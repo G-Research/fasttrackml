@@ -1,0 +1,833 @@
+package api
+
+import (
+	"database/sql"
+	"encoding/base64"
+	"encoding/json"
+	"fasttrack/model"
+	"fmt"
+	"net/http"
+	"regexp"
+	"strconv"
+	"strings"
+
+	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+)
+
+var (
+	filterAnd     *regexp.Regexp = regexp.MustCompile(`(?i)\s+AND\s+`)
+	filterCond    *regexp.Regexp = regexp.MustCompile(`^(?:(\w+)\.)?("[\w\. ]+"|` + "`" + `[\w\. ]+` + "`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'\w{32}'(?:,\s*)?)+\)|"[\w\. ]+"|'[\w\. ]+'|[\w\.]+)$`)
+	filterInGroup *regexp.Regexp = regexp.MustCompile(`,\s*`)
+)
+
+func RunCreate(db *gorm.DB) HandlerFunc {
+	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
+		var req RunCreateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		}
+
+		log.Debugf("RunCreate request: %#v", &req)
+
+		ex, err := strconv.ParseInt(req.ExperimentID, 10, 32)
+		if err != nil {
+			return NewError(ErrorCodeBadRequest, "Unable to parse experiment id '%s': %s", req.ExperimentID, err)
+		}
+
+		exp := model.Experiment{
+			ID: int32(ex),
+		}
+		if tx := db.Select("artifact_location").First(&exp); tx.Error != nil {
+			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find experiment '%d': %s", ex, tx.Error)
+		}
+
+		run := model.Run{
+			ID:           model.NewUUID(),
+			Name:         req.Name,
+			ExperimentID: exp.ID,
+			Status:       model.StatusRunning,
+			StartTime: sql.NullInt64{
+				Int64: req.StartTime,
+				Valid: true,
+			},
+			LifecycleStage: model.LifecycleStageActive,
+			Tags:           make([]model.Tag, len(req.Tags)),
+		}
+
+		run.ArtifactURI = fmt.Sprintf("%s/%s/artifacts", exp.ArtifactLocation, run.ID)
+
+		for n, tag := range req.Tags {
+			switch tag.Key {
+			case "mlflow.user":
+				run.UserID = tag.Value
+			case "mlflow.source.name":
+				run.SourceName = tag.Value
+			case "mlflow.source.type":
+				run.SourceType = tag.Value
+			case "mlflow.runName":
+				run.Name = tag.Value
+			}
+			run.Tags[n] = model.Tag{
+				Key:   tag.Key,
+				Value: tag.Value,
+			}
+		}
+
+		if run.Name == "" {
+			run.Name = GenerateRandomName()
+			run.Tags = append(run.Tags, model.Tag{
+				Key:   "mlflow.runName",
+				Value: run.Name,
+			})
+		}
+
+		if tx := db.Create(&run); tx.Error != nil {
+			return NewError(ErrorCodeInternalError, "Error inserting run '%s': %s", run.ID, tx.Error)
+		}
+
+		resp := &RunCreateResponse{
+			Run: Run{
+				Info: RunInfo{
+					ID:             run.ID,
+					UUID:           run.ID,
+					Name:           run.Name,
+					ExperimentID:   fmt.Sprint(run.ExperimentID),
+					UserID:         run.UserID,
+					Status:         RunStatus(run.Status),
+					StartTime:      run.StartTime.Int64,
+					ArtifactURI:    run.ArtifactURI,
+					LifecycleStage: LifecycleStage(run.LifecycleStage),
+				},
+				Data: RunData{
+					Tags: make([]RunTag, len(run.Tags)),
+				},
+			},
+		}
+		for n, tag := range run.Tags {
+			resp.Run.Data.Tags[n] = RunTag{
+				Key:   tag.Key,
+				Value: tag.Value,
+			}
+		}
+
+		log.Debugf("RunCreate response: %#v", resp)
+
+		return resp
+	},
+		http.MethodPost,
+	))
+}
+
+func RunUpdate(db *gorm.DB) HandlerFunc {
+	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
+		var req RunUpdateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		}
+
+		log.Debugf("RunUpdate request: %#v", &req)
+
+		run := model.Run{
+			ID: req.ID,
+		}
+		if tx := db.First(&run); tx.Error != nil {
+			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
+		}
+
+		if tx := db.Model(&run).Updates(model.Run{
+			Name:   req.Name,
+			Status: model.Status(req.Status),
+			EndTime: sql.NullInt64{
+				Int64: req.EndTime,
+				Valid: true,
+			},
+		}); tx.Error != nil {
+			return NewError(ErrorCodeInternalError, "Unable to update run '%s': %s", run.ID, tx.Error)
+		}
+
+		resp := &RunUpdateResponse{
+			RunInfo: RunInfo{
+				ID:             run.ID,
+				UUID:           run.ID,
+				Name:           run.Name,
+				ExperimentID:   fmt.Sprint(run.ExperimentID),
+				UserID:         run.UserID,
+				Status:         RunStatus(run.Status),
+				StartTime:      run.StartTime.Int64,
+				EndTime:        run.EndTime.Int64,
+				ArtifactURI:    run.ArtifactURI,
+				LifecycleStage: LifecycleStage(run.LifecycleStage),
+			},
+		}
+
+		log.Debugf("RunUpdate response: %#v", resp)
+
+		return resp
+	},
+		http.MethodPost,
+	))
+}
+
+func RunGet(db *gorm.DB) HandlerFunc {
+	return EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
+		id := r.URL.Query().Get("run_id")
+
+		log.Debugf("RunGet request: run_id='%s'", id)
+
+		if id == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		}
+
+		run := model.Run{
+			ID: id,
+		}
+		if tx := db.Preload("LatestMetrics").Preload("Params").Preload("Tags").First(&run); tx.Error != nil {
+			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
+		}
+
+		resp := &RunGetResponse{
+			Run: ModelRunToAPI(run),
+		}
+
+		log.Debugf("RunUpdate response: %#v", resp)
+
+		return resp
+	},
+		http.MethodGet,
+	)
+}
+
+func RunSearch(db *gorm.DB) HandlerFunc {
+	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
+		var req RunSearchRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		}
+
+		log.Debugf("RunSearch request: %#v", req)
+
+		runs := []model.Run{}
+		tx := db.Where("experiment_id IN ?", req.ExperimentIDs)
+
+		// ViewType
+		var lifecyleStages []model.LifecycleStage
+		switch req.ViewType {
+		case ViewTypeActiveOnly, "":
+			lifecyleStages = []model.LifecycleStage{
+				model.LifecycleStageActive,
+			}
+		case ViewTypeDeletedOnly:
+			lifecyleStages = []model.LifecycleStage{
+				model.LifecycleStageDeleted,
+			}
+		case ViewTypeAll:
+			lifecyleStages = []model.LifecycleStage{
+				model.LifecycleStageActive,
+				model.LifecycleStageDeleted,
+			}
+		default:
+			return NewError(ErrorCodeInvalidParameterValue, "Invalid run_view_type '%s'", req.ViewType)
+		}
+		tx.Where("lifecycle_stage IN ?", lifecyleStages)
+
+		// MaxResults
+		// TODO if compatible with mlflow client, consider using same logic as in ExperimentSearch
+		limit := int(req.MaxResults)
+		if limit == 0 {
+			limit = 1000
+		}
+		tx.Limit(limit)
+
+		// PageToken
+		var offset int
+		if req.PageToken != "" {
+			var token PageToken
+			if err := json.NewDecoder(
+				base64.NewDecoder(
+					base64.StdEncoding,
+					strings.NewReader(req.PageToken),
+				),
+			).Decode(&token); err != nil {
+				return NewError(ErrorCodeInvalidParameterValue, "Invalid page_token '%s': %s", req.PageToken, err)
+
+			}
+			offset = int(token.Offset)
+		}
+		tx.Offset(offset)
+
+		// Filter
+		if req.Filter != "" {
+			for n, f := range filterAnd.Split(req.Filter, -1) {
+				components := filterCond.FindStringSubmatch(f)
+				if len(components) != 5 {
+					return NewError(ErrorCodeInvalidParameterValue, "Malformed filter '%s'", f)
+				}
+
+				entity := components[1]
+				key := strings.Trim(components[2], "\"`")
+				comparison := components[3]
+				var value any = components[4]
+
+				var kind interface{}
+				switch entity {
+				case "", "attribute", "attributes", "attr", "run":
+					switch key {
+					case "start_time", "end_time":
+						switch comparison {
+						case ">", ">=", "!=", "=", "<", "<=":
+							v, err := strconv.Atoi(value.(string))
+							if err != nil {
+								return NewError(ErrorCodeInvalidParameterValue, "Invalid numeric value '%s'", value)
+							}
+							value = v
+						default:
+							return NewError(ErrorCodeInvalidParameterValue, "Invalid numeric attribute comparison operator '%s'", comparison)
+						}
+					case "run_name":
+						key = "mlflow.runName"
+						kind = &model.Tag{}
+						fallthrough
+					case "status", "user_id", "artifact_uri":
+						switch strings.ToUpper(comparison) {
+						case "!=", "=", "LIKE", "ILIKE":
+							if strings.HasPrefix(value.(string), "(") {
+								return NewError(ErrorCodeInvalidParameterValue, "Invalid string value '%s'", value)
+							}
+							value = strings.Trim(value.(string), `"'`)
+						default:
+							return NewError(ErrorCodeInvalidParameterValue, "Invalid string attribute comparison operator '%s'", comparison)
+						}
+					case "run_id":
+						key = "run_uuid"
+						switch strings.ToUpper(comparison) {
+						case "!=", "=", "LIKE", "ILIKE":
+							if strings.HasPrefix(value.(string), "(") {
+								return NewError(ErrorCodeInvalidParameterValue, "Invalid string value '%s'", value)
+							}
+							value = strings.Trim(value.(string), `"'`)
+						case "IN", "NOT IN":
+							if !strings.HasPrefix(value.(string), "(") {
+								return NewError(ErrorCodeInvalidParameterValue, "Invalid list definition '%s'", value)
+							}
+							var values []string
+							for _, v := range filterInGroup.Split(value.(string)[1:len(value.(string))-1], -1) {
+								values = append(values, strings.Trim(v, "'"))
+							}
+							value = values
+						default:
+							return NewError(ErrorCodeInvalidParameterValue, "Invalid string attribute comparison operator '%s'", comparison)
+						}
+					default:
+						return NewError(ErrorCodeInvalidParameterValue, "Invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']", key)
+					}
+				case "metric", "metrics":
+					switch comparison {
+					case ">", ">=", "!=", "=", "<", "<=":
+						v, err := strconv.ParseFloat(value.(string), 64)
+						if err != nil {
+							return NewError(ErrorCodeInvalidParameterValue, "Invalid numeric value '%s'", value)
+						}
+						value = v
+					default:
+						return NewError(ErrorCodeInvalidParameterValue, "Invalid metric comparison operator '%s'", comparison)
+					}
+					kind = &model.LatestMetric{}
+				case "parameter", "parameters", "param", "params":
+					switch strings.ToUpper(comparison) {
+					case "!=", "=", "LIKE", "ILIKE":
+						if strings.HasPrefix(value.(string), "(") {
+							return NewError(ErrorCodeInvalidParameterValue, "Invalid string value '%s'", value)
+						}
+						value = strings.Trim(value.(string), `"'`)
+					default:
+						return NewError(ErrorCodeInvalidParameterValue, "Invalid param comparison operator '%s'", comparison)
+					}
+					kind = &model.Param{}
+				case "tag", "tags":
+					switch strings.ToUpper(comparison) {
+					case "!=", "=", "LIKE", "ILIKE":
+						if strings.HasPrefix(value.(string), "(") {
+							return NewError(ErrorCodeInvalidParameterValue, "Invalid string value '%s'", value)
+						}
+						value = strings.Trim(value.(string), `"'`)
+					default:
+						return NewError(ErrorCodeInvalidParameterValue, "Invalid tag comparison operator '%s'", comparison)
+					}
+					kind = &model.Tag{}
+				default:
+					return NewError(ErrorCodeInvalidParameterValue, "Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
+				}
+				if kind == nil {
+					tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
+				} else {
+					table := fmt.Sprintf("filter_%d", n)
+					tx.Joins(
+						fmt.Sprintf("JOIN (?) AS %s ON runs.run_uuid = %s.run_uuid", table, table),
+						db.Select("run_uuid", "value").Where("key = ?", key).Where(fmt.Sprintf("value %s ?", comparison), value).Model(kind),
+					)
+				}
+			}
+		}
+
+		// OrderBy
+		// TODO order numeric, nan, null
+		// TODO maybe use Cut instead of SplitN? or maybe even regex?
+		startTimeOrder := false
+		for n, o := range req.OrderBy {
+			components := strings.SplitN(o, " ", 2)
+			refs := strings.SplitN(components[0], ".", 2)
+
+			desc := false
+			if len(components) > 1 {
+				switch components[1] {
+				case "ASC":
+				case "DESC":
+					desc = true
+				default:
+					return NewError(ErrorCodeInvalidParameterValue, "Invalid ordering key in order_by clause '%s'", o)
+				}
+			}
+
+			if len(refs) != 2 {
+				return NewError(ErrorCodeInvalidParameterValue, "Invalid identifier '%s'. Columns should be specified as 'attribute.<key>', 'metric.<key>', 'tag.<key>', or 'param.<key>'.", components[0])
+			}
+
+			column := refs[1]
+			var kind interface{}
+			switch refs[0] {
+			case "attribute", "attributes":
+				if column == "start_time" {
+					startTimeOrder = true
+				}
+			case "metric", "metrics":
+				kind = &model.LatestMetric{}
+			case "param", "params":
+				kind = &model.Param{}
+			case "tag", "tags":
+				kind = &model.Tag{}
+			default:
+				return NewError(ErrorCodeInvalidParameterValue, "Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", refs[0])
+			}
+			if kind != nil {
+				table := fmt.Sprintf("order_%d", n)
+				tx.Joins(
+					fmt.Sprintf("LEFT OUTER JOIN (?) AS %s ON runs.run_uuid = %s.run_uuid", table, table),
+					db.Select("run_uuid", "value").Where("key = ?", refs[1]).Model(kind),
+				)
+				column = fmt.Sprintf("%s.value", table)
+			}
+			tx.Order(clause.OrderByColumn{
+				Column: clause.Column{
+					Name: column,
+				},
+				Desc: desc,
+			})
+		}
+		if !startTimeOrder {
+			tx.Order("start_time DESC")
+		}
+		tx.Order("run_uuid")
+
+		// Actual query
+		tx.Preload("LatestMetrics").
+			Preload("Params").
+			Preload("Tags").
+			Find(&runs)
+		if tx.Error != nil {
+			return NewError(ErrorCodeInternalError, "Unable to search runs: %s", tx.Error)
+		}
+
+		resp := &RunSearchResponse{
+			Runs: make([]Run, len(runs)),
+		}
+		for n, r := range runs {
+			resp.Runs[n] = ModelRunToAPI(r)
+		}
+
+		// NextPageToken
+		if len(runs) == limit {
+			var token strings.Builder
+			b64 := base64.NewEncoder(base64.StdEncoding, &token)
+			if err := json.NewEncoder(b64).Encode(PageToken{
+				Offset: int32(offset + limit),
+			}); err != nil {
+				return NewError(ErrorCodeInternalError, "Unable to build next_page_token: %s", err)
+
+			}
+			b64.Close()
+			resp.NextPageToken = token.String()
+		}
+
+		log.Debugf("RunSearch response: %#v", resp)
+
+		return resp
+	},
+		http.MethodPost,
+	))
+}
+
+func RunDelete(db *gorm.DB) HandlerFunc {
+	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
+		var req RunDeleteRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		}
+
+		log.Debugf("RunDelete request: %#v", req)
+
+		run := model.Run{
+			ID: req.ID,
+		}
+		if tx := db.Select("lifecycle_stage").First(&run); tx.Error != nil {
+			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
+		}
+
+		if tx := db.Model(&run).Updates(model.Run{
+			LifecycleStage: model.LifecycleStageDeleted,
+		}); tx.Error != nil {
+			return NewError(ErrorCodeInternalError, "Unable to update run '%s': %s", run.ID, tx.Error)
+		}
+
+		return nil
+	},
+		http.MethodPost,
+	))
+}
+
+func RunRestore(db *gorm.DB) HandlerFunc {
+	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
+		var req RunRestoreRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		}
+
+		log.Debugf("RunRestore request: %#v", req)
+
+		run := model.Run{
+			ID: req.ID,
+		}
+		if tx := db.Select("lifecycle_stage").First(&run); tx.Error != nil {
+			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
+		}
+
+		if tx := db.Model(&run).Updates(model.Run{
+			LifecycleStage: model.LifecycleStageActive,
+		}); tx.Error != nil {
+			return NewError(ErrorCodeInternalError, "Unable to update run '%s': %s", run.ID, tx.Error)
+		}
+
+		return nil
+	},
+		http.MethodPost,
+	))
+}
+
+func RunLogMetric(db *gorm.DB) HandlerFunc {
+	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
+		var req RunLogMetricRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		}
+
+		log.Debugf("RunLogMetric request: %#v", req)
+
+		if err := RunLogMetrics(db, req.ID, []Metric{req.Metric}); err != nil {
+			return NewError(ErrorCodeInternalError, "Unable to log metric '%s' for run '%s': %s", req.Key, req.ID, err)
+		}
+
+		return nil
+	},
+		http.MethodPost,
+	))
+}
+
+func RunLogParam(db *gorm.DB) HandlerFunc {
+	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
+		var req RunLogParamRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		}
+
+		log.Debugf("RunLogParam request: %#v", req)
+
+		if err := RunLogParams(db, req.ID, []RunParam{req.RunParam}); err != nil {
+			return NewError(ErrorCodeInternalError, "Unable to log param '%s' for run '%s': %s", req.Key, req.ID, err)
+		}
+
+		return nil
+	},
+		http.MethodPost,
+	))
+}
+
+func RunSetTag(db *gorm.DB) HandlerFunc {
+	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
+		var req RunSetTagRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		}
+
+		log.Debugf("RunSetTag request: %#v", req)
+
+		if err := RunSetTags(db, req.ID, []RunTag{req.RunTag}); err != nil {
+			return NewError(ErrorCodeInternalError, "Unable to set tag '%s' for run '%s': %s", req.Key, req.ID, err)
+		}
+
+		return nil
+	},
+		http.MethodPost,
+	))
+}
+
+func RunDeleteTag(db *gorm.DB) HandlerFunc {
+	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
+		var req RunDeleteTagRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		}
+
+		log.Debugf("RunDeleteTag request: %#v", req)
+
+		if tx := db.Delete(&model.Tag{
+			RunID: req.ID,
+			Key:   req.Key,
+		}); tx.Error != nil {
+			return NewError(ErrorCodeInternalError, "Unable to delete tag'%s' for run '%s': %s", req.Key, req.ID, tx.Error)
+		}
+
+		return nil
+	},
+		http.MethodPost,
+	))
+}
+
+func RunLogBatch(db *gorm.DB) HandlerFunc {
+	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
+		var req RunLogBatchRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		}
+
+		log.Debugf("RunLogBatch request: %#v", req)
+
+		if err := RunLogParams(db, req.ID, req.Params); err != nil {
+			return err
+		}
+
+		if err := RunLogMetrics(db, req.ID, req.Metrics); err != nil {
+			return err
+		}
+
+		if err := RunSetTags(db, req.ID, req.Tags); err != nil {
+			return err
+		}
+
+		return nil
+	},
+		http.MethodPost,
+	))
+}
+
+func RunLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
+	if len(metrics) == 0 {
+		return nil
+	}
+
+	if tx := db.Select("run_uuid").Where("lifecycle_stage = ?", model.LifecycleStageActive).First(&model.Run{ID: id}); tx.Error != nil {
+		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", id, tx.Error)
+	}
+
+	dbMetrics := make([]model.Metric, len(metrics))
+	latestMetrics := make(map[string]model.LatestMetric)
+	for n, metric := range metrics {
+		m := model.Metric{
+			RunID:     id,
+			Key:       metric.Key,
+			Timestamp: metric.Timestamp,
+			Step:      metric.Step,
+		}
+		if v, ok := metric.Value.(float64); ok {
+			m.Value = v
+		} else if v, ok := metric.Value.(string); ok && v == "NaN" {
+			m.Value = 0
+			m.IsNan = true
+		} else {
+			return NewError(ErrorCodeInvalidParameterValue, "Invalid metric value '%s'", v)
+		}
+		dbMetrics[n] = m
+
+		lm, ok := latestMetrics[m.Key]
+		if !ok ||
+			m.Step > lm.Step ||
+			(m.Step == lm.Step && m.Timestamp > lm.Timestamp) ||
+			(m.Step == lm.Step && m.Timestamp == lm.Timestamp && m.Value > lm.Value) {
+			latestMetrics[m.Key] = model.LatestMetric{
+				RunID:     m.RunID,
+				Key:       m.Key,
+				Value:     m.Value,
+				Timestamp: m.Timestamp,
+				Step:      m.Step,
+			}
+		}
+	}
+
+	if tx := db.Create(&dbMetrics); tx.Error != nil {
+		return NewError(ErrorCodeInternalError, "Unable to insert metrics for run '%s': %s", id, tx.Error)
+	}
+
+	// TODO update latest metrics in the background?
+
+	keys := make([]string, len(latestMetrics))
+	n := 0
+	for k := range latestMetrics {
+		keys[n] = k
+		n += 1
+	}
+
+	tx := db.Begin()
+	if tx.Error != nil {
+		return NewError(ErrorCodeInternalError, "Unable to begin transaction: %s", tx.Error)
+	}
+
+	var currentLatestMetrics []model.LatestMetric
+	if tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("run_uuid = ?", id).Where("key IN ?", keys).Find(&currentLatestMetrics); tx.Error != nil {
+		return NewError(ErrorCodeInternalError, "Unable to get latest metrics for run '%s': %s", id, tx.Error)
+	}
+
+	currentLatestMetricsMap := make(map[string]model.LatestMetric, len(currentLatestMetrics))
+	for _, m := range currentLatestMetrics {
+		currentLatestMetricsMap[m.Key] = m
+	}
+
+	updatedLatestMetrics := make([]model.LatestMetric, 0, len(keys))
+	for k, m := range latestMetrics {
+		lm, ok := currentLatestMetricsMap[k]
+		if !ok ||
+			m.Step > lm.Step ||
+			(m.Step == lm.Step && m.Timestamp > lm.Timestamp) ||
+			(m.Step == lm.Step && m.Timestamp == lm.Timestamp && m.Value > lm.Value) {
+			updatedLatestMetrics = append(updatedLatestMetrics, m)
+		}
+	}
+
+	if len(updatedLatestMetrics) > 0 {
+		if tx.Clauses(clause.OnConflict{
+			UpdateAll: true,
+		}).Create(updatedLatestMetrics); tx.Error != nil {
+			return NewError(ErrorCodeInternalError, "Unable to update latest metrics for run '%s': %s", id, tx.Error)
+		}
+	}
+
+	if tx.Commit(); tx.Error != nil {
+		return NewError(ErrorCodeInternalError, "Unable to commit transaction: %s", tx.Error)
+	}
+
+	return nil
+}
+
+func RunLogParams(db *gorm.DB, id string, params []RunParam) error {
+	if len(params) == 0 {
+		return nil
+	}
+
+	if tx := db.Select("run_uuid").Where("lifecycle_stage = ?", model.LifecycleStageActive).First(&model.Run{ID: id}); tx.Error != nil {
+		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", id, tx.Error)
+	}
+
+	dbParams := make([]model.Param, len(params))
+	for n, p := range params {
+		dbParams[n] = model.Param{
+			Key:   p.Key,
+			Value: p.Value,
+			RunID: id,
+		}
+	}
+
+	if tx := db.Create(&dbParams); tx.Error != nil {
+		return NewError(ErrorCodeInternalError, "Unable to insert params for run '%s': %s", id, tx.Error)
+	}
+
+	return nil
+}
+
+func RunSetTags(db *gorm.DB, id string, tags []RunTag) error {
+	if len(tags) == 0 {
+		return nil
+	}
+
+	if tx := db.Select("run_uuid").Where("lifecycle_stage = ?", model.LifecycleStageActive).First(&model.Run{ID: id}); tx.Error != nil {
+		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", id, tx.Error)
+	}
+
+	dbTags := make([]model.Tag, len(tags))
+	for n, t := range tags {
+		dbTags[n] = model.Tag{
+			Key:   t.Key,
+			Value: t.Value,
+			RunID: id,
+		}
+	}
+
+	if tx := db.Clauses(clause.OnConflict{
+		UpdateAll: true,
+	}).Create(&dbTags); tx.Error != nil {
+		return NewError(ErrorCodeInternalError, "Unable to insert tags for run '%s': %s", id, tx.Error)
+	}
+
+	return nil
+}
+
+func ModelRunToAPI(r model.Run) Run {
+	metrics := make([]Metric, len(r.LatestMetrics))
+	for n, m := range r.LatestMetrics {
+
+		metrics[n] = Metric{
+			Key:       m.Key,
+			Value:     m.Value,
+			Timestamp: m.Timestamp,
+			Step:      m.Step,
+		}
+		if m.IsNan {
+			metrics[n].Value = "NaN"
+		}
+	}
+
+	params := make([]RunParam, len(r.Params))
+	for n, p := range r.Params {
+		params[n] = RunParam{
+			Key:   p.Key,
+			Value: p.Value,
+		}
+	}
+
+	tags := make([]RunTag, len(r.Tags))
+	for n, t := range r.Tags {
+		tags[n] = RunTag{
+			Key:   t.Key,
+			Value: t.Value,
+		}
+	}
+
+	return Run{
+		RunInfo{
+			ID:             r.ID,
+			UUID:           r.ID,
+			Name:           r.Name,
+			ExperimentID:   fmt.Sprint(r.ExperimentID),
+			UserID:         r.UserID,
+			Status:         RunStatus(r.Status),
+			StartTime:      r.StartTime.Int64,
+			EndTime:        r.EndTime.Int64,
+			ArtifactURI:    r.ArtifactURI,
+			LifecycleStage: LifecycleStage(r.LifecycleStage),
+		},
+		RunData{
+			Metrics: metrics,
+			Params:  params,
+			Tags:    tags,
+		},
+	}
+
+}

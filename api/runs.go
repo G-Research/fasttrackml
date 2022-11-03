@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fasttrack/model"
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -18,7 +19,7 @@ import (
 
 var (
 	filterAnd     *regexp.Regexp = regexp.MustCompile(`(?i)\s+AND\s+`)
-	filterCond    *regexp.Regexp = regexp.MustCompile(`^(?:(\w+)\.)?("[\w\. ]+"|` + "`" + `[\w\. ]+` + "`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'\w{32}'(?:,\s*)?)+\)|"[\w\. ]+"|'[\w\. ]+'|[\w\.]+)$`)
+	filterCond    *regexp.Regexp = regexp.MustCompile(`^(?:(\w+)\.)?("[\w\. ]+"|` + "`" + `[\w\. ]+` + "`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'\w{32}'(?:,\s*)?)+\)|"[\w\. ]+"|'[\w\. %]+'|[\w\.]+)$`)
 	filterInGroup *regexp.Regexp = regexp.MustCompile(`,\s*`)
 )
 
@@ -36,8 +37,9 @@ func RunCreate(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeBadRequest, "Unable to parse experiment id '%s': %s", req.ExperimentID, err)
 		}
 
+		ex32 := int32(ex)
 		exp := model.Experiment{
-			ID: int32(ex),
+			ID: &ex32,
 		}
 		if tx := db.Select("artifact_location").First(&exp); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find experiment '%d': %s", ex, tx.Error)
@@ -46,7 +48,8 @@ func RunCreate(db *gorm.DB) HandlerFunc {
 		run := model.Run{
 			ID:           model.NewUUID(),
 			Name:         req.Name,
-			ExperimentID: exp.ID,
+			ExperimentID: *exp.ID,
+			UserID:       req.UserID,
 			Status:       model.StatusRunning,
 			StartTime: sql.NullInt64{
 				Int64: req.StartTime,
@@ -61,7 +64,9 @@ func RunCreate(db *gorm.DB) HandlerFunc {
 		for n, tag := range req.Tags {
 			switch tag.Key {
 			case "mlflow.user":
-				run.UserID = tag.Value
+				if run.UserID == "" {
+					run.UserID = tag.Value
+				}
 			case "mlflow.source.name":
 				run.SourceName = tag.Value
 			case "mlflow.source.type":
@@ -129,6 +134,10 @@ func RunUpdate(db *gorm.DB) HandlerFunc {
 
 		log.Debugf("RunUpdate request: %#v", &req)
 
+		if req.ID == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		}
+
 		run := model.Run{
 			ID: req.ID,
 		}
@@ -191,7 +200,7 @@ func RunGet(db *gorm.DB) HandlerFunc {
 			Run: ModelRunToAPI(run),
 		}
 
-		log.Debugf("RunUpdate response: %#v", resp)
+		log.Debugf("RunGet response: %#v", resp)
 
 		return resp
 	},
@@ -237,6 +246,8 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 		limit := int(req.MaxResults)
 		if limit == 0 {
 			limit = 1000
+		} else if limit > 1000000 {
+			return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter 'max_results' supplied.")
 		}
 		tx.Limit(limit)
 
@@ -360,12 +371,22 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 					return NewError(ErrorCodeInvalidParameterValue, "Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
 				}
 				if kind == nil {
-					tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
+					if db.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+						key = fmt.Sprintf("LOWER(%s)", key)
+						comparison = "LIKE"
+						value = strings.ToLower(value.(string))
+					}
+					tx.Where(fmt.Sprintf("runs.%s %s ?", key, comparison), value)
 				} else {
 					table := fmt.Sprintf("filter_%d", n)
+					where := fmt.Sprintf("value %s ?", comparison)
+					if db.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+						where = "LOWER(value) LIKE ?"
+						value = strings.ToLower(value.(string))
+					}
 					tx.Joins(
 						fmt.Sprintf("JOIN (?) AS %s ON runs.run_uuid = %s.run_uuid", table, table),
-						db.Select("run_uuid", "value").Where("key = ?", key).Where(fmt.Sprintf("value %s ?", comparison), value).Model(kind),
+						db.Select("run_uuid", "value").Where("key = ?", key).Where(where, value).Model(kind),
 					)
 				}
 			}
@@ -426,9 +447,9 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 			})
 		}
 		if !startTimeOrder {
-			tx.Order("start_time DESC")
+			tx.Order("runs.start_time DESC")
 		}
-		tx.Order("run_uuid")
+		tx.Order("runs.run_uuid")
 
 		// Actual query
 		tx.Preload("LatestMetrics").
@@ -477,6 +498,10 @@ func RunDelete(db *gorm.DB) HandlerFunc {
 
 		log.Debugf("RunDelete request: %#v", req)
 
+		if req.ID == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		}
+
 		run := model.Run{
 			ID: req.ID,
 		}
@@ -505,6 +530,10 @@ func RunRestore(db *gorm.DB) HandlerFunc {
 
 		log.Debugf("RunRestore request: %#v", req)
 
+		if req.ID == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		}
+
 		run := model.Run{
 			ID: req.ID,
 		}
@@ -528,10 +557,29 @@ func RunLogMetric(db *gorm.DB) HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunLogMetricRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err, ok := err.(*json.UnmarshalTypeError); ok {
+				return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
+			}
 			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
 		}
 
 		log.Debugf("RunLogMetric request: %#v", req)
+
+		if req.ID == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		}
+
+		if req.Key == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'key'")
+		}
+
+		// if req.Value == "" {
+		// 	return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'value'")
+		// }
+
+		if req.Timestamp == 0 {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'timestamp'")
+		}
 
 		if err := RunLogMetrics(db, req.ID, []Metric{req.Metric}); err != nil {
 			return NewError(ErrorCodeInternalError, "Unable to log metric '%s' for run '%s': %s", req.Key, req.ID, err)
@@ -547,10 +595,21 @@ func RunLogParam(db *gorm.DB) HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunLogParamRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err, ok := err.(*json.UnmarshalTypeError); ok {
+				return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
+			}
 			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
 		}
 
 		log.Debugf("RunLogParam request: %#v", req)
+
+		if req.ID == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		}
+
+		if req.Key == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'key'")
+		}
 
 		if err := RunLogParams(db, req.ID, []RunParam{req.RunParam}); err != nil {
 			return NewError(ErrorCodeInternalError, "Unable to log param '%s' for run '%s': %s", req.Key, req.ID, err)
@@ -566,10 +625,21 @@ func RunSetTag(db *gorm.DB) HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunSetTagRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err, ok := err.(*json.UnmarshalTypeError); ok {
+				return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
+			}
 			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
 		}
 
 		log.Debugf("RunSetTag request: %#v", req)
+
+		if req.ID == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		}
+
+		if req.Key == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'key'")
+		}
 
 		if err := RunSetTags(db, req.ID, []RunTag{req.RunTag}); err != nil {
 			return NewError(ErrorCodeInternalError, "Unable to set tag '%s' for run '%s': %s", req.Key, req.ID, err)
@@ -590,11 +660,23 @@ func RunDeleteTag(db *gorm.DB) HandlerFunc {
 
 		log.Debugf("RunDeleteTag request: %#v", req)
 
+		if req.ID == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		}
+
+		if tx := db.Select("run_uuid").Where("lifecycle_stage = ?", model.LifecycleStageActive).First(&model.Run{ID: req.ID}); tx.Error != nil {
+			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", req.ID, tx.Error)
+		}
+
+		if tx := db.First(&model.Tag{RunID: req.ID, Key: req.Key}); tx.Error != nil {
+			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find tag '%s' for run '%s': %s", req.Key, req.ID, tx.Error)
+		}
+
 		if tx := db.Delete(&model.Tag{
 			RunID: req.ID,
 			Key:   req.Key,
 		}); tx.Error != nil {
-			return NewError(ErrorCodeInternalError, "Unable to delete tag'%s' for run '%s': %s", req.Key, req.ID, tx.Error)
+			return NewError(ErrorCodeInternalError, "Unable to delete tag '%s' for run '%s': %s", req.Key, req.ID, tx.Error)
 		}
 
 		return nil
@@ -607,10 +689,17 @@ func RunLogBatch(db *gorm.DB) HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunLogBatchRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err, ok := err.(*json.UnmarshalTypeError); ok {
+				return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
+			}
 			return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
 		}
 
 		log.Debugf("RunLogBatch request: %#v", req)
+
+		if req.ID == "" {
+			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		}
 
 		if err := RunLogParams(db, req.ID, req.Params); err != nil {
 			return err
@@ -650,9 +739,20 @@ func RunLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 		}
 		if v, ok := metric.Value.(float64); ok {
 			m.Value = v
-		} else if v, ok := metric.Value.(string); ok && v == "NaN" {
-			m.Value = 0
-			m.IsNan = true
+		} else if v, ok := metric.Value.(string); ok {
+			switch v {
+			case "NaN":
+				m.Value = 0
+				m.IsNan = true
+			case "Infinity":
+				m.Value = math.MaxFloat64
+				// m.Value = math.Inf(1)
+			case "-Infinity":
+				m.Value = -math.MaxFloat64
+				// m.Value = math.Inf(-1)
+			default:
+				return NewError(ErrorCodeInvalidParameterValue, "Invalid metric value '%s'", v)
+			}
 		} else {
 			return NewError(ErrorCodeInvalidParameterValue, "Invalid metric value '%s'", v)
 		}
@@ -669,6 +769,7 @@ func RunLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 				Value:     m.Value,
 				Timestamp: m.Timestamp,
 				Step:      m.Step,
+				IsNan:     m.IsNan,
 			}
 		}
 	}

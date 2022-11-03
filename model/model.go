@@ -25,7 +25,7 @@ const (
 )
 
 type Experiment struct {
-	ID               int32          `gorm:"column:experiment_id;primaryKey"`
+	ID               *int32         `gorm:"column:experiment_id;primaryKey"`
 	Name             string         `gorm:"type:varchar(256);not null;uniqueIndex"`
 	ArtifactLocation string         `gorm:"type:varchar(256)"`
 	LifecycleStage   LifecycleStage `gorm:"type:varchar(32)"`

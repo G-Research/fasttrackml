@@ -5,7 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Package",
+            "name": "Launch server (postgres)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "--level",
+                "debug",
+                "--db",
+                "postgres://postgres:postgres@localhost:5432/another?sslmode=disable"
+            ]
+        },
+        {
+            "name": "Launch server (sqlite memory)",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -13,6 +26,19 @@
             "args": [
                 "--level",
                 "debug"
+            ]
+        },
+        {
+            "name": "Launch server (sqlite file)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "--level",
+                "debug",
+                "--db",
+                "sqlite://sqlite.db"
             ]
         }
     ]

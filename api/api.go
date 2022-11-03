@@ -63,6 +63,7 @@ type ExperimentSearchResponse struct {
 }
 type RunCreateRequest struct {
 	ExperimentID string   `json:"experiment_id"`
+	UserID       string   `json:"user_id"`
 	Name         string   `json:"run_name"`
 	StartTime    int64    `json:"start_time"`
 	Tags         []RunTag `json:"tags"`

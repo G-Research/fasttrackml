@@ -75,7 +75,10 @@ func ReturnJson(f HandlerFunc) http.HandlerFunc {
 		if v == nil {
 			v = struct{}{}
 		}
-		json.NewEncoder(w).Encode(v)
+		if err := json.NewEncoder(w).Encode(v); err != nil {
+			log.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		elapsed := time.Since(start)
 		log.Infof("Elapsed time: %s", elapsed)
 	}

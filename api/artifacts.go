@@ -11,6 +11,9 @@ import (
 func ArtifactList(db *gorm.DB) HandlerFunc {
 	return EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		id := r.URL.Query().Get("run_id")
+		if id == "" {
+			id = r.URL.Query().Get("run_uuid")
+		}
 		path := r.URL.Query().Get("path")
 		token := r.URL.Query().Get("page_token")
 

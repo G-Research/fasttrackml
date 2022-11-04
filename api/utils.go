@@ -4,9 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+)
+
+var (
+	jsonContentType *regexp.Regexp = regexp.MustCompile("^application/json;?")
 )
 
 func NewError(e ErrorCode, msg string, args ...interface{}) *ErrorResponse {
@@ -24,7 +29,7 @@ type HandlerFunc func(http.ResponseWriter, *http.Request) any
 
 func EnsureJson(f HandlerFunc) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) any {
-		if r.Header.Get("Content-Type") != "application/json" {
+		if !jsonContentType.MatchString(r.Header.Get("Content-Type")) {
 			return NewError(ErrorCodeBadRequest, "Invalid Content-Type '%s'", r.Header.Get("Content-Type"))
 		}
 		return f(w, r)

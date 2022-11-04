@@ -134,12 +134,15 @@ func RunUpdate(db *gorm.DB) HandlerFunc {
 
 		log.Debugf("RunUpdate request: %#v", &req)
 
-		if req.ID == "" {
+		if req.ID == "" && req.UUID == "" {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
 		run := model.Run{
 			ID: req.ID,
+		}
+		if run.ID == "" {
+			run.ID = req.UUID
 		}
 		if tx := db.First(&run); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
@@ -182,6 +185,9 @@ func RunUpdate(db *gorm.DB) HandlerFunc {
 func RunGet(db *gorm.DB) HandlerFunc {
 	return EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		id := r.URL.Query().Get("run_id")
+		if id == "" {
+			id = r.URL.Query().Get("run_uuid")
+		}
 
 		log.Debugf("RunGet request: run_id='%s'", id)
 
@@ -565,7 +571,7 @@ func RunLogMetric(db *gorm.DB) HandlerFunc {
 
 		log.Debugf("RunLogMetric request: %#v", req)
 
-		if req.ID == "" {
+		if req.ID == "" && req.UUID == "" {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
@@ -581,8 +587,13 @@ func RunLogMetric(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'timestamp'")
 		}
 
-		if err := RunLogMetrics(db, req.ID, []Metric{req.Metric}); err != nil {
-			return NewError(ErrorCodeInternalError, "Unable to log metric '%s' for run '%s': %s", req.Key, req.ID, err)
+		id := req.ID
+		if id == "" {
+			id = req.UUID
+		}
+
+		if err := RunLogMetrics(db, id, []Metric{req.Metric}); err != nil {
+			return NewError(ErrorCodeInternalError, "Unable to log metric '%s' for run '%s': %s", req.Key, id, err)
 		}
 
 		return nil
@@ -603,7 +614,7 @@ func RunLogParam(db *gorm.DB) HandlerFunc {
 
 		log.Debugf("RunLogParam request: %#v", req)
 
-		if req.ID == "" {
+		if req.ID == "" && req.UUID == "" {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
@@ -611,8 +622,13 @@ func RunLogParam(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'key'")
 		}
 
-		if err := RunLogParams(db, req.ID, []RunParam{req.RunParam}); err != nil {
-			return NewError(ErrorCodeInternalError, "Unable to log param '%s' for run '%s': %s", req.Key, req.ID, err)
+		id := req.ID
+		if id == "" {
+			id = req.UUID
+		}
+
+		if err := RunLogParams(db, id, []RunParam{req.RunParam}); err != nil {
+			return NewError(ErrorCodeInternalError, "Unable to log param '%s' for run '%s': %s", req.Key, id, err)
 		}
 
 		return nil
@@ -633,7 +649,7 @@ func RunSetTag(db *gorm.DB) HandlerFunc {
 
 		log.Debugf("RunSetTag request: %#v", req)
 
-		if req.ID == "" {
+		if req.ID == "" && req.UUID == "" {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
@@ -641,8 +657,13 @@ func RunSetTag(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'key'")
 		}
 
-		if err := RunSetTags(db, req.ID, []RunTag{req.RunTag}); err != nil {
-			return NewError(ErrorCodeInternalError, "Unable to set tag '%s' for run '%s': %s", req.Key, req.ID, err)
+		id := req.ID
+		if id == "" {
+			id = req.UUID
+		}
+
+		if err := RunSetTags(db, id, []RunTag{req.RunTag}); err != nil {
+			return NewError(ErrorCodeInternalError, "Unable to set tag '%s' for run '%s': %s", req.Key, id, err)
 		}
 
 		return nil

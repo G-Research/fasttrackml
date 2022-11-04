@@ -11,6 +11,9 @@ import (
 func MetricGetHistory(db *gorm.DB) HandlerFunc {
 	return EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		id := r.URL.Query().Get("run_id")
+		if id == "" {
+			id = r.URL.Query().Get("run_uuid")
+		}
 		key := r.URL.Query().Get("metric_key")
 
 		log.Debugf("MetricGetHistory request: run_id='%s', metric_key='%s'", id, key)

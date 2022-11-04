@@ -75,6 +75,7 @@ type RunCreateResponse struct {
 
 type RunUpdateRequest struct {
 	ID      string    `json:"run_id"`
+	UUID    string    `json:"run_uuid"`
 	Name    string    `json:"run_name"`
 	Status  RunStatus `json:"status"`
 	EndTime int64     `json:"end_time"`
@@ -85,7 +86,8 @@ type RunUpdateResponse struct {
 }
 
 type RunGetRequest struct {
-	ID string `json:"run_id"`
+	ID   string `json:"run_id"`
+	UUID string `json:"run_uuid"`
 }
 
 type RunGetResponse RunCreateResponse
@@ -109,12 +111,14 @@ type RunRestoreRequest RunGetRequest
 type RunDeleteRequest RunGetRequest
 
 type RunLogParamRequest struct {
-	ID string `json:"run_id"`
+	ID   string `json:"run_id"`
+	UUID string `json:"run_uuid"`
 	RunParam
 }
 
 type RunLogMetricRequest struct {
-	ID string `json:"run_id"`
+	ID   string `json:"run_id"`
+	UUID string `json:"run_uuid"`
 	Metric
 }
 
@@ -124,7 +128,8 @@ type RunLogBatchRequest struct {
 }
 
 type RunSetTagRequest struct {
-	ID string `json:"run_id"`
+	ID   string `json:"run_id"`
+	UUID string `json:"run_uuid"`
 	RunTag
 }
 

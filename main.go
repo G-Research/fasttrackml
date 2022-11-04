@@ -61,7 +61,7 @@ func main() {
 				glog.LstdFlags,
 			),
 			logger.Config{
-				SlowThreshold:             200 * time.Millisecond,
+				SlowThreshold:             500 * time.Millisecond,
 				LogLevel:                  logger.Warn,
 				IgnoreRecordNotFoundError: true,
 			},

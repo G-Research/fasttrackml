@@ -29,6 +29,7 @@ func main() {
 	dsn := flag.String("db", "sqlite://:memory:?cache=shared", "Database URL")
 	addr := flag.String("listen", ":5000", "Address to listen to")
 	levelString := flag.String("level", "info", "Log level")
+	init := flag.Bool("init", false, "(Re-)Initialize database - WARNING all data will be lost!")
 	migrate := flag.Bool("migrate", true, "Run database migrations")
 	artifactRoot := flag.String("artifact-root", "s3://fasttrack", "Artifact root")
 	flag.Parse()
@@ -70,8 +71,14 @@ func main() {
 		log.Fatalf("Failed to connect to database: %s", err)
 	}
 
+	if *init {
+		log.Info("Initializing database")
+		db.Exec("drop schema public cascade")
+		db.Exec("create schema public")
+	}
+
 	if *migrate {
-		log.Info("Migrating DB")
+		log.Info("Migrating database")
 		if err = db.AutoMigrate(
 			&model.Experiment{},
 			&model.ExperimentTag{},

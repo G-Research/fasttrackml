@@ -32,7 +32,9 @@ func ArtifactList(db *gorm.DB) HandlerFunc {
 		}
 
 		// TODO grab list of artifacts from S3
-		resp := &ArtifactListResponse{}
+		resp := &ArtifactListResponse{
+			Files: make([]File, 0),
+		}
 
 		log.Debugf("ArtifactList response: %#v", resp)
 

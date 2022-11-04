@@ -139,12 +139,8 @@ type RunDeleteTagRequest struct {
 }
 
 type ArtifactListResponse struct {
-	RootURI string `json:"root_uri"`
-	Files   []struct {
-		Path     string `json:"path"`
-		IsDir    bool   `json:"is_dir"`
-		FileSize int64  `json:"file_size"`
-	} `json:"files"`
+	RootURI       string `json:"root_uri"`
+	Files         []File `json:"files"`
 	NextPageToken string `json:"next_page_token,omitempty"`
 }
 
@@ -231,4 +227,10 @@ type Metric struct {
 	Value     interface{} `json:"value"`
 	Timestamp int64       `json:"timestamp"`
 	Step      int64       `json:"step"`
+}
+
+type File struct {
+	Path     string `json:"path"`
+	IsDir    bool   `json:"is_dir"`
+	FileSize int64  `json:"file_size"`
 }

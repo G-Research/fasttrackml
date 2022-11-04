@@ -146,6 +146,20 @@ func main() {
 	apiHandler.HandleFunc("/runs/search", api.RunSearch(db))
 	apiHandler.HandleFunc("/runs/set-tag", api.RunSetTag(db))
 	apiHandler.HandleFunc("/runs/update", api.RunUpdate(db))
+	apiHandler.HandleFunc("/model-versions/search", func(w http.ResponseWriter, r *http.Request) any {
+		return struct {
+			ModelVersions []struct{} `json:"model_versions"`
+		}{
+			ModelVersions: make([]struct{}, 0),
+		}
+	})
+	apiHandler.HandleFunc("/registered-models/search", func(w http.ResponseWriter, r *http.Request) any {
+		return struct {
+			RegisteredModels []struct{} `json:"registered_models"`
+		}{
+			RegisteredModels: make([]struct{}, 0),
+		}
+	})
 
 	handler := http.NewServeMux()
 	for _, path := range []string{

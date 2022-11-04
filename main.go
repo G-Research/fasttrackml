@@ -26,7 +26,7 @@ import (
 var staticFiles embed.FS
 
 func main() {
-	dsn := flag.String("db", "sqlite://:memory:?cache=shared", "Database URL")
+	dsn := flag.String("db", "sqlite://fasttrack.db?mode=memory&cache=shared", "Database URL")
 	addr := flag.String("listen", ":5000", "Address to listen to")
 	levelString := flag.String("level", "info", "Log level")
 	init := flag.Bool("init", false, "(Re-)Initialize database - WARNING all data will be lost!")
@@ -51,7 +51,7 @@ func main() {
 	case "sqlite":
 		q := u.Query()
 		q.Set("_case_sensitive_like", "true")
-		dialector = sqlite.Open(u.Host + u.Path + "?" + q.Encode())
+		dialector = sqlite.Open("file:" + u.Host + u.Path + "?" + q.Encode())
 	}
 	db, err := gorm.Open(dialector, &gorm.Config{
 		Logger: logger.New(

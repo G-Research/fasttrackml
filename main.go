@@ -17,6 +17,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -51,7 +52,8 @@ func main() {
 	case "sqlite":
 		q := u.Query()
 		q.Set("_case_sensitive_like", "true")
-		dialector = sqlite.Open("file:" + u.Host + u.Path + "?" + q.Encode())
+		u.RawQuery = q.Encode()
+		dialector = sqlite.Open("file:" + u.String()[len("sqlite://"):])
 	}
 	db, err := gorm.Open(dialector, &gorm.Config{
 		Logger: logger.New(

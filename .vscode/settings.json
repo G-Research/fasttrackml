@@ -1,0 +1,4 @@
+{
+    "go.testTags": "sqlcipher sqlite_unlock_notify sqlite_foreign_keys sqlite_vacuum_incr",
+    "go.buildTags": "sqlcipher sqlite_unlock_notify sqlite_foreign_keys sqlite_vacuum_incr"
+}

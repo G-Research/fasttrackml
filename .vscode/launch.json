@@ -40,6 +40,19 @@
                 "--db",
                 "sqlite://sqlite.db"
             ]
+        },
+        {
+            "name": "Launch server (encrypted sqlite file)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "--level",
+                "debug",
+                "--db",
+                "sqlite://encrypted.db?_key=passphrase"
+            ]
         }
     ]
 }

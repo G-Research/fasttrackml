@@ -2,7 +2,7 @@ module fasttrack
 
 go 1.18
 
-replace github.com/mattn/go-sqlite3 v1.14.16 => github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20221110191122-34e1e855329d
+replace github.com/mattn/go-sqlite3 v1.14.16 => github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20221111220431-c96939f956d9
 
 require (
 	github.com/google/uuid v1.3.0

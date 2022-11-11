@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/plugin/dbresolver"
 )
 
 var (
@@ -808,7 +809,7 @@ func RunLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 		n += 1
 	}
 
-	tx := db.Begin()
+	tx := db.Clauses(dbresolver.Write).Begin()
 	if tx.Error != nil {
 		return NewError(ErrorCodeInternalError, "Unable to begin transaction: %s", tx.Error)
 	}

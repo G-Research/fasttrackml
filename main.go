@@ -21,6 +21,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/plugin/dbresolver"
 )
 
 //go:embed static-files/*
@@ -41,21 +42,46 @@ func main() {
 	}
 	log.SetLevel(level)
 
-	var dialector gorm.Dialector
+	var sourceConn gorm.Dialector
+	var replicaConn gorm.Dialector
 	u, err := url.Parse(*dsn)
 	if err != nil {
 		log.Fatalf("Invalid database URL: %s", err)
 	}
 	switch u.Scheme {
 	case "postgres":
-		dialector = postgres.Open(u.String())
+		sourceConn = postgres.Open(u.String())
 	case "sqlite":
 		q := u.Query()
 		q.Set("_case_sensitive_like", "true")
 		u.RawQuery = q.Encode()
-		dialector = sqlite.Open("file:" + u.String()[len("sqlite://"):])
+
+		s, err := sql.Open(sqlite.DriverName, strings.Replace(u.String(), "sqlite://", "file:", 1))
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %s", err)
+		}
+		s.SetMaxIdleConns(1)
+		s.SetMaxOpenConns(1)
+		s.SetConnMaxIdleTime(0)
+		s.SetConnMaxLifetime(0)
+		sourceConn = sqlite.Dialector{
+			Conn: s,
+		}
+
+		q.Set("_query_only", "true")
+		u.RawQuery = q.Encode()
+		r, err := sql.Open(sqlite.DriverName, strings.Replace(u.String(), "sqlite://", "file:", 1))
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %s", err)
+		}
+		replicaConn = sqlite.Dialector{
+			Conn: r,
+		}
+	default:
+		log.Fatalf("Unsupported database scheme %s", u.Scheme)
 	}
-	db, err := gorm.Open(dialector, &gorm.Config{
+
+	db, err := gorm.Open(sourceConn, &gorm.Config{
 		Logger: logger.New(
 			glog.New(
 				log.StandardLogger().WriterLevel(log.WarnLevel),
@@ -71,6 +97,16 @@ func main() {
 	})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %s", err)
+	}
+
+	if replicaConn != nil {
+		db.Use(
+			dbresolver.Register(dbresolver.Config{
+				Replicas: []gorm.Dialector{
+					replicaConn,
+				},
+			}),
+		)
 	}
 
 	if *init {

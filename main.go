@@ -31,6 +31,7 @@ func main() {
 	dsn := flag.String("db", "sqlite://fasttrack.db?mode=memory&cache=shared", "Database URL")
 	addr := flag.String("listen", ":5000", "Address to listen to")
 	levelString := flag.String("level", "info", "Log level")
+	slowThreshold := flag.Duration("slow-threshold", 500*time.Millisecond, "Slow SQL warning threshold")
 	init := flag.Bool("init", false, "(Re-)Initialize database - WARNING all data will be lost!")
 	migrate := flag.Bool("migrate", true, "Run database migrations")
 	artifactRoot := flag.String("artifact-root", "s3://fasttrack", "Artifact root")
@@ -85,11 +86,11 @@ func main() {
 		Logger: logger.New(
 			glog.New(
 				log.StandardLogger().WriterLevel(log.WarnLevel),
-				"\r\n",
-				glog.LstdFlags,
+				"",
+				0,
 			),
 			logger.Config{
-				SlowThreshold:             500 * time.Millisecond,
+				SlowThreshold:             *slowThreshold,
 				LogLevel:                  logger.Warn,
 				IgnoreRecordNotFoundError: true,
 			},

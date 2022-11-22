@@ -522,21 +522,25 @@ func ExperimentSearch(db *gorm.DB) HandlerFunc {
 			case "experiment_id":
 				expOrder = true
 				fallthrough
-			case "name", "creation_time", "last_update_time":
+			case "name":
+				if db.Dialector.Name() == "postgres" {
+					column += ` COLLATE "C"`
+				}
+			case "creation_time", "last_update_time":
 			default:
 				return NewError(ErrorCodeInvalidParameterValue, "Invalid attribute '%s'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']", column)
 			}
 			tx.Order(clause.OrderByColumn{
-				Column: clause.Column{Name: column},
+				Column: clause.Column{Name: column, Raw: true},
 				Desc:   len(components) == 3 && strings.ToUpper(components[2]) == "DESC",
 			})
 
 		}
 		if len(req.OrderBy) == 0 {
-			tx.Order("experiments.last_update_time DESC")
+			tx.Order("experiments.creation_time DESC")
 		}
 		if !expOrder {
-			tx.Order("experiments.experiment_id DESC")
+			tx.Order("experiments.experiment_id ASC")
 		}
 
 		// Actual query

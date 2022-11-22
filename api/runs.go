@@ -89,6 +89,10 @@ func RunCreate(db *gorm.DB) HandlerFunc {
 			})
 		}
 
+		if run.SourceType == "" {
+			run.SourceType = "UNKNOWN"
+		}
+
 		if tx := db.Create(&run); tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Error inserting run '%s': %s", run.ID, tx.Error)
 		}

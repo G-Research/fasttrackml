@@ -35,7 +35,13 @@ func main() {
 	init := flag.Bool("init", false, "(Re-)Initialize database - WARNING all data will be lost!")
 	migrate := flag.Bool("migrate", true, "Run database migrations")
 	artifactRoot := flag.String("artifact-root", "s3://fasttrack", "Artifact root")
+	version := flag.Bool("version", false, "Show version number")
 	flag.Parse()
+
+	if *version {
+		fmt.Printf("0.0.1\n")
+		return
+	}
 
 	level, err := log.ParseLevel(*levelString)
 	if err != nil {

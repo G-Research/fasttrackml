@@ -131,50 +131,136 @@ func main() {
 		db.Exec("create schema public")
 	}
 
-	if *migrate {
-		log.Info("Migrating database")
-		if err = db.AutoMigrate(
-			&model.Experiment{},
-			&model.ExperimentTag{},
-			&model.Run{},
-			&model.Param{},
-			&model.Tag{},
-			&model.Metric{},
-			&model.LatestMetric{},
-		); err != nil {
-			log.Fatalf("Error migrating database: %s", err)
+	var schemaVersion model.AlembicVersion
+	db.Session(&gorm.Session{
+		Logger: logger.Discard,
+	}).First(&schemaVersion)
+
+	if schemaVersion.Version != "97727af70f4d" {
+		if !*migrate {
+			log.Fatalf("Unsupported database schema version %s", schemaVersion.Version)
 		}
 
-		if tx := db.First(&model.Experiment{}, 0); tx.Error != nil {
-			if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-				log.Info("Creating default experiment")
-				var id int32 = 0
-				ts := time.Now().UTC().UnixMilli()
-				exp := model.Experiment{
-					ID:             &id,
-					Name:           "Default",
-					LifecycleStage: model.LifecycleStageActive,
-					CreationTime: sql.NullInt64{
-						Int64: ts,
-						Valid: true,
-					},
-					LastUpdateTime: sql.NullInt64{
-						Int64: ts,
-						Valid: true,
-					},
-				}
-				if tx := db.Create(&exp); tx.Error != nil {
-					log.Fatalf("Error creating default experiment: %s", tx.Error)
-				}
-
-				exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(*artifactRoot, "/"), *exp.ID)
-
-				if tx := db.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
-					log.Fatalf("Error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)
-				}
-			} else {
-				log.Fatalf("Unable to find default experiment: %s", tx.Error)
+		switch schemaVersion.Version {
+		case "":
+			log.Info("Migrating database to 97727af70f4d")
+			tx := db.Begin()
+			if err = tx.AutoMigrate(
+				&model.Experiment{},
+				&model.ExperimentTag{},
+				&model.Run{},
+				&model.Param{},
+				&model.Tag{},
+				&model.Metric{},
+				&model.LatestMetric{},
+				&model.AlembicVersion{},
+			); err != nil {
+				log.Fatalf("Error migrating database to 97727af70f4d: %s", err)
 			}
+			tx.Create(&model.AlembicVersion{
+				Version: "97727af70f4d",
+			})
+			tx.Commit()
+			if tx.Error != nil {
+				log.Fatalf("Error setting database schema version: %s", tx.Error)
+			}
+
+		case "c48cb773bb87":
+			log.Info("Migrating database to bd07f7e963c5")
+			tx := db.Begin()
+			for _, table := range []interface{}{
+				&model.Param{},
+				&model.Metric{},
+				&model.LatestMetric{},
+				&model.Tag{},
+			} {
+				if err := tx.Migrator().CreateIndex(table, "RunID"); err != nil {
+					log.Fatalf("Error migrating database to bd07f7e963c5: %s", err)
+				}
+			}
+			tx.Model(&model.AlembicVersion{}).Where("1 = 1").Update("Version", "bd07f7e963c5")
+			tx.Commit()
+			if tx.Error != nil {
+				log.Fatalf("Error setting database schema version to bd07f7e963c5: %s", err)
+			}
+			fallthrough
+
+		case "bd07f7e963c5":
+			log.Info("Migrating database to 0c779009ac13")
+			tx := db.Begin()
+			if err := tx.Migrator().AddColumn(&model.Run{}, "DeletedTime"); err != nil {
+				log.Fatalf("Error migrating database to 0c779009ac13: %s", err)
+			}
+			tx.Model(&model.AlembicVersion{}).Where("1 = 1").Update("Version", "0c779009ac13")
+			tx.Commit()
+			if tx.Error != nil {
+				log.Fatalf("Error setting database schema version to 0c779009ac13: %s", err)
+			}
+			fallthrough
+
+		case "0c779009ac13":
+			log.Info("Migrating database to cc1f77228345")
+			tx := db.Begin()
+			if err := tx.Migrator().AlterColumn(&model.Param{}, "value"); err != nil {
+				log.Fatalf("Error migrating database to cc1f77228345: %s", err)
+			}
+			tx.Model(&model.AlembicVersion{}).Where("1 = 1").Update("Version", "cc1f77228345")
+			tx.Commit()
+			if tx.Error != nil {
+				log.Fatalf("Error setting database schema version to cc1f77228345: %s", err)
+			}
+			fallthrough
+
+		case "cc1f77228345":
+			log.Info("Migrating database to 97727af70f4d")
+			tx := db.Begin()
+			for _, column := range []string{
+				"CreationTime",
+				"LastUpdateTime",
+			} {
+				if err := tx.Migrator().AddColumn(&model.Experiment{}, column); err != nil {
+					log.Fatalf("Error migrating database to 97727af70f4d: %s", err)
+				}
+			}
+			tx.Model(&model.AlembicVersion{}).Where("1 = 1").Update("Version", "97727af70f4d")
+			tx.Commit()
+			if tx.Error != nil {
+				log.Fatalf("Error setting database schema version to 97727af70f4d: %s", err)
+			}
+
+		default:
+			log.Fatalf("Unsupported database schema version %s", schemaVersion.Version)
+		}
+	}
+
+	if tx := db.First(&model.Experiment{}, 0); tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			log.Info("Creating default experiment")
+			var id int32 = 0
+			ts := time.Now().UTC().UnixMilli()
+			exp := model.Experiment{
+				ID:             &id,
+				Name:           "Default",
+				LifecycleStage: model.LifecycleStageActive,
+				CreationTime: sql.NullInt64{
+					Int64: ts,
+					Valid: true,
+				},
+				LastUpdateTime: sql.NullInt64{
+					Int64: ts,
+					Valid: true,
+				},
+			}
+			if tx := db.Create(&exp); tx.Error != nil {
+				log.Fatalf("Error creating default experiment: %s", tx.Error)
+			}
+
+			exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(*artifactRoot, "/"), *exp.ID)
+			if tx := db.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
+				log.Fatalf("Error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)
+			}
+		} else {
+			log.Fatalf("Unable to find default experiment: %s", tx.Error)
 		}
 	}
 

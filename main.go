@@ -43,11 +43,11 @@ func main() {
 		return
 	}
 
-	level, err := log.ParseLevel(*levelString)
+	logLevel, err := log.ParseLevel(*levelString)
 	if err != nil {
 		log.Fatalf("Unable to parse log level: %s", err)
 	}
-	log.SetLevel(level)
+	log.SetLevel(logLevel)
 
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
@@ -91,6 +91,12 @@ func main() {
 		log.Fatalf("Unsupported database scheme %s", u.Scheme)
 	}
 
+	log.Infof("Using database %s", *dsn)
+
+	dbLogLevel := logger.Warn
+	if logLevel == log.DebugLevel {
+		dbLogLevel = logger.Info
+	}
 	db, err := gorm.Open(sourceConn, &gorm.Config{
 		Logger: logger.New(
 			glog.New(
@@ -100,7 +106,7 @@ func main() {
 			),
 			logger.Config{
 				SlowThreshold:             *slowThreshold,
-				LogLevel:                  logger.Warn,
+				LogLevel:                  dbLogLevel,
 				IgnoreRecordNotFoundError: true,
 			},
 		),

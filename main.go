@@ -61,6 +61,9 @@ func main() {
 	case "sqlite":
 		q := u.Query()
 		q.Set("_case_sensitive_like", "true")
+		if q.Get("mode") != "memory" && !(q.Has("_journal") || q.Has("_journal_mode")) {
+			q.Set("_journal", "WAL")
+		}
 		u.RawQuery = q.Encode()
 
 		s, err := sql.Open(sqlite.DriverName, strings.Replace(u.String(), "sqlite://", "file:", 1))

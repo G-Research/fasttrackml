@@ -16,8 +16,8 @@ services:
         # Options
         NODE_VERSION: "lts/*"
     env_file:
-        # Ensure that the variables in .env match the same variables in devcontainer.json
-        - .env
+      # Ensure that the variables in .env match the same variables in devcontainer.json
+      - .env
 
     # Security Opt and cap_add allow for C++ based debuggers to work. 
     # See `runArgs`: https://github.com/Microsoft/vscode-docs/blob/main/docs/remote/devcontainerjson-reference.md

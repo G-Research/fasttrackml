@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
+	"strings"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -99,4 +102,45 @@ func NewServeMux() *ServeMux {
 
 func (m *ServeMux) HandleFunc(p string, h HandlerFunc) {
 	m.ServeMux.HandleFunc(p, ReturnJson(h))
+}
+
+var (
+	authOnce     sync.Once
+	authEnabled  bool
+	authUsername string
+	authPassword string
+)
+
+func BasicAuth(h http.Handler) http.Handler {
+	authOnce.Do(func() {
+		for _, e := range os.Environ() {
+			kv := strings.SplitN(e, "=", 2)
+			switch kv[0] {
+			case "MLFLOW_TRACKING_USERNAME", "FASTTRACK_USERNAME":
+				authUsername = kv[1]
+			case "MLFLOW_TRACKING_PASSWORD", "FASTTRACK_PASSWORD":
+				authPassword = kv[1]
+			}
+		}
+
+		if authUsername != "" && authPassword != "" {
+			log.Infof(`BasicAuth enabled with user "%s"`, authUsername)
+			authEnabled = true
+		}
+	})
+
+	if authEnabled {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			u, p, ok := r.BasicAuth()
+			if !ok || u != authUsername || p != authPassword {
+				log.Warn("Unauthorized")
+				w.Header().Add("WWW-Authenticate", `Basic realm="Fasttrack"`)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			h.ServeHTTP(w, r)
+		})
+	}
+
+	return h
 }

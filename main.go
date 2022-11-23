@@ -308,7 +308,7 @@ func main() {
 		"/api/2.0/preview/mlflow/",
 		"/ajax-api/2.0/preview/mlflow/",
 	} {
-		handler.Handle(path, http.StripPrefix(strings.TrimRight(path, "/"), apiHandler))
+		handler.Handle(path, api.BasicAuth(http.StripPrefix(strings.TrimRight(path, "/"), apiHandler)))
 	}
 
 	handler.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {

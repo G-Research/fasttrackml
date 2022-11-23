@@ -17,7 +17,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
-
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -39,7 +38,7 @@ func main() {
 	flag.Parse()
 
 	if *version {
-		fmt.Printf("0.0.1\n")
+		fmt.Printf("0.0.2\n")
 		return
 	}
 

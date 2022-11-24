@@ -60,6 +60,7 @@ func main() {
 	case "sqlite":
 		q := u.Query()
 		q.Set("_case_sensitive_like", "true")
+		q.Set("_mutex", "no")
 		if q.Get("mode") != "memory" && !(q.Has("_journal") || q.Has("_journal_mode")) {
 			q.Set("_journal", "WAL")
 		}
@@ -70,7 +71,7 @@ func main() {
 			log.Fatalf("Failed to connect to database: %s", err)
 		}
 		s.SetMaxIdleConns(1)
-		s.SetMaxOpenConns(1)
+		s.SetMaxOpenConns(4)
 		s.SetConnMaxIdleTime(0)
 		s.SetConnMaxLifetime(0)
 		sourceConn = sqlite.Dialector{

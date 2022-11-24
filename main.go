@@ -130,6 +130,13 @@ func main() {
 		)
 	}
 
+	if u.Scheme != "sqlite" {
+		sqlDB, _ := db.DB()
+		sqlDB.SetConnMaxIdleTime(time.Minute)
+		sqlDB.SetMaxIdleConns(100)
+		sqlDB.SetMaxOpenConns(100)
+	}
+
 	if *init {
 		log.Info("Initializing database")
 		db.Exec("drop schema public cascade")

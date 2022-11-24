@@ -15,7 +15,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"gorm.io/plugin/dbresolver"
 )
 
 var (
@@ -813,13 +812,8 @@ func RunLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 		n += 1
 	}
 
-	tx := db.Clauses(dbresolver.Write).Begin()
-	if tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to begin transaction: %s", tx.Error)
-	}
-
 	var currentLatestMetrics []model.LatestMetric
-	if tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("run_uuid = ?", id).Where("key IN ?", keys).Find(&currentLatestMetrics); tx.Error != nil {
+	if tx := db.Where("run_uuid = ?", id).Where("key IN ?", keys).Find(&currentLatestMetrics); tx.Error != nil {
 		return NewError(ErrorCodeInternalError, "Unable to get latest metrics for run '%s': %s", id, tx.Error)
 	}
 
@@ -840,15 +834,11 @@ func RunLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 	}
 
 	if len(updatedLatestMetrics) > 0 {
-		if tx.Clauses(clause.OnConflict{
+		if tx := db.Clauses(clause.OnConflict{
 			UpdateAll: true,
-		}).Create(updatedLatestMetrics); tx.Error != nil {
+		}).Create(&updatedLatestMetrics); tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Unable to update latest metrics for run '%s': %s", id, tx.Error)
 		}
-	}
-
-	if tx.Commit(); tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to commit transaction: %s", tx.Error)
 	}
 
 	return nil

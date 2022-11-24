@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"errors"
@@ -12,6 +13,8 @@ import (
 	glog "log"
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
 	"strings"
 	"time"
 
@@ -70,6 +73,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to connect to database: %s", err)
 		}
+		defer s.Close()
 		s.SetMaxIdleConns(1)
 		s.SetMaxOpenConns(4)
 		s.SetConnMaxIdleTime(0)
@@ -84,6 +88,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to connect to database: %s", err)
 		}
+		defer r.Close()
 		replicaConn = sqlite.Dialector{
 			Conn: r,
 		}
@@ -332,6 +337,23 @@ func main() {
 		Handler: handler,
 	}
 
+	idleConnsClosed := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt)
+		<-sigint
+
+		log.Infof("Shutting down")
+		if err := server.Shutdown(context.Background()); err != nil {
+			log.Infof("Error shutting down server: %v", err)
+		}
+		close(idleConnsClosed)
+	}()
+
 	log.Infof("Listening on %s", server.Addr)
-	log.Fatal(server.ListenAndServe())
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		log.Fatalf("Error listening: %v", err)
+	}
+
+	<-idleConnsClosed
 }

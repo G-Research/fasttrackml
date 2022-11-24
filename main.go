@@ -271,6 +271,7 @@ func main() {
 	apiHandler.HandleFunc("/experiments/get", api.ExperimentGet(db))
 	apiHandler.HandleFunc("/experiments/get-by-name", api.ExperimentGetByName(db))
 	apiHandler.HandleFunc("/experiments/restore", api.ExperimentRestore(db))
+	apiHandler.HandleFunc("/experiments/list", api.ExperimentSearch(db))
 	apiHandler.HandleFunc("/experiments/search", api.ExperimentSearch(db))
 	apiHandler.HandleFunc("/experiments/set-experiment-tag", api.ExperimentSetTag(db))
 	apiHandler.HandleFunc("/experiments/update", api.ExperimentUpdate(db))

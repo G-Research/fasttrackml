@@ -8,7 +8,7 @@ COPY js ./
 RUN yarn build
 
 
-FROM golang:1.19.2 AS go-build
+FROM golang:1.19-bullseye AS go-build
 
 RUN apt-get update && apt-get install -y libssl-dev && rm -rf /var/lib/apt/lists/*
 
@@ -17,12 +17,10 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 COPY --from=js-build /js/build ./js/build
-RUN go build --tags "sqlcipher sqlite_unlock_notify sqlite_foreign_keys sqlite_vacuum_incr"
+RUN CGO_LDFLAGS="/usr/lib/$(uname -m)-linux-gnu/libcrypto.a" go build --tags "sqlcipher sqlite_unlock_notify sqlite_foreign_keys sqlite_vacuum_incr"
 
 
-FROM ubuntu:20.04
-
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y libssl1.1 && rm -rf /var/lib/apt/lists/*
+FROM debian:bullseye
 
 COPY --from=go-build /build/fasttrack /usr/local/bin/
 

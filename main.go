@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	glog "log"
 	"net/http"
 	"net/url"
@@ -26,8 +27,8 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
-//go:embed static-files/*
-var staticFiles embed.FS
+//go:embed js/build
+var content embed.FS
 
 func main() {
 	dsn := flag.String("db", "sqlite://fasttrack.db?mode=memory&cache=shared", "Database URL")
@@ -328,13 +329,14 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	handler.Handle("/static-files/", http.FileServer(http.FS(staticFiles)))
+	staticFiles, _ := fs.Sub(content, "js/build")
+	handler.Handle("/static-files/", http.StripPrefix("/static-files/", http.FileServer(http.FS(staticFiles))))
 	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		f, _ := staticFiles.Open("static-files/index.html")
+		f, _ := staticFiles.Open("index.html")
 		defer f.Close()
 		io.Copy(w, f)
 	})

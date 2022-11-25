@@ -3,3 +3,6 @@
 .vscode
 fasttrack
 Dockerfile
+js/.yarn
+js/build
+js/node_modules

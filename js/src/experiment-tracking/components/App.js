@@ -87,7 +87,7 @@ class App extends Component {
                 </NavLink>
               </div>
               <div className='header-links'>
-                <a href={'https://github.com/mlflow/mlflow'} css={{ marginRight }}>
+                <a href={'https://git.uberit.net/GR/fasttrack'} css={{ marginRight }}>
                   <div className='github'>
                     <span>GitHub</span>
                   </div>

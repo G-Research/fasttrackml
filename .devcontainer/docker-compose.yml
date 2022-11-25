@@ -14,7 +14,7 @@ services:
         # Use -bullseye variants on local arm64/Apple Silicon.
         VARIANT: 1.19-bullseye
         # Options
-        NODE_VERSION: "lts/*"
+        NODE_VERSION: "16"
     env_file:
       # Ensure that the variables in .env match the same variables in devcontainer.json
       - .env

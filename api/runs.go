@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -521,6 +522,10 @@ func RunDelete(db *gorm.DB) HandlerFunc {
 
 		if tx := db.Model(&run).Updates(model.Run{
 			LifecycleStage: model.LifecycleStageDeleted,
+			DeletedTime: sql.NullInt64{
+				Int64: time.Now().UTC().UnixMilli(),
+				Valid: true,
+			},
 		}); tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Unable to update run '%s': %s", run.ID, tx.Error)
 		}
@@ -551,8 +556,10 @@ func RunRestore(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
 		}
 
-		if tx := db.Model(&run).Updates(model.Run{
-			LifecycleStage: model.LifecycleStageActive,
+		// Use UpdateColumns so we can reset DeletedTime to null
+		if tx := db.Model(&run).UpdateColumns(map[string]interface{}{
+			"LifecycleStage": model.LifecycleStageActive,
+			"DeletedTime":    sql.NullInt64{},
 		}); tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Unable to update run '%s': %s", run.ID, tx.Error)
 		}

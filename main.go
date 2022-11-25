@@ -31,7 +31,7 @@ import (
 var content embed.FS
 
 func main() {
-	dsn := flag.String("db", "sqlite://fasttrack.db?mode=memory&cache=shared", "Database URL")
+	dsn := flag.String("db", "sqlite://fasttrack.db", "Database URL")
 	addr := flag.String("listen", ":5000", "Address to listen to")
 	levelString := flag.String("level", "info", "Log level")
 	slowThreshold := flag.Duration("slow-threshold", 500*time.Millisecond, "Slow SQL warning threshold")

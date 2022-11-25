@@ -1,8 +1,9 @@
 .git
 .devcontainer
 .vscode
-fasttrack
 Dockerfile
+fasttrack
+fasttrack.db*
 js/.yarn
 js/build
 js/node_modules

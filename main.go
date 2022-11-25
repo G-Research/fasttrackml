@@ -27,6 +27,8 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
+const version = "0.0.2"
+
 //go:embed js/build
 var content embed.FS
 
@@ -38,11 +40,11 @@ func main() {
 	init := flag.Bool("init", false, "(Re-)Initialize database - WARNING all data will be lost!")
 	migrate := flag.Bool("migrate", true, "Run database migrations")
 	artifactRoot := flag.String("artifact-root", "s3://fasttrack", "Artifact root")
-	version := flag.Bool("version", false, "Show version number")
+	showVersion := flag.Bool("version", false, "Show version number")
 	flag.Parse()
 
-	if *version {
-		fmt.Printf("0.0.2\n")
+	if *showVersion {
+		fmt.Println(version)
 		return
 	}
 

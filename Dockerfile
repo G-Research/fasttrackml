@@ -2,6 +2,7 @@ FROM node:16 AS js-build
 
 WORKDIR /js
 COPY js/yarn ./yarn
+COPY js/vendor ./vendor
 COPY js/package.json js/yarn.lock js/.yarnrc.yml ./
 RUN yarn install
 COPY js ./

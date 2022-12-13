@@ -297,6 +297,7 @@ func main() {
 	apiHandler.HandleFunc("/experiments/set-experiment-tag", api.ExperimentSetTag(db))
 	apiHandler.HandleFunc("/experiments/update", api.ExperimentUpdate(db))
 	apiHandler.HandleFunc("/metrics/get-history", api.MetricGetHistory(db))
+	apiHandler.HandleFunc("/metrics/get-histories", api.MetricsGetHistories(db))
 	apiHandler.HandleFunc("/runs/create", api.RunCreate(db))
 	apiHandler.HandleFunc("/runs/delete", api.RunDelete(db))
 	apiHandler.HandleFunc("/runs/delete-tag", api.RunDeleteTag(db))

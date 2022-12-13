@@ -88,7 +88,7 @@ func ReturnJson(f HandlerFunc) http.HandlerFunc {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		elapsed := time.Since(start)
-		log.Debugf("Elapsed time: %s", elapsed)
+		log.Infof("%s %s", r.URL.Path, elapsed)
 	}
 }
 

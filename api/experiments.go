@@ -560,7 +560,6 @@ func ExperimentSearch(db *gorm.DB) HandlerFunc {
 				Offset: int32(offset + limit),
 			}); err != nil {
 				return NewError(ErrorCodeInternalError, "Unable to build next_page_token: %s", err)
-
 			}
 			b64.Close()
 			resp.NextPageToken = token.String()

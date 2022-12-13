@@ -208,7 +208,7 @@ func RunGet(db *gorm.DB) HandlerFunc {
 		}
 
 		resp := &RunGetResponse{
-			Run: ModelRunToAPI(run),
+			Run: modelRunToAPI(run),
 		}
 
 		log.Debugf("RunGet response: %#v", resp)
@@ -475,7 +475,7 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 			Runs: make([]Run, len(runs)),
 		}
 		for n, r := range runs {
-			resp.Runs[n] = ModelRunToAPI(r)
+			resp.Runs[n] = modelRunToAPI(r)
 		}
 
 		// NextPageToken
@@ -486,7 +486,6 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 				Offset: int32(offset + limit),
 			}); err != nil {
 				return NewError(ErrorCodeInternalError, "Unable to build next_page_token: %s", err)
-
 			}
 			b64.Close()
 			resp.NextPageToken = token.String()
@@ -603,7 +602,7 @@ func RunLogMetric(db *gorm.DB) HandlerFunc {
 			id = req.UUID
 		}
 
-		if err := RunLogMetrics(db, id, []Metric{req.Metric}); err != nil {
+		if err := runLogMetrics(db, id, []Metric{req.Metric}); err != nil {
 			return NewError(ErrorCodeInternalError, "Unable to log metric '%s' for run '%s': %s", req.Key, id, err)
 		}
 
@@ -638,7 +637,7 @@ func RunLogParam(db *gorm.DB) HandlerFunc {
 			id = req.UUID
 		}
 
-		if err := RunLogParams(db, id, []RunParam{req.RunParam}); err != nil {
+		if err := runLogParams(db, id, []RunParam{req.RunParam}); err != nil {
 			return NewError(ErrorCodeInternalError, "Unable to log param '%s' for run '%s': %s", req.Key, id, err)
 		}
 
@@ -673,7 +672,7 @@ func RunSetTag(db *gorm.DB) HandlerFunc {
 			id = req.UUID
 		}
 
-		if err := RunSetTags(db, id, []RunTag{req.RunTag}); err != nil {
+		if err := runSetTags(db, id, []RunTag{req.RunTag}); err != nil {
 			return NewError(ErrorCodeInternalError, "Unable to set tag '%s' for run '%s': %s", req.Key, id, err)
 		}
 
@@ -733,15 +732,15 @@ func RunLogBatch(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
-		if err := RunLogParams(db, req.ID, req.Params); err != nil {
+		if err := runLogParams(db, req.ID, req.Params); err != nil {
 			return err
 		}
 
-		if err := RunLogMetrics(db, req.ID, req.Metrics); err != nil {
+		if err := runLogMetrics(db, req.ID, req.Metrics); err != nil {
 			return err
 		}
 
-		if err := RunSetTags(db, req.ID, req.Tags); err != nil {
+		if err := runSetTags(db, req.ID, req.Tags); err != nil {
 			return err
 		}
 
@@ -751,7 +750,7 @@ func RunLogBatch(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func RunLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
+func runLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 	if len(metrics) == 0 {
 		return nil
 	}
@@ -851,7 +850,7 @@ func RunLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 	return nil
 }
 
-func RunLogParams(db *gorm.DB, id string, params []RunParam) error {
+func runLogParams(db *gorm.DB, id string, params []RunParam) error {
 	if len(params) == 0 {
 		return nil
 	}
@@ -876,7 +875,7 @@ func RunLogParams(db *gorm.DB, id string, params []RunParam) error {
 	return nil
 }
 
-func RunSetTags(db *gorm.DB, id string, tags []RunTag) error {
+func runSetTags(db *gorm.DB, id string, tags []RunTag) error {
 	if len(tags) == 0 {
 		return nil
 	}
@@ -903,7 +902,7 @@ func RunSetTags(db *gorm.DB, id string, tags []RunTag) error {
 	return nil
 }
 
-func ModelRunToAPI(r model.Run) Run {
+func modelRunToAPI(r model.Run) Run {
 	metrics := make([]Metric, len(r.LatestMetrics))
 	for n, m := range r.LatestMetrics {
 

@@ -141,9 +141,14 @@ func main() {
 	}
 
 	if *init {
-		log.Info("Initializing database")
-		db.Exec("drop schema public cascade")
-		db.Exec("create schema public")
+		switch u.Scheme {
+		case "postgres":
+			log.Info("Initializing database")
+			db.Exec("drop schema public cascade")
+			db.Exec("create schema public")
+		default:
+			log.Fatalf("Unable to initialize database with schema \"%s\"", u.Scheme)
+		}
 	}
 
 	var schemaVersion model.AlembicVersion

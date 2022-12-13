@@ -40,6 +40,7 @@ func main() {
 	init := flag.Bool("init", false, "(Re-)Initialize database - WARNING all data will be lost!")
 	migrate := flag.Bool("migrate", true, "Run database migrations")
 	artifactRoot := flag.String("artifact-root", "s3://fasttrack", "Artifact root")
+	dbPoolMax := flag.Int("db-pool-max", 20, "Maximum number of database connections in the pool")
 	showVersion := flag.Bool("version", false, "Show version number")
 	flag.Parse()
 
@@ -136,8 +137,8 @@ func main() {
 	if u.Scheme != "sqlite" {
 		sqlDB, _ := db.DB()
 		sqlDB.SetConnMaxIdleTime(time.Minute)
-		sqlDB.SetMaxIdleConns(100)
-		sqlDB.SetMaxOpenConns(100)
+		sqlDB.SetMaxIdleConns(*dbPoolMax)
+		sqlDB.SetMaxOpenConns(*dbPoolMax)
 	}
 
 	if *init {

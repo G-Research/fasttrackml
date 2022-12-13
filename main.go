@@ -27,7 +27,7 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
-const version = "0.0.3"
+const version = "0.0.4"
 
 //go:embed js/build
 var content embed.FS

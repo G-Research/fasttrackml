@@ -25,4 +25,8 @@ FROM debian:bullseye
 
 COPY --from=go-build /build/fasttrack /usr/local/bin/
 
+VOLUME /data
+ENV "FASTTRACK_LISTEN_ADDRESS" ":5000"
+ENV "FASTTRACK_DATABASE_URI" "sqlite:///data/fasttrack.db"
 ENTRYPOINT ["fasttrack"]
+CMD ["server"]

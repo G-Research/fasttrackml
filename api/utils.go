@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -113,15 +112,8 @@ var (
 
 func BasicAuth(h http.Handler) http.Handler {
 	authOnce.Do(func() {
-		for _, e := range os.Environ() {
-			kv := strings.SplitN(e, "=", 2)
-			switch kv[0] {
-			case "MLFLOW_TRACKING_USERNAME", "FASTTRACK_USERNAME":
-				authUsername = kv[1]
-			case "MLFLOW_TRACKING_PASSWORD", "FASTTRACK_PASSWORD":
-				authPassword = kv[1]
-			}
-		}
+		authUsername := viper.GetString("auth-username")
+		authPassword := viper.GetString("auth-password")
 
 		if authUsername != "" && authPassword != "" {
 			log.Infof(`BasicAuth enabled with user "%s"`, authUsername)

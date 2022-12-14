@@ -14,6 +14,7 @@ import (
 
 	"github.com/jackc/pgconn"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -22,7 +23,7 @@ var (
 	experimentFilterOrder *regexp.Regexp = regexp.MustCompile(`^(?:attr(?:ibutes?)?\.)?(\w+)(?i:\s+(ASC|DESC))?$`)
 )
 
-func ExperimentCreate(db *gorm.DB, artifactRoot string) HandlerFunc {
+func ExperimentCreate(db *gorm.DB) HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req ExperimentCreateRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -70,7 +71,7 @@ func ExperimentCreate(db *gorm.DB, artifactRoot string) HandlerFunc {
 		}
 
 		if exp.ArtifactLocation == "" {
-			exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(artifactRoot, "/"), *exp.ID)
+			exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(viper.GetString("artifact-root"), "/"), *exp.ID)
 		}
 		if tx := db.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)

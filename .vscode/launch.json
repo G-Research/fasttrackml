@@ -11,9 +11,10 @@
             "mode": "auto",
             "program": "${workspaceFolder}",
             "args": [
-                "--level",
+                "server",
+                "--log-level",
                 "debug",
-                "--db",
+                "--database-uri",
                 "postgres://postgres:postgres@localhost:5432/another?sslmode=disable"
             ]
         },
@@ -24,8 +25,11 @@
             "mode": "auto",
             "program": "${workspaceFolder}",
             "args": [
-                "--level",
-                "debug"
+                "server",
+                "--log-level",
+                "debug",
+                "--database-uri",
+                "sqlite://fasttrack.db?mode=memory&cache=shared"
             ]
         },
         {
@@ -35,10 +39,11 @@
             "mode": "auto",
             "program": "${workspaceFolder}",
             "args": [
-                "--level",
+                "server",
+                "--log-level",
                 "debug",
-                "--db",
-                "sqlite://sqlite.db"
+                "--database-uri",
+                "sqlite://fasttrack.db"
             ]
         },
         {
@@ -48,9 +53,10 @@
             "mode": "auto",
             "program": "${workspaceFolder}",
             "args": [
-                "--level",
+                "server",
+                "--log-level",
                 "debug",
-                "--db",
+                "--database-uri",
                 "sqlite://encrypted.db?_key=passphrase"
             ]
         }

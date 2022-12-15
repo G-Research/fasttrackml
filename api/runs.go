@@ -73,7 +73,9 @@ func RunCreate(db *gorm.DB) HandlerFunc {
 			case "mlflow.source.type":
 				run.SourceType = tag.Value
 			case "mlflow.runName":
-				run.Name = tag.Value
+				if run.Name == "" {
+					run.Name = tag.Value
+				}
 			}
 			run.Tags[n] = model.Tag{
 				Key:   tag.Key,
@@ -153,17 +155,32 @@ func RunUpdate(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
 		}
 
-		if tx := db.Model(&run).Updates(model.Run{
+		tx := db.Begin()
+		tx.Model(&run).Updates(model.Run{
 			Name:   req.Name,
 			Status: model.Status(req.Status),
 			EndTime: sql.NullInt64{
 				Int64: req.EndTime,
 				Valid: true,
 			},
-		}); tx.Error != nil {
+		})
+
+		if req.Name != "" {
+			tx.Clauses(clause.OnConflict{
+				UpdateAll: true,
+			}).Create([]model.Tag{{
+				Key:   "mlflow.runName",
+				Value: req.Name,
+				RunID: run.ID,
+			}})
+		}
+
+		tx.Commit()
+		if tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Unable to update run '%s': %s", run.ID, tx.Error)
 		}
 
+		// TODO grab name and user from tags?
 		resp := &RunUpdateResponse{
 			RunInfo: RunInfo{
 				ID:             run.ID,
@@ -880,10 +897,12 @@ func runSetTags(db *gorm.DB, id string, tags []RunTag) error {
 		return nil
 	}
 
-	if tx := db.Select("run_uuid").Where("lifecycle_stage = ?", model.LifecycleStageActive).First(&model.Run{ID: id}); tx.Error != nil {
+	run := model.Run{ID: id}
+	if tx := db.Select("run_uuid", "name", "user_id").Where("lifecycle_stage = ?", model.LifecycleStageActive).First(&run); tx.Error != nil {
 		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", id, tx.Error)
 	}
 
+	tx := db.Begin()
 	dbTags := make([]model.Tag, len(tags))
 	for n, t := range tags {
 		dbTags[n] = model.Tag{
@@ -891,11 +910,24 @@ func runSetTags(db *gorm.DB, id string, tags []RunTag) error {
 			Value: t.Value,
 			RunID: id,
 		}
+		switch t.Key {
+		case "mlflow.runName":
+			if run.Name != t.Value {
+				tx.Model(&run).UpdateColumn("name", t.Value)
+			}
+		case "mlflow.user":
+			if run.UserID != t.Value {
+				tx.Model(&run).UpdateColumn("user_id", t.Value)
+			}
+		}
 	}
 
-	if tx := db.Clauses(clause.OnConflict{
+	tx.Clauses(clause.OnConflict{
 		UpdateAll: true,
-	}).Create(&dbTags); tx.Error != nil {
+	}).Create(&dbTags)
+
+	tx.Commit()
+	if tx.Error != nil {
 		return NewError(ErrorCodeInternalError, "Unable to insert tags for run '%s': %s", id, tx.Error)
 	}
 
@@ -930,6 +962,12 @@ func modelRunToAPI(r model.Run) Run {
 		tags[n] = RunTag{
 			Key:   t.Key,
 			Value: t.Value,
+		}
+		switch t.Key {
+		case "mlflow.runName":
+			r.Name = t.Value
+		case "mlflow.user":
+			r.UserID = t.Value
 		}
 	}
 

@@ -169,8 +169,12 @@ func MetricsGetHistories(db *gorm.DB) HandlerFunc {
 			resp.NextPageToken = token.String()
 		}
 
-		resp.Runs = make([]Run, len(runs))
-		for i, r := range runs {
+		resp.Runs = make([]Run, 0, len(runs))
+		for _, r := range runs {
+			if len(r.Metrics) == 0 {
+				continue
+			}
+
 			run := Run{
 				Info: RunInfo{
 					ID:             r.ID,
@@ -200,7 +204,7 @@ func MetricsGetHistories(db *gorm.DB) HandlerFunc {
 				}
 				run.Data.Metrics[j] = metric
 			}
-			resp.Runs[i] = run
+			resp.Runs = append(resp.Runs, run)
 		}
 
 		log.Debugf("MetricsGetHistories response: %#v", resp)

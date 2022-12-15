@@ -22,6 +22,7 @@ var (
 	filterAnd     *regexp.Regexp = regexp.MustCompile(`(?i)\s+AND\s+`)
 	filterCond    *regexp.Regexp = regexp.MustCompile(`^(?:(\w+)\.)?("[\w\. ]+"|` + "`" + `[\w\. ]+` + "`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'\w{32}'(?:,\s*)?)+\)|"[\w\. ]+"|'[\w\. %]+'|[\w\.]+)$`)
 	filterInGroup *regexp.Regexp = regexp.MustCompile(`,\s*`)
+	runOrder      *regexp.Regexp = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[\w\. ]+"|` + "`" + `[\w\. ]+` + "`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
 )
 
 func RunCreate(db *gorm.DB) HandlerFunc {
@@ -421,49 +422,38 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 		}
 
 		// OrderBy
-		// TODO order numeric, nan, null
-		// TODO maybe use Cut instead of SplitN? or maybe even regex?
+		// TODO order numeric, nan, null?
+		// TODO collation for strings on postgres?
 		startTimeOrder := false
 		for n, o := range req.OrderBy {
-			components := strings.SplitN(o, " ", 2)
-			refs := strings.SplitN(components[0], ".", 2)
-
-			desc := false
-			if len(components) > 1 {
-				switch components[1] {
-				case "ASC":
-				case "DESC":
-					desc = true
-				default:
-					return NewError(ErrorCodeInvalidParameterValue, "Invalid ordering key in order_by clause '%s'", o)
-				}
+			components := runOrder.FindStringSubmatch(o)
+			log.Debugf("Components: %#v", components)
+			if len(components) < 3 {
+				return NewError(ErrorCodeInvalidParameterValue, "Invalid order_by clause '%s'", o)
 			}
 
-			if len(refs) != 2 {
-				return NewError(ErrorCodeInvalidParameterValue, "Invalid identifier '%s'. Columns should be specified as 'attribute.<key>', 'metric.<key>', 'tag.<key>', or 'param.<key>'.", components[0])
-			}
+			column := strings.Trim(components[2], "`\"")
 
-			column := refs[1]
 			var kind interface{}
-			switch refs[0] {
-			case "attribute", "attributes":
+			switch components[1] {
+			case "attribute":
 				if column == "start_time" {
 					startTimeOrder = true
 				}
-			case "metric", "metrics":
+			case "metric":
 				kind = &model.LatestMetric{}
-			case "param", "params":
+			case "param":
 				kind = &model.Param{}
-			case "tag", "tags":
+			case "tag":
 				kind = &model.Tag{}
 			default:
-				return NewError(ErrorCodeInvalidParameterValue, "Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", refs[0])
+				return NewError(ErrorCodeInvalidParameterValue, "Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", components[1])
 			}
 			if kind != nil {
 				table := fmt.Sprintf("order_%d", n)
 				tx.Joins(
 					fmt.Sprintf("LEFT OUTER JOIN (?) AS %s ON runs.run_uuid = %s.run_uuid", table, table),
-					db.Select("run_uuid", "value").Where("key = ?", refs[1]).Model(kind),
+					db.Select("run_uuid", "value").Where("key = ?", column).Model(kind),
 				)
 				column = fmt.Sprintf("%s.value", table)
 			}
@@ -471,7 +461,7 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 				Column: clause.Column{
 					Name: column,
 				},
-				Desc: desc,
+				Desc: len(components) == 4 && strings.ToUpper(components[3]) == "DESC",
 			})
 		}
 		if !startTimeOrder {

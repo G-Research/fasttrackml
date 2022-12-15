@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	experimentFilterOrder *regexp.Regexp = regexp.MustCompile(`^(?:attr(?:ibutes?)?\.)?(\w+)(?i:\s+(ASC|DESC))?$`)
+	experimentOrder *regexp.Regexp = regexp.MustCompile(`^(?:attr(?:ibutes?)?\.)?(\w+)(?i:\s+(ASC|DESC))?$`)
 )
 
 func ExperimentCreate(db *gorm.DB) HandlerFunc {
@@ -513,7 +513,7 @@ func ExperimentSearch(db *gorm.DB) HandlerFunc {
 		// OrderBy
 		expOrder := false
 		for _, o := range req.OrderBy {
-			components := experimentFilterOrder.FindStringSubmatch(o)
+			components := experimentOrder.FindStringSubmatch(o)
 			if len(components) == 0 {
 				return NewError(ErrorCodeInvalidParameterValue, "Invalid order_by clause '%s'", o)
 			}

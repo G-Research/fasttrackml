@@ -20,9 +20,9 @@ import (
 
 var (
 	filterAnd     *regexp.Regexp = regexp.MustCompile(`(?i)\s+AND\s+`)
-	filterCond    *regexp.Regexp = regexp.MustCompile(`^(?:(\w+)\.)?("[\w\. ]+"|` + "`" + `[\w\. ]+` + "`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'\w{32}'(?:,\s*)?)+\)|"[\w\. ]+"|'[\w\. %]+'|[\w\.]+)$`)
+	filterCond    *regexp.Regexp = regexp.MustCompile(`^(?:(\w+)\.)?("[\w\.\- ]+"|` + "`" + `[\w\.\- ]+` + "`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'\w{32}'(?:,\s*)?)+\)|"[\w\.\- ]+"|'[\w\.\- %]+'|[\w\.]+)$`)
 	filterInGroup *regexp.Regexp = regexp.MustCompile(`,\s*`)
-	runOrder      *regexp.Regexp = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[\w\. ]+"|` + "`" + `[\w\. ]+` + "`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
+	runOrder      *regexp.Regexp = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[\w\.\- ]+"|` + "`" + `[\w\.\- ]+` + "`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
 )
 
 func RunCreate(db *gorm.DB) HandlerFunc {

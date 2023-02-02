@@ -8,7 +8,7 @@ export const ErrorCodes = {
   PERMISSION_DENIED: 'PERMISSION_DENIED',
 };
 
-export const Version = '0.0.5';
+export const Version = '0.0.6';
 
 const DOCS_VERSION = 'latest';
 

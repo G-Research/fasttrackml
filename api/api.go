@@ -154,12 +154,6 @@ type MetricsGetHistoriesRequest struct {
 	MetricKeys    []string `json:"metric_keys"`
 	ViewType      ViewType `json:"run_view_type"`
 	MaxResults    int32    `json:"max_results"`
-	PageToken     string   `json:"page_token"`
-}
-
-type MetricsGetHistoriesResponse struct {
-	Runs          []Run  `json:"runs"`
-	NextPageToken string `json:"next_page_token,omitempty"`
 }
 
 type KV struct {

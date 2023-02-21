@@ -1,13 +1,14 @@
 package api
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fasttrack/model"
-	"fmt"
 	"net/http"
-	"strings"
 
+	"github.com/apache/arrow/go/v11/arrow"
+	"github.com/apache/arrow/go/v11/arrow/array"
+	"github.com/apache/arrow/go/v11/arrow/ipc"
+	"github.com/apache/arrow/go/v11/arrow/memory"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -71,39 +72,10 @@ func MetricsGetHistories(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "experiment_ids and run_ids cannot both be specified at the same time")
 		}
 
-		// MaxResults
-		limit := int(req.MaxResults)
-		if limit == 0 {
-			limit = 1000
-		} else if limit > 1000000 {
-			return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter 'max_results' supplied.")
-		}
-		tx := db.Limit(limit + 1)
-
-		// PageToken
-		var offset int
-		if req.PageToken != "" {
-			var token PageToken
-			if err := json.NewDecoder(
-				base64.NewDecoder(
-					base64.StdEncoding,
-					strings.NewReader(req.PageToken),
-				),
-			).Decode(&token); err != nil {
-				return NewError(ErrorCodeInvalidParameterValue, "Invalid page_token '%s': %s", req.PageToken, err)
-
-			}
-			offset = int(token.Offset)
-		}
-		tx.Offset(offset)
-
-		// Default order
-		tx.Order("runs.start_time DESC")
-		tx.Order("runs.run_uuid")
-
 		// Filter by experiments
 		if len(req.ExperimentIDs) > 0 {
-			tx.Where("experiment_id IN ?", req.ExperimentIDs)
+			tx := db.Model(&model.Run{}).
+				Where("experiment_id IN ?", req.ExperimentIDs)
 
 			// ViewType
 			var lifecyleStages []model.LifecycleStage
@@ -125,92 +97,96 @@ func MetricsGetHistories(db *gorm.DB) HandlerFunc {
 				return NewError(ErrorCodeInvalidParameterValue, "Invalid run_view_type '%s'", req.ViewType)
 			}
 			tx.Where("lifecycle_stage IN ?", lifecyleStages)
+
+			tx.Pluck("run_uuid", &req.RunIDs)
+			if tx.Error != nil {
+				return NewError(ErrorCodeInternalError, "Unable to search runs: %s", tx.Error)
+			}
 		}
+
+		tx := db.Model(&model.Metric{})
 
 		// Filter by runs
-		if len(req.RunIDs) > 0 {
-			tx.Where("run_uuid IN ?", req.RunIDs)
-		}
+		tx.Where("metrics.run_uuid IN ?", req.RunIDs)
 
-		// Filter by metric keys
-		order := func(db *gorm.DB) *gorm.DB {
-			return db.Order("metrics.key").
-				Order("metrics.step").
-				Order("metrics.timestamp").
-				Order("metrics.value")
-
+		// MaxResults
+		limit := int(req.MaxResults)
+		if limit == 0 {
+			limit = 10000000
+		} else if limit > 1000000000 {
+			return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter 'max_results' supplied.")
 		}
+		tx.Limit(limit)
+
+		// Default order
+		tx.Joins("JOIN runs on runs.run_uuid = metrics.run_uuid").
+			Order("runs.start_time DESC").
+			Order("metrics.run_uuid").
+			Order("metrics.key").
+			Order("metrics.step").
+			Order("metrics.timestamp").
+			Order("metrics.value")
+
 		if len(req.MetricKeys) > 0 {
-			tx.Preload("Metrics", "key IN ?", req.MetricKeys, order)
-		} else {
-			tx.Preload("Metrics", order)
+			tx.Where("metrics.key IN ?", req.MetricKeys)
 		}
 
 		// Actual query
-		runs := []model.Run{}
-		tx.Find(&runs)
-		if tx.Error != nil {
-			return NewError(ErrorCodeInternalError, "Unable to search runs: %s", tx.Error)
+		rows, err := tx.Rows()
+		if err != nil {
+			return NewError(ErrorCodeInternalError, "Unable to search runs: %s", err)
 		}
+		defer rows.Close()
 
-		resp := &MetricsGetHistoriesResponse{}
+		pool := memory.NewGoAllocator()
 
-		// NextPageToken
-		if len(runs) > limit {
-			runs = runs[:limit]
-			var token strings.Builder
-			b64 := base64.NewEncoder(base64.StdEncoding, &token)
-			if err := json.NewEncoder(b64).Encode(PageToken{
-				Offset: int32(offset + limit),
-			}); err != nil {
-				return NewError(ErrorCodeInternalError, "Unable to build next_page_token: %s", err)
+		schema := arrow.NewSchema(
+			[]arrow.Field{
+				{Name: "run_id", Type: arrow.BinaryTypes.String},
+				{Name: "key", Type: arrow.BinaryTypes.String},
+				{Name: "step", Type: arrow.PrimitiveTypes.Int64},
+				{Name: "timestamp", Type: arrow.PrimitiveTypes.Int64},
+				{Name: "value", Type: arrow.PrimitiveTypes.Float64},
+			},
+			nil,
+		)
+		ww := ipc.NewWriter(w, ipc.WithAllocator(pool), ipc.WithSchema(schema))
+		defer ww.Close()
+
+		b := array.NewRecordBuilder(pool, schema)
+		defer b.Release()
+
+		for i := 0; rows.Next(); i++ {
+			var m model.Metric
+			db.ScanRows(rows, &m)
+			b.Field(0).(*array.StringBuilder).Append(m.RunID)
+			b.Field(1).(*array.StringBuilder).Append(m.Key)
+			b.Field(2).(*array.Int64Builder).Append(m.Step)
+			b.Field(3).(*array.Int64Builder).Append(m.Timestamp)
+			if m.IsNan {
+				b.Field(4).(*array.Float64Builder).AppendNull()
+			} else {
+				b.Field(4).(*array.Float64Builder).Append(m.Value)
 			}
-			b64.Close()
-			resp.NextPageToken = token.String()
-		}
-
-		resp.Runs = make([]Run, 0, len(runs))
-		for _, r := range runs {
-			if len(r.Metrics) == 0 {
-				continue
-			}
-
-			run := Run{
-				Info: RunInfo{
-					ID:             r.ID,
-					UUID:           r.ID,
-					Name:           r.Name,
-					ExperimentID:   fmt.Sprint(r.ExperimentID),
-					UserID:         r.UserID,
-					Status:         RunStatus(r.Status),
-					StartTime:      r.StartTime.Int64,
-					EndTime:        r.EndTime.Int64,
-					ArtifactURI:    r.ArtifactURI,
-					LifecycleStage: LifecycleStage(r.LifecycleStage),
-				},
-				Data: RunData{
-					Metrics: make([]Metric, len(r.Metrics)),
-				},
-			}
-			for j, m := range r.Metrics {
-				metric := Metric{
-					Key:       m.Key,
-					Value:     m.Value,
-					Timestamp: m.Timestamp,
-					Step:      m.Step,
+			if (i+1)%100000 == 0 {
+				if err := WriteRecord(ww, b.NewRecord()); err != nil {
+					return NewError(ErrorCodeInternalError, "unable to write Arrow record batch: %s", err)
 				}
-				if m.IsNan {
-					metric.Value = "NaN"
-				}
-				run.Data.Metrics[j] = metric
 			}
-			resp.Runs = append(resp.Runs, run)
+		}
+		if b.Field(0).Len() > 0 {
+			if err := WriteRecord(ww, b.NewRecord()); err != nil {
+				return NewError(ErrorCodeInternalError, "unable to write Arrow record batch: %s", err)
+			}
 		}
 
-		log.Debugf("MetricsGetHistories response: %#v", resp)
-
-		return resp
+		return nil
 	},
 		http.MethodPost,
 	))
+}
+
+func WriteRecord(w *ipc.Writer, r arrow.Record) error {
+	defer r.Release()
+	return w.Write(r)
 }

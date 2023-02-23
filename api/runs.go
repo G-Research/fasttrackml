@@ -20,7 +20,7 @@ import (
 
 var (
 	filterAnd     *regexp.Regexp = regexp.MustCompile(`(?i)\s+AND\s+`)
-	filterCond    *regexp.Regexp = regexp.MustCompile(`^(?:(\w+)\.)?("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'\w{32}'(?:,\s*)?)+\)|"[^"]+"|'[^']+'|[\w\.]+)$`)
+	filterCond    *regexp.Regexp = regexp.MustCompile(`^(?:(\w+)\.)?("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'[^']+'(?:,\s*)?)+\)|"[^"]+"|'[^']+'|[\w\.]+)$`)
 	filterInGroup *regexp.Regexp = regexp.MustCompile(`,\s*`)
 	runOrder      *regexp.Regexp = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
 )

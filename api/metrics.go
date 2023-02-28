@@ -4,17 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/G-Resarch/fasttrack/model"
+	"github.com/G-Resarch/fasttrack/database"
 
 	"github.com/apache/arrow/go/v11/arrow"
 	"github.com/apache/arrow/go/v11/arrow/array"
 	"github.com/apache/arrow/go/v11/arrow/ipc"
 	"github.com/apache/arrow/go/v11/arrow/memory"
 	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
-func MetricGetHistory(db *gorm.DB) HandlerFunc {
+func MetricGetHistory() HandlerFunc {
 	return EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		id := r.URL.Query().Get("run_id")
 		if id == "" {
@@ -31,8 +30,8 @@ func MetricGetHistory(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'metric_key'")
 		}
 
-		var metrics []model.Metric
-		if tx := db.Where("run_uuid = ?", id).Where("key = ?", key).Find(&metrics); tx.Error != nil {
+		var metrics []database.Metric
+		if tx := database.DB.Where("run_uuid = ?", id).Where("key = ?", key).Find(&metrics); tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Unable to get metric history for metric '%s' of run '%s'", key, id)
 		}
 
@@ -60,7 +59,7 @@ func MetricGetHistory(db *gorm.DB) HandlerFunc {
 	)
 }
 
-func MetricsGetHistories(db *gorm.DB) HandlerFunc {
+func MetricsGetHistories() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req MetricsGetHistoriesRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -75,24 +74,24 @@ func MetricsGetHistories(db *gorm.DB) HandlerFunc {
 
 		// Filter by experiments
 		if len(req.ExperimentIDs) > 0 {
-			tx := db.Model(&model.Run{}).
+			tx := database.DB.Model(&database.Run{}).
 				Where("experiment_id IN ?", req.ExperimentIDs)
 
 			// ViewType
-			var lifecyleStages []model.LifecycleStage
+			var lifecyleStages []database.LifecycleStage
 			switch req.ViewType {
 			case ViewTypeActiveOnly, "":
-				lifecyleStages = []model.LifecycleStage{
-					model.LifecycleStageActive,
+				lifecyleStages = []database.LifecycleStage{
+					database.LifecycleStageActive,
 				}
 			case ViewTypeDeletedOnly:
-				lifecyleStages = []model.LifecycleStage{
-					model.LifecycleStageDeleted,
+				lifecyleStages = []database.LifecycleStage{
+					database.LifecycleStageDeleted,
 				}
 			case ViewTypeAll:
-				lifecyleStages = []model.LifecycleStage{
-					model.LifecycleStageActive,
-					model.LifecycleStageDeleted,
+				lifecyleStages = []database.LifecycleStage{
+					database.LifecycleStageActive,
+					database.LifecycleStageDeleted,
 				}
 			default:
 				return NewError(ErrorCodeInvalidParameterValue, "Invalid run_view_type '%s'", req.ViewType)
@@ -105,7 +104,7 @@ func MetricsGetHistories(db *gorm.DB) HandlerFunc {
 			}
 		}
 
-		tx := db.Model(&model.Metric{})
+		tx := database.DB.Model(&database.Metric{})
 
 		// Filter by runs
 		tx.Where("metrics.run_uuid IN ?", req.RunIDs)
@@ -158,8 +157,8 @@ func MetricsGetHistories(db *gorm.DB) HandlerFunc {
 		defer b.Release()
 
 		for i := 0; rows.Next(); i++ {
-			var m model.Metric
-			db.ScanRows(rows, &m)
+			var m database.Metric
+			database.DB.ScanRows(rows, &m)
 			b.Field(0).(*array.StringBuilder).Append(m.RunID)
 			b.Field(1).(*array.StringBuilder).Append(m.Key)
 			b.Field(2).(*array.Int64Builder).Append(m.Step)

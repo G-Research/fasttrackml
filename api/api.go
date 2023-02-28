@@ -231,10 +231,10 @@ type RunParam KV
 type RunTag KV
 
 type Metric struct {
-	Key       string      `json:"key"`
-	Value     interface{} `json:"value"`
-	Timestamp int64       `json:"timestamp"`
-	Step      int64       `json:"step"`
+	Key       string `json:"key"`
+	Value     any    `json:"value"`
+	Timestamp int64  `json:"timestamp"`
+	Step      int64  `json:"step"`
 }
 
 type File struct {

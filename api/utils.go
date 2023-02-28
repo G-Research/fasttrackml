@@ -16,7 +16,7 @@ var (
 	jsonContentType *regexp.Regexp = regexp.MustCompile("^application/json;?")
 )
 
-func NewError(e ErrorCode, msg string, args ...interface{}) *ErrorResponse {
+func NewError(e ErrorCode, msg string, args ...any) *ErrorResponse {
 	return &ErrorResponse{
 		ErrorCode: e,
 		Message:   fmt.Sprintf(msg, args...),

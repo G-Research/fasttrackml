@@ -11,13 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/G-Resarch/fasttrack/model"
+	"github.com/G-Resarch/fasttrack/database"
 
 	"github.com/jackc/pgconn"
 	"github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -25,7 +24,7 @@ var (
 	experimentOrder *regexp.Regexp = regexp.MustCompile(`^(?:attr(?:ibutes?)?\.)?(\w+)(?i:\s+(ASC|DESC))?$`)
 )
 
-func ExperimentCreate(db *gorm.DB) HandlerFunc {
+func ExperimentCreate() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req ExperimentCreateRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -42,10 +41,10 @@ func ExperimentCreate(db *gorm.DB) HandlerFunc {
 		}
 
 		ts := time.Now().UTC().UnixMilli()
-		exp := model.Experiment{
+		exp := database.Experiment{
 			Name:             req.Name,
 			ArtifactLocation: req.ArtifactLocation,
-			LifecycleStage:   model.LifecycleStageActive,
+			LifecycleStage:   database.LifecycleStageActive,
 			CreationTime: sql.NullInt64{
 				Int64: ts,
 				Valid: true,
@@ -54,18 +53,18 @@ func ExperimentCreate(db *gorm.DB) HandlerFunc {
 				Int64: ts,
 				Valid: true,
 			},
-			Tags: make([]model.ExperimentTag, len(req.Tags)),
+			Tags: make([]database.ExperimentTag, len(req.Tags)),
 		}
 
 		for n, tag := range req.Tags {
-			exp.Tags[n] = model.ExperimentTag{
+			exp.Tags[n] = database.ExperimentTag{
 				Key:   tag.Key,
 				Value: tag.Value,
 			}
 		}
 
 		// TODO do it in one session?
-		if tx := db.Create(&exp); tx.Error != nil {
+		if tx := database.DB.Create(&exp); tx.Error != nil {
 			if err, ok := tx.Error.(*pgconn.PgError); ok && err.Code == "23505" {
 				return NewError(ErrorCodeResourceAlreadyExists, "Experiment(name=%s) already exists", exp.Name)
 			}
@@ -78,7 +77,7 @@ func ExperimentCreate(db *gorm.DB) HandlerFunc {
 		if exp.ArtifactLocation == "" {
 			exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(viper.GetString("artifact-root"), "/"), *exp.ID)
 		}
-		if tx := db.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
+		if tx := database.DB.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)
 		}
 
@@ -94,7 +93,7 @@ func ExperimentCreate(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func ExperimentUpdate(db *gorm.DB) HandlerFunc {
+func ExperimentUpdate() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req ExperimentUpdateRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -117,15 +116,15 @@ func ExperimentUpdate(db *gorm.DB) HandlerFunc {
 		}
 
 		ex32 := int32(ex)
-		exp := model.Experiment{
+		exp := database.Experiment{
 			ID: &ex32,
 		}
 
-		if tx := db.Select("ID").First(&exp); tx.Error != nil {
+		if tx := database.DB.Select("ID").First(&exp); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find experiment '%d': %s", *exp.ID, tx.Error)
 		}
 
-		if tx := db.Model(&exp).Updates(&model.Experiment{
+		if tx := database.DB.Model(&exp).Updates(&database.Experiment{
 			Name: req.Name,
 			LastUpdateTime: sql.NullInt64{
 				Int64: time.Now().UTC().UnixMilli(),
@@ -141,7 +140,7 @@ func ExperimentUpdate(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func ExperimentGet(db *gorm.DB) HandlerFunc {
+func ExperimentGet() HandlerFunc {
 	return EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		id := r.URL.Query().Get("experiment_id")
 
@@ -157,11 +156,11 @@ func ExperimentGet(db *gorm.DB) HandlerFunc {
 		}
 
 		ex32 := int32(ex)
-		exp := model.Experiment{
+		exp := database.Experiment{
 			ID: &ex32,
 		}
 
-		if tx := db.Preload("Tags").First(&exp); tx.Error != nil {
+		if tx := database.DB.Preload("Tags").First(&exp); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find experiment '%d': %s", ex, tx.Error)
 		}
 
@@ -192,7 +191,7 @@ func ExperimentGet(db *gorm.DB) HandlerFunc {
 	)
 }
 
-func ExperimentGetByName(db *gorm.DB) HandlerFunc {
+func ExperimentGetByName() HandlerFunc {
 	return EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		name := r.URL.Query().Get("experiment_name")
 
@@ -202,10 +201,10 @@ func ExperimentGetByName(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'experiment_name'")
 		}
 
-		exp := model.Experiment{
+		exp := database.Experiment{
 			Name: name,
 		}
-		if tx := db.Preload("Tags").Where(&exp).First(&exp); tx.Error != nil {
+		if tx := database.DB.Preload("Tags").Where(&exp).First(&exp); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find experiment '%s': %s", name, tx.Error)
 		}
 
@@ -236,7 +235,7 @@ func ExperimentGetByName(db *gorm.DB) HandlerFunc {
 	)
 }
 
-func ExperimentDelete(db *gorm.DB) HandlerFunc {
+func ExperimentDelete() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req ExperimentDeleteRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -255,15 +254,15 @@ func ExperimentDelete(db *gorm.DB) HandlerFunc {
 		}
 
 		ex32 := int32(ex)
-		exp := model.Experiment{
+		exp := database.Experiment{
 			ID: &ex32,
 		}
-		if tx := db.Select("ID").First(&exp); tx.Error != nil {
+		if tx := database.DB.Select("ID").First(&exp); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find experiment '%d': %s", *exp.ID, tx.Error)
 		}
 
-		if tx := db.Model(&exp).Updates(&model.Experiment{
-			LifecycleStage: model.LifecycleStageDeleted,
+		if tx := database.DB.Model(&exp).Updates(&database.Experiment{
+			LifecycleStage: database.LifecycleStageDeleted,
 			LastUpdateTime: sql.NullInt64{
 				Int64: time.Now().UTC().UnixMilli(),
 				Valid: true,
@@ -278,7 +277,7 @@ func ExperimentDelete(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func ExperimentRestore(db *gorm.DB) HandlerFunc {
+func ExperimentRestore() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req ExperimentRestoreRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -297,15 +296,15 @@ func ExperimentRestore(db *gorm.DB) HandlerFunc {
 		}
 
 		ex32 := int32(ex)
-		exp := model.Experiment{
+		exp := database.Experiment{
 			ID: &ex32,
 		}
-		if tx := db.Select("ID").First(&exp); tx.Error != nil {
+		if tx := database.DB.Select("ID").First(&exp); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find experiment '%d': %s", *exp.ID, tx.Error)
 		}
 
-		if tx := db.Model(&exp).Updates(&model.Experiment{
-			LifecycleStage: model.LifecycleStageActive,
+		if tx := database.DB.Model(&exp).Updates(&database.Experiment{
+			LifecycleStage: database.LifecycleStageActive,
 			LastUpdateTime: sql.NullInt64{
 				Int64: time.Now().UTC().UnixMilli(),
 				Valid: true,
@@ -321,7 +320,7 @@ func ExperimentRestore(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func ExperimentSetTag(db *gorm.DB) HandlerFunc {
+func ExperimentSetTag() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req ExperimentSetTagRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -344,17 +343,17 @@ func ExperimentSetTag(db *gorm.DB) HandlerFunc {
 		}
 
 		ex32 := int32(ex)
-		exp := model.Experiment{
+		exp := database.Experiment{
 			ID:             &ex32,
-			LifecycleStage: model.LifecycleStageActive,
+			LifecycleStage: database.LifecycleStageActive,
 		}
-		if tx := db.Select("ID").Where(&exp).First(&exp); tx.Error != nil {
+		if tx := database.DB.Select("ID").Where(&exp).First(&exp); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find experiment '%d': %s", *exp.ID, tx.Error)
 		}
 
-		if tx := db.Clauses(clause.OnConflict{
+		if tx := database.DB.Clauses(clause.OnConflict{
 			UpdateAll: true,
-		}).Create(&model.ExperimentTag{
+		}).Create(&database.ExperimentTag{
 			ExperimentID: *exp.ID,
 			Key:          req.Key,
 			Value:        req.Value,
@@ -368,7 +367,7 @@ func ExperimentSetTag(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func ExperimentSearch(db *gorm.DB) HandlerFunc {
+func ExperimentSearch() HandlerFunc {
 	return EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req ExperimentSearchRequest
 		if r.Method == http.MethodPost {
@@ -396,28 +395,28 @@ func ExperimentSearch(db *gorm.DB) HandlerFunc {
 
 		log.Debugf("ExperimentSearch request: %#v", req)
 
-		exps := []model.Experiment{}
+		exps := []database.Experiment{}
 
 		// ViewType
-		var lifecyleStages []model.LifecycleStage
+		var lifecyleStages []database.LifecycleStage
 		switch req.ViewType {
 		case ViewTypeActiveOnly, "":
-			lifecyleStages = []model.LifecycleStage{
-				model.LifecycleStageActive,
+			lifecyleStages = []database.LifecycleStage{
+				database.LifecycleStageActive,
 			}
 		case ViewTypeDeletedOnly:
-			lifecyleStages = []model.LifecycleStage{
-				model.LifecycleStageDeleted,
+			lifecyleStages = []database.LifecycleStage{
+				database.LifecycleStageDeleted,
 			}
 		case ViewTypeAll:
-			lifecyleStages = []model.LifecycleStage{
-				model.LifecycleStageActive,
-				model.LifecycleStageDeleted,
+			lifecyleStages = []database.LifecycleStage{
+				database.LifecycleStageActive,
+				database.LifecycleStageDeleted,
 			}
 		default:
 			return NewError(ErrorCodeInvalidParameterValue, "Invalid view_type '%s'", req.ViewType)
 		}
-		tx := db.Where("lifecycle_stage IN ?", lifecyleStages)
+		tx := database.DB.Where("lifecycle_stage IN ?", lifecyleStages)
 
 		// MaxResults
 		limit := int(req.MaxResults)
@@ -477,7 +476,7 @@ func ExperimentSearch(db *gorm.DB) HandlerFunc {
 								return NewError(ErrorCodeInvalidParameterValue, "Invalid string value '%s'", value)
 							}
 							value = strings.Trim(value.(string), `"'`)
-							if db.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+							if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
 								key = fmt.Sprintf("LOWER(%s)", key)
 								comparison = "LIKE"
 								value = strings.ToLower(value.(string))
@@ -501,13 +500,13 @@ func ExperimentSearch(db *gorm.DB) HandlerFunc {
 					}
 					table := fmt.Sprintf("filter_%d", n)
 					where := fmt.Sprintf("value %s ?", comparison)
-					if db.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+					if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
 						where = "LOWER(value) LIKE ?"
 						value = strings.ToLower(value.(string))
 					}
 					tx.Joins(
 						fmt.Sprintf("JOIN (?) AS %s ON experiments.experiment_id = %s.experiment_id", table, table),
-						db.Select("experiment_id", "value").Where("key = ?", key).Where(where, value).Model(&model.ExperimentTag{}),
+						database.DB.Select("experiment_id", "value").Where("key = ?", key).Where(where, value).Model(&database.ExperimentTag{}),
 					)
 				default:
 					return NewError(ErrorCodeInvalidParameterValue, "Invalid entity type '%s'. Valid values are ['tag', 'attribute']", entity)
@@ -529,7 +528,7 @@ func ExperimentSearch(db *gorm.DB) HandlerFunc {
 				expOrder = true
 				fallthrough
 			case "name":
-				if db.Dialector.Name() == "postgres" {
+				if database.DB.Dialector.Name() == "postgres" {
 					column += ` COLLATE "C"`
 				}
 			case "creation_time", "last_update_time":

@@ -12,10 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/G-Resarch/fasttrack/model"
+	"github.com/G-Resarch/fasttrack/database"
 
 	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -26,7 +25,7 @@ var (
 	runOrder      *regexp.Regexp = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
 )
 
-func RunCreate(db *gorm.DB) HandlerFunc {
+func RunCreate() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunCreateRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -41,25 +40,25 @@ func RunCreate(db *gorm.DB) HandlerFunc {
 		}
 
 		ex32 := int32(ex)
-		exp := model.Experiment{
+		exp := database.Experiment{
 			ID: &ex32,
 		}
-		if tx := db.Select("artifact_location").First(&exp); tx.Error != nil {
+		if tx := database.DB.Select("artifact_location").First(&exp); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find experiment '%d': %s", ex, tx.Error)
 		}
 
-		run := model.Run{
-			ID:           model.NewUUID(),
+		run := database.Run{
+			ID:           database.NewUUID(),
 			Name:         req.Name,
 			ExperimentID: *exp.ID,
 			UserID:       req.UserID,
-			Status:       model.StatusRunning,
+			Status:       database.StatusRunning,
 			StartTime: sql.NullInt64{
 				Int64: req.StartTime,
 				Valid: true,
 			},
-			LifecycleStage: model.LifecycleStageActive,
-			Tags:           make([]model.Tag, len(req.Tags)),
+			LifecycleStage: database.LifecycleStageActive,
+			Tags:           make([]database.Tag, len(req.Tags)),
 		}
 
 		run.ArtifactURI = fmt.Sprintf("%s/%s/artifacts", exp.ArtifactLocation, run.ID)
@@ -79,7 +78,7 @@ func RunCreate(db *gorm.DB) HandlerFunc {
 					run.Name = tag.Value
 				}
 			}
-			run.Tags[n] = model.Tag{
+			run.Tags[n] = database.Tag{
 				Key:   tag.Key,
 				Value: tag.Value,
 			}
@@ -87,7 +86,7 @@ func RunCreate(db *gorm.DB) HandlerFunc {
 
 		if run.Name == "" {
 			run.Name = GenerateRandomName()
-			run.Tags = append(run.Tags, model.Tag{
+			run.Tags = append(run.Tags, database.Tag{
 				Key:   "mlflow.runName",
 				Value: run.Name,
 			})
@@ -97,7 +96,7 @@ func RunCreate(db *gorm.DB) HandlerFunc {
 			run.SourceType = "UNKNOWN"
 		}
 
-		if tx := db.Create(&run); tx.Error != nil {
+		if tx := database.DB.Create(&run); tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Error inserting run '%s': %s", run.ID, tx.Error)
 		}
 
@@ -134,7 +133,7 @@ func RunCreate(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func RunUpdate(db *gorm.DB) HandlerFunc {
+func RunUpdate() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunUpdateRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -147,20 +146,20 @@ func RunUpdate(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
-		run := model.Run{
+		run := database.Run{
 			ID: req.ID,
 		}
 		if run.ID == "" {
 			run.ID = req.UUID
 		}
-		if tx := db.First(&run); tx.Error != nil {
+		if tx := database.DB.First(&run); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
 		}
 
-		tx := db.Begin()
-		tx.Model(&run).Updates(model.Run{
+		tx := database.DB.Begin()
+		tx.Model(&run).Updates(database.Run{
 			Name:   req.Name,
-			Status: model.Status(req.Status),
+			Status: database.Status(req.Status),
 			EndTime: sql.NullInt64{
 				Int64: req.EndTime,
 				Valid: true,
@@ -170,7 +169,7 @@ func RunUpdate(db *gorm.DB) HandlerFunc {
 		if req.Name != "" {
 			tx.Clauses(clause.OnConflict{
 				UpdateAll: true,
-			}).Create([]model.Tag{{
+			}).Create([]database.Tag{{
 				Key:   "mlflow.runName",
 				Value: req.Name,
 				RunID: run.ID,
@@ -206,7 +205,7 @@ func RunUpdate(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func RunGet(db *gorm.DB) HandlerFunc {
+func RunGet() HandlerFunc {
 	return EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		id := r.URL.Query().Get("run_id")
 		if id == "" {
@@ -219,10 +218,10 @@ func RunGet(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
-		run := model.Run{
+		run := database.Run{
 			ID: id,
 		}
-		if tx := db.Preload("LatestMetrics").Preload("Params").Preload("Tags").First(&run); tx.Error != nil {
+		if tx := database.DB.Preload("LatestMetrics").Preload("Params").Preload("Tags").First(&run); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
 		}
 
@@ -238,7 +237,7 @@ func RunGet(db *gorm.DB) HandlerFunc {
 	)
 }
 
-func RunSearch(db *gorm.DB) HandlerFunc {
+func RunSearch() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunSearchRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -247,24 +246,24 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 
 		log.Debugf("RunSearch request: %#v", req)
 
-		runs := []model.Run{}
-		tx := db.Where("experiment_id IN ?", req.ExperimentIDs)
+		runs := []database.Run{}
+		tx := database.DB.Where("experiment_id IN ?", req.ExperimentIDs)
 
 		// ViewType
-		var lifecyleStages []model.LifecycleStage
+		var lifecyleStages []database.LifecycleStage
 		switch req.ViewType {
 		case ViewTypeActiveOnly, "":
-			lifecyleStages = []model.LifecycleStage{
-				model.LifecycleStageActive,
+			lifecyleStages = []database.LifecycleStage{
+				database.LifecycleStageActive,
 			}
 		case ViewTypeDeletedOnly:
-			lifecyleStages = []model.LifecycleStage{
-				model.LifecycleStageDeleted,
+			lifecyleStages = []database.LifecycleStage{
+				database.LifecycleStageDeleted,
 			}
 		case ViewTypeAll:
-			lifecyleStages = []model.LifecycleStage{
-				model.LifecycleStageActive,
-				model.LifecycleStageDeleted,
+			lifecyleStages = []database.LifecycleStage{
+				database.LifecycleStageActive,
+				database.LifecycleStageDeleted,
 			}
 		default:
 			return NewError(ErrorCodeInvalidParameterValue, "Invalid run_view_type '%s'", req.ViewType)
@@ -311,7 +310,7 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 				comparison := components[3]
 				var value any = components[4]
 
-				var kind interface{}
+				var kind any
 				switch entity {
 				case "", "attribute", "attributes", "attr", "run":
 					switch key {
@@ -328,7 +327,7 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 						}
 					case "run_name":
 						key = "mlflow.runName"
-						kind = &model.Tag{}
+						kind = &database.Tag{}
 						fallthrough
 					case "status", "user_id", "artifact_uri":
 						switch strings.ToUpper(comparison) {
@@ -374,7 +373,7 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 					default:
 						return NewError(ErrorCodeInvalidParameterValue, "Invalid metric comparison operator '%s'", comparison)
 					}
-					kind = &model.LatestMetric{}
+					kind = &database.LatestMetric{}
 				case "parameter", "parameters", "param", "params":
 					switch strings.ToUpper(comparison) {
 					case "!=", "=", "LIKE", "ILIKE":
@@ -385,7 +384,7 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 					default:
 						return NewError(ErrorCodeInvalidParameterValue, "Invalid param comparison operator '%s'", comparison)
 					}
-					kind = &model.Param{}
+					kind = &database.Param{}
 				case "tag", "tags":
 					switch strings.ToUpper(comparison) {
 					case "!=", "=", "LIKE", "ILIKE":
@@ -396,12 +395,12 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 					default:
 						return NewError(ErrorCodeInvalidParameterValue, "Invalid tag comparison operator '%s'", comparison)
 					}
-					kind = &model.Tag{}
+					kind = &database.Tag{}
 				default:
 					return NewError(ErrorCodeInvalidParameterValue, "Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
 				}
 				if kind == nil {
-					if db.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+					if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
 						key = fmt.Sprintf("LOWER(%s)", key)
 						comparison = "LIKE"
 						value = strings.ToLower(value.(string))
@@ -410,13 +409,13 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 				} else {
 					table := fmt.Sprintf("filter_%d", n)
 					where := fmt.Sprintf("value %s ?", comparison)
-					if db.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+					if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
 						where = "LOWER(value) LIKE ?"
 						value = strings.ToLower(value.(string))
 					}
 					tx.Joins(
 						fmt.Sprintf("JOIN (?) AS %s ON runs.run_uuid = %s.run_uuid", table, table),
-						db.Select("run_uuid", "value").Where("key = ?", key).Where(where, value).Model(kind),
+						database.DB.Select("run_uuid", "value").Where("key = ?", key).Where(where, value).Model(kind),
 					)
 				}
 			}
@@ -435,18 +434,18 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 
 			column := strings.Trim(components[2], "`\"")
 
-			var kind interface{}
+			var kind any
 			switch components[1] {
 			case "attribute":
 				if column == "start_time" {
 					startTimeOrder = true
 				}
 			case "metric":
-				kind = &model.LatestMetric{}
+				kind = &database.LatestMetric{}
 			case "param":
-				kind = &model.Param{}
+				kind = &database.Param{}
 			case "tag":
-				kind = &model.Tag{}
+				kind = &database.Tag{}
 			default:
 				return NewError(ErrorCodeInvalidParameterValue, "Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", components[1])
 			}
@@ -454,7 +453,7 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 				table := fmt.Sprintf("order_%d", n)
 				tx.Joins(
 					fmt.Sprintf("LEFT OUTER JOIN (?) AS %s ON runs.run_uuid = %s.run_uuid", table, table),
-					db.Select("run_uuid", "value").Where("key = ?", column).Model(kind),
+					database.DB.Select("run_uuid", "value").Where("key = ?", column).Model(kind),
 				)
 				column = fmt.Sprintf("%s.value", table)
 			}
@@ -507,7 +506,7 @@ func RunSearch(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func RunDelete(db *gorm.DB) HandlerFunc {
+func RunDelete() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunDeleteRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -520,15 +519,15 @@ func RunDelete(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
-		run := model.Run{
+		run := database.Run{
 			ID: req.ID,
 		}
-		if tx := db.Select("lifecycle_stage").First(&run); tx.Error != nil {
+		if tx := database.DB.Select("lifecycle_stage").First(&run); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
 		}
 
-		if tx := db.Model(&run).Updates(model.Run{
-			LifecycleStage: model.LifecycleStageDeleted,
+		if tx := database.DB.Model(&run).Updates(database.Run{
+			LifecycleStage: database.LifecycleStageDeleted,
 			DeletedTime: sql.NullInt64{
 				Int64: time.Now().UTC().UnixMilli(),
 				Valid: true,
@@ -543,7 +542,7 @@ func RunDelete(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func RunRestore(db *gorm.DB) HandlerFunc {
+func RunRestore() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunRestoreRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -556,16 +555,16 @@ func RunRestore(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
-		run := model.Run{
+		run := database.Run{
 			ID: req.ID,
 		}
-		if tx := db.Select("lifecycle_stage").First(&run); tx.Error != nil {
+		if tx := database.DB.Select("lifecycle_stage").First(&run); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
 		}
 
 		// Use UpdateColumns so we can reset DeletedTime to null
-		if tx := db.Model(&run).UpdateColumns(map[string]interface{}{
-			"LifecycleStage": model.LifecycleStageActive,
+		if tx := database.DB.Model(&run).UpdateColumns(map[string]any{
+			"LifecycleStage": database.LifecycleStageActive,
 			"DeletedTime":    sql.NullInt64{},
 		}); tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Unable to update run '%s': %s", run.ID, tx.Error)
@@ -577,7 +576,7 @@ func RunRestore(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func RunLogMetric(db *gorm.DB) HandlerFunc {
+func RunLogMetric() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunLogMetricRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -610,7 +609,7 @@ func RunLogMetric(db *gorm.DB) HandlerFunc {
 			id = req.UUID
 		}
 
-		if err := runLogMetrics(db, id, []Metric{req.Metric}); err != nil {
+		if err := runLogMetrics(id, []Metric{req.Metric}); err != nil {
 			return NewError(ErrorCodeInternalError, "Unable to log metric '%s' for run '%s': %s", req.Key, id, err)
 		}
 
@@ -620,7 +619,7 @@ func RunLogMetric(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func RunLogParam(db *gorm.DB) HandlerFunc {
+func RunLogParam() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunLogParamRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -645,7 +644,7 @@ func RunLogParam(db *gorm.DB) HandlerFunc {
 			id = req.UUID
 		}
 
-		if err := runLogParams(db, id, []RunParam{req.RunParam}); err != nil {
+		if err := runLogParams(id, []RunParam{req.RunParam}); err != nil {
 			return NewError(ErrorCodeInternalError, "Unable to log param '%s' for run '%s': %s", req.Key, id, err)
 		}
 
@@ -655,7 +654,7 @@ func RunLogParam(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func RunSetTag(db *gorm.DB) HandlerFunc {
+func RunSetTag() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunSetTagRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -680,7 +679,7 @@ func RunSetTag(db *gorm.DB) HandlerFunc {
 			id = req.UUID
 		}
 
-		if err := runSetTags(db, id, []RunTag{req.RunTag}); err != nil {
+		if err := runSetTags(id, []RunTag{req.RunTag}); err != nil {
 			return NewError(ErrorCodeInternalError, "Unable to set tag '%s' for run '%s': %s", req.Key, id, err)
 		}
 
@@ -690,7 +689,7 @@ func RunSetTag(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func RunDeleteTag(db *gorm.DB) HandlerFunc {
+func RunDeleteTag() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunDeleteTagRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -703,15 +702,15 @@ func RunDeleteTag(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
-		if tx := db.Select("run_uuid").Where("lifecycle_stage = ?", model.LifecycleStageActive).First(&model.Run{ID: req.ID}); tx.Error != nil {
+		if tx := database.DB.Select("run_uuid").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&database.Run{ID: req.ID}); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", req.ID, tx.Error)
 		}
 
-		if tx := db.First(&model.Tag{RunID: req.ID, Key: req.Key}); tx.Error != nil {
+		if tx := database.DB.First(&database.Tag{RunID: req.ID, Key: req.Key}); tx.Error != nil {
 			return NewError(ErrorCodeResourceDoesNotExist, "Unable to find tag '%s' for run '%s': %s", req.Key, req.ID, tx.Error)
 		}
 
-		if tx := db.Delete(&model.Tag{
+		if tx := database.DB.Delete(&database.Tag{
 			RunID: req.ID,
 			Key:   req.Key,
 		}); tx.Error != nil {
@@ -724,7 +723,7 @@ func RunDeleteTag(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func RunLogBatch(db *gorm.DB) HandlerFunc {
+func RunLogBatch() HandlerFunc {
 	return EnsureJson(EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		var req RunLogBatchRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -740,15 +739,15 @@ func RunLogBatch(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
-		if err := runLogParams(db, req.ID, req.Params); err != nil {
+		if err := runLogParams(req.ID, req.Params); err != nil {
 			return err
 		}
 
-		if err := runLogMetrics(db, req.ID, req.Metrics); err != nil {
+		if err := runLogMetrics(req.ID, req.Metrics); err != nil {
 			return err
 		}
 
-		if err := runSetTags(db, req.ID, req.Tags); err != nil {
+		if err := runSetTags(req.ID, req.Tags); err != nil {
 			return err
 		}
 
@@ -758,19 +757,19 @@ func RunLogBatch(db *gorm.DB) HandlerFunc {
 	))
 }
 
-func runLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
+func runLogMetrics(id string, metrics []Metric) error {
 	if len(metrics) == 0 {
 		return nil
 	}
 
-	if tx := db.Select("run_uuid").Where("lifecycle_stage = ?", model.LifecycleStageActive).First(&model.Run{ID: id}); tx.Error != nil {
+	if tx := database.DB.Select("run_uuid").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&database.Run{ID: id}); tx.Error != nil {
 		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", id, tx.Error)
 	}
 
-	dbMetrics := make([]model.Metric, len(metrics))
-	latestMetrics := make(map[string]model.LatestMetric)
+	dbMetrics := make([]database.Metric, len(metrics))
+	latestMetrics := make(map[string]database.LatestMetric)
 	for n, metric := range metrics {
-		m := model.Metric{
+		m := database.Metric{
 			RunID:     id,
 			Key:       metric.Key,
 			Timestamp: metric.Timestamp,
@@ -802,7 +801,7 @@ func runLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 			m.Step > lm.Step ||
 			(m.Step == lm.Step && m.Timestamp > lm.Timestamp) ||
 			(m.Step == lm.Step && m.Timestamp == lm.Timestamp && m.Value > lm.Value) {
-			latestMetrics[m.Key] = model.LatestMetric{
+			latestMetrics[m.Key] = database.LatestMetric{
 				RunID:     m.RunID,
 				Key:       m.Key,
 				Value:     m.Value,
@@ -813,7 +812,7 @@ func runLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 		}
 	}
 
-	if tx := db.Create(&dbMetrics); tx.Error != nil {
+	if tx := database.DB.Create(&dbMetrics); tx.Error != nil {
 		return NewError(ErrorCodeInternalError, "Unable to insert metrics for run '%s': %s", id, tx.Error)
 	}
 
@@ -826,17 +825,17 @@ func runLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 		n += 1
 	}
 
-	var currentLatestMetrics []model.LatestMetric
-	if tx := db.Where("run_uuid = ?", id).Where("key IN ?", keys).Find(&currentLatestMetrics); tx.Error != nil {
+	var currentLatestMetrics []database.LatestMetric
+	if tx := database.DB.Where("run_uuid = ?", id).Where("key IN ?", keys).Find(&currentLatestMetrics); tx.Error != nil {
 		return NewError(ErrorCodeInternalError, "Unable to get latest metrics for run '%s': %s", id, tx.Error)
 	}
 
-	currentLatestMetricsMap := make(map[string]model.LatestMetric, len(currentLatestMetrics))
+	currentLatestMetricsMap := make(map[string]database.LatestMetric, len(currentLatestMetrics))
 	for _, m := range currentLatestMetrics {
 		currentLatestMetricsMap[m.Key] = m
 	}
 
-	updatedLatestMetrics := make([]model.LatestMetric, 0, len(keys))
+	updatedLatestMetrics := make([]database.LatestMetric, 0, len(keys))
 	for k, m := range latestMetrics {
 		lm, ok := currentLatestMetricsMap[k]
 		if !ok ||
@@ -848,7 +847,7 @@ func runLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 	}
 
 	if len(updatedLatestMetrics) > 0 {
-		if tx := db.Clauses(clause.OnConflict{
+		if tx := database.DB.Clauses(clause.OnConflict{
 			UpdateAll: true,
 		}).Create(&updatedLatestMetrics); tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Unable to update latest metrics for run '%s': %s", id, tx.Error)
@@ -858,45 +857,45 @@ func runLogMetrics(db *gorm.DB, id string, metrics []Metric) error {
 	return nil
 }
 
-func runLogParams(db *gorm.DB, id string, params []RunParam) error {
+func runLogParams(id string, params []RunParam) error {
 	if len(params) == 0 {
 		return nil
 	}
 
-	if tx := db.Select("run_uuid").Where("lifecycle_stage = ?", model.LifecycleStageActive).First(&model.Run{ID: id}); tx.Error != nil {
+	if tx := database.DB.Select("run_uuid").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&database.Run{ID: id}); tx.Error != nil {
 		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", id, tx.Error)
 	}
 
-	dbParams := make([]model.Param, len(params))
+	dbParams := make([]database.Param, len(params))
 	for n, p := range params {
-		dbParams[n] = model.Param{
+		dbParams[n] = database.Param{
 			Key:   p.Key,
 			Value: p.Value,
 			RunID: id,
 		}
 	}
 
-	if tx := db.Create(&dbParams); tx.Error != nil {
+	if tx := database.DB.Create(&dbParams); tx.Error != nil {
 		return NewError(ErrorCodeInternalError, "Unable to insert params for run '%s': %s", id, tx.Error)
 	}
 
 	return nil
 }
 
-func runSetTags(db *gorm.DB, id string, tags []RunTag) error {
+func runSetTags(id string, tags []RunTag) error {
 	if len(tags) == 0 {
 		return nil
 	}
 
-	run := model.Run{ID: id}
-	if tx := db.Select("run_uuid", "name", "user_id").Where("lifecycle_stage = ?", model.LifecycleStageActive).First(&run); tx.Error != nil {
+	run := database.Run{ID: id}
+	if tx := database.DB.Select("run_uuid", "name", "user_id").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&run); tx.Error != nil {
 		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", id, tx.Error)
 	}
 
-	tx := db.Begin()
-	dbTags := make([]model.Tag, len(tags))
+	tx := database.DB.Begin()
+	dbTags := make([]database.Tag, len(tags))
 	for n, t := range tags {
-		dbTags[n] = model.Tag{
+		dbTags[n] = database.Tag{
 			Key:   t.Key,
 			Value: t.Value,
 			RunID: id,
@@ -925,7 +924,7 @@ func runSetTags(db *gorm.DB, id string, tags []RunTag) error {
 	return nil
 }
 
-func modelRunToAPI(r model.Run) Run {
+func modelRunToAPI(r database.Run) Run {
 	metrics := make([]Metric, len(r.LatestMetrics))
 	for n, m := range r.LatestMetrics {
 

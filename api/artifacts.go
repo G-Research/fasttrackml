@@ -3,13 +3,12 @@ package api
 import (
 	"net/http"
 
-	"github.com/G-Resarch/fasttrack/model"
+	"github.com/G-Resarch/fasttrack/database"
 
 	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
-func ArtifactList(db *gorm.DB) HandlerFunc {
+func ArtifactList() HandlerFunc {
 	return EnsureMethod(func(w http.ResponseWriter, r *http.Request) any {
 		id := r.URL.Query().Get("run_id")
 		if id == "" {
@@ -24,11 +23,11 @@ func ArtifactList(db *gorm.DB) HandlerFunc {
 			return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
 		}
 
-		run := model.Run{
+		run := database.Run{
 			ID: id,
 		}
 
-		if tx := db.Select("artifact_uri").First(&run); tx.Error != nil {
+		if tx := database.DB.Select("artifact_uri").First(&run); tx.Error != nil {
 			return NewError(ErrorCodeInternalError, "Unable to get artifact URI for run '%s'", id)
 		}
 

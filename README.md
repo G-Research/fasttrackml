@@ -30,6 +30,7 @@ docker run --rm -ti fasttrack server --database-uri 'sqlite:///data/fasttrack.db
 ### License
 
 Copyright 2022-2023 G-Research
+
 Copyright 2018 Databricks, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use these files except in compliance with the License.

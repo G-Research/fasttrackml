@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
-	"fasttrack/model"
 	"fmt"
 	"math"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/G-Resarch/fasttrack/model"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"

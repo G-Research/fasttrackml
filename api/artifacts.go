@@ -1,8 +1,9 @@
 package api
 
 import (
-	"fasttrack/model"
 	"net/http"
+
+	"github.com/G-Resarch/fasttrack/model"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"

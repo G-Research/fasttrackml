@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
-	"fasttrack/model"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -12,7 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/G-Resarch/fasttrack/model"
+
 	"github.com/jackc/pgconn"
+	"github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
@@ -65,7 +67,10 @@ func ExperimentCreate(db *gorm.DB) HandlerFunc {
 		// TODO do it in one session?
 		if tx := db.Create(&exp); tx.Error != nil {
 			if err, ok := tx.Error.(*pgconn.PgError); ok && err.Code == "23505" {
-				return NewError(ErrorCodeResourceAlreadyExists, "An experiment already exists with the name '%s'", exp.Name)
+				return NewError(ErrorCodeResourceAlreadyExists, "Experiment(name=%s) already exists", exp.Name)
+			}
+			if err, ok := tx.Error.(sqlite3.Error); ok && err.Code == 19 && err.ExtendedCode == 2067 {
+				return NewError(ErrorCodeResourceAlreadyExists, "Experiment(name=%s) already exists", exp.Name)
 			}
 			return NewError(ErrorCodeInternalError, "Error inserting experiment '%s': %s", exp.Name, tx.Error)
 		}

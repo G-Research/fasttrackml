@@ -1,4 +1,4 @@
-module fasttrack
+module github.com/G-Resarch/fasttrack
 
 go 1.18
 
@@ -11,6 +11,7 @@ require (
 	github.com/apache/arrow/go/v11 v11.0.0
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.13.0
+	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.14.0
@@ -42,7 +43,6 @@ require (
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
-	github.com/mattn/go-sqlite3 v1.14.16 // indirect
 	github.com/minio/asm2plan9s v0.0.0-20200509001527-cdd76441f9d8 // indirect
 	github.com/minio/c2goasm v0.0.0-20190812172519-36a3d3bbc4f3 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

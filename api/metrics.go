@@ -2,8 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"fasttrack/model"
 	"net/http"
+
+	"github.com/G-Resarch/fasttrack/model"
 
 	"github.com/apache/arrow/go/v11/arrow"
 	"github.com/apache/arrow/go/v11/arrow/array"

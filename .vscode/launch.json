@@ -15,7 +15,7 @@
                 "--log-level",
                 "debug",
                 "--database-uri",
-                "postgres://postgres:postgres@localhost:5432/another?sslmode=disable"
+                "postgres://postgres:postgres@localhost:5432/postgres"
             ]
         },
         {

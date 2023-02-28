@@ -51,8 +51,8 @@ services:
       - .env
     command:
       - postgres
-      - -c
-      - log_statement=all
+      # - -c
+      # - log_statement=all
 
 
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.

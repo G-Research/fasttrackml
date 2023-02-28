@@ -4,12 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fasttrack/api"
-	"fasttrack/js"
-	"fasttrack/model"
 	"fmt"
 	"io"
-	"io/fs"
 	glog "log"
 	"net/http"
 	"net/url"
@@ -17,6 +13,10 @@ import (
 	"os/signal"
 	"strings"
 	"time"
+
+	"github.com/G-Resarch/fasttrack/api"
+	"github.com/G-Resarch/fasttrack/model"
+	"github.com/G-Resarch/fasttrack/ui"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -130,7 +130,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 			db.Exec("drop schema public cascade")
 			db.Exec("create schema public")
 		default:
-			return fmt.Errorf("unable to initialize database with schema \"%s\"", u.Scheme)
+			return fmt.Errorf("unable to initialize database with scheme \"%s\"", u.Scheme)
 		}
 	}
 
@@ -308,29 +308,34 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 	handler := http.NewServeMux()
 	for _, path := range []string{
-		"/api/2.0/mlflow/",
-		"/ajax-api/2.0/mlflow/",
-		"/api/2.0/preview/mlflow/",
-		"/ajax-api/2.0/preview/mlflow/",
+		"/mlflow/api/2.0/mlflow/",
+		"/mlflow/ajax-api/2.0/mlflow/",
+		"/mlflow/api/2.0/preview/mlflow/",
+		"/mlflow/ajax-api/2.0/preview/mlflow/",
 	} {
 		handler.Handle(path, api.BasicAuth(http.StripPrefix(strings.TrimRight(path, "/"), apiHandler)))
 	}
 
-	handler.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
+	handler.HandleFunc("/mlflow/health", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "OK")
 	})
 
-	staticFiles, _ := fs.Sub(js.Content, "build")
-	handler.Handle("/static-files/", http.StripPrefix("/static-files/", http.FileServer(http.FS(staticFiles))))
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
+	handler.HandleFunc("/mlflow/version", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, version)
+	})
+
+	handler.Handle("/mlflow/static-files/", http.StripPrefix("/mlflow/static-files/", http.FileServer(http.FS(ui.MlflowFS))))
+	handler.HandleFunc("/mlflow/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/mlflow/" {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		f, _ := staticFiles.Open("index.html")
+		f, _ := ui.MlflowFS.Open("index.html")
 		defer f.Close()
 		io.Copy(w, f)
 	})
+
+	handler.Handle("/", http.FileServer(http.FS(ui.ChooserFS)))
 
 	server := &http.Server{
 		Addr:    viper.GetString("listen-address"),

@@ -4,6 +4,5 @@
 Dockerfile
 fasttrack
 fasttrack.db*
-js/.yarn
-js/build
-js/node_modules
+ui/*/build*
+!ui/*/build.sh

@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/G-Resarch/fasttrack/version"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 const (
-	version   = "0.0.8"
 	envPrefix = "FASTTRACK"
 )
 
@@ -21,7 +22,7 @@ var RootCmd = &cobra.Command{
 It aims at being 100% compatible with the MLFlow client library and should be a
 drop-in replacement. It can even use existing SQLite/SQLCipher/PostgreSQL
 databases created by MLFlow 1.21+.`,
-	Version:           version,
+	Version:           version.Version,
 	PersistentPreRunE: initCmd,
 	SilenceUsage:      true,
 	SilenceErrors:     true,

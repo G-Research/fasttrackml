@@ -1,4 +1,4 @@
-package api
+package mlflow
 
 import (
 	"crypto/rand"

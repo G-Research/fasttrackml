@@ -1,4 +1,6 @@
-package api
+package mlflow
+
+import "fmt"
 
 // TODO conversion methods to/from model
 // or maybe even better, compatibility between both?
@@ -21,47 +23,58 @@ const (
 	ErrorCodeResourceDoesNotExist   = "RESOURCE_DOES_NOT_EXIST"
 )
 
-type ExperimentCreateRequest struct {
+func NewError(e ErrorCode, msg string, args ...any) *ErrorResponse {
+	return &ErrorResponse{
+		ErrorCode: e,
+		Message:   fmt.Sprintf(msg, args...),
+	}
+}
+
+func (e *ErrorResponse) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode, e.Message)
+}
+
+type CreateExperimentRequest struct {
 	Name             string          `json:"name"`
 	ArtifactLocation string          `json:"artifact_location"`
 	Tags             []ExperimentTag `json:"tags"`
 }
 
-type ExperimentCreateResponse struct {
+type CreateExperimentResponse struct {
 	ID string `json:"experiment_id"`
 }
 
-type ExperimentUpdateRequest struct {
+type UpdateExperimentRequest struct {
 	ID   string `json:"experiment_id"`
 	Name string `json:"new_name"`
 }
 
-type ExperimentGetResponse struct {
+type GetExperimentResponse struct {
 	Experiment Experiment `json:"experiment"`
 }
 
-type ExperimentDeleteRequest ExperimentCreateResponse
+type DeleteExperimentRequest CreateExperimentResponse
 
-type ExperimentRestoreRequest ExperimentCreateResponse
+type RestoreExperimentRequest CreateExperimentResponse
 
-type ExperimentSetTagRequest struct {
+type SetExperimentTagRequest struct {
 	ID string `json:"experiment_id"`
 	ExperimentTag
 }
 
-type ExperimentSearchRequest struct {
-	MaxResults int64    `json:"max_results"`
-	PageToken  string   `json:"page_token"`
-	Filter     string   `json:"filter"`
-	OrderBy    []string `json:"order_by"`
-	ViewType   ViewType `json:"view_type"`
+type SearchExperimentsRequest struct {
+	MaxResults int64    `json:"max_results" query:"max_results"`
+	PageToken  string   `json:"page_token"  query:"page_token"`
+	Filter     string   `json:"filter"      query:"filter"`
+	OrderBy    []string `json:"order_by"    query:"order_by"`
+	ViewType   ViewType `json:"view_type"   query:"view_type"`
 }
 
-type ExperimentSearchResponse struct {
+type SearchExperimentsResponse struct {
 	Experiments   []Experiment `json:"experiments"`
 	NextPageToken string       `json:"next_page_token,omitempty"`
 }
-type RunCreateRequest struct {
+type CreateRunRequest struct {
 	ExperimentID string   `json:"experiment_id"`
 	UserID       string   `json:"user_id"`
 	Name         string   `json:"run_name"`
@@ -69,11 +82,11 @@ type RunCreateRequest struct {
 	Tags         []RunTag `json:"tags"`
 }
 
-type RunCreateResponse struct {
+type CreateRunResponse struct {
 	Run Run `json:"run"`
 }
 
-type RunUpdateRequest struct {
+type UpdateRunRequest struct {
 	ID      string    `json:"run_id"`
 	UUID    string    `json:"run_uuid"`
 	Name    string    `json:"run_name"`
@@ -81,7 +94,7 @@ type RunUpdateRequest struct {
 	EndTime int64     `json:"end_time"`
 }
 
-type RunUpdateResponse struct {
+type UpdateRunResponse struct {
 	RunInfo RunInfo `json:"run_info"`
 }
 
@@ -90,9 +103,9 @@ type RunGetRequest struct {
 	UUID string `json:"run_uuid"`
 }
 
-type RunGetResponse RunCreateResponse
+type GetRunResponse CreateRunResponse
 
-type RunSearchRequest struct {
+type SearchRunsRequest struct {
 	ExperimentIDs []string `json:"experiment_ids"`
 	Filter        string   `json:"filter"`
 	ViewType      ViewType `json:"run_view_type"`
@@ -101,54 +114,54 @@ type RunSearchRequest struct {
 	PageToken     string   `json:"page_token"`
 }
 
-type RunSearchResponse struct {
+type SearchRunsResponse struct {
 	Runs          []Run  `json:"runs"`
 	NextPageToken string `json:"next_page_token,omitempty"`
 }
 
-type RunRestoreRequest RunGetRequest
+type RestoreRunRequest RunGetRequest
 
-type RunDeleteRequest RunGetRequest
+type DeleteRunRequest RunGetRequest
 
-type RunLogParamRequest struct {
+type LogParamRequest struct {
 	ID   string `json:"run_id"`
 	UUID string `json:"run_uuid"`
 	RunParam
 }
 
-type RunLogMetricRequest struct {
+type LogMetricRequest struct {
 	ID   string `json:"run_id"`
 	UUID string `json:"run_uuid"`
 	Metric
 }
 
-type RunLogBatchRequest struct {
+type LogBatchRequest struct {
 	ID string `json:"run_id"`
 	RunData
 }
 
-type RunSetTagRequest struct {
+type SetRunTagRequest struct {
 	ID   string `json:"run_id"`
 	UUID string `json:"run_uuid"`
 	RunTag
 }
 
-type RunDeleteTagRequest struct {
+type DeleteRunTagRequest struct {
 	ID  string `json:"run_id"`
 	Key string `json:"key"`
 }
 
-type ArtifactListResponse struct {
+type ListArtifactsResponse struct {
 	RootURI       string `json:"root_uri"`
 	Files         []File `json:"files"`
 	NextPageToken string `json:"next_page_token,omitempty"`
 }
 
-type MetricsGetHistoryResponse struct {
+type GetMetricHistoryResponse struct {
 	Metrics []Metric `json:"metrics"`
 }
 
-type MetricsGetHistoriesRequest struct {
+type GetMetricHistoriesRequest struct {
 	ExperimentIDs []string `json:"experiment_ids"`
 	RunIDs        []string `json:"run_ids"`
 	MetricKeys    []string `json:"metric_keys"`

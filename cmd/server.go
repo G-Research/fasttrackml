@@ -1,19 +1,23 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
 
-	"github.com/G-Resarch/fasttrack/api"
+	"github.com/G-Resarch/fasttrack/api/mlflow"
 	"github.com/G-Resarch/fasttrack/database"
 	"github.com/G-Resarch/fasttrack/ui"
+	"github.com/G-Resarch/fasttrack/version"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/etag"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,80 +40,44 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	)
 	defer database.DB.Close()
 
-	apiHandler := api.NewServeMux()
-	apiHandler.HandleFunc("/artifacts/list", api.ArtifactList())
-	apiHandler.HandleFunc("/experiments/create", api.ExperimentCreate())
-	apiHandler.HandleFunc("/experiments/delete", api.ExperimentDelete())
-	apiHandler.HandleFunc("/experiments/get", api.ExperimentGet())
-	apiHandler.HandleFunc("/experiments/get-by-name", api.ExperimentGetByName())
-	apiHandler.HandleFunc("/experiments/restore", api.ExperimentRestore())
-	apiHandler.HandleFunc("/experiments/list", api.ExperimentSearch())
-	apiHandler.HandleFunc("/experiments/search", api.ExperimentSearch())
-	apiHandler.HandleFunc("/experiments/set-experiment-tag", api.ExperimentSetTag())
-	apiHandler.HandleFunc("/experiments/update", api.ExperimentUpdate())
-	apiHandler.HandleFunc("/metrics/get-history", api.MetricGetHistory())
-	apiHandler.HandleFunc("/metrics/get-histories", api.MetricsGetHistories())
-	apiHandler.HandleFunc("/runs/create", api.RunCreate())
-	apiHandler.HandleFunc("/runs/delete", api.RunDelete())
-	apiHandler.HandleFunc("/runs/delete-tag", api.RunDeleteTag())
-	apiHandler.HandleFunc("/runs/get", api.RunGet())
-	apiHandler.HandleFunc("/runs/log-batch", api.RunLogBatch())
-	apiHandler.HandleFunc("/runs/log-metric", api.RunLogMetric())
-	apiHandler.HandleFunc("/runs/log-parameter", api.RunLogParam())
-	apiHandler.HandleFunc("/runs/restore", api.RunRestore())
-	apiHandler.HandleFunc("/runs/search", api.RunSearch())
-	apiHandler.HandleFunc("/runs/set-tag", api.RunSetTag())
-	apiHandler.HandleFunc("/runs/update", api.RunUpdate())
-	apiHandler.HandleFunc("/model-versions/search", func(w http.ResponseWriter, r *http.Request) any {
-		return struct {
-			ModelVersions []struct{} `json:"model_versions"`
-		}{
-			ModelVersions: make([]struct{}, 0),
-		}
-	})
-	apiHandler.HandleFunc("/registered-models/search", func(w http.ResponseWriter, r *http.Request) any {
-		return struct {
-			RegisteredModels []struct{} `json:"registered_models"`
-		}{
-			RegisteredModels: make([]struct{}, 0),
-		}
+	server := fiber.New(fiber.Config{
+		ServerHeader:          fmt.Sprintf("fasttrack/%s", version.Version),
+		DisableStartupMessage: true,
 	})
 
-	handler := http.NewServeMux()
-	for _, path := range []string{
-		"/mlflow/api/2.0/mlflow/",
-		"/mlflow/ajax-api/2.0/mlflow/",
-		"/mlflow/api/2.0/preview/mlflow/",
-		"/mlflow/ajax-api/2.0/preview/mlflow/",
-	} {
-		handler.Handle(path, api.BasicAuth(http.StripPrefix(strings.TrimRight(path, "/"), apiHandler)))
-	}
+	server.Mount("/mlflow/", mlflow.NewApp(viper.GetString("auth-username"), viper.GetString("auth-password")))
 
-	handler.HandleFunc("/mlflow/health", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "OK")
+	// Somehow mounting/using ChooserFS as a filesystem handler _sometimes_ results in 404 status code for /mlflow/
+	// This is working around it in a non-intellectually-satisfying but effective way
+	server.Get("/", etag.New(), func(c *fiber.Ctx) error {
+		file, _ := ui.ChooserFS.Open("index.html")
+		stat, _ := file.Stat()
+		c.Set("Content-Type", "text/html; charset=utf-8")
+		c.Response().SetBodyStream(file, int(stat.Size()))
+		return nil
+	})
+	server.Get("/simple.min.css", etag.New(), func(c *fiber.Ctx) error {
+		file, _ := ui.ChooserFS.Open("simple.min.css")
+		stat, _ := file.Stat()
+		c.Set("Content-Type", "text/css")
+		c.Response().SetBodyStream(file, int(stat.Size()))
+		return nil
 	})
 
-	handler.HandleFunc("/mlflow/version", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, version)
-	})
+	server.Use(compress.New(compress.Config{
+		Next: func(c *fiber.Ctx) bool {
+			// This is a little bit brittle, maybe there is a better way?
+			// Do not compress metric histories as urllib3 did not support file-like compressed reads until 2.0.0a1
+			return strings.HasSuffix(c.Path(), "/metrics/get-histories")
+		},
+	}))
 
-	handler.Handle("/mlflow/static-files/", http.StripPrefix("/mlflow/static-files/", http.FileServer(http.FS(ui.MlflowFS))))
-	handler.HandleFunc("/mlflow/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/mlflow/" {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		f, _ := ui.MlflowFS.Open("index.html")
-		defer f.Close()
-		io.Copy(w, f)
-	})
+	server.Use(recover.New(recover.Config{EnableStackTrace: true}))
 
-	handler.Handle("/", http.FileServer(http.FS(ui.ChooserFS)))
-
-	server := &http.Server{
-		Addr:    viper.GetString("listen-address"),
-		Handler: handler,
-	}
+	server.Use(logger.New(logger.Config{
+		Format: "${status} - ${latency} ${method} ${path}\n",
+		Output: log.StandardLogger().Writer(),
+	}))
 
 	idleConnsClosed := make(chan struct{})
 	go func() {
@@ -118,14 +86,15 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		<-sigint
 
 		log.Infof("Shutting down")
-		if err := server.Shutdown(context.Background()); err != nil {
+		if err := server.Shutdown(); err != nil {
 			log.Infof("Error shutting down server: %v", err)
 		}
 		close(idleConnsClosed)
 	}()
 
-	log.Infof("Listening on %s", server.Addr)
-	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+	addr := viper.GetString("listen-address")
+	log.Infof("Listening on %s", addr)
+	if err := server.Listen(addr); err != http.ErrServerClosed {
 		return fmt.Errorf("error listening: %v", err)
 	}
 

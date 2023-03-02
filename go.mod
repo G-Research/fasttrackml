@@ -9,6 +9,7 @@ replace (
 
 require (
 	github.com/apache/arrow/go/v11 v11.0.0
+	github.com/go-python/gpython v0.1.0
 	github.com/gofiber/fiber/v2 v2.42.0
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.13.0

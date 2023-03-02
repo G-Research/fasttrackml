@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/G-Resarch/fasttrack/api/aim"
 	"github.com/G-Resarch/fasttrack/api/mlflow"
 	"github.com/G-Resarch/fasttrack/database"
 	"github.com/G-Resarch/fasttrack/ui"
@@ -45,6 +46,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		DisableStartupMessage: true,
 	})
 
+	server.Mount("/aim/", aim.NewApp(viper.GetString("auth-username"), viper.GetString("auth-password")))
 	server.Mount("/mlflow/", mlflow.NewApp(viper.GetString("auth-username"), viper.GetString("auth-password")))
 
 	// Somehow mounting/using ChooserFS as a filesystem handler _sometimes_ results in 404 status code for /mlflow/

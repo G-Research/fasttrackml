@@ -10,7 +10,7 @@ RUN /aim/build.sh
 
 FROM golang:1.19-alpine3.17 AS go-build
 
-RUN apk add build-base gcc openssl-dev
+RUN apk add --no-cache build-base gcc openssl-dev
 
 WORKDIR /build
 COPY go.mod go.sum ./

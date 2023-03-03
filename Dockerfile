@@ -3,6 +3,11 @@ FROM node:16 AS mlflow-build
 COPY ui/mlflow /mlflow
 RUN /mlflow/build.sh
 
+FROM node:16 AS aim-build
+
+COPY ui/aim /aim
+RUN /aim/build.sh
+
 FROM golang:1.19-alpine3.17 AS go-build
 
 RUN apk add build-base gcc openssl-dev
@@ -12,6 +17,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 COPY --from=mlflow-build /mlflow/build ./ui/mlflow/build
+COPY --from=aim-build /aim/build ./ui/aim/build
 RUN go build --tags "sqlcipher sqlite_unlock_notify sqlite_foreign_keys sqlite_vacuum_incr"
 
 

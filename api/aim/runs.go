@@ -332,9 +332,50 @@ func GetRunsSearch(c *fiber.Ctx) error {
 	}
 
 	pq := query.QueryParser{
-		// Tables: map[string]string{
-		// 	"run": "runs",
-		// },
+		Tables: map[string]query.Table{
+			"run": {
+				"created_at": clause.Column{
+					// Table: "runs",
+					Name: "start_time",
+				},
+				"finalized_at": clause.Column{
+					// Table: "runs",
+					Name: "end_time",
+				},
+				"hash": clause.Column{
+					// Table: "runs",
+					Name: "run_uuid",
+				},
+				"name": clause.Column{
+					// Table: "runs",
+					Name: "name",
+				},
+				"experiment": clause.Column{
+					Table: "Experiment",
+					Name:  "name",
+				},
+				"archived": clause.Eq{
+					Column: clause.Column{
+						// Table: "runs",
+						Name: "lifecycle_stage",
+					},
+					Value: database.LifecycleStageDeleted,
+				},
+				"active": clause.Eq{
+					Column: clause.Column{
+						Table: "runs",
+						Name:  "status",
+					},
+					Value: database.StatusRunning,
+				},
+				"duration": clause.Column{
+					Name: "runs.end_time - runs.start_time",
+					Raw:  true,
+				},
+				// "tags":
+				// "metrics":
+			},
+		},
 		TzOffset: tzOffset,
 	}
 	qp, err := pq.Parse(q.Query)
@@ -395,10 +436,11 @@ func GetRunsSearch(c *fiber.Ctx) error {
 		// if where != nil {
 		// 	expr = clause.And(where, expr)
 		// }
-		if tx := database.DB.
-			Model(&database.Run{}).
-			Joins("Experiment").
-			Where(expr).
+		if tx := qp.Filter(
+			database.DB.
+				Model(&database.Run{}).
+				Joins("Experiment").
+				Where(expr)).
 			Count(&count); tx.Error != nil {
 			return fmt.Errorf("unable to compute search runs offset %q: %w", q.Offset, tx.Error)
 		}
@@ -417,7 +459,7 @@ func GetRunsSearch(c *fiber.Ctx) error {
 	}
 
 	var runs []database.Run
-	tx.Find(&runs)
+	qp.Filter(tx).Find(&runs)
 	if tx.Error != nil {
 		return fmt.Errorf("error searching runs: %w", tx.Error)
 	}
@@ -516,6 +558,8 @@ func GetRunsSearch(c *fiber.Ctx) error {
 	return nil
 }
 
+// TODO proper streaming (à la api.mlflow.GetMetricHistories)
+// though maybe not necessary once Query and Steps are implemented
 func GetRunsMetricsSearch(c *fiber.Ctx) error {
 	q := struct {
 		Query string `query:"q"`
@@ -540,7 +584,7 @@ func GetRunsMetricsSearch(c *fiber.Ctx) error {
 
 	if q.Query != "" {
 		query := fmt.Sprintf("((%s))", q.Query)
-		if _, err := parser.ParseString(query, py.EvalMode+"b"); err != nil {
+		if _, err := parser.ParseString(query, py.EvalMode); err != nil {
 			if err, ok := err.(*py.Exception); ok && err.Base.Name == py.SyntaxError.Name {
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 					"message": "SyntaxError",

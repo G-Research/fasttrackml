@@ -486,16 +486,12 @@ func SearchExperiments(c *fiber.Ctx) error {
 		case "experiment_id":
 			expOrder = true
 			fallthrough
-		case "name":
-			if database.DB.Dialector.Name() == "postgres" {
-				column += ` COLLATE "C"`
-			}
-		case "creation_time", "last_update_time":
+		case "name", "creation_time", "last_update_time":
 		default:
 			return NewError(ErrorCodeInvalidParameterValue, "Invalid attribute '%s'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']", column)
 		}
 		tx.Order(clause.OrderByColumn{
-			Column: clause.Column{Name: column, Raw: true},
+			Column: clause.Column{Name: column},
 			Desc:   len(components) == 3 && strings.ToUpper(components[2]) == "DESC",
 		})
 

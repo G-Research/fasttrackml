@@ -1,5 +1,5 @@
 diff --git a/aim/web/ui/package.json b/aim/web/ui/package.json
-index e0de1d6..5d475f3 100644
+index 8c8b1e9..4ef1195 100644
 --- a/aim/web/ui/package.json
 +++ b/aim/web/ui/package.json
 @@ -66,7 +66,7 @@
@@ -170,7 +170,7 @@ index 9c9fb38..fb0de77 100644
        props: {
          experimentName: experimentData?.name ?? '',
 diff --git a/aim/web/ui/src/pages/RunDetail/RunDetail.tsx b/aim/web/ui/src/pages/RunDetail/RunDetail.tsx
-index cff6689..1dfa112 100644
+index b0d58c3..1dfa112 100644
 --- a/aim/web/ui/src/pages/RunDetail/RunDetail.tsx
 +++ b/aim/web/ui/src/pages/RunDetail/RunDetail.tsx
 @@ -1,5 +1,4 @@
@@ -191,7 +191,7 @@ index cff6689..1dfa112 100644
  const RunDetailParamsTab = React.lazy(
    () =>
      import(/* webpackChunkName: "RunDetailParamsTab" */ './RunDetailParamsTab'),
-@@ -60,31 +54,14 @@ const RunDetailMetricsAndSystemTab = React.lazy(
+@@ -60,35 +54,14 @@ const RunDetailMetricsAndSystemTab = React.lazy(
        /* webpackChunkName: "RunDetailMetricsAndSystemTab" */ './RunDetailMetricsAndSystemTab'
      ),
  );
@@ -207,12 +207,16 @@ index cff6689..1dfa112 100644
 -const RunLogsTab = React.lazy(
 -  () => import(/* webpackChunkName: "RunLogsTab" */ './RunLogsTab'),
 -);
+-const RunLogRecords = React.lazy(
+-  () => import(/* webpackChunkName: "RunLogRecords" */ './RunLogRecords'),
+-);
  
  const tabs: Record<string, string> = {
    overview: 'Overview',
    run_parameters: 'Run Params',
 -  notes: 'Notes',
 -  logs: 'Logs',
+-  messages: 'Messages',
    metrics: 'Metrics',
 -  system: 'System',
 -  distributions: 'Distributions',
@@ -223,7 +227,7 @@ index cff6689..1dfa112 100644
    settings: 'Settings',
  };
  
-@@ -128,15 +105,6 @@ function RunDetail(): React.FunctionComponentElement<React.ReactNode> {
+@@ -132,21 +105,6 @@ function RunDetail(): React.FunctionComponentElement<React.ReactNode> {
          isRunInfoLoading={runData?.isRunInfoLoading}
        />
      ),
@@ -236,10 +240,16 @@ index cff6689..1dfa112 100644
 -        isRunLogsLoading={runData?.isRunLogsLoading}
 -      />
 -    ),
+-    messages: (
+-      <RunLogRecords
+-        runHash={runHash}
+-        inProgress={_.isNil(runData?.runInfo?.end_time)}
+-      />
+-    ),
      metrics: (
        <RunDetailMetricsAndSystemTab
          runHash={runHash}
-@@ -145,52 +113,6 @@ function RunDetail(): React.FunctionComponentElement<React.ReactNode> {
+@@ -155,52 +113,6 @@ function RunDetail(): React.FunctionComponentElement<React.ReactNode> {
          isRunBatchLoading={runData?.isRunBatchLoading}
        />
      ),
@@ -292,7 +302,7 @@ index cff6689..1dfa112 100644
      settings: (
        <RunDetailSettingsTab
          isArchived={runData?.runInfo?.archived}
-@@ -199,7 +121,6 @@ function RunDetail(): React.FunctionComponentElement<React.ReactNode> {
+@@ -209,7 +121,6 @@ function RunDetail(): React.FunctionComponentElement<React.ReactNode> {
          runHash={runHash}
        />
      ),
@@ -301,10 +311,10 @@ index cff6689..1dfa112 100644
  
    function getRunsOfExperiment(
 diff --git a/aim/web/ui/src/pages/RunDetail/RunOverviewTab/components/RunOverviewSidebar/RunOverviewSidebar.tsx b/aim/web/ui/src/pages/RunDetail/RunOverviewTab/components/RunOverviewSidebar/RunOverviewSidebar.tsx
-index 5e80ed1..9812bd0 100644
+index b17f9cb..0cbd65b 100644
 --- a/aim/web/ui/src/pages/RunDetail/RunOverviewTab/components/RunOverviewSidebar/RunOverviewSidebar.tsx
 +++ b/aim/web/ui/src/pages/RunDetail/RunOverviewTab/components/RunOverviewSidebar/RunOverviewSidebar.tsx
-@@ -53,46 +53,11 @@ function RunOverviewSidebar({
+@@ -54,46 +54,11 @@ function RunOverviewSidebar({
      const systemMetricsLength: number =
        traces.metric.filter((m) => m.name.startsWith('__system__')).length || 0;
      return [

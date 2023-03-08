@@ -1,5 +1,5 @@
 diff --git a/mlflow/server/js/craco.config.js b/mlflow/server/js/craco.config.js
-index b8896f0..0818f51 100644
+index 97c79d2..b413a82 100644
 --- a/mlflow/server/js/craco.config.js
 +++ b/mlflow/server/js/craco.config.js
 @@ -74,7 +74,7 @@ function configureIframeCSSPublicPaths(config, env) {
@@ -12,10 +12,10 @@ index b8896f0..0818f51 100644
                loaderConfig.options = { publicPath };
  
 diff --git a/mlflow/server/js/src/common/constants.js b/mlflow/server/js/src/common/constants.js
-index b2c7c56..d557399 100644
+index b176e1c..66fe90e 100644
 --- a/mlflow/server/js/src/common/constants.js
 +++ b/mlflow/server/js/src/common/constants.js
-@@ -42,7 +42,7 @@ export const LoggingRunsDocUrl = `${DOCS_ROOT}/tracking.html#logging-data-to-run
+@@ -43,7 +43,7 @@ export const LoggingRunsDocUrl = `${DOCS_ROOT}/tracking.html#logging-data-to-run
  
  export const onboarding = 'onboarding';
  
@@ -927,21 +927,20 @@ index 6ad01a9..f1f8b5b 100644
  
  div.github {
 diff --git a/mlflow/server/js/src/experiment-tracking/components/App.js b/mlflow/server/js/src/experiment-tracking/components/App.js
-index 0f817b2..136eaf3 100644
+index bf1f184..1f260c0 100644
 --- a/mlflow/server/js/src/experiment-tracking/components/App.js
 +++ b/mlflow/server/js/src/experiment-tracking/components/App.js
-@@ -1,8 +1,9 @@
- import React, { Component } from 'react';
- import { connect } from 'react-redux';
- import { HashRouter as Router, Link, NavLink, Route, Switch } from 'react-router-dom';
-+import { fetchEndpoint } from 'src/common/utils/FetchUtils';
+@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
+ import { HashRouter as Router, Link, NavLink, Switch } from 'react-router-dom';
+ import { CompatRouter, CompatRoute as Route } from 'react-router-dom-v5-compat';
  import AppErrorBoundary from '../../common/components/error-boundaries/AppErrorBoundary';
 -import { HomePageDocsUrl, Version } from '../../common/constants';
 +import { HomePageDocsUrl } from '../../common/constants';
++import { fetchEndpoint } from '../../common/utils/FetchUtils';
  import logo from '../../common/static/home-logo.png';
  import ErrorModal from '../../experiment-tracking/components/modals/ErrorModal';
  import { CompareModelVersionsPage } from '../../model-registry/components/CompareModelVersionsPage';
-@@ -44,6 +45,24 @@ const classNames = {
+@@ -45,6 +46,24 @@ const classNames = {
  const InteractionTracker = ({ children }) => children;
  
  class App extends Component {
@@ -966,21 +965,21 @@ index 0f817b2..136eaf3 100644
    render() {
      const marginRight = 24;
      return (
-@@ -59,7 +78,7 @@ class App extends Component {
-                 <Link to={Routes.rootRoute} className='App-mlflow'>
-                   <img className='mlflow-logo' alt='MLflow' src={logo} />
-                 </Link>
--                <span className={'mlflow-version'}>{Version}</span>
-+                <span className={'mlflow-version'}>{this.state.version}</span>
-               </div>
-               <div className='header-route-links'>
-                 <NavLink
-@@ -87,7 +106,7 @@ class App extends Component {
-                 </NavLink>
-               </div>
-               <div className='header-links'>
--                <a href={'https://github.com/mlflow/mlflow'} css={{ marginRight }}>
-+                <a href={'https://github.com/G-Research/fasttrack'} css={{ marginRight }}>
-                   <div className='github'>
-                     <span>GitHub</span>
-                   </div>
+@@ -63,7 +82,7 @@ class App extends Component {
+                   <Link to={Routes.rootRoute} className='App-mlflow'>
+                     <img className='mlflow-logo' alt='MLflow' src={logo} />
+                   </Link>
+-                  <span className={'mlflow-version'}>{Version}</span>
++                  <span className={'mlflow-version'}>{this.state.version}</span>
+                 </div>
+                 <div className='header-route-links'>
+                   <NavLink
+@@ -91,7 +110,7 @@ class App extends Component {
+                   </NavLink>
+                 </div>
+                 <div className='header-links'>
+-                  <a href={'https://github.com/mlflow/mlflow'} css={{ marginRight }}>
++                  <a href={'https://github.com/G-Research/fasttrack'} css={{ marginRight }}>
+                     <div className='github'>
+                       <span>GitHub</span>
+                     </div>

@@ -42,6 +42,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	defer database.DB.Close()
 
 	server := fiber.New(fiber.Config{
+		ReadBufferSize:        16384,
 		ServerHeader:          fmt.Sprintf("fasttrack/%s", version.Version),
 		DisableStartupMessage: true,
 	})

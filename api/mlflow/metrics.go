@@ -17,7 +17,7 @@ func GetMetricHistory(c *fiber.Ctx) error {
 	id := c.Query("run_id", c.Query("run_uuid"))
 	key := c.Query("metric_key")
 
-	log.Debugf("GetMetricHistory request: run_id='%s', metric_key='%s'", id, key)
+	log.Debugf("GetMetricHistory request: run_id=%q, metric_key=%q", id, key)
 
 	if id == "" {
 		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
@@ -28,7 +28,7 @@ func GetMetricHistory(c *fiber.Ctx) error {
 
 	var metrics []database.Metric
 	if tx := database.DB.Where("run_uuid = ?", id).Where("key = ?", key).Find(&metrics); tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to get metric history for metric '%s' of run '%s'", key, id)
+		return NewError(ErrorCodeInternalError, "Unable to get metric history for metric %q of run %q", key, id)
 	}
 
 	resp := &GetMetricHistoryResponse{
@@ -47,7 +47,72 @@ func GetMetricHistory(c *fiber.Ctx) error {
 		}
 	}
 
-	log.Debugf("MetricGetHistory response: %#v", resp)
+	log.Debugf("GetMetricHistory response: %#v", resp)
+
+	return c.JSON(resp)
+}
+
+func GetMetricHistoryBulk(c *fiber.Ctx) error {
+	q := struct {
+		RunIDs     []string `query:"run_id"`
+		MetricKey  string   `query:"metric_key"`
+		MaxResults int      `query:"max_results"`
+	}{}
+
+	if err := c.QueryParser(&q); err != nil {
+		return NewError(ErrorCodeBadRequest, err.Error())
+	}
+
+	if len(q.RunIDs) == 0 {
+		return NewError(ErrorCodeInvalidParameterValue, "GetMetricHistoryBulk request must specify at least one run_id.")
+	}
+
+	if len(q.RunIDs) > 200 {
+		return NewError(ErrorCodeInvalidParameterValue, "GetMetricHistoryBulk request cannot specify more than 200 run_ids. Received %d run_ids.", len(q.RunIDs))
+	}
+
+	if q.MetricKey == "" {
+		return NewError(ErrorCodeInvalidParameterValue, "GetMetricHistoryBulk request must specify a metric_key.")
+	}
+
+	if q.MaxResults == 0 {
+		q.MaxResults = 25000
+	}
+
+	log.Debugf("GetMetricHistoryBulk request: %#v", q)
+
+	var dbMetrics []database.Metric
+	if tx := database.DB.
+		Where("run_uuid IN ?", q.RunIDs).
+		Where("key = ?", q.MetricKey).
+		Order("run_uuid").
+		Order("timestamp").
+		Order("step").
+		Order("value").
+		Limit(q.MaxResults).
+		Find(&dbMetrics); tx.Error != nil {
+		return NewError(ErrorCodeInternalError, "Unable to get metric history in bulk for metric %q of runs %q", q.MetricKey, q.RunIDs)
+	}
+
+	metrics := make([]fiber.Map, len(dbMetrics))
+	for n, m := range dbMetrics {
+		metrics[n] = fiber.Map{
+			"run_id":    m.RunID,
+			"key":       m.Key,
+			"step":      m.Step,
+			"timestamp": m.Timestamp,
+			"value":     m.Value,
+		}
+		if m.IsNan {
+			metrics[n]["value"] = "NaN"
+		}
+	}
+
+	resp := fiber.Map{
+		"metrics": metrics,
+	}
+
+	log.Debugf("GetMetricHistoryBulk response: %#v", resp)
 
 	return c.JSON(resp)
 }
@@ -86,7 +151,7 @@ func GetMetricHistories(c *fiber.Ctx) error {
 				database.LifecycleStageDeleted,
 			}
 		default:
-			return NewError(ErrorCodeInvalidParameterValue, "Invalid run_view_type '%s'", req.ViewType)
+			return NewError(ErrorCodeInvalidParameterValue, "Invalid run_view_type %q", req.ViewType)
 		}
 		tx.Where("lifecycle_stage IN ?", lifecyleStages)
 

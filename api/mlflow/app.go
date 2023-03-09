@@ -89,6 +89,7 @@ func NewApp(authUsername string, authPassword string) *fiber.App {
 
 	metrics := api.Group("/metrics")
 	metrics.Get("/get-history", GetMetricHistory)
+	metrics.Get("/get-history-bulk", GetMetricHistoryBulk)
 	metrics.Post("/get-histories", GetMetricHistories)
 
 	runs := api.Group("/runs")

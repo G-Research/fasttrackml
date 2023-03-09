@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -39,6 +41,20 @@ func CreateExperiment(c *fiber.Ctx) error {
 		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'name'")
 	}
 
+	if req.ArtifactLocation != "" {
+		u, err := url.Parse(req.ArtifactLocation)
+		if err != nil {
+			return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter 'artifact_location': %s", err)
+		}
+
+		p, err := filepath.Abs(u.Path)
+		if err != nil {
+			return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter 'artifact_location': %s", err)
+		}
+		u.Path = p
+		req.ArtifactLocation = u.String()
+	}
+
 	ts := time.Now().UTC().UnixMilli()
 	exp := database.Experiment{
 		Name:             req.Name,
@@ -62,7 +78,6 @@ func CreateExperiment(c *fiber.Ctx) error {
 		}
 	}
 
-	// TODO do it in one session?
 	if tx := database.DB.Create(&exp); tx.Error != nil {
 		if err, ok := tx.Error.(*pgconn.PgError); ok && err.Code == "23505" {
 			return NewError(ErrorCodeResourceAlreadyExists, "Experiment(name=%s) already exists", exp.Name)
@@ -75,9 +90,9 @@ func CreateExperiment(c *fiber.Ctx) error {
 
 	if exp.ArtifactLocation == "" {
 		exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(viper.GetString("artifact-root"), "/"), *exp.ID)
-	}
-	if tx := database.DB.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)
+		if tx := database.DB.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
+			return NewError(ErrorCodeInternalError, "Error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)
+		}
 	}
 
 	resp := &CreateExperimentResponse{

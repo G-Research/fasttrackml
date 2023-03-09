@@ -63,6 +63,15 @@ func NewApp(authUsername string, authPassword string) *fiber.App {
 		},
 	})
 
+	if authUsername != "" && authPassword != "" {
+		log.Infof(`BasicAuth enabled for classic UI with user "%s"`, authUsername)
+		api.Use(basicauth.New(basicauth.Config{
+			Users: map[string]string{
+				authUsername: authPassword,
+			},
+		}))
+	}
+
 	artifacts := api.Group("/artifacts")
 	artifacts.Get("/list", ListArtifacts)
 
@@ -97,15 +106,6 @@ func NewApp(authUsername string, authPassword string) *fiber.App {
 
 	api.Get("/model-versions/search", SearchModelVersions)
 	api.Get("/registered-models/search", SearchRegisteredModels)
-
-	if authUsername != "" && authPassword != "" {
-		log.Infof(`BasicAuth enabled with user "%s"`, authUsername)
-		api.Use(basicauth.New(basicauth.Config{
-			Users: map[string]string{
-				authUsername: authPassword,
-			},
-		}))
-	}
 
 	api.Use(func(c *fiber.Ctx) error {
 		return NewError(ErrorCodeEndpointNotFound, "Not found")

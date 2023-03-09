@@ -43,6 +43,15 @@ func NewApp(authUsername string, authPassword string) *fiber.App {
 
 	api := app.Group("/api")
 
+	if authUsername != "" && authPassword != "" {
+		log.Infof(`BasicAuth enabled for modern UI with user "%s"`, authUsername)
+		api.Use(basicauth.New(basicauth.Config{
+			Users: map[string]string{
+				authUsername: authPassword,
+			},
+		}))
+	}
+
 	dashboards := api.Group("/dashboards")
 	dashboards.Get("/", GetDashboards)
 
@@ -69,16 +78,6 @@ func NewApp(authUsername string, authPassword string) *fiber.App {
 
 	tags := api.Group("/tags")
 	tags.Get("/", GetTags)
-
-	if authUsername != "" && authPassword != "" {
-		log.Infof(`BasicAuth enabled with user "%s"`, authUsername)
-		api.Use(basicauth.New(basicauth.Config{
-			Users: map[string]string{
-				authUsername: authPassword,
-			},
-		}))
-	}
-
 	api.Use(func(c *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	})

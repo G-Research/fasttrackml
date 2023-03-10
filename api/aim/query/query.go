@@ -2,7 +2,7 @@ package query
 
 import (
 	"fmt"
-	"reflect"
+	"strings"
 	"time"
 
 	"github.com/G-Resarch/fasttrack/database"
@@ -15,34 +15,50 @@ import (
 )
 
 type QueryParser struct {
-	Tables   map[string]Table
+	Default  string
 	TzOffset int
 }
 
-type parsedQuery struct {
-	qp         *QueryParser
-	joins      map[string]string
-	columns    map[string]clause.Column
-	conditions []clause.Expression
-}
 type ParsedQuery interface {
 	Filter(*gorm.DB) *gorm.DB
 }
 
-type Table map[string]any
+type parsedQuery struct {
+	qp         *QueryParser
+	joins      map[string]join
+	conditions []clause.Expression
+}
 
-type function func(pq *parsedQuery, args ...ast.Expr) (any, error)
+type attributeGetter func(attr string) (any, error)
 
-var functions map[ast.Identifier]function
+type callable func(args []ast.Expr) (any, error)
+
+type subscriptSlicer func(index ast.Slicer) (any, error)
+
+type join struct {
+	alias string
+	query string
+	args  []any
+}
 
 func (qp *QueryParser) Parse(q string) (ParsedQuery, error) {
 	pq := &parsedQuery{
-		qp: qp,
+		qp:    qp,
+		joins: make(map[string]join),
 	}
 
 	if q == "" {
-		return pq, nil
+		if qp.Default == "" {
+			return pq, nil
+		}
+		q = qp.Default
 	}
+
+	if !strings.Contains(q, qp.Default) {
+		q = fmt.Sprintf("%s and %s", qp.Default, q)
+	}
+
+	fmt.Println(q)
 
 	a, err := parser.ParseString(q, py.EvalMode)
 	if err != nil {
@@ -73,11 +89,8 @@ func (qp *QueryParser) Parse(q string) (ParsedQuery, error) {
 }
 
 func (pq *parsedQuery) Filter(tx *gorm.DB) *gorm.DB {
-	for _, c := range pq.columns {
-		tx.Select(c)
-	}
 	for _, j := range pq.joins {
-		tx.Joins(j)
+		tx.Joins(j.query, j.args...)
 	}
 	if len(pq.conditions) > 0 {
 		tx.Where(clause.And(pq.conditions...))
@@ -101,222 +114,35 @@ func (pq *parsedQuery) parseNode(node ast.Expr) (any, error) {
 		return pq.parseNum(n)
 	case *ast.Str:
 		return pq.parseStr(n)
+	case *ast.Subscript:
+		return pq.parseSubscript(n)
 	case *ast.UnaryOp:
 		return pq.parseUnaryOp(n)
 	case *ast.Attribute:
-		v, err := pq.parseNode(n.Value)
-		if err != nil {
-			return nil, err
-		}
-		a := string(n.Attr)
-		switch v := v.(type) {
-		case Table:
-			c, ok := v[a]
-			if ok {
-				return c, nil
-			}
-			c, ok = v["*"]
-			if ok {
-				return c, nil
-			}
-			return nil, fmt.Errorf("no mapping for attribute %q in %q", a, n.Value.(*ast.Name).Id)
-		default:
-			return nil, fmt.Errorf("unsupported attribute value %#v", v)
-		}
-		// c := string(n.Attr)
-		// switch c {
-		// case "created_at":
-		// 	c = "start_time"
-		// case "finalized_at":
-		// 	c = "end_time"
-		// case "hash":
-		// 	c = "run_uuid"
-		// case "name":
-		// case "experiment":
-		// 	t = "Experiment"
-		// 	c = "name"
-		// case "active":
-		// 	return clause.Eq{
-		// 		Column: clause.Column{
-		// 			Table: t,
-		// 			Name:  "status",
-		// 		},
-		// 		Value: database.StatusRunning,
-		// 	}, nil
-		// case "archived":
-		// 	return clause.Eq{
-		// 		Column: clause.Column{
-		// 			Table: t,
-		// 			Name:  "lifecycle_stage",
-		// 		},
-		// 		Value: database.LifecycleStageDeleted,
-		// 	}, nil
-		// case "duration":
-		// 	return clause.Column{
-		// 		Name: "runs.end_time - runs.start_time",
-		// 		Raw:  true,
-		// 	}, nil
-		// case "metrics":
-		// default:
-		// 	return clause.And(
-		// 		clause.Eq{
-		// 			Column: clause.Column{
-		// 				Table: "Params",
-		// 				Name:  "key",
-		// 			},
-		// 			Value: c,
-		// 		},
-		// 		clause.Eq{
-		// 			Column: clause.Column{
-		// 				Table: "Params",
-		// 				Name:  "value",
-		// 			},
-		// 			Value: "1",
-		// 		},
-		// 	), nil
-		// }
-		// return clause.Column{
-		// 	Table: t,
-		// 	Name:  c,
-		// }, nil
+		return pq.parseAttribute(n)
 	case *ast.Compare:
-		exprs := make([]clause.Expression, len(n.Ops))
-		for i, o := range n.Ops {
-			// lrOrder := true
-			// var equality clause.Expression
-			leftAst := n.Left
-			if i > 0 {
-				leftAst = n.Comparators[i-1]
-			}
-			left, err := pq.parseNode(leftAst)
-			if err != nil {
-				return nil, err
-			}
-			right, err := pq.parseNode(n.Comparators[i])
-			if err != nil {
-				return nil, err
-			}
-			if reflect.TypeOf(left) != reflect.TypeOf(clause.Column{}) {
-				if reflect.TypeOf(right) == reflect.TypeOf(clause.Column{}) {
-					o = reverseComparison(o)
-					t := left
-					left = right
-					right = t
-				} else {
-					left = clause.Column{
-						Name: database.DB.Statement.Quote(left),
-						Raw:  true,
-					}
-				}
-			}
-			// if reflect.TypeOf(left) == reflect.TypeOf(clause.Eq{}) {
-			// 	if reflect.TypeOf(right) == reflect.TypeOf(true) {
-			// 		equality = left.(clause.Eq)
-			// 		if !right.(bool) {
-			// 			equality = clause.Not(equality)
-			// 		}
-			// 	} else {
-			// 		return nil, fmt.Errorf("unsupported comparison %q", ast.Dump(n))
-			// 	}
-			// }
-			// if reflect.TypeOf(right) == reflect.TypeOf(clause.Eq{}) {
-			// 	if reflect.TypeOf(left) == reflect.TypeOf(true) {
-			// 		equality = right.(clause.Eq)
-			// 		if !left.(bool) {
-			// 			equality = clause.Not(equality)
-			// 		}
-			// 	} else {
-			// 		return nil, fmt.Errorf("unsupported comparison %q", ast.Dump(n))
-			// 	}
-			// }
-			// if equality != nil {
-			// 	switch o {
-			// 	case ast.Eq, ast.Is:
-			// 		exprs[i] = equality
-			// 	case ast.NotEq, ast.IsNot:
-			// 		exprs[i] = clause.Not(equality)
-			// 	default:
-			// 		return nil, fmt.Errorf("unsupported comparison %q", ast.Dump(n))
-			// 	}
-			// 	break
-			// }
-			switch o {
-			case ast.Eq, ast.Is:
-				exprs[i] = clause.Eq{
-					Column: left,
-					Value:  right,
-				}
-			case ast.NotEq, ast.IsNot:
-				exprs[i] = clause.Neq{
-					Column: left,
-					Value:  right,
-				}
-			case ast.Lt:
-				exprs[i] = clause.Lt{
-					Column: left,
-					Value:  right,
-				}
-			case ast.LtE:
-				exprs[i] = clause.Lte{
-					Column: left,
-					Value:  right,
-				}
-			case ast.Gt:
-				exprs[i] = clause.Gt{
-					Column: left,
-					Value:  right,
-				}
-			case ast.GtE:
-				exprs[i] = clause.Gte{
-					Column: left,
-					Value:  right,
-				}
-			case ast.In:
-				r, ok := right.([]any)
-				if !ok {
-					return nil, fmt.Errorf("right value in \"in\" comparison is not a list: %#v", right)
-				}
-				exprs[i] = clause.IN{
-					Column: left,
-					Values: r,
-				}
-			case ast.NotIn:
-				r, ok := right.([]any)
-				if !ok {
-					return nil, fmt.Errorf("right value in \"not in\" comparison is not a list: %#v", right)
-				}
-				exprs[i] = clause.NotConditions{
-					Exprs: []clause.Expression{
-						clause.IN{
-							Column: left,
-							Values: r,
-						},
-					},
-				}
-			default:
-				return nil, fmt.Errorf("unsupported compare operation %s", o)
-			}
-		}
-		return clause.AndConditions{
-			Exprs: exprs,
-		}, nil
+		return pq.parseCompare(n)
 	default:
-		return nil, fmt.Errorf("unsupported expression %#v", n)
+		return nil, fmt.Errorf("unsupported expression %q", ast.Dump(n))
 	}
 }
 
-func reverseComparison(op ast.CmpOp) ast.CmpOp {
-	switch op {
-	case ast.Lt:
-		return ast.Gt
-	case ast.LtE:
-		return ast.GtE
-	case ast.Gt:
-		return ast.Lt
-	case ast.GtE:
-		return ast.LtE
+func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
+	switch node.Ctx {
+	case ast.Load:
+		v, err := pq.parseNode(node.Value)
+		if err != nil {
+			return nil, err
+		}
+		a := string(node.Attr)
+		switch v := v.(type) {
+		case attributeGetter:
+			return v(a)
+		default:
+			return nil, fmt.Errorf("unsupported attribute value %#v", v)
+		}
 	default:
-		return op
+		return nil, fmt.Errorf("unsupported attribute context %q", node.Ctx)
 	}
 }
 
@@ -339,7 +165,7 @@ func (pq *parsedQuery) parseBoolOp(node *ast.BoolOp) (any, error) {
 	case ast.Or:
 		return clause.Or(exprs...), nil
 	default:
-		return nil, fmt.Errorf("unsupported boolean operation %s", node.Op)
+		return nil, fmt.Errorf("unsupported boolean operation %q", node.Op)
 	}
 }
 
@@ -349,12 +175,75 @@ func (pq *parsedQuery) parseCall(node *ast.Call) (any, error) {
 		return nil, err
 	}
 
-	fu, ok := f.(function)
-	if !ok {
+	switch f := f.(type) {
+	case callable:
+		return f(node.Args)
+	default:
 		return nil, fmt.Errorf("unsupported call to function %#v", node.Func)
 	}
+}
 
-	return fu(pq, node.Args...)
+func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
+	exprs := make([]clause.Expression, len(node.Ops))
+
+	for i, op := range node.Ops {
+		leftAst := node.Left
+		if i > 0 {
+			leftAst = node.Comparators[i-1]
+		}
+		left, err := pq.parseNode(leftAst)
+		if err != nil {
+			return nil, err
+		}
+		right, err := pq.parseNode(node.Comparators[i])
+		if err != nil {
+			return nil, err
+		}
+
+		switch left := left.(type) {
+		case clause.Column:
+			exprs[i], err = newSqlComparison(op, left, right)
+			if err != nil {
+				return nil, err
+			}
+		case clause.Eq:
+			switch right := right.(type) {
+			case bool:
+				exprs[i], err = newSqlBoolComparison(op, left, right)
+				if err != nil {
+					return nil, err
+				}
+			default:
+				return nil, fmt.Errorf("unsupported comparison %q", ast.Dump(node))
+			}
+		default:
+			switch right := right.(type) {
+			case clause.Column:
+				o, l, r, err := reverseComparison(op, left, right)
+				if err != nil {
+					return nil, err
+				}
+				exprs[i], err = newSqlComparison(o, l, r)
+				if err != nil {
+					return nil, err
+				}
+			case clause.Eq:
+				switch left := left.(type) {
+				case bool:
+					exprs[i], err = newSqlBoolComparison(op, right, left)
+					if err != nil {
+						return nil, err
+					}
+				default:
+					return nil, fmt.Errorf("unsupported comparison %q", ast.Dump(node))
+				}
+			}
+		}
+	}
+
+	return clause.AndConditions{
+		Exprs: exprs,
+	}, nil
 }
 
 func (pq *parsedQuery) parseList(node *ast.List) (any, error) {
@@ -372,17 +261,156 @@ func (pq *parsedQuery) parseList(node *ast.List) (any, error) {
 func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 	switch node.Ctx {
 	case ast.Load:
-		t, ok := pq.qp.Tables[string(node.Id)]
-		if ok {
-			return t, nil
+		switch string(node.Id) {
+		case "run":
+			return attributeGetter(
+				func(attr string) (any, error) {
+					switch attr {
+					case "creation_time", "created_at":
+						return clause.Column{
+							Table: "runs",
+							Name:  "start_time",
+						}, nil
+					case "end_time", "finalized_at":
+						return clause.Column{
+							Table: "runs",
+							Name:  "end_time",
+						}, nil
+					case "hash":
+						return clause.Column{
+							Table: "runs",
+							Name:  "run_uuid",
+						}, nil
+					case "name":
+						return clause.Column{
+							Table: "runs",
+							Name:  "name",
+						}, nil
+					case "experiment":
+						return clause.Column{
+							Table: "Experiment",
+							Name:  "name",
+						}, nil
+					case "archived":
+						return clause.Eq{
+							Column: clause.Column{
+								Table: "runs",
+								Name:  "lifecycle_stage",
+							},
+							Value: database.LifecycleStageDeleted,
+						}, nil
+					case "active":
+						return clause.Eq{
+							Column: clause.Column{
+								Table: "runs",
+								Name:  "status",
+							},
+							Value: database.StatusRunning,
+						}, nil
+					case "duration":
+						return clause.Column{
+							Name: "runs.end_time - runs.start_time",
+							Raw:  true,
+						}, nil
+					case "metrics":
+						return subscriptSlicer(func(s ast.Slicer) (any, error) {
+							switch s := s.(type) {
+							case *ast.Index:
+								v, err := pq.parseNode(s.Value)
+								if err != nil {
+									return nil, err
+								}
+								switch v := v.(type) {
+								case string:
+									j, ok := pq.joins[fmt.Sprintf("metrics:%s", v)]
+									if !ok {
+										alias := fmt.Sprintf("metrics_%d", len(pq.joins))
+										j = join{
+											alias: alias,
+											query: fmt.Sprintf("LEFT JOIN latest_metrics %s ON runs.run_uuid = %s.run_uuid AND %s.key = ?", alias, alias, alias),
+											args:  []any{v},
+										}
+										pq.joins[fmt.Sprintf("metrics:%s", v)] = j
+									}
+									return attributeGetter(func(attr string) (any, error) {
+										var name string
+										switch attr {
+										case "last":
+											name = "value"
+										case "last_step":
+											name = "step"
+										default:
+											return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
+										}
+										return clause.Column{
+											Table: j.alias,
+											Name:  name,
+										}, nil
+									}), nil
+								default:
+									return nil, fmt.Errorf("unsupported index value type %t", v)
+								}
+							default:
+								return nil, fmt.Errorf("unsupported slicer %q", ast.Dump(s))
+							}
+						}), nil
+					// case "tags":
+					default:
+						j, ok := pq.joins[fmt.Sprintf("params:%s", attr)]
+						if !ok {
+							alias := fmt.Sprintf("params_%d", len(pq.joins))
+							j = join{
+								alias: alias,
+								query: fmt.Sprintf("LEFT JOIN params %s ON runs.run_uuid = %s.run_uuid AND %s.key = ?", alias, alias, alias),
+								args:  []any{attr},
+							}
+							pq.joins[fmt.Sprintf("params:%s", attr)] = j
+						}
+						return clause.Column{
+							Table: j.alias,
+							Name:  "value",
+						}, nil
+
+					}
+				},
+			), nil
+		// case "metric":
+		// 	return nil, nil
+		case "datetime":
+			return callable(
+				func(args []ast.Expr) (any, error) {
+					if len(args) > 7 {
+						return nil, fmt.Errorf("too many arguments for datetime: %d", len(args))
+					}
+					intArgs := make([]int, 7)
+					for i, a := range args {
+						e, err := pq.parseNode(a)
+						if err != nil {
+							return nil, err
+						}
+						n, ok := e.(int)
+						if !ok {
+							return nil, fmt.Errorf("unsupported argument %d to datetime: %#v", i, a)
+						}
+						intArgs[i] = n
+					}
+					return time.Date(
+						intArgs[0],
+						time.Month(intArgs[1]),
+						intArgs[2],
+						intArgs[3],
+						intArgs[4],
+						intArgs[5],
+						intArgs[6]*1000,
+						time.FixedZone("custom", -pq.qp.TzOffset*60),
+					).UnixMilli(), nil
+				},
+			), nil
+		default:
+			return nil, fmt.Errorf("unsupported name identifier %q", node.Id)
 		}
-		f, ok := functions[node.Id]
-		if ok {
-			return f, nil
-		}
-		return nil, fmt.Errorf("unsupported name identifier %q", node.Id)
 	default:
-		return nil, fmt.Errorf("unsupported name context %s", node.Ctx)
+		return nil, fmt.Errorf("unsupported name context %q", node.Ctx)
 	}
 }
 
@@ -393,7 +421,7 @@ func (pq *parsedQuery) parseNameConstant(node *ast.NameConstant) (any, error) {
 	case py.BoolType:
 		return bool(node.Value.(py.Bool)), nil
 	default:
-		return nil, fmt.Errorf("unsupported name constant type %s", node.Value.Type())
+		return nil, fmt.Errorf("unsupported name constant type %q", node.Value.Type())
 	}
 }
 func (pq *parsedQuery) parseNum(node *ast.Num) (any, error) {
@@ -403,12 +431,30 @@ func (pq *parsedQuery) parseNum(node *ast.Num) (any, error) {
 	case py.FloatType:
 		return py.FloatAsFloat64(node.N.(py.Float))
 	default:
-		return nil, fmt.Errorf("unsupported num type %s", node.N.Type())
+		return nil, fmt.Errorf("unsupported num type %q", node.N.Type())
 	}
 }
 
 func (pq *parsedQuery) parseStr(node *ast.Str) (any, error) {
 	return string(node.S), nil
+}
+
+func (pq *parsedQuery) parseSubscript(node *ast.Subscript) (any, error) {
+	switch node.Ctx {
+	case ast.Load:
+		v, err := pq.parseNode(node.Value)
+		if err != nil {
+			return nil, err
+		}
+		switch v := v.(type) {
+		case subscriptSlicer:
+			return v(node.Slice)
+		default:
+			return nil, fmt.Errorf("unsupported attribute value %#v", v)
+		}
+	default:
+		return nil, fmt.Errorf("unsupported attribute context %q", node.Ctx)
+	}
 }
 
 func (pq *parsedQuery) parseUnaryOp(node *ast.UnaryOp) (any, error) {
@@ -424,42 +470,99 @@ func (pq *parsedQuery) parseUnaryOp(node *ast.UnaryOp) (any, error) {
 	case ast.Not:
 		return clause.Not(c), nil
 	default:
-		return nil, fmt.Errorf("unsupported unary operation %s", node.Op)
+		return nil, fmt.Errorf("unsupported unary operation %q", node.Op)
 	}
 }
 
-func initFunctions() {
-	functions = map[ast.Identifier]function{
-		"datetime": func(pq *parsedQuery, args ...ast.Expr) (any, error) {
-			if len(args) > 7 {
-				return nil, fmt.Errorf("too many arguments for datetime: %d", len(args))
-			}
-			intArgs := make([]int, 7)
-			for i, a := range args {
-				e, err := pq.parseNode(a)
-				if err != nil {
-					return nil, err
-				}
-				n, ok := e.(int)
-				if !ok {
-					return nil, fmt.Errorf("unsupported argument %d to datetime: %#v", i, a)
-				}
-				intArgs[i] = n
-			}
-			return time.Date(
-				intArgs[0],
-				time.Month(intArgs[1]),
-				intArgs[2],
-				intArgs[3],
-				intArgs[4],
-				intArgs[5],
-				intArgs[6]*1000,
-				time.FixedZone("custom", pq.qp.TzOffset*60),
-			).UnixMilli(), nil
-		},
+func newSqlBoolComparison(op ast.CmpOp, left clause.Eq, right bool) (clause.Expression, error) {
+	switch op {
+	case ast.Eq, ast.Is:
+		if right {
+			return left, nil
+		}
+		return clause.Not(left), nil
+	case ast.NotEq, ast.IsNot:
+		if !right {
+			return left, nil
+		}
+		return clause.Not(left), nil
+	default:
+		return nil, fmt.Errorf("comparison operation incompatible with bool %q", op)
 	}
 }
 
-func init() {
-	initFunctions()
+func newSqlComparison(op ast.CmpOp, left clause.Column, right any) (clause.Expression, error) {
+	switch op {
+	case ast.Eq, ast.Is:
+		return clause.Eq{
+			Column: left,
+			Value:  right,
+		}, nil
+	case ast.NotEq, ast.IsNot:
+		return clause.Neq{
+			Column: left,
+			Value:  right,
+		}, nil
+	case ast.Lt:
+		return clause.Lt{
+			Column: left,
+			Value:  right,
+		}, nil
+	case ast.LtE:
+		return clause.Lte{
+			Column: left,
+			Value:  right,
+		}, nil
+	case ast.Gt:
+		return clause.Gt{
+			Column: left,
+			Value:  right,
+		}, nil
+	case ast.GtE:
+		return clause.Gte{
+			Column: left,
+			Value:  right,
+		}, nil
+	case ast.In:
+		r, ok := right.([]any)
+		if !ok {
+			return nil, fmt.Errorf("right value in \"in\" comparison is not a list: %#v", right)
+		}
+		return clause.IN{
+			Column: left,
+			Values: r,
+		}, nil
+	case ast.NotIn:
+		r, ok := right.([]any)
+		if !ok {
+			return nil, fmt.Errorf("right value in \"not in\" comparison is not a list: %#v", right)
+		}
+		return clause.NotConditions{
+			Exprs: []clause.Expression{
+				clause.IN{
+					Column: left,
+					Values: r,
+				},
+			},
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported comparison operation %q", op)
+	}
+}
+
+func reverseComparison(op ast.CmpOp, left any, right clause.Column) (ast.CmpOp, clause.Column, any, error) {
+	switch op {
+	case ast.Lt:
+		return ast.Gt, right, left, nil
+	case ast.LtE:
+		return ast.GtE, right, left, nil
+	case ast.Gt:
+		return ast.Lt, right, left, nil
+	case ast.GtE:
+		return ast.LtE, right, left, nil
+	case ast.Eq, ast.Is, ast.NotEq, ast.IsNot:
+		return op, right, left, nil
+	default:
+		return op, right, left, fmt.Errorf("unable to reverse comparison operator %q", op)
+	}
 }

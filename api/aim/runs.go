@@ -332,50 +332,7 @@ func GetRunsSearch(c *fiber.Ctx) error {
 	}
 
 	pq := query.QueryParser{
-		Tables: map[string]query.Table{
-			"run": {
-				"created_at": clause.Column{
-					// Table: "runs",
-					Name: "start_time",
-				},
-				"finalized_at": clause.Column{
-					// Table: "runs",
-					Name: "end_time",
-				},
-				"hash": clause.Column{
-					// Table: "runs",
-					Name: "run_uuid",
-				},
-				"name": clause.Column{
-					// Table: "runs",
-					Name: "name",
-				},
-				"experiment": clause.Column{
-					Table: "Experiment",
-					Name:  "name",
-				},
-				"archived": clause.Eq{
-					Column: clause.Column{
-						// Table: "runs",
-						Name: "lifecycle_stage",
-					},
-					Value: database.LifecycleStageDeleted,
-				},
-				"active": clause.Eq{
-					Column: clause.Column{
-						Table: "runs",
-						Name:  "status",
-					},
-					Value: database.StatusRunning,
-				},
-				"duration": clause.Column{
-					Name: "runs.end_time - runs.start_time",
-					Raw:  true,
-				},
-				// "tags":
-				// "metrics":
-			},
-		},
+		Default:  "run.archived == False",
 		TzOffset: tzOffset,
 	}
 	qp, err := pq.Parse(q.Query)
@@ -415,32 +372,26 @@ func GetRunsSearch(c *fiber.Ctx) error {
 		}
 		var count int64
 
-		expr := clause.Or(
-			clause.Gt{
-				Column: "start_time",
-				Value:  r.StartTime,
-			},
-			clause.And(
-				clause.Eq{
-					Column: "start_time",
-					Value:  r.StartTime,
-				},
-				clause.Lt{
-					Column: "run_uuid",
-					Value:  r.ID,
-				},
-			),
-		)
-
-		// TODO how do we deal with this???
-		// if where != nil {
-		// 	expr = clause.And(where, expr)
-		// }
 		if tx := qp.Filter(
 			database.DB.
 				Model(&database.Run{}).
 				Joins("Experiment").
-				Where(expr)).
+				Where(clause.Or(
+					clause.Gt{
+						Column: "start_time",
+						Value:  r.StartTime,
+					},
+					clause.And(
+						clause.Eq{
+							Column: "start_time",
+							Value:  r.StartTime,
+						},
+						clause.Lt{
+							Column: "run_uuid",
+							Value:  r.ID,
+						},
+					),
+				))).
 			Count(&count); tx.Error != nil {
 			return fmt.Errorf("unable to compute search runs offset %q: %w", q.Offset, tx.Error)
 		}

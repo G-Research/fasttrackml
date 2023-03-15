@@ -927,7 +927,7 @@ index 6ad01a9..f1f8b5b 100644
  
  div.github {
 diff --git a/mlflow/server/js/src/experiment-tracking/components/App.js b/mlflow/server/js/src/experiment-tracking/components/App.js
-index bf1f184..1f260c0 100644
+index bf1f184..232955c 100644
 --- a/mlflow/server/js/src/experiment-tracking/components/App.js
 +++ b/mlflow/server/js/src/experiment-tracking/components/App.js
 @@ -3,7 +3,8 @@ import { connect } from 'react-redux';
@@ -940,32 +940,29 @@ index bf1f184..1f260c0 100644
  import logo from '../../common/static/home-logo.png';
  import ErrorModal from '../../experiment-tracking/components/modals/ErrorModal';
  import { CompareModelVersionsPage } from '../../model-registry/components/CompareModelVersionsPage';
-@@ -45,6 +46,24 @@ const classNames = {
+@@ -45,6 +46,21 @@ const classNames = {
  const InteractionTracker = ({ children }) => children;
  
  class App extends Component {
 +  constructor(props) {
 +    super(props);
 +    this.state = {
-+      version: "unknown"
++      version: 'unknown',
 +    };
 +  }
 +
-+  componentWillMount() {
-+    fetchEndpoint({ relativeUrl: "version" })
-+      .then(
-+        (result) => {
-+          this.setState({
-+            version: result
-+          });
-+        }
-+      )
++  componentDidMount() {
++    fetchEndpoint({ relativeUrl: 'version' }).then((result) => {
++      this.setState({
++        version: result,
++      });
++    });
 +  }
 +
    render() {
      const marginRight = 24;
      return (
-@@ -63,7 +82,7 @@ class App extends Component {
+@@ -63,7 +79,7 @@ class App extends Component {
                    <Link to={Routes.rootRoute} className='App-mlflow'>
                      <img className='mlflow-logo' alt='MLflow' src={logo} />
                    </Link>
@@ -974,11 +971,29 @@ index bf1f184..1f260c0 100644
                  </div>
                  <div className='header-route-links'>
                    <NavLink
-@@ -91,7 +110,7 @@ class App extends Component {
+@@ -78,20 +94,14 @@ class App extends Component {
+                       <span>Experiments</span>
+                     </div>
                    </NavLink>
+-                  <NavLink
+-                    strict
+-                    to={modelListPageRoute}
+-                    css={{ marginRight }}
+-                    activeStyle={classNames.activeNavLink}
+-                    className='header-nav-link header-nav-link-models'
+-                  >
+-                    <div className='models'>
+-                      <span>Models</span>
+-                    </div>
+-                  </NavLink>
                  </div>
                  <div className='header-links'>
 -                  <a href={'https://github.com/mlflow/mlflow'} css={{ marginRight }}>
++                  <a href={'/'} css={{ marginRight }}>
++                    <div className='github'>
++                      <span>Switch UI</span>
++                    </div>
++                  </a>
 +                  <a href={'https://github.com/G-Research/fasttrack'} css={{ marginRight }}>
                      <div className='github'>
                        <span>GitHub</span>

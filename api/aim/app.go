@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/G-Resarch/fasttrack/ui"
+	"github.com/G-Resarch/fasttrack/version"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
@@ -78,6 +79,13 @@ func NewApp(authUsername string, authPassword string) *fiber.App {
 
 	tags := api.Group("/tags")
 	tags.Get("/", GetTags)
+
+	api.Get("/version", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"version": version.Version,
+		})
+	})
+
 	api.Use(func(c *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	})

@@ -1,6 +1,7 @@
 version: '3.8'
 
 volumes:
+  workspace-data:
   postgres-data:
 
 services:
@@ -12,7 +13,7 @@ services:
         # [Choice] Go version 1, 1.18, 1.17
         # Append -bullseye or -buster to pin to an OS version.
         # Use -bullseye variants on local arm64/Apple Silicon.
-        VARIANT: 1.19-bullseye
+        VARIANT: 1.20-bullseye
         # Options
         NODE_VERSION: "16"
     env_file:
@@ -27,7 +28,8 @@ services:
 #       - SYS_PTRACE
 
     volumes:
-      - ..:/workspace:cached
+      - workspace-data:/workspaces
+      - ..:/workspaces/fasttrack:cached
       
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity

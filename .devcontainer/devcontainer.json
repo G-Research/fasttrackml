@@ -4,7 +4,7 @@
 	"name": "Fasttrack",
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "app",
-	"workspaceFolder": "/workspace",
+	"workspaceFolder": "/workspaces/fasttrack",
 	// Configure tool-specific properties.
 	"customizations": {
 		// Configure properties specific to VS Code.
@@ -26,6 +26,7 @@
 	},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [
+		5000,
 		5432
 	],
 	// Use 'postCreateCommand' to run commands after the container is created.

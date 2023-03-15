@@ -8,7 +8,7 @@ FROM node:16 AS aim-build
 COPY ui/aim /aim
 RUN /aim/build.sh
 
-FROM golang:1.19-alpine3.17 AS go-build
+FROM golang:1.20-alpine3.17 AS go-build
 
 RUN apk add --no-cache build-base gcc openssl-dev
 

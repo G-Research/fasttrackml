@@ -1,9 +1,9 @@
-FROM node:16 AS mlflow-build
+FROM --platform=$BUILDPLATFORM node:16 AS mlflow-build
 
 COPY ui/mlflow /mlflow
 RUN /mlflow/build.sh
 
-FROM node:16 AS aim-build
+FROM --platform=$BUILDPLATFORM node:16 AS aim-build
 
 COPY ui/aim /aim
 RUN /aim/build.sh

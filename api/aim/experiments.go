@@ -22,9 +22,9 @@ func GetExperiments(c *fiber.Ctx) error {
 			"experiments.name",
 			"experiments.lifecycle_stage",
 			"experiments.creation_time",
-			"count(runs.run_uuid) as run_count",
+			"COUNT(runs.run_uuid) AS run_count",
 		).
-		Joins("JOIN runs on runs.experiment_id = experiments.experiment_id").
+		Joins("LEFT JOIN runs USING(experiment_id)").
 		Group("experiments.experiment_id").
 		Find(&experiments); tx.Error != nil {
 		return fmt.Errorf("error fetching experiments: %w", tx.Error)
@@ -79,9 +79,9 @@ func GetExperiment(c *fiber.Ctx) error {
 			"experiments.name",
 			"experiments.lifecycle_stage",
 			"experiments.creation_time",
-			"count(runs.run_uuid) as run_count",
+			"COUNT(runs.run_uuid) AS run_count",
 		).
-		Joins("JOIN runs on runs.experiment_id = experiments.experiment_id").
+		Joins("LEFT JOIN runs USING(experiment_id)").
 		Group("experiments.experiment_id").
 		Where("experiments.experiment_id = ?", id).
 		First(&exp); tx.Error != nil {
@@ -136,30 +136,21 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 
 	tx := database.DB.
 		Where("experiment_id = ?", id).
-		Order("start_time DESC").
-		Order("run_uuid")
+		Order("row_num DESC")
 
 	if q.Limit > 0 {
 		tx.Limit(q.Limit)
 	}
 
 	if q.Offset != "" {
-		r := &database.Run{
+		run := &database.Run{
 			ID: q.Offset,
 		}
-		if tx := database.DB.Select("start_time").First(&r); tx.Error != nil && tx.Error != gorm.ErrRecordNotFound {
-			return fmt.Errorf("unable to find experiment runs offset %q for %q: %w", q.Offset, p.ID, tx.Error)
+		if tx := database.DB.Select("row_num").First(&run); tx.Error != nil && tx.Error != gorm.ErrRecordNotFound {
+			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, tx.Error)
 		}
-		var count int64
-		if tx := database.DB.Model(&database.Run{}).
-			Where("start_time > ?", r.StartTime).
-			Or(database.DB.
-				Where("start_time = ?", r.StartTime).
-				Where("run_uuid < ?", r.ID)).
-			Count(&count); tx.Error != nil {
-			return fmt.Errorf("unable to compute experiment runs offset %q for %q: %w", q.Offset, p.ID, tx.Error)
-		}
-		tx.Offset(int(count) + 1)
+
+		tx.Where("row_num < ?", run.RowNum)
 	}
 
 	var sqlRuns []database.Run

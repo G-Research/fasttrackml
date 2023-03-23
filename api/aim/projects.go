@@ -26,7 +26,7 @@ func GetProjectActivity(c *fiber.Ctx) error {
 	}
 
 	var numExperiments int64
-	if tx := database.DB.Model(&database.Experiment{}).Count(&numExperiments); tx.Error != nil {
+	if tx := database.DB.Model(&database.Experiment{}).Where("lifecycle_stage = ?", database.LifecycleStageActive).Count(&numExperiments); tx.Error != nil {
 		return fmt.Errorf("error counting experiments: %w", tx.Error)
 	}
 

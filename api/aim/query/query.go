@@ -1,11 +1,13 @@
 package query
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/G-Resarch/fasttrack/database"
+	"github.com/gofiber/fiber/v2"
 
 	"github.com/go-python/gpython/ast"
 	"github.com/go-python/gpython/parser"
@@ -14,8 +16,14 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+type DefaultExpression struct {
+	Contains   string
+	Expression string
+}
+
 type QueryParser struct {
-	Default  string
+	Default  DefaultExpression
+	Tables   map[string]string
 	TzOffset int
 }
 
@@ -41,6 +49,66 @@ type join struct {
 	args  []any
 }
 
+type SyntaxError struct {
+	Statement string `json:"statement"`
+	Line      int    `json:"line"`
+	Offset    int    `json:"offset"`
+	EndOffset int    `json:"end_offset"`
+	Err       string `json:"error,omitempty"`
+}
+
+func (s SyntaxError) Error() string {
+	return fmt.Sprintf("syntax error at (%d, %d) in %q: %s", s.Line, s.Offset, s.Statement, s.Err)
+}
+
+func (s SyntaxError) Detail() any {
+	return s
+}
+
+func (s SyntaxError) Message() string {
+	return "SyntaxError"
+}
+
+func (s SyntaxError) Code() int {
+	return fiber.StatusBadRequest
+}
+
+func (s SyntaxError) Is(target error) bool {
+	_, ok := target.(SyntaxError)
+	return ok
+}
+
+func wrapError(e error, q string) error {
+	switch e := e.(type) {
+	case *py.Exception:
+		if py.SyntaxError.IsSubtype(e.Base.Type()) {
+			s := SyntaxError{
+				Statement: q,
+				Err:       "invalid syntax",
+			}
+			if l, ok := e.Dict["lineno"]; ok {
+				if l, ok := l.(py.Int); ok {
+					if l, err := l.GoInt(); err == nil {
+						s.Line = l
+					}
+				}
+			}
+			if o, ok := e.Dict["offset"]; ok {
+				if o, ok := o.(py.Int); ok {
+					if o, err := o.GoInt(); err == nil {
+						s.Offset = o
+					}
+				}
+			}
+			return s
+		}
+	case SyntaxError:
+		e.Statement = q
+		return e
+	}
+	return e
+}
+
 func (qp *QueryParser) Parse(q string) (ParsedQuery, error) {
 	pq := &parsedQuery{
 		qp:    qp,
@@ -48,21 +116,19 @@ func (qp *QueryParser) Parse(q string) (ParsedQuery, error) {
 	}
 
 	if q == "" {
-		if qp.Default == "" {
+		if qp.Default.Expression == "" {
 			return pq, nil
 		}
-		q = qp.Default
+		q = qp.Default.Expression
 	}
 
-	if !strings.Contains(q, qp.Default) {
-		q = fmt.Sprintf("%s and %s", qp.Default, q)
+	if !strings.Contains(q, qp.Default.Contains) {
+		q = fmt.Sprintf("(%s) and (%s)", q, qp.Default.Expression)
 	}
-
-	fmt.Println(q)
 
 	a, err := parser.ParseString(q, py.EvalMode)
 	if err != nil {
-		return nil, err
+		return nil, wrapError(err, q)
 	}
 
 	e, ok := a.(*ast.Expression)
@@ -70,12 +136,9 @@ func (qp *QueryParser) Parse(q string) (ParsedQuery, error) {
 		return nil, fmt.Errorf("not a valid Python expression: %#v", a)
 	}
 
-	// TODO this is just for debugging
-	fmt.Println(ast.Dump(e))
-
 	cl, err := pq.parseNode(e.Body)
 	if err != nil {
-		return nil, err
+		return nil, wrapError(err, q)
 	}
 
 	cond, ok := cl.(clause.Expression)
@@ -99,6 +162,18 @@ func (pq *parsedQuery) Filter(tx *gorm.DB) *gorm.DB {
 }
 
 func (pq *parsedQuery) parseNode(node ast.Expr) (any, error) {
+	ret, err := pq._parseNode(node)
+	if err != nil && !errors.Is(err, SyntaxError{}) {
+		return nil, SyntaxError{
+			Line:   node.GetLineno(),
+			Offset: node.GetColOffset() + 3,
+			Err:    err.Error(),
+		}
+	}
+	return ret, err
+}
+
+func (pq *parsedQuery) _parseNode(node ast.Expr) (any, error) {
 	switch n := node.(type) {
 	case *ast.BoolOp:
 		return pq.parseBoolOp(n)
@@ -263,38 +338,46 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 	case ast.Load:
 		switch string(node.Id) {
 		case "run":
+			table, ok := pq.qp.Tables["runs"]
+			if !ok {
+				return nil, errors.New("unsupported name identifier \"run\"")
+			}
 			return attributeGetter(
 				func(attr string) (any, error) {
 					switch attr {
 					case "creation_time", "created_at":
 						return clause.Column{
-							Table: "runs",
+							Table: table,
 							Name:  "start_time",
 						}, nil
 					case "end_time", "finalized_at":
 						return clause.Column{
-							Table: "runs",
+							Table: table,
 							Name:  "end_time",
 						}, nil
 					case "hash":
 						return clause.Column{
-							Table: "runs",
+							Table: table,
 							Name:  "run_uuid",
 						}, nil
 					case "name":
 						return clause.Column{
-							Table: "runs",
+							Table: table,
 							Name:  "name",
 						}, nil
 					case "experiment":
+						e, ok := pq.qp.Tables["experiments"]
+						if !ok {
+							return nil, errors.New("unsupported attribute \"experiment\"")
+						}
 						return clause.Column{
-							Table: "Experiment",
+							Table: e,
 							Name:  "name",
 						}, nil
 					case "archived":
 						return clause.Eq{
 							Column: clause.Column{
-								Table: "runs",
+								Table: table,
 								Name:  "lifecycle_stage",
 							},
 							Value: database.LifecycleStageDeleted,
@@ -302,14 +385,14 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 					case "active":
 						return clause.Eq{
 							Column: clause.Column{
-								Table: "runs",
+								Table: table,
 								Name:  "status",
 							},
 							Value: database.StatusRunning,
 						}, nil
 					case "duration":
 						return clause.Column{
-							Name: "runs.end_time - runs.start_time",
+							Name: fmt.Sprintf("(%s.end_time - %s.start_time) / 1000", table, table),
 							Raw:  true,
 						}, nil
 					case "metrics":
@@ -327,7 +410,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 										alias := fmt.Sprintf("metrics_%d", len(pq.joins))
 										j = join{
 											alias: alias,
-											query: fmt.Sprintf("LEFT JOIN latest_metrics %s ON runs.run_uuid = %s.run_uuid AND %s.key = ?", alias, alias, alias),
+											query: fmt.Sprintf("LEFT JOIN latest_metrics %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?", alias, table, alias, alias),
 											args:  []any{v},
 										}
 										pq.joins[fmt.Sprintf("metrics:%s", v)] = j
@@ -338,7 +421,9 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 										case "last":
 											name = "value"
 										case "last_step":
-											name = "step"
+											name = "last_iter"
+										case "first_step":
+											return 0, nil
 										default:
 											return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
 										}
@@ -361,7 +446,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 							alias := fmt.Sprintf("params_%d", len(pq.joins))
 							j = join{
 								alias: alias,
-								query: fmt.Sprintf("LEFT JOIN params %s ON runs.run_uuid = %s.run_uuid AND %s.key = ?", alias, alias, alias),
+								query: fmt.Sprintf("LEFT JOIN params %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?", alias, table, alias, alias),
 								args:  []any{attr},
 							}
 							pq.joins[fmt.Sprintf("params:%s", attr)] = j
@@ -370,12 +455,39 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 							Table: j.alias,
 							Name:  "value",
 						}, nil
-
 					}
 				},
 			), nil
-		// case "metric":
-		// 	return nil, nil
+		case "metric":
+			table, ok := pq.qp.Tables["metrics"]
+			if !ok {
+				return nil, errors.New("unsupported name identifier \"metric\"")
+			}
+			return attributeGetter(
+				func(attr string) (any, error) {
+					switch attr {
+					case "name":
+						return clause.Column{
+							Table: table,
+							Name:  "key",
+						}, nil
+					case "last":
+						return clause.Column{
+							Table: table,
+							Name:  "value",
+						}, nil
+					case "last_step":
+						return clause.Column{
+							Table: table,
+							Name:  "last_iter",
+						}, nil
+					case "first_step":
+						return 0, nil
+					default:
+						return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
+					}
+				},
+			), nil
 		case "datetime":
 			return callable(
 				func(args []ast.Expr) (any, error) {

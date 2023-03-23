@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -95,8 +96,15 @@ func CreateRun(c *fiber.Ctx) error {
 		run.SourceType = "UNKNOWN"
 	}
 
-	if tx := database.DB.Create(&run); tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Error inserting run '%s': %s", run.ID, tx.Error)
+	if err := database.DB.Transaction(func(tx *gorm.DB) error {
+		if tx.Dialector.Name() == "postgres" {
+			if err := tx.Exec("LOCK TABLE runs").Error; err != nil {
+				return err
+			}
+		}
+		return tx.Create(&run).Error
+	}); err != nil {
+		return NewError(ErrorCodeInternalError, "Error inserting run '%s': %s", run.ID, err)
 	}
 
 	resp := &CreateRunResponse{
@@ -719,6 +727,36 @@ func logMetrics(id string, metrics []Metric) error {
 		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", id, tx.Error)
 	}
 
+	lastIters := make(map[string]int64)
+	for _, m := range metrics {
+		lastIters[m.Key] = -1
+	}
+	keys := make([]string, 0, len(lastIters))
+	for k := range lastIters {
+		keys = append(keys, k)
+	}
+
+	if err := func() error {
+		rows, err := database.DB.Table("latest_metrics").Select("key", "last_iter").Where("run_uuid = ?", id).Where("key IN ?", keys).Rows()
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var key string
+			var iter int64
+			if err := rows.Scan(&key, &iter); err != nil {
+				return err
+			}
+			lastIters[key] = iter
+		}
+
+		return nil
+	}(); err != nil {
+		return NewError(ErrorCodeInternalError, "Unable to get latest metric iters for run '%s': %s", id, err)
+	}
+
 	dbMetrics := make([]database.Metric, len(metrics))
 	latestMetrics := make(map[string]database.LatestMetric)
 	for n, metric := range metrics {
@@ -727,6 +765,7 @@ func logMetrics(id string, metrics []Metric) error {
 			Key:       metric.Key,
 			Timestamp: metric.Timestamp,
 			Step:      metric.Step,
+			Iter:      lastIters[metric.Key] + 1,
 		}
 		if v, ok := metric.Value.(float64); ok {
 			m.Value = v
@@ -749,6 +788,8 @@ func logMetrics(id string, metrics []Metric) error {
 		}
 		dbMetrics[n] = m
 
+		lastIters[metric.Key] = m.Iter
+
 		lm, ok := latestMetrics[m.Key]
 		if !ok ||
 			m.Step > lm.Step ||
@@ -761,6 +802,7 @@ func logMetrics(id string, metrics []Metric) error {
 				Timestamp: m.Timestamp,
 				Step:      m.Step,
 				IsNan:     m.IsNan,
+				LastIter:  m.Iter,
 			}
 		}
 	}
@@ -770,13 +812,6 @@ func logMetrics(id string, metrics []Metric) error {
 	}
 
 	// TODO update latest metrics in the background?
-
-	keys := make([]string, len(latestMetrics))
-	n := 0
-	for k := range latestMetrics {
-		keys[n] = k
-		n += 1
-	}
 
 	var currentLatestMetrics []database.LatestMetric
 	if tx := database.DB.Where("run_uuid = ?", id).Where("key IN ?", keys).Find(&currentLatestMetrics); tx.Error != nil {
@@ -788,7 +823,7 @@ func logMetrics(id string, metrics []Metric) error {
 		currentLatestMetricsMap[m.Key] = m
 	}
 
-	updatedLatestMetrics := make([]database.LatestMetric, 0, len(keys))
+	updatedLatestMetrics := make([]database.LatestMetric, 0, len(latestMetrics))
 	for k, m := range latestMetrics {
 		lm, ok := currentLatestMetricsMap[k]
 		if !ok ||
@@ -796,6 +831,9 @@ func logMetrics(id string, metrics []Metric) error {
 			(m.Step == lm.Step && m.Timestamp > lm.Timestamp) ||
 			(m.Step == lm.Step && m.Timestamp == lm.Timestamp && m.Value > lm.Value) {
 			updatedLatestMetrics = append(updatedLatestMetrics, m)
+		} else {
+			lm.LastIter = lastIters[k]
+			updatedLatestMetrics = append(updatedLatestMetrics, lm)
 		}
 	}
 

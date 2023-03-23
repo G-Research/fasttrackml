@@ -12,12 +12,9 @@ import (
 	"github.com/G-Resarch/fasttrack/api/aim/query"
 	"github.com/G-Resarch/fasttrack/database"
 
-	"github.com/go-python/gpython/parser"
-	"github.com/go-python/gpython/py"
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 func GetRunInfo(c *fiber.Ctx) error {
@@ -100,17 +97,15 @@ func GetRunInfo(c *fiber.Ctx) error {
 		params[p.Key] = p.Value
 	}
 
-	if len(r.LatestMetrics) != 0 {
-		metrics := make([]fiber.Map, len(r.LatestMetrics))
-		for i, m := range r.LatestMetrics {
-			metrics[i] = fiber.Map{
-				"name":       m.Key,
-				"last_value": 0.1,
-				"context":    fiber.Map{},
-			}
+	metrics := make([]fiber.Map, len(r.LatestMetrics))
+	for i, m := range r.LatestMetrics {
+		metrics[i] = fiber.Map{
+			"name":       m.Key,
+			"last_value": 0.1,
+			"context":    fiber.Map{},
 		}
-		traces["metric"] = metrics
 	}
+	traces["metric"] = metrics
 
 	return c.JSON(fiber.Map{
 		"params": params,
@@ -157,9 +152,7 @@ func GetRunMetricBatch(c *fiber.Ctx) error {
 		Preload("Metrics", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Where("key IN ?", metricKeys).
-				Order("key").
-				Order("step").
-				Order("timestamp")
+				Order("iter")
 		}).
 		First(&r); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
@@ -173,11 +166,7 @@ func GetRunMetricBatch(c *fiber.Ctx) error {
 		iters  []int
 	}, len(metricKeys))
 	for _, m := range r.Metrics {
-		var i int
 		k := metrics[m.Key]
-		if len(k.iters) != 0 {
-			i = k.iters[len(k.iters)-1] + 1
-		}
 
 		v := m.Value
 		if m.IsNan {
@@ -185,7 +174,7 @@ func GetRunMetricBatch(c *fiber.Ctx) error {
 		}
 
 		k.values = append(k.values, v)
-		k.iters = append(k.iters, i)
+		k.iters = append(k.iters, int(m.Iter))
 		metrics[m.Key] = k
 	}
 
@@ -252,10 +241,9 @@ func GetRunsActive(c *fiber.Ctx) error {
 					"context": fiber.Map{},
 					"name":    m.Key,
 					"last_value": fiber.Map{
-						"dtype": "float",
-						// TODO would need to add this to LatestMetrics
+						"dtype":      "float",
 						"first_step": 0,
-						"last_step":  m.Step,
+						"last_step":  m.LastIter,
 						"last":       v,
 						"version":    2,
 					},
@@ -332,74 +320,48 @@ func GetRunsSearch(c *fiber.Ctx) error {
 	}
 
 	pq := query.QueryParser{
-		Default:  "run.archived == False",
+		Default: query.DefaultExpression{
+			Contains:   "run.archived",
+			Expression: "not run.archived",
+		},
+		Tables: map[string]string{
+			"runs":        "runs",
+			"experiments": "Experiment",
+		},
 		TzOffset: tzOffset,
 	}
 	qp, err := pq.Parse(q.Query)
 	if err != nil {
-		// TODO should have a type for syntax errors
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid query: %s", err))
+		return err
 	}
 
-	tx := database.DB.
-		Model(&database.Run{}).
-		Joins("Experiment")
-
 	var total int64
-	qp.Filter(tx).Count(&total)
-	if tx.Error != nil {
+	if tx := database.DB.
+		Model(&database.Run{}).
+		Count(&total); tx.Error != nil {
 		return fmt.Errorf("unable to count total runs: %w", tx.Error)
 	}
 
 	log.Debugf("Total runs: %d", total)
 
-	tx = database.DB.
+	tx := database.DB.
 		Joins("Experiment", database.DB.Select("ID", "Name")).
-		Order("start_time DESC").
-		Order("run_uuid")
+		Order("row_num DESC")
 
 	if q.Limit > 0 {
 		tx.Limit(q.Limit)
 	}
 
-	var offset int64
 	if q.Offset != "" {
-		r := &database.Run{
+		run := &database.Run{
 			ID: q.Offset,
 		}
-		if tx := database.DB.Select("start_time").First(&r); tx.Error != nil && tx.Error != gorm.ErrRecordNotFound {
+		if tx := database.DB.Select("row_num").First(&run); tx.Error != nil && tx.Error != gorm.ErrRecordNotFound {
 			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, tx.Error)
 		}
-		var count int64
 
-		if tx := qp.Filter(
-			database.DB.
-				Model(&database.Run{}).
-				Joins("Experiment").
-				Where(clause.Or(
-					clause.Gt{
-						Column: "start_time",
-						Value:  r.StartTime,
-					},
-					clause.And(
-						clause.Eq{
-							Column: "start_time",
-							Value:  r.StartTime,
-						},
-						clause.Lt{
-							Column: "run_uuid",
-							Value:  r.ID,
-						},
-					),
-				))).
-			Count(&count); tx.Error != nil {
-			return fmt.Errorf("unable to compute search runs offset %q: %w", q.Offset, tx.Error)
-		}
-		offset = count + 1
-
-		log.Debugf("Runs offset: %d", offset)
+		tx.Where("row_num < ?", run.RowNum)
 	}
-	tx.Offset(int(offset))
 
 	if !q.ExcludeParams {
 		tx.Preload("Params")
@@ -420,6 +382,12 @@ func GetRunsSearch(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/octet-stream")
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		var err error
+		defer func() {
+			if err != nil {
+				log.Errorf("Error encountered in %s %s: error streaming runs: %s", c.Method(), c.Path(), err)
+			}
+		}()
+
 		for i, r := range runs {
 			run := fiber.Map{
 				"props": fiber.Map{
@@ -448,10 +416,9 @@ func GetRunsSearch(c *fiber.Ctx) error {
 						"context": fiber.Map{},
 						"name":    m.Key,
 						"last_value": fiber.Map{
-							"dtype": "float",
-							// TODO would need to add this to LatestMetrics
+							"dtype":      "float",
 							"first_step": 0,
-							"last_step":  m.Step,
+							"last_step":  m.LastIter,
 							"last":       v,
 							"version":    2,
 						},
@@ -474,43 +441,37 @@ func GetRunsSearch(c *fiber.Ctx) error {
 				r.ID: run,
 			})
 			if err != nil {
-				break
+				return
 			}
 
 			if q.ReportProgress {
 				err = encoding.EncodeTree(w, fiber.Map{
-					fmt.Sprintf("progress_%d", i): []int64{offset + int64(i) + 1, total},
+					fmt.Sprintf("progress_%d", i): []int64{total - int64(r.RowNum), total},
 				})
 				if err != nil {
-					break
+					return
 				}
 			}
 
 			err = w.Flush()
 			if err != nil {
-				break
+				return
 			}
 		}
 
 		if q.ReportProgress && err == nil {
 			err = encoding.EncodeTree(w, fiber.Map{
-				fmt.Sprintf("progress_%d", len(runs)): []int64{offset + int64(len(runs)), total},
+				fmt.Sprintf("progress_%d", len(runs)): []int64{total, total},
 			})
 			if err != nil {
 				err = w.Flush()
 			}
-		}
-
-		if err != nil {
-			log.Errorf("Error encountered in %s %s: error streaming active runs: %s", c.Method(), c.Path(), err)
 		}
 	})
 
 	return nil
 }
 
-// TODO proper streaming (à la api.mlflow.GetMetricHistories)
-// though maybe not necessary once Query and Steps are implemented
 func GetRunsMetricsSearch(c *fiber.Ctx) error {
 	q := struct {
 		Query string `query:"q"`
@@ -533,159 +494,216 @@ func GetRunsMetricsSearch(c *fiber.Ctx) error {
 		q.Steps = 50
 	}
 
-	if q.Query != "" {
-		query := fmt.Sprintf("((%s))", q.Query)
-		if _, err := parser.ParseString(query, py.EvalMode); err != nil {
-			if err, ok := err.(*py.Exception); ok && err.Base.Name == py.SyntaxError.Name {
-				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"message": "SyntaxError",
-					"detail": fiber.Map{
-						"statement":  query,
-						"line":       err.Dict["lineno"],
-						"offset":     err.Dict["offset"],
-						"end_offset": 0,
-					},
-				})
-			}
-			return fmt.Errorf("error parsing run search metrics query %q: %w", q.Query, err)
-		}
+	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
 
-	// x-timezone-offset seems to be ignored in streams
-	// tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
-	// if err != nil {
-	// 	return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
-	// }
+	pq := query.QueryParser{
+		Default: query.DefaultExpression{
+			Contains:   "run.archived",
+			Expression: "not run.archived",
+		},
+		Tables: map[string]string{
+			"runs":        "runs",
+			"experiments": "experiments",
+			"metrics":     "latest_metrics",
+		},
+		TzOffset: tzOffset,
+	}
+	qp, err := pq.Parse(q.Query)
+	if err != nil {
+		return err
+	}
 
-	// TODO do something with the query!
+	// TODO use q.XAxis -- the tricky bit may be hashing the steps properly -- nah it looks like aim is doing it wrong in format v2 -- "just" need to return identical iters
+	//      also alignment may be tricky?
 
-	// TODO use q.Steps as a limit
-
-	// TODO use q.XAxis -- the tricky bit may be hashing the steps properly
+	var totalRuns int64
+	if tx := database.DB.Model(&database.Run{}).Count(&totalRuns); tx.Error != nil {
+		return fmt.Errorf("error searching run metrics: %w", tx.Error)
+	}
 
 	var runs []database.Run
 	if tx := database.DB.
 		Joins("Experiment", database.DB.Select("ID", "Name")).
 		Preload("Params").
-		Preload("Metrics", func(db *gorm.DB) *gorm.DB {
-			return db.
-				Order("Key").
-				Order("Step").
-				Order("Timestamp").
-				Order("Value").
-				// TODO this is temporary
-				Where("Key = ?", "metric1")
-		}).
-		Order("start_time DESC").
-		Order("run_uuid").
-		// TODO this is temporary
-		// Limit(1).
+		Where("run_uuid IN (?)", qp.Filter(database.DB.
+			Select("runs.run_uuid").
+			Table("runs").
+			Joins("LEFT JOIN experiments USING(experiment_id)").
+			Joins("LEFT JOIN latest_metrics USING(run_uuid)"))).
+		Order("runs.row_num DESC").
 		Find(&runs); tx.Error != nil {
 		return fmt.Errorf("error searching run metrics: %w", tx.Error)
 	}
 
+	result := make(map[string]struct {
+		RowNum int64
+		Info   fiber.Map
+	}, len(runs))
+	for _, r := range runs {
+		run := fiber.Map{
+			"props": fiber.Map{
+				"name":        r.Name,
+				"description": nil,
+				"experiment": fiber.Map{
+					"id":   fmt.Sprintf("%d", *r.Experiment.ID),
+					"name": r.Experiment.Name,
+				},
+				"tags":          []string{}, // TODO insert real tags
+				"creation_time": float64(r.StartTime.Int64) / 1000,
+				"end_time":      float64(r.EndTime.Int64) / 1000,
+				"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
+				"active":        r.Status == database.StatusRunning,
+			},
+		}
+
+		params := make(fiber.Map, len(r.Params))
+		for _, p := range r.Params {
+			params[p.Key] = p.Value
+		}
+		run["params"] = params
+
+		result[r.ID] = struct {
+			RowNum int64
+			Info   fiber.Map
+		}{int64(r.RowNum), run}
+	}
+
+	rows, err := database.DB.
+		Table("metrics").
+		Joins(
+			"INNER JOIN (?) runmetrics USING(run_uuid, key)",
+			qp.Filter(database.DB.
+				Select("runs.run_uuid", "runs.row_num", "latest_metrics.key", fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps))).
+				Table("runs").
+				Joins("LEFT JOIN experiments USING(experiment_id)").
+				Joins("LEFT JOIN latest_metrics USING(run_uuid)")),
+		).
+		Where("mod(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
+		Order("runmetrics.row_num DESC").
+		Order("metrics.key").
+		Order("metrics.iter").
+		Rows()
+	if err != nil {
+		return fmt.Errorf("error searching run metrics: %w", err)
+	}
+
 	c.Set("Content-Type", "application/octet-stream")
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		var err error
-		for i, r := range runs {
-			run := fiber.Map{
-				"props": fiber.Map{
-					"name":        r.Name,
-					"description": nil,
-					"experiment": fiber.Map{
-						"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-						"name": r.Experiment.Name,
-					},
-					"tags":          []string{}, // TODO insert real tags
-					"creation_time": float64(r.StartTime.Int64) / 1000,
-					"end_time":      float64(r.EndTime.Int64) / 1000,
-					"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
-					"active":        r.Status == database.StatusRunning,
-				},
-			}
+		defer rows.Close()
 
-			metrics := map[string]struct {
+		if err := func() error {
+			var (
+				id         string
+				key        string
+				metrics    []fiber.Map
 				values     []float64
 				iters      []float64
 				epochs     []float64
 				timestamps []float64
-			}{}
-			for _, m := range r.Metrics {
-				var i int
-				metric, ok := metrics[m.Key]
-				if ok {
-					i = len(metric.iters)
+				progress   int
+			)
+			reportProgress := func(cur int64) error {
+				if !q.ReportProgress {
+					return nil
 				}
-
-				v := m.Value
-				if m.IsNan {
-					v = math.NaN()
-				}
-
-				metric.values = append(metric.values, v)
-				metric.iters = append(metric.iters, float64(i))
-				metric.epochs = append(metric.epochs, float64(m.Step))
-				metric.timestamps = append(metric.timestamps, float64(m.Timestamp)/1000)
-				metrics[m.Key] = metric
-			}
-
-			fm := make([]fiber.Map, len(metrics))
-			var n int
-			for k, m := range metrics {
-				fm[n] = fiber.Map{
-					"name":          k,
-					"context":       fiber.Map{},
-					"slice":         []int{0, 0, q.Steps},
-					"values":        toNumpy(m.values),
-					"iters":         toNumpy(m.iters),
-					"epochs":        toNumpy(m.epochs),
-					"timestamps":    toNumpy(m.timestamps),
-					"x_axis_values": nil,
-					"x_axis_iters":  nil,
-				}
-				n++
-			}
-			run["traces"] = fm
-
-			params := make(fiber.Map, len(r.Params))
-			for _, p := range r.Params {
-				params[p.Key] = p.Value
-			}
-			run["params"] = params
-
-			err = encoding.EncodeTree(w, fiber.Map{
-				r.ID: run,
-			})
-			if err != nil {
-				break
-			}
-
-			if q.ReportProgress {
-				err = encoding.EncodeTree(w, fiber.Map{
-					fmt.Sprintf("progress_%d", i): []int{i + 1, len(runs)},
+				err := encoding.EncodeTree(w, fiber.Map{
+					fmt.Sprintf("progress_%d", progress): []int64{cur, totalRuns},
 				})
 				if err != nil {
-					break
+					return err
+				}
+				progress++
+				return w.Flush()
+			}
+			addMetrics := func() {
+				if key != "" {
+					metrics = append(metrics, fiber.Map{
+						"name":          key,
+						"context":       fiber.Map{},
+						"slice":         []int{0, 0, q.Steps},
+						"values":        toNumpy(values),
+						"iters":         toNumpy(iters),
+						"epochs":        toNumpy(epochs),
+						"timestamps":    toNumpy(timestamps),
+						"x_axis_values": nil,
+						"x_axis_iters":  nil,
+					})
 				}
 			}
-
-			err = w.Flush()
-			if err != nil {
-				break
+			flushMetrics := func() error {
+				if id == "" {
+					return nil
+				}
+				if err := encoding.EncodeTree(w, fiber.Map{
+					id: fiber.Map{
+						"traces": metrics,
+					},
+				}); err != nil {
+					return err
+				}
+				if err := reportProgress(totalRuns - result[id].RowNum); err != nil {
+					return err
+				}
+				return w.Flush()
 			}
-		}
+			for rows.Next() {
+				var metric database.Metric
+				if err := database.DB.ScanRows(rows, &metric); err != nil {
+					return err
+				}
 
-		// if q.ReportProgress && err == nil {
-		// 	err = encoding.EncodeTree(w, fiber.Map{
-		// 		fmt.Sprintf("progress_%d", len(runs)): []int{len(runs), len(runs)},
-		// 	})
-		// 	if err != nil {
-		// 		err = w.Flush()
-		// 	}
-		// }
+				// New series of metrics
+				if metric.Key != key || metric.RunID != id {
+					addMetrics()
 
-		if err != nil {
-			log.Errorf("Error encountered in %s %s: error streaming active runs: %s", c.Method(), c.Path(), err)
+					if metric.RunID != id {
+						if err := flushMetrics(); err != nil {
+							return err
+						}
+
+						metrics = make([]fiber.Map, 0)
+
+						if err := encoding.EncodeTree(w, fiber.Map{
+							metric.RunID: result[metric.RunID].Info,
+						}); err != nil {
+							return err
+						}
+
+						id = metric.RunID
+					}
+
+					values = make([]float64, 0, q.Steps)
+					iters = make([]float64, 0, q.Steps)
+					epochs = make([]float64, 0, q.Steps)
+					timestamps = make([]float64, 0, q.Steps)
+					key = metric.Key
+				}
+
+				v := metric.Value
+				if metric.IsNan {
+					v = math.NaN()
+				}
+				values = append(values, v)
+				iters = append(iters, float64(metric.Iter))
+				epochs = append(epochs, float64(metric.Step))
+				timestamps = append(timestamps, float64(metric.Timestamp)/1000)
+			}
+
+			addMetrics()
+			if err := flushMetrics(); err != nil {
+				return err
+			}
+
+			if err := reportProgress(totalRuns); err != nil {
+				return err
+			}
+
+			return nil
+		}(); err != nil {
+			log.Errorf("Error encountered in %s %s: error streaming metrics: %s", c.Method(), c.Path(), err)
 		}
 	})
 

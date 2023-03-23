@@ -31,14 +31,17 @@ var ServerCmd = &cobra.Command{
 }
 
 func serverCmd(cmd *cobra.Command, args []string) error {
-	database.ConnectDB(
+	if err := database.ConnectDB(
 		viper.GetString("database-uri"),
 		viper.GetDuration("database-slow-threshold"),
 		viper.GetInt("database-pool-max"),
-		viper.GetBool("database-init"),
+		viper.GetBool("database-reset"),
 		viper.GetBool("database-migrate"),
 		viper.GetString("artifact-root"),
-	)
+	); err != nil {
+		database.DB.Close()
+		return fmt.Errorf("error connecting to DB: %w", err)
+	}
 	defer database.DB.Close()
 
 	server := fiber.New(fiber.Config{
@@ -120,8 +123,8 @@ func init() {
 	ServerCmd.Flags().Int("database-pool-max", 20, "Maximum number of database connections in the pool")
 	ServerCmd.Flags().Duration("database-slow-threshold", 1*time.Second, "Slow SQL warning threshold")
 	ServerCmd.Flags().Bool("database-migrate", true, "Run database migrations")
-	ServerCmd.Flags().Bool("database-init", false, "(Re-)Initialize database - WARNING all data will be lost!")
-	ServerCmd.Flags().MarkHidden("database-init")
+	ServerCmd.Flags().Bool("database-reset", false, "Reinitialize database - WARNING all data will be lost!")
+	ServerCmd.Flags().MarkHidden("database-reset")
 	viper.BindEnv("auth-username", "MLFLOW_TRACKING_USERNAME")
 	viper.BindEnv("auth-password", "MLFLOW_TRACKING_PASSWORD")
 }

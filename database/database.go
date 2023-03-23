@@ -40,7 +40,7 @@ func (db *DbInstance) DSN() string {
 
 var DB *DbInstance = &DbInstance{}
 
-func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, init bool, migrate bool, artifactRoot string) error {
+func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string) error {
 	DB.dsn = dsn
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
@@ -49,7 +49,7 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, init bool, 
 		return fmt.Errorf("invalid database URL: %w", err)
 	}
 	switch u.Scheme {
-	case "postgres":
+	case "postgres", "postgresql":
 		sourceConn = postgres.Open(u.String())
 	case "sqlite":
 		q := u.Query()
@@ -128,32 +128,196 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, init bool, 
 		sqlDB.SetMaxOpenConns(poolMax)
 	}
 
-	if init {
+	if reset {
 		switch u.Scheme {
-		case "postgres":
-			log.Info("Initializing database")
+		case "postgres", "postgresql":
+			log.Info("Resetting database")
 			DB.Exec("drop schema public cascade")
 			DB.Exec("create schema public")
 		default:
-			return fmt.Errorf("unable to initialize database with scheme \"%s\"", u.Scheme)
+			return fmt.Errorf("unable to reset database with scheme \"%s\"", u.Scheme)
 		}
 	}
 
-	var schemaVersion AlembicVersion
-	DB.Session(&gorm.Session{
-		Logger: logger.Discard,
-	}).First(&schemaVersion)
+	var alembicVersion AlembicVersion
+	var schemaVersion SchemaVersion
+	{
+		tx := DB.Session(&gorm.Session{
+			Logger: logger.Discard,
+		})
+		tx.First(&alembicVersion)
+		tx.First(&schemaVersion)
+	}
 
-	if schemaVersion.Version != "97727af70f4d" {
-		if !migrate {
-			return fmt.Errorf("unsupported database schema version %s", schemaVersion.Version)
+	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "ac0b8b7c0014" {
+		if !migrate && alembicVersion.Version != "" {
+			return fmt.Errorf("unsupported database schema versions alembic %s, fasttrack %s", alembicVersion.Version, schemaVersion.Version)
 		}
 
-		switch schemaVersion.Version {
+		switch alembicVersion.Version {
+		case "c48cb773bb87":
+			log.Info("Migrating database to alembic schema bd07f7e963c5")
+			if err := DB.Transaction(func(tx *gorm.DB) error {
+				for _, table := range []any{
+					&Param{},
+					&Metric{},
+					&LatestMetric{},
+					&Tag{},
+				} {
+					if err := tx.Migrator().CreateIndex(table, "RunID"); err != nil {
+						return err
+					}
+				}
+				if err := tx.Model(&AlembicVersion{}).
+					Where("1 = 1").
+					Update("Version", "bd07f7e963c5").
+					Error; err != nil {
+					return err
+				}
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error migrating database to alembic schema bd07f7e963c5: %w", err)
+			}
+			fallthrough
+
+		case "bd07f7e963c5":
+			log.Info("Migrating database to alembic schema 0c779009ac13")
+			if err := DB.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Migrator().AddColumn(&Run{}, "DeletedTime"); err != nil {
+					return err
+				}
+				if err := tx.Model(&AlembicVersion{}).
+					Where("1 = 1").
+					Update("Version", "0c779009ac13").
+					Error; err != nil {
+					return err
+				}
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error migrating database to alembic schema 0c779009ac13: %w", err)
+			}
+			fallthrough
+
+		case "0c779009ac13":
+			log.Info("Migrating database to alembic schema cc1f77228345")
+			if err := DB.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Migrator().AlterColumn(&Param{}, "value"); err != nil {
+					return err
+				}
+				if err := tx.Model(&AlembicVersion{}).
+					Where("1 = 1").
+					Update("Version", "cc1f77228345").
+					Error; err != nil {
+					return err
+				}
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error migrating database to alembic schema cc1f77228345: %w", err)
+			}
+			fallthrough
+
+		case "cc1f77228345":
+			log.Info("Migrating database to alembic schema 97727af70f4d")
+			if err := DB.Transaction(func(tx *gorm.DB) error {
+				for _, column := range []string{
+					"CreationTime",
+					"LastUpdateTime",
+				} {
+					if err := tx.Migrator().AddColumn(&Experiment{}, column); err != nil {
+						return err
+					}
+				}
+				if err := tx.Model(&AlembicVersion{}).
+					Where("1 = 1").
+					Update("Version", "97727af70f4d").
+					Error; err != nil {
+					return err
+				}
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error migrating database to alembic schema 97727af70f4d: %w", err)
+			}
+			fallthrough
+
+		case "97727af70f4d":
+			switch schemaVersion.Version {
+			case "":
+				log.Info("Migrating database to fasttrack schema ac0b8b7c0014")
+				if err := DB.Transaction(func(tx *gorm.DB) error {
+					for _, column := range []struct {
+						dst   any
+						field string
+					}{
+						{&Run{}, "RowNum"},
+						{&Metric{}, "Iter"},
+						{&LatestMetric{}, "LastIter"},
+					} {
+						if err := tx.Migrator().AddColumn(column.dst, column.field); err != nil {
+							return err
+						}
+					}
+					if err := tx.Exec(
+						"UPDATE runs" +
+							"  SET row_num = rows.row_num" +
+							"  FROM (" +
+							"    SELECT run_uuid, ROW_NUMBER() OVER (ORDER BY start_time, run_uuid DESC) - 1 AS row_num" +
+							"    FROM runs" +
+							"  ) AS rows" +
+							"  WHERE runs.run_uuid = rows.run_uuid").
+						Error; err != nil {
+						return err
+					}
+					if err := tx.Exec(
+						"UPDATE metrics" +
+							"  SET iter = iters.iter" +
+							"  FROM (" +
+							"    SELECT ROW_NUMBER() OVER (PARTITION BY run_uuid, key ORDER BY timestamp, step, value) - 1 AS iter," +
+							"      run_uuid, key, timestamp, step, value" +
+							"    FROM metrics" +
+							"  ) AS iters" +
+							"  WHERE" +
+							"    (metrics.run_uuid, metrics.key, metrics.timestamp, metrics.step, metrics.value) =" +
+							"    (iters.run_uuid, iters.key, iters.timestamp, iters.step, iters.value)").
+						Error; err != nil {
+						return err
+					}
+					if err := tx.Exec(
+						"UPDATE latest_metrics" +
+							"  SET last_iter = metrics.last_iter" +
+							"  FROM (" +
+							"    SELECT run_uuid, key, MAX(iter) AS last_iter" +
+							"    FROM metrics" +
+							"    GROUP BY run_uuid, key" +
+							"  ) AS metrics" +
+							"  WHERE" +
+							"    (latest_metrics.run_uuid, latest_metrics.key) =" +
+							"    (metrics.run_uuid, metrics.key)").
+						Error; err != nil {
+						return err
+					}
+					if err := tx.AutoMigrate(&SchemaVersion{}); err != nil {
+						return err
+					}
+					if err := tx.Create(&SchemaVersion{
+						Version: "ac0b8b7c0014",
+					}).Error; err != nil {
+						return err
+					}
+					return nil
+				}); err != nil {
+					return fmt.Errorf("error migrating database to fasttrack schema ac0b8b7c0014: %w", err)
+				}
+
+			default:
+				return fmt.Errorf("unsupported database fasttrack schema version %s", schemaVersion.Version)
+			}
+
+			log.Info("Database migration done")
+
 		case "":
-			log.Info("Migrating database to 97727af70f4d")
+			log.Info("Initializing database")
 			tx := DB.Begin()
-			if err = tx.AutoMigrate(
+			if err := tx.AutoMigrate(
 				&Experiment{},
 				&ExperimentTag{},
 				&Run{},
@@ -162,82 +326,23 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, init bool, 
 				&Metric{},
 				&LatestMetric{},
 				&AlembicVersion{},
+				&SchemaVersion{},
 			); err != nil {
-				return fmt.Errorf("error migrating database to 97727af70f4d: %w", err)
+				return fmt.Errorf("error initializing database: %w", err)
 			}
 			tx.Create(&AlembicVersion{
 				Version: "97727af70f4d",
 			})
+			tx.Create(&SchemaVersion{
+				Version: "ac0b8b7c0014",
+			})
 			tx.Commit()
 			if tx.Error != nil {
-				return fmt.Errorf("error setting database schema version: %s", tx.Error)
-			}
-
-		case "c48cb773bb87":
-			log.Info("Migrating database to bd07f7e963c5")
-			tx := DB.Begin()
-			for _, table := range []any{
-				&Param{},
-				&Metric{},
-				&LatestMetric{},
-				&Tag{},
-			} {
-				if err := tx.Migrator().CreateIndex(table, "RunID"); err != nil {
-					return fmt.Errorf("error migrating database to bd07f7e963c5: %w", err)
-				}
-			}
-			tx.Model(&AlembicVersion{}).Where("1 = 1").Update("Version", "bd07f7e963c5")
-			tx.Commit()
-			if tx.Error != nil {
-				return fmt.Errorf("error setting database schema version to bd07f7e963c5: %w", err)
-			}
-			fallthrough
-
-		case "bd07f7e963c5":
-			log.Info("Migrating database to 0c779009ac13")
-			tx := DB.Begin()
-			if err := tx.Migrator().AddColumn(&Run{}, "DeletedTime"); err != nil {
-				return fmt.Errorf("error migrating database to 0c779009ac13: %w", err)
-			}
-			tx.Model(&AlembicVersion{}).Where("1 = 1").Update("Version", "0c779009ac13")
-			tx.Commit()
-			if tx.Error != nil {
-				return fmt.Errorf("error setting database schema version to 0c779009ac13: %w", err)
-			}
-			fallthrough
-
-		case "0c779009ac13":
-			log.Info("Migrating database to cc1f77228345")
-			tx := DB.Begin()
-			if err := tx.Migrator().AlterColumn(&Param{}, "value"); err != nil {
-				return fmt.Errorf("error migrating database to cc1f77228345: %w", err)
-			}
-			tx.Model(&AlembicVersion{}).Where("1 = 1").Update("Version", "cc1f77228345")
-			tx.Commit()
-			if tx.Error != nil {
-				return fmt.Errorf("error setting database schema version to cc1f77228345: %w", err)
-			}
-			fallthrough
-
-		case "cc1f77228345":
-			log.Info("Migrating database to 97727af70f4d")
-			tx := DB.Begin()
-			for _, column := range []string{
-				"CreationTime",
-				"LastUpdateTime",
-			} {
-				if err := tx.Migrator().AddColumn(&Experiment{}, column); err != nil {
-					return fmt.Errorf("error migrating database to 97727af70f4d: %w", err)
-				}
-			}
-			tx.Model(&AlembicVersion{}).Where("1 = 1").Update("Version", "97727af70f4d")
-			tx.Commit()
-			if tx.Error != nil {
-				return fmt.Errorf("error setting database schema version to 97727af70f4d: %w", err)
+				return fmt.Errorf("error initializing database: %w", tx.Error)
 			}
 
 		default:
-			return fmt.Errorf("unsupported database schema version %s", schemaVersion.Version)
+			return fmt.Errorf("unsupported database alembic schema version %s", alembicVersion.Version)
 		}
 	}
 

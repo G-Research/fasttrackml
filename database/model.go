@@ -1,10 +1,13 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"encoding/hex"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Status string
@@ -57,10 +60,32 @@ type Run struct {
 	ExperimentID   int32
 	Experiment     Experiment
 	DeletedTime    sql.NullInt64 `gorm:"type:bigint"`
+	RowNum         RowNum
 	Params         []Param
 	Tags           []Tag
 	Metrics        []Metric
 	LatestMetrics  []LatestMetric
+}
+
+type RowNum int64
+
+func (rn *RowNum) Scan(v interface{}) error {
+	nullInt := sql.NullInt64{}
+	if err := nullInt.Scan(v); err != nil {
+		return err
+	}
+	*rn = RowNum(nullInt.Int64)
+	return nil
+}
+
+func (rn RowNum) GormDataType() string {
+	return "bigint"
+}
+
+func (rn RowNum) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
+	return clause.Expr{
+		SQL: "(SELECT COALESCE(MAX(row_num), -1) FROM runs) + 1",
+	}
 }
 
 type Param struct {
@@ -82,6 +107,7 @@ type Metric struct {
 	RunID     string  `gorm:"column:run_uuid;not null;primaryKey;index"`
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
+	Iter      int64
 }
 
 type LatestMetric struct {
@@ -91,6 +117,7 @@ type LatestMetric struct {
 	Step      int64  `gorm:"not null"`
 	IsNan     bool   `gorm:"not null"`
 	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
+	LastIter  int64
 }
 
 type AlembicVersion struct {
@@ -99,6 +126,14 @@ type AlembicVersion struct {
 
 func (AlembicVersion) TableName() string {
 	return "alembic_version"
+}
+
+type SchemaVersion struct {
+	Version string `gorm:"not null;primaryKey"`
+}
+
+func (SchemaVersion) TableName() string {
+	return "schema_version"
 }
 
 func NewUUID() string {

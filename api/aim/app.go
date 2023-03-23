@@ -17,28 +17,45 @@ import (
 func NewApp(authUsername string, authPassword string) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			// Status code defaults to 500
-			code := fiber.StatusInternalServerError
+			var e *ErrorResponse
+			var f *fiber.Error
+			var d DetailedError
+
+			switch {
+			case errors.As(err, &e):
+			case errors.As(err, &f):
+				e = &ErrorResponse{
+					Code:    f.Code,
+					Message: f.Message,
+					Detail:  "",
+				}
+			case errors.As(err, &d):
+				e = &ErrorResponse{
+					Code:    d.Code(),
+					Message: d.Message(),
+					Detail:  d.Detail(),
+				}
+			default:
+				e = &ErrorResponse{
+					Code:    fiber.StatusInternalServerError,
+					Message: err.Error(),
+					Detail:  "",
+				}
+			}
+
 			fn := log.Errorf
 
-			// Retrieve the custom status code if it's a *fiber.Error
-			var e *fiber.Error
-			if errors.As(err, &e) {
-				code = e.Code
-				switch e.Code {
-				case fiber.StatusNotFound:
-					fn = log.Debugf
-				case fiber.StatusInternalServerError:
-				default:
-					fn = log.Warnf
-				}
+			switch e.Code {
+			case fiber.StatusNotFound:
+				fn = log.Debugf
+			case fiber.StatusInternalServerError:
+			default:
+				fn = log.Warnf
 			}
 
 			fn("Error encountered in %s %s: %s", c.Method(), c.Path(), err)
 
-			return c.Status(code).JSON(fiber.Map{
-				"detail": err.Error(),
-			})
+			return c.Status(e.Code).JSON(e)
 		},
 	})
 
@@ -52,6 +69,9 @@ func NewApp(authUsername string, authPassword string) *fiber.App {
 			},
 		}))
 	}
+
+	apps := api.Group("apps")
+	apps.Get("/", GetApps)
 
 	dashboards := api.Group("/dashboards")
 	dashboards.Get("/", GetDashboards)

@@ -7,3 +7,4 @@ fasttrack
 fasttrack.db*
 ui/*/build*
 !ui/*/build.sh
+tests/*/*.src

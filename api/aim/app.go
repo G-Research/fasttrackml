@@ -72,9 +72,17 @@ func NewApp(authUsername string, authPassword string) *fiber.App {
 
 	apps := api.Group("apps")
 	apps.Get("/", GetApps)
+	apps.Post("/", CreateApp)
+	apps.Get("/:id/", GetApp)
+	apps.Put("/:id/", UpdateApp)
+	apps.Delete("/:id/", DeleteApp)
 
 	dashboards := api.Group("/dashboards")
 	dashboards.Get("/", GetDashboards)
+	dashboards.Post("/", CreateDashboard)
+	dashboards.Get("/:id/", GetDashboard)
+	dashboards.Put("/:id/", UpdateDashboard)
+	dashboards.Delete("/:id/", DeleteDashboard)
 
 	experiments := api.Group("experiments")
 	experiments.Get("/", GetExperiments)

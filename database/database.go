@@ -149,7 +149,7 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 		tx.First(&schemaVersion)
 	}
 
-	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "ac0b8b7c0014" {
+	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "8073e7e037e5" {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf("unsupported database schema versions alembic %s, fasttrack %s", alembicVersion.Version, schemaVersion.Version)
 		}
@@ -168,13 +168,10 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 						return err
 					}
 				}
-				if err := tx.Model(&AlembicVersion{}).
+				return tx.Model(&AlembicVersion{}).
 					Where("1 = 1").
 					Update("Version", "bd07f7e963c5").
-					Error; err != nil {
-					return err
-				}
-				return nil
+					Error
 			}); err != nil {
 				return fmt.Errorf("error migrating database to alembic schema bd07f7e963c5: %w", err)
 			}
@@ -186,13 +183,10 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 				if err := tx.Migrator().AddColumn(&Run{}, "DeletedTime"); err != nil {
 					return err
 				}
-				if err := tx.Model(&AlembicVersion{}).
+				return tx.Model(&AlembicVersion{}).
 					Where("1 = 1").
 					Update("Version", "0c779009ac13").
-					Error; err != nil {
-					return err
-				}
-				return nil
+					Error
 			}); err != nil {
 				return fmt.Errorf("error migrating database to alembic schema 0c779009ac13: %w", err)
 			}
@@ -204,13 +198,10 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 				if err := tx.Migrator().AlterColumn(&Param{}, "value"); err != nil {
 					return err
 				}
-				if err := tx.Model(&AlembicVersion{}).
+				return tx.Model(&AlembicVersion{}).
 					Where("1 = 1").
 					Update("Version", "cc1f77228345").
-					Error; err != nil {
-					return err
-				}
-				return nil
+					Error
 			}); err != nil {
 				return fmt.Errorf("error migrating database to alembic schema cc1f77228345: %w", err)
 			}
@@ -227,13 +218,10 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 						return err
 					}
 				}
-				if err := tx.Model(&AlembicVersion{}).
+				return tx.Model(&AlembicVersion{}).
 					Where("1 = 1").
 					Update("Version", "97727af70f4d").
-					Error; err != nil {
-					return err
-				}
-				return nil
+					Error
 			}); err != nil {
 				return fmt.Errorf("error migrating database to alembic schema 97727af70f4d: %w", err)
 			}
@@ -298,14 +286,29 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 					if err := tx.AutoMigrate(&SchemaVersion{}); err != nil {
 						return err
 					}
-					if err := tx.Create(&SchemaVersion{
+					return tx.Create(&SchemaVersion{
 						Version: "ac0b8b7c0014",
-					}).Error; err != nil {
-						return err
-					}
-					return nil
+					}).Error
 				}); err != nil {
 					return fmt.Errorf("error migrating database to fasttrack schema ac0b8b7c0014: %w", err)
+				}
+				fallthrough
+
+			case "ac0b8b7c0014":
+				log.Info("Migrating database to fasttrack schema 8073e7e037e5")
+				if err := DB.Transaction(func(tx *gorm.DB) error {
+					if err := tx.AutoMigrate(
+						&Dashboard{},
+						&App{},
+					); err != nil {
+						return err
+					}
+					return tx.Model(&SchemaVersion{}).
+						Where("1 = 1").
+						Update("Version", "8073e7e037e5").
+						Error
+				}); err != nil {
+					return fmt.Errorf("error migrating database to fasttrack schema 8073e7e037e5: %w", err)
 				}
 
 			default:
@@ -326,6 +329,8 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 				&Metric{},
 				&LatestMetric{},
 				&AlembicVersion{},
+				&Dashboard{},
+				&App{},
 				&SchemaVersion{},
 			); err != nil {
 				return fmt.Errorf("error initializing database: %w", err)
@@ -334,7 +339,7 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 				Version: "97727af70f4d",
 			})
 			tx.Create(&SchemaVersion{
-				Version: "ac0b8b7c0014",
+				Version: "8073e7e037e5",
 			})
 			tx.Commit()
 			if tx.Error != nil {

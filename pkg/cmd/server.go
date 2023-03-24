@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/G-Resarch/fasttrack/api/aim"
-	"github.com/G-Resarch/fasttrack/api/mlflow"
-	"github.com/G-Resarch/fasttrack/database"
-	"github.com/G-Resarch/fasttrack/ui"
-	"github.com/G-Resarch/fasttrack/version"
+	"github.com/G-Resarch/fasttrack/pkg/api/aim"
+	"github.com/G-Resarch/fasttrack/pkg/api/mlflow"
+	"github.com/G-Resarch/fasttrack/pkg/database"
+	"github.com/G-Resarch/fasttrack/pkg/ui"
+	"github.com/G-Resarch/fasttrack/pkg/version"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"

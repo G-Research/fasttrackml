@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/G-Resarch/fasttrack/database"
-	"github.com/gofiber/fiber/v2"
+	"github.com/G-Resarch/fasttrack/pkg/database"
 
 	"github.com/go-python/gpython/ast"
 	"github.com/go-python/gpython/parser"
 	"github.com/go-python/gpython/py"
+	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

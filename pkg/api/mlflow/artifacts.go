@@ -1,7 +1,7 @@
 package mlflow
 
 import (
-	"github.com/G-Resarch/fasttrack/database"
+	"github.com/G-Resarch/fasttrack/pkg/database"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"

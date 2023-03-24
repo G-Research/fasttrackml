@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/G-Resarch/fasttrack/version"
+	"github.com/G-Resarch/fasttrack/pkg/version"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

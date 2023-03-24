@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/G-Resarch/fasttrack/ui"
-	"github.com/G-Resarch/fasttrack/version"
+	"github.com/G-Resarch/fasttrack/pkg/ui"
+	"github.com/G-Resarch/fasttrack/pkg/version"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"

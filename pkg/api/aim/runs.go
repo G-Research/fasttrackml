@@ -8,9 +8,9 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/G-Resarch/fasttrack/api/aim/encoding"
-	"github.com/G-Resarch/fasttrack/api/aim/query"
-	"github.com/G-Resarch/fasttrack/database"
+	"github.com/G-Resarch/fasttrack/pkg/api/aim/encoding"
+	"github.com/G-Resarch/fasttrack/pkg/api/aim/query"
+	"github.com/G-Resarch/fasttrack/pkg/database"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"

@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    # Run daily at 01:34 so we get notified if CI is broken before a pull request
+    # is submitted.
+    - cron:  '34 1 * * *'
+
+jobs:
+
+  lint:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Read build tags
+        id: tags
+        run: echo tags=$(jq -r '."go.buildTags"' .vscode/settings.json) >> $GITHUB_OUTPUT
+
+      - name: Check formatting
+        run: gofmt -l .
+
+      - name: Mock UI builds
+        run: |
+          mkdir pkg/ui/{aim,mlflow}/build
+          touch pkg/ui/{aim,mlflow}/build/index.html
+
+      - name: Check with go vet
+        run: go vet --tags "${{ steps.tags.outputs.tags }}" ./...
+
+      - uses: dominikh/staticcheck-action@v1.3.0
+        with:
+          version: "2022.1.3"
+          build-tags: ${{ steps.tags.outputs.tags }}
+
+  test:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test
+          LC_COLLATE: POSIX
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Mock UI builds
+        run: |
+          mkdir pkg/ui/{aim,mlflow}/build
+          touch pkg/ui/{aim,mlflow}/build/index.html
+
+      - name: Run MLFlow integration tests
+        run: ./tests/mlflow/test.sh
+
+  build-image:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Build container image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Read build tags
+        id: tags
+        run: echo tags=$(jq -r '."go.buildTags"' .vscode/settings.json) >> $GITHUB_OUTPUT
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: buildx-${{ github.sha }}
+          restore-keys: |
+            buildx-
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      # Setup buildx with only one parallel worker.
+      # This is to avoid OOM during UI build.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          config-inline: |
+            [worker.oci]
+            max-parallelism = 1
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: gresearch/fasttrack
+
+      - name: Build container image
+        uses: docker/build-push-action@v4
+        with:
+          build-args: tags=${{ steps.tags.outputs.tags }}
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      # Temp fix
+      # https://github.com/docker/build-push-action/issues/252
+      # https://github.com/moby/buildkit/issues/1896
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  # Virtual job that can be configured as a required check before a PR can be merged.
+  all-required-checks-done:
+    name: All required checks done
+    needs:
+      - lint
+      - test
+      - build-image
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All required checks done"

@@ -1,7 +1,8 @@
 version: '3.8'
 
 volumes:
-  workspace-data:
+  home:
+  workspaces:
   postgres-data:
 
 services:
@@ -28,7 +29,8 @@ services:
 #       - SYS_PTRACE
 
     volumes:
-      - workspace-data:/workspaces
+      - home:/home/vscode
+      - workspaces:/workspaces
       - ..:/workspaces/fasttrack:cached
       
     # Overrides default command so things don't shut down after the process ends.

@@ -210,8 +210,8 @@ github.com/jackc/puddle v0.0.0-20190413234325-e4ced69a3a2b/go.mod h1:m4B5Dj62Y0f
 github.com/jackc/puddle v0.0.0-20190608224051-11cab39313c9/go.mod h1:m4B5Dj62Y0fbyuIc15OsIqK0+JU8nkqQjsgx7dvjSWk=
 github.com/jackc/puddle v1.1.3/go.mod h1:m4B5Dj62Y0fbyuIc15OsIqK0+JU8nkqQjsgx7dvjSWk=
 github.com/jackc/puddle v1.3.0/go.mod h1:m4B5Dj62Y0fbyuIc15OsIqK0+JU8nkqQjsgx7dvjSWk=
-github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20221111220431-c96939f956d9 h1:06YcMiz+qcfFsNtHAfUHNuNbp6o1m2TgF5Me2yqlzJw=
-github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20221111220431-c96939f956d9/go.mod h1:2eHXhiwb8IkHr+BDWZGa96P6+rkvnG63S2DGjv9HUNg=
+github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20230327164124-765f25ea5431 h1:zveJxnAiwI63z7qf5ndPbJxRIO7ZC8wFiDDzZ4WXVF4=
+github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20230327164124-765f25ea5431/go.mod h1:2eHXhiwb8IkHr+BDWZGa96P6+rkvnG63S2DGjv9HUNg=
 github.com/jgiannuzzi/gorm-sqlite v1.4.4-0.20221215225833-42389ad31305 h1:At4YCq3pSf9pDEkd47r7CGh3A/j6hMD8hOKSt14fIgk=
 github.com/jgiannuzzi/gorm-sqlite v1.4.4-0.20221215225833-42389ad31305/go.mod h1:0Aq3iPO+v9ZKbcdiz8gLWRw5VOPcBOPUQJFLq5e2ecI=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=

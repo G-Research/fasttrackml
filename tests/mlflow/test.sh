@@ -38,7 +38,8 @@ fi
 # Build fasttrack
 go build \
   -C ${workspace} \
-  --tags "$(jq -r '."go.buildTags"' ${workspace}/.vscode/settings.json)" \
+  -tags "$(jq -r '."go.buildTags"' ${workspace}/.vscode/settings.json)" \
+  -ldflags "-linkmode external -extldflags '-static' -s -w" \
   -o ${repo}/fasttrack
 
 # Create postgres test database if needed

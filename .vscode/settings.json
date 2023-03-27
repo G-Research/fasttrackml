@@ -1,4 +1,4 @@
 {
-    "go.testTags": "sqlcipher sqlite_math_functions sqlite_foreign_keys sqlite_unlock_notify sqlite_vacuum_incr",
-    "go.buildTags": "sqlcipher sqlite_math_functions sqlite_foreign_keys sqlite_unlock_notify sqlite_vacuum_incr"
+    "go.testTags": "netgo osusergo sqlite_foreign_keys sqlite_math_functions sqlite_omit_load_extension sqlite_unlock_notify sqlite_vacuum_incr",
+    "go.buildTags": "netgo osusergo sqlite_foreign_keys sqlite_math_functions sqlite_omit_load_extension sqlite_unlock_notify sqlite_vacuum_incr"
 }

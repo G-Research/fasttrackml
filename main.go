@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/G-Resarch/fasttrack/pkg/cmd"
+	"github.com/G-Research/fasttrack/pkg/cmd"
 
 	log "github.com/sirupsen/logrus"
 )

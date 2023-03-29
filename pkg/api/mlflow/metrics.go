@@ -3,7 +3,7 @@ package mlflow
 import (
 	"bufio"
 
-	"github.com/G-Resarch/fasttrack/pkg/database"
+	"github.com/G-Research/fasttrack/pkg/database"
 
 	"github.com/apache/arrow/go/v11/arrow"
 	"github.com/apache/arrow/go/v11/arrow/array"

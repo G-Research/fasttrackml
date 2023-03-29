@@ -85,11 +85,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      - name: Read build tags
-        id: tags
-        run: echo tags=$(jq -r '."go.buildTags"' .vscode/settings.json) >> $GITHUB_OUTPUT
-
+      - name: Compute build args
+        id: build-args
+        run: |
+          echo tags=$(jq -r '."go.buildTags"' .vscode/settings.json) >> $GITHUB_OUTPUT
+          echo version=$(git describe --tags | sed 's/^v//') >> $GITHUB_OUTPUT
+        
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -119,7 +123,9 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: ${{ github.event_name == 'push' }}
-          build-args: tags=${{ steps.tags.outputs.tags }}
+          build-args: |
+            tags=${{ steps.build-args.outputs.tags }}
+            version=${{ steps.build-args.outputs.version }}
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

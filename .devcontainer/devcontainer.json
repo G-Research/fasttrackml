@@ -14,7 +14,8 @@
 				"go.toolsManagement.checkForUpdates": "local",
 				"go.useLanguageServer": true,
 				"go.gopath": "/go",
-				"go.goroot": "/usr/local/go"
+				"go.goroot": "/usr/local/go",
+				"terminal.integrated.defaultProfile.linux": "zsh",
 			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [

@@ -8,6 +8,9 @@ on:
     # is submitted.
     - cron: "34 1 * * *"
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
@@ -81,6 +84,7 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
     name: Build container image
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -109,19 +113,17 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ghcr.io/g-research/fasttrack
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          images: fasttrack
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=edge
 
       - name: Build container image
         uses: docker/build-push-action@v4
         with:
-          push: ${{ github.event_name == 'push' }}
+          context: .
           build-args: |
             tags=${{ steps.build-args.outputs.tags }}
             version=${{ steps.build-args.outputs.version }}
@@ -130,6 +132,15 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
+          outputs: type=oci,dest=fasttrack-oci.tar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: fasttrack-oci-image
+          path: fasttrack-oci.tar
 
   # Virtual job that can be configured as a required check before a PR can be merged.
   all-required-checks-done:
@@ -141,3 +152,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "All required checks done"
+
+  # Publish any push to a branch or tag to ghcr.io as a convenience
+  # Actual release to Docker Hub happens in a different workflow
+  push-ghcr:
+    name: Push to GitHub Container Registry
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: all-required-checks-done
+    permissions:
+      packages: write
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: fasttrack-oci-image
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute repo name
+        id: repo
+        run: echo name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_OUTPUT
+
+      - name: Push to GitHub Container Registry
+        run: |
+          tags=$(tar -xOf fasttrack-oci.tar index.json | jq -r '.manifests[].annotations."org.opencontainers.image.ref.name"')
+          for tag in $tags
+          do
+            echo "::group::Pushing image to ghcr.io/${{ steps.repo.outputs.name }}:$tag"
+            skopeo copy --all oci-archive:fasttrack-oci.tar:$tag docker://ghcr.io/${{ steps.repo.outputs.name }}:$tag
+            echo "::endgroup::"
+          done

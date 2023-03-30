@@ -21,7 +21,8 @@
 			"extensions": [
 				"golang.Go",
 				"ms-python.python",
-				"pbkit.vscode-pbkit"
+				"pbkit.vscode-pbkit",
+				"redhat.vscode-yaml"
 			]
 		}
 	},

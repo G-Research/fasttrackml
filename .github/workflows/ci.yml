@@ -1,0 +1,190 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    # Run daily at 01:34 so we get notified if CI is broken before a pull request
+    # is submitted.
+    - cron: "34 1 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+
+      - name: Read build tags
+        id: tags
+        run: echo tags=$(jq -r '."go.buildTags"' .vscode/settings.json) >> $GITHUB_OUTPUT
+
+      - name: Check formatting
+        run: gofmt -l .
+
+      - name: Mock UI builds
+        run: |
+          mkdir pkg/ui/{aim,mlflow}/build
+          touch pkg/ui/{aim,mlflow}/build/index.html
+
+      - name: Check with go vet
+        run: go vet --tags "${{ steps.tags.outputs.tags }}" ./...
+
+      - uses: dominikh/staticcheck-action@v1.3.0
+        with:
+          version: "2022.1.3"
+          build-tags: ${{ steps.tags.outputs.tags }}
+
+  test:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test
+          LC_COLLATE: POSIX
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+
+      - name: Mock UI builds
+        run: |
+          mkdir pkg/ui/{aim,mlflow}/build
+          touch pkg/ui/{aim,mlflow}/build/index.html
+
+      - name: Run MLFlow integration tests
+        run: ./tests/mlflow/test.sh
+
+  build-image:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Build container image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Compute build args
+        id: build-args
+        run: |
+          echo tags=$(jq -r '."go.buildTags"' .vscode/settings.json) >> $GITHUB_OUTPUT
+          echo version=$(git describe --tags | sed 's/^v//') >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      # Setup buildx with only one parallel worker.
+      # This is to avoid OOM during UI build.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          config-inline: |
+            [worker.oci]
+            max-parallelism = 1
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: fasttrack
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=edge
+
+      - name: Build container image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          build-args: |
+            tags=${{ steps.build-args.outputs.tags }}
+            version=${{ steps.build-args.outputs.version }}
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
+          outputs: type=oci,dest=fasttrack-oci.tar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: fasttrack-oci-image
+          path: fasttrack-oci.tar
+
+  # Virtual job that can be configured as a required check before a PR can be merged.
+  all-required-checks-done:
+    name: All required checks done
+    needs:
+      - lint
+      - test
+      - build-image
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All required checks done"
+
+  # Publish any push to a branch or tag to ghcr.io as a convenience
+  # Actual release to Docker Hub happens in a different workflow
+  push-ghcr:
+    name: Push to GitHub Container Registry
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: all-required-checks-done
+    permissions:
+      packages: write
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: fasttrack-oci-image
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute repo name
+        id: repo
+        run: echo name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_OUTPUT
+
+      - name: Push to GitHub Container Registry
+        run: |
+          tags=$(tar -xOf fasttrack-oci.tar index.json | jq -r '.manifests[].annotations."org.opencontainers.image.ref.name"')
+          for tag in $tags
+          do
+            echo "::group::Pushing image to ghcr.io/${{ steps.repo.outputs.name }}:$tag"
+            skopeo copy --all oci-archive:fasttrack-oci.tar:$tag docker://ghcr.io/${{ steps.repo.outputs.name }}:$tag
+            echo "::endgroup::"
+          done

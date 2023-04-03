@@ -940,7 +940,7 @@ index 6ad01a9..f1f8b5b 100644
  
  div.github {
 diff --git a/mlflow/server/js/src/experiment-tracking/components/App.js b/mlflow/server/js/src/experiment-tracking/components/App.js
-index bf1f184..232955c 100644
+index bf1f184..8b35333 100644
 --- a/mlflow/server/js/src/experiment-tracking/components/App.js
 +++ b/mlflow/server/js/src/experiment-tracking/components/App.js
 @@ -3,7 +3,8 @@ import { connect } from 'react-redux';
@@ -953,7 +953,7 @@ index bf1f184..232955c 100644
  import logo from '../../common/static/home-logo.png';
  import ErrorModal from '../../experiment-tracking/components/modals/ErrorModal';
  import { CompareModelVersionsPage } from '../../model-registry/components/CompareModelVersionsPage';
-@@ -45,6 +46,21 @@ const classNames = {
+@@ -45,6 +46,23 @@ const classNames = {
  const InteractionTracker = ({ children }) => children;
  
  class App extends Component {
@@ -965,9 +965,11 @@ index bf1f184..232955c 100644
 +  }
 +
 +  componentDidMount() {
-+    fetchEndpoint({ relativeUrl: 'version' }).then((result) => {
-+      this.setState({
-+        version: result,
++    fetch('/version').then((response) => {
++      response.text().then((version) => {
++        this.setState({
++          version: version,
++        });
 +      });
 +    });
 +  }
@@ -975,7 +977,7 @@ index bf1f184..232955c 100644
    render() {
      const marginRight = 24;
      return (
-@@ -63,7 +79,7 @@ class App extends Component {
+@@ -63,7 +81,7 @@ class App extends Component {
                    <Link to={Routes.rootRoute} className='App-mlflow'>
                      <img className='mlflow-logo' alt='MLflow' src={logo} />
                    </Link>
@@ -984,7 +986,7 @@ index bf1f184..232955c 100644
                  </div>
                  <div className='header-route-links'>
                    <NavLink
-@@ -78,20 +94,14 @@ class App extends Component {
+@@ -78,20 +96,14 @@ class App extends Component {
                        <span>Experiments</span>
                      </div>
                    </NavLink>

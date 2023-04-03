@@ -11,6 +11,19 @@ index 97c79d2..b413a82 100644
                // eslint-disable-next-line no-param-reassign
                loaderConfig.options = { publicPath };
  
+diff --git a/mlflow/server/js/package.json b/mlflow/server/js/package.json
+index ca622dc..d6f3d8f 100644
+--- a/mlflow/server/js/package.json
++++ b/mlflow/server/js/package.json
+@@ -145,7 +145,7 @@
+     "start:dev-proxy-iframe": "MLFLOW_DEV_PROXY_MODE=true yarn start:iframe",
+     "start:dev-proxy": "MLFLOW_DEV_PROXY_MODE=true yarn start:mfe",
+     "start:mfe": "PUBLIC_URL=/ MLFLOW_MFE_DEV=true npm run start:iframe",
+-    "build": "craco --max_old_space_size=8192 build",
++    "build": "GENERATE_SOURCEMAP=false craco --max_old_space_size=1536 build",
+     "build:fs": "scripts/build.sh fs",
+     "build:mfe": "MLFLOW_MFE_DEV=true craco --max_old_space_size=8192 build",
+     "build:fs:mfe": "FEATURE_STORE_MFE_DEV=true craco --max_old_space_size=8192 build",
 diff --git a/mlflow/server/js/src/common/constants.js b/mlflow/server/js/src/common/constants.js
 index b176e1c..66fe90e 100644
 --- a/mlflow/server/js/src/common/constants.js

@@ -1,8 +1,23 @@
 diff --git a/aim/web/ui/package.json b/aim/web/ui/package.json
-index 8c8b1e9..4ef1195 100644
+index 8c8b1e9..816e3f1 100644
 --- a/aim/web/ui/package.json
 +++ b/aim/web/ui/package.json
-@@ -66,7 +66,7 @@
+@@ -53,7 +53,7 @@
+   },
+   "scripts": {
+     "start": "react-app-rewired --max_old_space_size=4096 start",
+-    "build": "react-app-rewired --max_old_space_size=4096 build && gzipper c -i js,css,html ./build && node tasks/index-html-template-generator.js",
++    "build": "GENERATE_SOURCEMAP=false react-app-rewired --max_old_space_size=2048 build",
+     "test": "react-scripts test ",
+     "test:coverage": "react-app-rewired test --collectCoverage",
+     "test:watch": "react-app-rewired test --watchAll",
+@@ -61,12 +61,12 @@
+     "lint": "eslint src/. --ext .js,.jsx,.ts,.tsx",
+     "format:fix": "eslint src/. --ext .js,.jsx,.ts,.tsx --quiet --fix",
+     "preinstall": "rimraf public/vs",
+-    "postinstall": "cp -R node_modules/monaco-editor/min/vs public/vs",
++    "postinstall": "cp -R node_modules/monaco-editor/min/vs public/vs && find public/vs -type f | xargs sed -i -e '/^\\/\\/# sourceMappingURL=/d'",
+     "analyze-bundles": "node tasks/bundle-analyzer.js",
      "crc-kit": "func() { node tasks/cli/index.js  create-component --name=\"$1\" --path=./src/components/kit/ --lint; }; func",
      "crc": "func() { node tasks/cli/index.js  create-component --name=\"$1\" --path=./src/components/ --lint; }; func"
    },

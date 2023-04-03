@@ -52,3 +52,8 @@ EOF
 . ${venv}/bin/activate
 export PATH=".:${PATH}"
 pytest tests/tracking/test_rest_tracking.py
+pytest tests/tracking/test_tracking.py
+pytest tests/tracking/test_client.py
+pytest tests/tracking/test_log_figure.py
+pytest tests/tracking/test_log_image.py
+pytest tests/tracking/test_artifact_utils.py

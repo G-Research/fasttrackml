@@ -12,10 +12,21 @@ index 8c8b1e9..4ef1195 100644
      "production": [
        ">0.2%",
 diff --git a/aim/web/ui/public/index.html b/aim/web/ui/public/index.html
-index 74776c4..159b897 100644
+index 74776c4..88f4df1 100644
 --- a/aim/web/ui/public/index.html
 +++ b/aim/web/ui/public/index.html
-@@ -214,7 +214,7 @@
+@@ -147,10 +147,6 @@
+       rel="stylesheet"
+       href="%PUBLIC_URL%/assets/icomoon/icomoonIcons.css"
+     />
+-    <link
+-      rel="stylesheet"
+-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+-    />
+     <title>Aim</title>
+ 
+     <script>
+@@ -214,7 +210,7 @@
        })();
      </script>
      <script>

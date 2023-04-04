@@ -1,13 +1,13 @@
 # Build MLFlow UI
 FROM --platform=$BUILDPLATFORM node:16 AS mlflow-build
 
-COPY pkg/ui/mlflow /mlflow
+COPY pkg/ui/mlflow/embed /mlflow
 RUN /mlflow/build.sh
 
 # Build Aim UI
 FROM --platform=$BUILDPLATFORM node:16 AS aim-build
 
-COPY pkg/ui/aim /aim
+COPY pkg/ui/aim/embed /aim
 RUN /aim/build.sh
 
 # Build fasttrack binary
@@ -18,8 +18,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY main.go .
 COPY pkg ./pkg
-COPY --from=mlflow-build /mlflow/build ./pkg/ui/mlflow/build
-COPY --from=aim-build /aim/build ./pkg/ui/aim/build
+COPY --from=mlflow-build /mlflow/build ./pkg/ui/mlflow/embed/build
+COPY --from=aim-build /aim/build ./pkg/ui/aim/embed/build
 
 ARG TARGETARCH
 RUN bash -c "\

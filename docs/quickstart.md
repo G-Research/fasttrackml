@@ -49,7 +49,16 @@ After running this script, you should see the following output from http://local
 
 From here you can check out the metrics and run information to see more details about the run.
 
-## Testing a Random Forest Model
+## Testing a Random Forrest Model
 
 ```bash
+# Install mflow and poetry
+cd docs/dev
+poetry install
+# MLFlow will not be installed by poetry, so we need to install it manually
+poetry run pip install mlflow boto3
+
+# Run the script
+poetry run python3 random_forrest.py
+```
 

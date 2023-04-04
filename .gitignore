@@ -5,3 +5,5 @@ pkg/ui/*/build*
 tests/*/*.src
 
 outputs
+
+poetry.lock

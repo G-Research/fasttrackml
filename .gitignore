@@ -3,3 +3,5 @@ fasttrack.db*
 pkg/ui/*/build*
 !pkg/ui/*/build.sh
 tests/*/*.src
+
+outputs

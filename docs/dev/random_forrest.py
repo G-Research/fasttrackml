@@ -9,7 +9,7 @@ ALL_FILES = ["data/0.csv", "data/1.csv", "data/2.csv", "data/3.csv"]
 mlflow.set_tracking_uri("http://localhost:5000/mlflow")
 mlflow.set_experiment("my-experiment")
 
-mlflow.sklearn.autolog()
+mlflow.sklearn.autolog(log_models=False)
 
 
 def read_data():

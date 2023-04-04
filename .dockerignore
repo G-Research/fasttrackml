@@ -5,6 +5,6 @@
 Dockerfile
 fasttrack
 fasttrack.db*
-pkg/ui/*/build*
-!pkg/ui/*/build.sh
+pkg/ui/*/embed/build*
+!pkg/ui/*/embed/build.sh
 tests/*/*.src

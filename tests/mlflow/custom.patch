@@ -1,8 +1,8 @@
 diff --git a/tests/tracking/integration_test_utils.py b/tests/tracking/integration_test_utils.py
-index 41ec85f..94cb399 100644
+index 41ec85f..a99de1d 100644
 --- a/tests/tracking/integration_test_utils.py
 +++ b/tests/tracking/integration_test_utils.py
-@@ -52,19 +52,21 @@ def _init_server(backend_uri, root_artifact_uri):
+@@ -52,14 +52,16 @@ def _init_server(backend_uri, root_artifact_uri):
      server_port = get_safe_port()
      process = Popen(
          [
@@ -23,12 +23,6 @@ index 41ec85f..94cb399 100644
 +            "FASTTRACK_DATABASE_RESET": str(backend_uri.startswith("postgres://")),
          },
      )
- 
-     _await_server_up_or_die(server_port)
--    url = f"http://{LOCALHOST}:{server_port}"
-+    url = f"http://{LOCALHOST}:{server_port}/mlflow"
-     _logger.info(f"Launching tracking server against backend URI {backend_uri}. Server URL: {url}")
-     return url, process
  
 diff --git a/tests/tracking/test_rest_tracking.py b/tests/tracking/test_rest_tracking.py
 index 45ee41e..3afdfcb 100644

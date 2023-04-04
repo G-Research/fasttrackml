@@ -1,8 +1,23 @@
 diff --git a/aim/web/ui/package.json b/aim/web/ui/package.json
-index 8c8b1e9..4ef1195 100644
+index 8c8b1e9..816e3f1 100644
 --- a/aim/web/ui/package.json
 +++ b/aim/web/ui/package.json
-@@ -66,7 +66,7 @@
+@@ -53,7 +53,7 @@
+   },
+   "scripts": {
+     "start": "react-app-rewired --max_old_space_size=4096 start",
+-    "build": "react-app-rewired --max_old_space_size=4096 build && gzipper c -i js,css,html ./build && node tasks/index-html-template-generator.js",
++    "build": "GENERATE_SOURCEMAP=false react-app-rewired --max_old_space_size=2048 build",
+     "test": "react-scripts test ",
+     "test:coverage": "react-app-rewired test --collectCoverage",
+     "test:watch": "react-app-rewired test --watchAll",
+@@ -61,12 +61,12 @@
+     "lint": "eslint src/. --ext .js,.jsx,.ts,.tsx",
+     "format:fix": "eslint src/. --ext .js,.jsx,.ts,.tsx --quiet --fix",
+     "preinstall": "rimraf public/vs",
+-    "postinstall": "cp -R node_modules/monaco-editor/min/vs public/vs",
++    "postinstall": "cp -R node_modules/monaco-editor/min/vs public/vs && find public/vs -type f | xargs sed -i -e '/^\\/\\/# sourceMappingURL=/d'",
+     "analyze-bundles": "node tasks/bundle-analyzer.js",
      "crc-kit": "func() { node tasks/cli/index.js  create-component --name=\"$1\" --path=./src/components/kit/ --lint; }; func",
      "crc": "func() { node tasks/cli/index.js  create-component --name=\"$1\" --path=./src/components/ --lint; }; func"
    },
@@ -12,10 +27,21 @@ index 8c8b1e9..4ef1195 100644
      "production": [
        ">0.2%",
 diff --git a/aim/web/ui/public/index.html b/aim/web/ui/public/index.html
-index 74776c4..159b897 100644
+index 74776c4..88f4df1 100644
 --- a/aim/web/ui/public/index.html
 +++ b/aim/web/ui/public/index.html
-@@ -214,7 +214,7 @@
+@@ -147,10 +147,6 @@
+       rel="stylesheet"
+       href="%PUBLIC_URL%/assets/icomoon/icomoonIcons.css"
+     />
+-    <link
+-      rel="stylesheet"
+-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+-    />
+     <title>Aim</title>
+ 
+     <script>
+@@ -214,7 +210,7 @@
        })();
      </script>
      <script>
@@ -25,7 +51,7 @@ index 74776c4..159b897 100644
      </script>
    </head>
 diff --git a/aim/web/ui/src/components/SideBar/SideBar.tsx b/aim/web/ui/src/components/SideBar/SideBar.tsx
-index a82cad8..56f21dd 100644
+index a82cad8..80043c4 100644
 --- a/aim/web/ui/src/components/SideBar/SideBar.tsx
 +++ b/aim/web/ui/src/components/SideBar/SideBar.tsx
 @@ -1,30 +1,39 @@
@@ -58,14 +84,14 @@ index a82cad8..56f21dd 100644
  
  import './Sidebar.scss';
  
-+const api = new NetworkService(getAPIHost());
-+
  function SideBar(): React.FunctionComponentElement<React.ReactNode> {
 +  const [version, setVersion] = React.useState('unknown');
 +
 +  useEffect(() => {
-+    api.makeAPIGetRequest('version').then((response) => {
-+      setVersion(response.body.version);
++    fetch('/version').then((response) => {
++      response.text().then((version) => {
++        setVersion(version);
++      });
 +    });
 +  }, []);
 +

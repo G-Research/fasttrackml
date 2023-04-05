@@ -19,24 +19,37 @@ docker run --rm -p 5000:5000 -ti gresearch/fasttrack
 
 Verify that you can see the UI by navigating to http://localhost:5000/.
 
-![FastTrack UI](https://files.mcaq.me/57b05.jpg)
+![FastTrack UI](images/main_ui.jpg)
 
 
 ## Run a quick test script
 
 ```bash
-python3 ./docs/dev/minimal.py
+# Install mflow and poetry
+cd docs/dev
+poetry install
+# MLFlow will not be installed by poetry, so we need to install it manually
+poetry run pip install mlflow boto3
+
+python3 minimal.py
 ```
 
 After running this script, you should see the following output from http://localhost:5000/aim/:
 
-![FastTrack UI](https://files.mcaq.me/43x5j.jpg)
+![FastTrack UI](images/runs_ui.jpg)
 
 From here you can check out the metrics and run information to see more details about the run.
 
-## Testing a Random Forrest Model
+## Testing a Random Forest Model
 
 **Note that since artifacts are not yet supported, most of the autolog features will not work.**
+
+### Get the required data
+```bash
+cd docs/dev
+wget https://www.kaggle.com/datasets/kyr7plus/emg-4/download?datasetVersionNumber=2
+
+```
 
 ```bash
 # Install mflow and poetry
@@ -46,6 +59,6 @@ poetry install
 poetry run pip install mlflow boto3
 
 # Run the script
-poetry run python3 random_forrest.py
+poetry run python3 random_forest.py
 ```
 

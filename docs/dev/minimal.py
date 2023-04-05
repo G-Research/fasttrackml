@@ -1,9 +1,9 @@
 from random import randint, random
 
 import mlflow
-from mlflow import log_metric, log_param, sklearn
+from mlflow import log_metric, log_param
 
-mlflow.set_tracking_uri("http://localhost:5000/mlflow")
+mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("my-experiment")
 
 

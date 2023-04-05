@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "fast-track-test"
 version = "0.1.0"
-description = "A Random Forrest Classifier for EMG Data - Fast Track Test"
+description = "A Random Forest Classifier for EMG Data - Fast Track Test"
 authors = ["Sharpz7 <adam.mcarthur62@gmail.com>"]
 
 [tool.poetry.dependencies]

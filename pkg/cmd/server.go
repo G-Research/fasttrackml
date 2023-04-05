@@ -8,15 +8,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/G-Research/fasttrack/pkg/api/aim"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow"
+	aimAPI "github.com/G-Research/fasttrack/pkg/api/aim"
+	mlflowAPI "github.com/G-Research/fasttrack/pkg/api/mlflow"
 	"github.com/G-Research/fasttrack/pkg/database"
-	"github.com/G-Research/fasttrack/pkg/ui"
+	aimUI "github.com/G-Research/fasttrack/pkg/ui/aim"
+	"github.com/G-Research/fasttrack/pkg/ui/chooser"
+	mlflowUI "github.com/G-Research/fasttrack/pkg/ui/mlflow"
 	"github.com/G-Research/fasttrack/pkg/version"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/compress"
-	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	log "github.com/sirupsen/logrus"
@@ -51,27 +53,33 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		IdleTimeout:           30 * time.Second,
 		ServerHeader:          fmt.Sprintf("fasttrack/%s", version.Version),
 		DisableStartupMessage: true,
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			p := string(c.Request().URI().Path())
+			switch {
+			case strings.HasPrefix(p, "/aim/api/"):
+				return aimAPI.ErrorHandler(c, err)
+
+			case strings.HasPrefix(p, "/api/2.0/mlflow/") ||
+				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/") ||
+				strings.HasPrefix(p, "/mlflow/ajax-api/2.0/mlflow/"):
+				return mlflowAPI.ErrorHandler(c, err)
+
+			default:
+				return fiber.DefaultErrorHandler(c, err)
+			}
+		},
 	})
 
-	server.Mount("/aim/", aim.NewApp(viper.GetString("auth-username"), viper.GetString("auth-password")))
-	server.Mount("/mlflow/", mlflow.NewApp(viper.GetString("auth-username"), viper.GetString("auth-password")))
-
-	// Somehow mounting/using ChooserFS as a filesystem handler _sometimes_ results in 404 status code for /mlflow/
-	// This is working around it in a non-intellectually-satisfying but effective way
-	server.Get("/", etag.New(), func(c *fiber.Ctx) error {
-		file, _ := ui.ChooserFS.Open("index.html")
-		stat, _ := file.Stat()
-		c.Set("Content-Type", "text/html; charset=utf-8")
-		c.Response().SetBodyStream(file, int(stat.Size()))
-		return nil
-	})
-	server.Get("/simple.min.css", etag.New(), func(c *fiber.Ctx) error {
-		file, _ := ui.ChooserFS.Open("simple.min.css")
-		stat, _ := file.Stat()
-		c.Set("Content-Type", "text/css")
-		c.Response().SetBodyStream(file, int(stat.Size()))
-		return nil
-	})
+	authUsername := viper.GetString("auth-username")
+	authPassword := viper.GetString("auth-password")
+	if authUsername != "" && authPassword != "" {
+		log.Infof(`BasicAuth enabled with user "%s"`, authUsername)
+		server.Use(basicauth.New(basicauth.Config{
+			Users: map[string]string{
+				authUsername: authPassword,
+			},
+		}))
+	}
 
 	server.Use(compress.New(compress.Config{
 		Next: func(c *fiber.Ctx) bool {
@@ -87,6 +95,23 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
+
+	aimAPI.AddRoutes(server.Group("/aim/api/"))
+	aimUI.AddRoutes(server.Group("/aim/"))
+
+	mlflowAPI.AddRoutes(server.Group("/api/2.0/mlflow/"))
+	mlflowAPI.AddRoutes(server.Group("/ajax-api/2.0/mlflow/"))
+	mlflowAPI.AddRoutes(server.Group("/mlflow/ajax-api/2.0/mlflow/"))
+	mlflowUI.AddRoutes(server.Group("/mlflow/"))
+
+	server.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendString("OK")
+	})
+	server.Get("/version", func(c *fiber.Ctx) error {
+		return c.SendString(version.Version)
+	})
+
+	chooser.AddRoutes(server.Group("/"))
 
 	idleConnsClosed := make(chan struct{})
 	go func() {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 
 	"github.com/G-Research/fasttrack/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrack/pkg/api/aim/query"
@@ -215,80 +216,81 @@ func GetRunsActive(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/octet-stream")
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		var err error
-		for i, r := range runs {
-			props := fiber.Map{
-				"name":        r.Name,
-				"description": nil,
-				"experiment": fiber.Map{
-					"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-					"name": r.Experiment.Name,
-				},
-				"tags":          []string{}, // TODO insert real tags
-				"creation_time": float64(r.StartTime.Int64) / 1000,
-				"end_time":      float64(r.EndTime.Int64) / 1000,
-				"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
-				"active":        r.Status == database.StatusRunning,
-			}
-
-			metrics := make([]fiber.Map, len(r.LatestMetrics))
-			for i, m := range r.LatestMetrics {
-				v := m.Value
-				if m.IsNan {
-					v = math.NaN()
-				}
-				metrics[i] = fiber.Map{
-					"context": fiber.Map{},
-					"name":    m.Key,
-					"last_value": fiber.Map{
-						"dtype":      "float",
-						"first_step": 0,
-						"last_step":  m.LastIter,
-						"last":       v,
-						"version":    2,
+		start := time.Now()
+		if err := func() error {
+			for i, r := range runs {
+				props := fiber.Map{
+					"name":        r.Name,
+					"description": nil,
+					"experiment": fiber.Map{
+						"id":   fmt.Sprintf("%d", *r.Experiment.ID),
+						"name": r.Experiment.Name,
 					},
+					"tags":          []string{}, // TODO insert real tags
+					"creation_time": float64(r.StartTime.Int64) / 1000,
+					"end_time":      float64(r.EndTime.Int64) / 1000,
+					"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
+					"active":        r.Status == database.StatusRunning,
 				}
-			}
 
-			err = encoding.EncodeTree(w, fiber.Map{
-				r.ID: fiber.Map{
-					"props": props,
-					"traces": fiber.Map{
-						"metric": metrics,
+				metrics := make([]fiber.Map, len(r.LatestMetrics))
+				for i, m := range r.LatestMetrics {
+					v := m.Value
+					if m.IsNan {
+						v = math.NaN()
+					}
+					metrics[i] = fiber.Map{
+						"context": fiber.Map{},
+						"name":    m.Key,
+						"last_value": fiber.Map{
+							"dtype":      "float",
+							"first_step": 0,
+							"last_step":  m.LastIter,
+							"last":       v,
+							"version":    2,
+						},
+					}
+				}
+
+				if err := encoding.EncodeTree(w, fiber.Map{
+					r.ID: fiber.Map{
+						"props": props,
+						"traces": fiber.Map{
+							"metric": metrics,
+						},
 					},
-				},
-			})
-			if err != nil {
-				break
-			}
+				}); err != nil {
+					return err
+				}
 
-			if q.ReportProgress {
-				err = encoding.EncodeTree(w, fiber.Map{
-					fmt.Sprintf("progress_%d", i): []int{i + 1, len(runs)},
-				})
-				if err != nil {
-					break
+				if q.ReportProgress {
+					if err := encoding.EncodeTree(w, fiber.Map{
+						fmt.Sprintf("progress_%d", i): []int{i + 1, len(runs)},
+					}); err != nil {
+						return err
+					}
+				}
+
+				if err := w.Flush(); err != nil {
+					return err
 				}
 			}
 
-			err = w.Flush()
-			if err != nil {
-				break
-			}
-		}
+			// if q.ReportProgress && err == nil {
+			// 	err = encoding.EncodeTree(w, fiber.Map{
+			// 		fmt.Sprintf("progress_%d", len(runs)): []int{len(runs), len(runs)},
+			// 	})
+			// 	if err != nil {
+			// 		err = w.Flush()
+			// 	}
+			// }
 
-		// if q.ReportProgress && err == nil {
-		// 	err = encoding.EncodeTree(w, fiber.Map{
-		// 		fmt.Sprintf("progress_%d", len(runs)): []int{len(runs), len(runs)},
-		// 	})
-		// 	if err != nil {
-		// 		err = w.Flush()
-		// 	}
-		// }
-
-		if err != nil {
+			return nil
+		}(); err != nil {
 			log.Errorf("Error encountered in %s %s: error streaming active runs: %s", c.Method(), c.Path(), err)
 		}
+
+		log.Infof("body - %s %s %s", time.Since(start), c.Method(), c.Path())
 	})
 
 	return nil
@@ -381,92 +383,94 @@ func SearchRuns(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/octet-stream")
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		var err error
-		defer func() {
-			if err != nil {
-				log.Errorf("Error encountered in %s %s: error streaming runs: %s", c.Method(), c.Path(), err)
-			}
-		}()
-
-		for i, r := range runs {
-			run := fiber.Map{
-				"props": fiber.Map{
-					"name":        r.Name,
-					"description": nil,
-					"experiment": fiber.Map{
-						"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-						"name": r.Experiment.Name,
-					},
-					"tags":          []string{}, // TODO insert real tags
-					"creation_time": float64(r.StartTime.Int64) / 1000,
-					"end_time":      float64(r.EndTime.Int64) / 1000,
-					"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
-					"active":        r.Status == database.StatusRunning,
-				},
-			}
-
-			if !q.ExcludeTraces {
-				metrics := make([]fiber.Map, len(r.LatestMetrics))
-				for i, m := range r.LatestMetrics {
-					v := m.Value
-					if m.IsNan {
-						v = math.NaN()
-					}
-					metrics[i] = fiber.Map{
-						"context": fiber.Map{},
-						"name":    m.Key,
-						"last_value": fiber.Map{
-							"dtype":      "float",
-							"first_step": 0,
-							"last_step":  m.LastIter,
-							"last":       v,
-							"version":    2,
+		start := time.Now()
+		if err := func() error {
+			for i, r := range runs {
+				run := fiber.Map{
+					"props": fiber.Map{
+						"name":        r.Name,
+						"description": nil,
+						"experiment": fiber.Map{
+							"id":   fmt.Sprintf("%d", *r.Experiment.ID),
+							"name": r.Experiment.Name,
 						},
+						"tags":          []string{}, // TODO insert real tags
+						"creation_time": float64(r.StartTime.Int64) / 1000,
+						"end_time":      float64(r.EndTime.Int64) / 1000,
+						"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
+						"active":        r.Status == database.StatusRunning,
+					},
+				}
+
+				if !q.ExcludeTraces {
+					metrics := make([]fiber.Map, len(r.LatestMetrics))
+					for i, m := range r.LatestMetrics {
+						v := m.Value
+						if m.IsNan {
+							v = math.NaN()
+						}
+						metrics[i] = fiber.Map{
+							"context": fiber.Map{},
+							"name":    m.Key,
+							"last_value": fiber.Map{
+								"dtype":      "float",
+								"first_step": 0,
+								"last_step":  m.LastIter,
+								"last":       v,
+								"version":    2,
+							},
+						}
+					}
+					run["traces"] = fiber.Map{
+						"metric": metrics,
 					}
 				}
-				run["traces"] = fiber.Map{
-					"metric": metrics,
+
+				if !q.ExcludeParams {
+					params := make(fiber.Map, len(r.Params))
+					for _, p := range r.Params {
+						params[p.Key] = p.Value
+					}
+					run["params"] = params
 				}
-			}
 
-			if !q.ExcludeParams {
-				params := make(fiber.Map, len(r.Params))
-				for _, p := range r.Params {
-					params[p.Key] = p.Value
-				}
-				run["params"] = params
-			}
-
-			err = encoding.EncodeTree(w, fiber.Map{
-				r.ID: run,
-			})
-			if err != nil {
-				return
-			}
-
-			if q.ReportProgress {
 				err = encoding.EncodeTree(w, fiber.Map{
-					fmt.Sprintf("progress_%d", i): []int64{total - int64(r.RowNum), total},
+					r.ID: run,
 				})
 				if err != nil {
-					return
+					return err
+				}
+
+				if q.ReportProgress {
+					err = encoding.EncodeTree(w, fiber.Map{
+						fmt.Sprintf("progress_%d", i): []int64{total - int64(r.RowNum), total},
+					})
+					if err != nil {
+						return err
+					}
+				}
+
+				err = w.Flush()
+				if err != nil {
+					return err
 				}
 			}
 
-			err = w.Flush()
-			if err != nil {
-				return
+			if q.ReportProgress && err == nil {
+				err = encoding.EncodeTree(w, fiber.Map{
+					fmt.Sprintf("progress_%d", len(runs)): []int64{total, total},
+				})
+				if err != nil {
+					err = w.Flush()
+				}
 			}
+
+			return nil
+		}(); err != nil {
+			log.Errorf("Error encountered in %s %s: error streaming runs: %s", c.Method(), c.Path(), err)
 		}
 
-		if q.ReportProgress && err == nil {
-			err = encoding.EncodeTree(w, fiber.Map{
-				fmt.Sprintf("progress_%d", len(runs)): []int64{total, total},
-			})
-			if err != nil {
-				err = w.Flush()
-			}
-		}
+		log.Infof("body - %s %s %s", time.Since(start), c.Method(), c.Path())
 	})
 
 	return nil

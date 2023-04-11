@@ -37,6 +37,7 @@ func AddRoutes(r fiber.Router) {
 	runs.Get("/active/", GetRunsActive)
 	runs.Get("/search/run/", SearchRuns)
 	runs.Get("/search/metric/", SearchMetrics)
+	runs.Post("/search/metric/align/", SearchAlignedMetrics)
 	runs.Get("/:id/info/", GetRunInfo)
 	runs.Post("/:id/metric/get-batch/", GetRunMetrics)
 

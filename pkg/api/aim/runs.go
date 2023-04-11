@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/G-Research/fasttrack/pkg/api/aim/encoding"
@@ -520,9 +521,6 @@ func SearchMetrics(c *fiber.Ctx) error {
 		return err
 	}
 
-	// TODO use q.XAxis -- the tricky bit may be hashing the steps properly -- nah it looks like aim is doing it wrong in format v2 -- "just" need to return identical iters
-	//      also alignment may be tricky?
-
 	var totalRuns int64
 	if tx := database.DB.Model(&database.Run{}).Count(&totalRuns); tx.Error != nil {
 		return fmt.Errorf("error searching run metrics: %w", tx.Error)
@@ -575,7 +573,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 		}{int64(r.RowNum), run}
 	}
 
-	rows, err := database.DB.
+	tx := database.DB.
+		Select("metrics.*").
 		Table("metrics").
 		Joins(
 			"INNER JOIN (?) runmetrics USING(run_uuid, key)",
@@ -585,11 +584,20 @@ func SearchMetrics(c *fiber.Ctx) error {
 				Joins("LEFT JOIN experiments USING(experiment_id)").
 				Joins("LEFT JOIN latest_metrics USING(run_uuid)")),
 		).
-		Where("mod(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
+		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").
 		Order("metrics.key").
-		Order("metrics.iter").
-		Rows()
+		Order("metrics.iter")
+
+	var xAxis bool
+	if q.XAxis != "" {
+		tx.
+			Select("metrics.*", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
+			Joins("LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND metrics.iter = x_axis.iter AND x_axis.key = ?", q.XAxis)
+		xAxis = true
+	}
+
+	rows, err := tx.Rows()
 	if err != nil {
 		return fmt.Errorf("error searching run metrics: %w", err)
 	}
@@ -598,16 +606,18 @@ func SearchMetrics(c *fiber.Ctx) error {
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		defer rows.Close()
 
+		start := time.Now()
 		if err := func() error {
 			var (
-				id         string
-				key        string
-				metrics    []fiber.Map
-				values     []float64
-				iters      []float64
-				epochs     []float64
-				timestamps []float64
-				progress   int
+				id          string
+				key         string
+				metrics     []fiber.Map
+				values      []float64
+				iters       []float64
+				epochs      []float64
+				timestamps  []float64
+				xAxisValues []float64
+				progress    int
 			)
 			reportProgress := func(cur int64) error {
 				if !q.ReportProgress {
@@ -624,7 +634,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 			}
 			addMetrics := func() {
 				if key != "" {
-					metrics = append(metrics, fiber.Map{
+					metric := fiber.Map{
 						"name":          key,
 						"context":       fiber.Map{},
 						"slice":         []int{0, 0, q.Steps},
@@ -634,7 +644,12 @@ func SearchMetrics(c *fiber.Ctx) error {
 						"timestamps":    toNumpy(timestamps),
 						"x_axis_values": nil,
 						"x_axis_iters":  nil,
-					})
+					}
+					if xAxis {
+						metric["x_axis_values"] = toNumpy(xAxisValues)
+						metric["x_axis_iters"] = metric["iters"]
+					}
+					metrics = append(metrics, metric)
 				}
 			}
 			flushMetrics := func() error {
@@ -654,7 +669,11 @@ func SearchMetrics(c *fiber.Ctx) error {
 				return w.Flush()
 			}
 			for rows.Next() {
-				var metric database.Metric
+				var metric struct {
+					database.Metric
+					XAxisValue float64 `gorm:"column:x_axis_value"`
+					XAxisIsNaN bool    `gorm:"column:x_axis_is_nan"`
+				}
 				if err := database.DB.ScanRows(rows, &metric); err != nil {
 					return err
 				}
@@ -683,6 +702,9 @@ func SearchMetrics(c *fiber.Ctx) error {
 					iters = make([]float64, 0, q.Steps)
 					epochs = make([]float64, 0, q.Steps)
 					timestamps = make([]float64, 0, q.Steps)
+					if xAxis {
+						xAxisValues = make([]float64, 0, q.Steps)
+					}
 					key = metric.Key
 				}
 
@@ -694,6 +716,13 @@ func SearchMetrics(c *fiber.Ctx) error {
 				iters = append(iters, float64(metric.Iter))
 				epochs = append(epochs, float64(metric.Step))
 				timestamps = append(timestamps, float64(metric.Timestamp)/1000)
+				if xAxis {
+					x := metric.XAxisValue
+					if metric.XAxisIsNaN {
+						x = math.NaN()
+					}
+					xAxisValues = append(xAxisValues, x)
+				}
 			}
 
 			addMetrics()
@@ -709,6 +738,151 @@ func SearchMetrics(c *fiber.Ctx) error {
 		}(); err != nil {
 			log.Errorf("Error encountered in %s %s: error streaming metrics: %s", c.Method(), c.Path(), err)
 		}
+
+		log.Infof("body - %s %s %s", time.Since(start), c.Method(), c.Path())
+	})
+
+	return nil
+}
+
+func SearchAlignedMetrics(c *fiber.Ctx) error {
+	b := struct {
+		AlignBy string `json:"align_by"`
+		Runs    []struct {
+			ID     string `json:"run_id"`
+			Traces []struct {
+				Context fiber.Map `json:"context"`
+				Name    string    `json:"name"`
+				Slice   [3]int    `json:"slice"`
+			} `json:"traces"`
+		} `json:"runs"`
+	}{}
+
+	if err := c.BodyParser(&b); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	var capacity int
+	var values []any
+	for _, r := range b.Runs {
+		for _, t := range r.Traces {
+			l := t.Slice[2]
+			if l > capacity {
+				capacity = l
+			}
+			values = append(values, r.ID, t.Name, float32(l))
+		}
+	}
+
+	var valuesStmt strings.Builder
+	length := len(values) / 3
+	for i := 0; i < length; i++ {
+		valuesStmt.WriteString("(?, ?, CAST(? AS numeric))")
+		if i < length-1 {
+			valuesStmt.WriteString(",")
+		}
+	}
+
+	// TODO this should probably be batched
+
+	values = append(values, b.AlignBy)
+	rows, err := database.DB.Raw(
+		fmt.Sprintf("WITH params(run_uuid, key, steps) AS (VALUES %s)", &valuesStmt)+
+			"        SELECT m.run_uuid, rm.key, m.iter, m.value, m.is_nan FROM metrics AS m"+
+			"        RIGHT JOIN ("+
+			"          SELECT p.run_uuid, p.key, lm.last_iter AS max, (lm.last_iter + 1) / p.steps AS interval"+
+			"          FROM params AS p"+
+			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key)"+
+			"        ) rm USING(run_uuid)"+
+			"        WHERE m.key = ?"+
+			"          AND m.iter <= rm.max"+
+			"          AND MOD(m.iter + 1 + rm.interval / 2, rm.interval) < 1"+
+			"        ORDER BY m.run_uuid, rm.key, m.iter",
+		values...,
+	).Rows()
+	if err != nil {
+		return fmt.Errorf("error searching aligned run metrics: %w", err)
+	}
+
+	c.Set("Content-Type", "application/octet-stream")
+	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		defer rows.Close()
+
+		start := time.Now()
+		if err := func() error {
+			var id string
+			var key string
+			metrics := make([]fiber.Map, 0)
+			values := make([]float64, 0, capacity)
+			iters := make([]float64, 0, capacity)
+
+			addMetrics := func() {
+				if key != "" {
+					metric := fiber.Map{
+						"name":          key,
+						"context":       fiber.Map{},
+						"x_axis_values": toNumpy(values),
+						"x_axis_iters":  toNumpy(iters),
+					}
+					metrics = append(metrics, metric)
+				}
+			}
+
+			flushMetrics := func() error {
+				if id == "" {
+					return nil
+				}
+				if err := encoding.EncodeTree(w, fiber.Map{
+					id: metrics,
+				}); err != nil {
+					return err
+				}
+				return w.Flush()
+			}
+
+			for rows.Next() {
+				var metric database.Metric
+				if err := database.DB.ScanRows(rows, &metric); err != nil {
+					return err
+				}
+
+				// New series of metrics
+				if metric.Key != key || metric.RunID != id {
+					addMetrics()
+
+					if metric.RunID != id {
+						if err := flushMetrics(); err != nil {
+							return err
+						}
+
+						metrics = metrics[:0]
+						id = metric.RunID
+					}
+
+					key = metric.Key
+					values = values[:0]
+					iters = iters[:0]
+				}
+
+				v := metric.Value
+				if metric.IsNan {
+					v = math.NaN()
+				}
+				values = append(values, v)
+				iters = append(iters, float64(metric.Iter))
+			}
+
+			addMetrics()
+			if err := flushMetrics(); err != nil {
+				return err
+			}
+
+			return nil
+		}(); err != nil {
+			log.Errorf("Error encountered in %s %s: error streaming metrics: %s", c.Method(), c.Path(), err)
+		}
+
+		log.Infof("body - %s %s %s", time.Since(start), c.Method(), c.Path())
 	})
 
 	return nil

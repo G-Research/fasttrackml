@@ -114,7 +114,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 	})
 }
 
-func GetRunMetricBatch(c *fiber.Ctx) error {
+func GetRunMetrics(c *fiber.Ctx) error {
 	p := struct {
 		ID string `params:"id"`
 	}{}
@@ -294,7 +294,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 	return nil
 }
 
-func GetRunsSearch(c *fiber.Ctx) error {
+func SearchRuns(c *fiber.Ctx) error {
 	q := struct {
 		Query  string `query:"q"`
 		Limit  int    `query:"limit"`
@@ -472,7 +472,7 @@ func GetRunsSearch(c *fiber.Ctx) error {
 	return nil
 }
 
-func GetRunsMetricsSearch(c *fiber.Ctx) error {
+func SearchMetrics(c *fiber.Ctx) error {
 	q := struct {
 		Query string `query:"q"`
 		Steps int    `query:"p"`

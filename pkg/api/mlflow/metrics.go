@@ -2,6 +2,8 @@ package mlflow
 
 import (
 	"bufio"
+	"fmt"
+	"time"
 
 	"github.com/G-Research/fasttrack/pkg/database"
 
@@ -199,48 +201,55 @@ func GetMetricHistories(c *fiber.Ctx) error {
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		defer rows.Close()
 
-		pool := memory.NewGoAllocator()
+		start := time.Now()
+		if err := func() error {
+			pool := memory.NewGoAllocator()
 
-		schema := arrow.NewSchema(
-			[]arrow.Field{
-				{Name: "run_id", Type: arrow.BinaryTypes.String},
-				{Name: "key", Type: arrow.BinaryTypes.String},
-				{Name: "step", Type: arrow.PrimitiveTypes.Int64},
-				{Name: "timestamp", Type: arrow.PrimitiveTypes.Int64},
-				{Name: "value", Type: arrow.PrimitiveTypes.Float64},
-			},
-			nil,
-		)
-		ww := ipc.NewWriter(w, ipc.WithAllocator(pool), ipc.WithSchema(schema))
-		defer ww.Close()
+			schema := arrow.NewSchema(
+				[]arrow.Field{
+					{Name: "run_id", Type: arrow.BinaryTypes.String},
+					{Name: "key", Type: arrow.BinaryTypes.String},
+					{Name: "step", Type: arrow.PrimitiveTypes.Int64},
+					{Name: "timestamp", Type: arrow.PrimitiveTypes.Int64},
+					{Name: "value", Type: arrow.PrimitiveTypes.Float64},
+				},
+				nil,
+			)
+			ww := ipc.NewWriter(w, ipc.WithAllocator(pool), ipc.WithSchema(schema))
+			defer ww.Close()
 
-		b := array.NewRecordBuilder(pool, schema)
-		defer b.Release()
+			b := array.NewRecordBuilder(pool, schema)
+			defer b.Release()
 
-		for i := 0; rows.Next(); i++ {
-			var m database.Metric
-			database.DB.ScanRows(rows, &m)
-			b.Field(0).(*array.StringBuilder).Append(m.RunID)
-			b.Field(1).(*array.StringBuilder).Append(m.Key)
-			b.Field(2).(*array.Int64Builder).Append(m.Step)
-			b.Field(3).(*array.Int64Builder).Append(m.Timestamp)
-			if m.IsNan {
-				b.Field(4).(*array.Float64Builder).AppendNull()
-			} else {
-				b.Field(4).(*array.Float64Builder).Append(m.Value)
-			}
-			if (i+1)%100000 == 0 {
-				if err := WriteRecord(ww, b.NewRecord()); err != nil {
-					log.Errorf("unable to write Arrow record batch: %s", err)
-					return
+			for i := 0; rows.Next(); i++ {
+				var m database.Metric
+				database.DB.ScanRows(rows, &m)
+				b.Field(0).(*array.StringBuilder).Append(m.RunID)
+				b.Field(1).(*array.StringBuilder).Append(m.Key)
+				b.Field(2).(*array.Int64Builder).Append(m.Step)
+				b.Field(3).(*array.Int64Builder).Append(m.Timestamp)
+				if m.IsNan {
+					b.Field(4).(*array.Float64Builder).AppendNull()
+				} else {
+					b.Field(4).(*array.Float64Builder).Append(m.Value)
+				}
+				if (i+1)%100000 == 0 {
+					if err := WriteRecord(ww, b.NewRecord()); err != nil {
+						return fmt.Errorf("unable to write Arrow record batch: %w", err)
+					}
 				}
 			}
-		}
-		if b.Field(0).Len() > 0 {
-			if err := WriteRecord(ww, b.NewRecord()); err != nil {
-				log.Errorf("unable to write Arrow record batch: %s", err)
+			if b.Field(0).Len() > 0 {
+				if err := WriteRecord(ww, b.NewRecord()); err != nil {
+					return fmt.Errorf("unable to write Arrow record batch: %w", err)
+				}
 			}
+
+			return nil
+		}(); err != nil {
+			log.Errorf("Error encountered in %s %s: error streaming metrics: %s", c.Method(), c.Path(), err)
 		}
+		log.Infof("body - %s %s %s", time.Since(start), c.Method(), c.Path())
 	})
 
 	return nil

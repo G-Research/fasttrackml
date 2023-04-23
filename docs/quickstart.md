@@ -6,9 +6,6 @@ FastTrack requires the following dependencies to be installed on your system:
 
 - [Docker](https://docs.docker.com/get-docker/)
 - [Python 3](https://www.python.org/downloads/)
-
-```
-
 ## Run FastTrack
 
 FastTrack can be run using the following command:

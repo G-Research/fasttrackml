@@ -24,6 +24,7 @@ func GetExperiments(c *fiber.Ctx) error {
 			"experiments.creation_time",
 			"COUNT(runs.run_uuid) AS run_count",
 		).
+		Where("experiments.lifecycle_stage = ?", database.LifecycleStageActive).
 		Joins("LEFT JOIN runs USING(experiment_id)").
 		Group("experiments.experiment_id").
 		Find(&experiments); tx.Error != nil {

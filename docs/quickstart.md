@@ -6,6 +6,7 @@ FastTrack requires the following dependencies to be installed on your system:
 
 - [Docker](https://docs.docker.com/get-docker/)
 - [Python 3](https://www.python.org/downloads/)
+
 ## Run FastTrack
 
 FastTrack can be run using the following command:
@@ -17,7 +18,6 @@ docker run --rm -p 5000:5000 -ti gresearch/fasttrack
 Verify that you can see the UI by navigating to http://localhost:5000/.
 
 ![FastTrack UI](images/main_ui.jpg)
-
 
 ## Run a quick test script
 
@@ -42,11 +42,10 @@ From here you can check out the metrics and run information to see more details 
 **Note that since artifacts are not yet supported, most of the autolog features will not work.**
 
 ### Get the required data
-```bash
-cd docs/dev
-wget https://www.kaggle.com/datasets/kyr7plus/emg-4/download?datasetVersionNumber=2
 
-```
+From Kaggle, download https://www.kaggle.com/datasets/kyr7plus/emg-4?resource=download
+
+Extract the zip file and move the files to `docs/dev/data`.
 
 ```bash
 # Install mflow and poetry

@@ -149,7 +149,7 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 		tx.First(&schemaVersion)
 	}
 
-	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "8073e7e037e5" {
+	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "ed364de02645" {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf("unsupported database schema versions alembic %s, fasttrack %s", alembicVersion.Version, schemaVersion.Version)
 		}
@@ -311,6 +311,23 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 					return fmt.Errorf("error migrating database to fasttrack schema 8073e7e037e5: %w", err)
 				}
 
+			case "8073e7e037e5":
+				log.Info("Migrating database to fasttrack schema ed364de02645")
+				if err := DB.Transaction(func(tx *gorm.DB) error {
+					if err := tx.Migrator().CreateIndex(&Run{}, "RowNum"); err != nil {
+						return err
+					}
+					if err := tx.Migrator().CreateIndex(&Metric{}, "Iter"); err != nil {
+						return err
+					}
+					return tx.Model(&SchemaVersion{}).
+						Where("1 = 1").
+						Update("Version", "ed364de02645").
+						Error
+				}); err != nil {
+					return fmt.Errorf("error migrating database to fasttrack schema ed364de02645: %w", err)
+				}
+
 			default:
 				return fmt.Errorf("unsupported database fasttrack schema version %s", schemaVersion.Version)
 			}
@@ -339,7 +356,7 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 				Version: "97727af70f4d",
 			})
 			tx.Create(&SchemaVersion{
-				Version: "8073e7e037e5",
+				Version: "ed364de02645",
 			})
 			tx.Commit()
 			if tx.Error != nil {

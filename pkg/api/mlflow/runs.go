@@ -807,7 +807,7 @@ func logMetrics(id string, metrics []Metric) error {
 		}
 	}
 
-	if tx := database.DB.Create(&dbMetrics); tx.Error != nil {
+	if tx := database.DB.CreateInBatches(&dbMetrics, 100); tx.Error != nil {
 		return NewError(ErrorCodeInternalError, "Unable to insert metrics for run '%s': %s", id, tx.Error)
 	}
 
@@ -866,7 +866,7 @@ func logParams(id string, params []RunParam) error {
 		}
 	}
 
-	if tx := database.DB.Create(&dbParams); tx.Error != nil {
+	if tx := database.DB.CreateInBatches(&dbParams, 100); tx.Error != nil {
 		return NewError(ErrorCodeInternalError, "Unable to insert params for run '%s': %s", id, tx.Error)
 	}
 
@@ -905,7 +905,7 @@ func setRunTags(id string, tags []RunTag) error {
 
 	tx.Clauses(clause.OnConflict{
 		UpdateAll: true,
-	}).Create(&dbTags)
+	}).CreateInBatches(&dbTags, 100)
 
 	tx.Commit()
 	if tx.Error != nil {

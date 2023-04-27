@@ -49,8 +49,8 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	server := fiber.New(fiber.Config{
 		ReadBufferSize:        16384,
 		ReadTimeout:           5 * time.Second,
-		WriteTimeout:          10 * time.Second,
-		IdleTimeout:           30 * time.Second,
+		WriteTimeout:          600 * time.Second,
+		IdleTimeout:           120 * time.Second,
 		ServerHeader:          fmt.Sprintf("fasttrack/%s", version.Version),
 		DisableStartupMessage: true,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {

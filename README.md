@@ -18,7 +18,7 @@ docker run --rm -p 5000:5000 -ti gresearch/fasttrack
 
 Verify that you can see the UI by navigating to http://localhost:5000/.
 
-![FastTrack UI](images/main_ui.jpg)
+![FastTrack UI](docs/images/main_ui.jpg)
 
 For more info, `--help` is your friend!
 

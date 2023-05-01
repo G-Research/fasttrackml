@@ -50,6 +50,19 @@ index 74776c4..88f4df1 100644
        window.externalPublicPath = '%PUBLIC_URL%/';
      </script>
    </head>
+diff --git a/aim/web/ui/src/components/AutocompleteInput/AutocompleteInput.tsx b/aim/web/ui/src/components/AutocompleteInput/AutocompleteInput.tsx
+index fd3115a..113226e 100644
+--- a/aim/web/ui/src/components/AutocompleteInput/AutocompleteInput.tsx
++++ b/aim/web/ui/src/components/AutocompleteInput/AutocompleteInput.tsx
+@@ -186,7 +186,7 @@ function AutocompleteInput({
+           //   : formattedValue;
+           onChange(formattedValue, ev);
+         }
+-        if (ev.changes[0].text === '\n') {
++        if (/^\r?\n$/.test(ev.changes[0].text)) {
+           formattedValue = hasSelection
+             ? editorValue.replace(/[\n\r]/g, '')
+             : formattedValue;
 diff --git a/aim/web/ui/src/components/SideBar/SideBar.tsx b/aim/web/ui/src/components/SideBar/SideBar.tsx
 index a82cad8..80043c4 100644
 --- a/aim/web/ui/src/components/SideBar/SideBar.tsx

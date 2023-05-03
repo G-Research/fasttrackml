@@ -17,10 +17,10 @@ import (
 	"github.com/spf13/viper"
 	"gorm.io/gorm/clause"
 
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrack/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 var (

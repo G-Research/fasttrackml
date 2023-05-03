@@ -1,8 +1,11 @@
 # IDE
 .idea
 
+fml
 fasttrack
 fasttrack.db*
+fasttrackml
+fasttrackml.db*
 pkg/ui/*/embed/build*
 !pkg/ui/*/embed/build.sh
 tests/*/*.src

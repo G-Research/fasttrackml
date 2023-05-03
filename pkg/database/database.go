@@ -151,7 +151,7 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 
 	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "ed364de02645" {
 		if !migrate && alembicVersion.Version != "" {
-			return fmt.Errorf("unsupported database schema versions alembic %s, fasttrack %s", alembicVersion.Version, schemaVersion.Version)
+			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
 		}
 
 		switch alembicVersion.Version {
@@ -230,7 +230,7 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 		case "97727af70f4d":
 			switch schemaVersion.Version {
 			case "":
-				log.Info("Migrating database to fasttrack schema ac0b8b7c0014")
+				log.Info("Migrating database to FastTrackML schema ac0b8b7c0014")
 				if err := DB.Transaction(func(tx *gorm.DB) error {
 					for _, column := range []struct {
 						dst   any
@@ -290,12 +290,12 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 						Version: "ac0b8b7c0014",
 					}).Error
 				}); err != nil {
-					return fmt.Errorf("error migrating database to fasttrack schema ac0b8b7c0014: %w", err)
+					return fmt.Errorf("error migrating database to FastTrackML schema ac0b8b7c0014: %w", err)
 				}
 				fallthrough
 
 			case "ac0b8b7c0014":
-				log.Info("Migrating database to fasttrack schema 8073e7e037e5")
+				log.Info("Migrating database to FastTrackML schema 8073e7e037e5")
 				if err := DB.Transaction(func(tx *gorm.DB) error {
 					if err := tx.AutoMigrate(
 						&Dashboard{},
@@ -308,11 +308,11 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 						Update("Version", "8073e7e037e5").
 						Error
 				}); err != nil {
-					return fmt.Errorf("error migrating database to fasttrack schema 8073e7e037e5: %w", err)
+					return fmt.Errorf("error migrating database to FastTrackML schema 8073e7e037e5: %w", err)
 				}
 
 			case "8073e7e037e5":
-				log.Info("Migrating database to fasttrack schema ed364de02645")
+				log.Info("Migrating database to FastTrackML schema ed364de02645")
 				if err := DB.Transaction(func(tx *gorm.DB) error {
 					if err := tx.Migrator().CreateIndex(&Run{}, "RowNum"); err != nil {
 						return err
@@ -325,11 +325,11 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 						Update("Version", "ed364de02645").
 						Error
 				}); err != nil {
-					return fmt.Errorf("error migrating database to fasttrack schema ed364de02645: %w", err)
+					return fmt.Errorf("error migrating database to FastTrackML schema ed364de02645: %w", err)
 				}
 
 			default:
-				return fmt.Errorf("unsupported database fasttrack schema version %s", schemaVersion.Version)
+				return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
 			}
 
 			log.Info("Database migration done")

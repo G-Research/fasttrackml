@@ -5,14 +5,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/G-Research/fasttrack/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/database"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func GetProject(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
-		"name":              "fasttrack",
+		"name":              "FastTrackML",
 		"path":              database.DB.DSN(),
 		"description":       "",
 		"telemetry_enabled": 0,

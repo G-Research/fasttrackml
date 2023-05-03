@@ -1,4 +1,4 @@
-module github.com/G-Research/fasttrack
+module github.com/G-Research/fasttrackml
 
 go 1.18
 

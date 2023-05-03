@@ -57,7 +57,7 @@ func NewInternalServerError(msg string, args ...any) *ErrorResponse {
 func NewCodeInvalidParameterValueError(msg string, args ...any) *ErrorResponse {
 	return &ErrorResponse{
 		Message:    fmt.Sprintf(msg, args...),
-		ErrorCode:  ErrorCodeInternalError,
+		ErrorCode:  ErrorCodeInvalidParameterValue,
 		StatusCode: http.StatusBadRequest,
 	}
 }

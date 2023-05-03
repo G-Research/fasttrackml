@@ -1,6 +1,7 @@
 package mlflow
 
 import (
+	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -42,6 +43,6 @@ func AddRoutes(r fiber.Router) {
 	r.Get("/registered-models/search", SearchRegisteredModels)
 
 	r.Use(func(c *fiber.Ctx) error {
-		return NewError(ErrorCodeEndpointNotFound, "Not found")
+		return api.NewEndpointNotFound("Not found")
 	})
 }

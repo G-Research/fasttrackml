@@ -6,27 +6,6 @@ type RunTagPartialRequest struct {
 	Value string `json:"value"`
 }
 
-// RunParamPartialRequest is a partial request object for different requests.
-type RunParamPartialRequest struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-// RunMetricPartialRequest is a partial request object for different requests.
-type RunMetricPartialRequest struct {
-	Key       string `json:"key"`
-	Value     any    `json:"value"`
-	Timestamp int64  `json:"timestamp"`
-	Step      int64  `json:"step"`
-}
-
-// RunDataPartialRequest is a partial request object for different requests.
-type RunDataPartialRequest struct {
-	Metrics []RunMetricPartialRequest `json:"metrics,omitempty"`
-	Params  []RunParamPartialRequest  `json:"params,omitempty"`
-	Tags    []RunTagPartialRequest    `json:"tags,omitempty"`
-}
-
 // CreateRunRequest is a request object for `POST mlflow/run/create` endpoint.
 type CreateRunRequest struct {
 	ExperimentID string                 `json:"experiment_id"`

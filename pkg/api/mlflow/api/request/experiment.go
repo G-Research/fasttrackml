@@ -6,17 +6,6 @@ type ExperimentTagPartialRequest struct {
 	Value string `json:"value"`
 }
 
-// ExperimentPartialRequest is a partial request object for different requests.
-type ExperimentPartialRequest struct {
-	ID               string                        `json:"experiment_id"`
-	Name             string                        `json:"name"`
-	ArtifactLocation string                        `json:"artifact_location"`
-	LifecycleStage   string                        `json:"lifecycle_stage"`
-	LastUpdateTime   int64                         `json:"last_update_time"`
-	CreationTime     int64                         `json:"creation_time"`
-	Tags             []ExperimentTagPartialRequest `json:"tags"`
-}
-
 // CreateExperimentRequest is a request object for `POST mlflow/experiments/create` endpoint.
 type CreateExperimentRequest struct {
 	Name             string                        `json:"name"`

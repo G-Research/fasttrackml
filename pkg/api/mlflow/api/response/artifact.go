@@ -7,7 +7,7 @@ type FilePartialResponse struct {
 	FileSize int64  `json:"file_size"`
 }
 
-// ListArtifactsResponse is a response object for `GET mlflow/list` endpoint.
+// ListArtifactsResponse is a response object for `GET mlflow/artifacts/list` endpoint.
 type ListArtifactsResponse struct {
 	RootURI       string                `json:"root_uri"`
 	Files         []FilePartialResponse `json:"files"`

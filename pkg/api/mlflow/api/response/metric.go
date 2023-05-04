@@ -8,7 +8,7 @@ type MetricPartialResponse struct {
 	Step      int64  `json:"step"`
 }
 
-// GetMetricHistoryResponse is a response object for `GET mlflow/get-history` endpoint.
+// GetMetricHistoryResponse is a response object for `GET mlflow/metrics/get-history` endpoint.
 type GetMetricHistoryResponse struct {
 	Metrics []MetricPartialResponse `json:"metrics"`
 }

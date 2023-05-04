@@ -20,7 +20,7 @@ type MetricPartialRequest struct {
 	Step      int64  `json:"step"`
 }
 
-// LogParamRequest is a request object for `POST mlflow/log-parameter` endpoint.
+// LogParamRequest is a request object for `POST mlflow/runs/log-parameter` endpoint.
 type LogParamRequest struct {
 	ID    string `json:"run_id"`
 	UUID  string `json:"run_uuid"`
@@ -28,7 +28,7 @@ type LogParamRequest struct {
 	Value string `json:"value"`
 }
 
-// LogMetricRequest is a request object for `POST mlflow/log-metric` endpoint.
+// LogMetricRequest is a request object for `POST mlflow/runs/log-metric` endpoint.
 type LogMetricRequest struct {
 	ID        string `json:"run_id"`
 	UUID      string `json:"run_uuid"`
@@ -38,7 +38,7 @@ type LogMetricRequest struct {
 	Step      int64  `json:"step"`
 }
 
-// LogBatchRequest is a request object for `POST mlflow/log-batch` endpoint.
+// LogBatchRequest is a request object for `POST mlflow/runs/log-batch` endpoint.
 type LogBatchRequest struct {
 	ID      string                 `json:"run_id"`
 	Tags    []TagPartialRequest    `json:"tags,omitempty"`

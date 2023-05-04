@@ -1,6 +1,6 @@
 package request
 
-// GetMetricHistoriesRequest is a request object for `POST mlflow/get-histories` endpoint.
+// GetMetricHistoriesRequest is a request object for `POST mlflow/metrics/get-histories` endpoint.
 type GetMetricHistoriesRequest struct {
 	ExperimentIDs []string `json:"experiment_ids"`
 	RunIDs        []string `json:"run_ids"`

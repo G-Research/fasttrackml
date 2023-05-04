@@ -47,22 +47,22 @@ type RunPartialResponse struct {
 	Data RunDataPartialResponse `json:"data"`
 }
 
-// CreateRunResponse is a response object for `POST mlflow/create` endpoint.
+// CreateRunResponse is a response object for `POST mlflow/runs/create` endpoint.
 type CreateRunResponse struct {
 	Run RunPartialResponse `json:"run"`
 }
 
-// UpdateRunResponse is a response object for `POST mlflow/update` endpoint.
+// UpdateRunResponse is a response object for `POST mlflow/runs/update` endpoint.
 type UpdateRunResponse struct {
 	RunInfo RunInfoPartialResponse `json:"run_info"`
 }
 
-// GetRunResponse is a response object for `GET mlflow/get` endpoint.
+// GetRunResponse is a response object for `GET mlflow/runs/get` endpoint.
 type GetRunResponse struct {
 	Run RunPartialResponse `json:"run"`
 }
 
-// SearchRunsResponse is a response object for `POST mlflow/search` endpoint.
+// SearchRunsResponse is a response object for `POST mlflow/runs/search` endpoint.
 type SearchRunsResponse struct {
 	Runs          []RunPartialResponse `json:"runs"`
 	NextPageToken string               `json:"next_page_token,omitempty"`

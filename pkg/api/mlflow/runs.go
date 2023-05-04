@@ -579,10 +579,6 @@ func LogMetric(c *fiber.Ctx) error {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'key'")
 	}
 
-	// if req.Value == "" {
-	// 	return api.NewError(api.ErrorCodeInvalidParameterValue, "Missing value for required parameter 'value'")
-	// }
-
 	if req.Timestamp == 0 {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'timestamp'")
 	}
@@ -815,7 +811,7 @@ func logMetrics(id string, metrics []request.MetricPartialRequest) error {
 		}
 	}
 
-	if tx := database.DB.Create(&dbMetrics); tx.Error != nil {
+	if tx := database.DB.CreateInBatches(&dbMetrics, 100); tx.Error != nil {
 		return api.NewInternalError("Unable to insert metrics for run '%s': %s", id, tx.Error)
 	}
 
@@ -874,7 +870,7 @@ func logParams(id string, params []request.ParamPartialRequest) error {
 		}
 	}
 
-	if tx := database.DB.Create(&dbParams); tx.Error != nil {
+	if tx := database.DB.CreateInBatches(&dbParams, 100); tx.Error != nil {
 		return api.NewInternalError("Unable to insert params for run '%s': %s", id, tx.Error)
 	}
 
@@ -913,7 +909,7 @@ func setRunTags(id string, tags []request.TagPartialRequest) error {
 
 	tx.Clauses(clause.OnConflict{
 		UpdateAll: true,
-	}).Create(&dbTags)
+	}).CreateInBatches(&dbTags, 100)
 
 	tx.Commit()
 	if tx.Error != nil {

@@ -23,7 +23,7 @@ func ListArtifacts(c *fiber.Ctx) error {
 	log.Debugf("ListArtifacts request: %#v", query)
 
 	if query.RunID == "" {
-		return api.NewCodeInvalidParameterValueError("Missing value for required parameter 'run_id'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
 	run := database.Run{
@@ -31,7 +31,7 @@ func ListArtifacts(c *fiber.Ctx) error {
 	}
 
 	if tx := database.DB.Select("artifact_uri").First(&run); tx.Error != nil {
-		return api.NewInternalServerError("Unable to get artifact URI for run '%s'", query.RunID)
+		return api.NewInternalError("Unable to get artifact URI for run '%s'", query.RunID)
 	}
 
 	// TODO grab list of artifacts from S3

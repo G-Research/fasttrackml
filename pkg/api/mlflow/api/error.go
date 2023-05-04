@@ -44,8 +44,8 @@ func NewBadRequestError(msg string, args ...any) *ErrorResponse {
 	}
 }
 
-// NewInternalServerError creates new Response object with ErrorCodeInternalError.
-func NewInternalServerError(msg string, args ...any) *ErrorResponse {
+// NewInternalError creates new Response object with ErrorCodeInternalError.
+func NewInternalError(msg string, args ...any) *ErrorResponse {
 	return &ErrorResponse{
 		Message:    fmt.Sprintf(msg, args...),
 		ErrorCode:  ErrorCodeInternalError,
@@ -53,8 +53,8 @@ func NewInternalServerError(msg string, args ...any) *ErrorResponse {
 	}
 }
 
-// NewCodeInvalidParameterValueError creates new Response object with ErrorCodeInternalError.
-func NewCodeInvalidParameterValueError(msg string, args ...any) *ErrorResponse {
+// NewInvalidParameterValueError creates new Response object with ErrorCodeInternalError.
+func NewInvalidParameterValueError(msg string, args ...any) *ErrorResponse {
 	return &ErrorResponse{
 		Message:    fmt.Sprintf(msg, args...),
 		ErrorCode:  ErrorCodeInvalidParameterValue,
@@ -62,8 +62,8 @@ func NewCodeInvalidParameterValueError(msg string, args ...any) *ErrorResponse {
 	}
 }
 
-// NewResourceNoExistsError creates new Response object with ErrorCodeResourceDoesNotExist.
-func NewResourceNoExistsError(msg string, args ...any) *ErrorResponse {
+// NewResourceDoesNotExistError creates new Response object with ErrorCodeResourceDoesNotExist.
+func NewResourceDoesNotExistError(msg string, args ...any) *ErrorResponse {
 	return &ErrorResponse{
 		Message:    fmt.Sprintf(msg, args...),
 		ErrorCode:  ErrorCodeResourceDoesNotExist,
@@ -71,8 +71,8 @@ func NewResourceNoExistsError(msg string, args ...any) *ErrorResponse {
 	}
 }
 
-// NewResourceAlreadyExistError creates new Response object with ErrorCodeResourceAlreadyExists.
-func NewResourceAlreadyExistError(msg string, args ...any) *ErrorResponse {
+// NewResourceAlreadyExistsError creates new Response object with ErrorCodeResourceAlreadyExists.
+func NewResourceAlreadyExistsError(msg string, args ...any) *ErrorResponse {
 	return &ErrorResponse{
 		Message:    fmt.Sprintf(msg, args...),
 		ErrorCode:  ErrorCodeResourceAlreadyExists,

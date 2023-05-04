@@ -27,27 +27,7 @@ type RunDataPartialRequest struct {
 	Tags    []RunTagPartialRequest    `json:"tags,omitempty"`
 }
 
-// RunPartialRequest is a partial request object for different requests.
-type RunPartialRequest struct {
-	Info RunInfoPartialRequest `json:"info"`
-	Data RunDataPartialRequest `json:"data"`
-}
-
-// RunInfoPartialRequest is a partial request object for different requests.
-type RunInfoPartialRequest struct {
-	UUID           string `json:"run_uuid"`
-	Name           string `json:"run_name"`
-	ExperimentID   string `json:"experiment_id"`
-	UserID         string `json:"user_id,omitempty"`
-	Status         string `json:"status"`
-	StartTime      int64  `json:"start_time"`
-	EndTime        int64  `json:"end_time,omitempty"`
-	ArtifactURI    string `json:"artifact_uri,omitempty"`
-	LifecycleStage string `json:"lifecycle_stage"`
-	ID             string `json:"run_id"`
-}
-
-// CreateRunRequest is a request object for `POST mlflow/create` endpoint.
+// CreateRunRequest is a request object for `POST mlflow/run/create` endpoint.
 type CreateRunRequest struct {
 	ExperimentID string                 `json:"experiment_id"`
 	UserID       string                 `json:"user_id"`
@@ -56,7 +36,7 @@ type CreateRunRequest struct {
 	Tags         []RunTagPartialRequest `json:"tags"`
 }
 
-// UpdateRunRequest is a request object for `POST mlflow/update` endpoint.
+// UpdateRunRequest is a request object for `POST mlflow/run/update` endpoint.
 type UpdateRunRequest struct {
 	ID      string `json:"run_id"`
 	UUID    string `json:"run_uuid"`
@@ -65,7 +45,7 @@ type UpdateRunRequest struct {
 	EndTime int64  `json:"end_time"`
 }
 
-// SearchRunsRequest is a request object for `POST mlflow/search` endpoint.
+// SearchRunsRequest is a request object for `POST mlflow/run/search` endpoint.
 type SearchRunsRequest struct {
 	ExperimentIDs []string `json:"experiment_ids"`
 	Filter        string   `json:"filter"`
@@ -75,19 +55,19 @@ type SearchRunsRequest struct {
 	PageToken     string   `json:"page_token"`
 }
 
-// RestoreRunRequest is a request object for `POST mlflow/restore` endpoint.
+// RestoreRunRequest is a request object for `POST mlflow/run/restore` endpoint.
 type RestoreRunRequest struct {
 	ID   string `json:"run_id"`
 	UUID string `json:"run_uuid"`
 }
 
-// DeleteRunRequest is a request object for `POST mlflow/delete` endpoint.
+// DeleteRunRequest is a request object for `POST mlflow/run/delete` endpoint.
 type DeleteRunRequest struct {
 	ID   string `json:"run_id"`
 	UUID string `json:"run_uuid"`
 }
 
-// SetRunTagRequest is a request object for `POST mlflow/set-tag` endpoint.
+// SetRunTagRequest is a request object for `POST mlflow/run/set-tag` endpoint.
 type SetRunTagRequest struct {
 	ID    string `json:"run_id"`
 	UUID  string `json:"run_uuid"`
@@ -95,7 +75,7 @@ type SetRunTagRequest struct {
 	Value string `json:"value"`
 }
 
-// DeleteRunTagRequest is a request object for `POST mlflow/delete-tag` endpoint.
+// DeleteRunTagRequest is a request object for `POST mlflow/run/delete-tag` endpoint.
 type DeleteRunTagRequest struct {
 	ID  string `json:"run_id"`
 	Key string `json:"key"`

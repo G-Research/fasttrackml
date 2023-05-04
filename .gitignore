@@ -1,3 +1,6 @@
+# IDE
+.idea
+
 fasttrack
 fasttrack.db*
 pkg/ui/*/embed/build*

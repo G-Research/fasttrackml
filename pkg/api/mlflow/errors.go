@@ -5,26 +5,28 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
 )
 
 func ErrorHandler(c *fiber.Ctx, err error) error {
-	var e *ErrorResponse
+	var e *api.ErrorResponse
 	if !errors.As(err, &e) {
-		var code ErrorCode = ErrorCodeInternalError
+		var code api.ErrorCode = api.ErrorCodeInternalError
 
 		var f *fiber.Error
 		if errors.As(err, &f) {
 			switch f.Code {
 			case fiber.StatusBadRequest:
-				code = ErrorCodeBadRequest
+				code = api.ErrorCodeBadRequest
 			case fiber.StatusServiceUnavailable:
-				code = ErrorCodeTemporarilyUnavailable
+				code = api.ErrorCodeTemporarilyUnavailable
 			case fiber.StatusNotFound:
-				code = ErrorCodeEndpointNotFound
+				code = api.ErrorCodeEndpointNotFound
 			}
 		}
 
-		e = &ErrorResponse{
+		e = &api.ErrorResponse{
 			ErrorCode: code,
 			Message:   err.Error(),
 		}
@@ -34,13 +36,13 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 	var fn func(format string, args ...any)
 
 	switch e.ErrorCode {
-	case ErrorCodeBadRequest, ErrorCodeInvalidParameterValue, ErrorCodeResourceAlreadyExists:
+	case api.ErrorCodeBadRequest, api.ErrorCodeInvalidParameterValue, api.ErrorCodeResourceAlreadyExists:
 		code = fiber.StatusBadRequest
 		fn = log.Infof
-	case ErrorCodeTemporarilyUnavailable:
+	case api.ErrorCodeTemporarilyUnavailable:
 		code = fiber.StatusServiceUnavailable
 		fn = log.Warnf
-	case ErrorCodeEndpointNotFound, ErrorCodeResourceDoesNotExist:
+	case api.ErrorCodeEndpointNotFound, api.ErrorCodeResourceDoesNotExist:
 		code = fiber.StatusNotFound
 		fn = log.Debugf
 	default:

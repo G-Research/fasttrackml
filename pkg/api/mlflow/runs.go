@@ -11,32 +11,35 @@ import (
 	"strings"
 	"time"
 
-	"github.com/G-Research/fasttrack/pkg/database"
 	"github.com/gofiber/fiber/v2"
-
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrack/pkg/database"
 )
 
 var (
-	filterAnd     *regexp.Regexp = regexp.MustCompile(`(?i)\s+AND\s+`)
-	filterCond    *regexp.Regexp = regexp.MustCompile(`^(?:(\w+)\.)?("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'[^']+'(?:,\s*)?)+\)|"[^"]+"|'[^']+'|[\w\.]+)$`)
-	filterInGroup *regexp.Regexp = regexp.MustCompile(`,\s*`)
-	runOrder      *regexp.Regexp = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
+	filterAnd     = regexp.MustCompile(`(?i)\s+AND\s+`)
+	filterCond    = regexp.MustCompile(`^(?:(\w+)\.)?("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'[^']+'(?:,\s*)?)+\)|"[^"]+"|'[^']+'|[\w\.]+)$`)
+	filterInGroup = regexp.MustCompile(`,\s*`)
+	runOrder      = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
 )
 
 func CreateRun(c *fiber.Ctx) error {
-	var req CreateRunRequest
+	var req request.CreateRunRequest
 	if err := c.BodyParser(&req); err != nil {
-		return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
 	log.Debugf("CreateRun request: %#v", &req)
 
 	ex, err := strconv.ParseInt(req.ExperimentID, 10, 32)
 	if err != nil {
-		return NewError(ErrorCodeBadRequest, "Unable to parse experiment id '%s': %s", req.ExperimentID, err)
+		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ExperimentID, err)
 	}
 
 	ex32 := int32(ex)
@@ -44,7 +47,7 @@ func CreateRun(c *fiber.Ctx) error {
 		ID: &ex32,
 	}
 	if tx := database.DB.Select("artifact_location").First(&exp); tx.Error != nil {
-		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find experiment '%d': %s", ex, tx.Error)
+		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", ex, tx.Error)
 	}
 
 	run := database.Run{
@@ -104,29 +107,29 @@ func CreateRun(c *fiber.Ctx) error {
 		}
 		return tx.Create(&run).Error
 	}); err != nil {
-		return NewError(ErrorCodeInternalError, "Error inserting run '%s': %s", run.ID, err)
+		return api.NewInternalError("Error inserting run '%s': %s", run.ID, err)
 	}
 
-	resp := &CreateRunResponse{
-		Run: Run{
-			Info: RunInfo{
+	resp := &response.CreateRunResponse{
+		Run: response.RunPartialResponse{
+			Info: response.RunInfoPartialResponse{
 				ID:             run.ID,
 				UUID:           run.ID,
 				Name:           run.Name,
 				ExperimentID:   fmt.Sprint(run.ExperimentID),
 				UserID:         run.UserID,
-				Status:         RunStatus(run.Status),
+				Status:         string(run.Status),
 				StartTime:      run.StartTime.Int64,
 				ArtifactURI:    run.ArtifactURI,
-				LifecycleStage: LifecycleStage(run.LifecycleStage),
+				LifecycleStage: string(run.LifecycleStage),
 			},
-			Data: RunData{
-				Tags: make([]RunTag, len(run.Tags)),
+			Data: response.RunDataPartialResponse{
+				Tags: make([]response.RunTagPartialResponse, len(run.Tags)),
 			},
 		},
 	}
 	for n, tag := range run.Tags {
-		resp.Run.Data.Tags[n] = RunTag{
+		resp.Run.Data.Tags[n] = response.RunTagPartialResponse{
 			Key:   tag.Key,
 			Value: tag.Value,
 		}
@@ -138,15 +141,15 @@ func CreateRun(c *fiber.Ctx) error {
 }
 
 func UpdateRun(c *fiber.Ctx) error {
-	var req UpdateRunRequest
+	var req request.UpdateRunRequest
 	if err := c.BodyParser(&req); err != nil {
-		return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
 	log.Debugf("UpdateRun request: %#v", &req)
 
 	if req.ID == "" && req.UUID == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
 	run := database.Run{
@@ -156,7 +159,7 @@ func UpdateRun(c *fiber.Ctx) error {
 		run.ID = req.UUID
 	}
 	if tx := database.DB.First(&run); tx.Error != nil {
-		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
+		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", run.ID, tx.Error)
 	}
 
 	tx := database.DB.Begin()
@@ -181,22 +184,22 @@ func UpdateRun(c *fiber.Ctx) error {
 
 	tx.Commit()
 	if tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to update run '%s': %s", run.ID, tx.Error)
+		return api.NewInternalError("Unable to update run '%s': %s", run.ID, tx.Error)
 	}
 
 	// TODO grab name and user from tags?
-	resp := &UpdateRunResponse{
-		RunInfo: RunInfo{
+	resp := &response.UpdateRunResponse{
+		RunInfo: response.RunInfoPartialResponse{
 			ID:             run.ID,
 			UUID:           run.ID,
 			Name:           run.Name,
 			ExperimentID:   fmt.Sprint(run.ExperimentID),
 			UserID:         run.UserID,
-			Status:         RunStatus(run.Status),
+			Status:         string(run.Status),
 			StartTime:      run.StartTime.Int64,
 			EndTime:        run.EndTime.Int64,
 			ArtifactURI:    run.ArtifactURI,
-			LifecycleStage: LifecycleStage(run.LifecycleStage),
+			LifecycleStage: string(run.LifecycleStage),
 		},
 	}
 
@@ -211,17 +214,17 @@ func GetRun(c *fiber.Ctx) error {
 	log.Debugf("GetRun request: run_id='%s'", id)
 
 	if id == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
 	run := database.Run{
 		ID: id,
 	}
 	if tx := database.DB.Preload("LatestMetrics").Preload("Params").Preload("Tags").First(&run); tx.Error != nil {
-		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
+		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", run.ID, tx.Error)
 	}
 
-	resp := &GetRunResponse{
+	resp := &response.GetRunResponse{
 		Run: modelRunToAPI(run),
 	}
 
@@ -231,9 +234,9 @@ func GetRun(c *fiber.Ctx) error {
 }
 
 func SearchRuns(c *fiber.Ctx) error {
-	var req SearchRunsRequest
+	var req request.SearchRunsRequest
 	if err := c.BodyParser(&req); err != nil {
-		return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
 	log.Debugf("SearchRuns request: %#v", req)
@@ -244,21 +247,21 @@ func SearchRuns(c *fiber.Ctx) error {
 	// ViewType
 	var lifecyleStages []database.LifecycleStage
 	switch req.ViewType {
-	case ViewTypeActiveOnly, "":
+	case string(request.ViewTypeActiveOnly), "":
 		lifecyleStages = []database.LifecycleStage{
 			database.LifecycleStageActive,
 		}
-	case ViewTypeDeletedOnly:
+	case string(request.ViewTypeDeletedOnly):
 		lifecyleStages = []database.LifecycleStage{
 			database.LifecycleStageDeleted,
 		}
-	case ViewTypeAll:
+	case string(request.ViewTypeAll):
 		lifecyleStages = []database.LifecycleStage{
 			database.LifecycleStageActive,
 			database.LifecycleStageDeleted,
 		}
 	default:
-		return NewError(ErrorCodeInvalidParameterValue, "Invalid run_view_type '%s'", req.ViewType)
+		return api.NewInvalidParameterValueError("Invalid run_view_type '%s'", req.ViewType)
 	}
 	tx.Where("lifecycle_stage IN ?", lifecyleStages)
 
@@ -268,21 +271,21 @@ func SearchRuns(c *fiber.Ctx) error {
 	if limit == 0 {
 		limit = 1000
 	} else if limit > 1000000 {
-		return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter 'max_results' supplied.")
+		return api.NewInvalidParameterValueError("Invalid value for parameter 'max_results' supplied.")
 	}
 	tx.Limit(limit)
 
 	// PageToken
 	var offset int
 	if req.PageToken != "" {
-		var token PageToken
+		var token request.PageToken
 		if err := json.NewDecoder(
 			base64.NewDecoder(
 				base64.StdEncoding,
 				strings.NewReader(req.PageToken),
 			),
 		).Decode(&token); err != nil {
-			return NewError(ErrorCodeInvalidParameterValue, "Invalid page_token '%s': %s", req.PageToken, err)
+			return api.NewInvalidParameterValueError("Invalid page_token '%s': %s", req.PageToken, err)
 
 		}
 		offset = int(token.Offset)
@@ -294,7 +297,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		for n, f := range filterAnd.Split(req.Filter, -1) {
 			components := filterCond.FindStringSubmatch(f)
 			if len(components) != 5 {
-				return NewError(ErrorCodeInvalidParameterValue, "Malformed filter '%s'", f)
+				return api.NewInvalidParameterValueError("Malformed filter '%s'", f)
 			}
 
 			entity := components[1]
@@ -311,11 +314,11 @@ func SearchRuns(c *fiber.Ctx) error {
 					case ">", ">=", "!=", "=", "<", "<=":
 						v, err := strconv.Atoi(value.(string))
 						if err != nil {
-							return NewError(ErrorCodeInvalidParameterValue, "Invalid numeric value '%s'", value)
+							return api.NewInvalidParameterValueError("Invalid numeric value '%s'", value)
 						}
 						value = v
 					default:
-						return NewError(ErrorCodeInvalidParameterValue, "Invalid numeric attribute comparison operator '%s'", comparison)
+						return api.NewInvalidParameterValueError("Invalid numeric attribute comparison operator '%s'", comparison)
 					}
 				case "run_name":
 					key = "mlflow.runName"
@@ -325,23 +328,23 @@ func SearchRuns(c *fiber.Ctx) error {
 					switch strings.ToUpper(comparison) {
 					case "!=", "=", "LIKE", "ILIKE":
 						if strings.HasPrefix(value.(string), "(") {
-							return NewError(ErrorCodeInvalidParameterValue, "Invalid string value '%s'", value)
+							return api.NewInvalidParameterValueError("Invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
 					default:
-						return NewError(ErrorCodeInvalidParameterValue, "Invalid string attribute comparison operator '%s'", comparison)
+						return api.NewInvalidParameterValueError("Invalid string attribute comparison operator '%s'", comparison)
 					}
 				case "run_id":
 					key = "run_uuid"
 					switch strings.ToUpper(comparison) {
 					case "!=", "=", "LIKE", "ILIKE":
 						if strings.HasPrefix(value.(string), "(") {
-							return NewError(ErrorCodeInvalidParameterValue, "Invalid string value '%s'", value)
+							return api.NewInvalidParameterValueError("Invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
 					case "IN", "NOT IN":
 						if !strings.HasPrefix(value.(string), "(") {
-							return NewError(ErrorCodeInvalidParameterValue, "Invalid list definition '%s'", value)
+							return api.NewInvalidParameterValueError("Invalid list definition '%s'", value)
 						}
 						var values []string
 						for _, v := range filterInGroup.Split(value.(string)[1:len(value.(string))-1], -1) {
@@ -349,47 +352,47 @@ func SearchRuns(c *fiber.Ctx) error {
 						}
 						value = values
 					default:
-						return NewError(ErrorCodeInvalidParameterValue, "Invalid string attribute comparison operator '%s'", comparison)
+						return api.NewInvalidParameterValueError("Invalid string attribute comparison operator '%s'", comparison)
 					}
 				default:
-					return NewError(ErrorCodeInvalidParameterValue, "Invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']", key)
+					return api.NewInvalidParameterValueError("Invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']", key)
 				}
 			case "metric", "metrics":
 				switch comparison {
 				case ">", ">=", "!=", "=", "<", "<=":
 					v, err := strconv.ParseFloat(value.(string), 64)
 					if err != nil {
-						return NewError(ErrorCodeInvalidParameterValue, "Invalid numeric value '%s'", value)
+						return api.NewInvalidParameterValueError("Invalid numeric value '%s'", value)
 					}
 					value = v
 				default:
-					return NewError(ErrorCodeInvalidParameterValue, "Invalid metric comparison operator '%s'", comparison)
+					return api.NewInvalidParameterValueError("Invalid metric comparison operator '%s'", comparison)
 				}
 				kind = &database.LatestMetric{}
 			case "parameter", "parameters", "param", "params":
 				switch strings.ToUpper(comparison) {
 				case "!=", "=", "LIKE", "ILIKE":
 					if strings.HasPrefix(value.(string), "(") {
-						return NewError(ErrorCodeInvalidParameterValue, "Invalid string value '%s'", value)
+						return api.NewInvalidParameterValueError("Invalid string value '%s'", value)
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return NewError(ErrorCodeInvalidParameterValue, "Invalid param comparison operator '%s'", comparison)
+					return api.NewInvalidParameterValueError("Invalid param comparison operator '%s'", comparison)
 				}
 				kind = &database.Param{}
 			case "tag", "tags":
 				switch strings.ToUpper(comparison) {
 				case "!=", "=", "LIKE", "ILIKE":
 					if strings.HasPrefix(value.(string), "(") {
-						return NewError(ErrorCodeInvalidParameterValue, "Invalid string value '%s'", value)
+						return api.NewInvalidParameterValueError("Invalid string value '%s'", value)
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return NewError(ErrorCodeInvalidParameterValue, "Invalid tag comparison operator '%s'", comparison)
+					return api.NewInvalidParameterValueError("Invalid tag comparison operator '%s'", comparison)
 				}
 				kind = &database.Tag{}
 			default:
-				return NewError(ErrorCodeInvalidParameterValue, "Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
+				return api.NewInvalidParameterValueError("Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
 			}
 			if kind == nil {
 				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
@@ -421,7 +424,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		components := runOrder.FindStringSubmatch(o)
 		log.Debugf("Components: %#v", components)
 		if len(components) < 3 {
-			return NewError(ErrorCodeInvalidParameterValue, "Invalid order_by clause '%s'", o)
+			return api.NewInvalidParameterValueError("Invalid order_by clause '%s'", o)
 		}
 
 		column := strings.Trim(components[2], "`\"")
@@ -439,7 +442,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		case "tag":
 			kind = &database.Tag{}
 		default:
-			return NewError(ErrorCodeInvalidParameterValue, "Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", components[1])
+			return api.NewInvalidParameterValueError("Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", components[1])
 		}
 		if kind != nil {
 			table := fmt.Sprintf("order_%d", n)
@@ -467,11 +470,11 @@ func SearchRuns(c *fiber.Ctx) error {
 		Preload("Tags").
 		Find(&runs)
 	if tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to search runs: %s", tx.Error)
+		return api.NewInternalError("Unable to search runs: %s", tx.Error)
 	}
 
-	resp := &SearchRunsResponse{
-		Runs: make([]Run, len(runs)),
+	resp := &response.SearchRunsResponse{
+		Runs: make([]response.RunPartialResponse, len(runs)),
 	}
 	for n, r := range runs {
 		resp.Runs[n] = modelRunToAPI(r)
@@ -481,10 +484,10 @@ func SearchRuns(c *fiber.Ctx) error {
 	if len(runs) == limit {
 		var token strings.Builder
 		b64 := base64.NewEncoder(base64.StdEncoding, &token)
-		if err := json.NewEncoder(b64).Encode(PageToken{
+		if err := json.NewEncoder(b64).Encode(request.PageToken{
 			Offset: int32(offset + limit),
 		}); err != nil {
-			return NewError(ErrorCodeInternalError, "Unable to build next_page_token: %s", err)
+			return api.NewInternalError("Unable to build next_page_token: %s", err)
 		}
 		b64.Close()
 		resp.NextPageToken = token.String()
@@ -496,22 +499,22 @@ func SearchRuns(c *fiber.Ctx) error {
 }
 
 func DeleteRun(c *fiber.Ctx) error {
-	var req DeleteRunRequest
+	var req request.DeleteRunRequest
 	if err := c.BodyParser(&req); err != nil {
-		return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
 	log.Debugf("DeleteRun request: %#v", req)
 
 	if req.ID == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
 	run := database.Run{
 		ID: req.ID,
 	}
 	if tx := database.DB.Select("lifecycle_stage").First(&run); tx.Error != nil {
-		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
+		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", run.ID, tx.Error)
 	}
 
 	if tx := database.DB.Model(&run).Updates(database.Run{
@@ -521,29 +524,29 @@ func DeleteRun(c *fiber.Ctx) error {
 			Valid: true,
 		},
 	}); tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to update run '%s': %s", run.ID, tx.Error)
+		return api.NewInternalError("Unable to update run '%s': %s", run.ID, tx.Error)
 	}
 
 	return c.JSON(fiber.Map{})
 }
 
 func RestoreRun(c *fiber.Ctx) error {
-	var req RestoreRunRequest
+	var req request.RestoreRunRequest
 	if err := c.BodyParser(&req); err != nil {
-		return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
 	log.Debugf("RestoreRun request: %#v", req)
 
 	if req.ID == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
 	run := database.Run{
 		ID: req.ID,
 	}
 	if tx := database.DB.Select("lifecycle_stage").First(&run); tx.Error != nil {
-		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find run '%s': %s", run.ID, tx.Error)
+		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", run.ID, tx.Error)
 	}
 
 	// Use UpdateColumns so we can reset DeletedTime to null
@@ -551,37 +554,33 @@ func RestoreRun(c *fiber.Ctx) error {
 		"LifecycleStage": database.LifecycleStageActive,
 		"DeletedTime":    sql.NullInt64{},
 	}); tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to update run '%s': %s", run.ID, tx.Error)
+		return api.NewInternalError("Unable to update run '%s': %s", run.ID, tx.Error)
 	}
 
 	return c.JSON(fiber.Map{})
 }
 
 func LogMetric(c *fiber.Ctx) error {
-	var req LogMetricRequest
+	var req request.LogMetricRequest
 	if err := c.BodyParser(&req); err != nil {
 		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
+			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
 		}
-		return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
 	log.Debugf("LogMetric request: %#v", req)
 
 	if req.ID == "" && req.UUID == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
 	if req.Key == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'key'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'key'")
 	}
 
-	// if req.Value == "" {
-	// 	return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'value'")
-	// }
-
 	if req.Timestamp == 0 {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'timestamp'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'timestamp'")
 	}
 
 	id := req.ID
@@ -589,30 +588,35 @@ func LogMetric(c *fiber.Ctx) error {
 		id = req.UUID
 	}
 
-	if err := logMetrics(id, []Metric{req.Metric}); err != nil {
-		return NewError(ErrorCodeInternalError, "Unable to log metric '%s' for run '%s': %s", req.Key, id, err)
+	if err := logMetrics(id, []request.MetricPartialRequest{{
+		Key:       req.Key,
+		Step:      req.Step,
+		Value:     req.Value,
+		Timestamp: req.Timestamp,
+	}}); err != nil {
+		return api.NewInternalError("Unable to log metric '%s' for run '%s': %s", req.Key, id, err)
 	}
 
 	return c.JSON(fiber.Map{})
 }
 
 func LogParam(c *fiber.Ctx) error {
-	var req LogParamRequest
+	var req request.LogParamRequest
 	if err := c.BodyParser(&req); err != nil {
 		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
+			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
 		}
-		return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
 	log.Debugf("LogParam request: %#v", req)
 
 	if req.ID == "" && req.UUID == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
 	if req.Key == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'key'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'key'")
 	}
 
 	id := req.ID
@@ -620,30 +624,30 @@ func LogParam(c *fiber.Ctx) error {
 		id = req.UUID
 	}
 
-	if err := logParams(id, []RunParam{req.RunParam}); err != nil {
-		return NewError(ErrorCodeInternalError, "Unable to log param '%s' for run '%s': %s", req.Key, id, err)
+	if err := logParams(id, []request.ParamPartialRequest{{Key: req.Key, Value: req.Value}}); err != nil {
+		return api.NewInternalError("Unable to log param '%s' for run '%s': %s", req.Key, id, err)
 	}
 
 	return c.JSON(fiber.Map{})
 }
 
 func SetRunTag(c *fiber.Ctx) error {
-	var req SetRunTagRequest
+	var req request.SetRunTagRequest
 	if err := c.BodyParser(&req); err != nil {
 		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
+			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
 		}
-		return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
 	log.Debugf("SetRunTag request: %#v", req)
 
 	if req.ID == "" && req.UUID == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
 	if req.Key == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'key'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'key'")
 	}
 
 	id := req.ID
@@ -651,56 +655,56 @@ func SetRunTag(c *fiber.Ctx) error {
 		id = req.UUID
 	}
 
-	if err := setRunTags(id, []RunTag{req.RunTag}); err != nil {
-		return NewError(ErrorCodeInternalError, "Unable to set tag '%s' for run '%s': %s", req.Key, id, err)
+	if err := setRunTags(id, []request.TagPartialRequest{{Key: req.Key, Value: req.Value}}); err != nil {
+		return api.NewInternalError("Unable to set tag '%s' for run '%s': %s", req.Key, id, err)
 	}
 
 	return c.JSON(fiber.Map{})
 }
 
 func DeleteRunTag(c *fiber.Ctx) error {
-	var req DeleteRunTagRequest
+	var req request.DeleteRunTagRequest
 	if err := c.BodyParser(&req); err != nil {
-		return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
 	log.Debugf("DeleteRunTag request: %#v", req)
 
 	if req.ID == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
 	if tx := database.DB.Select("run_uuid").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&database.Run{ID: req.ID}); tx.Error != nil {
-		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", req.ID, tx.Error)
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.ID, tx.Error)
 	}
 
 	if tx := database.DB.First(&database.Tag{RunID: req.ID, Key: req.Key}); tx.Error != nil {
-		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find tag '%s' for run '%s': %s", req.Key, req.ID, tx.Error)
+		return api.NewResourceDoesNotExistError("Unable to find tag '%s' for run '%s': %s", req.Key, req.ID, tx.Error)
 	}
 
 	if tx := database.DB.Delete(&database.Tag{
 		RunID: req.ID,
 		Key:   req.Key,
 	}); tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to delete tag '%s' for run '%s': %s", req.Key, req.ID, tx.Error)
+		return api.NewInternalError("Unable to delete tag '%s' for run '%s': %s", req.Key, req.ID, tx.Error)
 	}
 
 	return c.JSON(fiber.Map{})
 }
 
 func LogBatch(c *fiber.Ctx) error {
-	var req LogBatchRequest
+	var req request.LogBatchRequest
 	if err := c.BodyParser(&req); err != nil {
 		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			return NewError(ErrorCodeInvalidParameterValue, "Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
+			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
 		}
-		return NewError(ErrorCodeBadRequest, "Unable to decode request body: %s", err)
+		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
 	log.Debugf("LogBatch request: %#v", req)
 
 	if req.ID == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
 	if err := logParams(req.ID, req.Params); err != nil {
@@ -718,13 +722,13 @@ func LogBatch(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{})
 }
 
-func logMetrics(id string, metrics []Metric) error {
+func logMetrics(id string, metrics []request.MetricPartialRequest) error {
 	if len(metrics) == 0 {
 		return nil
 	}
 
 	if tx := database.DB.Select("run_uuid").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&database.Run{ID: id}); tx.Error != nil {
-		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", id, tx.Error)
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", id, tx.Error)
 	}
 
 	lastIters := make(map[string]int64)
@@ -754,7 +758,7 @@ func logMetrics(id string, metrics []Metric) error {
 
 		return nil
 	}(); err != nil {
-		return NewError(ErrorCodeInternalError, "Unable to get latest metric iters for run '%s': %s", id, err)
+		return api.NewInternalError("Unable to get latest metric iters for run '%s': %s", id, err)
 	}
 
 	dbMetrics := make([]database.Metric, len(metrics))
@@ -781,10 +785,10 @@ func logMetrics(id string, metrics []Metric) error {
 				m.Value = -math.MaxFloat64
 				// m.Value = math.Inf(-1)
 			default:
-				return NewError(ErrorCodeInvalidParameterValue, "Invalid metric value '%s'", v)
+				return api.NewInvalidParameterValueError("Invalid metric value '%s'", v)
 			}
 		} else {
-			return NewError(ErrorCodeInvalidParameterValue, "Invalid metric value '%s'", v)
+			return api.NewInvalidParameterValueError("Invalid metric value '%s'", v)
 		}
 		dbMetrics[n] = m
 
@@ -808,14 +812,14 @@ func logMetrics(id string, metrics []Metric) error {
 	}
 
 	if tx := database.DB.CreateInBatches(&dbMetrics, 100); tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to insert metrics for run '%s': %s", id, tx.Error)
+		return api.NewInternalError("Unable to insert metrics for run '%s': %s", id, tx.Error)
 	}
 
 	// TODO update latest metrics in the background?
 
 	var currentLatestMetrics []database.LatestMetric
 	if tx := database.DB.Where("run_uuid = ?", id).Where("key IN ?", keys).Find(&currentLatestMetrics); tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to get latest metrics for run '%s': %s", id, tx.Error)
+		return api.NewInternalError("Unable to get latest metrics for run '%s': %s", id, tx.Error)
 	}
 
 	currentLatestMetricsMap := make(map[string]database.LatestMetric, len(currentLatestMetrics))
@@ -841,20 +845,20 @@ func logMetrics(id string, metrics []Metric) error {
 		if tx := database.DB.Clauses(clause.OnConflict{
 			UpdateAll: true,
 		}).Create(&updatedLatestMetrics); tx.Error != nil {
-			return NewError(ErrorCodeInternalError, "Unable to update latest metrics for run '%s': %s", id, tx.Error)
+			return api.NewInternalError("Unable to update latest metrics for run '%s': %s", id, tx.Error)
 		}
 	}
 
 	return nil
 }
 
-func logParams(id string, params []RunParam) error {
+func logParams(id string, params []request.ParamPartialRequest) error {
 	if len(params) == 0 {
 		return nil
 	}
 
 	if tx := database.DB.Select("run_uuid").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&database.Run{ID: id}); tx.Error != nil {
-		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", id, tx.Error)
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", id, tx.Error)
 	}
 
 	dbParams := make([]database.Param, len(params))
@@ -867,20 +871,20 @@ func logParams(id string, params []RunParam) error {
 	}
 
 	if tx := database.DB.CreateInBatches(&dbParams, 100); tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to insert params for run '%s': %s", id, tx.Error)
+		return api.NewInternalError("Unable to insert params for run '%s': %s", id, tx.Error)
 	}
 
 	return nil
 }
 
-func setRunTags(id string, tags []RunTag) error {
+func setRunTags(id string, tags []request.TagPartialRequest) error {
 	if len(tags) == 0 {
 		return nil
 	}
 
 	run := database.Run{ID: id}
 	if tx := database.DB.Select("run_uuid", "name", "user_id").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&run); tx.Error != nil {
-		return NewError(ErrorCodeResourceDoesNotExist, "Unable to find active run '%s': %s", id, tx.Error)
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", id, tx.Error)
 	}
 
 	tx := database.DB.Begin()
@@ -909,17 +913,16 @@ func setRunTags(id string, tags []RunTag) error {
 
 	tx.Commit()
 	if tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to insert tags for run '%s': %s", id, tx.Error)
+		return api.NewInternalError("Unable to insert tags for run '%s': %s", id, tx.Error)
 	}
 
 	return nil
 }
 
-func modelRunToAPI(r database.Run) Run {
-	metrics := make([]Metric, len(r.LatestMetrics))
+func modelRunToAPI(r database.Run) response.RunPartialResponse {
+	metrics := make([]response.RunMetricPartialResponse, len(r.LatestMetrics))
 	for n, m := range r.LatestMetrics {
-
-		metrics[n] = Metric{
+		metrics[n] = response.RunMetricPartialResponse{
 			Key:       m.Key,
 			Value:     m.Value,
 			Timestamp: m.Timestamp,
@@ -930,17 +933,17 @@ func modelRunToAPI(r database.Run) Run {
 		}
 	}
 
-	params := make([]RunParam, len(r.Params))
+	params := make([]response.RunParamPartialResponse, len(r.Params))
 	for n, p := range r.Params {
-		params[n] = RunParam{
+		params[n] = response.RunParamPartialResponse{
 			Key:   p.Key,
 			Value: p.Value,
 		}
 	}
 
-	tags := make([]RunTag, len(r.Tags))
+	tags := make([]response.RunTagPartialResponse, len(r.Tags))
 	for n, t := range r.Tags {
-		tags[n] = RunTag{
+		tags[n] = response.RunTagPartialResponse{
 			Key:   t.Key,
 			Value: t.Value,
 		}
@@ -952,20 +955,20 @@ func modelRunToAPI(r database.Run) Run {
 		}
 	}
 
-	return Run{
-		RunInfo{
+	return response.RunPartialResponse{
+		Info: response.RunInfoPartialResponse{
 			ID:             r.ID,
 			UUID:           r.ID,
 			Name:           r.Name,
 			ExperimentID:   fmt.Sprint(r.ExperimentID),
 			UserID:         r.UserID,
-			Status:         RunStatus(r.Status),
+			Status:         string(r.Status),
 			StartTime:      r.StartTime.Int64,
 			EndTime:        r.EndTime.Int64,
 			ArtifactURI:    r.ArtifactURI,
-			LifecycleStage: LifecycleStage(r.LifecycleStage),
+			LifecycleStage: string(r.LifecycleStage),
 		},
-		RunData{
+		Data: response.RunDataPartialResponse{
 			Metrics: metrics,
 			Params:  params,
 			Tags:    tags,

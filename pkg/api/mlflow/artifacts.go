@@ -1,44 +1,42 @@
 package mlflow
 
 import (
-	"github.com/G-Research/fasttrack/pkg/database"
-
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrack/pkg/database"
 )
 
 func ListArtifacts(c *fiber.Ctx) error {
-	q := struct {
-		RunID string `query:"run_id"`
-		Path  string `query:"path"`
-		Token string `query:"token"`
-	}{}
-
-	if err := c.QueryParser(&q); err != nil {
-		return NewError(ErrorCodeBadRequest, err.Error())
+	query := request.ListArtifactsRequest{}
+	if err := c.QueryParser(&query); err != nil {
+		return api.NewBadRequestError(err.Error())
 	}
 
-	if q.RunID == "" {
-		q.RunID = c.Query("run_uuid")
+	if query.RunID == "" {
+		query.RunID = c.Query("run_uuid")
 	}
 
-	log.Debugf("ListArtifacts request: %#v", q)
+	log.Debugf("ListArtifacts request: %#v", query)
 
-	if q.RunID == "" {
-		return NewError(ErrorCodeInvalidParameterValue, "Missing value for required parameter 'run_id'")
+	if query.RunID == "" {
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
 	run := database.Run{
-		ID: q.RunID,
+		ID: query.RunID,
 	}
 
 	if tx := database.DB.Select("artifact_uri").First(&run); tx.Error != nil {
-		return NewError(ErrorCodeInternalError, "Unable to get artifact URI for run '%s'", q.RunID)
+		return api.NewInternalError("Unable to get artifact URI for run '%s'", query.RunID)
 	}
 
 	// TODO grab list of artifacts from S3
-	resp := &ListArtifactsResponse{
-		Files: make([]File, 0),
+	resp := &response.ListArtifactsResponse{
+		Files: make([]response.FilePartialResponse, 0),
 	}
 
 	log.Debugf("ArtifactList response: %#v", resp)

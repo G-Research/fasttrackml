@@ -1,4 +1,4 @@
-# fasttrack
+# FastTrackML
 Rewrite of the MLFlow tracking server with a focus on scalability
 
 | ⚠️ This is a work in progress ⚠️ |
@@ -10,7 +10,7 @@ Rewrite of the MLFlow tracking server with a focus on scalability
 
 For the full guide, see [docs/quickstart.md](docs/quickstart.md).
 
-FastTrack can be run using the following command:
+FastTrackML can be run using the following command:
 
 ```bash
 docker run --rm -p 5000:5000 -ti gresearch/fasttrack

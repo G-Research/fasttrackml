@@ -1,12 +1,10 @@
-package mlflow
+package experiment
 
 import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -27,6 +25,8 @@ import (
 
 var (
 	experimentOrder = regexp.MustCompile(`^(?:attr(?:ibutes?)?\.)?(\w+)(?i:\s+(ASC|DESC))?$`)
+	filterAnd       = regexp.MustCompile(`(?i)\s+AND\s+`)
+	filterCond      = regexp.MustCompile(`^(?:(\w+)\.)?("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'[^']+'(?:,\s*)?)+\)|"[^"]+"|'[^']+'|[\w\.]+)$`)
 )
 
 func CreateExperiment(c *fiber.Ctx) error {
@@ -40,22 +40,8 @@ func CreateExperiment(c *fiber.Ctx) error {
 
 	log.Debugf("CreateExperiment request: %#v", &req)
 
-	if req.Name == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'name'")
-	}
-
-	if req.ArtifactLocation != "" {
-		u, err := url.Parse(req.ArtifactLocation)
-		if err != nil {
-			return api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
-		}
-
-		p, err := filepath.Abs(u.Path)
-		if err != nil {
-			return api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
-		}
-		u.Path = p
-		req.ArtifactLocation = u.String()
+	if err := ValidateCreateExperimentRequest(&req); err != nil {
+		return err
 	}
 
 	ts := time.Now().UTC().UnixMilli()
@@ -98,9 +84,7 @@ func CreateExperiment(c *fiber.Ctx) error {
 		}
 	}
 
-	resp := &response.CreateExperimentResponse{
-		ID: fmt.Sprint(*exp.ID),
-	}
+	resp := response.NewExperimentResponse(&exp)
 
 	log.Debugf("CreateExperiment response: %#v", resp)
 
@@ -114,36 +98,32 @@ func UpdateExperiment(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("UpdateExperiment request: %#v", &req)
-	if req.ID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'experiment_id'")
+	if err := ValidateUpdateExperimentRequest(&req); err != nil {
+		return err
 	}
 
-	if req.Name == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'new_name'")
-	}
-
-	ex, err := strconv.ParseInt(req.ID, 10, 32)
+	parsedID, err := strconv.ParseInt(req.ID, 10, 32)
 	if err != nil {
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	ex32 := int32(ex)
-	exp := database.Experiment{
+	ex32 := int32(parsedID)
+	experiment := database.Experiment{
 		ID: &ex32,
 	}
 
-	if tx := database.DB.Select("ID").First(&exp); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", *exp.ID, tx.Error)
+	if tx := database.DB.Select("RunID").First(&experiment); tx.Error != nil {
+		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", *experiment.ID, tx.Error)
 	}
 
-	if tx := database.DB.Model(&exp).Updates(&database.Experiment{
+	if tx := database.DB.Model(&experiment).Updates(&database.Experiment{
 		Name: req.Name,
 		LastUpdateTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
 		},
 	}); tx.Error != nil {
-		return api.NewInternalError("Unable to update experiment '%d': %s", *exp.ID, tx.Error)
+		return api.NewInternalError("Unable to update experiment '%d': %s", *experiment.ID, tx.Error)
 	}
 
 	return c.JSON(fiber.Map{})
@@ -154,42 +134,25 @@ func GetExperiment(c *fiber.Ctx) error {
 
 	log.Debugf("GetExperiment request: experiment_id='%s'", id)
 
-	if id == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'experiment_id'")
+	if err := ValidateGetExperimentByIDRequest(id); err != nil {
+		return err
 	}
 
-	ex, err := strconv.ParseInt(id, 10, 32)
+	parsedID, err := strconv.ParseInt(id, 10, 32)
 	if err != nil {
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", id, err)
 	}
 
-	ex32 := int32(ex)
+	ex32 := int32(parsedID)
 	exp := database.Experiment{
 		ID: &ex32,
 	}
 
 	if tx := database.DB.Preload("Tags").First(&exp); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", ex, tx.Error)
+		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", parsedID, tx.Error)
 	}
 
-	resp := response.GetExperimentResponse{
-		Experiment: response.ExperimentPartialResponse{
-			ID:               fmt.Sprint(*exp.ID),
-			Name:             exp.Name,
-			ArtifactLocation: exp.ArtifactLocation,
-			LifecycleStage:   string(exp.LifecycleStage),
-			LastUpdateTime:   exp.LastUpdateTime.Int64,
-			CreationTime:     exp.CreationTime.Int64,
-			Tags:             make([]response.ExperimentTagPartialResponse, len(exp.Tags)),
-		},
-	}
-
-	for n, t := range exp.Tags {
-		resp.Experiment.Tags[n] = response.ExperimentTagPartialResponse{
-			Key:   t.Key,
-			Value: t.Value,
-		}
-	}
+	resp := response.NewExperimentResponse(&exp)
 
 	log.Debugf("GetExperiment response: %#v", resp)
 
@@ -201,8 +164,8 @@ func GetExperimentByName(c *fiber.Ctx) error {
 
 	log.Debugf("GetExperimentByName request: experiment_name='%s'", name)
 
-	if name == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'experiment_name'")
+	if err := ValidateGetExperimentByNameRequest(name); err != nil {
+		return err
 	}
 
 	exp := database.Experiment{
@@ -212,24 +175,7 @@ func GetExperimentByName(c *fiber.Ctx) error {
 		return api.NewResourceDoesNotExistError("Unable to find experiment '%s': %s", name, tx.Error)
 	}
 
-	resp := response.GetExperimentResponse{
-		Experiment: response.ExperimentPartialResponse{
-			ID:               fmt.Sprint(*exp.ID),
-			Name:             exp.Name,
-			ArtifactLocation: exp.ArtifactLocation,
-			LifecycleStage:   string(exp.LifecycleStage),
-			LastUpdateTime:   exp.LastUpdateTime.Int64,
-			CreationTime:     exp.CreationTime.Int64,
-			Tags:             make([]response.ExperimentTagPartialResponse, len(exp.Tags)),
-		},
-	}
-
-	for n, t := range exp.Tags {
-		resp.Experiment.Tags[n] = response.ExperimentTagPartialResponse{
-			Key:   t.Key,
-			Value: t.Value,
-		}
-	}
+	resp := response.NewExperimentResponse(&exp)
 
 	log.Debugf("GetExperimentByName response: %#v", resp)
 
@@ -244,20 +190,20 @@ func DeleteExperiment(c *fiber.Ctx) error {
 
 	log.Debugf("DeleteExperiment request: %#v", req)
 
-	if req.ID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'experiment_id'")
+	if err := ValidateDeleteExperimentRequest(&req); err != nil {
+		return err
 	}
 
-	ex, err := strconv.ParseInt(req.ID, 10, 32)
+	parsedID, err := strconv.ParseInt(req.ID, 10, 32)
 	if err != nil {
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	ex32 := int32(ex)
+	ex32 := int32(parsedID)
 	exp := database.Experiment{
 		ID: &ex32,
 	}
-	if tx := database.DB.Select("ID").First(&exp); tx.Error != nil {
+	if tx := database.DB.Select("RunID").First(&exp); tx.Error != nil {
 		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", *exp.ID, tx.Error)
 	}
 
@@ -282,20 +228,20 @@ func RestoreExperiment(c *fiber.Ctx) error {
 
 	log.Debugf("RestoreExperiment request: %#v", req)
 
-	if req.ID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'experiment_id'")
+	if err := ValidateRestoreExperimentRequest(&req); err != nil {
+		return err
 	}
 
-	ex, err := strconv.ParseInt(req.ID, 10, 32)
+	parsedID, err := strconv.ParseInt(req.ID, 10, 32)
 	if err != nil {
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	ex32 := int32(ex)
+	ex32 := int32(parsedID)
 	exp := database.Experiment{
 		ID: &ex32,
 	}
-	if tx := database.DB.Select("ID").First(&exp); tx.Error != nil {
+	if tx := database.DB.Select("RunID").First(&exp); tx.Error != nil {
 		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", *exp.ID, tx.Error)
 	}
 
@@ -321,25 +267,21 @@ func SetExperimentTag(c *fiber.Ctx) error {
 
 	log.Debugf("SetExperimentTag request: %#v", req)
 
-	if req.ID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'experiment_id'")
+	if err := ValidateSetExperimentTagRequest(&req); err != nil {
+		return err
 	}
 
-	if req.Key == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'key'")
-	}
-
-	ex, err := strconv.ParseInt(req.ID, 10, 32)
+	parsedID, err := strconv.ParseInt(req.ID, 10, 32)
 	if err != nil {
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	ex32 := int32(ex)
+	ex32 := int32(parsedID)
 	exp := database.Experiment{
 		ID:             &ex32,
 		LifecycleStage: database.LifecycleStageActive,
 	}
-	if tx := database.DB.Select("ID").Where(&exp).First(&exp); tx.Error != nil {
+	if tx := database.DB.Select("RunID").Where(&exp).First(&exp); tx.Error != nil {
 		return api.NewInvalidParameterValueError("Unable to find experiment '%d': %s", *exp.ID, tx.Error)
 	}
 
@@ -371,29 +313,29 @@ func SearchExperiments(c *fiber.Ctx) error {
 
 	log.Debugf("SearchExperiments request: %#v", req)
 
-	exps := []database.Experiment{}
+	if err := ValidateSearchExperimentsRequest(&req); err != nil {
+		return err
+	}
 
 	// ViewType
 	var lifecyleStages []database.LifecycleStage
 	switch req.ViewType {
-	case string(request.ViewTypeActiveOnly), "":
+	case request.ViewTypeActiveOnly, "":
 		lifecyleStages = []database.LifecycleStage{
 			database.LifecycleStageActive,
 		}
-	case string(request.ViewTypeDeletedOnly):
+	case request.ViewTypeDeletedOnly:
 		lifecyleStages = []database.LifecycleStage{
 			database.LifecycleStageDeleted,
 		}
-	case string(request.ViewTypeAll):
+	case request.ViewTypeAll:
 		lifecyleStages = []database.LifecycleStage{
 			database.LifecycleStageActive,
 			database.LifecycleStageDeleted,
 		}
-	default:
-		return api.NewInvalidParameterValueError("Invalid view_type '%s'", req.ViewType)
 	}
-	tx := database.DB.Where("lifecycle_stage IN ?", lifecyleStages)
 
+	tx := database.DB.Where("lifecycle_stage IN ?", lifecyleStages)
 	// MaxResults
 	limit := int(req.MaxResults)
 	if limit == 0 {
@@ -521,6 +463,7 @@ func SearchExperiments(c *fiber.Ctx) error {
 	}
 
 	// Actual query
+	var exps []database.Experiment
 	tx.Preload("Tags").Find(&exps)
 	if tx.Error != nil {
 		return api.NewInternalError("Unable to search runs: %s", tx.Error)

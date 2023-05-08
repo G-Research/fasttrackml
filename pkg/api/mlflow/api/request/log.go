@@ -28,6 +28,14 @@ type LogParamRequest struct {
 	Value string `json:"value"`
 }
 
+// GetRunID returns Run ID.
+func (r LogParamRequest) GetRunID() string {
+	if r.ID != "" {
+		return r.ID
+	}
+	return r.UUID
+}
+
 // LogMetricRequest is a request object for `POST mlflow/runs/log-metric` endpoint.
 type LogMetricRequest struct {
 	ID        string `json:"run_id"`
@@ -36,6 +44,14 @@ type LogMetricRequest struct {
 	Value     any    `json:"value"`
 	Timestamp int64  `json:"timestamp"`
 	Step      int64  `json:"step"`
+}
+
+// GetRunID returns Run ID.
+func (r LogMetricRequest) GetRunID() string {
+	if r.ID != "" {
+		return r.ID
+	}
+	return r.UUID
 }
 
 // LogBatchRequest is a request object for `POST mlflow/runs/log-batch` endpoint.

@@ -39,7 +39,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 	}
 
 	tx := database.DB.
-		Joins("Experiment", database.DB.Select("ID", "Name")).
+		Joins("Experiment", database.DB.Select("RunID", "Name")).
 		Preload("Params")
 
 	if len(q.Sequences) == 0 {
@@ -150,7 +150,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		ID: p.ID,
 	}
 	if tx := database.DB.
-		Select("ID").
+		Select("RunID").
 		Preload("Metrics", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Where("key IN ?", metricKeys).
@@ -209,7 +209,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 	var runs []database.Run
 	if tx := database.DB.
 		Where("status = ?", database.StatusRunning).
-		Joins("Experiment", database.DB.Select("ID", "Name")).
+		Joins("Experiment", database.DB.Select("RunID", "Name")).
 		Preload("LatestMetrics").
 		Find(&runs); tx.Error != nil {
 		return fmt.Errorf("error retrieving active runs: %w", tx.Error)
@@ -348,7 +348,7 @@ func SearchRuns(c *fiber.Ctx) error {
 	log.Debugf("Total runs: %d", total)
 
 	tx := database.DB.
-		Joins("Experiment", database.DB.Select("ID", "Name")).
+		Joins("Experiment", database.DB.Select("RunID", "Name")).
 		Order("row_num DESC")
 
 	if q.Limit > 0 {
@@ -528,7 +528,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 
 	var runs []database.Run
 	if tx := database.DB.
-		Joins("Experiment", database.DB.Select("ID", "Name")).
+		Joins("Experiment", database.DB.Select("RunID", "Name")).
 		Preload("Params").
 		Where("run_uuid IN (?)", qp.Filter(database.DB.
 			Select("runs.run_uuid").

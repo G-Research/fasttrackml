@@ -1,10 +1,15 @@
-package mlflow
+package experiment
 
 import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
 )
+
+// GetInt32Pointer returns pointer for provided value.
+func GetInt32Pointer(value int32) *int32 {
+	return &value
+}
 
 func GenerateRandomName() string {
 	p, _ := rand.Int(rand.Reader, big.NewInt(int64(len(PREDICATES))))

@@ -15,7 +15,7 @@ func GetDashboards(c *fiber.Ctx) error {
 	var dashboards []database.Dashboard
 	if err := database.DB.
 		Where("NOT dashboards.is_archived").
-		Joins("App", database.DB.Select("ID", "Type", "IsArchived")).
+		Joins("App", database.DB.Select("RunID", "Type", "IsArchived")).
 		Order("dashboards.updated_at").
 		Find(&dashboards).
 		Error; err != nil {
@@ -42,7 +42,7 @@ func CreateDashboard(c *fiber.Ctx) error {
 		},
 	}
 	if err := database.DB.
-		Select("ID", "Type").
+		Select("RunID", "Type").
 		First(&app).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -84,7 +84,7 @@ func GetDashboard(c *fiber.Ctx) error {
 	}
 	if err := database.DB.
 		Where("NOT dashboards.is_archived").
-		Joins("App", database.DB.Select("ID", "Type", "IsArchived")).
+		Joins("App", database.DB.Select("RunID", "Type", "IsArchived")).
 		First(&dash).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -157,7 +157,7 @@ func DeleteDashboard(c *fiber.Ctx) error {
 		},
 	}
 	if err := database.DB.
-		Select("ID").
+		Select("RunID").
 		Where("NOT is_archived").
 		First(&dash).
 		Error; err != nil {

@@ -134,7 +134,7 @@ func DeleteApp(c *fiber.Ctx) error {
 		},
 	}
 	if err := database.DB.
-		Select("ID").
+		Select("RunID").
 		Where("NOT is_archived").
 		First(&app).
 		Error; err != nil {

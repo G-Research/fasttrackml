@@ -165,8 +165,8 @@ func UpdateRun(c *fiber.Ctx) error {
 			}
 		}
 		return nil
-	}).Error; err != nil {
-		return api.NewInternalError("Unable to update run '%s': %+v", run.ID, err)
+	}); err != nil {
+		return api.NewInternalError("Unable to update run '%s': %s", run.ID, err)
 	}
 
 	resp := response.NewUpdateRunResponse(&run)

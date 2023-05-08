@@ -62,7 +62,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 			traces[s] = []fiber.Map{}
 		case "metric":
 			tx.Preload("LatestMetrics", func(db *gorm.DB) *gorm.DB {
-				return db.Select("ID", "Key")
+				return db.Select("RunID", "Key")
 			})
 		default:
 			return fmt.Errorf("%q is not a valid Sequence", s)

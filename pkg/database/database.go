@@ -164,7 +164,7 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 					&LatestMetric{},
 					&Tag{},
 				} {
-					if err := tx.Migrator().CreateIndex(table, "RunID"); err != nil {
+					if err := tx.Migrator().CreateIndex(table, "ID"); err != nil {
 						return err
 					}
 				}

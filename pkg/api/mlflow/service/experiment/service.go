@@ -112,7 +112,7 @@ func UpdateExperiment(c *fiber.Ctx) error {
 		ID: &ex32,
 	}
 
-	if tx := database.DB.Select("RunID").First(&experiment); tx.Error != nil {
+	if tx := database.DB.Select("ID").First(&experiment); tx.Error != nil {
 		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", *experiment.ID, tx.Error)
 	}
 
@@ -203,7 +203,7 @@ func DeleteExperiment(c *fiber.Ctx) error {
 	exp := database.Experiment{
 		ID: &ex32,
 	}
-	if tx := database.DB.Select("RunID").First(&exp); tx.Error != nil {
+	if tx := database.DB.Select("ID").First(&exp); tx.Error != nil {
 		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", *exp.ID, tx.Error)
 	}
 
@@ -241,7 +241,7 @@ func RestoreExperiment(c *fiber.Ctx) error {
 	exp := database.Experiment{
 		ID: &ex32,
 	}
-	if tx := database.DB.Select("RunID").First(&exp); tx.Error != nil {
+	if tx := database.DB.Select("ID").First(&exp); tx.Error != nil {
 		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", *exp.ID, tx.Error)
 	}
 
@@ -281,7 +281,7 @@ func SetExperimentTag(c *fiber.Ctx) error {
 		ID:             &ex32,
 		LifecycleStage: database.LifecycleStageActive,
 	}
-	if tx := database.DB.Select("RunID").Where(&exp).First(&exp); tx.Error != nil {
+	if tx := database.DB.Select("ID").Where(&exp).First(&exp); tx.Error != nil {
 		return api.NewInvalidParameterValueError("Unable to find experiment '%d': %s", *exp.ID, tx.Error)
 	}
 

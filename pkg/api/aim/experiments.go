@@ -61,7 +61,7 @@ func GetExperiment(c *fiber.Ctx) error {
 	}
 	id32 := int32(id)
 
-	if tx := database.DB.Select("RunID").First(&database.Experiment{
+	if tx := database.DB.Select("ID").First(&database.Experiment{
 		ID: &id32,
 	}); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
@@ -126,7 +126,7 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 	}
 	id32 := int32(id)
 
-	if tx := database.DB.Select("RunID").First(&database.Experiment{
+	if tx := database.DB.Select("ID").First(&database.Experiment{
 		ID: &id32,
 	}); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
@@ -200,7 +200,7 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 	}
 	id32 := int32(id)
 
-	if tx := database.DB.Select("RunID").First(&database.Experiment{
+	if tx := database.DB.Select("ID").First(&database.Experiment{
 		ID: &id32,
 	}); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {

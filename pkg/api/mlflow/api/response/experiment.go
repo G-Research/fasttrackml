@@ -28,6 +28,13 @@ type CreateExperimentResponse struct {
 	ID string `json:"experiment_id"`
 }
 
+// NewCreateExperimentResponse creates new CreateExperimentResponse object.
+func NewCreateExperimentResponse(experiment *database.Experiment) *CreateExperimentResponse {
+	return &CreateExperimentResponse{
+		ID: fmt.Sprint(*experiment.ID),
+	}
+}
+
 // GetExperimentResponse is a response object for `GET mlflow/experiments/get` endpoint.
 type GetExperimentResponse struct {
 	Experiment ExperimentPartialResponse `json:"experiment"`

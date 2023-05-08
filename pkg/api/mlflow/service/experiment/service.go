@@ -84,7 +84,7 @@ func CreateExperiment(c *fiber.Ctx) error {
 		}
 	}
 
-	resp := response.NewExperimentResponse(&exp)
+	resp := response.NewCreateExperimentResponse(&exp)
 
 	log.Debugf("CreateExperiment response: %#v", resp)
 

@@ -869,8 +869,8 @@ func setRunTags(id string, tags []request.TagPartialRequest) error {
 			return err
 		}
 		return nil
-	}).Error; err != nil {
-		return api.NewInternalError("Unable to insert tags for run '%s': %s", id, err())
+	}); err != nil {
+		return api.NewInternalError("Unable to insert tags for run '%s': %s", id, err)
 	}
 
 	return nil

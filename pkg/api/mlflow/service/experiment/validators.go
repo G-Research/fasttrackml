@@ -55,16 +55,16 @@ func ValidateUpdateExperimentRequest(req *request.UpdateExperimentRequest) error
 }
 
 // ValidateGetExperimentByIDRequest validates `GET /mlflow/experiments/get` request.
-func ValidateGetExperimentByIDRequest(id string) error {
-	if id == "" {
+func ValidateGetExperimentByIDRequest(req *request.GetExperimentRequest) error {
+	if req.ID == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'experiment_id'")
 	}
 	return nil
 }
 
 // ValidateGetExperimentByNameRequest validates `GET /mlflow/experiments/get` request.
-func ValidateGetExperimentByNameRequest(name string) error {
-	if name == "" {
+func ValidateGetExperimentByNameRequest(req *request.GetExperimentRequest) error {
+	if req.Name == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'experiment_name'")
 	}
 	return nil

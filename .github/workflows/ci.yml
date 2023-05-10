@@ -45,9 +45,30 @@ jobs:
           version: "2022.1.3"
           build-tags: ${{ steps.tags.outputs.tags }}
 
-  test:
+  golang-unit-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Test
+    name: Golang Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+
+      - name: Mock UI builds
+        run: |
+          mkdir pkg/ui/{aim,mlflow}/embed/build
+          touch pkg/ui/{aim,mlflow}/embed/build/index.html
+
+      - name: Run Golang Unit Tests
+        run: go test ./... -v
+
+  python-integration-tests:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Python Integration Tests
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -147,7 +168,8 @@ jobs:
     name: All required checks done
     needs:
       - lint
-      - test
+      - golang-unit-tests
+      - python-integration-tests
       - build-image
     runs-on: ubuntu-latest
     steps:

@@ -620,20 +620,20 @@ func DeleteRunTag(c *fiber.Ctx) error {
 	).Where(
 		"lifecycle_stage = ?", database.LifecycleStageActive,
 	).First(
-		&database.Run{ID: req.ID},
+		&database.Run{ID: req.RunID},
 	).Error; err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.ID, err)
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
 	}
 
-	if err := database.DB.First(&database.Tag{RunID: req.ID, Key: req.Key}).Error; err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find tag '%s' for run '%s': %s", req.Key, req.ID, err)
+	if err := database.DB.First(&database.Tag{RunID: req.RunID, Key: req.Key}).Error; err != nil {
+		return api.NewResourceDoesNotExistError("Unable to find tag '%s' for run '%s': %s", req.Key, req.RunID, err)
 	}
 
 	if tx := database.DB.Delete(&database.Tag{
-		RunID: req.ID,
+		RunID: req.RunID,
 		Key:   req.Key,
 	}); tx.Error != nil {
-		return api.NewInternalError("Unable to delete tag '%s' for run '%s': %s", req.Key, req.ID, tx.Error)
+		return api.NewInternalError("Unable to delete tag '%s' for run '%s': %s", req.Key, req.RunID, tx.Error)
 	}
 
 	return c.JSON(fiber.Map{})
@@ -654,15 +654,15 @@ func LogBatch(c *fiber.Ctx) error {
 		return err
 	}
 
-	if err := logParams(req.ID, req.Params); err != nil {
+	if err := logParams(req.RunID, req.Params); err != nil {
 		return err
 	}
 
-	if err := logMetrics(req.ID, req.Metrics); err != nil {
+	if err := logMetrics(req.RunID, req.Metrics); err != nil {
 		return err
 	}
 
-	if err := setRunTags(req.ID, req.Tags); err != nil {
+	if err := setRunTags(req.RunID, req.Tags); err != nil {
 		return err
 	}
 

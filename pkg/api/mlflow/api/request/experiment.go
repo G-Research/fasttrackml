@@ -19,6 +19,12 @@ type UpdateExperimentRequest struct {
 	Name string `json:"new_name"`
 }
 
+// GetExperimentRequest is a request object for `POST /mlflow/experiments/update` endpoint.
+type GetExperimentRequest struct {
+	ID   string `query:"experiment_id"`
+	Name string `query:"experiment_name"`
+}
+
 // DeleteExperimentRequest is a request object for `POST /mlflow/experiments/delete` endpoint.
 type DeleteExperimentRequest struct {
 	ID string `json:"experiment_id"`

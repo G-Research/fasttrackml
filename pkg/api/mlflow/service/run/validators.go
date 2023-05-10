@@ -37,6 +37,7 @@ func ValidateGetRunRequest(req *request.GetRunRequest) error {
 
 // ValidateDeleteRunRequest validates `POST /mlflow/runs/delete` request.
 func ValidateDeleteRunRequest(req *request.DeleteRunRequest) error {
+	// TODO:DSuhinin do we need to check here req.RunUUID?
 	if req.RunID == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
@@ -45,6 +46,7 @@ func ValidateDeleteRunRequest(req *request.DeleteRunRequest) error {
 
 // ValidateRestoreRunRequest validates `POST /mlflow/runs/restore` request.
 func ValidateRestoreRunRequest(req *request.RestoreRunRequest) error {
+	// TODO:DSuhinin do we need to check here req.RunUUID?
 	if req.RunID == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
@@ -53,7 +55,7 @@ func ValidateRestoreRunRequest(req *request.RestoreRunRequest) error {
 
 // ValidateLogMetricRequest validates `POST /mlflow/runs/log-metric` request.
 func ValidateLogMetricRequest(req *request.LogMetricRequest) error {
-	if req.ID == "" && req.UUID == "" {
+	if req.RunID == "" && req.RuneUUID == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
@@ -69,7 +71,7 @@ func ValidateLogMetricRequest(req *request.LogMetricRequest) error {
 
 // ValidateLogParamRequest validates `POST /mlflow/runs/log-parameter` request.
 func ValidateLogParamRequest(req *request.LogParamRequest) error {
-	if req.ID == "" && req.UUID == "" {
+	if req.RunID == "" && req.RuneUUID == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
@@ -93,7 +95,8 @@ func ValidateSetRunTagRequest(req *request.SetRunTagRequest) error {
 
 // ValidateDeleteRunTagRequest validates `POST /mlflow/runs/delete-tag` request.
 func ValidateDeleteRunTagRequest(req *request.DeleteRunTagRequest) error {
-	if req.ID == "" {
+	// TODO:DSuhinin do we need to check here req.RunUUID?
+	if req.RunID == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 	return nil
@@ -101,7 +104,8 @@ func ValidateDeleteRunTagRequest(req *request.DeleteRunTagRequest) error {
 
 // ValidateLogBatchRequest validates `POST /mlflow/runs/delete-tag` request.
 func ValidateLogBatchRequest(req *request.LogBatchRequest) error {
-	if req.ID == "" {
+	// TODO:DSuhinin do we need to check here req.RunUUID?
+	if req.RunID == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 	return nil

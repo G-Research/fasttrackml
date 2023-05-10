@@ -78,6 +78,6 @@ func (r SetRunTagRequest) GetRunID() string {
 
 // DeleteRunTagRequest is a request object for `POST /mlflow/runs/delete-tag` endpoint.
 type DeleteRunTagRequest struct {
-	ID  string `json:"run_id"`
-	Key string `json:"key"`
+	RunID string `json:"run_id"`
+	Key   string `json:"key"`
 }

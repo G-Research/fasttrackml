@@ -130,17 +130,20 @@ func UpdateExperiment(c *fiber.Ctx) error {
 }
 
 func GetExperiment(c *fiber.Ctx) error {
-	id := c.Query("experiment_id")
+	var req request.GetExperimentRequest
+	if err := c.QueryParser(&req); err != nil {
+		return api.NewBadRequestError(err.Error())
+	}
 
-	log.Debugf("GetExperiment request: experiment_id='%s'", id)
+	log.Debugf("GetExperiment request: experiment_id='%s'", req.ID)
 
-	if err := ValidateGetExperimentByIDRequest(id); err != nil {
+	if err := ValidateGetExperimentByIDRequest(&req); err != nil {
 		return err
 	}
 
-	parsedID, err := strconv.ParseInt(id, 10, 32)
+	parsedID, err := strconv.ParseInt(req.ID, 10, 32)
 	if err != nil {
-		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", id, err)
+		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
 	ex32 := int32(parsedID)
@@ -160,19 +163,22 @@ func GetExperiment(c *fiber.Ctx) error {
 }
 
 func GetExperimentByName(c *fiber.Ctx) error {
-	name := c.Query("experiment_name")
+	var req request.GetExperimentRequest
+	if err := c.QueryParser(&req); err != nil {
+		return api.NewBadRequestError(err.Error())
+	}
 
-	log.Debugf("GetExperimentByName request: experiment_name='%s'", name)
+	log.Debugf("GetExperimentByName request: experiment_name='%s'", req.Name)
 
-	if err := ValidateGetExperimentByNameRequest(name); err != nil {
+	if err := ValidateGetExperimentByNameRequest(&req); err != nil {
 		return err
 	}
 
 	exp := database.Experiment{
-		Name: name,
+		Name: req.Name,
 	}
 	if tx := database.DB.Preload("Tags").Where(&exp).First(&exp); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find experiment '%s': %s", name, tx.Error)
+		return api.NewResourceDoesNotExistError("Unable to find experiment '%s': %s", req.Name, tx.Error)
 	}
 
 	resp := response.NewExperimentResponse(&exp)

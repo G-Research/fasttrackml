@@ -70,7 +70,7 @@ func TestValidateGetMetricHistoryBulkRequest_Error(t *testing.T) {
 				"GetMetricHistoryBulk request cannot specify more than 200 run_ids. Received 201 run_ids.",
 			),
 			request: &request.GetMetricHistoryBulkRequest{
-				RunIDs: make([]string, 201, 201),
+				RunIDs: make([]string, 201),
 			},
 		},
 		{

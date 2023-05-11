@@ -23,7 +23,7 @@ func TestValidateUpdateRunRequest_Error(t *testing.T) {
 		request *request.UpdateRunRequest
 	}{
 		{
-			name:    "EmptyRunID",
+			name:    "EmptyRunIDAndRunUUID",
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.UpdateRunRequest{},
 		},

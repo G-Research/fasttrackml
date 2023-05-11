@@ -104,7 +104,7 @@ func TestValidateRestoreRunRequest_Error(t *testing.T) {
 		request *request.RestoreRunRequest
 	}{
 		{
-			name:    "EmptyRunIDAndRunUUID",
+			name:    "EmptyRunID",
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.RestoreRunRequest{},
 		},

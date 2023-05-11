@@ -333,8 +333,8 @@ func SearchExperiments(c *fiber.Ctx) error {
 			database.LifecycleStageDeleted,
 		}
 	}
-
 	tx := database.DB.Where("lifecycle_stage IN ?", lifecyleStages)
+
 	// MaxResults
 	limit := int(req.MaxResults)
 	if limit == 0 {

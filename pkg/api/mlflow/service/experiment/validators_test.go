@@ -3,10 +3,9 @@ package experiment
 import (
 	"testing"
 
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
-
 	"github.com/stretchr/testify/assert"
 
+	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/request"
 )
 

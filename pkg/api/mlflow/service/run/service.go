@@ -125,7 +125,7 @@ func UpdateRun(c *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
-	log.Debugf("UpdateRun request: %#v", &req)
+	log.Debugf("UpdateRun request: %#v", req)
 	if err := ValidateUpdateRunRequest(&req); err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func GetRun(c *fiber.Ctx) error {
 		return api.NewBadRequestError(err.Error())
 	}
 
-	log.Debugf("GetRun request: run_id=%q, run_uuid=%q", req.RunID, req.RunUUID)
+	log.Debugf("GetRun request: %#v", req)
 	if err := ValidateGetRunRequest(&req); err != nil {
 		return err
 	}

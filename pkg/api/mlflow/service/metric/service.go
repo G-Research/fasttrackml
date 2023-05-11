@@ -24,7 +24,7 @@ func GetMetricHistory(c *fiber.Ctx) error {
 		return api.NewBadRequestError(err.Error())
 	}
 
-	log.Debugf("GetMetricHistory request: run_id=%q, run_uuid=%q metric_key=%q", req.RunID, req.RunUUID, req.MetricKey)
+	log.Debugf("GetMetricHistory request: %#v", req)
 	if err := ValidateGetMetricHistoryRequest(&req); err != nil {
 		return err
 	}

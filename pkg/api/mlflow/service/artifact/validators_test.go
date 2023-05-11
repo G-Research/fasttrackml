@@ -9,13 +9,13 @@ import (
 	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/request"
 )
 
-func TestValidateListArtifactsRequestRequest_Ok(t *testing.T) {
-	err := ValidateListArtifactsRequestRequest(&request.ListArtifactsRequest{
+func TestValidateListArtifactsRequest_Ok(t *testing.T) {
+	err := ValidateListArtifactsRequest(&request.ListArtifactsRequest{
 		RunID: "run_id",
 	})
 	assert.Nil(t, err)
 }
-func TestValidateListArtifactsRequestRequest_Error(t *testing.T) {
+func TestValidateListArtifactsRequest_Error(t *testing.T) {
 	var testData = []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -30,7 +30,7 @@ func TestValidateListArtifactsRequestRequest_Error(t *testing.T) {
 
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateListArtifactsRequestRequest(tt.request)
+			err := ValidateListArtifactsRequest(tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}

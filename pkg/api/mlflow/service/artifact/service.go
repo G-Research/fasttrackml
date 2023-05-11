@@ -18,7 +18,7 @@ func ListArtifacts(c *fiber.Ctx) error {
 
 	log.Debugf("ListArtifacts request: %#v", req)
 
-	if err := ValidateListArtifactsRequestRequest(&req); err != nil {
+	if err := ValidateListArtifactsRequest(&req); err != nil {
 		return err
 	}
 

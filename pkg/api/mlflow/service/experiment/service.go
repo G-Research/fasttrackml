@@ -38,7 +38,7 @@ func CreateExperiment(c *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
-	log.Debugf("CreateExperiment request: %#v", &req)
+	log.Debugf("CreateExperiment request: %#v", req)
 	if err := ValidateCreateExperimentRequest(&req); err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func UpdateExperiment(c *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
-	log.Debugf("UpdateExperiment request: %#v", &req)
+	log.Debugf("UpdateExperiment request: %#v", req)
 	if err := ValidateUpdateExperimentRequest(&req); err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func GetExperiment(c *fiber.Ctx) error {
 		return api.NewBadRequestError(err.Error())
 	}
 
-	log.Debugf("GetExperiment request: experiment_id='%s'", req.ID)
+	log.Debugf("GetExperiment request: %#v", req)
 	if err := ValidateGetExperimentByIDRequest(&req); err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func GetExperimentByName(c *fiber.Ctx) error {
 		return api.NewBadRequestError(err.Error())
 	}
 
-	log.Debugf("GetExperimentByName request: experiment_name='%s'", req.Name)
+	log.Debugf("GetExperimentByName request: %#v", req)
 	if err := ValidateGetExperimentByNameRequest(&req); err != nil {
 		return err
 	}

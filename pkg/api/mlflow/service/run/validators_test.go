@@ -23,7 +23,7 @@ func TestValidateUpdateRunRequest_Error(t *testing.T) {
 		request *request.UpdateRunRequest
 	}{
 		{
-			name:    "EmptyRunIDAndRunUUID",
+			name:    "EmptyRunID",
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.UpdateRunRequest{},
 		},
@@ -77,7 +77,7 @@ func TestValidateDeleteRunRequest_Error(t *testing.T) {
 		request *request.DeleteRunRequest
 	}{
 		{
-			name:    "EmptyRunIDAndRunUUID",
+			name:    "EmptyRunID",
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.DeleteRunRequest{},
 		},

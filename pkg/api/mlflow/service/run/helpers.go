@@ -1,4 +1,4 @@
-package experiment
+package run
 
 import (
 	"crypto/rand"

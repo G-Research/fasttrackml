@@ -49,10 +49,10 @@ func NewMetricHistoryBulkResponse(metrics []database.Metric) *GetMetricHistoryBu
 
 	for n, m := range metrics {
 		response.Metrics[n] = MetricPartialResponse{
+			RunID:     m.RunID,
 			Key:       m.Key,
 			Step:      m.Step,
 			Value:     m.Value,
-			RunID:     m.RunID,
 			Timestamp: m.Timestamp,
 		}
 		if m.IsNan {

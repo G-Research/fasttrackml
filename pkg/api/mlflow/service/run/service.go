@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/service/experiment"
-
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -90,7 +88,7 @@ func CreateRun(c *fiber.Ctx) error {
 	}
 
 	if run.Name == "" {
-		run.Name = experiment.GenerateRandomName()
+		run.Name = GenerateRandomName()
 		run.Tags = append(run.Tags, database.Tag{
 			Key:   "mlflow.runName",
 			Value: run.Name,

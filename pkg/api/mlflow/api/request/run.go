@@ -38,6 +38,14 @@ type UpdateRunRequest struct {
 	EndTime int64  `json:"end_time"`
 }
 
+// GetRunID returns Run RunID.
+func (r UpdateRunRequest) GetRunID() string {
+	if r.RunID != "" {
+		return r.RunID
+	}
+	return r.RunUUID
+}
+
 // SearchRunsRequest is a request object for `POST /mlflow/runs/search` endpoint.
 type SearchRunsRequest struct {
 	ExperimentIDs []string `json:"experiment_ids"`
@@ -54,10 +62,26 @@ type RestoreRunRequest struct {
 	RunUUID string `json:"run_uuid"`
 }
 
+// GetRunID returns Run RunID.
+func (r RestoreRunRequest) GetRunID() string {
+	if r.RunID != "" {
+		return r.RunID
+	}
+	return r.RunUUID
+}
+
 // DeleteRunRequest is a request object for `POST /mlflow/runs/delete` endpoint.
 type DeleteRunRequest struct {
 	RunID   string `json:"run_id"`
 	RunUUID string `json:"run_uuid"`
+}
+
+// GetRunID returns Run RunID.
+func (r DeleteRunRequest) GetRunID() string {
+	if r.RunID != "" {
+		return r.RunID
+	}
+	return r.RunUUID
 }
 
 // SetRunTagRequest is a request object for `POST /mlflow/runs/set-tag` endpoint.

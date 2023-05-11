@@ -19,7 +19,7 @@ import (
 
 	aimAPI "github.com/G-Research/fasttrack/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrack/pkg/api/mlflow"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/service"
+	mlflowService "github.com/G-Research/fasttrack/pkg/api/mlflow/service"
 	"github.com/G-Research/fasttrack/pkg/database"
 	aimUI "github.com/G-Research/fasttrack/pkg/ui/aim"
 	"github.com/G-Research/fasttrack/pkg/ui/chooser"
@@ -63,7 +63,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 			case strings.HasPrefix(p, "/api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/mlflow/ajax-api/2.0/mlflow/"):
-				return service.ErrorHandler(c, err)
+				return mlflowService.ErrorHandler(c, err)
 
 			default:
 				return fiber.DefaultErrorHandler(c, err)

@@ -131,13 +131,10 @@ func UpdateRun(c *fiber.Ctx) error {
 	}
 
 	run := database.Run{
-		ID: req.RunID,
-	}
-	if run.ID == "" {
-		run.ID = req.RunUUID
+		ID: req.GetRunID(),
 	}
 	if err := database.DB.First(&run).Error; err != nil {
-		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", run.ID, err)
+		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", req.GetRunID(), err)
 	}
 
 	if err := database.DB.Transaction(func(tx *gorm.DB) error {
@@ -483,9 +480,9 @@ func DeleteRun(c *fiber.Ctx) error {
 		return err
 	}
 
-	run := database.Run{ID: req.RunID}
+	run := database.Run{ID: req.GetRunID()}
 	if tx := database.DB.Select("lifecycle_stage").First(&run); tx.Error != nil {
-		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", run.ID, tx.Error)
+		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", req.GetRunID(), tx.Error)
 	}
 
 	if err := database.DB.Model(&run).Updates(database.Run{
@@ -512,9 +509,9 @@ func RestoreRun(c *fiber.Ctx) error {
 		return err
 	}
 
-	run := database.Run{ID: req.RunID}
+	run := database.Run{ID: req.GetRunID()}
 	if err := database.DB.Select("lifecycle_stage").First(&run).Error; err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", run.ID, err)
+		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.GetRunID(), err)
 	}
 
 	// Use UpdateColumns so we can reset DeletedTime to null

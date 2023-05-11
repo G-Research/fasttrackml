@@ -22,10 +22,10 @@ type MetricPartialRequest struct {
 
 // LogParamRequest is a request object for `POST mlflow/runs/log-parameter` endpoint.
 type LogParamRequest struct {
-	RunID    string `json:"run_id"`
-	RuneUUID string `json:"run_uuid"`
-	Key      string `json:"key"`
-	Value    string `json:"value"`
+	RunID   string `json:"run_id"`
+	RunUUID string `json:"run_uuid"`
+	Key     string `json:"key"`
+	Value   string `json:"value"`
 }
 
 // GetRunID returns Run ID.
@@ -33,13 +33,13 @@ func (r LogParamRequest) GetRunID() string {
 	if r.RunID != "" {
 		return r.RunID
 	}
-	return r.RuneUUID
+	return r.RunUUID
 }
 
 // LogMetricRequest is a request object for `POST mlflow/runs/log-metric` endpoint.
 type LogMetricRequest struct {
 	RunID     string `json:"run_id"`
-	RuneUUID  string `json:"run_uuid"`
+	RunUUID   string `json:"run_uuid"`
 	Key       string `json:"key"`
 	Value     any    `json:"value"`
 	Timestamp int64  `json:"timestamp"`
@@ -51,7 +51,7 @@ func (r LogMetricRequest) GetRunID() string {
 	if r.RunID != "" {
 		return r.RunID
 	}
-	return r.RuneUUID
+	return r.RunUUID
 }
 
 // LogBatchRequest is a request object for `POST mlflow/runs/log-batch` endpoint.

@@ -25,7 +25,6 @@ func GetMetricHistory(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("GetMetricHistory request: run_id=%q, run_uuid=%q metric_key=%q", req.RunID, req.RunUUID, req.MetricKey)
-
 	if err := ValidateGetMetricHistoryRequest(&req); err != nil {
 		return err
 	}
@@ -54,10 +53,10 @@ func GetMetricHistoryBulk(c *fiber.Ctx) error {
 		return api.NewBadRequestError(err.Error())
 	}
 
+	log.Debugf("GetMetricHistoryBulk request: %#v", req)
 	if err := ValidateGetMetricHistoryBulkRequest(&req); err != nil {
 		return err
 	}
-	log.Debugf("GetMetricHistoryBulk request: %#v", req)
 
 	var metrics []database.Metric
 	if err := database.DB.
@@ -88,7 +87,6 @@ func GetMetricHistories(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("GetMetricHistories request: %#v", req)
-
 	if err := ValidateGetMetricHistoriesRequest(&req); err != nil {
 		return err
 	}

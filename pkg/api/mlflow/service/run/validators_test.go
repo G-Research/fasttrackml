@@ -121,7 +121,7 @@ func TestValidateRestoreRunRequest_Error(t *testing.T) {
 func TestValidateLogMetricRequest_Ok(t *testing.T) {
 	err := ValidateLogMetricRequest(&request.LogMetricRequest{
 		RunID:     "id",
-		RuneUUID:  "uuid",
+		RunUUID:   "uuid",
 		Key:       "key",
 		Timestamp: 123,
 	})
@@ -165,9 +165,9 @@ func TestValidateLogMetricRequest_Error(t *testing.T) {
 
 func TestValidateLogParamRequest_Ok(t *testing.T) {
 	err := ValidateLogParamRequest(&request.LogParamRequest{
-		RunID:    "id",
-		RuneUUID: "uuid",
-		Key:      "key",
+		RunID:   "id",
+		RunUUID: "uuid",
+		Key:     "key",
 	})
 	assert.Nil(t, err)
 }

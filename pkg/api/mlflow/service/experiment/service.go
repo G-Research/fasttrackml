@@ -39,7 +39,6 @@ func CreateExperiment(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("CreateExperiment request: %#v", &req)
-
 	if err := ValidateCreateExperimentRequest(&req); err != nil {
 		return err
 	}
@@ -136,7 +135,6 @@ func GetExperiment(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("GetExperiment request: experiment_id='%s'", req.ID)
-
 	if err := ValidateGetExperimentByIDRequest(&req); err != nil {
 		return err
 	}
@@ -169,7 +167,6 @@ func GetExperimentByName(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("GetExperimentByName request: experiment_name='%s'", req.Name)
-
 	if err := ValidateGetExperimentByNameRequest(&req); err != nil {
 		return err
 	}
@@ -195,7 +192,6 @@ func DeleteExperiment(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("DeleteExperiment request: %#v", req)
-
 	if err := ValidateDeleteExperimentRequest(&req); err != nil {
 		return err
 	}
@@ -233,7 +229,6 @@ func RestoreExperiment(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("RestoreExperiment request: %#v", req)
-
 	if err := ValidateRestoreExperimentRequest(&req); err != nil {
 		return err
 	}
@@ -272,7 +267,6 @@ func SetExperimentTag(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("SetExperimentTag request: %#v", req)
-
 	if err := ValidateSetExperimentTagRequest(&req); err != nil {
 		return err
 	}
@@ -318,7 +312,6 @@ func SearchExperiments(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("SearchExperiments request: %#v", req)
-
 	if err := ValidateSearchExperimentsRequest(&req); err != nil {
 		return err
 	}

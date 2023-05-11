@@ -126,7 +126,6 @@ func UpdateRun(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("UpdateRun request: %#v", &req)
-
 	if err := ValidateUpdateRunRequest(&req); err != nil {
 		return err
 	}
@@ -183,7 +182,6 @@ func GetRun(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("GetRun request: run_id=%q, run_uuid=%q", req.RunID, req.RunUUID)
-
 	if err := ValidateGetRunRequest(&req); err != nil {
 		return err
 	}
@@ -215,7 +213,6 @@ func SearchRuns(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("SearchRuns request: %#v", req)
-
 	if err := ValidateSearchRunsRequest(&req); err != nil {
 		return err
 	}
@@ -482,7 +479,6 @@ func DeleteRun(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("DeleteRun request: %#v", req)
-
 	if err := ValidateDeleteRunRequest(&req); err != nil {
 		return err
 	}
@@ -512,7 +508,6 @@ func RestoreRun(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("RestoreRun request: %#v", req)
-
 	if err := ValidateRestoreRunRequest(&req); err != nil {
 		return err
 	}
@@ -543,7 +538,6 @@ func LogMetric(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("LogMetric request: %#v", req)
-
 	if err := ValidateLogMetricRequest(&req); err != nil {
 		return err
 	}
@@ -570,7 +564,6 @@ func LogParam(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("LogParam request: %#v", req)
-
 	if err := ValidateLogParamRequest(&req); err != nil {
 		return err
 	}
@@ -592,7 +585,6 @@ func SetRunTag(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("SetRunTag request: %#v", req)
-
 	if err := ValidateSetRunTagRequest(&req); err != nil {
 		return err
 	}
@@ -611,10 +603,10 @@ func DeleteRunTag(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("DeleteRunTag request: %#v", req)
-
 	if err := ValidateDeleteRunTagRequest(&req); err != nil {
 		return err
 	}
+
 	if err := database.DB.Select(
 		"run_uuid",
 	).Where(
@@ -649,7 +641,6 @@ func LogBatch(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("LogBatch request: %#v", req)
-
 	if err := ValidateLogBatchRequest(&req); err != nil {
 		return err
 	}

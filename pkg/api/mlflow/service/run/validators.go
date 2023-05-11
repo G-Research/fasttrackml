@@ -55,7 +55,7 @@ func ValidateRestoreRunRequest(req *request.RestoreRunRequest) error {
 
 // ValidateLogMetricRequest validates `POST /mlflow/runs/log-metric` request.
 func ValidateLogMetricRequest(req *request.LogMetricRequest) error {
-	if req.RunID == "" && req.RuneUUID == "" {
+	if req.RunID == "" && req.RunUUID == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
@@ -71,7 +71,7 @@ func ValidateLogMetricRequest(req *request.LogMetricRequest) error {
 
 // ValidateLogParamRequest validates `POST /mlflow/runs/log-parameter` request.
 func ValidateLogParamRequest(req *request.LogParamRequest) error {
-	if req.RunID == "" && req.RuneUUID == "" {
+	if req.RunID == "" && req.RunUUID == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 

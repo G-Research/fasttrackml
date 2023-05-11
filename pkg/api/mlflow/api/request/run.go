@@ -58,30 +58,12 @@ type SearchRunsRequest struct {
 
 // RestoreRunRequest is a request object for `POST /mlflow/runs/restore` endpoint.
 type RestoreRunRequest struct {
-	RunID   string `json:"run_id"`
-	RunUUID string `json:"run_uuid"`
-}
-
-// GetRunID returns Run RunID.
-func (r RestoreRunRequest) GetRunID() string {
-	if r.RunID != "" {
-		return r.RunID
-	}
-	return r.RunUUID
+	RunID string `json:"run_id"`
 }
 
 // DeleteRunRequest is a request object for `POST /mlflow/runs/delete` endpoint.
 type DeleteRunRequest struct {
-	RunID   string `json:"run_id"`
-	RunUUID string `json:"run_uuid"`
-}
-
-// GetRunID returns Run RunID.
-func (r DeleteRunRequest) GetRunID() string {
-	if r.RunID != "" {
-		return r.RunID
-	}
-	return r.RunUUID
+	RunID string `json:"run_id"`
 }
 
 // SetRunTagRequest is a request object for `POST /mlflow/runs/set-tag` endpoint.

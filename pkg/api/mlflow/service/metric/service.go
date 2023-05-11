@@ -73,7 +73,7 @@ func GetMetricHistoryBulk(c *fiber.Ctx) error {
 		)
 	}
 
-	resp := response.NewMetricHistoryResponse(metrics)
+	resp := response.NewMetricHistoryBulkResponse(metrics)
 
 	log.Debugf("GetMetricHistoryBulk response: %#v", resp)
 

@@ -480,9 +480,9 @@ func DeleteRun(c *fiber.Ctx) error {
 		return err
 	}
 
-	run := database.Run{ID: req.GetRunID()}
+	run := database.Run{ID: req.RunID}
 	if tx := database.DB.Select("lifecycle_stage").First(&run); tx.Error != nil {
-		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", req.GetRunID(), tx.Error)
+		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", req.RunID, tx.Error)
 	}
 
 	if err := database.DB.Model(&run).Updates(database.Run{
@@ -509,9 +509,9 @@ func RestoreRun(c *fiber.Ctx) error {
 		return err
 	}
 
-	run := database.Run{ID: req.GetRunID()}
+	run := database.Run{ID: req.RunID}
 	if err := database.DB.Select("lifecycle_stage").First(&run).Error; err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.GetRunID(), err)
+		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.RunID, err)
 	}
 
 	// Use UpdateColumns so we can reset DeletedTime to null

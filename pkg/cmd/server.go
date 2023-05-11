@@ -8,14 +8,6 @@ import (
 	"strings"
 	"time"
 
-	aimAPI "github.com/G-Research/fasttrack/pkg/api/aim"
-	mlflowAPI "github.com/G-Research/fasttrack/pkg/api/mlflow"
-	"github.com/G-Research/fasttrack/pkg/database"
-	aimUI "github.com/G-Research/fasttrack/pkg/ui/aim"
-	"github.com/G-Research/fasttrack/pkg/ui/chooser"
-	mlflowUI "github.com/G-Research/fasttrack/pkg/ui/mlflow"
-	"github.com/G-Research/fasttrack/pkg/version"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/compress"
@@ -24,6 +16,15 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	aimAPI "github.com/G-Research/fasttrack/pkg/api/aim"
+	mlflowAPI "github.com/G-Research/fasttrack/pkg/api/mlflow"
+	mlflowService "github.com/G-Research/fasttrack/pkg/api/mlflow/service"
+	"github.com/G-Research/fasttrack/pkg/database"
+	aimUI "github.com/G-Research/fasttrack/pkg/ui/aim"
+	"github.com/G-Research/fasttrack/pkg/ui/chooser"
+	mlflowUI "github.com/G-Research/fasttrack/pkg/ui/mlflow"
+	"github.com/G-Research/fasttrack/pkg/version"
 )
 
 var ServerCmd = &cobra.Command{
@@ -62,7 +63,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 			case strings.HasPrefix(p, "/api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/mlflow/ajax-api/2.0/mlflow/"):
-				return mlflowAPI.ErrorHandler(c, err)
+				return mlflowService.ErrorHandler(c, err)
 
 			default:
 				return fiber.DefaultErrorHandler(c, err)

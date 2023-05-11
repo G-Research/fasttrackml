@@ -1,5 +1,11 @@
 package response
 
+import (
+	"fmt"
+
+	"github.com/G-Research/fasttrack/pkg/database"
+)
+
 // RunTagPartialResponse is a partial response object for different responses.
 type RunTagPartialResponse struct {
 	Key   string `json:"key"`
@@ -52,9 +58,57 @@ type CreateRunResponse struct {
 	Run RunPartialResponse `json:"run"`
 }
 
+// NewCreateRunResponse creates new instance of CreateRunResponse object.
+func NewCreateRunResponse(run *database.Run) *CreateRunResponse {
+	resp := CreateRunResponse{
+		Run: RunPartialResponse{
+			Info: RunInfoPartialResponse{
+				ID:             run.ID,
+				UUID:           run.ID,
+				Name:           run.Name,
+				ExperimentID:   fmt.Sprint(run.ExperimentID),
+				UserID:         run.UserID,
+				Status:         string(run.Status),
+				StartTime:      run.StartTime.Int64,
+				ArtifactURI:    run.ArtifactURI,
+				LifecycleStage: string(run.LifecycleStage),
+			},
+			Data: RunDataPartialResponse{
+				Tags: make([]RunTagPartialResponse, len(run.Tags)),
+			},
+		},
+	}
+	for n, tag := range run.Tags {
+		resp.Run.Data.Tags[n] = RunTagPartialResponse{
+			Key:   tag.Key,
+			Value: tag.Value,
+		}
+	}
+	return &resp
+}
+
 // UpdateRunResponse is a response object for `POST mlflow/runs/update` endpoint.
 type UpdateRunResponse struct {
 	RunInfo RunInfoPartialResponse `json:"run_info"`
+}
+
+// NewUpdateRunResponse creates new UpdateRunResponse object.
+func NewUpdateRunResponse(run *database.Run) *UpdateRunResponse {
+	// TODO grab name and user from tags?
+	return &UpdateRunResponse{
+		RunInfo: RunInfoPartialResponse{
+			ID:             run.ID,
+			UUID:           run.ID,
+			Name:           run.Name,
+			ExperimentID:   fmt.Sprint(run.ExperimentID),
+			UserID:         run.UserID,
+			Status:         string(run.Status),
+			StartTime:      run.StartTime.Int64,
+			EndTime:        run.EndTime.Int64,
+			ArtifactURI:    run.ArtifactURI,
+			LifecycleStage: string(run.LifecycleStage),
+		},
+	}
 }
 
 // GetRunResponse is a response object for `GET mlflow/runs/get` endpoint.

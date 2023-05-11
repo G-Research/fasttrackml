@@ -1,4 +1,4 @@
-package mlflow
+package run
 
 import (
 	"database/sql"
@@ -110,30 +110,7 @@ func CreateRun(c *fiber.Ctx) error {
 		return api.NewInternalError("Error inserting run '%s': %s", run.ID, err)
 	}
 
-	resp := &response.CreateRunResponse{
-		Run: response.RunPartialResponse{
-			Info: response.RunInfoPartialResponse{
-				ID:             run.ID,
-				UUID:           run.ID,
-				Name:           run.Name,
-				ExperimentID:   fmt.Sprint(run.ExperimentID),
-				UserID:         run.UserID,
-				Status:         string(run.Status),
-				StartTime:      run.StartTime.Int64,
-				ArtifactURI:    run.ArtifactURI,
-				LifecycleStage: string(run.LifecycleStage),
-			},
-			Data: response.RunDataPartialResponse{
-				Tags: make([]response.RunTagPartialResponse, len(run.Tags)),
-			},
-		},
-	}
-	for n, tag := range run.Tags {
-		resp.Run.Data.Tags[n] = response.RunTagPartialResponse{
-			Key:   tag.Key,
-			Value: tag.Value,
-		}
-	}
+	resp := response.NewCreateRunResponse(&run)
 
 	log.Debugf("CreateRun response: %#v", resp)
 
@@ -146,62 +123,47 @@ func UpdateRun(c *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
-	log.Debugf("UpdateRun request: %#v", &req)
-
-	if req.ID == "" && req.UUID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
+	log.Debugf("UpdateRun request: %#v", req)
+	if err := ValidateUpdateRunRequest(&req); err != nil {
+		return err
 	}
 
 	run := database.Run{
-		ID: req.ID,
+		ID: req.GetRunID(),
 	}
-	if run.ID == "" {
-		run.ID = req.UUID
-	}
-	if tx := database.DB.First(&run); tx.Error != nil {
-		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", run.ID, tx.Error)
+	if err := database.DB.First(&run).Error; err != nil {
+		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", req.GetRunID(), err)
 	}
 
-	tx := database.DB.Begin()
-	tx.Model(&run).Updates(database.Run{
-		Name:   req.Name,
-		Status: database.Status(req.Status),
-		EndTime: sql.NullInt64{
-			Int64: req.EndTime,
-			Valid: true,
-		},
-	})
+	if err := database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&run).Updates(database.Run{
+			Name:   req.Name,
+			Status: database.Status(req.Status),
+			EndTime: sql.NullInt64{
+				Int64: req.EndTime,
+				Valid: true,
+			},
+		}).Error; err != nil {
+			return err
+		}
 
-	if req.Name != "" {
-		tx.Clauses(clause.OnConflict{
-			UpdateAll: true,
-		}).Create([]database.Tag{{
-			Key:   "mlflow.runName",
-			Value: req.Name,
-			RunID: run.ID,
-		}})
+		if req.Name != "" {
+			if err := tx.Clauses(clause.OnConflict{
+				UpdateAll: true,
+			}).Create([]database.Tag{{
+				Key:   "mlflow.runName",
+				Value: req.Name,
+				RunID: run.ID,
+			}}).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return api.NewInternalError("Unable to update run '%s': %s", run.ID, err)
 	}
 
-	tx.Commit()
-	if tx.Error != nil {
-		return api.NewInternalError("Unable to update run '%s': %s", run.ID, tx.Error)
-	}
-
-	// TODO grab name and user from tags?
-	resp := &response.UpdateRunResponse{
-		RunInfo: response.RunInfoPartialResponse{
-			ID:             run.ID,
-			UUID:           run.ID,
-			Name:           run.Name,
-			ExperimentID:   fmt.Sprint(run.ExperimentID),
-			UserID:         run.UserID,
-			Status:         string(run.Status),
-			StartTime:      run.StartTime.Int64,
-			EndTime:        run.EndTime.Int64,
-			ArtifactURI:    run.ArtifactURI,
-			LifecycleStage: string(run.LifecycleStage),
-		},
-	}
+	resp := response.NewUpdateRunResponse(&run)
 
 	log.Debugf("UpdateRun response: %#v", resp)
 
@@ -209,19 +171,25 @@ func UpdateRun(c *fiber.Ctx) error {
 }
 
 func GetRun(c *fiber.Ctx) error {
-	id := c.Query("run_id", c.Query("run_uuid"))
+	req := request.GetRunRequest{}
+	if err := c.QueryParser(&req); err != nil {
+		return api.NewBadRequestError(err.Error())
+	}
 
-	log.Debugf("GetRun request: run_id='%s'", id)
-
-	if id == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
+	log.Debugf("GetRun request: %#v", req)
+	if err := ValidateGetRunRequest(&req); err != nil {
+		return err
 	}
 
 	run := database.Run{
-		ID: id,
+		ID: req.GetRunID(),
 	}
-	if tx := database.DB.Preload("LatestMetrics").Preload("Params").Preload("Tags").First(&run); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", run.ID, tx.Error)
+	if err := database.DB.Preload(
+		"LatestMetrics",
+	).Preload(
+		"Params",
+	).Preload("Tags").First(&run).Error; err != nil {
+		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", run.ID, err)
 	}
 
 	resp := &response.GetRunResponse{
@@ -240,38 +208,38 @@ func SearchRuns(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("SearchRuns request: %#v", req)
-
-	runs := []database.Run{}
-	tx := database.DB.Where("experiment_id IN ?", req.ExperimentIDs)
+	if err := ValidateSearchRunsRequest(&req); err != nil {
+		return err
+	}
 
 	// ViewType
 	var lifecyleStages []database.LifecycleStage
 	switch req.ViewType {
-	case string(request.ViewTypeActiveOnly), "":
+	case request.ViewTypeActiveOnly, "":
 		lifecyleStages = []database.LifecycleStage{
 			database.LifecycleStageActive,
 		}
-	case string(request.ViewTypeDeletedOnly):
+	case request.ViewTypeDeletedOnly:
 		lifecyleStages = []database.LifecycleStage{
 			database.LifecycleStageDeleted,
 		}
-	case string(request.ViewTypeAll):
+	case request.ViewTypeAll:
 		lifecyleStages = []database.LifecycleStage{
 			database.LifecycleStageActive,
 			database.LifecycleStageDeleted,
 		}
-	default:
-		return api.NewInvalidParameterValueError("Invalid run_view_type '%s'", req.ViewType)
 	}
-	tx.Where("lifecycle_stage IN ?", lifecyleStages)
+	tx := database.DB.Where(
+		"experiment_id IN ?", req.ExperimentIDs,
+	).Where(
+		"lifecycle_stage IN ?", lifecyleStages,
+	)
 
 	// MaxResults
 	// TODO if compatible with mlflow client, consider using same logic as in ExperimentSearch
 	limit := int(req.MaxResults)
 	if limit == 0 {
 		limit = 1000
-	} else if limit > 1000000 {
-		return api.NewInvalidParameterValueError("Invalid value for parameter 'max_results' supplied.")
 	}
 	tx.Limit(limit)
 
@@ -465,6 +433,7 @@ func SearchRuns(c *fiber.Ctx) error {
 	tx.Order("runs.run_uuid")
 
 	// Actual query
+	var runs []database.Run
 	tx.Preload("LatestMetrics").
 		Preload("Params").
 		Preload("Tags").
@@ -505,26 +474,23 @@ func DeleteRun(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("DeleteRun request: %#v", req)
-
-	if req.ID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
+	if err := ValidateDeleteRunRequest(&req); err != nil {
+		return err
 	}
 
-	run := database.Run{
-		ID: req.ID,
-	}
+	run := database.Run{ID: req.RunID}
 	if tx := database.DB.Select("lifecycle_stage").First(&run); tx.Error != nil {
-		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", run.ID, tx.Error)
+		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", req.RunID, tx.Error)
 	}
 
-	if tx := database.DB.Model(&run).Updates(database.Run{
+	if err := database.DB.Model(&run).Updates(database.Run{
 		LifecycleStage: database.LifecycleStageDeleted,
 		DeletedTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
 		},
-	}); tx.Error != nil {
-		return api.NewInternalError("Unable to update run '%s': %s", run.ID, tx.Error)
+	}).Error; err != nil {
+		return api.NewInternalError("Unable to update run '%s': %s", run.ID, err)
 	}
 
 	return c.JSON(fiber.Map{})
@@ -537,24 +503,21 @@ func RestoreRun(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("RestoreRun request: %#v", req)
-
-	if req.ID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
+	if err := ValidateRestoreRunRequest(&req); err != nil {
+		return err
 	}
 
-	run := database.Run{
-		ID: req.ID,
-	}
-	if tx := database.DB.Select("lifecycle_stage").First(&run); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", run.ID, tx.Error)
+	run := database.Run{ID: req.RunID}
+	if err := database.DB.Select("lifecycle_stage").First(&run).Error; err != nil {
+		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.RunID, err)
 	}
 
 	// Use UpdateColumns so we can reset DeletedTime to null
-	if tx := database.DB.Model(&run).UpdateColumns(map[string]any{
-		"LifecycleStage": database.LifecycleStageActive,
+	if err := database.DB.Model(&run).UpdateColumns(map[string]any{
 		"DeletedTime":    sql.NullInt64{},
-	}); tx.Error != nil {
-		return api.NewInternalError("Unable to update run '%s': %s", run.ID, tx.Error)
+		"LifecycleStage": database.LifecycleStageActive,
+	}).Error; err != nil {
+		return api.NewInternalError("Unable to update run '%s': %s", run.ID, err)
 	}
 
 	return c.JSON(fiber.Map{})
@@ -570,31 +533,17 @@ func LogMetric(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("LogMetric request: %#v", req)
-
-	if req.ID == "" && req.UUID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
+	if err := ValidateLogMetricRequest(&req); err != nil {
+		return err
 	}
 
-	if req.Key == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'key'")
-	}
-
-	if req.Timestamp == 0 {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'timestamp'")
-	}
-
-	id := req.ID
-	if id == "" {
-		id = req.UUID
-	}
-
-	if err := logMetrics(id, []request.MetricPartialRequest{{
+	if err := logMetrics(req.GetRunID(), []request.MetricPartialRequest{{
 		Key:       req.Key,
 		Step:      req.Step,
 		Value:     req.Value,
 		Timestamp: req.Timestamp,
 	}}); err != nil {
-		return api.NewInternalError("Unable to log metric '%s' for run '%s': %s", req.Key, id, err)
+		return api.NewInternalError("Unable to log metric '%s' for run '%s': %s", req.Key, req.GetRunID(), err)
 	}
 
 	return c.JSON(fiber.Map{})
@@ -610,22 +559,12 @@ func LogParam(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("LogParam request: %#v", req)
-
-	if req.ID == "" && req.UUID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
+	if err := ValidateLogParamRequest(&req); err != nil {
+		return err
 	}
 
-	if req.Key == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'key'")
-	}
-
-	id := req.ID
-	if id == "" {
-		id = req.UUID
-	}
-
-	if err := logParams(id, []request.ParamPartialRequest{{Key: req.Key, Value: req.Value}}); err != nil {
-		return api.NewInternalError("Unable to log param '%s' for run '%s': %s", req.Key, id, err)
+	if err := logParams(req.GetRunID(), []request.ParamPartialRequest{{Key: req.Key, Value: req.Value}}); err != nil {
+		return api.NewInternalError("Unable to log param '%s' for run '%s': %s", req.Key, req.GetRunID(), err)
 	}
 
 	return c.JSON(fiber.Map{})
@@ -641,22 +580,12 @@ func SetRunTag(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("SetRunTag request: %#v", req)
-
-	if req.ID == "" && req.UUID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
+	if err := ValidateSetRunTagRequest(&req); err != nil {
+		return err
 	}
 
-	if req.Key == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'key'")
-	}
-
-	id := req.ID
-	if id == "" {
-		id = req.UUID
-	}
-
-	if err := setRunTags(id, []request.TagPartialRequest{{Key: req.Key, Value: req.Value}}); err != nil {
-		return api.NewInternalError("Unable to set tag '%s' for run '%s': %s", req.Key, id, err)
+	if err := setRunTags(req.GetRunID(), []request.TagPartialRequest{{Key: req.Key, Value: req.Value}}); err != nil {
+		return api.NewInternalError("Unable to set tag '%s' for run '%s': %s", req.Key, req.GetRunID(), err)
 	}
 
 	return c.JSON(fiber.Map{})
@@ -669,24 +598,29 @@ func DeleteRunTag(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("DeleteRunTag request: %#v", req)
-
-	if req.ID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
+	if err := ValidateDeleteRunTagRequest(&req); err != nil {
+		return err
 	}
 
-	if tx := database.DB.Select("run_uuid").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&database.Run{ID: req.ID}); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.ID, tx.Error)
+	if err := database.DB.Select(
+		"run_uuid",
+	).Where(
+		"lifecycle_stage = ?", database.LifecycleStageActive,
+	).First(
+		&database.Run{ID: req.RunID},
+	).Error; err != nil {
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
 	}
 
-	if tx := database.DB.First(&database.Tag{RunID: req.ID, Key: req.Key}); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find tag '%s' for run '%s': %s", req.Key, req.ID, tx.Error)
+	if err := database.DB.First(&database.Tag{RunID: req.RunID, Key: req.Key}).Error; err != nil {
+		return api.NewResourceDoesNotExistError("Unable to find tag '%s' for run '%s': %s", req.Key, req.RunID, err)
 	}
 
 	if tx := database.DB.Delete(&database.Tag{
-		RunID: req.ID,
+		RunID: req.RunID,
 		Key:   req.Key,
 	}); tx.Error != nil {
-		return api.NewInternalError("Unable to delete tag '%s' for run '%s': %s", req.Key, req.ID, tx.Error)
+		return api.NewInternalError("Unable to delete tag '%s' for run '%s': %s", req.Key, req.RunID, tx.Error)
 	}
 
 	return c.JSON(fiber.Map{})
@@ -702,20 +636,19 @@ func LogBatch(c *fiber.Ctx) error {
 	}
 
 	log.Debugf("LogBatch request: %#v", req)
-
-	if req.ID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
-	}
-
-	if err := logParams(req.ID, req.Params); err != nil {
+	if err := ValidateLogBatchRequest(&req); err != nil {
 		return err
 	}
 
-	if err := logMetrics(req.ID, req.Metrics); err != nil {
+	if err := logParams(req.RunID, req.Params); err != nil {
 		return err
 	}
 
-	if err := setRunTags(req.ID, req.Tags); err != nil {
+	if err := logMetrics(req.RunID, req.Metrics); err != nil {
+		return err
+	}
+
+	if err := setRunTags(req.RunID, req.Tags); err != nil {
 		return err
 	}
 
@@ -727,7 +660,13 @@ func logMetrics(id string, metrics []request.MetricPartialRequest) error {
 		return nil
 	}
 
-	if tx := database.DB.Select("run_uuid").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&database.Run{ID: id}); tx.Error != nil {
+	if tx := database.DB.Select(
+		"run_uuid",
+	).Where(
+		"lifecycle_stage = ?", database.LifecycleStageActive,
+	).First(
+		&database.Run{ID: id},
+	); tx.Error != nil {
 		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", id, tx.Error)
 	}
 
@@ -887,33 +826,37 @@ func setRunTags(id string, tags []request.TagPartialRequest) error {
 		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", id, tx.Error)
 	}
 
-	tx := database.DB.Begin()
-	dbTags := make([]database.Tag, len(tags))
-	for n, t := range tags {
-		dbTags[n] = database.Tag{
-			Key:   t.Key,
-			Value: t.Value,
-			RunID: id,
-		}
-		switch t.Key {
-		case "mlflow.runName":
-			if run.Name != t.Value {
-				tx.Model(&run).UpdateColumn("name", t.Value)
+	if err := database.DB.Transaction(func(tx *gorm.DB) error {
+		dbTags := make([]database.Tag, len(tags))
+		for n, t := range tags {
+			dbTags[n] = database.Tag{
+				Key:   t.Key,
+				Value: t.Value,
+				RunID: id,
 			}
-		case "mlflow.user":
-			if run.UserID != t.Value {
-				tx.Model(&run).UpdateColumn("user_id", t.Value)
+			switch t.Key {
+			case "mlflow.runName":
+				if run.Name != t.Value {
+					if err := tx.Model(&run).UpdateColumn("name", t.Value).Error; err != nil {
+						return err
+					}
+				}
+			case "mlflow.user":
+				if run.UserID != t.Value {
+					if err := tx.Model(&run).UpdateColumn("user_id", t.Value).Error; err != nil {
+						return err
+					}
+				}
 			}
 		}
-	}
-
-	tx.Clauses(clause.OnConflict{
-		UpdateAll: true,
-	}).CreateInBatches(&dbTags, 100)
-
-	tx.Commit()
-	if tx.Error != nil {
-		return api.NewInternalError("Unable to insert tags for run '%s': %s", id, tx.Error)
+		if err := tx.Clauses(clause.OnConflict{
+			UpdateAll: true,
+		}).CreateInBatches(&dbTags, 100).Error; err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return api.NewInternalError("Unable to insert tags for run '%s': %s", id, err)
 	}
 
 	return nil
@@ -974,5 +917,4 @@ func modelRunToAPI(r database.Run) response.RunPartialResponse {
 			Tags:    tags,
 		},
 	}
-
 }

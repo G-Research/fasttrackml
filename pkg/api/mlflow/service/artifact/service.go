@@ -1,4 +1,4 @@
-package mlflow
+package artifact
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -11,27 +11,20 @@ import (
 )
 
 func ListArtifacts(c *fiber.Ctx) error {
-	query := request.ListArtifactsRequest{}
-	if err := c.QueryParser(&query); err != nil {
+	req := request.ListArtifactsRequest{}
+	if err := c.QueryParser(&req); err != nil {
 		return api.NewBadRequestError(err.Error())
 	}
 
-	if query.RunID == "" {
-		query.RunID = c.Query("run_uuid")
+	log.Debugf("ListArtifacts request: %#v", req)
+
+	if err := ValidateListArtifactsRequest(&req); err != nil {
+		return err
 	}
 
-	log.Debugf("ListArtifacts request: %#v", query)
-
-	if query.RunID == "" {
-		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
-	}
-
-	run := database.Run{
-		ID: query.RunID,
-	}
-
+	run := database.Run{ID: req.GetRunID()}
 	if tx := database.DB.Select("artifact_uri").First(&run); tx.Error != nil {
-		return api.NewInternalError("Unable to get artifact URI for run '%s'", query.RunID)
+		return api.NewInternalError("Unable to get artifact URI for run '%s'", req.GetRunID())
 	}
 
 	// TODO grab list of artifacts from S3

@@ -22,25 +22,41 @@ type MetricPartialRequest struct {
 
 // LogParamRequest is a request object for `POST mlflow/runs/log-parameter` endpoint.
 type LogParamRequest struct {
-	ID    string `json:"run_id"`
-	UUID  string `json:"run_uuid"`
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	RunID   string `json:"run_id"`
+	RunUUID string `json:"run_uuid"`
+	Key     string `json:"key"`
+	Value   string `json:"value"`
+}
+
+// GetRunID returns Run ID.
+func (r LogParamRequest) GetRunID() string {
+	if r.RunID != "" {
+		return r.RunID
+	}
+	return r.RunUUID
 }
 
 // LogMetricRequest is a request object for `POST mlflow/runs/log-metric` endpoint.
 type LogMetricRequest struct {
-	ID        string `json:"run_id"`
-	UUID      string `json:"run_uuid"`
+	RunID     string `json:"run_id"`
+	RunUUID   string `json:"run_uuid"`
 	Key       string `json:"key"`
 	Value     any    `json:"value"`
 	Timestamp int64  `json:"timestamp"`
 	Step      int64  `json:"step"`
 }
 
+// GetRunID returns Run ID.
+func (r LogMetricRequest) GetRunID() string {
+	if r.RunID != "" {
+		return r.RunID
+	}
+	return r.RunUUID
+}
+
 // LogBatchRequest is a request object for `POST mlflow/runs/log-batch` endpoint.
 type LogBatchRequest struct {
-	ID      string                 `json:"run_id"`
+	RunID   string                 `json:"run_id"`
 	Tags    []TagPartialRequest    `json:"tags,omitempty"`
 	Params  []ParamPartialRequest  `json:"params,omitempty"`
 	Metrics []MetricPartialRequest `json:"metrics,omitempty"`

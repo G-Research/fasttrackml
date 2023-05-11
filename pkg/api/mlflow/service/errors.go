@@ -1,4 +1,4 @@
-package mlflow
+package service
 
 import (
 	"errors"

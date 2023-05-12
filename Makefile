@@ -1,5 +1,5 @@
-## Fasttrack Makefile
-## For best results, run these targets inside the devcontainer
+## FastTrackML
+## For best results, run these make targets inside the devcontainer
 
 PHONY: build
 build:

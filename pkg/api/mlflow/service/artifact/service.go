@@ -4,10 +4,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrack/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func ListArtifacts(c *fiber.Ctx) error {

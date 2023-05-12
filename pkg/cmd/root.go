@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/G-Research/fasttrack/pkg/version"
+	"github.com/G-Research/fasttrackml/pkg/version"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -12,13 +12,13 @@ import (
 )
 
 const (
-	envPrefix = "FASTTRACK"
+	envPrefix = "FML"
 )
 
 var RootCmd = &cobra.Command{
-	Use:   "fasttrack",
+	Use:   "fml",
 	Short: "A fast experiment tracking server compatible with MLFlow",
-	Long: `Fasttrack is a rewrite of the MLFlow tracking server with a focus on scalability.
+	Long: `FastTrackML is a rewrite of the MLFlow tracking server with a focus on scalability.
 It aims at being 100% compatible with the MLFlow client library and should be a
 drop-in replacement. It can even use existing SQLite/SQLCipher/PostgreSQL
 databases created by MLFlow 1.21+.`,

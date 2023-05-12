@@ -134,7 +134,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: fasttrack
+          images: fasttrackml
           tags: |
             type=ref,event=branch
             type=ref,event=tag
@@ -155,13 +155,13 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: false
           sbom: false
-          outputs: type=oci,dest=fasttrack-oci.tar
+          outputs: type=oci,dest=fasttrackml-oci.tar
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: fasttrack-oci-image
-          path: fasttrack-oci.tar
+          name: fasttrackml-oci-image
+          path: fasttrackml-oci.tar
 
   # Virtual job that can be configured as a required check before a PR can be merged.
   all-required-checks-done:
@@ -188,7 +188,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: fasttrack-oci-image
+          name: fasttrackml-oci-image
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -203,10 +203,10 @@ jobs:
 
       - name: Push to GitHub Container Registry
         run: |
-          tags=$(tar -xOf fasttrack-oci.tar index.json | jq -r '.manifests[].annotations."org.opencontainers.image.ref.name"')
+          tags=$(tar -xOf fasttrackml-oci.tar index.json | jq -r '.manifests[].annotations."org.opencontainers.image.ref.name"')
           for tag in $tags
           do
             echo "::group::Pushing image to ghcr.io/${{ steps.repo.outputs.name }}:$tag"
-            skopeo copy --all oci-archive:fasttrack-oci.tar:$tag docker://ghcr.io/${{ steps.repo.outputs.name }}:$tag
+            skopeo copy --all oci-archive:fasttrackml-oci.tar:$tag docker://ghcr.io/${{ steps.repo.outputs.name }}:$tag
             echo "::endgroup::"
           done

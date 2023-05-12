@@ -29,7 +29,7 @@
                 "--log-level",
                 "debug",
                 "--database-uri",
-                "sqlite://fasttrack.db?mode=memory&cache=shared"
+                "sqlite://fasttrackml.db?mode=memory&cache=shared"
             ]
         },
         {
@@ -43,7 +43,7 @@
                 "--log-level",
                 "debug",
                 "--database-uri",
-                "sqlite://fasttrack.db"
+                "sqlite://fasttrackml.db"
             ]
         },
         {

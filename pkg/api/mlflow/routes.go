@@ -3,12 +3,12 @@ package mlflow
 import (
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/service/artifact"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/service/experiment"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/service/metric"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/service/model"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/service/run"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
 )
 
 func AddRoutes(r fiber.Router) {

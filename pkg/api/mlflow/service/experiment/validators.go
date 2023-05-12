@@ -4,8 +4,8 @@ import (
 	"net/url"
 	"path/filepath"
 
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 )
 
 const (

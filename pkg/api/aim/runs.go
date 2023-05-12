@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/G-Research/fasttrack/pkg/api/aim/encoding"
-	"github.com/G-Research/fasttrack/pkg/api/aim/query"
-	"github.com/G-Research/fasttrack/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
+	"github.com/G-Research/fasttrackml/pkg/database"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"

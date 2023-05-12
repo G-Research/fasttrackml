@@ -3,7 +3,7 @@ package response
 import (
 	"fmt"
 
-	"github.com/G-Research/fasttrack/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // RunTagPartialResponse is a partial response object for different responses.

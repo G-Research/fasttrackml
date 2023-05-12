@@ -3,7 +3,7 @@ package aim
 import (
 	"fmt"
 
-	"github.com/G-Research/fasttrack/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/database"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"

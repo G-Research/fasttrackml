@@ -1,6 +1,6 @@
 package response
 
-import "github.com/G-Research/fasttrack/pkg/database"
+import "github.com/G-Research/fasttrackml/pkg/database"
 
 // MetricPartialResponse is a partial response object for GetMetricHistoryResponse.
 type MetricPartialResponse struct {

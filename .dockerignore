@@ -1,11 +1,26 @@
+# Hidden files
 .git
 .devcontainer
+.idea
 .venv
 .vscode
+
+# Our own definition
 Dockerfile
+
+# Binaries
 fml
 fasttrackml
+
+# Local database
 fasttrackml.db*
+
+# UI builds
 pkg/ui/*/embed/build*
 !pkg/ui/*/embed/build.sh
-tests/*/*.src
+
+# Tests
+tests/
+
+# Docs
+docs/

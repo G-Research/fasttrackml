@@ -1,4 +1,4 @@
-# fasttrack
+# FastTrackML
 Rewrite of the MLFlow tracking server with a focus on scalability
 
 | ⚠️ This is a work in progress ⚠️ |
@@ -28,6 +28,24 @@ To use an encrypted SQLite database, use the query parameter `_key` in the DSN:
 
 ```
 docker run --rm -ti fasttrack server --database-uri 'sqlite:///data/fasttrack.db?_key=passphrase'
+```
+
+### Developer
+
+Using the project's devcontainer is recommended for development. VSCode should detect
+the .devcontainer folder and offer to restart the IDE in that context. For other users,
+the underlying docker container can be used. The Makefile offers some basic targets.
+
+```
+cd .devcontainer
+docker-compose up -d
+docker-compose exec app bash
+
+root ➜ /go $ cd /workspaces/fasttrack
+root ➜ /workspaces/fastrack $ make build
+root ➜ /workspaces/fastrack $ make run
+root ➜ /workspaces/fastrack $ make test
+root ➜ /workspaces/fastrack $ emacs .
 ```
 
 ### License

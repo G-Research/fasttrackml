@@ -17,14 +17,14 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	aimAPI "github.com/G-Research/fasttrack/pkg/api/aim"
-	mlflowAPI "github.com/G-Research/fasttrack/pkg/api/mlflow"
-	mlflowService "github.com/G-Research/fasttrack/pkg/api/mlflow/service"
-	"github.com/G-Research/fasttrack/pkg/database"
-	aimUI "github.com/G-Research/fasttrack/pkg/ui/aim"
-	"github.com/G-Research/fasttrack/pkg/ui/chooser"
-	mlflowUI "github.com/G-Research/fasttrack/pkg/ui/mlflow"
-	"github.com/G-Research/fasttrack/pkg/version"
+	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
+	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
+	"github.com/G-Research/fasttrackml/pkg/database"
+	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
+	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
+	mlflowUI "github.com/G-Research/fasttrackml/pkg/ui/mlflow"
+	"github.com/G-Research/fasttrackml/pkg/version"
 )
 
 var ServerCmd = &cobra.Command{
@@ -52,7 +52,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		ReadTimeout:           5 * time.Second,
 		WriteTimeout:          600 * time.Second,
 		IdleTimeout:           120 * time.Second,
-		ServerHeader:          fmt.Sprintf("fasttrack/%s", version.Version),
+		ServerHeader:          fmt.Sprintf("FastTrackML/%s", version.Version),
 		DisableStartupMessage: true,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			p := string(c.Request().URI().Path())
@@ -142,10 +142,10 @@ func init() {
 	RootCmd.AddCommand(ServerCmd)
 
 	ServerCmd.Flags().StringP("listen-address", "a", "localhost:5000", "Address (host:post) to listen to")
-	ServerCmd.Flags().String("artifact-root", "s3://fasttrack", "Artifact root")
+	ServerCmd.Flags().String("artifact-root", "s3://fasttrackml", "Artifact root")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")
-	ServerCmd.Flags().StringP("database-uri", "d", "sqlite://fasttrack.db", "Database URI")
+	ServerCmd.Flags().StringP("database-uri", "d", "sqlite://fasttrackml.db", "Database URI")
 	ServerCmd.Flags().Int("database-pool-max", 20, "Maximum number of database connections in the pool")
 	ServerCmd.Flags().Duration("database-slow-threshold", 1*time.Second, "Slow SQL warning threshold")
 	ServerCmd.Flags().Bool("database-migrate", true, "Run database migrations")

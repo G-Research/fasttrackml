@@ -16,7 +16,7 @@ git apply -p1 <${current}/custom.patch
 
 # Build the UI
 cd mlflow/server/js
-yarn install
+yarn install --immutable
 yarn build
 
 # Move the built UI to its destination

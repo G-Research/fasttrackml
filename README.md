@@ -1,24 +1,19 @@
-# FastTrackML
+# _FastTrackML_
 Rewrite of the MLFlow tracking server with a focus on scalability
-
-| ⚠️ This is a work in progress ⚠️ |
-| :------------------------------: |
-| 🗒️ name subject to change |
-
 
 ### Quickstart
 
 For the full guide, see [docs/quickstart.md](docs/quickstart.md).
 
-FastTrack can be run using the following command:
+FastTrackML can be run using the following command:
 
 ```bash
-docker run --rm -p 5000:5000 -ti gresearch/fasttrack
+docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
 ```
 
 Verify that you can see the UI by navigating to http://localhost:5000/.
 
-![FastTrack UI](docs/images/main_ui.jpg)
+![FastTrackML UI](docs/images/main_ui.jpg)
 
 For more info, `--help` is your friend!
 
@@ -27,7 +22,7 @@ For more info, `--help` is your friend!
 To use an encrypted SQLite database, use the query parameter `_key` in the DSN:
 
 ```
-docker run --rm -ti fasttrack server --database-uri 'sqlite:///data/fasttrack.db?_key=passphrase'
+docker run --rm -p 5000:5000 -ti gresearch/fasttrackml server --database-uri 'sqlite:///data/fasttrackml.db?_key=passphrase'
 ```
 
 ### Developer

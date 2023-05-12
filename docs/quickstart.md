@@ -1,23 +1,23 @@
-# FastTrack Quickstart
+# FastTrackML Quickstart
 
 ## Install Dependencies
 
-FastTrack requires the following dependencies to be installed on your system:
+FastTrackML requires the following dependencies to be installed on your system:
 
 - [Docker](https://docs.docker.com/get-docker/)
 - [Python 3](https://www.python.org/downloads/)
 
-## Run FastTrack
+## Run FastTrackML
 
-FastTrack can be run using the following command:
+FastTrackML can be run using the following command:
 
 ```bash
-docker run --rm -p 5000:5000 -ti gresearch/fasttrack
+docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
 ```
 
 Verify that you can see the UI by navigating to http://localhost:5000/.
 
-![FastTrack UI](images/main_ui.jpg)
+![FastTrackML UI](images/main_ui.jpg)
 
 ## Run a quick test script
 
@@ -33,7 +33,7 @@ python3 minimal.py
 
 After running this script, you should see the following output from http://localhost:5000/aim/:
 
-![FastTrack UI](images/runs_ui.jpg)
+![FastTrackML UI](images/runs_ui.jpg)
 
 From here you can check out the metrics and run information to see more details about the run.
 

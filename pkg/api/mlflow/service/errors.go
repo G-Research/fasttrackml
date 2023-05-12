@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 )
 
 func ErrorHandler(c *fiber.Ctx, err error) error {

@@ -35,12 +35,12 @@ then
   deactivate
 fi
 
-# Build fasttrack
+# Build fml
 go build \
   -C ${workspace} \
   -tags "$(jq -r '."go.buildTags"' ${workspace}/.vscode/settings.json)" \
   -ldflags "-linkmode external -extldflags '-static' -s -w" \
-  -o ${repo}/fasttrack
+  -o ${repo}/fml
 
 # Create postgres test database if needed
 psql postgres://postgres:postgres@localhost <<EOF

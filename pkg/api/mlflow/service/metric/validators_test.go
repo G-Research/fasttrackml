@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrack/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 )
 
 func TestValidateGetMetricHistoryRequest_Ok(t *testing.T) {

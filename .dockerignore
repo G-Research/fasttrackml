@@ -4,8 +4,6 @@
 .vscode
 Dockerfile
 fml
-fasttrack
-fasttrack.db*
 fasttrackml
 fasttrackml.db*
 pkg/ui/*/embed/build*

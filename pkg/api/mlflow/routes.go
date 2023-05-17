@@ -1,6 +1,7 @@
 package mlflow
 
 import (
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -8,47 +9,69 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
 )
 
-func AddRoutes(r fiber.Router) {
-	artifacts := r.Group("/artifacts")
-	artifacts.Get("/list", artifact.ListArtifacts)
+// Router represents `mlflow` router.
+type Router struct {
+	prefixList []string
+	controller *controller.Controller
+}
 
-	experiments := r.Group("/experiments")
-	experiments.Post("/create", experiment.CreateExperiment)
-	experiments.Post("/delete", experiment.DeleteExperiment)
-	experiments.Get("/get", experiment.GetExperiment)
-	experiments.Get("/get-by-name", experiment.GetExperimentByName)
-	experiments.Get("/list", experiment.SearchExperiments)
-	experiments.Post("/restore", experiment.RestoreExperiment)
-	experiments.Get("/search", experiment.SearchExperiments)
-	experiments.Post("/search", experiment.SearchExperiments)
-	experiments.Post("/set-experiment-tag", experiment.SetExperimentTag)
-	experiments.Post("/update", experiment.UpdateExperiment)
+// NewRouter creates new instance of `mlflow` router.
+func NewRouter(controller *controller.Controller) *Router {
+	return &Router{
+		prefixList: []string{
+			"/api/2.0/mlflow/",
+			"/ajax-api/2.0/mlflow/",
+			"/mlflow/ajax-api/2.0/mlflow/",
+		},
+		controller: controller,
+	}
+}
 
-	metrics := r.Group("/metrics")
-	metrics.Get("/get-history", metric.GetMetricHistory)
-	metrics.Get("/get-history-bulk", metric.GetMetricHistoryBulk)
-	metrics.Post("/get-histories", metric.GetMetricHistories)
+// Init makes initialization of all `mlflow` routes.
+func (r Router) Init(server fiber.Router) {
+	for _, prefix := range r.prefixList {
+		mainGroup := server.Group(prefix)
 
-	runs := r.Group("/runs")
-	runs.Post("/create", run.CreateRun)
-	runs.Post("/delete", run.DeleteRun)
-	runs.Post("/delete-tag", run.DeleteRunTag)
-	runs.Get("/get", run.GetRun)
-	runs.Post("/log-batch", run.LogBatch)
-	runs.Post("/log-metric", run.LogMetric)
-	runs.Post("/log-parameter", run.LogParam)
-	runs.Post("/restore", run.RestoreRun)
-	runs.Post("/search", run.SearchRuns)
-	runs.Post("/set-tag", run.SetRunTag)
-	runs.Post("/update", run.UpdateRun)
+		artifacts := mainGroup.Group("/artifacts")
+		artifacts.Get("/list", artifact.ListArtifacts)
 
-	r.Get("/model-versions/search", model.SearchModelVersions)
-	r.Get("/registered-models/search", model.SearchRegisteredModels)
+		experiments := mainGroup.Group("/experiments")
+		experiments.Post("/create", experiment.CreateExperiment)
+		experiments.Post("/delete", experiment.DeleteExperiment)
+		experiments.Get("/get", experiment.GetExperiment)
+		experiments.Get("/get-by-name", experiment.GetExperimentByName)
+		experiments.Get("/list", experiment.SearchExperiments)
+		experiments.Post("/restore", experiment.RestoreExperiment)
+		experiments.Get("/search", experiment.SearchExperiments)
+		experiments.Post("/search", experiment.SearchExperiments)
+		experiments.Post("/set-experiment-tag", experiment.SetExperimentTag)
+		experiments.Post("/update", experiment.UpdateExperiment)
 
-	r.Use(func(c *fiber.Ctx) error {
-		return api.NewEndpointNotFound("Not found")
-	})
+		metrics := mainGroup.Group("/metrics")
+		metrics.Get("/get-history", metric.GetMetricHistory)
+		metrics.Get("/get-history-bulk", metric.GetMetricHistoryBulk)
+		metrics.Post("/get-histories", metric.GetMetricHistories)
+
+		runs := mainGroup.Group("/runs")
+		runs.Post("/create", r.controller.CreateRun)
+		runs.Post("/delete", r.controller.DeleteRun)
+		runs.Post("/delete-tag", r.controller.DeleteRunTag)
+		runs.Get("/get", r.controller.GetRun)
+		runs.Post("/log-batch", r.controller.LogBatch)
+		runs.Post("/log-metric", r.controller.LogMetric)
+		runs.Post("/log-parameter", r.controller.LogParam)
+		runs.Post("/restore", r.controller.RestoreRun)
+		runs.Post("/search", r.controller.SearchRuns)
+		runs.Post("/set-tag", r.controller.SetRunTag)
+		runs.Post("/update", r.controller.UpdateRun)
+
+		mainGroup.Get("/model-versions/search", model.SearchModelVersions)
+		mainGroup.Get("/registered-models/search", model.SearchRegisteredModels)
+
+		mainGroup.Use(func(c *fiber.Ctx) error {
+			return api.NewEndpointNotFound("Not found")
+		})
+	}
 }

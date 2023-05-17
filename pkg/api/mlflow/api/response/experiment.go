@@ -23,7 +23,7 @@ type ExperimentPartialResponse struct {
 	Tags             []ExperimentTagPartialResponse `json:"tags"`
 }
 
-// CreateExperimentResponse is a response object for `POST mlflow/experiments/create` endpoint.
+// CreateExperimentResponse is a response object for `POST /mlflow/experiments/create` endpoint.
 type CreateExperimentResponse struct {
 	ID string `json:"experiment_id"`
 }
@@ -35,7 +35,7 @@ func NewCreateExperimentResponse(experiment *database.Experiment) *CreateExperim
 	}
 }
 
-// GetExperimentResponse is a response object for `GET mlflow/experiments/get` endpoint.
+// GetExperimentResponse is a response object for `GET /mlflow/experiments/get` endpoint.
 type GetExperimentResponse struct {
 	Experiment ExperimentPartialResponse `json:"experiment"`
 }
@@ -64,7 +64,7 @@ func NewExperimentResponse(experiment *database.Experiment) *GetExperimentRespon
 	return &response
 }
 
-// SearchExperimentsResponse is a response object for `GET mlflow/experiments/search` endpoint.
+// SearchExperimentsResponse is a response object for `GET /mlflow/experiments/search` endpoint.
 type SearchExperimentsResponse struct {
 	Experiments   []ExperimentPartialResponse `json:"experiments"`
 	NextPageToken string                      `json:"next_page_token,omitempty"`

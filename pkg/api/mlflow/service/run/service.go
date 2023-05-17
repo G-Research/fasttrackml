@@ -1,7 +1,7 @@
 package run
 
 import (
-	"database/sql"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -9,16 +9,16 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/convertors"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -29,187 +29,100 @@ var (
 	runOrder      = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
 )
 
-func CreateRun(c *fiber.Ctx) error {
-	var req request.CreateRunRequest
-	if err := c.BodyParser(&req); err != nil {
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("CreateRun request: %#v", &req)
-
-	ex, err := strconv.ParseInt(req.ExperimentID, 10, 32)
-	if err != nil {
-		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ExperimentID, err)
-	}
-
-	ex32 := int32(ex)
-	exp := database.Experiment{
-		ID: &ex32,
-	}
-	if tx := database.DB.Select("artifact_location").First(&exp); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", ex, tx.Error)
-	}
-
-	run := database.Run{
-		ID:           database.NewUUID(),
-		Name:         req.Name,
-		ExperimentID: *exp.ID,
-		UserID:       req.UserID,
-		Status:       database.StatusRunning,
-		StartTime: sql.NullInt64{
-			Int64: req.StartTime,
-			Valid: true,
-		},
-		LifecycleStage: database.LifecycleStageActive,
-		Tags:           make([]database.Tag, len(req.Tags)),
-	}
-
-	run.ArtifactURI = fmt.Sprintf("%s/%s/artifacts", exp.ArtifactLocation, run.ID)
-
-	for n, tag := range req.Tags {
-		switch tag.Key {
-		case "mlflow.user":
-			if run.UserID == "" {
-				run.UserID = tag.Value
-			}
-		case "mlflow.source.name":
-			run.SourceName = tag.Value
-		case "mlflow.source.type":
-			run.SourceType = tag.Value
-		case "mlflow.runName":
-			if run.Name == "" {
-				run.Name = tag.Value
-			}
-		}
-		run.Tags[n] = database.Tag{
-			Key:   tag.Key,
-			Value: tag.Value,
-		}
-	}
-
-	if run.Name == "" {
-		run.Name = GenerateRandomName()
-		run.Tags = append(run.Tags, database.Tag{
-			Key:   "mlflow.runName",
-			Value: run.Name,
-		})
-	}
-
-	if run.SourceType == "" {
-		run.SourceType = "UNKNOWN"
-	}
-
-	if err := database.DB.Transaction(func(tx *gorm.DB) error {
-		if tx.Dialector.Name() == "postgres" {
-			if err := tx.Exec("LOCK TABLE runs").Error; err != nil {
-				return err
-			}
-		}
-		return tx.Create(&run).Error
-	}); err != nil {
-		return api.NewInternalError("Error inserting run '%s': %s", run.ID, err)
-	}
-
-	resp := response.NewCreateRunResponse(&run)
-
-	log.Debugf("CreateRun response: %#v", resp)
-
-	return c.JSON(resp)
+// Service provides service layer to work with `run` business logic.
+type Service struct {
+	tagRepository        repositories.TagRepositoryProvider
+	runRepository        repositories.RunRepositoryProvider
+	paramRepository      repositories.ParamRepositoryProvider
+	metricRepository     repositories.MetricRepositoryProvider
+	experimentRepository repositories.ExperimentRepositoryProvider
 }
 
-func UpdateRun(c *fiber.Ctx) error {
-	var req request.UpdateRunRequest
-	if err := c.BodyParser(&req); err != nil {
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
+// NewService creates new Service instance.
+func NewService(
+	tagRepository repositories.TagRepositoryProvider,
+	runRepository repositories.RunRepositoryProvider,
+	paramRepository repositories.ParamRepositoryProvider,
+	metricRepository repositories.MetricRepositoryProvider,
+	experimentRepository repositories.ExperimentRepositoryProvider,
+) *Service {
+	return &Service{
+		tagRepository:        tagRepository,
+		runRepository:        runRepository,
+		paramRepository:      paramRepository,
+		metricRepository:     metricRepository,
+		experimentRepository: experimentRepository,
+	}
+}
+
+// CreateRun handles business logic of “
+func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (*models.Run, error) {
+	experimentID, err := strconv.ParseInt(req.ExperimentID, 10, 32)
+	if err != nil {
+		return nil, api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ExperimentID, err)
 	}
 
-	log.Debugf("UpdateRun request: %#v", req)
-	if err := ValidateUpdateRunRequest(&req); err != nil {
-		return err
+	experiment, err := s.experimentRepository.GetByID(ctx, int32(experimentID))
+	if err != nil {
+		return nil, api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", experiment, err)
 	}
 
-	run := database.Run{
-		ID: req.GetRunID(),
-	}
-	if err := database.DB.First(&run).Error; err != nil {
-		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", req.GetRunID(), err)
+	run := convertors.ConvertCreateRunRequestToDBModel(experiment, req)
+	if err := s.runRepository.Create(ctx, run); err != nil {
+		return nil, api.NewInternalError("Error inserting run '%s': %s", run.ID, err)
 	}
 
-	if err := database.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&run).Updates(database.Run{
-			Name:   req.Name,
-			Status: database.Status(req.Status),
-			EndTime: sql.NullInt64{
-				Int64: req.EndTime,
-				Valid: true,
-			},
-		}).Error; err != nil {
+	return run, nil
+}
+
+func (s Service) UpdateRun(ctx context.Context, req *request.UpdateRunRequest) (*models.Run, error) {
+	if err := ValidateUpdateRunRequest(req); err != nil {
+		return nil, err
+	}
+
+	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
+	if err != nil {
+		return nil, api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.RunID, err)
+	}
+
+	run = convertors.ConvertUpdateRunRequestToDBModel(run, req)
+	if err := s.runRepository.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := s.runRepository.UpdateWithTransaction(ctx, tx, run); err != nil {
 			return err
 		}
-
 		if req.Name != "" {
-			if err := tx.Clauses(clause.OnConflict{
-				UpdateAll: true,
-			}).Create([]database.Tag{{
-				Key:   "mlflow.runName",
-				Value: req.Name,
-				RunID: run.ID,
-			}}).Error; err != nil {
+			// TODO:DSuhinin - move "mlflow.runName" to be a constant somewhere.
+			// Also Im not fully sure that this is right place to keep this logic here.
+			if err := s.tagRepository.CreateWithTransaction(
+				ctx, tx, run.ID, "mlflow.runName", req.Name,
+			); err != nil {
 				return err
 			}
 		}
 		return nil
 	}); err != nil {
-		return api.NewInternalError("Unable to update run '%s': %s", run.ID, err)
+		return nil, api.NewInternalError("Unable to update run '%s': %s", run.ID, err)
 	}
 
-	resp := response.NewUpdateRunResponse(&run)
-
-	log.Debugf("UpdateRun response: %#v", resp)
-
-	return c.JSON(resp)
+	return run, nil
 }
 
-func GetRun(c *fiber.Ctx) error {
-	req := request.GetRunRequest{}
-	if err := c.QueryParser(&req); err != nil {
-		return api.NewBadRequestError(err.Error())
+func (s Service) GetRun(ctx context.Context, req *request.GetRunRequest) (*models.Run, error) {
+	if err := ValidateGetRunRequest(req); err != nil {
+		return nil, err
 	}
 
-	log.Debugf("GetRun request: %#v", req)
-	if err := ValidateGetRunRequest(&req); err != nil {
-		return err
+	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
+	if err != nil {
+		return nil, api.NewResourceDoesNotExistError("Unable to find run '%s': %s", run.ID, err)
 	}
 
-	run := database.Run{
-		ID: req.GetRunID(),
-	}
-	if err := database.DB.Preload(
-		"LatestMetrics",
-	).Preload(
-		"Params",
-	).Preload("Tags").First(&run).Error; err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", run.ID, err)
-	}
-
-	resp := &response.GetRunResponse{
-		Run: modelRunToAPI(run),
-	}
-
-	log.Debugf("GetRun response: %#v", resp)
-
-	return c.JSON(resp)
+	return run, nil
 }
 
-func SearchRuns(c *fiber.Ctx) error {
-	var req request.SearchRunsRequest
-	if err := c.BodyParser(&req); err != nil {
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("SearchRuns request: %#v", req)
-	if err := ValidateSearchRunsRequest(&req); err != nil {
-		return err
+func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest) ([]models.Run, int, int, error) {
+	if err := ValidateSearchRunsRequest(req); err != nil {
+		return nil, 0, 0, err
 	}
 
 	// ViewType
@@ -253,7 +166,7 @@ func SearchRuns(c *fiber.Ctx) error {
 				strings.NewReader(req.PageToken),
 			),
 		).Decode(&token); err != nil {
-			return api.NewInvalidParameterValueError("Invalid page_token '%s': %s", req.PageToken, err)
+			return nil, 0, 0, api.NewInvalidParameterValueError("Invalid page_token '%s': %s", req.PageToken, err)
 
 		}
 		offset = int(token.Offset)
@@ -265,7 +178,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		for n, f := range filterAnd.Split(req.Filter, -1) {
 			components := filterCond.FindStringSubmatch(f)
 			if len(components) != 5 {
-				return api.NewInvalidParameterValueError("Malformed filter '%s'", f)
+				return nil, 0, 0, api.NewInvalidParameterValueError("Malformed filter '%s'", f)
 			}
 
 			entity := components[1]
@@ -282,11 +195,11 @@ func SearchRuns(c *fiber.Ctx) error {
 					case ">", ">=", "!=", "=", "<", "<=":
 						v, err := strconv.Atoi(value.(string))
 						if err != nil {
-							return api.NewInvalidParameterValueError("Invalid numeric value '%s'", value)
+							return nil, 0, 0, api.NewInvalidParameterValueError("Invalid numeric value '%s'", value)
 						}
 						value = v
 					default:
-						return api.NewInvalidParameterValueError("Invalid numeric attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid numeric attribute comparison operator '%s'", comparison)
 					}
 				case "run_name":
 					key = "mlflow.runName"
@@ -296,23 +209,23 @@ func SearchRuns(c *fiber.Ctx) error {
 					switch strings.ToUpper(comparison) {
 					case "!=", "=", "LIKE", "ILIKE":
 						if strings.HasPrefix(value.(string), "(") {
-							return api.NewInvalidParameterValueError("Invalid string value '%s'", value)
+							return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
 					default:
-						return api.NewInvalidParameterValueError("Invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string attribute comparison operator '%s'", comparison)
 					}
 				case "run_id":
 					key = "run_uuid"
 					switch strings.ToUpper(comparison) {
 					case "!=", "=", "LIKE", "ILIKE":
 						if strings.HasPrefix(value.(string), "(") {
-							return api.NewInvalidParameterValueError("Invalid string value '%s'", value)
+							return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
 					case "IN", "NOT IN":
 						if !strings.HasPrefix(value.(string), "(") {
-							return api.NewInvalidParameterValueError("Invalid list definition '%s'", value)
+							return nil, 0, 0, api.NewInvalidParameterValueError("Invalid list definition '%s'", value)
 						}
 						var values []string
 						for _, v := range filterInGroup.Split(value.(string)[1:len(value.(string))-1], -1) {
@@ -320,48 +233,49 @@ func SearchRuns(c *fiber.Ctx) error {
 						}
 						value = values
 					default:
-						return api.NewInvalidParameterValueError("Invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string attribute comparison operator '%s'", comparison)
 					}
 				default:
-					return api.NewInvalidParameterValueError("Invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']", key)
+					return nil, 0, 0, api.NewInvalidParameterValueError("Invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']", key)
 				}
 			case "metric", "metrics":
 				switch comparison {
 				case ">", ">=", "!=", "=", "<", "<=":
 					v, err := strconv.ParseFloat(value.(string), 64)
 					if err != nil {
-						return api.NewInvalidParameterValueError("Invalid numeric value '%s'", value)
+						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid numeric value '%s'", value)
 					}
 					value = v
 				default:
-					return api.NewInvalidParameterValueError("Invalid metric comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError("Invalid metric comparison operator '%s'", comparison)
 				}
 				kind = &database.LatestMetric{}
 			case "parameter", "parameters", "param", "params":
 				switch strings.ToUpper(comparison) {
 				case "!=", "=", "LIKE", "ILIKE":
 					if strings.HasPrefix(value.(string), "(") {
-						return api.NewInvalidParameterValueError("Invalid string value '%s'", value)
+						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string value '%s'", value)
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return api.NewInvalidParameterValueError("Invalid param comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError("Invalid param comparison operator '%s'", comparison)
 				}
 				kind = &database.Param{}
 			case "tag", "tags":
 				switch strings.ToUpper(comparison) {
 				case "!=", "=", "LIKE", "ILIKE":
 					if strings.HasPrefix(value.(string), "(") {
-						return api.NewInvalidParameterValueError("Invalid string value '%s'", value)
+						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string value '%s'", value)
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return api.NewInvalidParameterValueError("Invalid tag comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError("Invalid tag comparison operator '%s'", comparison)
 				}
 				kind = &database.Tag{}
 			default:
-				return api.NewInvalidParameterValueError("Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
+				return nil, 0, 0, api.NewInvalidParameterValueError("Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
 			}
+
 			if kind == nil {
 				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
 					key = fmt.Sprintf("LOWER(%s)", key)
@@ -392,7 +306,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		components := runOrder.FindStringSubmatch(o)
 		log.Debugf("Components: %#v", components)
 		if len(components) < 3 {
-			return api.NewInvalidParameterValueError("Invalid order_by clause '%s'", o)
+			return nil, 0, 0, api.NewInvalidParameterValueError("Invalid order_by clause '%s'", o)
 		}
 
 		column := strings.Trim(components[2], "`\"")
@@ -410,7 +324,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		case "tag":
 			kind = &database.Tag{}
 		default:
-			return api.NewInvalidParameterValueError("Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", components[1])
+			return nil, 0, 0, api.NewInvalidParameterValueError("Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", components[1])
 		}
 		if kind != nil {
 			table := fmt.Sprintf("order_%d", n)
@@ -433,111 +347,64 @@ func SearchRuns(c *fiber.Ctx) error {
 	tx.Order("runs.run_uuid")
 
 	// Actual query
-	var runs []database.Run
+	var runs []models.Run
 	tx.Preload("LatestMetrics").
 		Preload("Params").
 		Preload("Tags").
 		Find(&runs)
 	if tx.Error != nil {
-		return api.NewInternalError("Unable to search runs: %s", tx.Error)
+		return nil, 0, 0, api.NewInternalError("Unable to search runs: %s", tx.Error)
 	}
 
-	resp := &response.SearchRunsResponse{
-		Runs: make([]response.RunPartialResponse, len(runs)),
-	}
-	for n, r := range runs {
-		resp.Runs[n] = modelRunToAPI(r)
-	}
-
-	// NextPageToken
-	if len(runs) == limit {
-		var token strings.Builder
-		b64 := base64.NewEncoder(base64.StdEncoding, &token)
-		if err := json.NewEncoder(b64).Encode(request.PageToken{
-			Offset: int32(offset + limit),
-		}); err != nil {
-			return api.NewInternalError("Unable to build next_page_token: %s", err)
-		}
-		b64.Close()
-		resp.NextPageToken = token.String()
-	}
-
-	log.Debugf("SearchRuns response: %#v", resp)
-
-	return c.JSON(resp)
+	return runs, limit, offset, nil
 }
 
-func DeleteRun(c *fiber.Ctx) error {
-	var req request.DeleteRunRequest
-	if err := c.BodyParser(&req); err != nil {
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("DeleteRun request: %#v", req)
-	if err := ValidateDeleteRunRequest(&req); err != nil {
+// DeleteRun handles delete models.Run entity business logic.
+func (s Service) DeleteRun(ctx context.Context, req *request.DeleteRunRequest) error {
+	if err := ValidateDeleteRunRequest(req); err != nil {
 		return err
 	}
 
-	run := database.Run{ID: req.RunID}
-	if tx := database.DB.Select("lifecycle_stage").First(&run); tx.Error != nil {
-		return api.NewInvalidParameterValueError("Unable to find run '%s': %s", req.RunID, tx.Error)
-	}
-
-	if err := database.DB.Model(&run).Updates(database.Run{
-		LifecycleStage: database.LifecycleStageDeleted,
-		DeletedTime: sql.NullInt64{
-			Int64: time.Now().UTC().UnixMilli(),
-			Valid: true,
-		},
-	}).Error; err != nil {
-		return api.NewInternalError("Unable to update run '%s': %s", run.ID, err)
-	}
-
-	return c.JSON(fiber.Map{})
-}
-
-func RestoreRun(c *fiber.Ctx) error {
-	var req request.RestoreRunRequest
-	if err := c.BodyParser(&req); err != nil {
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("RestoreRun request: %#v", req)
-	if err := ValidateRestoreRunRequest(&req); err != nil {
-		return err
-	}
-
-	run := database.Run{ID: req.RunID}
-	if err := database.DB.Select("lifecycle_stage").First(&run).Error; err != nil {
+	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	if err != nil {
 		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.RunID, err)
 	}
 
-	// Use UpdateColumns so we can reset DeletedTime to null
-	if err := database.DB.Model(&run).UpdateColumns(map[string]any{
-		"DeletedTime":    sql.NullInt64{},
-		"LifecycleStage": database.LifecycleStageActive,
-	}).Error; err != nil {
-		return api.NewInternalError("Unable to update run '%s': %s", run.ID, err)
+	if err := s.runRepository.Delete(ctx, run); err != nil {
+		return api.NewInternalError("Unable to delete run '%s': %s", run.ID, err)
 	}
 
-	return c.JSON(fiber.Map{})
+	return nil
 }
 
-func LogMetric(c *fiber.Ctx) error {
-	var req request.LogMetricRequest
-	if err := c.BodyParser(&req); err != nil {
-		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
-		}
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("LogMetric request: %#v", req)
-	if err := ValidateLogMetricRequest(&req); err != nil {
+func (s Service) RestoreRun(ctx context.Context, req *request.RestoreRunRequest) error {
+	if err := ValidateRestoreRunRequest(req); err != nil {
 		return err
 	}
 
-	if err := logMetrics(req.GetRunID(), []request.MetricPartialRequest{{
+	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	if err != nil {
+		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.RunID, err)
+	}
+
+	if err := s.runRepository.Restore(ctx, run); err != nil {
+		return api.NewInternalError("Unable to restore run '%s': %s", run.ID, err)
+	}
+
+	return nil
+}
+
+func (s Service) LogMetric(ctx context.Context, req *request.LogMetricRequest) error {
+	if err := ValidateLogMetricRequest(req); err != nil {
+		return err
+	}
+
+	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	if err != nil {
+		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.RunID, err)
+	}
+
+	if err := logMetrics(run.ID, []request.MetricPartialRequest{{
 		Key:       req.Key,
 		Step:      req.Step,
 		Value:     req.Value,
@@ -546,113 +413,90 @@ func LogMetric(c *fiber.Ctx) error {
 		return api.NewInternalError("Unable to log metric '%s' for run '%s': %s", req.Key, req.GetRunID(), err)
 	}
 
-	return c.JSON(fiber.Map{})
+	return nil
 }
 
-func LogParam(c *fiber.Ctx) error {
-	var req request.LogParamRequest
-	if err := c.BodyParser(&req); err != nil {
-		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
-		}
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("LogParam request: %#v", req)
-	if err := ValidateLogParamRequest(&req); err != nil {
+func (s Service) LogParam(ctx context.Context, req *request.LogParamRequest) error {
+	if err := ValidateLogParamRequest(req); err != nil {
 		return err
 	}
 
-	if err := logParams(req.GetRunID(), []request.ParamPartialRequest{{Key: req.Key, Value: req.Value}}); err != nil {
-		return api.NewInternalError("Unable to log param '%s' for run '%s': %s", req.Key, req.GetRunID(), err)
-	}
-
-	return c.JSON(fiber.Map{})
-}
-
-func SetRunTag(c *fiber.Ctx) error {
-	var req request.SetRunTagRequest
-	if err := c.BodyParser(&req); err != nil {
-		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
-		}
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("SetRunTag request: %#v", req)
-	if err := ValidateSetRunTagRequest(&req); err != nil {
-		return err
-	}
-
-	if err := setRunTags(req.GetRunID(), []request.TagPartialRequest{{Key: req.Key, Value: req.Value}}); err != nil {
-		return api.NewInternalError("Unable to set tag '%s' for run '%s': %s", req.Key, req.GetRunID(), err)
-	}
-
-	return c.JSON(fiber.Map{})
-}
-
-func DeleteRunTag(c *fiber.Ctx) error {
-	var req request.DeleteRunTagRequest
-	if err := c.BodyParser(&req); err != nil {
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("DeleteRunTag request: %#v", req)
-	if err := ValidateDeleteRunTagRequest(&req); err != nil {
-		return err
-	}
-
-	if err := database.DB.Select(
-		"run_uuid",
-	).Where(
-		"lifecycle_stage = ?", database.LifecycleStageActive,
-	).First(
-		&database.Run{ID: req.RunID},
-	).Error; err != nil {
+	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	if err != nil || !run.IsLifecycleStageActive() {
 		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
 	}
 
-	if err := database.DB.First(&database.Tag{RunID: req.RunID, Key: req.Key}).Error; err != nil {
+	param := convertors.ConvertLogParamRequestToDBModel(run.ID, req)
+	if err := s.paramRepository.Create(ctx, param); err != nil {
+		return api.NewInternalError("Unable to insert params for run '%s': %s", run.ID, err)
+	}
+
+	return nil
+}
+
+func (s Service) SetRunTag(ctx context.Context, req *request.SetRunTagRequest) error {
+	if err := ValidateSetRunTagRequest(req); err != nil {
+		return err
+	}
+
+	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	if err != nil || !run.IsLifecycleStageActive() {
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
+	}
+
+	tag := convertors.ConvertSetRunTagRequestToDBModel(run.ID, req)
+	if err := s.runRepository.SetRunTagsBatch(ctx, 1, run, []models.Tag{*tag}); err != nil {
+		return api.NewInternalError("Unable to insert tags for run '%s': %s", run.ID, err)
+	}
+	return nil
+}
+
+func (s Service) DeleteRunTag(ctx context.Context, req *request.DeleteRunTagRequest) error {
+	if err := ValidateDeleteRunTagRequest(req); err != nil {
+		return err
+	}
+
+	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	if err != nil || !run.IsLifecycleStageActive() {
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
+	}
+
+	tag, err := s.tagRepository.GetByRunIDAndKey(ctx, run.ID, req.Key)
+	if err != nil {
 		return api.NewResourceDoesNotExistError("Unable to find tag '%s' for run '%s': %s", req.Key, req.RunID, err)
 	}
 
-	if tx := database.DB.Delete(&database.Tag{
-		RunID: req.RunID,
-		Key:   req.Key,
-	}); tx.Error != nil {
-		return api.NewInternalError("Unable to delete tag '%s' for run '%s': %s", req.Key, req.RunID, tx.Error)
+	if err := s.tagRepository.Delete(ctx, tag); err != nil {
+		return api.NewInternalError("Unable to delete tag '%s' for run '%s': %s", req.Key, req.RunID, err)
 	}
 
-	return c.JSON(fiber.Map{})
+	return nil
 }
 
-func LogBatch(c *fiber.Ctx) error {
-	var req request.LogBatchRequest
-	if err := c.BodyParser(&req); err != nil {
-		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
-		}
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("LogBatch request: %#v", req)
-	if err := ValidateLogBatchRequest(&req); err != nil {
+func (s Service) LogBatch(ctx context.Context, req *request.LogBatchRequest) error {
+	if err := ValidateLogBatchRequest(req); err != nil {
 		return err
 	}
 
-	if err := logParams(req.RunID, req.Params); err != nil {
-		return err
+	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	if err != nil || !run.IsLifecycleStageActive() {
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
+	}
+
+	params, tags := convertors.ConvertLogBatchRequestToDBModel(run.ID, req)
+	if err := s.paramRepository.CreateBatch(ctx, 100, params); err != nil {
+		return api.NewInternalError("Unable to insert params for run '%s': %s", run.ID, err)
 	}
 
 	if err := logMetrics(req.RunID, req.Metrics); err != nil {
 		return err
 	}
 
-	if err := setRunTags(req.RunID, req.Tags); err != nil {
-		return err
+	if err := s.runRepository.SetRunTagsBatch(ctx, 100, run, tags); err != nil {
+		return api.NewInternalError("Unable to insert tags for run '%s': %s", run.ID, err)
 	}
 
-	return c.JSON(fiber.Map{})
+	return nil
 }
 
 func logMetrics(id string, metrics []request.MetricPartialRequest) error {
@@ -789,132 +633,4 @@ func logMetrics(id string, metrics []request.MetricPartialRequest) error {
 	}
 
 	return nil
-}
-
-func logParams(id string, params []request.ParamPartialRequest) error {
-	if len(params) == 0 {
-		return nil
-	}
-
-	if tx := database.DB.Select("run_uuid").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&database.Run{ID: id}); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", id, tx.Error)
-	}
-
-	dbParams := make([]database.Param, len(params))
-	for n, p := range params {
-		dbParams[n] = database.Param{
-			Key:   p.Key,
-			Value: p.Value,
-			RunID: id,
-		}
-	}
-
-	if tx := database.DB.CreateInBatches(&dbParams, 100); tx.Error != nil {
-		return api.NewInternalError("Unable to insert params for run '%s': %s", id, tx.Error)
-	}
-
-	return nil
-}
-
-func setRunTags(id string, tags []request.TagPartialRequest) error {
-	if len(tags) == 0 {
-		return nil
-	}
-
-	run := database.Run{ID: id}
-	if tx := database.DB.Select("run_uuid", "name", "user_id").Where("lifecycle_stage = ?", database.LifecycleStageActive).First(&run); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", id, tx.Error)
-	}
-
-	if err := database.DB.Transaction(func(tx *gorm.DB) error {
-		dbTags := make([]database.Tag, len(tags))
-		for n, t := range tags {
-			dbTags[n] = database.Tag{
-				Key:   t.Key,
-				Value: t.Value,
-				RunID: id,
-			}
-			switch t.Key {
-			case "mlflow.runName":
-				if run.Name != t.Value {
-					if err := tx.Model(&run).UpdateColumn("name", t.Value).Error; err != nil {
-						return err
-					}
-				}
-			case "mlflow.user":
-				if run.UserID != t.Value {
-					if err := tx.Model(&run).UpdateColumn("user_id", t.Value).Error; err != nil {
-						return err
-					}
-				}
-			}
-		}
-		if err := tx.Clauses(clause.OnConflict{
-			UpdateAll: true,
-		}).CreateInBatches(&dbTags, 100).Error; err != nil {
-			return err
-		}
-		return nil
-	}); err != nil {
-		return api.NewInternalError("Unable to insert tags for run '%s': %s", id, err)
-	}
-
-	return nil
-}
-
-func modelRunToAPI(r database.Run) response.RunPartialResponse {
-	metrics := make([]response.RunMetricPartialResponse, len(r.LatestMetrics))
-	for n, m := range r.LatestMetrics {
-		metrics[n] = response.RunMetricPartialResponse{
-			Key:       m.Key,
-			Value:     m.Value,
-			Timestamp: m.Timestamp,
-			Step:      m.Step,
-		}
-		if m.IsNan {
-			metrics[n].Value = "NaN"
-		}
-	}
-
-	params := make([]response.RunParamPartialResponse, len(r.Params))
-	for n, p := range r.Params {
-		params[n] = response.RunParamPartialResponse{
-			Key:   p.Key,
-			Value: p.Value,
-		}
-	}
-
-	tags := make([]response.RunTagPartialResponse, len(r.Tags))
-	for n, t := range r.Tags {
-		tags[n] = response.RunTagPartialResponse{
-			Key:   t.Key,
-			Value: t.Value,
-		}
-		switch t.Key {
-		case "mlflow.runName":
-			r.Name = t.Value
-		case "mlflow.user":
-			r.UserID = t.Value
-		}
-	}
-
-	return response.RunPartialResponse{
-		Info: response.RunInfoPartialResponse{
-			ID:             r.ID,
-			UUID:           r.ID,
-			Name:           r.Name,
-			ExperimentID:   fmt.Sprint(r.ExperimentID),
-			UserID:         r.UserID,
-			Status:         string(r.Status),
-			StartTime:      r.StartTime.Int64,
-			EndTime:        r.EndTime.Int64,
-			ArtifactURI:    r.ArtifactURI,
-			LifecycleStage: string(r.LifecycleStage),
-		},
-		Data: response.RunDataPartialResponse{
-			Metrics: metrics,
-			Params:  params,
-			Tags:    tags,
-		},
-	}
 }

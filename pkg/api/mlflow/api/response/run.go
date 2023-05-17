@@ -1,9 +1,15 @@
 package response
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"strings"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/rotisserie/eris"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // RunTagPartialResponse is a partial response object for different responses.
@@ -59,7 +65,7 @@ type CreateRunResponse struct {
 }
 
 // NewCreateRunResponse creates new instance of CreateRunResponse object.
-func NewCreateRunResponse(run *database.Run) *CreateRunResponse {
+func NewCreateRunResponse(run *models.Run) *CreateRunResponse {
 	resp := CreateRunResponse{
 		Run: RunPartialResponse{
 			Info: RunInfoPartialResponse{
@@ -93,7 +99,7 @@ type UpdateRunResponse struct {
 }
 
 // NewUpdateRunResponse creates new UpdateRunResponse object.
-func NewUpdateRunResponse(run *database.Run) *UpdateRunResponse {
+func NewUpdateRunResponse(run *models.Run) *UpdateRunResponse {
 	// TODO grab name and user from tags?
 	return &UpdateRunResponse{
 		RunInfo: RunInfoPartialResponse{
@@ -113,11 +119,104 @@ func NewUpdateRunResponse(run *database.Run) *UpdateRunResponse {
 
 // GetRunResponse is a response object for `GET mlflow/runs/get` endpoint.
 type GetRunResponse struct {
-	Run RunPartialResponse `json:"run"`
+	Run *RunPartialResponse `json:"run"`
+}
+
+// NewGetRunResponse creates new GetRunResponse object.
+func NewGetRunResponse(run *models.Run) *GetRunResponse {
+	return &GetRunResponse{
+		Run: NewRunPartialResponse(run),
+	}
 }
 
 // SearchRunsResponse is a response object for `POST mlflow/runs/search` endpoint.
 type SearchRunsResponse struct {
-	Runs          []RunPartialResponse `json:"runs"`
-	NextPageToken string               `json:"next_page_token,omitempty"`
+	Runs          []*RunPartialResponse `json:"runs"`
+	NextPageToken string                `json:"next_page_token,omitempty"`
+}
+
+// NewSearchRunsResponse creates new SearchRunsResponse object.
+func NewSearchRunsResponse(runs []models.Run, limit, offset int) (*SearchRunsResponse, error) {
+	resp := SearchRunsResponse{
+		Runs: make([]*RunPartialResponse, len(runs)),
+	}
+
+	// transform each models.Run entity.
+	for i, run := range runs {
+		resp.Runs[i] = NewRunPartialResponse(&run)
+	}
+
+	// encode `nextPageToken` value.
+	if len(runs) == limit {
+		var token strings.Builder
+		if err := json.NewEncoder(
+			base64.NewEncoder(base64.StdEncoding, &token),
+		).Encode(request.PageToken{
+			Offset: int32(offset + limit),
+		}); err != nil {
+			return nil, eris.Wrap(err, "error encoding `nextPageToken` value")
+		}
+		resp.NextPageToken = token.String()
+	}
+
+	return &resp, nil
+}
+
+// NewRunPartialResponse is a helper function for NewSearchRunsResponse and NewGetRunResponse functions,
+// because the use almost the same response structure.
+func NewRunPartialResponse(run *models.Run) *RunPartialResponse {
+	metrics := make([]RunMetricPartialResponse, len(run.LatestMetrics))
+	for n, m := range run.LatestMetrics {
+		metrics[n] = RunMetricPartialResponse{
+			Key:       m.Key,
+			Value:     m.Value,
+			Timestamp: m.Timestamp,
+			Step:      m.Step,
+		}
+		if m.IsNan {
+			metrics[n].Value = "NaN"
+		}
+	}
+
+	params := make([]RunParamPartialResponse, len(run.Params))
+	for n, p := range run.Params {
+		params[n] = RunParamPartialResponse{
+			Key:   p.Key,
+			Value: p.Value,
+		}
+	}
+
+	tags := make([]RunTagPartialResponse, len(run.Tags))
+	for n, t := range run.Tags {
+		tags[n] = RunTagPartialResponse{
+			Key:   t.Key,
+			Value: t.Value,
+		}
+		switch t.Key {
+		case "mlflow.runName":
+			run.Name = t.Value
+		case "mlflow.user":
+			run.UserID = t.Value
+		}
+	}
+
+	return &RunPartialResponse{
+		Info: RunInfoPartialResponse{
+			ID:             run.ID,
+			UUID:           run.ID,
+			Name:           run.Name,
+			ExperimentID:   fmt.Sprint(run.ExperimentID),
+			UserID:         run.UserID,
+			Status:         string(run.Status),
+			StartTime:      run.StartTime.Int64,
+			EndTime:        run.EndTime.Int64,
+			ArtifactURI:    run.ArtifactURI,
+			LifecycleStage: string(run.LifecycleStage),
+		},
+		Data: RunDataPartialResponse{
+			Metrics: metrics,
+			Params:  params,
+			Tags:    tags,
+		},
+	}
 }

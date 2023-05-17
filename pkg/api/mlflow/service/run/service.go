@@ -64,7 +64,7 @@ func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (
 
 	experiment, err := s.experimentRepository.GetByID(ctx, int32(experimentID))
 	if err != nil {
-		return nil, api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", experiment, err)
+		return nil, api.NewResourceDoesNotExistError("Unable to find experiment '%v': %s", experiment, err)
 	}
 
 	run := convertors.ConvertCreateRunRequestToDBModel(experiment, req)

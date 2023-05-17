@@ -65,6 +65,8 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		),
 	).Init(server)
 	mlflowUI.AddRoutes(server.Group("/mlflow/"))
+	// TODO:DSuhinin we have to move it.
+	chooser.AddRoutes(server.Group("/"))
 
 	isRunning := make(chan struct{})
 	go func() {
@@ -120,7 +122,6 @@ func initServer() *fiber.App {
 			switch {
 			case strings.HasPrefix(p, "/aim/api/"):
 				return aimAPI.ErrorHandler(c, err)
-
 			case strings.HasPrefix(p, "/api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/mlflow/ajax-api/2.0/mlflow/"):
@@ -152,7 +153,6 @@ func initServer() *fiber.App {
 	}))
 
 	server.Use(recover.New(recover.Config{EnableStackTrace: true}))
-
 	server.Use(logger.New(logger.Config{
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
@@ -164,8 +164,6 @@ func initServer() *fiber.App {
 	server.Get("/version", func(c *fiber.Ctx) error {
 		return c.SendString(version.Version)
 	})
-
-	chooser.AddRoutes(server.Group("/"))
 
 	return server
 }

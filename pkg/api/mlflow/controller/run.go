@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
@@ -10,7 +9,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // CreateRun handles `POST /runs/create` endpoint.
@@ -207,62 +205,4 @@ func (c Controller) LogBatch(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(fiber.Map{})
-}
-
-// TODO:Dsuhinin lets keep it here for now.
-func modelRunToAPI(r *models.Run) response.RunPartialResponse {
-	metrics := make([]response.RunMetricPartialResponse, len(r.LatestMetrics))
-	for n, m := range r.LatestMetrics {
-		metrics[n] = response.RunMetricPartialResponse{
-			Key:       m.Key,
-			Value:     m.Value,
-			Timestamp: m.Timestamp,
-			Step:      m.Step,
-		}
-		if m.IsNan {
-			metrics[n].Value = "NaN"
-		}
-	}
-
-	params := make([]response.RunParamPartialResponse, len(r.Params))
-	for n, p := range r.Params {
-		params[n] = response.RunParamPartialResponse{
-			Key:   p.Key,
-			Value: p.Value,
-		}
-	}
-
-	tags := make([]response.RunTagPartialResponse, len(r.Tags))
-	for n, t := range r.Tags {
-		tags[n] = response.RunTagPartialResponse{
-			Key:   t.Key,
-			Value: t.Value,
-		}
-		switch t.Key {
-		case "mlflow.runName":
-			r.Name = t.Value
-		case "mlflow.user":
-			r.UserID = t.Value
-		}
-	}
-
-	return response.RunPartialResponse{
-		Info: response.RunInfoPartialResponse{
-			ID:             r.ID,
-			UUID:           r.ID,
-			Name:           r.Name,
-			ExperimentID:   fmt.Sprint(r.ExperimentID),
-			UserID:         r.UserID,
-			Status:         string(r.Status),
-			StartTime:      r.StartTime.Int64,
-			EndTime:        r.EndTime.Int64,
-			ArtifactURI:    r.ArtifactURI,
-			LifecycleStage: string(r.LifecycleStage),
-		},
-		Data: response.RunDataPartialResponse{
-			Metrics: metrics,
-			Params:  params,
-			Tags:    tags,
-		},
-	}
 }

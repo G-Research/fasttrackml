@@ -1,6 +1,12 @@
 ## FastTrackML
 ## For best results, run these make targets inside the devcontainer
 
+PHONY: clean
+clean:
+	## build the javascript and go binary
+	rm -Rf pkg/ui/aim/embed/repo
+	rm -Rf pkg/ui/mlflow/embed/repo
+
 PHONY: build
 build:
 	## build the javascript and go binary

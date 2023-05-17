@@ -3,9 +3,10 @@
 
 PHONY: clean
 clean:
-	## build the javascript and go binary
+	## clean the javascript and go binary
 	rm -Rf pkg/ui/aim/embed/repo
 	rm -Rf pkg/ui/mlflow/embed/repo
+	rm -Rf bin/fasttrack
 
 PHONY: build
 build:

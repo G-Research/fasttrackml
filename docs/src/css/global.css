@@ -32,3 +32,21 @@
 }
 
 /* Section */
+
+/* Forms */
+label {
+    text-align: start;
+    display: block;
+}
+
+input, textarea {
+    width: 100%;
+    background-color: transparent;
+    border: var(--ifm-button-border-width) solid var(--ifm-button-border-color);
+    border-radius: var(--ifm-button-border-radius);
+    font-size: calc(0.875rem * var(--ifm-button-size-multiplier));
+    line-height: 1.5;
+    padding: calc(var(--ifm-button-padding-vertical) * var(--ifm-button-size-multiplier)) calc(var(--ifm-button-padding-horizontal) * var(--ifm-button-size-multiplier));
+}
+
+/* Forms */

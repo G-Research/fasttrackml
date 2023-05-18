@@ -13,3 +13,13 @@
 }
 
 /* Hero Title */
+
+/* Section */
+.section__ref::before {
+    content: '';
+    display: block;
+    height: 64px;
+    margin: -32px 0 0;
+}
+
+/* Section */

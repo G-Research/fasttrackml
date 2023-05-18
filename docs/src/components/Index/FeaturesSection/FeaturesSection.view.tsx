@@ -57,7 +57,7 @@ export default function FeaturesSection(): React.JSX.Element {
     return (
         <section>
             <div className="container">
-                <div className={clsx("row padding-top--lg padding-bottom--xl", styles.features)}>
+                <div className={clsx("row padding-vert--lg", styles.features)}>
                     {FeatureList.map((props, idx) => (
                         <Feature key={idx} {...props} />
                     ))}

@@ -7,7 +7,7 @@
 
 /* Hero Title */
 .hero__title {
-    background: -webkit-linear-gradient(0deg, #25b4ff 0%, #0084cb 100%);
+    background: -webkit-linear-gradient(0deg, var(--ifm-color-primary-lightest) 0%, var(--ifm-color-primary-dark) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }

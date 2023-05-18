@@ -1,0 +1,15 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+
+/* Hero Title */
+.hero__title {
+    background: -webkit-linear-gradient(0deg, #25b4ff 0%, #0084cb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Hero Title */

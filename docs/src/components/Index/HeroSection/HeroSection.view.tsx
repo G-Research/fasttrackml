@@ -17,13 +17,13 @@ export default function HeroSection(): React.JSX.Element {
                         <div className={styles.buttons}>
                             <Link
                                 className="button button--info button--lg"
-                                to="/docs/quickstart/">
+                                to="/#quickstart">
                                 🚀 Quickstart
                             </Link>
                             <Link
                                 className="button button--primary button--lg"
-                                to="/docs/quickstart/">
-                                {`🔥 Try ${siteConfig.title}`}
+                                to="/#contact-us">
+                                {`💬 Talk with Us`}
                             </Link>
                         </div>
                     </div>

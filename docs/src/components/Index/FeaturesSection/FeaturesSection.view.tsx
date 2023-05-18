@@ -56,8 +56,9 @@ function Feature({Svg, title, description}: FeatureItem) {
 export default function FeaturesSection(): React.JSX.Element {
     return (
         <section>
-            <div className="container">
-                <div className={clsx("row padding-vert--lg", styles.features)}>
+            <div className="container padding-top--md">
+                <h1 id="highlights" className={clsx("text--center section__ref")}>Highlights</h1>
+                <div className={clsx("row padding-top--md", styles.features)}>
                     {FeatureList.map((props, idx) => (
                         <Feature key={idx} {...props} />
                     ))}

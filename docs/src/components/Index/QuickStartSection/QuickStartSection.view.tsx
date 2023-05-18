@@ -6,8 +6,8 @@ import styles from './QuickStartSection.module.css';
 
 export default function quickStartSection(): React.JSX.Element {
     return (
-        <section>
-            <div className={clsx("container")}>
+        <section className={clsx(styles.section)}>
+            <div className={clsx("container padding-vert--md")}>
                 <h1 id="quickstart" className={clsx("text--center section__ref")}>Quickstart</h1>
                 <div className={clsx(styles.markdownContainer)}>
                     <MDXContent>

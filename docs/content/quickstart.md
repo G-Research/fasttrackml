@@ -1,4 +1,4 @@
-# Quickstart
+# FastTrackML Quickstart
 
 ## Install Dependencies
 

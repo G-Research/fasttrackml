@@ -15,12 +15,11 @@ const FeatureList: FeatureItem[] = [
         ),
     },
     {
-        title: 'Easy to Use',
-        Svg: require('@site/static/images/easy.svg').default,
+        title: 'Modern Aim UI',
+        Svg: require('@site/static/images/modern-ui.svg').default,
         description: (
             <>
-                FastTrackML is designed to be easily installed and used to get your experiments tracked quickly.
-                Use the Modern UI alternative for a seamless experience.
+                Use the modern Aim UI alternative for a seamless experience.
             </>
         ),
     },
@@ -29,8 +28,7 @@ const FeatureList: FeatureItem[] = [
         Svg: require('@site/static/images/drop-in.svg').default,
         description: (
             <>
-                Use the Classic UI to get the same experience as MLFlow's tracking server. But yet much faster than
-                MLFlow's.
+                Use the Classic UI to get the same experience as MLFlow’s tracking server. But even faster.
             </>
         ),
     },

@@ -98,25 +98,12 @@ const config = {
                                 to: '/#contact-us',
                             },
                             {
-                                label: `Found an Issue?`,
+                                label: `Report an Issue`,
                                 to: 'https://github.com/G-Research/fasttrackml/issues',
                             },
                             {
                                 label: `Create a Pull Request`,
                                 to: 'https://github.com/G-Research/fasttrackml/pulls',
-                            },
-                        ],
-                    },
-                    {
-                        title: 'Community',
-                        items: [
-                            {
-                                label: 'Stack Overflow',
-                                href: 'https://stackoverflow.com/questions/tagged/fasttrackml',
-                            },
-                            {
-                                label: 'GitHub Issues',
-                                href: 'https://github.com/G-Research/fasttrackml/issues',
                             },
                         ],
                     },
@@ -144,7 +131,7 @@ const config = {
                     srcDark: 'logo/organization-dark.png',
                     href: 'https://opensource.gresearch.co.uk/',
                 },
-                copyright: `Copyright © ${new Date().getFullYear()} FastTrackML.`,
+                copyright: `Copyright © ${new Date().getFullYear()} FastTrackML`,
             },
             announcementBar: {
                 // https://docusaurus.io/docs/api/themes/configuration#announcement-bar

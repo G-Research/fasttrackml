@@ -23,7 +23,7 @@ export default function HeroSection(): React.JSX.Element {
                             <Link
                                 className="button button--primary button--lg"
                                 to="/#contact-us">
-                                {`💬 Talk with Us`}
+                                {`💬 Talk to Us`}
                             </Link>
                         </div>
                     </div>

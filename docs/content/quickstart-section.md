@@ -18,7 +18,7 @@ Verify that you can see the UI by navigating to [http://localhost:5000/](http://
 > <small><strong>Note</strong>: This step requires <a href="https://www.python.org/downloads/">Python 3</a> to be
 > installed.</small>
 
-Install the ML Flow Python package:
+Install the MLflow Python package:
 
 ```bash
 pip install mlflow

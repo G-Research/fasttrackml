@@ -5,7 +5,7 @@ Rewrite of the MLFlow tracking server with a focus on scalability
 
 #### Run the tracking server
 
-For the full guide, see [docs/quickstart.md](docs/quickstart.md).
+For the full guide, see [docs/content/quickstart.md](docs/content/quickstart.md).
 
 FastTrackML can be run using the following command:
 
@@ -15,7 +15,7 @@ docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
 
 Verify that you can see the UI by navigating to http://localhost:5000/.
 
-![FastTrackML UI](docs/images/main_ui.jpg)
+![FastTrackML UI](docs/content/images/main_ui.jpg)
 
 For more info, `--help` is your friend!
 

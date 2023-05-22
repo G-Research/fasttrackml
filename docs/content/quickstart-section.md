@@ -33,7 +33,7 @@ import random
 # Set the tracking URI to the FastTrackML server
 mlflow.set_tracking_uri("http://localhost:5000")
 # Set the experiment name
-mlflow.set_experiment("my-experiment")
+mlflow.set_experiment("my-first-experiment")
 
 # Log a parameter
 mlflow.log_param("param1", random.randint(0, 100))

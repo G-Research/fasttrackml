@@ -43,7 +43,7 @@ export default function ContactUsSection(): React.JSX.Element {
     return <section>
         <div className="container padding-bottom--xl text--center">
             <h1 id="contact-us" className={clsx("section__ref")}>Contact Us</h1>
-            <p>We would love to hear from you! FastTrackML is a brand new project and any contribution is welcome.</p>
+            <p>We would love to hear from you! FastTrackML is a brand new project and any contribution would make a difference!</p>
             <form onSubmit={handleSubmit(onUsingGitHub)}>
                 <div className='row'>
                     <div className='col col--6'>

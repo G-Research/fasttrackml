@@ -34,12 +34,6 @@ const config = {
             /** @type {import('@docusaurus/preset-classic').Options} */
             ({
                 docs: false, // disabling docs
-                // docs: {
-                //     sidebarPath: require.resolve('./sidebars.js'),
-                //     editUrl: 'https://github.com/naskio/fasttrackml/edit/main/docs/',
-                //     path: 'content',
-                //     exclude: ['example/**'],
-                // },
                 theme: {
                     customCss: [require.resolve('./src/css/theming.css'), require.resolve('./src/css/announcement-bar.css'), require.resolve('./src/css/global.css')],
                 },

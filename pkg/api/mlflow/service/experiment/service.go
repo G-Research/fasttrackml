@@ -205,6 +205,8 @@ func DeleteExperiment(c *fiber.Ctx) error {
 	exp := database.Experiment{
 		ID: &ex32,
 	}
+	run := database.Run{}
+
 	if tx := database.DB.Select("ID").First(&exp); tx.Error != nil {
 		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", *exp.ID, tx.Error)
 	}
@@ -217,6 +219,16 @@ func DeleteExperiment(c *fiber.Ctx) error {
 		},
 	}); tx.Error != nil {
 		return api.NewInternalError("Unable to delete experiment '%d': %s", *exp.ID, tx.Error)
+	}
+
+	if tx := database.DB.Model(&run).Where("experiment_id = ?", exp.ID).Updates(&database.Run{
+		LifecycleStage: database.LifecycleStageDeleted,
+		DeletedTime: sql.NullInt64{
+			Int64: time.Now().UTC().UnixMilli(),
+			Valid: true,
+		},
+	}); tx.Error != nil {
+		return api.NewInternalError("Unable to delete runs for experiment '%d': %s", *exp.ID, tx.Error)
 	}
 
 	return c.JSON(fiber.Map{})

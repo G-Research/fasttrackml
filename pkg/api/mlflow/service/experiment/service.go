@@ -132,7 +132,10 @@ func (s Service) GetExperimentByName(
 
 	experiment, err := s.experimentRepository.GetByName(ctx, req.Name)
 	if err != nil {
-		return nil, api.NewResourceDoesNotExistError(`unable to find experiment '%s': %v`, req.Name, err)
+		return nil, api.NewInternalError("unable to get experiment by name '%s': %v", req.Name, err)
+	}
+	if experiment == nil {
+		return nil, api.NewResourceDoesNotExistError(`unable to find experiment '%s'`, req.Name)
 	}
 
 	return experiment, nil
@@ -145,7 +148,7 @@ func (s Service) DeleteExperiment(ctx context.Context, req *request.DeleteExperi
 
 	parsedID, err := strconv.ParseInt(req.ID, 10, 32)
 	if err != nil {
-		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
+		return api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
 	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))

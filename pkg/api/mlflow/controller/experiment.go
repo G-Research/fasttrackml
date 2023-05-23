@@ -22,14 +22,14 @@ func (c Controller) CreateExperiment(ctx *fiber.Ctx) error {
 		}
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("rreateExperiment request: %#v", req)
+	log.Debugf("createExperiment request: %#v", req)
 	experiment, err := c.experimentService.CreateExperiment(ctx.Context(), &req)
 	if err != nil {
 		return err
 	}
 
 	resp := response.NewCreateExperimentResponse(experiment)
-	log.Debugf("rreateExperiment response: %#v", resp)
+	log.Debugf("createExperiment response: %#v", resp)
 
 	return ctx.JSON(resp)
 }

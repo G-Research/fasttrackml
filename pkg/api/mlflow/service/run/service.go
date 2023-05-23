@@ -457,7 +457,7 @@ func (s Service) DeleteRunTag(ctx context.Context, req *request.DeleteRunTagRequ
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
 	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", req.RunID, err)
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
 	}
 
 	tag, err := s.tagRepository.GetByRunIDAndKey(ctx, run.ID, req.Key)

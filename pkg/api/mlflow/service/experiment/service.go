@@ -66,7 +66,7 @@ func (s Service) CreateExperiment(
 		return nil, api.NewInternalError("error inserting experiment '%s': %s", req.Name, err)
 	}
 
-	if req.ArtifactLocation != "" {
+	if experiment.ArtifactLocation != "" {
 		// TODO:DSuhinin move configuration out from here.
 		experiment.ArtifactLocation = fmt.Sprintf(
 			"%s/%d", strings.TrimRight(viper.GetString("artifact-root"), "/"), *experiment.ID,

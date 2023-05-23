@@ -22,7 +22,8 @@ func ConvertCreateExperimentToDBModel(req *request.CreateExperimentRequest) *mod
 			Int64: ts,
 			Valid: true,
 		},
-		Tags: make([]models.ExperimentTag, len(req.Tags)),
+		Tags:             make([]models.ExperimentTag, len(req.Tags)),
+		ArtifactLocation: req.ArtifactLocation,
 	}
 
 	for n, tag := range req.Tags {

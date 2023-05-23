@@ -67,11 +67,6 @@ func NewSearchExperimentsResponse(
 		Experiments: make([]*ExperimentPartialResponse, len(experiments)),
 	}
 
-	// transform each models.Experiment entity.
-	for i, experiment := range experiments {
-		resp.Experiments[i] = NewExperimentPartialResponse(&experiment)
-	}
-
 	// encode `nextPageToken` value.
 	if len(experiments) > limit {
 		experiments = experiments[:limit]
@@ -84,6 +79,11 @@ func NewSearchExperimentsResponse(
 			return nil, eris.Wrap(err, "error encoding `nextPageToken` value")
 		}
 		resp.NextPageToken = token.String()
+	}
+
+	// transform each models.Experiment entity.
+	for i, experiment := range experiments {
+		resp.Experiments[i] = NewExperimentPartialResponse(&experiment)
 	}
 
 	return &resp, nil

@@ -140,7 +140,7 @@ func (c Controller) SearchExperiments(ctx *fiber.Ctx) error {
 
 	resp, err := response.NewSearchExperimentsResponse(experiments, limit, offset)
 	if err != nil {
-
+		return api.NewInternalError("unable to build next_page_token: %s", err)
 	}
 	return ctx.JSON(resp)
 }

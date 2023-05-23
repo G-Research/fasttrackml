@@ -4,12 +4,12 @@
 .PHONY: tests-run-unit
 tests-run-unit: ## run unit tests.
 	@echo ">>> Running unit tests."
-	@env GOPROXY=$(GOPROXY) go test -v ./...
+	@env go test -v ./...
 
 .PHONY: tests-run-integration
 tests-run-integration: ## run integration tests.
 	@echo ">>> Running integration tests."
-	@env GOPROXY=$(GOPROXY) go test -v -p 1 -tags="integration" ./tests/integration/...
+	@env go test -v -p 1 -tags="integration" ./tests/integration/...
 
 
 #

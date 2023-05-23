@@ -66,16 +66,16 @@ func (s Service) CreateExperiment(
 		return nil, api.NewInternalError("error inserting experiment '%s': %s", req.Name, err)
 	}
 
-	if req.ArtifactLocation != "" && experiment.ID != nil {
+	if req.ArtifactLocation != "" {
 		// TODO:DSuhinin move configuration out from here.
 		experiment.ArtifactLocation = fmt.Sprintf(
 			"%s/%d", strings.TrimRight(viper.GetString("artifact-root"), "/"), *experiment.ID,
 		)
-	}
-	if err := s.experimentRepository.Update(ctx, experiment); err != nil {
-		return nil, api.NewInternalError(
-			"error updating artifact_location for experiment '%s': %s", experiment.Name, err,
-		)
+		if err := s.experimentRepository.Update(ctx, experiment); err != nil {
+			return nil, api.NewInternalError(
+				"error updating artifact_location for experiment '%s': %s", experiment.Name, err,
+			)
+		}
 	}
 
 	return experiment, nil

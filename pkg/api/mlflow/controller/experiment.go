@@ -40,6 +40,10 @@ func (c Controller) UpdateExperiment(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
+
+	if err := c.experimentService.UpdateExperiment(ctx.Context(), &req); err != nil {
+		return err
+	}
 	log.Debugf("UpdateExperiment request: %#v", req)
 
 	return ctx.JSON(fiber.Map{})

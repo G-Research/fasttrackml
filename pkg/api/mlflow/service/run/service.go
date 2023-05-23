@@ -55,21 +55,20 @@ func NewService(
 	}
 }
 
-// CreateRun handles business logic of “
 func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (*models.Run, error) {
 	experimentID, err := strconv.ParseInt(req.ExperimentID, 10, 32)
 	if err != nil {
-		return nil, api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ExperimentID, err)
+		return nil, api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ExperimentID, err)
 	}
 
 	experiment, err := s.experimentRepository.GetByID(ctx, int32(experimentID))
 	if err != nil {
-		return nil, api.NewResourceDoesNotExistError("Unable to find experiment '%v': %s", experiment, err)
+		return nil, api.NewResourceDoesNotExistError("unable to find experiment '%v': %s", experiment, err)
 	}
 
 	run := convertors.ConvertCreateRunRequestToDBModel(experiment, req)
 	if err := s.runRepository.Create(ctx, run); err != nil {
-		return nil, api.NewInternalError("Error inserting run '%s': %s", run.ID, err)
+		return nil, api.NewInternalError("error inserting run '%s': %s", run.ID, err)
 	}
 
 	return run, nil
@@ -82,7 +81,7 @@ func (s Service) UpdateRun(ctx context.Context, req *request.UpdateRunRequest) (
 
 	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
 	if err != nil {
-		return nil, api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.RunID, err)
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
 	}
 
 	run = convertors.ConvertUpdateRunRequestToDBModel(run, req)
@@ -93,7 +92,7 @@ func (s Service) UpdateRun(ctx context.Context, req *request.UpdateRunRequest) (
 		if req.Name != "" {
 			// TODO:DSuhinin - move "mlflow.runName" to be a constant somewhere.
 			// Also Im not fully sure that this is right place to keep this logic here.
-			if err := s.tagRepository.CreateWithTransaction(
+			if err := s.tagRepository.CreateRunTagWithTransaction(
 				ctx, tx, run.ID, "mlflow.runName", req.Name,
 			); err != nil {
 				return err
@@ -101,7 +100,7 @@ func (s Service) UpdateRun(ctx context.Context, req *request.UpdateRunRequest) (
 		}
 		return nil
 	}); err != nil {
-		return nil, api.NewInternalError("Unable to update run '%s': %s", run.ID, err)
+		return nil, api.NewInternalError("unable to update run '%s': %s", run.ID, err)
 	}
 
 	return run, nil
@@ -114,7 +113,7 @@ func (s Service) GetRun(ctx context.Context, req *request.GetRunRequest) (*model
 
 	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
 	if err != nil {
-		return nil, api.NewResourceDoesNotExistError("Unable to find run '%s': %s", run.ID, err)
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", run.ID, err)
 	}
 
 	return run, nil
@@ -166,7 +165,7 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 				strings.NewReader(req.PageToken),
 			),
 		).Decode(&token); err != nil {
-			return nil, 0, 0, api.NewInvalidParameterValueError("Invalid page_token '%s': %s", req.PageToken, err)
+			return nil, 0, 0, api.NewInvalidParameterValueError("invalid page_token '%s': %s", req.PageToken, err)
 
 		}
 		offset = int(token.Offset)
@@ -178,7 +177,7 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 		for n, f := range filterAnd.Split(req.Filter, -1) {
 			components := filterCond.FindStringSubmatch(f)
 			if len(components) != 5 {
-				return nil, 0, 0, api.NewInvalidParameterValueError("Malformed filter '%s'", f)
+				return nil, 0, 0, api.NewInvalidParameterValueError("malformed filter '%s'", f)
 			}
 
 			entity := components[1]
@@ -195,11 +194,11 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 					case ">", ">=", "!=", "=", "<", "<=":
 						v, err := strconv.Atoi(value.(string))
 						if err != nil {
-							return nil, 0, 0, api.NewInvalidParameterValueError("Invalid numeric value '%s'", value)
+							return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric value '%s'", value)
 						}
 						value = v
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid numeric attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric attribute comparison operator '%s'", comparison)
 					}
 				case "run_name":
 					key = "mlflow.runName"
@@ -209,23 +208,23 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 					switch strings.ToUpper(comparison) {
 					case "!=", "=", "LIKE", "ILIKE":
 						if strings.HasPrefix(value.(string), "(") {
-							return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string value '%s'", value)
+							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
 					}
 				case "run_id":
 					key = "run_uuid"
 					switch strings.ToUpper(comparison) {
 					case "!=", "=", "LIKE", "ILIKE":
 						if strings.HasPrefix(value.(string), "(") {
-							return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string value '%s'", value)
+							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
 					case "IN", "NOT IN":
 						if !strings.HasPrefix(value.(string), "(") {
-							return nil, 0, 0, api.NewInvalidParameterValueError("Invalid list definition '%s'", value)
+							return nil, 0, 0, api.NewInvalidParameterValueError("invalid list definition '%s'", value)
 						}
 						var values []string
 						for _, v := range filterInGroup.Split(value.(string)[1:len(value.(string))-1], -1) {
@@ -233,47 +232,47 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 						}
 						value = values
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
 					}
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("Invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']", key)
+					return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']", key)
 				}
 			case "metric", "metrics":
 				switch comparison {
 				case ">", ">=", "!=", "=", "<", "<=":
 					v, err := strconv.ParseFloat(value.(string), 64)
 					if err != nil {
-						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid numeric value '%s'", value)
+						return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric value '%s'", value)
 					}
 					value = v
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("Invalid metric comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError("invalid metric comparison operator '%s'", comparison)
 				}
 				kind = &database.LatestMetric{}
 			case "parameter", "parameters", "param", "params":
 				switch strings.ToUpper(comparison) {
 				case "!=", "=", "LIKE", "ILIKE":
 					if strings.HasPrefix(value.(string), "(") {
-						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string value '%s'", value)
+						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("Invalid param comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError("invalid param comparison operator '%s'", comparison)
 				}
 				kind = &database.Param{}
 			case "tag", "tags":
 				switch strings.ToUpper(comparison) {
 				case "!=", "=", "LIKE", "ILIKE":
 					if strings.HasPrefix(value.(string), "(") {
-						return nil, 0, 0, api.NewInvalidParameterValueError("Invalid string value '%s'", value)
+						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("Invalid tag comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError("invalid tag comparison operator '%s'", comparison)
 				}
 				kind = &database.Tag{}
 			default:
-				return nil, 0, 0, api.NewInvalidParameterValueError("Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
+				return nil, 0, 0, api.NewInvalidParameterValueError("invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
 			}
 
 			if kind == nil {
@@ -306,7 +305,7 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 		components := runOrder.FindStringSubmatch(o)
 		log.Debugf("Components: %#v", components)
 		if len(components) < 3 {
-			return nil, 0, 0, api.NewInvalidParameterValueError("Invalid order_by clause '%s'", o)
+			return nil, 0, 0, api.NewInvalidParameterValueError("invalid order_by clause '%s'", o)
 		}
 
 		column := strings.Trim(components[2], "`\"")
@@ -324,7 +323,7 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 		case "tag":
 			kind = &database.Tag{}
 		default:
-			return nil, 0, 0, api.NewInvalidParameterValueError("Invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", components[1])
+			return nil, 0, 0, api.NewInvalidParameterValueError("invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", components[1])
 		}
 		if kind != nil {
 			table := fmt.Sprintf("order_%d", n)
@@ -353,7 +352,7 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 		Preload("Tags").
 		Find(&runs)
 	if tx.Error != nil {
-		return nil, 0, 0, api.NewInternalError("Unable to search runs: %s", tx.Error)
+		return nil, 0, 0, api.NewInternalError("unable to search runs: %s", tx.Error)
 	}
 
 	return runs, limit, offset, nil
@@ -367,11 +366,11 @@ func (s Service) DeleteRun(ctx context.Context, req *request.DeleteRunRequest) e
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
 	if err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.RunID, err)
+		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
 	}
 
 	if err := s.runRepository.Delete(ctx, run); err != nil {
-		return api.NewInternalError("Unable to delete run '%s': %s", run.ID, err)
+		return api.NewInternalError("unable to delete run '%s': %s", run.ID, err)
 	}
 
 	return nil
@@ -384,11 +383,11 @@ func (s Service) RestoreRun(ctx context.Context, req *request.RestoreRunRequest)
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
 	if err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.RunID, err)
+		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
 	}
 
 	if err := s.runRepository.Restore(ctx, run); err != nil {
-		return api.NewInternalError("Unable to restore run '%s': %s", run.ID, err)
+		return api.NewInternalError("unable to restore run '%s': %s", run.ID, err)
 	}
 
 	return nil
@@ -401,7 +400,7 @@ func (s Service) LogMetric(ctx context.Context, req *request.LogMetricRequest) e
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
 	if err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.RunID, err)
+		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
 	}
 
 	if err := logMetrics(run.ID, []request.MetricPartialRequest{{
@@ -410,7 +409,7 @@ func (s Service) LogMetric(ctx context.Context, req *request.LogMetricRequest) e
 		Value:     req.Value,
 		Timestamp: req.Timestamp,
 	}}); err != nil {
-		return api.NewInternalError("Unable to log metric '%s' for run '%s': %s", req.Key, req.GetRunID(), err)
+		return api.NewInternalError("unable to log metric '%s' for run '%s': %s", req.Key, req.GetRunID(), err)
 	}
 
 	return nil
@@ -423,12 +422,12 @@ func (s Service) LogParam(ctx context.Context, req *request.LogParamRequest) err
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
 	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
+		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", req.RunID, err)
 	}
 
 	param := convertors.ConvertLogParamRequestToDBModel(run.ID, req)
 	if err := s.paramRepository.Create(ctx, param); err != nil {
-		return api.NewInternalError("Unable to insert params for run '%s': %s", run.ID, err)
+		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 	}
 
 	return nil
@@ -441,12 +440,12 @@ func (s Service) SetRunTag(ctx context.Context, req *request.SetRunTagRequest) e
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
 	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
+		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", req.RunID, err)
 	}
 
 	tag := convertors.ConvertSetRunTagRequestToDBModel(run.ID, req)
 	if err := s.runRepository.SetRunTagsBatch(ctx, 1, run, []models.Tag{*tag}); err != nil {
-		return api.NewInternalError("Unable to insert tags for run '%s': %s", run.ID, err)
+		return api.NewInternalError("unable to insert tags for run '%s': %s", run.ID, err)
 	}
 	return nil
 }
@@ -458,16 +457,16 @@ func (s Service) DeleteRunTag(ctx context.Context, req *request.DeleteRunTagRequ
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
 	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
+		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", req.RunID, err)
 	}
 
 	tag, err := s.tagRepository.GetByRunIDAndKey(ctx, run.ID, req.Key)
 	if err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find tag '%s' for run '%s': %s", req.Key, req.RunID, err)
+		return api.NewResourceDoesNotExistError("unable to find tag '%s' for run '%s': %s", req.Key, req.RunID, err)
 	}
 
 	if err := s.tagRepository.Delete(ctx, tag); err != nil {
-		return api.NewInternalError("Unable to delete tag '%s' for run '%s': %s", req.Key, req.RunID, err)
+		return api.NewInternalError("unable to delete tag '%s' for run '%s': %s", req.Key, req.RunID, err)
 	}
 
 	return nil
@@ -480,12 +479,12 @@ func (s Service) LogBatch(ctx context.Context, req *request.LogBatchRequest) err
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
 	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
+		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", req.RunID, err)
 	}
 
 	params, tags := convertors.ConvertLogBatchRequestToDBModel(run.ID, req)
 	if err := s.paramRepository.CreateBatch(ctx, 100, params); err != nil {
-		return api.NewInternalError("Unable to insert params for run '%s': %s", run.ID, err)
+		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 	}
 
 	if err := logMetrics(req.RunID, req.Metrics); err != nil {
@@ -493,7 +492,7 @@ func (s Service) LogBatch(ctx context.Context, req *request.LogBatchRequest) err
 	}
 
 	if err := s.runRepository.SetRunTagsBatch(ctx, 100, run, tags); err != nil {
-		return api.NewInternalError("Unable to insert tags for run '%s': %s", run.ID, err)
+		return api.NewInternalError("unable to insert tags for run '%s': %s", run.ID, err)
 	}
 
 	return nil
@@ -511,7 +510,7 @@ func logMetrics(id string, metrics []request.MetricPartialRequest) error {
 	).First(
 		&database.Run{ID: id},
 	); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", id, tx.Error)
+		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", id, tx.Error)
 	}
 
 	lastIters := make(map[string]int64)
@@ -541,7 +540,7 @@ func logMetrics(id string, metrics []request.MetricPartialRequest) error {
 
 		return nil
 	}(); err != nil {
-		return api.NewInternalError("Unable to get latest metric iters for run '%s': %s", id, err)
+		return api.NewInternalError("unable to get latest metric iters for run '%s': %s", id, err)
 	}
 
 	dbMetrics := make([]database.Metric, len(metrics))
@@ -568,10 +567,10 @@ func logMetrics(id string, metrics []request.MetricPartialRequest) error {
 				m.Value = -math.MaxFloat64
 				// m.Value = math.Inf(-1)
 			default:
-				return api.NewInvalidParameterValueError("Invalid metric value '%s'", v)
+				return api.NewInvalidParameterValueError("invalid metric value '%s'", v)
 			}
 		} else {
-			return api.NewInvalidParameterValueError("Invalid metric value '%s'", v)
+			return api.NewInvalidParameterValueError("invalid metric value '%s'", v)
 		}
 		dbMetrics[n] = m
 
@@ -595,14 +594,14 @@ func logMetrics(id string, metrics []request.MetricPartialRequest) error {
 	}
 
 	if tx := database.DB.CreateInBatches(&dbMetrics, 100); tx.Error != nil {
-		return api.NewInternalError("Unable to insert metrics for run '%s': %s", id, tx.Error)
+		return api.NewInternalError("unable to insert metrics for run '%s': %s", id, tx.Error)
 	}
 
 	// TODO update latest metrics in the background?
 
 	var currentLatestMetrics []database.LatestMetric
 	if tx := database.DB.Where("run_uuid = ?", id).Where("key IN ?", keys).Find(&currentLatestMetrics); tx.Error != nil {
-		return api.NewInternalError("Unable to get latest metrics for run '%s': %s", id, tx.Error)
+		return api.NewInternalError("unable to get latest metrics for run '%s': %s", id, tx.Error)
 	}
 
 	currentLatestMetricsMap := make(map[string]database.LatestMetric, len(currentLatestMetrics))
@@ -628,7 +627,7 @@ func logMetrics(id string, metrics []request.MetricPartialRequest) error {
 		if tx := database.DB.Clauses(clause.OnConflict{
 			UpdateAll: true,
 		}).Create(&updatedLatestMetrics); tx.Error != nil {
-			return api.NewInternalError("Unable to update latest metrics for run '%s': %s", id, tx.Error)
+			return api.NewInternalError("unable to update latest metrics for run '%s': %s", id, tx.Error)
 		}
 	}
 

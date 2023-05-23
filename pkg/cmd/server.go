@@ -23,6 +23,10 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
@@ -60,6 +64,17 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 				repositories.NewRunRepository(db),
 				repositories.NewParamRepository(db),
 				repositories.NewMetricRepository(db),
+				repositories.NewExperimentRepository(db),
+			),
+			model.NewService(),
+			metric.NewService(
+				repositories.NewMetricRepository(db),
+			),
+			artifact.NewService(
+				repositories.NewRunRepository(db),
+			),
+			experiment.NewService(
+				repositories.NewTagRepository(db),
 				repositories.NewExperimentRepository(db),
 			),
 		),

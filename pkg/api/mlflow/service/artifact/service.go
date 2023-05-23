@@ -1,38 +1,34 @@
 package artifact
 
 import (
-	"github.com/gofiber/fiber/v2"
-	log "github.com/sirupsen/logrus"
+	"context"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 )
 
-func ListArtifacts(c *fiber.Ctx) error {
-	req := request.ListArtifactsRequest{}
-	if err := c.QueryParser(&req); err != nil {
-		return api.NewBadRequestError(err.Error())
+// Service provides service layer to work with `artifact` business logic.
+type Service struct {
+	runRepository repositories.RunRepositoryProvider
+}
+
+// NewService creates new Service instance.
+func NewService(runRepository repositories.RunRepositoryProvider) *Service {
+	return &Service{
+		runRepository: runRepository,
 	}
+}
 
-	log.Debugf("ListArtifacts request: %#v", req)
-
-	if err := ValidateListArtifactsRequest(&req); err != nil {
+func (s Service) ListArtifacts(ctx context.Context, req *request.ListArtifactsRequest) error {
+	if err := ValidateListArtifactsRequest(req); err != nil {
 		return err
 	}
 
-	run := database.Run{ID: req.GetRunID()}
-	if tx := database.DB.Select("artifact_uri").First(&run); tx.Error != nil {
-		return api.NewInternalError("Unable to get artifact URI for run '%s'", req.GetRunID())
+	_, err := s.runRepository.GetByID(ctx, req.GetRunID())
+	if err != nil {
+		return api.NewInternalError("unable to get artifact URI for run '%s'", req.GetRunID())
 	}
 
-	// TODO grab list of artifacts from S3
-	resp := &response.ListArtifactsResponse{
-		Files: make([]response.FilePartialResponse, 0),
-	}
-
-	log.Debugf("ArtifactList response: %#v", resp)
-
-	return c.JSON(resp)
+	return nil
 }

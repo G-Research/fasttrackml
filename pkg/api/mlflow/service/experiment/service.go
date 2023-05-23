@@ -1,6 +1,7 @@
 package experiment
 
 import (
+	"context"
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
@@ -10,16 +11,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgconn"
-	"github.com/mattn/go-sqlite3"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/convertors"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -29,75 +29,117 @@ var (
 	filterCond      = regexp.MustCompile(`^(?:(\w+)\.)?("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'[^']+'(?:,\s*)?)+\)|"[^"]+"|'[^']+'|[\w\.]+)$`)
 )
 
-func CreateExperiment(c *fiber.Ctx) error {
-	var req request.CreateExperimentRequest
-	if err := c.BodyParser(&req); err != nil {
-		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
-		}
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
+// Service provides service layer to work with `metric` business logic.
+type Service struct {
+	tagRepository        repositories.TagRepositoryProvider
+	experimentRepository repositories.ExperimentRepositoryProvider
+}
+
+// NewService creates new Service instance.
+func NewService(
+	tagRepository repositories.TagRepositoryProvider,
+	experimentRepository repositories.ExperimentRepositoryProvider,
+) *Service {
+	return &Service{
+		tagRepository:        tagRepository,
+		experimentRepository: experimentRepository,
+	}
+}
+
+func (s Service) CreateExperiment(
+	ctx context.Context, req *request.CreateExperimentRequest,
+) (*models.Experiment, error) {
+	if err := ValidateCreateExperimentRequest(req); err != nil {
+		return nil, err
 	}
 
-	log.Debugf("CreateExperiment request: %#v", req)
-	if err := ValidateCreateExperimentRequest(&req); err != nil {
+	experiment, err := s.experimentRepository.GetByName(ctx, req.Name)
+	if err != nil {
+		return nil, api.NewInternalError(`error getting experiment with name: '%s', error: %s`, req.Name, err)
+	}
+	if experiment != nil {
+		return nil, api.NewResourceAlreadyExistsError("experiment(name=%s) already exists", req.Name)
+	}
+
+	experiment = convertors.ConvertCreateExperimentToDBModel(req)
+	if err := s.experimentRepository.Create(ctx, experiment); err != nil {
+		return nil, api.NewInternalError("error inserting experiment '%s': %s", req.Name, err)
+	}
+
+	if req.ArtifactLocation != "" && experiment.ID != nil {
+		// TODO:DSuhinin move configuration out from here.
+		experiment.ArtifactLocation = fmt.Sprintf(
+			"%s/%d", strings.TrimRight(viper.GetString("artifact-root"), "/"), *experiment.ID,
+		)
+	}
+	if err := s.experimentRepository.Update(ctx, experiment); err != nil {
+		return nil, api.NewInternalError(
+			"error updating artifact_location for experiment '%s': %s", experiment.Name, err,
+		)
+	}
+
+	return experiment, nil
+}
+
+func (s Service) UpdateExperiment(ctx context.Context, req *request.UpdateExperimentRequest) error {
+	if err := ValidateUpdateExperimentRequest(req); err != nil {
 		return err
 	}
 
-	ts := time.Now().UTC().UnixMilli()
-	exp := database.Experiment{
-		Name:             req.Name,
-		ArtifactLocation: req.ArtifactLocation,
-		LifecycleStage:   database.LifecycleStageActive,
-		CreationTime: sql.NullInt64{
-			Int64: ts,
-			Valid: true,
-		},
-		LastUpdateTime: sql.NullInt64{
-			Int64: ts,
-			Valid: true,
-		},
-		Tags: make([]database.ExperimentTag, len(req.Tags)),
+	parsedID, err := strconv.ParseInt(req.ID, 10, 32)
+	if err != nil {
+		return api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	for n, tag := range req.Tags {
-		exp.Tags[n] = database.ExperimentTag{
-			Key:   tag.Key,
-			Value: tag.Value,
-		}
+	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
+	if err != nil {
+		return api.NewResourceDoesNotExistError("unable to find experiment '%d': %s", *experiment.ID, err)
 	}
 
-	if tx := database.DB.Create(&exp); tx.Error != nil {
-		if err, ok := tx.Error.(*pgconn.PgError); ok && err.Code == "23505" {
-			return api.NewResourceAlreadyExistsError("Experiment(name=%s) already exists", exp.Name)
-		}
-		if err, ok := tx.Error.(sqlite3.Error); ok && err.Code == 19 && err.ExtendedCode == 2067 {
-			return api.NewResourceAlreadyExistsError("Experiment(name=%s) already exists", exp.Name)
-		}
-		return api.NewInternalError("Error inserting experiment '%s': %s", exp.Name, tx.Error)
+	experiment = convertors.ConvertUpdateExperimentToDBModel(experiment, req)
+	if err := s.experimentRepository.Update(ctx, experiment); err != nil {
+		return api.NewInternalError("unable to update experiment '%d': %s", *experiment.ID, err)
 	}
 
-	if exp.ArtifactLocation == "" {
-		exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(viper.GetString("artifact-root"), "/"), *exp.ID)
-		if tx := database.DB.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
-			return api.NewInternalError("Error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)
-		}
-	}
-
-	resp := response.NewCreateExperimentResponse(&exp)
-
-	log.Debugf("CreateExperiment response: %#v", resp)
-
-	return c.JSON(resp)
+	return nil
 }
 
-func UpdateExperiment(c *fiber.Ctx) error {
-	var req request.UpdateExperimentRequest
-	if err := c.BodyParser(&req); err != nil {
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
+func (s Service) GetExperiment(ctx context.Context, req *request.GetExperimentRequest) (*models.Experiment, error) {
+	if err := ValidateGetExperimentByIDRequest(req); err != nil {
+		return nil, err
 	}
 
-	log.Debugf("UpdateExperiment request: %#v", req)
-	if err := ValidateUpdateExperimentRequest(&req); err != nil {
+	// TODO:DSuhinin not sure about this conversion. Maybe we can just use string everywhere?
+	parsedID, err := strconv.ParseInt(req.ID, 10, 32)
+	if err != nil {
+		return nil, api.NewBadRequestError(`unable to parse experiment id '%s': %s`, req.ID, err)
+	}
+
+	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
+	if err != nil {
+		return nil, api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
+	}
+
+	return experiment, nil
+}
+
+func (s Service) GetExperimentByName(
+	ctx context.Context, req *request.GetExperimentRequest,
+) (*models.Experiment, error) {
+	if err := ValidateGetExperimentByNameRequest(req); err != nil {
+		return nil, err
+	}
+
+	experiment, err := s.experimentRepository.GetByName(ctx, req.Name)
+	if err != nil {
+		return nil, api.NewResourceDoesNotExistError(`unable to find experiment '%s': %v`, req.Name, err)
+	}
+
+	return experiment, nil
+}
+
+func (s Service) DeleteExperiment(ctx context.Context, req *request.DeleteExperimentRequest) error {
+	if err := ValidateDeleteExperimentRequest(req); err != nil {
 		return err
 	}
 
@@ -106,36 +148,26 @@ func UpdateExperiment(c *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	ex32 := int32(parsedID)
-	experiment := database.Experiment{
-		ID: &ex32,
+	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
+	if err != nil {
+		return api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
 
-	if tx := database.DB.Select("ID").First(&experiment); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", *experiment.ID, tx.Error)
+	experiment.LifecycleStage = models.LifecycleStageDeleted
+	experiment.LastUpdateTime = sql.NullInt64{
+		Int64: time.Now().UTC().UnixMilli(),
+		Valid: true,
 	}
 
-	if tx := database.DB.Model(&experiment).Updates(&database.Experiment{
-		Name: req.Name,
-		LastUpdateTime: sql.NullInt64{
-			Int64: time.Now().UTC().UnixMilli(),
-			Valid: true,
-		},
-	}); tx.Error != nil {
-		return api.NewInternalError("Unable to update experiment '%d': %s", *experiment.ID, tx.Error)
+	if err := s.experimentRepository.Update(ctx, experiment); err != nil {
+		return api.NewInternalError("unable to delete experiment '%d': %s", *experiment.ID, err)
 	}
 
-	return c.JSON(fiber.Map{})
+	return nil
 }
 
-func GetExperiment(c *fiber.Ctx) error {
-	var req request.GetExperimentRequest
-	if err := c.QueryParser(&req); err != nil {
-		return api.NewBadRequestError(err.Error())
-	}
-
-	log.Debugf("GetExperiment request: %#v", req)
-	if err := ValidateGetExperimentByIDRequest(&req); err != nil {
+func (s Service) RestoreExperiment(ctx context.Context, req *request.RestoreExperimentRequest) error {
+	if err := ValidateRestoreExperimentRequest(req); err != nil {
 		return err
 	}
 
@@ -144,55 +176,26 @@ func GetExperiment(c *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	ex32 := int32(parsedID)
-	exp := database.Experiment{
-		ID: &ex32,
+	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
+	if err != nil {
+		return api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
 
-	if tx := database.DB.Preload("Tags").First(&exp); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", parsedID, tx.Error)
+	experiment.LifecycleStage = models.LifecycleStageActive
+	experiment.LastUpdateTime = sql.NullInt64{
+		Int64: time.Now().UTC().UnixMilli(),
+		Valid: true,
 	}
 
-	resp := response.NewExperimentResponse(&exp)
+	if err := s.experimentRepository.Update(ctx, experiment); err != nil {
+		return api.NewInternalError("Unable to restore experiment '%d': %s", *experiment.ID, err)
+	}
 
-	log.Debugf("GetExperiment response: %#v", resp)
-
-	return c.JSON(resp)
+	return nil
 }
 
-func GetExperimentByName(c *fiber.Ctx) error {
-	var req request.GetExperimentRequest
-	if err := c.QueryParser(&req); err != nil {
-		return api.NewBadRequestError(err.Error())
-	}
-
-	log.Debugf("GetExperimentByName request: %#v", req)
-	if err := ValidateGetExperimentByNameRequest(&req); err != nil {
-		return err
-	}
-
-	exp := database.Experiment{
-		Name: req.Name,
-	}
-	if tx := database.DB.Preload("Tags").Where(&exp).First(&exp); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find experiment '%s': %s", req.Name, tx.Error)
-	}
-
-	resp := response.NewExperimentResponse(&exp)
-
-	log.Debugf("GetExperimentByName response: %#v", resp)
-
-	return c.JSON(resp)
-}
-
-func DeleteExperiment(c *fiber.Ctx) error {
-	var req request.DeleteExperimentRequest
-	if err := c.BodyParser(&req); err != nil {
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("DeleteExperiment request: %#v", req)
-	if err := ValidateDeleteExperimentRequest(&req); err != nil {
+func (s Service) SetExperimentTag(ctx context.Context, req *request.SetExperimentTagRequest) error {
+	if err := ValidateSetExperimentTagRequest(req); err != nil {
 		return err
 	}
 
@@ -201,119 +204,24 @@ func DeleteExperiment(c *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	ex32 := int32(parsedID)
-	exp := database.Experiment{
-		ID: &ex32,
-	}
-	if tx := database.DB.Select("ID").First(&exp); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", *exp.ID, tx.Error)
-	}
-
-	if tx := database.DB.Model(&exp).Updates(&database.Experiment{
-		LifecycleStage: database.LifecycleStageDeleted,
-		LastUpdateTime: sql.NullInt64{
-			Int64: time.Now().UTC().UnixMilli(),
-			Valid: true,
-		},
-	}); tx.Error != nil {
-		return api.NewInternalError("Unable to delete experiment '%d': %s", *exp.ID, tx.Error)
-	}
-
-	return c.JSON(fiber.Map{})
-}
-
-func RestoreExperiment(c *fiber.Ctx) error {
-	var req request.RestoreExperimentRequest
-	if err := c.BodyParser(&req); err != nil {
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("RestoreExperiment request: %#v", req)
-	if err := ValidateRestoreExperimentRequest(&req); err != nil {
-		return err
-	}
-
-	parsedID, err := strconv.ParseInt(req.ID, 10, 32)
+	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
 	if err != nil {
-		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
+		return api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
 
-	ex32 := int32(parsedID)
-	exp := database.Experiment{
-		ID: &ex32,
-	}
-	if tx := database.DB.Select("ID").First(&exp); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("Unable to find experiment '%d': %s", *exp.ID, tx.Error)
+	experimentTag := convertors.ConvertSetExperimentTagRequestToDBModel(*experiment.ID, req)
+	if err := s.tagRepository.CreateExperimentTag(ctx, experimentTag); err != nil {
+		return api.NewInternalError("Unable to set tag for experiment '%d': %s", *experiment.ID, err)
 	}
 
-	if tx := database.DB.Model(&exp).Updates(&database.Experiment{
-		LifecycleStage: database.LifecycleStageActive,
-		LastUpdateTime: sql.NullInt64{
-			Int64: time.Now().UTC().UnixMilli(),
-			Valid: true,
-		},
-	}); tx.Error != nil {
-
-		return api.NewInternalError("Unable to restore experiment '%d': %s", *exp.ID, tx.Error)
-	}
-
-	return c.JSON(fiber.Map{})
+	return nil
 }
 
-func SetExperimentTag(c *fiber.Ctx) error {
-	var req request.SetExperimentTagRequest
-	if err := c.BodyParser(&req); err != nil {
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
-	}
-
-	log.Debugf("SetExperimentTag request: %#v", req)
-	if err := ValidateSetExperimentTagRequest(&req); err != nil {
-		return err
-	}
-
-	parsedID, err := strconv.ParseInt(req.ID, 10, 32)
-	if err != nil {
-		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
-	}
-
-	ex32 := int32(parsedID)
-	exp := database.Experiment{
-		ID:             &ex32,
-		LifecycleStage: database.LifecycleStageActive,
-	}
-	if tx := database.DB.Select("ID").Where(&exp).First(&exp); tx.Error != nil {
-		return api.NewInvalidParameterValueError("Unable to find experiment '%d': %s", *exp.ID, tx.Error)
-	}
-
-	if tx := database.DB.Clauses(clause.OnConflict{
-		UpdateAll: true,
-	}).Create(&database.ExperimentTag{
-		ExperimentID: *exp.ID,
-		Key:          req.Key,
-		Value:        req.Value,
-	}); tx.Error != nil {
-		return api.NewInternalError("Unable to set tag for experiment '%d': %s", *exp.ID, tx.Error)
-	}
-
-	return c.JSON(fiber.Map{})
-}
-
-func SearchExperiments(c *fiber.Ctx) error {
-	var req request.SearchExperimentsRequest
-	switch c.Method() {
-	case fiber.MethodPost:
-		if err := c.BodyParser(&req); err != nil {
-			return api.NewBadRequestError("Unable to decode request body: %s", err)
-		}
-	case fiber.MethodGet:
-		if err := c.QueryParser(&req); err != nil {
-			return api.NewBadRequestError(err.Error())
-		}
-	}
-
-	log.Debugf("SearchExperiments request: %#v", req)
-	if err := ValidateSearchExperimentsRequest(&req); err != nil {
-		return err
+func (s Service) SearchExperiments(
+	ctx context.Context, req *request.SearchExperimentsRequest,
+) ([]models.Experiment, int, int, error) {
+	if err := ValidateSearchExperimentsRequest(req); err != nil {
+		return nil, 0, 0, err
 	}
 
 	// ViewType
@@ -352,7 +260,7 @@ func SearchExperiments(c *fiber.Ctx) error {
 				strings.NewReader(req.PageToken),
 			),
 		).Decode(&token); err != nil {
-			return api.NewInvalidParameterValueError("Invalid page_token '%s': %s", req.PageToken, err)
+			return nil, 0, 0, api.NewInvalidParameterValueError("invalid page_token '%s': %s", req.PageToken, err)
 
 		}
 		offset = int(token.Offset)
@@ -364,7 +272,7 @@ func SearchExperiments(c *fiber.Ctx) error {
 		for n, f := range filterAnd.Split(req.Filter, -1) {
 			components := filterCond.FindStringSubmatch(f)
 			if len(components) != 5 {
-				return api.NewInvalidParameterValueError("Malformed filter '%s'", f)
+				return nil, 0, 0, api.NewInvalidParameterValueError("malformed filter '%s'", f)
 			}
 
 			entity := components[1]
@@ -380,17 +288,17 @@ func SearchExperiments(c *fiber.Ctx) error {
 					case ">", ">=", "!=", "=", "<", "<=":
 						v, err := strconv.Atoi(value.(string))
 						if err != nil {
-							return api.NewInvalidParameterValueError("Invalid numeric value '%s'", value)
+							return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric value '%s'", value)
 						}
 						value = v
 					default:
-						return api.NewInvalidParameterValueError("Invalid numeric attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric attribute comparison operator '%s'", comparison)
 					}
 				case "name":
 					switch strings.ToUpper(comparison) {
 					case "!=", "=", "LIKE", "ILIKE":
 						if strings.HasPrefix(value.(string), "(") {
-							return api.NewInvalidParameterValueError("Invalid string value '%s'", value)
+							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
 						if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
@@ -399,21 +307,21 @@ func SearchExperiments(c *fiber.Ctx) error {
 							value = strings.ToLower(value.(string))
 						}
 					default:
-						return api.NewInvalidParameterValueError("Invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
 					}
 				default:
-					return api.NewInvalidParameterValueError("Invalid attribute '%s'. Valid values are ['name', 'creation_time', 'last_update_time']", key)
+					return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['name', 'creation_time', 'last_update_time']", key)
 				}
 				tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
 			case "tag", "tags":
 				switch strings.ToUpper(comparison) {
 				case "!=", "=", "LIKE", "ILIKE":
 					if strings.HasPrefix(value.(string), "(") {
-						return api.NewInvalidParameterValueError("Invalid string value '%s'", value)
+						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return api.NewInvalidParameterValueError("Invalid tag comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError("invalid tag comparison operator '%s'", comparison)
 				}
 				table := fmt.Sprintf("filter_%d", n)
 				where := fmt.Sprintf("value %s ?", comparison)
@@ -426,7 +334,7 @@ func SearchExperiments(c *fiber.Ctx) error {
 					database.DB.Select("experiment_id", "value").Where("key = ?", key).Where(where, value).Model(&database.ExperimentTag{}),
 				)
 			default:
-				return api.NewInvalidParameterValueError("Invalid entity type '%s'. Valid values are ['tag', 'attribute']", entity)
+				return nil, 0, 0, api.NewInvalidParameterValueError("invalid entity type '%s'. Valid values are ['tag', 'attribute']", entity)
 			}
 		}
 	}
@@ -436,7 +344,7 @@ func SearchExperiments(c *fiber.Ctx) error {
 	for _, o := range req.OrderBy {
 		components := experimentOrder.FindStringSubmatch(o)
 		if len(components) == 0 {
-			return api.NewInvalidParameterValueError("Invalid order_by clause '%s'", o)
+			return nil, 0, 0, api.NewInvalidParameterValueError("invalid order_by clause '%s'", o)
 		}
 
 		column := components[1]
@@ -446,7 +354,7 @@ func SearchExperiments(c *fiber.Ctx) error {
 			fallthrough
 		case "name", "creation_time", "last_update_time":
 		default:
-			return api.NewInvalidParameterValueError("Invalid attribute '%s'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']", column)
+			return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']", column)
 		}
 		tx.Order(clause.OrderByColumn{
 			Column: clause.Column{Name: column},
@@ -462,51 +370,10 @@ func SearchExperiments(c *fiber.Ctx) error {
 	}
 
 	// Actual query
-	var exps []database.Experiment
-	tx.Preload("Tags").Find(&exps)
-	if tx.Error != nil {
-		return api.NewInternalError("Unable to search runs: %s", tx.Error)
+	var exps []models.Experiment
+	if tx.Preload("Tags").Find(&exps).Error != nil {
+		return nil, 0, 0, api.NewInternalError("unable to search runs: %s", tx.Error)
 	}
 
-	resp := &response.SearchExperimentsResponse{}
-
-	// NextPageToken
-	if len(exps) > limit {
-		exps = exps[:limit]
-		var token strings.Builder
-		b64 := base64.NewEncoder(base64.StdEncoding, &token)
-		if err := json.NewEncoder(b64).Encode(request.PageToken{
-			Offset: int32(offset + limit),
-		}); err != nil {
-			return api.NewInternalError("Unable to build next_page_token: %s", err)
-		}
-		b64.Close()
-		resp.NextPageToken = token.String()
-	}
-
-	resp.Experiments = make([]response.ExperimentPartialResponse, len(exps))
-	for n, r := range exps {
-		e := response.ExperimentPartialResponse{
-			ID:               fmt.Sprint(*r.ID),
-			Name:             r.Name,
-			ArtifactLocation: r.ArtifactLocation,
-			LifecycleStage:   string(r.LifecycleStage),
-			LastUpdateTime:   r.LastUpdateTime.Int64,
-			CreationTime:     r.CreationTime.Int64,
-			Tags:             make([]response.ExperimentTagPartialResponse, len(r.Tags)),
-		}
-
-		for n, t := range r.Tags {
-			e.Tags[n] = response.ExperimentTagPartialResponse{
-				Key:   t.Key,
-				Value: t.Value,
-			}
-		}
-
-		resp.Experiments[n] = e
-	}
-
-	log.Debugf("SearchExperiments response: %#v", resp)
-
-	return c.JSON(resp)
+	return exps, limit, offset, nil
 }

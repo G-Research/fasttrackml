@@ -21,6 +21,7 @@ const (
 // ConvertCreateRunRequestToDBModel converts request.CreateRunRequest into actual models.Run model.
 func ConvertCreateRunRequestToDBModel(experiment *models.Experiment, req *request.CreateRunRequest) *models.Run {
 	run := models.Run{
+		// TODO:Dsuhinin why sometimes we create ID like that and sometimes created it using DB?
 		ID:           database.NewUUID(),
 		Name:         req.Name,
 		ExperimentID: *experiment.ID,

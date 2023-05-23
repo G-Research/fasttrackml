@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+// Run represents model to work with `runs` table.
 type Run struct {
 	ID             string         `gorm:"column:run_uuid;type:varchar(32);not null;primaryKey"`
 	Name           string         `gorm:"type:varchar(250)"`
@@ -36,8 +37,10 @@ func (r Run) IsLifecycleStageActive() bool {
 	return r.LifecycleStage == LifecycleStageActive
 }
 
+// RowNum represents custom data type.
 type RowNum int64
 
+// Scan implements Gorm interface for custom data types.
 func (rn *RowNum) Scan(v interface{}) error {
 	nullInt := sql.NullInt64{}
 	if err := nullInt.Scan(v); err != nil {
@@ -47,44 +50,14 @@ func (rn *RowNum) Scan(v interface{}) error {
 	return nil
 }
 
+// GormDataType implements Gorm interface for custom data types.
 func (rn *RowNum) GormDataType() string {
 	return "bigint"
 }
 
+// GormValue implements Gorm interface for custom data types.
 func (rn *RowNum) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 	return clause.Expr{
 		SQL: "(SELECT COALESCE(MAX(row_num), -1) FROM runs) + 1",
 	}
-}
-
-type Param struct {
-	Key   string `gorm:"type:varchar(250);not null;primaryKey"`
-	Value string `gorm:"type:varchar(500);not null"`
-	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
-}
-
-type Tag struct {
-	Key   string `gorm:"type:varchar(250);not null;primaryKey"`
-	Value string `gorm:"type:varchar(5000)"`
-	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
-}
-
-type Metric struct {
-	Key       string  `gorm:"type:varchar(250);not null;primaryKey"`
-	Value     float64 `gorm:"type:double precision;not null;primaryKey"`
-	Timestamp int64   `gorm:"not null;primaryKey"`
-	RunID     string  `gorm:"column:run_uuid;not null;primaryKey;index"`
-	Step      int64   `gorm:"default:0;not null;primaryKey"`
-	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
-	Iter      int64   `gorm:"index"`
-}
-
-type LatestMetric struct {
-	Key       string  `gorm:"type:varchar(250);not null;primaryKey"`
-	Value     float64 `gorm:"type:double precision;not null"`
-	Timestamp int64
-	Step      int64  `gorm:"not null"`
-	IsNan     bool   `gorm:"not null"`
-	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
-	LastIter  int64
 }

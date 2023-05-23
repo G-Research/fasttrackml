@@ -1,9 +1,15 @@
 package response
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"strings"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/rotisserie/eris"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // ExperimentTagPartialResponse is a partial response object for different responses.
@@ -29,7 +35,7 @@ type CreateExperimentResponse struct {
 }
 
 // NewCreateExperimentResponse creates new CreateExperimentResponse object.
-func NewCreateExperimentResponse(experiment *database.Experiment) *CreateExperimentResponse {
+func NewCreateExperimentResponse(experiment *models.Experiment) *CreateExperimentResponse {
 	return &CreateExperimentResponse{
 		ID: fmt.Sprint(*experiment.ID),
 	}
@@ -37,35 +43,70 @@ func NewCreateExperimentResponse(experiment *database.Experiment) *CreateExperim
 
 // GetExperimentResponse is a response object for `GET /mlflow/experiments/get` endpoint.
 type GetExperimentResponse struct {
-	Experiment ExperimentPartialResponse `json:"experiment"`
+	Experiment *ExperimentPartialResponse `json:"experiment"`
 }
 
 // NewExperimentResponse creates new GetExperimentResponse object.
-func NewExperimentResponse(experiment *database.Experiment) *GetExperimentResponse {
-	response := GetExperimentResponse{
-		Experiment: ExperimentPartialResponse{
-			// TODO:DSuhinin - we have to check that value is not null before use it. Ideally get rid of pointer.
-			ID:               fmt.Sprint(*experiment.ID),
-			Name:             experiment.Name,
-			ArtifactLocation: experiment.ArtifactLocation,
-			LifecycleStage:   string(experiment.LifecycleStage),
-			LastUpdateTime:   experiment.LastUpdateTime.Int64,
-			CreationTime:     experiment.CreationTime.Int64,
-			Tags:             make([]ExperimentTagPartialResponse, len(experiment.Tags)),
-		},
+func NewExperimentResponse(experiment *models.Experiment) *GetExperimentResponse {
+	return &GetExperimentResponse{
+		Experiment: NewExperimentPartialResponse(experiment),
 	}
-
-	for n, t := range experiment.Tags {
-		response.Experiment.Tags[n] = ExperimentTagPartialResponse{
-			Key:   t.Key,
-			Value: t.Value,
-		}
-	}
-	return &response
 }
 
 // SearchExperimentsResponse is a response object for `GET /mlflow/experiments/search` endpoint.
 type SearchExperimentsResponse struct {
-	Experiments   []ExperimentPartialResponse `json:"experiments"`
-	NextPageToken string                      `json:"next_page_token,omitempty"`
+	Experiments   []*ExperimentPartialResponse `json:"experiments"`
+	NextPageToken string                       `json:"next_page_token,omitempty"`
+}
+
+// NewSearchExperimentsResponse  creates new SearchExperimentsResponse object.
+func NewSearchExperimentsResponse(
+	experiments []models.Experiment, limit, offset int,
+) (*SearchExperimentsResponse, error) {
+	resp := SearchExperimentsResponse{
+		Experiments: make([]*ExperimentPartialResponse, len(experiments)),
+	}
+
+	// transform each models.Experiment entity.
+	for i, experiment := range experiments {
+		resp.Experiments[i] = NewExperimentPartialResponse(&experiment)
+	}
+
+	// encode `nextPageToken` value.
+	if len(experiments) > limit {
+		experiments = experiments[:limit]
+		var token strings.Builder
+		if err := json.NewEncoder(
+			base64.NewEncoder(base64.StdEncoding, &token),
+		).Encode(request.PageToken{
+			Offset: int32(offset + limit),
+		}); err != nil {
+			return nil, eris.Wrap(err, "error encoding `nextPageToken` value")
+		}
+		resp.NextPageToken = token.String()
+	}
+
+	return &resp, nil
+}
+
+// NewExperimentPartialResponse is a helper function for NewExperimentResponse and NewSearchExperimentsResponse functions,
+// because the use almost the same response structure.
+func NewExperimentPartialResponse(experiment *models.Experiment) *ExperimentPartialResponse {
+	tags := make([]ExperimentTagPartialResponse, len(experiment.Tags))
+	for n, t := range experiment.Tags {
+		tags[n] = ExperimentTagPartialResponse{
+			Key:   t.Key,
+			Value: t.Value,
+		}
+	}
+
+	return &ExperimentPartialResponse{
+		ID:               fmt.Sprint(*experiment.ID),
+		Name:             experiment.Name,
+		ArtifactLocation: experiment.ArtifactLocation,
+		LifecycleStage:   string(experiment.LifecycleStage),
+		LastUpdateTime:   experiment.LastUpdateTime.Int64,
+		CreationTime:     experiment.CreationTime.Int64,
+		Tags:             tags,
+	}
 }

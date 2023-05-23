@@ -1,6 +1,8 @@
 package response
 
-import "github.com/G-Research/fasttrackml/pkg/database"
+import (
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+)
 
 // MetricPartialResponse is a partial response object for GetMetricHistoryResponse.
 type MetricPartialResponse struct {
@@ -17,7 +19,7 @@ type GetMetricHistoryResponse struct {
 }
 
 // NewMetricHistoryResponse creates new GetMetricHistoryResponse object.
-func NewMetricHistoryResponse(metrics []database.Metric) *GetMetricHistoryResponse {
+func NewMetricHistoryResponse(metrics []models.Metric) *GetMetricHistoryResponse {
 	response := GetMetricHistoryResponse{
 		Metrics: make([]MetricPartialResponse, len(metrics)),
 	}
@@ -42,7 +44,7 @@ type GetMetricHistoryBulkResponse struct {
 }
 
 // NewMetricHistoryBulkResponse creates new GetMetricHistoryBulkResponse object.
-func NewMetricHistoryBulkResponse(metrics []database.Metric) *GetMetricHistoryBulkResponse {
+func NewMetricHistoryBulkResponse(metrics []models.Metric) *GetMetricHistoryBulkResponse {
 	response := GetMetricHistoryBulkResponse{
 		Metrics: make([]MetricPartialResponse, len(metrics)),
 	}

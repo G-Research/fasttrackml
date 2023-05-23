@@ -14,12 +14,14 @@ import (
 // TagRepositoryProvider provides an interface to work with models.Tag entity.
 type TagRepositoryProvider interface {
 	BaseRepositoryProvider
-	// Delete deletes existing models.Tag entity.
-	Delete(ctx context.Context, tag *models.Tag) error
+	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
+	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
+	// CreateRunTagWithTransaction creates new models.Tag entity connected to models.Run.
+	CreateRunTagWithTransaction(ctx context.Context, tx *gorm.DB, runID, key, value string) error
 	// GetByRunIDAndKey returns models.Tag by provided RunID and Tag Key.
 	GetByRunIDAndKey(ctx context.Context, runID, key string) (*models.Tag, error)
-	// CreateWithTransaction creates new models.Tag entity connected to models.Run.
-	CreateWithTransaction(ctx context.Context, tx *gorm.DB, runID, key, value string) error
+	// Delete deletes existing models.Tag entity.
+	Delete(ctx context.Context, tag *models.Tag) error
 }
 
 // TagRepository repository to work with models.Tag entity.
@@ -36,10 +38,28 @@ func NewTagRepository(db *gorm.DB) *TagRepository {
 	}
 }
 
-// Delete deletes existing models.Tag entity.
-func (r TagRepository) Delete(ctx context.Context, tag *models.Tag) error {
-	if err := database.DB.Delete(tag).Error; err != nil {
-		return eris.Wrapf(err, "error deleting tag by run id: %s and key: %s", tag.RunID, tag.Key)
+// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
+func (r TagRepository) CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error {
+	if err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		UpdateAll: true,
+	}).Create(experimentTag).Error; err != nil {
+		return eris.Wrapf(err, "error creating tag for experiment with id: %d", experimentTag.ExperimentID)
+	}
+	return nil
+}
+
+// CreateRunTagWithTransaction creates new models.Tag entity connected to models.Run.
+func (r TagRepository) CreateRunTagWithTransaction(
+	ctx context.Context, tx *gorm.DB, runID, key, value string,
+) error {
+	if err := tx.WithContext(ctx).Clauses(clause.OnConflict{
+		UpdateAll: true,
+	}).Create([]models.Tag{{
+		Key:   key,
+		Value: value,
+		RunID: runID,
+	}}).Error; err != nil {
+		return eris.Wrapf(err, "error creating tag for run with id: %s", runID)
 	}
 	return nil
 }
@@ -53,18 +73,10 @@ func (r TagRepository) GetByRunIDAndKey(ctx context.Context, runID, key string) 
 	return &tag, nil
 }
 
-// CreateWithTransaction creates new models.Tag entity connected to models.Run.
-func (r TagRepository) CreateWithTransaction(
-	ctx context.Context, tx *gorm.DB, runID, key, value string,
-) error {
-	if err := tx.WithContext(ctx).Clauses(clause.OnConflict{
-		UpdateAll: true,
-	}).Create([]database.Tag{{
-		Key:   key,
-		Value: value,
-		RunID: runID,
-	}}).Error; err != nil {
-		return eris.Wrapf(err, "error creating tag for run with id: %s", runID)
+// Delete deletes existing models.Tag entity.
+func (r TagRepository) Delete(ctx context.Context, tag *models.Tag) error {
+	if err := database.DB.Delete(tag).Error; err != nil {
+		return eris.Wrapf(err, "error deleting tag by run id: %s and key: %s", tag.RunID, tag.Key)
 	}
 	return nil
 }

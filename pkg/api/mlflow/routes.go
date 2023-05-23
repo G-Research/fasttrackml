@@ -5,10 +5,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
 )
 
 // Router represents `mlflow` router.
@@ -35,23 +32,23 @@ func (r Router) Init(server fiber.Router) {
 		mainGroup := server.Group(prefix)
 
 		artifacts := mainGroup.Group("/artifacts")
-		artifacts.Get("/list", artifact.ListArtifacts)
+		artifacts.Get("/list", r.controller.ListArtifacts)
 
 		experiments := mainGroup.Group("/experiments")
-		experiments.Post("/create", experiment.CreateExperiment)
-		experiments.Post("/delete", experiment.DeleteExperiment)
-		experiments.Get("/get", experiment.GetExperiment)
-		experiments.Get("/get-by-name", experiment.GetExperimentByName)
-		experiments.Get("/list", experiment.SearchExperiments)
-		experiments.Post("/restore", experiment.RestoreExperiment)
-		experiments.Get("/search", experiment.SearchExperiments)
-		experiments.Post("/search", experiment.SearchExperiments)
-		experiments.Post("/set-experiment-tag", experiment.SetExperimentTag)
-		experiments.Post("/update", experiment.UpdateExperiment)
+		experiments.Post("/create", r.controller.CreateExperiment)
+		experiments.Post("/delete", r.controller.DeleteExperiment)
+		experiments.Get("/get", r.controller.GetExperiment)
+		experiments.Get("/get-by-name", r.controller.GetExperimentByName)
+		experiments.Get("/list", r.controller.SearchExperiments)
+		experiments.Post("/restore", r.controller.RestoreExperiment)
+		experiments.Get("/search", r.controller.SearchExperiments)
+		experiments.Post("/search", r.controller.SearchExperiments)
+		experiments.Post("/set-experiment-tag", r.controller.SetExperimentTag)
+		experiments.Post("/update", r.controller.UpdateExperiment)
 
 		metrics := mainGroup.Group("/metrics")
-		metrics.Get("/get-history", metric.GetMetricHistory)
-		metrics.Get("/get-history-bulk", metric.GetMetricHistoryBulk)
+		metrics.Get("/get-history", r.controller.GetMetricHistory)
+		metrics.Get("/get-history-bulk", r.controller.GetMetricHistoryBulk)
 		metrics.Post("/get-histories", metric.GetMetricHistories)
 
 		runs := mainGroup.Group("/runs")
@@ -67,8 +64,8 @@ func (r Router) Init(server fiber.Router) {
 		runs.Post("/set-tag", r.controller.SetRunTag)
 		runs.Post("/update", r.controller.UpdateRun)
 
-		mainGroup.Get("/model-versions/search", model.SearchModelVersions)
-		mainGroup.Get("/registered-models/search", model.SearchRegisteredModels)
+		mainGroup.Get("/model-versions/search", r.controller.SearchModelVersions)
+		mainGroup.Get("/registered-models/search", r.controller.SearchRegisteredModels)
 
 		mainGroup.Use(func(c *fiber.Ctx) error {
 			return api.NewEndpointNotFound("Not found")

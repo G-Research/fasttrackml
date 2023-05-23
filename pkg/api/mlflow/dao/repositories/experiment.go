@@ -54,8 +54,8 @@ func (r ExperimentRepository) Create(ctx context.Context, experiment *models.Exp
 
 // GetByID returns experiment by its ID.
 func (r ExperimentRepository) GetByID(ctx context.Context, experimentID int32) (*models.Experiment, error) {
-	experiment := models.Experiment{ID: &experimentID}
-	if err := r.db.WithContext(ctx).Preload("Tags").First(&experiment).Error; err != nil {
+	var experiment models.Experiment
+	if err := r.db.WithContext(ctx).Where(models.Experiment{ID: &experimentID}).Preload("Tags").First(&experiment).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting experiment by id: %d", experimentID)
 	}
 	return &experiment, nil
@@ -63,8 +63,8 @@ func (r ExperimentRepository) GetByID(ctx context.Context, experimentID int32) (
 
 // GetByName returns experiment by its name.
 func (r ExperimentRepository) GetByName(ctx context.Context, name string) (*models.Experiment, error) {
-	experiment := models.Experiment{Name: name}
-	if err := r.db.WithContext(ctx).First(&experiment).Error; err != nil {
+	var experiment models.Experiment
+	if err := r.db.WithContext(ctx).Where(models.Experiment{Name: name}).First(&experiment).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

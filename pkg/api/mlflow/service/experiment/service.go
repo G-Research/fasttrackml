@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"

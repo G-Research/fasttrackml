@@ -462,7 +462,7 @@ func (s Service) DeleteRunTag(ctx context.Context, req *request.DeleteRunTagRequ
 
 	tag, err := s.tagRepository.GetByRunIDAndKey(ctx, run.ID, req.Key)
 	if err != nil {
-		return api.NewResourceDoesNotExistError("unable to find tag '%s' for run '%s': %s", req.Key, req.RunID, err)
+		return api.NewResourceDoesNotExistError("Unable to find tag '%s' for run '%s': %s", req.Key, req.RunID, err)
 	}
 
 	if err := s.tagRepository.Delete(ctx, tag); err != nil {

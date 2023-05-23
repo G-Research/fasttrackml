@@ -67,10 +67,10 @@ jobs:
         run: go get github.com/vektra/mockery/v2/.../
 
       - name: Generate mocks
-        run: make mocks; sleep 5;
+        run: make mocks-generate; sleep 5;
 
       - name: Run Golang Unit Tests
-        run: make go_test_unit
+        run: make tests-run-unit
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

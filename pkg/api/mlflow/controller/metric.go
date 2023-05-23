@@ -15,14 +15,14 @@ func (c Controller) GetMetricHistory(ctx *fiber.Ctx) error {
 	if err := ctx.QueryParser(&req); err != nil {
 		return api.NewBadRequestError(err.Error())
 	}
-	log.Debugf("GetMetricHistory request: %#v", req)
+	log.Debugf("getMetricHistory request: %#v", req)
 	metrics, err := c.metricService.GetMetricHistory(ctx.Context(), &req)
 	if err != nil {
 		return err
 	}
 
 	resp := response.NewMetricHistoryResponse(metrics)
-	log.Debugf("GetMetricHistory response: %#v", resp)
+	log.Debugf("getMetricHistory response: %#v", resp)
 
 	return ctx.JSON(resp)
 }
@@ -33,7 +33,7 @@ func (c Controller) GetMetricHistoryBulk(ctx *fiber.Ctx) error {
 	if err := ctx.QueryParser(&req); err != nil {
 		return api.NewBadRequestError(err.Error())
 	}
-	log.Debugf("GetMetricHistoryBulk request: %#v", req)
+	log.Debugf("getMetricHistoryBulk request: %#v", req)
 
 	metrics, err := c.metricService.GetMetricHistoryBulk(ctx, &req)
 	if err != nil {
@@ -41,7 +41,7 @@ func (c Controller) GetMetricHistoryBulk(ctx *fiber.Ctx) error {
 	}
 
 	resp := response.NewMetricHistoryBulkResponse(metrics)
-	log.Debugf("GetMetricHistoryBulk response: %#v", resp)
+	log.Debugf("getMetricHistoryBulk response: %#v", resp)
 
 	return ctx.JSON(resp)
 }

@@ -22,14 +22,14 @@ func (c Controller) CreateExperiment(ctx *fiber.Ctx) error {
 		}
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("CreateExperiment request: %#v", req)
+	log.Debugf("rreateExperiment request: %#v", req)
 	experiment, err := c.experimentService.CreateExperiment(ctx.Context(), &req)
 	if err != nil {
 		return err
 	}
 
 	resp := response.NewCreateExperimentResponse(experiment)
-	log.Debugf("CreateExperiment response: %#v", resp)
+	log.Debugf("rreateExperiment response: %#v", resp)
 
 	return ctx.JSON(resp)
 }
@@ -40,11 +40,10 @@ func (c Controller) UpdateExperiment(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-
+	log.Debugf("updateExperiment request: %#v", req)
 	if err := c.experimentService.UpdateExperiment(ctx.Context(), &req); err != nil {
 		return err
 	}
-	log.Debugf("UpdateExperiment request: %#v", req)
 
 	return ctx.JSON(fiber.Map{})
 }
@@ -55,14 +54,14 @@ func (c Controller) GetExperiment(ctx *fiber.Ctx) error {
 	if err := ctx.QueryParser(&req); err != nil {
 		return api.NewBadRequestError(err.Error())
 	}
-	log.Debugf("GetExperiment request: %#v", req)
+	log.Debugf("getExperiment request: %#v", req)
 
 	experiment, err := c.experimentService.GetExperiment(ctx.Context(), &req)
 	if err != nil {
 		return err
 	}
 	resp := response.NewExperimentResponse(experiment)
-	log.Debugf("GetExperiment response: %#v", resp)
+	log.Debugf("getExperiment response: %#v", resp)
 	return ctx.JSON(resp)
 }
 
@@ -72,14 +71,14 @@ func (c Controller) GetExperimentByName(ctx *fiber.Ctx) error {
 	if err := ctx.QueryParser(&req); err != nil {
 		return api.NewBadRequestError(err.Error())
 	}
-	log.Debugf("GetExperimentByName request: %#v", req)
+	log.Debugf("getExperimentByName request: %#v", req)
 
 	experiment, err := c.experimentService.GetExperimentByName(ctx.Context(), &req)
 	if err != nil {
 		return err
 	}
 	resp := response.NewExperimentResponse(experiment)
-	log.Debugf("GetExperimentByName response: %#v", resp)
+	log.Debugf("getExperimentByName response: %#v", resp)
 	return ctx.JSON(resp)
 }
 
@@ -89,7 +88,7 @@ func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("DeleteExperiment request: %#v", req)
+	log.Debugf("deleteExperiment request: %#v", req)
 	if err := c.experimentService.DeleteExperiment(ctx.Context(), &req); err != nil {
 		return err
 	}
@@ -103,7 +102,7 @@ func (c Controller) RestoreExperiment(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("RestoreExperiment request: %#v", req)
+	log.Debugf("restoreExperiment request: %#v", req)
 	if err := c.experimentService.RestoreExperiment(ctx.Context(), &req); err != nil {
 		return err
 	}
@@ -116,7 +115,7 @@ func (c Controller) SetExperimentTag(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("SetExperimentTag request: %#v", req)
+	log.Debugf("setExperimentTag request: %#v", req)
 	if err := c.experimentService.SetExperimentTag(ctx.Context(), &req); err != nil {
 		return err
 	}
@@ -136,7 +135,7 @@ func (c Controller) SearchExperiments(ctx *fiber.Ctx) error {
 			return api.NewBadRequestError(err.Error())
 		}
 	}
-	log.Debugf("SearchExperiments request: %#v", req)
+	log.Debugf("searchExperiments request: %#v", req)
 	experiments, limit, offset, err := c.experimentService.SearchExperiments(ctx.Context(), &req)
 	if err != nil {
 		return err
@@ -146,5 +145,6 @@ func (c Controller) SearchExperiments(ctx *fiber.Ctx) error {
 	if err != nil {
 		return api.NewInternalError("unable to build next_page_token: %s", err)
 	}
+	log.Debugf("searchExperiments response: %#v", resp)
 	return ctx.JSON(resp)
 }

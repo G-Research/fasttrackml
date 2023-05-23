@@ -18,13 +18,13 @@ func (c Controller) CreateRun(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
-	log.Debugf("Create request: %#v", &req)
+	log.Debugf("create request: %#v", &req)
 	run, err := c.runService.CreateRun(ctx.Context(), &req)
 	if err != nil {
 		return err
 	}
 	resp := response.NewCreateRunResponse(run)
-	log.Debugf("Create response: %#v", resp)
+	log.Debugf("create response: %#v", resp)
 
 	return ctx.JSON(resp)
 }
@@ -40,10 +40,9 @@ func (c Controller) UpdateRun(ctx *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	log.Debugf("UpdateRun request: %#v", req)
+	log.Debugf("updateRun request: %#v", req)
 	resp := response.NewUpdateRunResponse(run)
-
-	log.Debugf("UpdateRun response: %#v", resp)
+	log.Debugf("updateRun response: %#v", resp)
 
 	return ctx.JSON(resp)
 }
@@ -55,15 +54,14 @@ func (c Controller) GetRun(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError(err.Error())
 	}
 
-	log.Debugf("GetRun request: %#v", req)
+	log.Debugf("getRun request: %#v", req)
 	run, err := c.runService.GetRun(ctx.Context(), &req)
 	if err != nil {
 		return err
 	}
 
 	resp := response.NewGetRunResponse(run)
-
-	log.Debugf("GetRun response: %#v", resp)
+	log.Debugf("getRun response: %#v", resp)
 
 	return ctx.JSON(resp)
 }
@@ -74,7 +72,7 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("SearchRuns request: %#v", req)
+	log.Debugf("searchRuns request: %#v", req)
 
 	runs, limit, offset, err := c.runService.SearchRuns(ctx.Context(), &req)
 	if err != nil {
@@ -85,8 +83,7 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	if err != nil {
 		return api.NewInternalError("Unable to build next_page_token: %s", err)
 	}
-
-	log.Debugf("SearchRuns response: %#v", resp)
+	log.Debugf("searchRuns response: %#v", resp)
 
 	return ctx.JSON(resp)
 }
@@ -97,7 +94,7 @@ func (c Controller) DeleteRun(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("DeleteRun request: %#v", req)
+	log.Debugf("deleteRun request: %#v", req)
 
 	if err := c.runService.DeleteRun(ctx.Context(), &req); err != nil {
 		return err
@@ -112,7 +109,7 @@ func (c Controller) RestoreRun(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("RestoreRun request: %#v", req)
+	log.Debugf("restoreRun request: %#v", req)
 
 	if err := c.runService.RestoreRun(ctx.Context(), &req); err != nil {
 		return err
@@ -130,7 +127,7 @@ func (c Controller) LogMetric(ctx *fiber.Ctx) error {
 		}
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("LogMetric request: %#v", req)
+	log.Debugf("logMetric request: %#v", req)
 
 	if err := c.runService.LogMetric(ctx.Context(), &req); err != nil {
 		return err
@@ -148,7 +145,7 @@ func (c Controller) LogParam(ctx *fiber.Ctx) error {
 		}
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("LogParam request: %#v", req)
+	log.Debugf("logParam request: %#v", req)
 
 	if err := c.runService.LogParam(ctx.Context(), &req); err != nil {
 		return err
@@ -166,7 +163,7 @@ func (c Controller) SetRunTag(ctx *fiber.Ctx) error {
 		}
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("SetRunTag request: %#v", req)
+	log.Debugf("setRunTag request: %#v", req)
 
 	if err := c.runService.SetRunTag(ctx.Context(), &req); err != nil {
 		return err
@@ -181,7 +178,7 @@ func (c Controller) DeleteRunTag(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("DeleteRunTag request: %#v", req)
+	log.Debugf("deleteRunTag request: %#v", req)
 
 	if err := c.runService.DeleteRunTag(ctx.Context(), &req); err != nil {
 		return err
@@ -198,7 +195,7 @@ func (c Controller) LogBatch(ctx *fiber.Ctx) error {
 		}
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
-	log.Debugf("LogBatch request: %#v", req)
+	log.Debugf("logBatch request: %#v", req)
 
 	if err := c.runService.LogBatch(ctx.Context(), &req); err != nil {
 		return err

@@ -63,14 +63,10 @@ type SearchExperimentsResponse struct {
 func NewSearchExperimentsResponse(
 	experiments []models.Experiment, limit, offset int,
 ) (*SearchExperimentsResponse, error) {
-	resp := SearchExperimentsResponse{
-		Experiments: make([]*ExperimentPartialResponse, len(experiments)),
-	}
-
 	// encode `nextPageToken` value.
+	var token strings.Builder
 	if len(experiments) > limit {
 		experiments = experiments[:limit]
-		var token strings.Builder
 		if err := json.NewEncoder(
 			base64.NewEncoder(base64.StdEncoding, &token),
 		).Encode(request.PageToken{
@@ -78,12 +74,14 @@ func NewSearchExperimentsResponse(
 		}); err != nil {
 			return nil, eris.Wrap(err, "error encoding `nextPageToken` value")
 		}
-		resp.NextPageToken = token.String()
 	}
 
+	resp := SearchExperimentsResponse{
+		NextPageToken: token.String(),
+	}
 	// transform each models.Experiment entity.
-	for i, experiment := range experiments {
-		resp.Experiments[i] = NewExperimentPartialResponse(&experiment)
+	for _, experiment := range experiments {
+		resp.Experiments = append(resp.Experiments, NewExperimentPartialResponse(&experiment))
 	}
 
 	return &resp, nil

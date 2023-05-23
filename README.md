@@ -82,6 +82,8 @@ root ➜ /workspaces/fastrack $ make test
 root ➜ /workspaces/fastrack $ emacs .
 ```
 
+Note that on MacOS, port 5000 is already occupied, so some adjustments are necessary.
+
 ### License
 
 Copyright 2022-2023 G-Research

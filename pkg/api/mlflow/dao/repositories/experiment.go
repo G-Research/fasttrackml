@@ -64,7 +64,11 @@ func (r ExperimentRepository) GetByID(ctx context.Context, experimentID int32) (
 // GetByName returns experiment by its name.
 func (r ExperimentRepository) GetByName(ctx context.Context, name string) (*models.Experiment, error) {
 	var experiment models.Experiment
-	if err := r.db.WithContext(ctx).Where(models.Experiment{Name: name}).First(&experiment).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload(
+		"Tags",
+	).Where(
+		models.Experiment{Name: name},
+	).First(&experiment).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

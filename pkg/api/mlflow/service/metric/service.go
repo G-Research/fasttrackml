@@ -2,6 +2,7 @@ package metric
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"time"
 
@@ -14,76 +15,59 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-func GetMetricHistory(c *fiber.Ctx) error {
-	req := request.GetMetricHistoryRequest{}
-	if err := c.QueryParser(&req); err != nil {
-		return api.NewBadRequestError(err.Error())
-	}
-
-	log.Debugf("GetMetricHistory request: %#v", req)
-	if err := ValidateGetMetricHistoryRequest(&req); err != nil {
-		return err
-	}
-
-	var metrics []database.Metric
-	if err := database.DB.Where(
-		"run_uuid = ?", req.GetRunID(),
-	).Where(
-		"key = ?", req.MetricKey,
-	).Find(&metrics).Error; err != nil {
-		return api.NewInternalError(
-			"Unable to get metric history for metric %q of run %q", req.MetricKey, req.GetRunID(),
-		)
-	}
-
-	resp := response.NewMetricHistoryResponse(metrics)
-
-	log.Debugf("GetMetricHistory response: %#v", resp)
-
-	return c.JSON(resp)
+// Service provides service layer to work with `metric` business logic.
+type Service struct {
+	metricRepository repositories.MetricRepositoryProvider
 }
 
-func GetMetricHistoryBulk(c *fiber.Ctx) error {
-	req := request.GetMetricHistoryBulkRequest{}
-	if err := c.QueryParser(&req); err != nil {
-		return api.NewBadRequestError(err.Error())
+// NewService creates new Service instance.
+func NewService(metricRepository repositories.MetricRepositoryProvider) *Service {
+	return &Service{
+		metricRepository: metricRepository,
+	}
+}
+
+func (s Service) GetMetricHistory(
+	ctx context.Context, req *request.GetMetricHistoryRequest,
+) ([]models.Metric, error) {
+	if err := ValidateGetMetricHistoryRequest(req); err != nil {
+		return nil, err
 	}
 
-	log.Debugf("GetMetricHistoryBulk request: %#v", req)
-	if err := ValidateGetMetricHistoryBulkRequest(&req); err != nil {
-		return err
-	}
-
-	var metrics []database.Metric
-	if err := database.DB.
-		Where("run_uuid IN ?", req.RunIDs).
-		Where("key = ?", req.MetricKey).
-		Order("run_uuid").
-		Order("timestamp").
-		Order("step").
-		Order("value").
-		Limit(req.MaxResults).
-		Find(&metrics).Error; err != nil {
-		return api.NewInternalError(
-			"Unable to get metric history in bulk for metric %q of runs %q", req.MetricKey, req.RunIDs,
+	metrics, err := s.metricRepository.GetMetricHistoryByRunIDAndKey(ctx, req.GetRunID(), req.MetricKey)
+	if err != nil {
+		return nil, api.NewInternalError(
+			"unable to get metric history for metric %q of run %q", req.MetricKey, req.GetRunID(),
 		)
 	}
 
-	resp := response.NewMetricHistoryBulkResponse(metrics)
+	return metrics, nil
+}
 
-	log.Debugf("GetMetricHistoryBulk response: %#v", resp)
-
-	return c.JSON(resp)
+func (s Service) GetMetricHistoryBulk(
+	ctx *fiber.Ctx, req *request.GetMetricHistoryBulkRequest,
+) ([]models.Metric, error) {
+	if err := ValidateGetMetricHistoryBulkRequest(req); err != nil {
+		return nil, err
+	}
+	metrics, err := s.metricRepository.GetMetricHistoryBulk(ctx.Context(), req.RunIDs, req.MetricKey, req.MaxResults)
+	if err != nil {
+		return nil, api.NewInternalError(
+			"unable to get metric history in bulk for metric %q of runs %q", req.MetricKey, req.RunIDs,
+		)
+	}
+	return metrics, nil
 }
 
 func GetMetricHistories(c *fiber.Ctx) error {
 	var req request.GetMetricHistoriesRequest
 	if err := c.BodyParser(&req); err != nil {
-		return api.NewBadRequestError("Unable to decode request body: %s", err)
+		return api.NewBadRequestError("unable to decode request body: %s", err)
 	}
 
 	log.Debugf("GetMetricHistories request: %#v", req)

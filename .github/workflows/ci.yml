@@ -70,7 +70,7 @@ jobs:
         run: make mocks-generate; sleep 5;
 
       - name: Run Golang Unit Tests
-        run: make tests-run-unit
+        run: make test-go-unit
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
@@ -105,7 +105,7 @@ jobs:
           touch pkg/ui/{aim,mlflow}/embed/build/index.html
 
       - name: Run MLFlow integration tests
-        run: ./tests/mlflow/test.sh
+        run: make test-python-integration
 
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

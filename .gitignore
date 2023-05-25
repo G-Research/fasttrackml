@@ -18,3 +18,6 @@ tests/*/*.src
 # Quick start
 outputs
 poetry.lock
+
+# Mocks
+mock_*

@@ -16,10 +16,18 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gorm.io/gorm"
 
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
@@ -34,19 +42,89 @@ var ServerCmd = &cobra.Command{
 }
 
 func serverCmd(cmd *cobra.Command, args []string) error {
-	if err := database.ConnectDB(
+	// 1. init database connection.
+	db, err := initDB()
+	if err != nil {
+		return err
+	}
+
+	// 2. init main HTTP server.
+	server := initServer()
+
+	// 3. init `aim` api and ui routes.
+	aimAPI.AddRoutes(server.Group("/aim/api/"))
+	aimUI.AddRoutes(server.Group("/aim/"))
+
+	// 4. init `mlflow` api and ui routes.
+	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
+	mlflowAPI.NewRouter(
+		controller.NewController(
+			run.NewService(
+				repositories.NewTagRepository(db),
+				repositories.NewRunRepository(db),
+				repositories.NewParamRepository(db),
+				repositories.NewMetricRepository(db),
+				repositories.NewExperimentRepository(db),
+			),
+			model.NewService(),
+			metric.NewService(
+				repositories.NewMetricRepository(db),
+			),
+			artifact.NewService(
+				repositories.NewRunRepository(db),
+			),
+			experiment.NewService(
+				repositories.NewTagRepository(db),
+				repositories.NewExperimentRepository(db),
+			),
+		),
+	).Init(server)
+	mlflowUI.AddRoutes(server.Group("/mlflow/"))
+	// TODO:DSuhinin we have to move it.
+	chooser.AddRoutes(server.Group("/"))
+
+	isRunning := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt)
+		<-sigint
+
+		log.Infof("Shutting down")
+		if err := server.Shutdown(); err != nil {
+			log.Infof("Error shutting down server: %v", err)
+		}
+		close(isRunning)
+	}()
+
+	addr := viper.GetString("listen-address")
+	log.Infof("Listening on %s", addr)
+	if err := server.Listen(addr); err != http.ErrServerClosed {
+		return fmt.Errorf("error listening: %v", err)
+	}
+
+	<-isRunning
+
+	return nil
+}
+
+// initDB init DB connection.
+func initDB() (*gorm.DB, error) {
+	db, err := database.ConnectDB(
 		viper.GetString("database-uri"),
 		viper.GetDuration("database-slow-threshold"),
 		viper.GetInt("database-pool-max"),
 		viper.GetBool("database-reset"),
 		viper.GetBool("database-migrate"),
 		viper.GetString("artifact-root"),
-	); err != nil {
-		database.DB.Close()
-		return fmt.Errorf("error connecting to DB: %w", err)
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to DB: %w", err)
 	}
-	defer database.DB.Close()
+	return db, nil
+}
 
+// initServer init HTTP server with base configuration.
+func initServer() *fiber.App {
 	server := fiber.New(fiber.Config{
 		ReadBufferSize:        16384,
 		ReadTimeout:           5 * time.Second,
@@ -59,7 +137,6 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 			switch {
 			case strings.HasPrefix(p, "/aim/api/"):
 				return aimAPI.ErrorHandler(c, err)
-
 			case strings.HasPrefix(p, "/api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/mlflow/ajax-api/2.0/mlflow/"):
@@ -91,19 +168,10 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	}))
 
 	server.Use(recover.New(recover.Config{EnableStackTrace: true}))
-
 	server.Use(logger.New(logger.Config{
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
-
-	aimAPI.AddRoutes(server.Group("/aim/api/"))
-	aimUI.AddRoutes(server.Group("/aim/"))
-
-	mlflowAPI.AddRoutes(server.Group("/api/2.0/mlflow/"))
-	mlflowAPI.AddRoutes(server.Group("/ajax-api/2.0/mlflow/"))
-	mlflowAPI.AddRoutes(server.Group("/mlflow/ajax-api/2.0/mlflow/"))
-	mlflowUI.AddRoutes(server.Group("/mlflow/"))
 
 	server.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")
@@ -112,30 +180,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		return c.SendString(version.Version)
 	})
 
-	chooser.AddRoutes(server.Group("/"))
-
-	idleConnsClosed := make(chan struct{})
-	go func() {
-		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt)
-		<-sigint
-
-		log.Infof("Shutting down")
-		if err := server.Shutdown(); err != nil {
-			log.Infof("Error shutting down server: %v", err)
-		}
-		close(idleConnsClosed)
-	}()
-
-	addr := viper.GetString("listen-address")
-	log.Infof("Listening on %s", addr)
-	if err := server.Listen(addr); err != http.ErrServerClosed {
-		return fmt.Errorf("error listening: %v", err)
-	}
-
-	<-idleConnsClosed
-
-	return nil
+	return server
 }
 
 func init() {

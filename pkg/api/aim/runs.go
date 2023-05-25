@@ -12,6 +12,8 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 
 	"github.com/gofiber/fiber/v2"
@@ -886,6 +888,31 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	})
 
 	return nil
+}
+
+// DeleteRun will update the run to the deleted lifecycle stage
+func DeleteRun(c *fiber.Ctx) error {
+	params := struct {
+		ID string `params:"id"`
+	}{}
+
+	if err := c.ParamsParser(&params); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	// TODO this code should move to service with injected repository
+	runRepo := repositories.NewRunRepository(database.DB.DB)
+	run := models.Run{ID: params.ID}
+	err := runRepo.Delete(c.Context(), &run)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError,
+			fmt.Sprintf("unable to delete run %q: %s", params.ID, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"id":     params.ID,
+		"status": "OK",
+	})
 }
 
 func toNumpy(values []float64) fiber.Map {

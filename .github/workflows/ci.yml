@@ -105,7 +105,7 @@ jobs:
           touch pkg/ui/{aim,mlflow}/embed/build/index.html
 
       - name: Run MLFlow integration tests
-        run: make test-python-integration
+        run: ./tests/mlflow/test.sh
 
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

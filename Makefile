@@ -42,19 +42,19 @@ help: ## display this help
 # 
 PHONY: clean
 clean:
-	@echo ">>> Cleaning node and go builds"
+	@echo ">>> Cleaning node and go build artifacts."
 	rm -Rf pkg/ui/aim/embed/repo
 	rm -Rf pkg/ui/mlflow/embed/repo
 	rm -Rf bin/fasttrack
 
 PHONY: build
 build:
-	@echo ">>> Build go and node modules"
+	@echo ">>> Building go and node components."
 	pkg/ui/aim/embed/build.sh
 	pkg/ui/mlflow/embed/build.sh
 	go build -o bin/fasttrack main.go
 
 PHONY: run
 run: build
-	@echo ">>> Run the FasttrackML server""
+	@echo ">>> Running the FasttrackML server."
 	bin/fasttrack server

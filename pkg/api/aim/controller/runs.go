@@ -1,4 +1,4 @@
-package aim
+package controller
 
 import (
 	"bufio"

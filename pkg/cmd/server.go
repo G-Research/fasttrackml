@@ -18,7 +18,8 @@ import (
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 
-	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
+	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim/api"
+	aimRoutes "github.com/G-Research/fasttrackml/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -52,7 +53,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	server := initServer()
 
 	// 3. init `aim` api and ui routes.
-	aimAPI.AddRoutes(server.Group("/aim/api/"))
+	aimRoutes.AddRoutes(server.Group("/aim/api/"))
 	aimUI.AddRoutes(server.Group("/aim/"))
 
 	// 4. init `mlflow` api and ui routes.

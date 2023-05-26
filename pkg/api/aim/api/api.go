@@ -1,4 +1,4 @@
-package aim
+package api
 
 type DetailedError interface {
 	error

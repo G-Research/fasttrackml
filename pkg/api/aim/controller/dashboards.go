@@ -11,7 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetDashboards(c *fiber.Ctx) error {
+func (ctlr Controller) GetDashboards(c *fiber.Ctx) error {
 	var dashboards []database.Dashboard
 	if err := database.DB.
 		Where("NOT dashboards.is_archived").
@@ -25,7 +25,7 @@ func GetDashboards(c *fiber.Ctx) error {
 	return c.JSON(dashboards)
 }
 
-func CreateDashboard(c *fiber.Ctx) error {
+func (ctlr Controller) CreateDashboard(c *fiber.Ctx) error {
 	var d struct {
 		AppID       uuid.UUID `json:"app_id"`
 		Name        string
@@ -68,7 +68,7 @@ func CreateDashboard(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(dash)
 }
 
-func GetDashboard(c *fiber.Ctx) error {
+func (ctlr Controller) GetDashboard(c *fiber.Ctx) error {
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}
@@ -96,7 +96,7 @@ func GetDashboard(c *fiber.Ctx) error {
 	return c.JSON(dash)
 }
 
-func UpdateDashboard(c *fiber.Ctx) error {
+func (ctlr Controller) UpdateDashboard(c *fiber.Ctx) error {
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}
@@ -142,7 +142,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 	return c.JSON(dash)
 }
 
-func DeleteDashboard(c *fiber.Ctx) error {
+func (ctlr Controller) DeleteDashboard(c *fiber.Ctx) error {
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}

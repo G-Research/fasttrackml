@@ -18,10 +18,11 @@ import (
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 
-	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim/api"
 	aimRoutes "github.com/G-Research/fasttrackml/pkg/api/aim"
+	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim/api"
+	aimController "github.com/G-Research/fasttrackml/pkg/api/aim/controller"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
+	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
@@ -43,42 +44,46 @@ var ServerCmd = &cobra.Command{
 }
 
 func serverCmd(cmd *cobra.Command, args []string) error {
-	// 1. init database connection.
+	// 1. init database connection and services
 	db, err := initDB()
 	if err != nil {
 		return err
 	}
 
+	runService := run.NewService(
+		repositories.NewTagRepository(db),
+		repositories.NewRunRepository(db),
+		repositories.NewParamRepository(db),
+		repositories.NewMetricRepository(db),
+		repositories.NewExperimentRepository(db),
+	)
+	modelService := model.NewService()
+	metricService := metric.NewService(
+		repositories.NewMetricRepository(db),
+	)
+	artifactService := artifact.NewService(
+		repositories.NewRunRepository(db),
+	)
+	experimentService := experiment.NewService(
+		repositories.NewTagRepository(db),
+		repositories.NewExperimentRepository(db),
+	)
+
 	// 2. init main HTTP server.
 	server := initServer()
 
 	// 3. init `aim` api and ui routes.
-	aimRoutes.AddRoutes(server.Group("/aim/api/"))
+	aimRouter := aimRoutes.NewRouter(
+		aimController.NewController(runService, modelService, metricService, artifactService, experimentService),
+	)
+
+	aimRouter.AddRoutes(server.Group("/aim/api/"))
 	aimUI.AddRoutes(server.Group("/aim/"))
 
 	// 4. init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
-		controller.NewController(
-			run.NewService(
-				repositories.NewTagRepository(db),
-				repositories.NewRunRepository(db),
-				repositories.NewParamRepository(db),
-				repositories.NewMetricRepository(db),
-				repositories.NewExperimentRepository(db),
-			),
-			model.NewService(),
-			metric.NewService(
-				repositories.NewMetricRepository(db),
-			),
-			artifact.NewService(
-				repositories.NewRunRepository(db),
-			),
-			experiment.NewService(
-				repositories.NewTagRepository(db),
-				repositories.NewExperimentRepository(db),
-			),
-		),
+		mlflowController.NewController(runService, modelService, metricService, artifactService, experimentService),
 	).Init(server)
 	mlflowUI.AddRoutes(server.Group("/mlflow/"))
 	// TODO:DSuhinin we have to move it.

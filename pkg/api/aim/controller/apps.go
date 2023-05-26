@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetApps(c *fiber.Ctx) error {
+func (ctlr Controller) GetApps(c *fiber.Ctx) error {
 	var apps []database.App
 	if err := database.DB.
 		Where("NOT is_archived").
@@ -22,7 +22,7 @@ func GetApps(c *fiber.Ctx) error {
 	return c.JSON(apps)
 }
 
-func CreateApp(c *fiber.Ctx) error {
+func (ctlr Controller) CreateApp(c *fiber.Ctx) error {
 	var a struct {
 		Type  string
 		State database.AppState
@@ -46,7 +46,7 @@ func CreateApp(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(app)
 }
 
-func GetApp(c *fiber.Ctx) error {
+func (ctlr Controller) GetApp(c *fiber.Ctx) error {
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}
@@ -73,7 +73,7 @@ func GetApp(c *fiber.Ctx) error {
 	return c.JSON(app)
 }
 
-func UpdateApp(c *fiber.Ctx) error {
+func (ctlr Controller) UpdateApp(c *fiber.Ctx) error {
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}
@@ -119,7 +119,7 @@ func UpdateApp(c *fiber.Ctx) error {
 	return c.JSON(app)
 }
 
-func DeleteApp(c *fiber.Ctx) error {
+func (ctlr Controller) DeleteApp(c *fiber.Ctx) error {
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}

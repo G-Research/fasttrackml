@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetExperiments(c *fiber.Ctx) error {
+func (ctlr Controller) GetExperiments(c *fiber.Ctx) error {
 	var experiments []struct {
 		database.Experiment
 		RunCount int
@@ -46,7 +46,7 @@ func GetExperiments(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func GetExperiment(c *fiber.Ctx) error {
+func (ctlr Controller) GetExperiment(c *fiber.Ctx) error {
 	p := struct {
 		ID string `params:"id"`
 	}{}
@@ -102,7 +102,7 @@ func GetExperiment(c *fiber.Ctx) error {
 	})
 }
 
-func GetExperimentRuns(c *fiber.Ctx) error {
+func (ctlr Controller) GetExperimentRuns(c *fiber.Ctx) error {
 	q := struct {
 		Limit  int    `query:"limit"`
 		Offset string `query:"offset"`
@@ -180,7 +180,7 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 	})
 }
 
-func GetExperimentActivity(c *fiber.Ctx) error {
+func (ctlr Controller) GetExperimentActivity(c *fiber.Ctx) error {
 	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")

@@ -5,46 +5,57 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func AddRoutes(r fiber.Router) {
+// Router represents `aim` router.
+type Router struct {
+	controller *controller.Controller
+}
+
+// NewRouter creates new instance of `mlflow` router.
+func NewRouter(controller *controller.Controller) *Router {
+	return &Router{
+		controller: controller,
+	}
+}
+
+func (rtr Router) AddRoutes(r fiber.Router) {
 	apps := r.Group("apps")
-	apps.Get("/", controller.GetApps)
-	apps.Post("/", controller.CreateApp)
-	apps.Get("/:id/", controller.GetApp)
-	apps.Put("/:id/", controller.UpdateApp)
-	apps.Delete("/:id/", controller.DeleteApp)
+	apps.Get("/", rtr.controller.GetApps)
+	apps.Post("/", rtr.controller.CreateApp)
+	apps.Get("/:id/", rtr.controller.GetApp)
+	apps.Put("/:id/", rtr.controller.UpdateApp)
+	apps.Delete("/:id/", rtr.controller.DeleteApp)
 
 	dashboards := r.Group("/dashboards")
-	dashboards.Get("/", controller.GetDashboards)
-	dashboards.Post("/", controller.CreateDashboard)
-	dashboards.Get("/:id/", controller.GetDashboard)
-	dashboards.Put("/:id/", controller.UpdateDashboard)
-	dashboards.Delete("/:id/", controller.DeleteDashboard)
+	dashboards.Get("/", rtr.controller.GetDashboards)
+	dashboards.Post("/", rtr.controller.CreateDashboard)
+	dashboards.Get("/:id/", rtr.controller.GetDashboard)
+	dashboards.Put("/:id/", rtr.controller.UpdateDashboard)
+	dashboards.Delete("/:id/", rtr.controller.DeleteDashboard)
 
 	experiments := r.Group("experiments")
-	experiments.Get("/", controller.GetExperiments)
-	experiments.Get("/:id/", controller.GetExperiment)
-	experiments.Get("/:id/activity/", controller.GetExperimentActivity)
-	experiments.Get("/:id/runs/", controller.GetExperimentRuns)
+	experiments.Get("/", rtr.controller.GetExperiments)
+	experiments.Get("/:id/", rtr.controller.GetExperiment)
+	experiments.Get("/:id/activity/", rtr.controller.GetExperimentActivity)
+	experiments.Get("/:id/runs/", rtr.controller.GetExperimentRuns)
 
 	projects := r.Group("/projects")
-	projects.Get("/", controller.GetProject)
-	projects.Get("/activity/", controller.GetProjectActivity)
-	projects.Get("/pinned-sequences/", controller.GetProjectPinnedSequences)
-	projects.Post("/pinned-sequences/", controller.UpdateProjectPinnedSequences)
-	projects.Get("/params/", controller.GetProjectParams)
-	projects.Get("/status/", controller.GetProjectStatus)
+	projects.Get("/", rtr.controller.GetProject)
+	projects.Get("/activity/", rtr.controller.GetProjectActivity)
+	projects.Get("/pinned-sequences/", rtr.controller.GetProjectPinnedSequences)
+	projects.Post("/pinned-sequences/", rtr.controller.UpdateProjectPinnedSequences)
+	projects.Get("/params/", rtr.controller.GetProjectParams)
+	projects.Get("/status/", rtr.controller.GetProjectStatus)
 
 	runs := r.Group("/runs")
-	runs.Get("/active/", controller.GetRunsActive)
-	runs.Get("/search/run/", controller.SearchRuns)
-	runs.Get("/search/metric/", controller.SearchMetrics)
-	runs.Post("/search/metric/align/", controller.SearchAlignedMetrics)
-	runs.Get("/:id/info/", controller.GetRunInfo)
-	runs.Post("/:id/metric/get-batch/", controller.GetRunMetrics)
+	runs.Get("/active/", rtr.controller.GetRunsActive)
+	runs.Get("/search/run/", rtr.controller.SearchRuns)
+	runs.Get("/search/metric/", rtr.controller.SearchMetrics)
+	runs.Post("/search/metric/align/", rtr.controller.SearchAlignedMetrics)
+	runs.Get("/:id/info/", rtr.controller.GetRunInfo)
+	runs.Post("/:id/metric/get-batch/", rtr.controller.GetRunMetrics)
 
 	tags := r.Group("/tags")
-	tags.Get("/", controller.GetTags)
-
+	tags.Get("/", rtr.controller.GetTags)
 	r.Use(func(c *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	})

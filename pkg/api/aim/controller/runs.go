@@ -19,7 +19,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetRunInfo(c *fiber.Ctx) error {
+func (ctlr Controller) GetRunInfo(c *fiber.Ctx) error {
 	q := struct {
 		// TODO skip_system is unused - should we keep it?
 		SkipSystem bool     `query:"skip_system"`
@@ -116,7 +116,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 	})
 }
 
-func GetRunMetrics(c *fiber.Ctx) error {
+func (ctlr Controller) GetRunMetrics(c *fiber.Ctx) error {
 	p := struct {
 		ID string `params:"id"`
 	}{}
@@ -193,7 +193,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func GetRunsActive(c *fiber.Ctx) error {
+func (ctlr Controller) GetRunsActive(c *fiber.Ctx) error {
 	q := struct {
 		ReportProgress bool `query:"report_progress"`
 	}{}
@@ -297,7 +297,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 	return nil
 }
 
-func SearchRuns(c *fiber.Ctx) error {
+func (ctlr Controller) SearchRuns(c *fiber.Ctx) error {
 	q := struct {
 		Query  string `query:"q"`
 		Limit  int    `query:"limit"`
@@ -477,7 +477,7 @@ func SearchRuns(c *fiber.Ctx) error {
 	return nil
 }
 
-func SearchMetrics(c *fiber.Ctx) error {
+func (ctlr Controller) SearchMetrics(c *fiber.Ctx) error {
 	q := struct {
 		Query string `query:"q"`
 		Steps int    `query:"p"`
@@ -745,7 +745,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 	return nil
 }
 
-func SearchAlignedMetrics(c *fiber.Ctx) error {
+func (ctlr Controller) SearchAlignedMetrics(c *fiber.Ctx) error {
 	b := struct {
 		AlignBy string `json:"align_by"`
 		Runs    []struct {

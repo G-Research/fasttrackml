@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetProject(c *fiber.Ctx) error {
+func (ctlr Controller) GetProject(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"name":              "FastTrackML",
 		"path":              database.DB.DSN(),
@@ -19,7 +19,7 @@ func GetProject(c *fiber.Ctx) error {
 	})
 }
 
-func GetProjectActivity(c *fiber.Ctx) error {
+func (ctlr Controller) GetProjectActivity(c *fiber.Ctx) error {
 	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
@@ -59,20 +59,20 @@ func GetProjectActivity(c *fiber.Ctx) error {
 }
 
 // TODO
-func GetProjectPinnedSequences(c *fiber.Ctx) error {
+func (ctlr Controller) GetProjectPinnedSequences(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"sequences": []string{},
 	})
 }
 
 // TODO
-func UpdateProjectPinnedSequences(c *fiber.Ctx) error {
+func (ctlr Controller) UpdateProjectPinnedSequences(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"sequences": []string{},
 	})
 }
 
-func GetProjectParams(c *fiber.Ctx) error {
+func (ctlr Controller) GetProjectParams(c *fiber.Ctx) error {
 	q := struct {
 		ExcludeParams bool     `query:"exclude_params"`
 		Sequences     []string `query:"sequence"`
@@ -135,6 +135,6 @@ func GetProjectParams(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func GetProjectStatus(c *fiber.Ctx) error {
+func (ctlr Controller) GetProjectStatus(c *fiber.Ctx) error {
 	return c.JSON("up-to-date")
 }

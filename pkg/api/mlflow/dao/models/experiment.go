@@ -14,9 +14,19 @@ type Experiment struct {
 	Runs             []Run
 }
 
+// TableName returns actual table name.
+func (o Experiment) TableName() string {
+	return "experiments"
+}
+
 // ExperimentTag represents model to work with `experiment_tags` table.
 type ExperimentTag struct {
 	Key          string `gorm:"type:varchar(250);not null;primaryKey"`
 	Value        string `gorm:"type:varchar(5000)"`
 	ExperimentID int32  `gorm:"not null;primaryKey"`
+}
+
+// TableName returns actual table name.
+func (o ExperimentTag) TableName() string {
+	return "experiment_tags"
 }

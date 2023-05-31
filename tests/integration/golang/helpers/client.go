@@ -65,12 +65,10 @@ func (c HttpClient) DoPostRequest(uri string, request interface{}, response inte
 	if err != nil {
 		return eris.Wrap(err, "error reading response data")
 	}
-	// nolint
+	//lint:ignore SA5011 don't need to check it in tests.
 	defer resp.Body.Close()
-	if resp != nil {
-		if err := json.Unmarshal(body, response); err != nil {
-			return eris.Wrap(err, "error unmarshaling response data")
-		}
+	if err := json.Unmarshal(body, response); err != nil {
+		return eris.Wrap(err, "error unmarshaling response data")
 	}
 
 	return nil
@@ -109,12 +107,10 @@ func (c HttpClient) DoGetRequest(uri string, response interface{}) error {
 	if err != nil {
 		return eris.Wrap(err, "error reading response data")
 	}
-	// nolint
+	//lint:ignore SA5011 don't need to check it in tests.
 	defer resp.Body.Close()
-	if resp != nil {
-		if err := json.Unmarshal(body, response); err != nil {
-			return eris.Wrap(err, "error unmarshaling response data")
-		}
+	if err := json.Unmarshal(body, response); err != nil {
+		return eris.Wrap(err, "error unmarshaling response data")
 	}
 
 	return nil

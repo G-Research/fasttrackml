@@ -18,6 +18,12 @@ RUN mkdir -p $PATH_GO_SOURCES/
 WORKDIR $PATH_GO_SOURCES
 COPY . $PATH_GO_SOURCES
 
+# Dirt hack for `//go:embed embed/build` directive.
+RUN mkdir pkg/ui/aim/embed/build
+RUN touch pkg/ui/aim/embed/build/index.html
+RUN mkdir pkg/ui/mlflow/embed/build
+RUN touch pkg/ui/mlflow/embed/build/index.html
+
 # Build
 RUN make go-get
 RUN make go-build

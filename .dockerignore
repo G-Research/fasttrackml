@@ -19,8 +19,5 @@ fasttrackml.db*
 pkg/ui/*/embed/build*
 !pkg/ui/*/embed/build.sh
 
-# Tests
-tests/
-
 # Docs
 docs/

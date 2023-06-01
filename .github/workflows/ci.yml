@@ -72,6 +72,21 @@ jobs:
       - name: Run Golang Unit Tests
         run: make test-go-unit
 
+  golang-integration-tests:
+    name: Golang Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+
+      - name: Run Integration Tests
+        run: make service-test
+
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
     name: Python Integration Tests
@@ -105,7 +120,7 @@ jobs:
           touch pkg/ui/{aim,mlflow}/embed/build/index.html
 
       - name: Run MLFlow integration tests
-        run: ./tests/mlflow/test.sh
+        run: ./tests/integration/python/mlflow/test.sh
 
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
@@ -175,6 +190,7 @@ jobs:
     needs:
       - lint
       - golang-unit-tests
+      - golang-integration-tests
       - python-integration-tests
       - build-image
     runs-on: ubuntu-latest

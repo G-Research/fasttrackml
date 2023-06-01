@@ -1,4 +1,4 @@
-package run
+package convertors
 
 import (
 	"crypto/rand"

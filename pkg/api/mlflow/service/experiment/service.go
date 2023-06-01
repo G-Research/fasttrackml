@@ -154,7 +154,6 @@ func (s Service) DeleteExperiment(ctx context.Context, req *request.DeleteExperi
 	if err != nil {
 		return api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
-	run := database.Run{}
 
 	experiment.LifecycleStage = models.LifecycleStageDeleted
 	experiment.LastUpdateTime = sql.NullInt64{
@@ -166,17 +165,7 @@ func (s Service) DeleteExperiment(ctx context.Context, req *request.DeleteExperi
 		return api.NewInternalError("unable to delete experiment '%d': %s", *experiment.ID, err)
 	}
 
-	if tx := database.DB.Model(&run).Where("experiment_id = ?", exp.ID).Updates(&database.Run{
-		LifecycleStage: database.LifecycleStageDeleted,
-		DeletedTime: sql.NullInt64{
-			Int64: time.Now().UTC().UnixMilli(),
-			Valid: true,
-		},
-	}); tx.Error != nil {
-		return api.NewInternalError("Unable to delete runs for experiment '%d': %s", *exp.ID, tx.Error)
-	}
-
-	return c.JSON(fiber.Map{})
+	return nil
 }
 
 func (s Service) RestoreExperiment(ctx context.Context, req *request.RestoreExperimentRequest) error {

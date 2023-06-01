@@ -93,6 +93,10 @@ func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	if err := c.runService.DeleteRunsByExperiment(ctx.Context(), &req); err != nil {
+		return err
+	}
+
 	return ctx.JSON(fiber.Map{})
 }
 

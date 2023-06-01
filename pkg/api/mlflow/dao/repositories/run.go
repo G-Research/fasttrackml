@@ -22,6 +22,8 @@ type RunRepositoryProvider interface {
 	Create(ctx context.Context, run *models.Run) error
 	// Delete marks existing models.Run entity as deleted.
 	Delete(ctx context.Context, run *models.Run) error
+	// DeleteByExperimentID marks existing models.Run having the given expirimentID as deleted.
+	DeleteByExperimentID(ctx context.Context, experiementID int32) error
 	// Restore marks existing models.Run entity as active.
 	Restore(ctx context.Context, run *models.Run) error
 	// SetRunTagsBatch sets Run tags in batch.
@@ -89,6 +91,24 @@ func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 	}
 
 	return nil
+}
+
+// DeleteByExperimentID marks existing models.Run with the given experiment id as deleted
+func (r RunRepository) DeleteByExperimentID(ctx context.Context, expID int32) error {
+	run := models.Run{
+		LifecycleStage: models.LifecycleStageDeleted,
+		DeletedTime: sql.NullInt64{
+			Int64: time.Now().UTC().UnixMilli(),
+			Valid: true,
+		},
+	}
+
+	if err := r.db.WithContext(ctx).Model(&run).Where("experiment_id = ?", expID).Updates(&run).Error; err != nil {
+		return eris.Wrapf(err, "error updating existing runs with experiment id: %d", expID)
+	}
+
+	return nil
+
 }
 
 // Restore marks existing models.Run entity as active.

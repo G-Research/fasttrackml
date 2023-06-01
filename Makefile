@@ -115,16 +115,15 @@ clean: ## clean the go and node build artifacts
 	@echo ">>> Cleaning go and node build artifacts."
 	rm -Rf pkg/ui/aim/embed/repo
 	rm -Rf pkg/ui/mlflow/embed/repo
-	rm -Rf bin/fasttrack
+	rm -Rf $(SERVICE)
 
 PHONY: build
-build: ## build the go and node components
-	@echo ">>> Building go and node components."
+build: go-build ## build the go and node components
+	@echo ">>> Building node UI components."
 	pkg/ui/aim/embed/build.sh
 	pkg/ui/mlflow/embed/build.sh
-	go build -o bin/fasttrack main.go
 
 PHONY: run
 run: build ## run the FastTrackML server
 	@echo ">>> Running the FasttrackML server."
-	bin/fasttrack server
+	./$(SERVICE) server

@@ -10,7 +10,6 @@ import (
 
 // Controller handles all the input HTTP requests.
 type Controller struct {
-	appService        *app.Service
 	runService        *run.Service
 	modelService      *model.Service
 	metricService     *metric.Service
@@ -19,9 +18,15 @@ type Controller struct {
 }
 
 // NewController creates new Controller instance.
-func NewController(runService *run.Service, modelService *model.Service, metricService *metric.Service, artifactService *artifact.Service, experimentService *experiment.Service, appService *app.Service) *Controller {
+func NewController(
+	runService *run.Service,
+	modelService *model.Service,
+	metricService *metric.Service,
+	artifactService *artifact.Service,
+	experimentService *experiment.Service,
+) *Controller {
 	return &Controller{
-		appService:        appService,
+		runService:        runService,
 		modelService:      modelService,
 		metricService:     metricService,
 		artifactService:   artifactService,

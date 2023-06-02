@@ -11,9 +11,12 @@ import (
 )
 
 func (ctlr Controller) GetApps(c *fiber.Ctx) error {
-	apps, err := ctlr.appService.GetApps()
-	if err != nil {
-		return err
+	var apps []database.App
+	if err := database.DB.
+		Where("NOT is_archived").
+		Find(&apps).
+		Error; err != nil {
+		return fmt.Errorf("error fetching apps: %w", err)
 	}
 
 	return c.JSON(apps)

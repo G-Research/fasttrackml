@@ -74,7 +74,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 	// 3. init `aim` api and ui routes.
 	aimRouter := aimRoutes.NewRouter(
-		aimController.NewController(runService, modelService, metricService, artifactService, experimentService, nil),
+		aimController.NewController(runService, modelService, metricService, artifactService, experimentService),
 	)
 
 	aimRouter.AddRoutes(server.Group("/aim/api/"))

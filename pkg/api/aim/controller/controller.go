@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"github.com/G-Research/fasttrackml/pkg/service/artifact"
-	"github.com/G-Research/fasttrackml/pkg/service/experiment"
-	"github.com/G-Research/fasttrackml/pkg/service/metric"
-	"github.com/G-Research/fasttrackml/pkg/service/model"
-	"github.com/G-Research/fasttrackml/pkg/service/run"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
 )
 
 // Controller handles all the input HTTP requests.

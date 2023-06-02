@@ -1,11 +1,11 @@
 package mlflow
 
 import (
-	"github.com/G-Research/fasttrackml/pkg/service/metric"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 )
 
 // Router represents `mlflow` router.

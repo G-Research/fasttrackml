@@ -8,6 +8,54 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 )
 
+// List of route prefixes.
+const (
+	RunsRoutePrefix        = "/runs"
+	MetricsRoutePrefix     = "/metrics"
+	ArtifactsRoutePrefix   = "/artifacts"
+	ExperimentsRoutePrefix = "/experiments"
+)
+
+// List of `/artifact/*` routes.
+const (
+	ArtifactsListRoute = "/list"
+)
+
+// List of `/experiments/*` routes.
+const (
+	ExperimentsGetRoute         = "/get"
+	ExperimentsListRoute        = "/list"
+	ExperimentsCreateRoute      = "/create"
+	ExperimentsDeleteRoute      = "/delete"
+	ExperimentsRestoreRoute     = "/restore"
+	ExperimentsSearchRoute      = "/search"
+	ExperimentsUpdateRoute      = "/update"
+	ExperimentsGetByNameRoute   = "/get-by-name"
+	ExperimentsSetExperimentTag = "/set-experiment-tag"
+)
+
+// List of `/metrics/*` routes.
+const (
+	MetricsGetHistoriesRoute   = "/get-histories"
+	MetricsGetHistoryRoute     = "/get-history"
+	MetricsGetHistoryBulkRoute = "/get-history-bulk"
+)
+
+// List of `/runs/*` routes.
+const (
+	RunsGetTagRoute       = "/get"
+	RunsCreateRoute       = "/create"
+	RunsDeleteRoute       = "/delete"
+	RunsSearchRoute       = "/search"
+	RunsSetTagRoute       = "/set-tag"
+	RunsUpdateRoute       = "/update"
+	RunsRestoreRoute      = "/restore"
+	RunsDeleteTagRoute    = "/delete-tag"
+	RunsLogBatchRoute     = "/log-batch"
+	RunsLogMetricRoute    = "/log-metric"
+	RunsLogParameterRoute = "/log-parameter"
+)
+
 // Router represents `mlflow` router.
 type Router struct {
 	prefixList []string
@@ -31,38 +79,38 @@ func (r Router) Init(server fiber.Router) {
 	for _, prefix := range r.prefixList {
 		mainGroup := server.Group(prefix)
 
-		artifacts := mainGroup.Group("/artifacts")
-		artifacts.Get("/list", r.controller.ListArtifacts)
+		artifacts := mainGroup.Group(ArtifactsRoutePrefix)
+		artifacts.Get(ArtifactsListRoute, r.controller.ListArtifacts)
 
-		experiments := mainGroup.Group("/experiments")
-		experiments.Post("/create", r.controller.CreateExperiment)
-		experiments.Post("/delete", r.controller.DeleteExperiment)
-		experiments.Get("/get", r.controller.GetExperiment)
-		experiments.Get("/get-by-name", r.controller.GetExperimentByName)
-		experiments.Get("/list", r.controller.SearchExperiments)
-		experiments.Post("/restore", r.controller.RestoreExperiment)
-		experiments.Get("/search", r.controller.SearchExperiments)
-		experiments.Post("/search", r.controller.SearchExperiments)
-		experiments.Post("/set-experiment-tag", r.controller.SetExperimentTag)
-		experiments.Post("/update", r.controller.UpdateExperiment)
+		experiments := mainGroup.Group(ExperimentsRoutePrefix)
+		experiments.Post(ExperimentsCreateRoute, r.controller.CreateExperiment)
+		experiments.Post(ExperimentsDeleteRoute, r.controller.DeleteExperiment)
+		experiments.Get(ExperimentsGetRoute, r.controller.GetExperiment)
+		experiments.Get(ExperimentsGetByNameRoute, r.controller.GetExperimentByName)
+		experiments.Get(ExperimentsListRoute, r.controller.SearchExperiments)
+		experiments.Post(ExperimentsRestoreRoute, r.controller.RestoreExperiment)
+		experiments.Get(ExperimentsSearchRoute, r.controller.SearchExperiments)
+		experiments.Post(ExperimentsSearchRoute, r.controller.SearchExperiments)
+		experiments.Post(ExperimentsSetExperimentTag, r.controller.SetExperimentTag)
+		experiments.Post(ExperimentsUpdateRoute, r.controller.UpdateExperiment)
 
-		metrics := mainGroup.Group("/metrics")
-		metrics.Get("/get-history", r.controller.GetMetricHistory)
-		metrics.Get("/get-history-bulk", r.controller.GetMetricHistoryBulk)
-		metrics.Post("/get-histories", metric.GetMetricHistories)
+		metrics := mainGroup.Group(MetricsRoutePrefix)
+		metrics.Get(MetricsGetHistoryRoute, r.controller.GetMetricHistory)
+		metrics.Get(MetricsGetHistoryBulkRoute, r.controller.GetMetricHistoryBulk)
+		metrics.Post(MetricsGetHistoriesRoute, metric.GetMetricHistories)
 
-		runs := mainGroup.Group("/runs")
-		runs.Post("/create", r.controller.CreateRun)
-		runs.Post("/delete", r.controller.DeleteRun)
-		runs.Post("/delete-tag", r.controller.DeleteRunTag)
-		runs.Get("/get", r.controller.GetRun)
-		runs.Post("/log-batch", r.controller.LogBatch)
-		runs.Post("/log-metric", r.controller.LogMetric)
-		runs.Post("/log-parameter", r.controller.LogParam)
-		runs.Post("/restore", r.controller.RestoreRun)
-		runs.Post("/search", r.controller.SearchRuns)
-		runs.Post("/set-tag", r.controller.SetRunTag)
-		runs.Post("/update", r.controller.UpdateRun)
+		runs := mainGroup.Group(RunsRoutePrefix)
+		runs.Post(RunsCreateRoute, r.controller.CreateRun)
+		runs.Post(RunsDeleteRoute, r.controller.DeleteRun)
+		runs.Post(RunsDeleteTagRoute, r.controller.DeleteRunTag)
+		runs.Get(RunsGetTagRoute, r.controller.GetRun)
+		runs.Post(RunsLogBatchRoute, r.controller.LogBatch)
+		runs.Post(RunsLogMetricRoute, r.controller.LogMetric)
+		runs.Post(RunsLogParameterRoute, r.controller.LogParam)
+		runs.Post(RunsRestoreRoute, r.controller.RestoreRun)
+		runs.Post(RunsSearchRoute, r.controller.SearchRuns)
+		runs.Post(RunsSetTagRoute, r.controller.SetRunTag)
+		runs.Post(RunsUpdateRoute, r.controller.UpdateRun)
 
 		mainGroup.Get("/model-versions/search", r.controller.SearchModelVersions)
 		mainGroup.Get("/registered-models/search", r.controller.SearchRegisteredModels)

@@ -1,7 +1,7 @@
 package response
 
 import (
-	"github.com/G-Research/fasttrackml/pkg/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // MetricPartialResponse is a partial response object for GetMetricHistoryResponse.

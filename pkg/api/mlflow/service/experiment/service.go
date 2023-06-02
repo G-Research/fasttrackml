@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	repositories2 "github.com/G-Research/fasttrackml/pkg/repositories"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,9 +18,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/convertors"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/models"
 )
 
 var (
@@ -30,14 +30,14 @@ var (
 
 // Service provides service layer to work with `metric` business logic.
 type Service struct {
-	tagRepository        repositories.TagRepositoryProvider
-	experimentRepository repositories.ExperimentRepositoryProvider
+	tagRepository        repositories2.TagRepositoryProvider
+	experimentRepository repositories2.ExperimentRepositoryProvider
 }
 
 // NewService creates new Service instance.
 func NewService(
-	tagRepository repositories.TagRepositoryProvider,
-	experimentRepository repositories.ExperimentRepositoryProvider,
+	tagRepository repositories2.TagRepositoryProvider,
+	experimentRepository repositories2.ExperimentRepositoryProvider,
 ) *Service {
 	return &Service{
 		tagRepository:        tagRepository,

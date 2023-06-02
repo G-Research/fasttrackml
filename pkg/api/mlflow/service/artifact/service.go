@@ -2,10 +2,10 @@ package artifact
 
 import (
 	"context"
+	"github.com/G-Research/fasttrackml/pkg/repositories"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 )
 
 // Service provides service layer to work with `artifact` business logic.

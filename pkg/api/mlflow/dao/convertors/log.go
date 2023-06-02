@@ -4,7 +4,7 @@ package convertors
 
 import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/models"
 )
 
 // ConvertLogParamRequestToDBModel converts request.LogParamRequest into actual models.Param model.

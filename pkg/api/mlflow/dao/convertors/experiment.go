@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/models"
 )
 
 // ConvertCreateExperimentToDBModel converts request.CreateExperimentRequest into actual models.Experiment model.

@@ -11,6 +11,7 @@ require (
 	github.com/apache/arrow/go/v11 v11.0.0
 	github.com/go-python/gpython v0.1.0
 	github.com/gofiber/fiber/v2 v2.42.0
+	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/rotisserie/eris v0.5.4
 	github.com/sirupsen/logrus v1.9.0
@@ -66,7 +67,6 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/tinylib/msgp v1.1.6 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

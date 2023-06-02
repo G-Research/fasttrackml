@@ -151,6 +151,38 @@ func (b *Base) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
+type App struct {
+	Base
+	Type  string   `gorm:"not null" json:"type"`
+	State AppState `json:"state"`
+}
+
+type AppState map[string]any
+
+func (s AppState) Value() (driver.Value, error) {
+	v, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+	return string(v), nil
+}
+
+func (s *AppState) Scan(v interface{}) error {
+	var nullS sql.NullString
+	if err := nullS.Scan(v); err != nil {
+		return err
+	}
+	if nullS.Valid {
+		return json.Unmarshal([]byte(nullS.String), s)
+	}
+	s = nil
+	return nil
+}
+
+func (s AppState) GormDataType() string {
+	return "text"
+}
+
 type Dashboard struct {
 	Base
 	Name        string     `json:"name"`

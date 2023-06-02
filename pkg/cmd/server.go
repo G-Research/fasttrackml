@@ -21,6 +21,7 @@ import (
 	aimRoutes "github.com/G-Research/fasttrackml/pkg/api/aim"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim/api"
 	aimController "github.com/G-Research/fasttrackml/pkg/api/aim/controller"
+	aimService "github.com/G-Research/fasttrackml/pkg/api/aim/service"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
@@ -50,6 +51,8 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	appService := aimService.NewAppService(db)
+	
 	runService := run.NewService(
 		repositories.NewTagRepository(db),
 		repositories.NewRunRepository(db),
@@ -74,7 +77,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 	// 3. init `aim` api and ui routes.
 	aimRouter := aimRoutes.NewRouter(
-		aimController.NewController(runService, modelService, metricService, artifactService, experimentService),
+		aimController.NewController(appService),
 	)
 
 	aimRouter.AddRoutes(server.Group("/aim/api/"))

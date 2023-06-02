@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/G-Research/fasttrackml/pkg/repositories"
 	"time"
 
 	"github.com/apache/arrow/go/v11/arrow"
@@ -16,8 +15,9 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
-	"github.com/G-Research/fasttrackml/pkg/models"
 )
 
 // Service provides service layer to work with `metric` business logic.

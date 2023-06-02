@@ -11,10 +11,11 @@ import (
 )
 
 func (ctlr Controller) GetApps(c *fiber.Ctx) error {
-	apps, err := ctlr.appRepository.GetApps()
+	apps, err := ctlr.appService.GetApps()
 	if err != nil {
 		return err
 	}
+
 	return c.JSON(apps)
 }
 
@@ -33,9 +34,10 @@ func (ctlr Controller) CreateApp(c *fiber.Ctx) error {
 		State: a.State,
 	}
 
-	app, err := ctrl.appRepository.CreateApp(app)
-	if err != nil {
-		return err
+	if err := database.DB.
+		Create(&app).
+		Error; err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error inserting app: %s", err))
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(app)

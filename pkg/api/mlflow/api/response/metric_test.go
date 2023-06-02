@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/G-Research/fasttrackml/pkg/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 func TestNewMetricHistoryResponse_Ok(t *testing.T) {

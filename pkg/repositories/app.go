@@ -2,18 +2,17 @@ package repositories
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/pkg/models"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofrs/uuid"
 )
 
-// AppRepositoryProvider provides an interface to work with models.Tag entity.
-type AppRepositoryProvider interface {
+// TagRepositoryProvider provides an interface to work with models.Tag entity.
+type TagRepositoryProvider interface {
 	BaseRepositoryProvider
 	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
@@ -25,144 +24,59 @@ type AppRepositoryProvider interface {
 	Delete(ctx context.Context, tag *models.Tag) error
 }
 
-// AppRepository repository to work with models.Tag entity.
-type AppRepository struct {
+// TagRepository repository to work with models.Tag entity.
+type TagRepository struct {
 	BaseRepository
 }
 
-// NewAppRepository creates repository to work with models.Tag entity.
-func NewAppRepository(db *gorm.DB) *AppRepository {
-	return &AppRepository{
+// NewTagRepository creates repository to work with models.Tag entity.
+func NewTagRepository(db *gorm.DB) *TagRepository {
+	return &TagRepository{
 		BaseRepository{
 			db: db,
 		},
 	}
 }
 
-func (r AppRepository) GetApps() ([]database.App, error) {
-	var apps []database.App
-	err := database.DB.Where("NOT is_archived").Find(&apps).Error
-	if err != nil {
-		return apps, fmt.Errorf("error fetching apps: %w", err)
+// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
+func (r TagRepository) CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error {
+	if err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		UpdateAll: true,
+	}).Create(experimentTag).Error; err != nil {
+		return eris.Wrapf(err, "error creating tag for experiment with id: %d", experimentTag.ExperimentID)
 	}
-
-	return apps, nil
+	return nil
 }
 
-func (r AppRepository) CreateApp(app database.App) (database.App, error) {
-	err := r.BaseRepository.DB.Create(&app).Error
-	if err != nil {
-		return app, fmt.Sprintf("error inserting app: %s", err)
+// CreateRunTagWithTransaction creates new models.Tag entity connected to models.Run.
+func (r TagRepository) CreateRunTagWithTransaction(
+	ctx context.Context, tx *gorm.DB, runID, key, value string,
+) error {
+	if err := tx.WithContext(ctx).Clauses(clause.OnConflict{
+		UpdateAll: true,
+	}).Create([]models.Tag{{
+		Key:   key,
+		Value: value,
+		RunID: runID,
+	}}).Error; err != nil {
+		return eris.Wrapf(err, "error creating tag for run with id: %s", runID)
 	}
-	return app, nil
+	return nil
 }
 
-
-func (r AppRepository) GetApp(c *fiber.Ctx) error {
-	p := struct {
-		ID uuid.UUID `params:"id"`
-	}{}
-
-	if err := c.ParamsParser(&p); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+// GetByRunIDAndKey returns models.Tag by provided RunID and Tag Key.
+func (r TagRepository) GetByRunIDAndKey(ctx context.Context, runID, key string) (*models.Tag, error) {
+	tag := models.Tag{RunID: runID, Key: key}
+	if err := r.db.WithContext(ctx).First(&tag).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting tag by run id: %s and tag key: %s", runID, key)
 	}
-
-	app := database.App{
-		Base: database.Base{
-			ID: p.ID,
-		},
-	}
-	if err := database.DB.
-		Where("NOT is_archived").
-		First(&app).
-		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return fiber.ErrNotFound
-		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))
-	}
-
-	return c.JSON(app)
+	return &tag, nil
 }
 
-func (r AppRepository) UpdateApp(c *fiber.Ctx) error {
-	p := struct {
-		ID uuid.UUID `params:"id"`
-	}{}
-
-	if err := c.ParamsParser(&p); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+// Delete deletes existing models.Tag entity.
+func (r TagRepository) Delete(ctx context.Context, tag *models.Tag) error {
+	if err := database.DB.Delete(tag).Error; err != nil {
+		return eris.Wrapf(err, "error deleting tag by run id: %s and key: %s", tag.RunID, tag.Key)
 	}
-
-	var a struct {
-		Type  string
-		State database.AppState
-	}
-
-	if err := c.BodyParser(&a); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-	}
-
-	app := database.App{
-		Base: database.Base{
-			ID: p.ID,
-		},
-	}
-	if err := database.DB.
-		Where("NOT is_archived").
-		First(&app).
-		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return fiber.ErrNotFound
-		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))
-	}
-
-	if err := database.DB.
-		Model(&app).
-		Updates(database.App{
-			Type:  a.Type,
-			State: a.State,
-		}).
-		Error; err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error updating app %q: %s", p.ID, err))
-	}
-
-	return c.JSON(app)
+	return nil
 }
-
-func (r AppRepository) DeleteApp(c *fiber.Ctx) error {
-	p := struct {
-		ID uuid.UUID `params:"id"`
-	}{}
-
-	if err := c.ParamsParser(&p); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-	}
-
-	app := database.App{
-		Base: database.Base{
-			ID: p.ID,
-		},
-	}
-	if err := database.DB.
-		Select("ID").
-		Where("NOT is_archived").
-		First(&app).
-		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return fiber.ErrNotFound
-		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))
-	}
-
-	if err := database.DB.
-		Model(&app).
-		Update("IsArchived", true).
-		Error; err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to delete app %q: %s", p.ID, err))
-	}
-
-	return c.Status(200).JSON(nil)
-}
-

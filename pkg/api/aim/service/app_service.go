@@ -2,44 +2,37 @@ package service
 
 import (
 	"github.com/G-Research/fasttrackml/pkg/models"
+	"github.com/G-Research/fasttrackml/pkg/repositories"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type AppService struct {
-	DB *gorm.DB
+	appRepository repositories.AppRepositoryProvider
 }
 
-func NewAppService(db *gorm.DB) *AppService {
+func NewAppService(appRepo repositories.AppRepositoryProvider) *AppService {
 	return &AppService{
-		DB: db,
+		appRepository: appRepo,
 	}
 }
 
 func (svc *AppService) GetApps() ([]models.App, error) {
-	apps := []models.App{}
-	err := svc.DB.Find(&apps).Error
-	return apps, err
+	return svc.appRepository.List()
 }
 
 func (svc *AppService) CreateApp(a *models.App) error {
-	err := svc.DB.Create(a).Error
-	return err
+	return svc.appRepository.Create(a)
 }
 
 func (svc *AppService) GetAppByID(id uuid.UUID) (*models.App, error) {
-	app := &models.App{}
-	err := svc.DB.Where("NOT is_archived").First(app, id).Error
-	return app, err
+	return svc.appRepository.GetByID(id)
 }
 
 func (svc *AppService) UpdateApp(app *models.App, updateData *models.App) error {
-	err := svc.DB.Model(app).Updates(updateData).Error
-	return err
+	return svc.appRepository.Update(app, updateData)
 }
 
 func (svc *AppService) DeleteApp(app *models.App) error {
-	err := svc.DB.Model(app).Update("IsArchived", true).Error
-	return err
+	return svc.appRepository.Delete(app)
 }

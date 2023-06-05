@@ -12,6 +12,7 @@ type Experiment struct {
 	LastUpdateTime   sql.NullInt64  `gorm:"type:bigint"`
 	Tags             []ExperimentTag
 	Runs             []Run
+	RunCount         *int32         `gorm:"type:bigint"`
 }
 
 // ExperimentTag represents model to work with `experiment_tags` table.

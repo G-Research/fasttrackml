@@ -1,39 +1,34 @@
-package controller
+package service
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
 	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/models"
+	"github.com/G-Research/fasttrackml/pkg/repositories"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
-func (ctlr Controller) GetExperiments(c *fiber.Ctx) error {
-
-	experiments, err := ctlr.experimentService.GetExperiments()
-	if err != nil {
-		return err
-	}
-	resp := make([]fiber.Map, len(experiments))
-	for i, e := range experiments {
-		resp[i] = fiber.Map{
-			"id":            strconv.Itoa(int(*e.ID)),
-			"name":          e.Name,
-			"description":   nil,
-			"archived":      e.LifecycleStage == database.LifecycleStageDeleted,
-			"run_count":     e.RunCount,
-			"creation_time": float64(e.CreationTime.Int64) / 1000,
-		}
-	}
-
-	return c.JSON(resp)
+type ExperimentService struct {
+	experimentRepository repositories.ExperimentRepositoryProvider
 }
 
-func (ctlr Controller) GetExperiment(c *fiber.Ctx) error {
+func NewExperimentService(experimentRepo repositories.ExperimentRepositoryProvider) *ExperimentService {
+	return &ExperimentService{
+		experimentRepository: experimentRepo,
+	}
+}
+
+func (svc ExperimentService) GetExperiments(ctx context.Context) (*[]models.Experiment, error) {
+	return svc.experimentRepository.List(ctx)
+}
+
+func (svc ExperimentService) GetExperiment(ctx context.Context) error {
 	p := struct {
 		ID string `params:"id"`
 	}{}
@@ -57,10 +52,28 @@ func (ctlr Controller) GetExperiment(c *fiber.Ctx) error {
 		return fmt.Errorf("unable to find experiment %q: %w", p.ID, tx.Error)
 	}
 
-	exp, err := ctlr.experimentService.GetExperiment(id)
-	if err != nil {
-		return err
+	var exp struct {
+		database.Experiment
+		RunCount int
 	}
+	if tx := database.DB.Model(&database.Experiment{}).
+		Select(
+			"experiments.experiment_id",
+			"experiments.name",
+			"experiments.lifecycle_stage",
+			"experiments.creation_time",
+			"COUNT(runs.run_uuid) AS run_count",
+		).
+		Joins("LEFT JOIN runs USING(experiment_id)").
+		Group("experiments.experiment_id").
+		Where("experiments.experiment_id = ?", id).
+		First(&exp); tx.Error != nil {
+		if tx.Error == gorm.ErrRecordNotFound {
+			return fiber.ErrNotFound
+		}
+		return fmt.Errorf("error fetching experiment %q: %w", p.ID, tx.Error)
+	}
+
 	return c.JSON(fiber.Map{
 		"id":            id,
 		"name":          exp.Name,
@@ -71,7 +84,7 @@ func (ctlr Controller) GetExperiment(c *fiber.Ctx) error {
 	})
 }
 
-func (ctlr Controller) GetExperimentRuns(c *fiber.Ctx) error {
+func (svc ExperimentService) GetExperimentRuns(ctx context.Context, id, limit, offset int32) error {
 	q := struct {
 		Limit  int    `query:"limit"`
 		Offset string `query:"offset"`
@@ -149,7 +162,7 @@ func (ctlr Controller) GetExperimentRuns(c *fiber.Ctx) error {
 	})
 }
 
-func (ctlr Controller) GetExperimentActivity(c *fiber.Ctx) error {
+func (svc ExperimentService) GetExperimentActivity(c *fiber.Ctx) error {
 	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
@@ -206,4 +219,4 @@ func (ctlr Controller) GetExperimentActivity(c *fiber.Ctx) error {
 		"num_active_runs":   numActiveRuns,
 		"activity_map":      activity,
 	})
-}
+}    

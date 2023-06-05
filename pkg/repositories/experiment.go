@@ -13,6 +13,8 @@ import (
 
 // ExperimentRepositoryProvider provides an interface to work with `experiment` entity.
 type ExperimentRepositoryProvider interface {
+	// List all the active Experiment
+	List(ctx context.Context) (*[]models.Experiment, error)
 	// Create creates new models.Experiment entity.
 	Create(ctx context.Context, experiment *models.Experiment) error
 	// GetByID returns experiment by its ID.
@@ -33,6 +35,26 @@ func NewExperimentRepository(db *gorm.DB) *ExperimentRepository {
 	return &ExperimentRepository{
 		db: db,
 	}
+}
+
+// List returns all the active Experiments
+func (r ExperimentRepository) List(ctx context.Context) (*[]models.Experiment, error) {
+	experiments := []models.Experiment{}
+	if tx := r.db.Model(&models.Experiment{}).
+		Select(
+			"experiments.experiment_id",
+			"experiments.name",
+			"experiments.lifecycle_stage",
+			"experiments.creation_time",
+			"COUNT(runs.run_uuid) AS run_count",
+		).
+		Where("experiments.lifecycle_stage = ?", database.LifecycleStageActive).
+		Joins("LEFT JOIN runs USING(experiment_id)").
+		Group("experiments.experiment_id").
+		Find(&experiments); tx.Error != nil {
+		return nil, eris.Wrapf(tx.Error, "error fetching list of experiments")
+	}
+	return &experiments, nil
 }
 
 // Create creates new models.Experiment entity.

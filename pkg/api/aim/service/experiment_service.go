@@ -28,60 +28,9 @@ func (svc ExperimentService) GetExperiments(ctx context.Context) (*[]models.Expe
 	return svc.experimentRepository.List(ctx)
 }
 
-func (svc ExperimentService) GetExperiment(ctx context.Context) error {
-	p := struct {
-		ID string `params:"id"`
-	}{}
+func (svc ExperimentService) GetExperiment(ctx context.Context, id int32) (*models.Experiment, errror) {
 
-	if err := c.ParamsParser(&p); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-	}
-
-	id, err := strconv.ParseInt(p.ID, 10, 32)
-	if err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("unable to parse experiment id %q: %s", p.ID, err))
-	}
-	id32 := int32(id)
-
-	if tx := database.DB.Select("ID").First(&database.Experiment{
-		ID: &id32,
-	}); tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("unable to find experiment %q: %w", p.ID, tx.Error)
-	}
-
-	var exp struct {
-		database.Experiment
-		RunCount int
-	}
-	if tx := database.DB.Model(&database.Experiment{}).
-		Select(
-			"experiments.experiment_id",
-			"experiments.name",
-			"experiments.lifecycle_stage",
-			"experiments.creation_time",
-			"COUNT(runs.run_uuid) AS run_count",
-		).
-		Joins("LEFT JOIN runs USING(experiment_id)").
-		Group("experiments.experiment_id").
-		Where("experiments.experiment_id = ?", id).
-		First(&exp); tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("error fetching experiment %q: %w", p.ID, tx.Error)
-	}
-
-	return c.JSON(fiber.Map{
-		"id":            id,
-		"name":          exp.Name,
-		"description":   nil,
-		"archived":      exp.LifecycleStage == database.LifecycleStageDeleted,
-		"run_count":     exp.RunCount,
-		"creation_time": float64(exp.CreationTime.Int64) / 1000,
-	})
+	return svc.experimentRepository.GetByID(ctx, id)
 }
 
 func (svc ExperimentService) GetExperimentRuns(ctx context.Context, id, limit, offset int32) error {

@@ -48,19 +48,11 @@ func (ctlr Controller) GetExperiment(c *fiber.Ctx) error {
 	}
 	id32 := int32(id)
 
-	if tx := database.DB.Select("ID").First(&database.Experiment{
-		ID: &id32,
-	}); tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("unable to find experiment %q: %w", p.ID, tx.Error)
-	}
-
-	exp, err := ctlr.experimentService.GetExperiment(id)
+	exp, err := ctlr.experimentService.GetExperiment(c.Context(), id32)
 	if err != nil {
 		return err
 	}
+	
 	return c.JSON(fiber.Map{
 		"id":            id,
 		"name":          exp.Name,

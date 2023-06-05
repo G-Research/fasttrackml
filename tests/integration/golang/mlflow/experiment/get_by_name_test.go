@@ -40,7 +40,7 @@ func (s *GetExperimentByNameTestSuite) SetupTest() {
 	s.fixtures = fixtures
 }
 
-func (s *GetExperimentTestSuite) Test_Ok() {
+func (s *GetExperimentByNameTestSuite) Test_Ok() {
 	// 1. prepare database with test data.
 	experiment, err := s.fixtures.CreateTestExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
@@ -68,7 +68,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 
 	// 2. make actual API call.
 	query, err := urlquery.Marshal(request.GetExperimentRequest{
-		Name: fmt.Sprintf("%d", *experiment.Name),
+		Name: fmt.Sprintf("%s", experiment.Name),
 	})
 	assert.Nil(s.T(), err)
 
@@ -94,7 +94,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	}, experiment.Tags)
 }
 
-func (s *GetExperimentTestSuite) Test_Error() {
+func (s *GetExperimentByNameTestSuite) Test_Error() {
 	var testData = []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -102,11 +102,11 @@ func (s *GetExperimentTestSuite) Test_Error() {
 	}{
 		{
 			name:  "IncorrectExperimentID",
-			error: api.NewBadRequestError(`unable to find experiment 'incorrect_experiment_name': error getting experiment by name: incorrect_experiment_name: record not found`),
+			error: api.NewResourceDoesNotExistError(`unable to find experiment 'incorrect_experiment_name'`),
 			request: &request.GetExperimentRequest{
 				Name: "incorrect_experiment_name",
 			},
-		}
+		},
 	}
 
 	for _, tt := range testData {

@@ -35,23 +35,21 @@ then
   deactivate
 fi
 
-
-# Build fasttrack
+# Build fml
 go build \
   -C ${workspace} \
   -tags "$(jq -r '."go.buildTags"' ${workspace}/.vscode/settings.json)" \
   -ldflags "-linkmode external -extldflags '-static' -s -w" \
   -o ${repo}/fml
 
-
 # Create postgres test database if needed
 psql postgres://postgres:postgres@localhost <<EOF
 SELECT 'CREATE DATABASE test'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'test')\gexec
 EOF
+
 # Run tests
 . ${venv}/bin/activate
 export PATH=".:${PATH}"
-
 pytest tests/api/test_dashboards_api.py  -k "SQliteKeyTest or SQliteMemoryTest or SQliteFileTest or PostgresTest"
 pytest tests/api/test_project_api.py -k "SQliteKeyTest or SQliteMemoryTest or SQliteFileTest or PostgresTest"

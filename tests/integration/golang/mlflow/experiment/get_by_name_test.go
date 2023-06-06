@@ -101,10 +101,17 @@ func (s *GetExperimentByNameTestSuite) Test_Error() {
 		request *request.GetExperimentRequest
 	}{
 		{
-			name:  "IncorrectExperimentID",
+			name:  "NotFoundExperiment",
 			error: api.NewResourceDoesNotExistError(`unable to find experiment 'incorrect_experiment_name'`),
 			request: &request.GetExperimentRequest{
 				Name: "incorrect_experiment_name",
+			},
+		},
+		{
+			name:  "EmptyExperimentName",
+			error: api.NewInvalidParameterValueError(`Missing value for required parameter 'experiment_name'`),
+			request: &request.GetExperimentRequest{
+				Name: "",
 			},
 		},
 	}

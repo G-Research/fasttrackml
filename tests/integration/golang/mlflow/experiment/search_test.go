@@ -54,6 +54,7 @@ func getExperimentNames(experiments []*response.ExperimentPartialResponse) []str
 }
 
 func (s *SearchExperimentsTestSuite) Test_Ok() {
+	// 1. prepare database with test data.
 	experiments := []Experiment{
 		{
 			Name: "a",
@@ -99,6 +100,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
 	}()
 
+	// API call 1
 	query, err := urlquery.Marshal(request.SearchExperimentsRequest{
 		Filter: "attribute.name = 'a'",
 	})
@@ -112,8 +114,10 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		&resp,
 	)
 	assert.Nil(s.T(), err)
+	// check API response 1
 	assert.Equal(s.T(), []string{"a"}, getExperimentNames(resp.Experiments))
 
+	// API call 2
 	query, err = urlquery.Marshal(request.SearchExperimentsRequest{
 		Filter: "attribute.name != 'a'",
 	})
@@ -126,8 +130,10 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		&resp,
 	)
 	assert.Nil(s.T(), err)
+	// check API response 2
 	assert.Equal(s.T(), []string{"Abc", "ab"}, getExperimentNames(resp.Experiments))
 
+	// API call 3
 	query, err = urlquery.Marshal(request.SearchExperimentsRequest{
 		Filter: "name LIKE 'a%'",
 	})
@@ -140,8 +146,10 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		&resp,
 	)
 	assert.Nil(s.T(), err)
+	// check API response 3
 	assert.Equal(s.T(), []string{"ab", "a"}, getExperimentNames(resp.Experiments))
 
+	// API call 4
 	query, err = urlquery.Marshal(request.SearchExperimentsRequest{
 		Filter: "tag.key = 'value'",
 	})
@@ -154,8 +162,10 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		&resp,
 	)
 	assert.Nil(s.T(), err)
+	// check API response 4
 	assert.Equal(s.T(), []string{"a"}, getExperimentNames(resp.Experiments))
 
+	// API call 5
 	query, err = urlquery.Marshal(request.SearchExperimentsRequest{
 		Filter: "tag.key != 'value'",
 	})
@@ -168,8 +178,10 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		&resp,
 	)
 	assert.Nil(s.T(), err)
+	// check API response 5
 	assert.Equal(s.T(), []string{"ab"}, getExperimentNames(resp.Experiments))
 
+	// API call 6
 	query, err = urlquery.Marshal(request.SearchExperimentsRequest{
 		Filter: "tag.key ILIKE '%alu%'",
 	})
@@ -182,6 +194,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		&resp,
 	)
 	assert.Nil(s.T(), err)
+	// check API response 5
 	assert.Equal(s.T(), []string{"ab", "a"}, getExperimentNames(resp.Experiments))
 }
 

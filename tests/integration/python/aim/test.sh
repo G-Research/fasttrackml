@@ -2,7 +2,7 @@
 
 # Initialize variables
 current=$(dirname $(realpath $0))
-workspace=$(realpath ${current}/../..)
+workspace=$(realpath ${current}/../../../..)
 version=$(cat ${current}/version)
 repo=${current}/aim.src
 venv=/tmp/venv-$(echo ${repo} | sha256sum | awk '{print $1}')

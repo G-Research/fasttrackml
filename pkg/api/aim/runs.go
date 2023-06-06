@@ -12,6 +12,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
@@ -890,7 +891,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	return nil
 }
 
-// DeleteRun will update the run to the deleted lifecycle stage
+// DeleteRun will remove the Run from the repo
 func DeleteRun(c *fiber.Ctx) error {
 	params := struct {
 		ID string `params:"id"`
@@ -907,6 +908,46 @@ func DeleteRun(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
 			fmt.Sprintf("unable to delete run %q: %s", params.ID, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"id":     params.ID,
+		"status": "OK",
+	})
+}
+
+// UpdateRun will update the run name, description, and lifecycle stage
+func UpdateRun(c *fiber.Ctx) error {
+	params := struct {
+		ID string `params:"id"`
+	}{}
+	if err := c.ParamsParser(&params); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	var update request.UpdateRun
+	if err := c.BodyParser(&update); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	// TODO this code should move to service
+	run := models.Run{ID: params.ID}
+	runRepo := repositories.NewRunRepository(database.DB.DB)
+	var err error
+	if update.Archived != nil && *update.Archived {
+		err = runRepo.Archive(c.Context(), &run)
+	} else {
+		run.Name = *update.Name
+		err = database.DB.DB.Transaction(func(tx *gorm.DB) error {
+			if err := runRepo.UpdateWithTransaction(c.Context(), tx, &run); err != nil {
+				return err
+			}
+			return nil
+		})
+	}
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError,
+			fmt.Sprintf("unable to update/archive run %q: %s", params.ID, err))
 	}
 
 	return c.JSON(fiber.Map{

@@ -20,7 +20,9 @@ type RunRepositoryProvider interface {
 	GetByID(ctx context.Context, id string) (*models.Run, error)
 	// Create creates new models.Run entity.
 	Create(ctx context.Context, run *models.Run) error
-	// Delete marks existing models.Run entity as deleted.
+	// Archive marks existing models.Run entity as archived.
+	Archive(ctx context.Context, run *models.Run) error
+	// Delete removes the existing models.Run
 	Delete(ctx context.Context, run *models.Run) error
 	// Restore marks existing models.Run entity as active.
 	Restore(ctx context.Context, run *models.Run) error
@@ -77,8 +79,8 @@ func (r RunRepository) Create(ctx context.Context, run *models.Run) error {
 	return nil
 }
 
-// Delete marks existing models.Run entity as deleted.
-func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
+// Archive marks existing models.Run entity as archived.
+func (r RunRepository) Archive(ctx context.Context, run *models.Run) error {
 	run.DeletedTime = sql.NullInt64{
 		Int64: time.Now().UTC().UnixMilli(),
 		Valid: true,
@@ -86,6 +88,15 @@ func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 	run.LifecycleStage = models.LifecycleStageDeleted
 	if err := r.db.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
 		return eris.Wrapf(err, "error updating existing run with id: %s", run.ID)
+	}
+
+	return nil
+}
+
+// Delete removes the existing models.Run
+func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
+	if err := r.db.WithContext(ctx).Model(&run).Delete(run).Error; err != nil {
+		return eris.Wrapf(err, "error deleting run with id: %s", run.ID)
 	}
 
 	return nil

@@ -369,7 +369,7 @@ func (s Service) DeleteRun(ctx context.Context, req *request.DeleteRunRequest) e
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
 	}
 
-	if err := s.runRepository.Delete(ctx, run); err != nil {
+	if err := s.runRepository.Archive(ctx, run); err != nil {
 		return api.NewInternalError("unable to delete run '%s': %s", run.ID, err)
 	}
 

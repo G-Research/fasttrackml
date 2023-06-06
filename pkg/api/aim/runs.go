@@ -934,9 +934,19 @@ func UpdateRun(c *fiber.Ctx) error {
 	run := models.Run{ID: params.ID}
 	runRepo := repositories.NewRunRepository(database.DB.DB)
 	var err error
-	if update.Archived != nil && *update.Archived {
-		err = runRepo.Archive(c.Context(), &run)
-	} else {
+	if update.Archived != nil {
+		if *update.Archived {
+			err = runRepo.Archive(c.Context(), &run)
+		} else {
+			err = runRepo.Restore(c.Context(), &run)
+		}
+	}
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError,
+			fmt.Sprintf("unable to archive/restore run %q: %s", params.ID, err))
+	}
+
+	if update.Name != nil {
 		run.Name = *update.Name
 		err = database.DB.DB.Transaction(func(tx *gorm.DB) error {
 			if err := runRepo.UpdateWithTransaction(c.Context(), tx, &run); err != nil {
@@ -947,7 +957,7 @@ func UpdateRun(c *fiber.Ctx) error {
 	}
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
-			fmt.Sprintf("unable to update/archive run %q: %s", params.ID, err))
+			fmt.Sprintf("unable to update run %q: %s", params.ID, err))
 	}
 
 	return c.JSON(fiber.Map{

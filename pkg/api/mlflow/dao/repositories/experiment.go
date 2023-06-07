@@ -83,7 +83,6 @@ func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Exp
 	if err := r.db.Transaction(func(tx *gorm.DB) error{
 
 		if err := r.db.WithContext(ctx).Model(&experiment).Updates(experiment).Error; err != nil {
-			tx.Rollback()
 			return eris.Wrapf(err, "error updating experiment with id: %d", *experiment.ID)
 		}
 
@@ -95,7 +94,6 @@ func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Exp
 			}
 
 			if err := r.db.WithContext(ctx).Model(&run).Where("experiment_id = ?", experiment.ID).Updates(&run).Error; err != nil {
-				tx.Rollback()
 				return eris.Wrapf(err, "error updating existing runs with experiment id: %d", *experiment.ID)
 			}
 		}

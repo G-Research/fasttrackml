@@ -40,7 +40,8 @@ func GetRunInfo(c *fiber.Ctx) error {
 
 	tx := database.DB.
 		Joins("Experiment", database.DB.Select("ID", "Name")).
-		Preload("Params")
+		Preload("Params").
+		Preload("Tags")
 
 	if len(q.Sequences) == 0 {
 		q.Sequences = []string{
@@ -94,10 +95,15 @@ func GetRunInfo(c *fiber.Ctx) error {
 		"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
 		"active":        r.Status == database.StatusRunning,
 	}
-	params := make(map[string]string, len(r.Params))
+	params := make(map[string]any, len(r.Params)+1)
 	for _, p := range r.Params {
 		params[p.Key] = p.Value
 	}
+	tags := make(map[string]string, len(r.Tags))
+	for _, t := range r.Tags {
+		tags[t.Key] = t.Value
+	}
+	params["tags"] = tags
 
 	metrics := make([]fiber.Map, len(r.LatestMetrics))
 	for i, m := range r.LatestMetrics {
@@ -368,6 +374,7 @@ func SearchRuns(c *fiber.Ctx) error {
 
 	if !q.ExcludeParams {
 		tx.Preload("Params")
+		tx.Preload("Tags")
 	}
 
 	if !q.ExcludeTraces {
@@ -428,10 +435,15 @@ func SearchRuns(c *fiber.Ctx) error {
 				}
 
 				if !q.ExcludeParams {
-					params := make(fiber.Map, len(r.Params))
+					params := make(fiber.Map, len(r.Params)+1)
 					for _, p := range r.Params {
 						params[p.Key] = p.Value
 					}
+					tags := make(map[string]string, len(r.Tags))
+					for _, t := range r.Tags {
+						tags[t.Key] = t.Value
+					}
+					params["tags"] = tags
 					run["params"] = params
 				}
 
@@ -530,6 +542,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 	if tx := database.DB.
 		Joins("Experiment", database.DB.Select("ID", "Name")).
 		Preload("Params").
+		Preload("Tags").
 		Where("run_uuid IN (?)", qp.Filter(database.DB.
 			Select("runs.run_uuid").
 			Table("runs").
@@ -561,10 +574,15 @@ func SearchMetrics(c *fiber.Ctx) error {
 			},
 		}
 
-		params := make(fiber.Map, len(r.Params))
+		params := make(fiber.Map, len(r.Params)+1)
 		for _, p := range r.Params {
 			params[p.Key] = p.Value
 		}
+		tags := make(map[string]string, len(r.Tags))
+		for _, t := range r.Tags {
+			tags[t.Key] = t.Value
+		}
+		params["tags"] = tags
 		run["params"] = params
 
 		result[r.ID] = struct {

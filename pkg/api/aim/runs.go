@@ -966,6 +966,65 @@ func UpdateRun(c *fiber.Ctx) error {
 	})
 }
 
+func ArchiveBatch(c *fiber.Ctx) error {
+	params := struct {
+		Archive bool `params:"archive"`
+	}{}
+	if err := c.ParamsParser(&params); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	var ids []string
+	if err := c.BodyParser(&ids); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	// TODO this code should move to service
+	runRepo := repositories.NewRunRepository(database.DB.DB)
+	if err := database.DB.DB.Transaction(func(tx *gorm.DB) error {
+		for _, id := range ids {
+			run := models.Run{ID: id}
+			var err error
+			if params.Archive {
+				err = runRepo.Archive(c.Context(), &run)
+			} else {
+				err = runRepo.Restore(c.Context(), &run)
+			}
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteBatch(c *fiber.Ctx) error {
+	var ids []string
+	if err := c.BodyParser(&ids); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	// TODO this code should move to service
+	runRepo := repositories.NewRunRepository(database.DB.DB)
+	if err := database.DB.DB.Transaction(func(tx *gorm.DB) error {
+		for _, id := range ids {
+			run := models.Run{ID: id}
+			err := runRepo.Delete(c.Context(), &run)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func toNumpy(values []float64) fiber.Map {
 	buf := bytes.NewBuffer(make([]byte, 0, len(values)*8))
 	for _, v := range values {

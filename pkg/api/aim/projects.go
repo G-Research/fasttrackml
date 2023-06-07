@@ -131,7 +131,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 			resp[s] = fiber.Map{}
 		case "metric":
 			var metricKeys []string
-			if tx := database.DB.Model(&database.Metric{}).Distinct().Pluck("Key", &metricKeys); tx.Error != nil {
+			if tx := database.DB.Model(&database.LatestMetric{}).Distinct().Pluck("Key", &metricKeys); tx.Error != nil {
 				return fmt.Errorf("error retrieving metric keys: %w", tx.Error)
 			}
 

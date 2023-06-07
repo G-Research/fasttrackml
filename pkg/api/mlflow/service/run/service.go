@@ -19,7 +19,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/convertors"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -389,24 +388,6 @@ func (s Service) RestoreRun(ctx context.Context, req *request.RestoreRunRequest)
 
 	if err := s.runRepository.Restore(ctx, run); err != nil {
 		return api.NewInternalError("unable to restore run '%s': %s", run.ID, err)
-	}
-
-	return nil
-}
-
-func (s Service) DeleteRunsByExperiment(ctx context.Context, req *request.DeleteExperimentRequest) error {
-	if err := experiment.ValidateDeleteExperimentRequest(req); err != nil {
-		return err
-	}
-
-	parsedID, err := strconv.ParseInt(req.ID, 10, 32)
-	if err != nil {
-		return api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ID, err)
-	}
-
-	err = s.runRepository.DeleteByExperimentID(ctx, int32(parsedID))
-	if err != nil {
-		return api.NewInternalError("Unable to delete runs for experiment '%d': %s", parsedID, err)
 	}
 
 	return nil

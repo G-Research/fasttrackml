@@ -50,12 +50,12 @@ func (s Service) GetMetricHistory(
 }
 
 func (s Service) GetMetricHistoryBulk(
-	ctx *fiber.Ctx, req *request.GetMetricHistoryBulkRequest,
+	ctx context.Context, req *request.GetMetricHistoryBulkRequest,
 ) ([]models.Metric, error) {
 	if err := ValidateGetMetricHistoryBulkRequest(req); err != nil {
 		return nil, err
 	}
-	metrics, err := s.metricRepository.GetMetricHistoryBulk(ctx.Context(), req.RunIDs, req.MetricKey, req.MaxResults)
+	metrics, err := s.metricRepository.GetMetricHistoryBulk(ctx, req.RunIDs, req.MetricKey, req.MaxResults)
 	if err != nil {
 		return nil, api.NewInternalError(
 			"unable to get metric history in bulk for metric %q of runs %q", req.MetricKey, req.RunIDs,

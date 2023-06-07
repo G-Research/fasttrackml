@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // RunRepositoryProvider provides an interface to work with models.Run entity.
@@ -20,12 +19,12 @@ type RunRepositoryProvider interface {
 	GetByID(ctx context.Context, id string) (*models.Run, error)
 	// Create creates new models.Run entity.
 	Create(ctx context.Context, run *models.Run) error
+	// Update updates existing models.Experiment entity.
+	Update(ctx context.Context, run *models.Run) error
 	// Delete marks existing models.Run entity as deleted.
 	Delete(ctx context.Context, run *models.Run) error
-	// Restore marks existing models.Run entity as active.
-	Restore(ctx context.Context, run *models.Run) error
 	// SetRunTagsBatch sets Run tags in batch.
-	SetRunTagsBatch(ctx context.Context, batchSize int, run *models.Run, tags []models.Tag) error
+	SetRunTagsBatch(ctx context.Context, run *models.Run, batchSize int, tags []models.Tag) error
 	// UpdateWithTransaction updates existing models.Run entity in scope of transaction.
 	UpdateWithTransaction(ctx context.Context, tx *gorm.DB, run *models.Run) error
 }
@@ -77,6 +76,14 @@ func (r RunRepository) Create(ctx context.Context, run *models.Run) error {
 	return nil
 }
 
+// Update updates existing models.Run entity.
+func (r RunRepository) Update(ctx context.Context, run *models.Run) error {
+	if err := r.db.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
+		return eris.Wrapf(err, "error updating run with id: %s", run.ID)
+	}
+	return nil
+}
+
 // Delete marks existing models.Run entity as deleted.
 func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 	run.DeletedTime = sql.NullInt64{
@@ -85,19 +92,6 @@ func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 	}
 	run.LifecycleStage = models.LifecycleStageDeleted
 	if err := r.db.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
-		return eris.Wrapf(err, "error updating existing run with id: %s", run.ID)
-	}
-
-	return nil
-}
-
-// Restore marks existing models.Run entity as active.
-func (r RunRepository) Restore(ctx context.Context, run *models.Run) error {
-	// Use UpdateColumns so we can reset DeletedTime to null
-	if err := r.db.WithContext(ctx).Model(&run).UpdateColumns(map[string]any{
-		"DeletedTime":    sql.NullInt64{},
-		"LifecycleStage": database.LifecycleStageActive,
-	}).Error; err != nil {
 		return eris.Wrapf(err, "error updating existing run with id: %s", run.ID)
 	}
 
@@ -114,7 +108,7 @@ func (r RunRepository) UpdateWithTransaction(ctx context.Context, tx *gorm.DB, r
 }
 
 // SetRunTagsBatch sets Run tags in batch.
-func (r RunRepository) SetRunTagsBatch(ctx context.Context, batchSize int, run *models.Run, tags []models.Tag) error {
+func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, batchSize int, tags []models.Tag) error {
 	if err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, tag := range tags {
 			switch tag.Key {

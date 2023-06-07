@@ -37,6 +37,12 @@ jobs:
           mkdir pkg/ui/{aim,mlflow}/embed/build
           touch pkg/ui/{aim,mlflow}/embed/build/index.html
 
+      - name: Download mockery
+        run: go install github.com/vektra/mockery/v2@v2.20.0
+
+      - name: Generate mocks
+        run: make mocks-generate; sleep 5;
+
       - name: Check with go vet
         run: go vet --tags "${{ steps.tags.outputs.tags }}" ./...
 

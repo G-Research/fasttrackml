@@ -3,13 +3,12 @@ package repositories
 import (
 	"context"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
-	"gorm.io/gorm/clause"
-
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // MetricRepositoryProvider provides an interface to work with models.Metric entity.

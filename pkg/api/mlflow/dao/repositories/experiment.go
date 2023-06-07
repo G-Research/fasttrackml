@@ -79,35 +79,31 @@ func (r ExperimentRepository) GetByName(ctx context.Context, name string) (*mode
 
 // Update updates existing models.Experiment entity.
 func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Experiment) error {
-	tx := r.db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
 
-	if err := tx.Error; err != nil {
+	if err := r.db.Transaction(func(tx *gorm.DB) error{
+
+		if err := r.db.WithContext(ctx).Model(&experiment).Updates(experiment).Error; err != nil {
+			tx.Rollback()
+			return eris.Wrapf(err, "error updating experiment with id: %d", *experiment.ID)
+		}
+
+		// also archive experiment runs if experiment is being archived
+		if experiment.LifecycleStage == models.LifecycleStageDeleted {
+			run := models.Run{
+				LifecycleStage: experiment.LifecycleStage,
+				DeletedTime: experiment.LastUpdateTime,
+			}
+
+			if err := r.db.WithContext(ctx).Model(&run).Where("experiment_id = ?", experiment.ID).Updates(&run).Error; err != nil {
+				tx.Rollback()
+				return eris.Wrapf(err, "error updating existing runs with experiment id: %d", *experiment.ID)
+			}
+		}
+		return nil
+
+	}); err != nil {
 		return err
 	}
 
-	if err := r.db.WithContext(ctx).Model(&experiment).Updates(experiment).Error; err != nil {
-		tx.Rollback()
-		return eris.Wrapf(err, "error updating experiment with id: %d", *experiment.ID)
-	}
-
-	// also archive experiment runs if experiment is being archived
-	if experiment.LifecycleStage == models.LifecycleStageDeleted {
-		run := models.Run{
-			LifecycleStage: experiment.LifecycleStage,
-			DeletedTime: experiment.LastUpdateTime,
-		}
-
-		if err := r.db.WithContext(ctx).Model(&run).Where("experiment_id = ?", experiment.ID).Updates(&run).Error; err != nil {
-			tx.Rollback()
-			return eris.Wrapf(err, "error updating existing runs with experiment id: %d", *experiment.ID)
-		}
-	}
-
-	tx.Commit()
 	return nil
 }

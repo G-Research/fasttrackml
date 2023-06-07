@@ -90,12 +90,26 @@ func GetProjectParams(c *fiber.Ctx) error {
 			return fmt.Errorf("error retrieving param keys: %w", tx.Error)
 		}
 
-		params := make(map[string]map[string]string, len(paramKeys))
+		params := make(map[string]any, len(paramKeys)+1)
 		for _, p := range paramKeys {
 			params[p] = map[string]string{
 				"__example_type__": "<class 'str'>",
 			}
 		}
+
+		var tagKeys []string
+		if tx := database.DB.Model(&database.Tag{}).Distinct().Pluck("Key", &tagKeys); tx.Error != nil {
+			return fmt.Errorf("error retrieving tag keys: %w", tx.Error)
+		}
+
+		tags := make(map[string]map[string]string, len(tagKeys))
+		for _, t := range tagKeys {
+			tags[t] = map[string]string{
+				"__example_type__": "<class 'str'>",
+			}
+		}
+
+		params["tags"] = tags
 
 		resp["params"] = params
 	}
@@ -117,7 +131,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 			resp[s] = fiber.Map{}
 		case "metric":
 			var metricKeys []string
-			if tx := database.DB.Model(&database.Metric{}).Distinct().Pluck("Key", &metricKeys); tx.Error != nil {
+			if tx := database.DB.Model(&database.LatestMetric{}).Distinct().Pluck("Key", &metricKeys); tx.Error != nil {
 				return fmt.Errorf("error retrieving metric keys: %w", tx.Error)
 			}
 

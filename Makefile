@@ -1,3 +1,6 @@
+## FastTrackML
+## For best results, run these make targets inside the devcontainer
+
 #
 # Project-specific variables
 #
@@ -17,6 +20,16 @@ PATH_DOCKER_COMPOSE_FILE=$(realpath ./docker/docker-compose.yml)
 DOCKER_COMPOSE_OPTIONS= -f $(PATH_DOCKER_COMPOSE_FILE)
 
 #
+# Default target (help)
+#
+.PHONY: help
+help: ## display this help
+	@ echo "Please use \`make <target>' where <target> is one of:"
+	@ echo
+	@ grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-24s\033[0m - %s\n", $$1, $$2}'
+	@ echo
+
+#
 # Go targets.
 #
 .PHONY: go-get
@@ -32,16 +45,20 @@ go-build: ## build service binary.
 #
 # Tests targets.
 #
-.PHONY: tests-run-unit
-tests-run-unit: ## run unit tests.
+.PHONY: test-go-unit
+test-go-unit: ## run go unit tests.
 	@echo ">>> Running unit tests."
 	go test -v ./...
 
-.PHONY: tests-run-integration
-tests-run-integration: ## run integration tests.
+.PHONY: test-go-integration
+test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
 	go test -v -p 1 -tags="integration" ./tests/integration/golang/...
 
+PHONY: test-python-integration
+test-python-integration: build ## run the MLFlow python integration tests.
+	@echo ">>> Running MLFlow python integration tests."
+	tests/mlflow/test.sh
 
 #
 # Service test targets
@@ -90,10 +107,23 @@ mocks-clean: ## cleans old mocks.
 mocks-generate: mocks-clean ## generate mock based on all project interfaces.
 	mockery --all --dir "./pkg/api/mlflow" --inpackage --case underscore
 
-.PHONY: help
-help: ## display this help
-	@ echo "Please use \`make <target>' where <target> is one of:"
-	@ echo
-	@ grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-10s\033[0m - %s\n", $$1, $$2}'
-	@ echo
+#
+# Build targets
+# 
+PHONY: clean
+clean: ## clean the go and node build artifacts
+	@echo ">>> Cleaning go and node build artifacts."
+	rm -Rf pkg/ui/aim/embed/repo
+	rm -Rf pkg/ui/mlflow/embed/repo
+	rm -Rf $(SERVICE)
 
+PHONY: build
+build: go-build ## build the go and node components
+	@echo ">>> Building node UI components."
+	pkg/ui/aim/embed/build.sh
+	pkg/ui/mlflow/embed/build.sh
+
+PHONY: run
+run: build ## run the FastTrackML server
+	@echo ">>> Running the FasttrackML server."
+	./$(SERVICE) server

@@ -967,13 +967,6 @@ func UpdateRun(c *fiber.Ctx) error {
 }
 
 func ArchiveBatch(c *fiber.Ctx) error {
-	params := struct {
-		Archive bool `params:"archive"`
-	}{}
-	if err := c.ParamsParser(&params); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-	}
-
 	var ids []string
 	if err := c.BodyParser(&ids); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
@@ -985,7 +978,7 @@ func ArchiveBatch(c *fiber.Ctx) error {
 		for _, id := range ids {
 			run := models.Run{ID: id}
 			var err error
-			if params.Archive {
+			if c.Query("archive") == "true" {
 				err = runRepo.Archive(c.Context(), &run)
 			} else {
 				err = runRepo.Restore(c.Context(), &run)
@@ -998,7 +991,9 @@ func ArchiveBatch(c *fiber.Ctx) error {
 	}); err != nil {
 		return err
 	}
-	return nil
+	return c.JSON(fiber.Map{
+		"status": "OK",
+	})
 }
 
 func DeleteBatch(c *fiber.Ctx) error {
@@ -1021,8 +1016,9 @@ func DeleteBatch(c *fiber.Ctx) error {
 	}); err != nil {
 		return err
 	}
-
-	return nil
+	return c.JSON(fiber.Map{
+		"status": "OK",
+	})
 }
 
 func toNumpy(values []float64) fiber.Map {

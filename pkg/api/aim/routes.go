@@ -40,6 +40,10 @@ func AddRoutes(r fiber.Router) {
 	runs.Post("/search/metric/align/", SearchAlignedMetrics)
 	runs.Get("/:id/info/", GetRunInfo)
 	runs.Post("/:id/metric/get-batch/", GetRunMetrics)
+	runs.Put("/:id/", UpdateRun)
+	runs.Delete("/:id/", DeleteRun)
+	runs.Post("/delete-batch/", DeleteBatch)
+	runs.Post("/archive-batch/", ArchiveBatch)
 
 	tags := r.Group("/tags")
 	tags.Get("/", GetTags)

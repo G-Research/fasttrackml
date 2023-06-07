@@ -974,21 +974,13 @@ func ArchiveBatch(c *fiber.Ctx) error {
 
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB.DB)
-	if err := database.DB.DB.Transaction(func(tx *gorm.DB) error {
-		for _, id := range ids {
-			run := models.Run{ID: id}
-			var err error
-			if c.Query("archive") == "true" {
-				err = runRepo.Archive(c.Context(), &run)
-			} else {
-				err = runRepo.Restore(c.Context(), &run)
-			}
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}); err != nil {
+	var err error
+	if c.Query("archive") == "true" {
+		err = runRepo.ArchiveBatch(c.Context(), ids)
+	} else {
+		err = runRepo.RestoreBatch(c.Context(), ids)
+	}
+	if err != nil {
 		return err
 	}
 	return c.JSON(fiber.Map{
@@ -1004,16 +996,7 @@ func DeleteBatch(c *fiber.Ctx) error {
 
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB.DB)
-	if err := database.DB.DB.Transaction(func(tx *gorm.DB) error {
-		for _, id := range ids {
-			run := models.Run{ID: id}
-			err := runRepo.Delete(c.Context(), &run)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}); err != nil {
+	if err := runRepo.DeleteBatch(c.Context(), ids); err != nil {
 		return err
 	}
 	return c.JSON(fiber.Map{

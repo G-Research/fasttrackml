@@ -439,7 +439,37 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								return nil, fmt.Errorf("unsupported slicer %q", ast.Dump(s))
 							}
 						}), nil
-					// case "tags":
+					case "tags":
+						return subscriptSlicer(func(s ast.Slicer) (any, error) {
+							switch s := s.(type) {
+							case *ast.Index:
+								v, err := pq.parseNode(s.Value)
+								if err != nil {
+									return nil, err
+								}
+								switch v := v.(type) {
+								case string:
+									j, ok := pq.joins[fmt.Sprintf("tags:%s", v)]
+									if !ok {
+										alias := fmt.Sprintf("tags_%d", len(pq.joins))
+										j = join{
+											alias: alias,
+											query: fmt.Sprintf("LEFT JOIN tags %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?", alias, table, alias, alias),
+											args:  []any{v},
+										}
+										pq.joins[fmt.Sprintf("tags:%s", v)] = j
+									}
+									return clause.Column{
+										Table: j.alias,
+										Name:  "value",
+									}, nil
+								default:
+									return nil, fmt.Errorf("unsupported index value type %t", v)
+								}
+							default:
+								return nil, fmt.Errorf("unsupported slicer %q", ast.Dump(s))
+							}
+						}), nil
 					default:
 						j, ok := pq.joins[fmt.Sprintf("params:%s", attr)]
 						if !ok {
@@ -536,6 +566,7 @@ func (pq *parsedQuery) parseNameConstant(node *ast.NameConstant) (any, error) {
 		return nil, fmt.Errorf("unsupported name constant type %q", node.Value.Type())
 	}
 }
+
 func (pq *parsedQuery) parseNum(node *ast.Num) (any, error) {
 	switch node.N.Type() {
 	case py.IntType:

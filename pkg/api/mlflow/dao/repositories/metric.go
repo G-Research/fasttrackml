@@ -82,7 +82,17 @@ func (r MetricRepository) CreateBatch(
 	}
 
 	if err := r.db.WithContext(ctx).CreateInBatches(&metrics, batchSize).Error; err != nil {
-		return eris.Wrapf(err, "error creating metrics for run: %s", run.ID)
+		var count int64
+		for _, metric := range metrics {
+			if err := r.db.WithContext(ctx).Model(&models.Metric{}).Where("value = ? AND timestamp = ? AND step = ?", metric.Value, metric.Timestamp, metric.Step).Count(&count).Error; err != nil {
+				return eris.Wrapf(err, "Error checking for the existence of the metric")
+			}
+			// if the metric wasn't created
+			if count == 0 {
+				return eris.Wrapf(err, "error creating metrics for run: %s", run.ID)
+			}
+		}
+
 	}
 
 	// TODO update latest metrics in the background?

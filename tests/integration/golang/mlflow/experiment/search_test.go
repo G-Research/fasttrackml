@@ -52,6 +52,23 @@ func getExperimentNames(experiments []*response.ExperimentPartialResponse) []str
 	}
 	return names
 }
+func executeSearchRequest(s *SearchExperimentsTestSuite, filter string) response.SearchExperimentsResponse {
+	query, err := urlquery.Marshal(request.SearchExperimentsRequest{
+		Filter: filter,
+	})
+	assert.Nil(s.T(), err)
+
+	resp := response.SearchExperimentsResponse{}
+	err = s.client.DoGetRequest(
+		fmt.Sprintf(
+			"%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query,
+		),
+		&resp,
+	)
+	assert.Nil(s.T(), err)
+
+	return resp
+}
 
 func (s *SearchExperimentsTestSuite) Test_Ok() {
 	// 1. prepare database with test data.
@@ -101,100 +118,27 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 	}()
 
 	// API call 1
-	query, err := urlquery.Marshal(request.SearchExperimentsRequest{
-		Filter: "attribute.name = 'a'",
-	})
-	assert.Nil(s.T(), err)
-
-	resp := response.SearchExperimentsResponse{}
-	err = s.client.DoGetRequest(
-		fmt.Sprintf(
-			"%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query,
-		),
-		&resp,
-	)
-	assert.Nil(s.T(), err)
-	// check API response 1
+	resp := executeSearchRequest(s, "attribute.name = 'a'")
 	assert.Equal(s.T(), []string{"a"}, getExperimentNames(resp.Experiments))
 
 	// API call 2
-	query, err = urlquery.Marshal(request.SearchExperimentsRequest{
-		Filter: "attribute.name != 'a'",
-	})
-	assert.Nil(s.T(), err)
-
-	err = s.client.DoGetRequest(
-		fmt.Sprintf(
-			"%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query,
-		),
-		&resp,
-	)
-	assert.Nil(s.T(), err)
-	// check API response 2
+	resp = executeSearchRequest(s, "attribute.name != 'a'")
 	assert.Equal(s.T(), []string{"Abc", "ab"}, getExperimentNames(resp.Experiments))
 
 	// API call 3
-	query, err = urlquery.Marshal(request.SearchExperimentsRequest{
-		Filter: "name LIKE 'a%'",
-	})
-	assert.Nil(s.T(), err)
-
-	err = s.client.DoGetRequest(
-		fmt.Sprintf(
-			"%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query,
-		),
-		&resp,
-	)
-	assert.Nil(s.T(), err)
-	// check API response 3
+	resp = executeSearchRequest(s, "name LIKE 'a%'")
 	assert.Equal(s.T(), []string{"ab", "a"}, getExperimentNames(resp.Experiments))
 
 	// API call 4
-	query, err = urlquery.Marshal(request.SearchExperimentsRequest{
-		Filter: "tag.key = 'value'",
-	})
-	assert.Nil(s.T(), err)
-
-	err = s.client.DoGetRequest(
-		fmt.Sprintf(
-			"%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query,
-		),
-		&resp,
-	)
-	assert.Nil(s.T(), err)
-	// check API response 4
+	resp = executeSearchRequest(s, "tag.key = 'value'")
 	assert.Equal(s.T(), []string{"a"}, getExperimentNames(resp.Experiments))
 
 	// API call 5
-	query, err = urlquery.Marshal(request.SearchExperimentsRequest{
-		Filter: "tag.key != 'value'",
-	})
-	assert.Nil(s.T(), err)
-
-	err = s.client.DoGetRequest(
-		fmt.Sprintf(
-			"%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query,
-		),
-		&resp,
-	)
-	assert.Nil(s.T(), err)
-	// check API response 5
+	resp = executeSearchRequest(s, "tag.key != 'value'")
 	assert.Equal(s.T(), []string{"ab"}, getExperimentNames(resp.Experiments))
 
 	// API call 6
-	query, err = urlquery.Marshal(request.SearchExperimentsRequest{
-		Filter: "tag.key ILIKE '%alu%'",
-	})
-	assert.Nil(s.T(), err)
-
-	err = s.client.DoGetRequest(
-		fmt.Sprintf(
-			"%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query,
-		),
-		&resp,
-	)
-	assert.Nil(s.T(), err)
-	// check API response 5
+	resp = executeSearchRequest(s, "tag.key ILIKE '%alu%'")
 	assert.Equal(s.T(), []string{"ab", "a"}, getExperimentNames(resp.Experiments))
 }
 
@@ -202,20 +146,76 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 	var testData = []struct {
 		name    string
 		error   *api.ErrorResponse
-		request *request.GetExperimentRequest
+		request *request.SearchExperimentsRequest
 	}{
 		{
-			name:  "IncorrectExperimentID",
-			error: api.NewBadRequestError(`unable to parse experiment id 'incorrect_experiment_id': strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`),
-			request: &request.GetExperimentRequest{
-				ID: "incorrect_experiment_id",
+			name:  "InvalidViewType",
+			error: api.NewInvalidParameterValueError("Invalid view_type 'invalid_ViewType'"),
+			request: &request.SearchExperimentsRequest{
+				ViewType: "invalid_ViewType",
 			},
 		},
 		{
-			name:  "NotFoundExperiment",
-			error: api.NewResourceDoesNotExistError(`unable to find experiment '1': error getting experiment by id: 1: record not found`),
-			request: &request.GetExperimentRequest{
-				ID: "1",
+			name:  "InvalidMaxResult",
+			error: api.NewInvalidParameterValueError("Invalid value for parameter 'max_results' supplied."),
+			request: &request.SearchExperimentsRequest{
+				MaxResults: 10000000,
+			},
+		},
+		{
+			name:  "InvalidFilterValue",
+			error: api.NewInvalidParameterValueError("invalid numeric value 'abc'"),
+			request: &request.SearchExperimentsRequest{
+				Filter: "attribute.creation_time>abc",
+			},
+		},
+		{
+			name:  "MalformedFilter",
+			error: api.NewInvalidParameterValueError("malformed filter 'invalid_filter'"),
+			request: &request.SearchExperimentsRequest{
+				Filter: "invalid_filter",
+			},
+		},
+		{
+			name:  "InvalidAttributeComparisonOperator",
+			error: api.NewInvalidParameterValueError("invalid numeric attribute comparison operator '>='"),
+			request: &request.SearchExperimentsRequest{
+				Filter: "attribute.creation_time>=100",
+			},
+		},
+		{
+			name:  "InvalidStringAttributeValue",
+			error: api.NewInvalidParameterValueError("invalid string value '(abc'"),
+			request: &request.SearchExperimentsRequest{
+				Filter: "attribute.name LIKE '(abc'",
+			},
+		},
+		{
+			name:  "InvalidTagComparisonOperator",
+			error: api.NewInvalidParameterValueError("invalid tag comparison operator '>='"),
+			request: &request.SearchExperimentsRequest{
+				Filter: "tags.name>='tag'",
+			},
+		},
+		{
+			name:  "InvalidEntity",
+			error: api.NewInvalidParameterValueError("invalid entity type 'invalid_entity'. Valid values are ['tag', 'attribute']"),
+			request: &request.SearchExperimentsRequest{
+				Filter: "invalid_entity.name=value",
+			},
+		},
+		{
+			name:  "InvalidOrderByClause",
+			error: api.NewInvalidParameterValueError("invalid order_by clause 'invalid_column'"),
+			request: &request.SearchExperimentsRequest{
+				OrderBy: []string{"invalid_column"},
+			},
+		},
+		{
+			name:  "InvalidOrderByAttribute",
+			error: api.NewInvalidParameterValueError("invalid attribute 'invalid_attribute'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']"),
+			request: &request.SearchExperimentsRequest{
+				OrderBy: []string{"invalid_attribute"},
 			},
 		},
 	}
@@ -226,7 +226,7 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
 			err = s.client.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute, query),
+				fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query),
 				&resp,
 			)
 			assert.Nil(t, err)

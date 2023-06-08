@@ -172,7 +172,7 @@ func TestService_DeleteRun_Ok(t *testing.T) {
 		"1",
 	).Return(&models.Run{ID: "1"}, nil)
 	runRepository.On(
-		"Delete",
+		"Archive",
 		mock.AnythingOfType("*context.emptyCtx"),
 		&models.Run{ID: "1"},
 	).Return(nil)

@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // RunRepositoryProvider provides an interface to work with models.Run entity.
@@ -160,7 +161,7 @@ func (r RunRepository) Restore(ctx context.Context, run *models.Run) error {
 // RestoreBatch marks existing models.Run entities as active.
 func (r RunRepository) RestoreBatch(ctx context.Context, ids []string) error {
 	run := models.Run{
-		DeletedTime: sql.NullInt64{},
+		DeletedTime:    sql.NullInt64{},
 		LifecycleStage: models.LifecycleStageActive,
 	}
 	if err := r.db.WithContext(ctx).Model(&run).Where("run_uuid IN ?", ids).Updates(run).Error; err != nil {

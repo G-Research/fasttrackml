@@ -93,7 +93,7 @@ func (rn RowNum) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 
 type Param struct {
 	Key   string `gorm:"type:varchar(250);not null;primaryKey"`
-	Value string `gorm:"type:varchar(500);not null;primaryKey"`
+	Value string `gorm:"type:varchar(500);not null"`
 	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 

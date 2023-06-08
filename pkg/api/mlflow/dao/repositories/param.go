@@ -33,8 +33,8 @@ func NewParamRepository(db *gorm.DB) *ParamRepository {
 // CreateBatch creates []models.Param entities in batch.
 func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params []models.Param) error {
 	if err := r.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "key"}, {Name: "run_uuid"}},
-		DoUpdates: clause.AssignmentColumns([]string{"value"}),
+		Columns:   []clause.Column{{Name: "key"}, {Name: "value"}, {Name: "run_uuid"}},
+		DoNothing: true,
 	}).CreateInBatches(params, batchSize).Error; err != nil {
 		return eris.Wrap(err, "error creating params in batch")
 	}

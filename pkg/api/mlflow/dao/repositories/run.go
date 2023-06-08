@@ -20,6 +20,9 @@ type RunRepositoryProvider interface {
 	GetByID(ctx context.Context, id string) (*models.Run, error)
 	// Create creates new models.Run entity.
 	Create(ctx context.Context, run *models.Run) error
+	// Update updates existing models.Experiment entity.
+	Update(ctx context.Context, run *models.Run) error
+	// Delete marks existing models.Run entity as deleted.
 	// Archive marks existing models.Run entity as archived.
 	Archive(ctx context.Context, run *models.Run) error
 	// Delete removes the existing models.Run
@@ -33,7 +36,7 @@ type RunRepositoryProvider interface {
 	// RestoreBatch marks existing models.Run entities as active.
 	RestoreBatch(ctx context.Context, ids []string) error
 	// SetRunTagsBatch sets Run tags in batch.
-	SetRunTagsBatch(ctx context.Context, batchSize int, run *models.Run, tags []models.Tag) error
+	SetRunTagsBatch(ctx context.Context, run *models.Run, batchSize int, tags []models.Tag) error
 	// UpdateWithTransaction updates existing models.Run entity in scope of transaction.
 	UpdateWithTransaction(ctx context.Context, tx *gorm.DB, run *models.Run) error
 }
@@ -81,6 +84,14 @@ func (r RunRepository) Create(ctx context.Context, run *models.Run) error {
 		return tx.Create(&run).Error
 	}); err != nil {
 		return eris.Wrap(err, "error creating new `run` entity")
+	}
+	return nil
+}
+
+// Update updates existing models.Run entity.
+func (r RunRepository) Update(ctx context.Context, run *models.Run) error {
+	if err := r.db.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
+		return eris.Wrapf(err, "error updating run with id: %s", run.ID)
 	}
 	return nil
 }
@@ -150,7 +161,7 @@ func (r RunRepository) Restore(ctx context.Context, run *models.Run) error {
 // RestoreBatch marks existing models.Run entities as active.
 func (r RunRepository) RestoreBatch(ctx context.Context, ids []string) error {
 	run := models.Run{
-		DeletedTime: sql.NullInt64{},
+		DeletedTime:    sql.NullInt64{},
 		LifecycleStage: models.LifecycleStageActive,
 	}
 	if err := r.db.WithContext(ctx).Model(&run).Where("run_uuid IN ?", ids).Updates(run).Error; err != nil {
@@ -170,7 +181,7 @@ func (r RunRepository) UpdateWithTransaction(ctx context.Context, tx *gorm.DB, r
 }
 
 // SetRunTagsBatch sets Run tags in batch.
-func (r RunRepository) SetRunTagsBatch(ctx context.Context, batchSize int, run *models.Run, tags []models.Tag) error {
+func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, batchSize int, tags []models.Tag) error {
 	if err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, tag := range tags {
 			switch tag.Key {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
@@ -31,7 +32,10 @@ func NewParamRepository(db *gorm.DB) *ParamRepository {
 
 // CreateBatch creates []models.Param entities in batch.
 func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params []models.Param) error {
-	if err := r.db.CreateInBatches(params, batchSize).Error; err != nil {
+	if err := r.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "key"}, {Name: "run_uuid"}},
+		DoUpdates: clause.AssignmentColumns([]string{"value"}),
+	}).CreateInBatches(params, batchSize).Error; err != nil {
 		return eris.Wrap(err, "error creating params in batch")
 	}
 	return nil

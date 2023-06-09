@@ -32,12 +32,18 @@ func NewParamRepository(db *gorm.DB) *ParamRepository {
 
 // CreateBatch creates []models.Param entities in batch.
 func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params []models.Param) error {
-	// skip inserting params which exactly match existing rows
-	params, err := r.removeExactMatches(ctx, params)
+	var err error
+	err = r.db.CreateInBatches(params, batchSize).Error
 	if err != nil {
-		return err
+		// remove duplicate rows and try again
+		params, err1 := r.removeExactMatches(ctx, params)
+		if err1 != nil {
+			return eris.Wrap(err1, "error removing exact matches after: " + err.Error())
+		}
+		err = r.db.CreateInBatches(params, batchSize).Error
 	}
-	if err := r.db.CreateInBatches(params, batchSize).Error; err != nil {
+
+	if err != nil {
 		return eris.Wrap(err, "error creating params in batch")
 	}
 	return nil

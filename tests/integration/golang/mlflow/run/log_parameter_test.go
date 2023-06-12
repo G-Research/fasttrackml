@@ -23,9 +23,10 @@ import (
 
 type LogParamTestSuite struct {
 	suite.Suite
-	client   *helpers.HttpClient
-	fixtures *fixtures.RunFixtures
-	run      *models.Run
+	client             *helpers.HttpClient
+	runFixtures        *fixtures.RunFixtures
+	experimentFixtures *fixtures.ExperimentFixtures
+	run                *models.Run
 }
 
 func TestLogParamTestSuite(t *testing.T) {
@@ -34,24 +35,37 @@ func TestLogParamTestSuite(t *testing.T) {
 
 func (s *LogParamTestSuite) SetupTest() {
 	s.client = helpers.NewHttpClient(os.Getenv("SERVICE_BASE_URL"))
-	fixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
+	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
-	s.fixtures = fixtures
-	id := uuid.New().String()
+	s.runFixtures = runFixtures
+	expFixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = expFixtures
+
+	expName := uuid.New().String()
+	exp := &models.Experiment{
+		Name:           expName,
+		LifecycleStage: models.LifecycleStageActive,
+	}
+	_, err = s.experimentFixtures.CreateTestExperiment(context.Background(), exp)
+	assert.Nil(s.T(), err)
+
+	runID := uuid.New().String()
 	run := &models.Run{
-		ID:             strings.ReplaceAll(id, "-", ""),
+		ID:             strings.ReplaceAll(runID, "-", ""),
+		ExperimentID:   *exp.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
 	}
-	run, err = s.fixtures.CreateTestRun(context.Background(), run)
+	run, err = s.runFixtures.CreateTestRun(context.Background(), run)
 	assert.Nil(s.T(), err)
 	s.run = run
 }
 
 func (s *LogParamTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 
 	req := request.LogParamRequest{
@@ -120,7 +134,7 @@ func (s *LogParamTestSuite) TestBatch_Ok() {
 
 func (s *LogParamTestSuite) TestBatch_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 
 	var testData = []struct {
@@ -173,3 +187,4 @@ func (s *LogParamTestSuite) TestBatch_Error() {
 		})
 	}
 }
+    

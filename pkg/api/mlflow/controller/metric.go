@@ -35,7 +35,7 @@ func (c Controller) GetMetricHistoryBulk(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getMetricHistoryBulk request: %#v", req)
 
-	metrics, err := c.metricService.GetMetricHistoryBulk(ctx, &req)
+	metrics, err := c.metricService.GetMetricHistoryBulk(ctx.Context(), &req)
 	if err != nil {
 		return err
 	}

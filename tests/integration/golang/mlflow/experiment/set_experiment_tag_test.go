@@ -40,7 +40,7 @@ func (s *SetExperimentTagTestSuite) SetupTest() {
 	s.fixtures = fixtures
 }
 
-func setExperimentTag(s *SetExperimentTagTestSuite, experiment *models.Experiment, key, value string) {
+func SetExperimentTag(s *SetExperimentTagTestSuite, experiment *models.Experiment, key, value string) {
 	req := request.SetExperimentTagRequest{
 		ID:    fmt.Sprintf("%d", *experiment.ID),
 		Key:   key,
@@ -92,32 +92,32 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	}()
 
 	// Set tag on experiment
-	setExperimentTag(s, experiment, "dataset", "imagenet1K")
+	SetExperimentTag(s, experiment, "KeyTag1", "ValueTag1")
 	exp, err := s.fixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
 
 	found := false
 	for _, tag := range exp.Tags {
-		if tag.Key == "dataset" && tag.Value == "imagenet1K" {
+		if tag.Key == "KeyTag1" && tag.Value == "ValueTag1" {
 			found = true
 			break
 		}
 	}
-	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'dataset' with value 'imagenet1K'")
+	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'")
 
 	// Update tag on experiment
-	setExperimentTag(s, experiment, "dataset", "birdbike")
+	SetExperimentTag(s, experiment, "KeyTag1", "ValueTag2")
 	exp, err = s.fixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
 
 	found = false
 	for _, tag := range exp.Tags {
-		if tag.Key == "dataset" && tag.Value == "birdbike" {
+		if tag.Key == "KeyTag1" && tag.Value == "ValueTag2" {
 			found = true
 			break
 		}
 	}
-	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'dataset' with value 'imagenet1K'")
+	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'")
 
 	//test that setting a tag on 1 experiment does not impact another experiment.
 	exp, err = s.fixtures.GetExperimentByID(context.Background(), *experiment1.ID)
@@ -125,28 +125,28 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	assert.Equal(s.T(), len(exp.Tags), 0)
 
 	//test that setting a tag on different experiments maintain different values across experiments
-	setExperimentTag(s, experiment1, "dataset", "birds200")
+	SetExperimentTag(s, experiment1, "KeyTag1", "ValueTag3")
 	exp, err = s.fixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
 	exp1, err := s.fixtures.GetExperimentByID(context.Background(), *experiment1.ID)
 	assert.Nil(s.T(), err)
 	found = false
 	for _, tag := range exp.Tags {
-		if tag.Key == "dataset" && tag.Value == "birdbike" {
+		if tag.Key == "KeyTag1" && tag.Value == "ValueTag2" {
 			found = true
 			break
 		}
 	}
-	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'dataset' with value 'birdbike'")
+	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag2'")
 
 	found = false
 	for _, tag := range exp1.Tags {
-		if tag.Key == "dataset" && tag.Value == "birds200" {
+		if tag.Key == "KeyTag1" && tag.Value == "ValueTag3" {
 			found = true
 			break
 		}
 	}
-	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'dataset' with value 'birds200'")
+	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag3'")
 
 }
 func (s *SetExperimentTagTestSuite) Test_Error() {

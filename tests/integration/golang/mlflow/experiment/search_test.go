@@ -30,7 +30,7 @@ type SearchExperimentsTestSuite struct {
 }
 
 func TestSearchExperimentsTestSuite(t *testing.T) {
-	suite.Run(t, new(GetExperimentTestSuite))
+	suite.Run(t, new(SearchExperimentsTestSuite))
 }
 
 func (s *SearchExperimentsTestSuite) SetupTest() {
@@ -39,30 +39,21 @@ func (s *SearchExperimentsTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.fixtures = fixtures
 }
-
-type Experiment struct {
-	Name string
-	Tags []models.ExperimentTag
-}
-
-func getExperimentNames(experiments []*response.ExperimentPartialResponse) []string {
+func GetExperimentNames(experiments []*response.ExperimentPartialResponse) []string {
 	names := make([]string, len(experiments))
-	for i, e := range experiments {
-		names[i] = e.Name
+	for i, exp := range experiments {
+		names[i] = exp.Name
 	}
 	return names
 }
-func executeSearchRequest(s *SearchExperimentsTestSuite, filter string) response.SearchExperimentsResponse {
-	query, err := urlquery.Marshal(request.SearchExperimentsRequest{
-		Filter: filter,
-	})
+
+func GetSearchExperimentsResponse(s *SearchExperimentsTestSuite, request request.SearchExperimentsRequest) response.SearchExperimentsResponse {
+	query, err := urlquery.Marshal(request)
 	assert.Nil(s.T(), err)
 
 	resp := response.SearchExperimentsResponse{}
 	err = s.client.DoGetRequest(
-		fmt.Sprintf(
-			"%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query,
-		),
+		fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query),
 		&resp,
 	)
 	assert.Nil(s.T(), err)
@@ -72,28 +63,57 @@ func executeSearchRequest(s *SearchExperimentsTestSuite, filter string) response
 
 func (s *SearchExperimentsTestSuite) Test_Ok() {
 	// 1. prepare database with test data.
-	experiments := []Experiment{
+	experiments := []models.Experiment{
 		{
-			Name: "a",
-			Tags: []models.ExperimentTag{
-				{
-					Key:   "key1",
-					Value: "value1",
-				},
-			},
-		},
-		{
-			Name: "ab",
+			Name: "Test Experiment 1",
 			Tags: []models.ExperimentTag{
 				{
 					Key:   "key2",
 					Value: "value2",
 				},
 			},
+
+			LifecycleStage: models.LifecycleStageActive,
 		},
 		{
-			Name: "Abc",
-			Tags: nil,
+			Name: "Test Experiment 2",
+			Tags: []models.ExperimentTag{
+				{
+					Key:   "key1",
+					Value: "value1",
+				},
+			},
+			LifecycleStage: models.LifecycleStageActive,
+		},
+		{
+			Name: "Test Experiment 3",
+			Tags: []models.ExperimentTag{
+				{
+					Key:   "key3",
+					Value: "value3",
+				},
+			},
+			LifecycleStage: models.LifecycleStageActive,
+		},
+		{
+			Name: "Test Experiment 4",
+			Tags: []models.ExperimentTag{
+				{
+					Key:   "key4",
+					Value: "value4",
+				},
+			},
+			LifecycleStage: models.LifecycleStageActive,
+		},
+		{
+			Name:           "Test Experiment 5",
+			Tags:           nil,
+			LifecycleStage: models.LifecycleStageActive,
+		},
+		{
+			Name:           "Test Experiment 6",
+			Tags:           nil,
+			LifecycleStage: models.LifecycleStageDeleted,
 		},
 	}
 	for _, ex := range experiments {
@@ -108,7 +128,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 				Int64: time.Now().UTC().UnixMilli(),
 				Valid: true,
 			},
-			LifecycleStage:   models.LifecycleStageActive,
+			LifecycleStage:   ex.LifecycleStage,
 			ArtifactLocation: "/artifact/location",
 		})
 		assert.Nil(s.T(), err)
@@ -117,29 +137,34 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
 	}()
 
-	// API call 1
-	resp := executeSearchRequest(s, "attribute.name = 'a'")
-	assert.Equal(s.T(), []string{"a"}, getExperimentNames(resp.Experiments))
+	// Test Filter
+	resp := GetSearchExperimentsResponse(s, request.SearchExperimentsRequest{
+		Filter: "attribute.name != 'Test Experiment 5'",
+	})
 
-	// API call 2
-	resp = executeSearchRequest(s, "attribute.name != 'a'")
-	assert.Equal(s.T(), []string{"Abc", "ab"}, getExperimentNames(resp.Experiments))
+	assert.ElementsMatch(s.T(), []string{"Test Experiment 1", "Test Experiment 2", "Test Experiment 3", "Test Experiment 4", "Default"}, GetExperimentNames(resp.Experiments))
 
-	// API call 3
-	resp = executeSearchRequest(s, "name LIKE 'a%'")
-	assert.Equal(s.T(), []string{"ab", "a"}, getExperimentNames(resp.Experiments))
+	//Test ViewType
+	resp = GetSearchExperimentsResponse(s, request.SearchExperimentsRequest{
+		ViewType: request.ViewTypeDeletedOnly,
+	})
 
-	// API call 4
-	resp = executeSearchRequest(s, "tag.key = 'value'")
-	assert.Equal(s.T(), []string{"a"}, getExperimentNames(resp.Experiments))
+	assert.ElementsMatch(s.T(), []string{"Test Experiment 6"}, GetExperimentNames(resp.Experiments))
 
-	// API call 5
-	resp = executeSearchRequest(s, "tag.key != 'value'")
-	assert.Equal(s.T(), []string{"ab"}, getExperimentNames(resp.Experiments))
+	//Test OrderBy
+	resp = GetSearchExperimentsResponse(s, request.SearchExperimentsRequest{
+		OrderBy: []string{"name ASC"},
+	})
 
-	// API call 6
-	resp = executeSearchRequest(s, "tag.key ILIKE '%alu%'")
-	assert.Equal(s.T(), []string{"ab", "a"}, getExperimentNames(resp.Experiments))
+	assert.Equal(s.T(), []string{"Default", "Test Experiment 1", "Test Experiment 2", "Test Experiment 3", "Test Experiment 4", "Test Experiment 5"}, GetExperimentNames(resp.Experiments))
+
+	// Test MaxResults
+	resp = GetSearchExperimentsResponse(s, request.SearchExperimentsRequest{
+		OrderBy:    []string{"name ASC"},
+		MaxResults: 3,
+	})
+
+	assert.ElementsMatch(s.T(), []string{"Default", "Test Experiment 1", "Test Experiment 2"}, GetExperimentNames(resp.Experiments))
 }
 
 func (s *SearchExperimentsTestSuite) Test_Error() {
@@ -164,9 +189,9 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 		},
 		{
 			name:  "InvalidFilterValue",
-			error: api.NewInvalidParameterValueError("invalid numeric value 'abc'"),
+			error: api.NewInvalidParameterValueError("invalid numeric value 'cc'"),
 			request: &request.SearchExperimentsRequest{
-				Filter: "attribute.creation_time>abc",
+				Filter: "attribute.creation_time > cc",
 			},
 		},
 		{
@@ -177,38 +202,31 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 			},
 		},
 		{
-			name:  "InvalidAttributeComparisonOperator",
-			error: api.NewInvalidParameterValueError("invalid numeric attribute comparison operator '>='"),
+			name:  "InvalidNumericValue",
+			error: api.NewInvalidParameterValueError("invalid numeric value 'invalid_value'"),
 			request: &request.SearchExperimentsRequest{
-				Filter: "attribute.creation_time>=100",
+				Filter: "creation_time > invalid_value",
 			},
 		},
 		{
-			name:  "InvalidStringAttributeValue",
-			error: api.NewInvalidParameterValueError("invalid string value '(abc'"),
+			name:  "InvalidStringOperator",
+			error: api.NewInvalidParameterValueError("invalid string attribute comparison operator '<'"),
 			request: &request.SearchExperimentsRequest{
-				Filter: "attribute.name LIKE '(abc'",
+				Filter: "attribute.name < 'value'",
 			},
 		},
 		{
-			name:  "InvalidTagComparisonOperator",
-			error: api.NewInvalidParameterValueError("invalid tag comparison operator '>='"),
+			name:  "InvalidTagOperator",
+			error: api.NewInvalidParameterValueError("invalid tag comparison operator '<'"),
 			request: &request.SearchExperimentsRequest{
-				Filter: "tags.name>='tag'",
+				Filter: "tag.value < 'value'",
 			},
 		},
 		{
 			name:  "InvalidEntity",
 			error: api.NewInvalidParameterValueError("invalid entity type 'invalid_entity'. Valid values are ['tag', 'attribute']"),
 			request: &request.SearchExperimentsRequest{
-				Filter: "invalid_entity.name=value",
-			},
-		},
-		{
-			name:  "InvalidOrderByClause",
-			error: api.NewInvalidParameterValueError("invalid order_by clause 'invalid_column'"),
-			request: &request.SearchExperimentsRequest{
-				OrderBy: []string{"invalid_column"},
+				Filter: "invalid_entity.name = value",
 			},
 		},
 		{

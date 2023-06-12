@@ -1,10 +1,10 @@
-//go:build integration
 package run
 
 import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -35,8 +35,9 @@ func (s *LogParamTestSuite) SetupTest() {
 	fixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.fixtures = fixtures
+	id := uuid.New().String()
 	run := &models.Run{
-		ID:             uuid.New().String(),
+		ID:             strings.ReplaceAll(id, "-", ""),
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,

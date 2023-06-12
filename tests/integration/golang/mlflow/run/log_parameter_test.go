@@ -101,7 +101,7 @@ func (s *LogParamTestSuite) TestBatch_Ok() {
 			},
 		},
 		{
-			name: "Duplicat ekeys with same value should succeed",
+			name: "Duplicate keys with same value should succeed",
 			request: &request.LogBatchRequest{
 				RunID: s.run.ID,
 				Params: []request.ParamPartialRequest{
@@ -157,7 +157,7 @@ func (s *LogParamTestSuite) TestBatch_Error() {
 		},
 		{
 			name:  "Duplicate keys with different values should error",
-			error: "error creating params in batch: UNIQUE constraint failed",
+			error: "ERROR: duplicate key",
 			request: &request.LogBatchRequest{
 				RunID: s.run.ID,
 				Params: []request.ParamPartialRequest{

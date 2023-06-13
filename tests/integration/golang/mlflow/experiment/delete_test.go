@@ -66,7 +66,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
 	}()
 
-	//check that the expetiment lifecycle is active
+	//check that the experiment lifecycle is active
 	assert.Equal(s.T(), models.LifecycleStageActive, experiment.LifecycleStage)
 
 	// 2. make actual API call.
@@ -102,7 +102,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 		},
 		{
 			name:  "InvalidIDFormat",
-			error: api.NewBadRequestError("unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing \"invalid_id\": invalid syntax"),
+			error: api.NewBadRequestError(`unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing "invalid_id": invalid syntax`),
 			request: &request.DeleteExperimentRequest{
 				ID: "invalid_id",
 			},

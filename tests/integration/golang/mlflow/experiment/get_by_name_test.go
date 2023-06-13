@@ -68,7 +68,7 @@ func (s *GetExperimentByNameTestSuite) Test_Ok() {
 
 	// 2. make actual API call.
 	query, err := urlquery.Marshal(request.GetExperimentRequest{
-		Name: fmt.Sprintf("%s", experiment.Name),
+		Name: experiment.Name,
 	})
 	assert.Nil(s.T(), err)
 

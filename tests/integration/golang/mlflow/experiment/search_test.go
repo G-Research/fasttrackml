@@ -122,28 +122,28 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		expected []string
 	}{
 		{
-			name: "Test Filter",
+			name: "TestFilter",
 			request: request.SearchExperimentsRequest{
 				Filter: "attribute.name != 'Test Experiment 5'",
 			},
 			expected: []string{"Test Experiment 1", "Test Experiment 2", "Test Experiment 3", "Test Experiment 4", "Default"},
 		},
 		{
-			name: "Test ViewType",
+			name: "TestViewType",
 			request: request.SearchExperimentsRequest{
 				ViewType: request.ViewTypeDeletedOnly,
 			},
 			expected: []string{"Test Experiment 6"},
 		},
 		{
-			name: "Test OrderBy",
+			name: "TestOrderBy",
 			request: request.SearchExperimentsRequest{
 				OrderBy: []string{"name ASC"},
 			},
 			expected: []string{"Default", "Test Experiment 1", "Test Experiment 2", "Test Experiment 3", "Test Experiment 4", "Test Experiment 5"},
 		},
 		{
-			name: "Test MaxResults",
+			name: "TestMaxResults",
 			request: request.SearchExperimentsRequest{
 				OrderBy:    []string{"name ASC"},
 				MaxResults: 3,

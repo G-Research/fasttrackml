@@ -67,7 +67,7 @@ func (s *LogBatchTestSuite) Test_Ok() {
 		request *request.LogBatchRequest
 	}{
 		{
-			name: "Batch of one should succeed",
+			name: "BatchOfOneSucceeds",
 			request: &request.LogBatchRequest{
 				RunID: s.run.ID,
 				Params: []request.ParamPartialRequest{
@@ -79,7 +79,7 @@ func (s *LogBatchTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "Duplicate keys with same value should succeed",
+			name: "DuplicateKeySameValueSucceeds",
 			request: &request.LogBatchRequest{
 				RunID: s.run.ID,
 				Params: []request.ParamPartialRequest{
@@ -120,7 +120,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 		request *request.LogBatchRequest
 	}{
 		{
-			name:  "Missing required field 'run_id'",
+			name:  "MissingRunIDFails",
 			error: "Missing value for required parameter 'run_id'",
 			request: &request.LogBatchRequest{
 				RunID: "",
@@ -133,7 +133,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 			},
 		},
 		{
-			name:  "Duplicate param keys with different values should error",
+			name:  "DuplicateKeyDifferentValueFails",
 			error: "ERROR: duplicate key",
 			request: &request.LogBatchRequest{
 				RunID: s.run.ID,

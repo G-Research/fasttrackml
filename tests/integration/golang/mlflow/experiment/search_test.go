@@ -39,27 +39,6 @@ func (s *SearchExperimentsTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.fixtures = fixtures
 }
-func GetExperimentNames(experiments []*response.ExperimentPartialResponse) []string {
-	names := make([]string, len(experiments))
-	for i, exp := range experiments {
-		names[i] = exp.Name
-	}
-	return names
-}
-
-func GetSearchExperimentsResponse(s *SearchExperimentsTestSuite, request request.SearchExperimentsRequest) response.SearchExperimentsResponse {
-	query, err := urlquery.Marshal(request)
-	assert.Nil(s.T(), err)
-
-	resp := response.SearchExperimentsResponse{}
-	err = s.client.DoGetRequest(
-		fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query),
-		&resp,
-	)
-	assert.Nil(s.T(), err)
-
-	return resp
-}
 
 func (s *SearchExperimentsTestSuite) Test_Ok() {
 	// 1. prepare database with test data.
@@ -137,34 +116,62 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
 	}()
 
-	// Test Filter
-	resp := GetSearchExperimentsResponse(s, request.SearchExperimentsRequest{
-		Filter: "attribute.name != 'Test Experiment 5'",
-	})
+	tests := []struct {
+		name     string
+		request  request.SearchExperimentsRequest
+		expected []string
+	}{
+		{
+			name: "Test Filter",
+			request: request.SearchExperimentsRequest{
+				Filter: "attribute.name != 'Test Experiment 5'",
+			},
+			expected: []string{"Test Experiment 1", "Test Experiment 2", "Test Experiment 3", "Test Experiment 4", "Default"},
+		},
+		{
+			name: "Test ViewType",
+			request: request.SearchExperimentsRequest{
+				ViewType: request.ViewTypeDeletedOnly,
+			},
+			expected: []string{"Test Experiment 6"},
+		},
+		{
+			name: "Test OrderBy",
+			request: request.SearchExperimentsRequest{
+				OrderBy: []string{"name ASC"},
+			},
+			expected: []string{"Default", "Test Experiment 1", "Test Experiment 2", "Test Experiment 3", "Test Experiment 4", "Test Experiment 5"},
+		},
+		{
+			name: "Test MaxResults",
+			request: request.SearchExperimentsRequest{
+				OrderBy:    []string{"name ASC"},
+				MaxResults: 3,
+			},
+			expected: []string{"Default", "Test Experiment 1", "Test Experiment 2"},
+		},
+	}
 
-	assert.ElementsMatch(s.T(), []string{"Test Experiment 1", "Test Experiment 2", "Test Experiment 3", "Test Experiment 4", "Default"}, GetExperimentNames(resp.Experiments))
+	for _, tt := range tests {
+		s.T().Run(tt.name, func(t *testing.T) {
+			query, err := urlquery.Marshal(tt.request)
+			assert.Nil(t, err)
 
-	//Test ViewType
-	resp = GetSearchExperimentsResponse(s, request.SearchExperimentsRequest{
-		ViewType: request.ViewTypeDeletedOnly,
-	})
+			resp := response.SearchExperimentsResponse{}
+			err = s.client.DoGetRequest(
+				fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query),
+				&resp,
+			)
+			assert.Nil(t, err)
 
-	assert.ElementsMatch(s.T(), []string{"Test Experiment 6"}, GetExperimentNames(resp.Experiments))
+			names := make([]string, len(resp.Experiments))
+			for i, exp := range resp.Experiments {
+				names[i] = exp.Name
+			}
 
-	//Test OrderBy
-	resp = GetSearchExperimentsResponse(s, request.SearchExperimentsRequest{
-		OrderBy: []string{"name ASC"},
-	})
-
-	assert.Equal(s.T(), []string{"Default", "Test Experiment 1", "Test Experiment 2", "Test Experiment 3", "Test Experiment 4", "Test Experiment 5"}, GetExperimentNames(resp.Experiments))
-
-	// Test MaxResults
-	resp = GetSearchExperimentsResponse(s, request.SearchExperimentsRequest{
-		OrderBy:    []string{"name ASC"},
-		MaxResults: 3,
-	})
-
-	assert.ElementsMatch(s.T(), []string{"Default", "Test Experiment 1", "Test Experiment 2"}, GetExperimentNames(resp.Experiments))
+			assert.ElementsMatch(t, tt.expected, names)
+		})
+	}
 }
 
 func (s *SearchExperimentsTestSuite) Test_Error() {

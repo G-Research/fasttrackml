@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -64,11 +62,10 @@ func (s *UpdateExperimentTestSuite) Test_Ok() {
 		ID:   fmt.Sprintf("%d", *experiment.ID),
 		Name: "Test Updated Experiment",
 	}
-	resp := fiber.Map{}
 	err = s.client.DoPostRequest(
 		fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute),
 		req,
-		&resp,
+		&struct{}{},
 	)
 	assert.Nil(s.T(), err)
 
@@ -86,8 +83,7 @@ func (s *UpdateExperimentTestSuite) Test_Error() {
 			name:  "EmptyIDProperty",
 			error: api.NewInvalidParameterValueError("Missing value for required parameter 'experiment_id'"),
 			request: &request.UpdateExperimentRequest{
-				ID:   "",
-				Name: "New Name",
+				ID: "",
 			},
 		},
 		{
@@ -100,7 +96,7 @@ func (s *UpdateExperimentTestSuite) Test_Error() {
 		},
 		{
 			name:  "InvalidIDFormat",
-			error: api.NewBadRequestError("unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing \"invalid_id\": invalid syntax"),
+			error: api.NewBadRequestError(`unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing "invalid_id": invalid syntax`),
 			request: &request.UpdateExperimentRequest{
 				ID:   "invalid_id",
 				Name: "New Name",

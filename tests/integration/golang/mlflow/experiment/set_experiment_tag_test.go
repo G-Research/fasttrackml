@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -46,13 +44,12 @@ func SetExperimentTag(s *SetExperimentTagTestSuite, experiment *models.Experimen
 		Key:   key,
 		Value: value,
 	}
-	resp := fiber.Map{}
 	err := s.client.DoPostRequest(
 		fmt.Sprintf(
 			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
 		),
 		req,
-		&resp,
+		&struct{}{},
 	)
 	assert.Nil(s.T(), err)
 }
@@ -96,28 +93,14 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	exp, err := s.fixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
 
-	found := false
-	for _, tag := range exp.Tags {
-		if tag.Key == "KeyTag1" && tag.Value == "ValueTag1" {
-			found = true
-			break
-		}
-	}
-	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'")
+	assert.True(s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag1"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'")
 
 	// Update tag on experiment
 	SetExperimentTag(s, experiment, "KeyTag1", "ValueTag2")
 	exp, err = s.fixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
 
-	found = false
-	for _, tag := range exp.Tags {
-		if tag.Key == "KeyTag1" && tag.Value == "ValueTag2" {
-			found = true
-			break
-		}
-	}
-	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'")
+	assert.True(s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'")
 
 	//test that setting a tag on 1 experiment does not impact another experiment.
 	exp, err = s.fixtures.GetExperimentByID(context.Background(), *experiment1.ID)
@@ -130,23 +113,8 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 	exp1, err := s.fixtures.GetExperimentByID(context.Background(), *experiment1.ID)
 	assert.Nil(s.T(), err)
-	found = false
-	for _, tag := range exp.Tags {
-		if tag.Key == "KeyTag1" && tag.Value == "ValueTag2" {
-			found = true
-			break
-		}
-	}
-	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag2'")
-
-	found = false
-	for _, tag := range exp1.Tags {
-		if tag.Key == "KeyTag1" && tag.Value == "ValueTag3" {
-			found = true
-			break
-		}
-	}
-	assert.True(s.T(), found, "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag3'")
+	assert.True(s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag2'")
+	assert.True(s.T(), helpers.CheckTagExists(exp1.Tags, "KeyTag1", "ValueTag3"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag3'")
 
 }
 func (s *SetExperimentTagTestSuite) Test_Error() {
@@ -159,36 +127,31 @@ func (s *SetExperimentTagTestSuite) Test_Error() {
 			name:  "EmptyIDProperty",
 			error: api.NewInvalidParameterValueError("Missing value for required parameter 'experiment_id'"),
 			request: &request.SetExperimentTagRequest{
-				ID:    "",
-				Key:   "test_key",
-				Value: "test_value",
+				ID: "",
 			},
 		},
 		{
 			name:  "EmptyKeyProperty",
 			error: api.NewInvalidParameterValueError("Missing value for required parameter 'key'"),
 			request: &request.SetExperimentTagRequest{
-				ID:    "1",
-				Key:   "",
-				Value: "test_value",
+				ID:  "1",
+				Key: "",
 			},
 		},
 		{
 			name:  "IncorrectExperimentID",
 			error: api.NewBadRequestError(`Unable to parse experiment id 'incorrect_experiment_id': strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`),
 			request: &request.SetExperimentTagRequest{
-				ID:    "incorrect_experiment_id",
-				Key:   "test_key",
-				Value: "test_value",
+				ID:  "incorrect_experiment_id",
+				Key: "test_key",
 			},
 		},
 		{
 			name:  "NotFoundExperiment",
 			error: api.NewResourceDoesNotExistError(`unable to find experiment '1': error getting experiment by id: 1: record not found`),
 			request: &request.SetExperimentTagRequest{
-				ID:    "1",
-				Key:   "test_key",
-				Value: "test_value",
+				ID:  "1",
+				Key: "test_key",
 			},
 		},
 	}

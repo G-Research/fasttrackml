@@ -37,6 +37,12 @@ jobs:
           mkdir pkg/ui/{aim,mlflow}/embed/build
           touch pkg/ui/{aim,mlflow}/embed/build/index.html
 
+      - name: Download mockery
+        run: go install github.com/vektra/mockery/v2@v2.20.0
+
+      - name: Generate mocks
+        run: make mocks-generate
+
       - name: Check with go vet
         run: go vet --tags "${{ steps.tags.outputs.tags }}" ./...
 
@@ -67,15 +73,34 @@ jobs:
         run: go install github.com/vektra/mockery/v2@v2.20.0
 
       - name: Generate mocks
-        run: make mocks-generate; sleep 5;
+        run: make mocks-generate
 
       - name: Run Golang Unit Tests
-        run: make tests-run-unit
+        run: make test-go-unit
+
+  golang-integration-tests:
+    name: Golang Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+
+      - name: Run Integration Tests
+        run: make service-test
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
     name: Python Integration Tests
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        api: [aim, mlflow]
+      fail-fast: false
     services:
       postgres:
         image: postgres
@@ -104,8 +129,8 @@ jobs:
           mkdir pkg/ui/{aim,mlflow}/embed/build
           touch pkg/ui/{aim,mlflow}/embed/build/index.html
 
-      - name: Run MLFlow integration tests
-        run: ./tests/mlflow/test.sh
+      - name: Run ${{ matrix.api }} integration tests
+        run: ./tests/integration/python/${{ matrix.api }}/test.sh
 
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
@@ -175,6 +200,7 @@ jobs:
     needs:
       - lint
       - golang-unit-tests
+      - golang-integration-tests
       - python-integration-tests
       - build-image
     runs-on: ubuntu-latest

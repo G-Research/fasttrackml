@@ -33,8 +33,17 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				Value: "value",
 			},
 		},
+		Metrics: []request.MetricPartialRequest{
+			{
+				Key:       "key",
+				Value:     1.1,
+				Timestamp: 1234567890,
+				Step:      1,
+			},
+		},
 	}
-	params, tags := ConvertLogBatchRequestToDBModel("run_id", &req)
+	metrics, params, tags, err := ConvertLogBatchRequestToDBModel("run_id", &req)
+	assert.Nil(t, err)
 	assert.Equal(t, []models.Tag{
 		{
 			RunID: "run_id",
@@ -49,4 +58,13 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 			Value: "value",
 		},
 	}, params)
+	assert.Equal(t, []models.Metric{
+		{
+			Key:       "key",
+			Value:     1.1,
+			Timestamp: 1234567890,
+			RunID:     "run_id",
+			Step:      1,
+		},
+	}, metrics)
 }

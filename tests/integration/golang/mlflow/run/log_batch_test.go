@@ -120,17 +120,9 @@ func (s *LogBatchTestSuite) Test_Error() {
 		request *request.LogBatchRequest
 	}{
 		{
-			name:  "MissingRunIDFails",
-			error: "Missing value for required parameter 'run_id'",
-			request: &request.LogBatchRequest{
-				RunID: "",
-				Params: []request.ParamPartialRequest{
-					{
-						Key:   "key1",
-						Value: "value1",
-					},
-				},
-			},
+			name:    "MissingRunIDFails",
+			error:   "Missing value for required parameter 'run_id'",
+			request: &request.LogBatchRequest{},
 		},
 		{
 			name:  "DuplicateKeyDifferentValueFails",
@@ -164,4 +156,3 @@ func (s *LogBatchTestSuite) Test_Error() {
 		})
 	}
 }
-    

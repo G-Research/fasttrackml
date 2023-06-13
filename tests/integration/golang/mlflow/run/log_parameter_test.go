@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
@@ -42,17 +41,15 @@ func (s *LogParamTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
 
-	expName := uuid.New().String()
 	exp := &models.Experiment{
-		Name:           expName,
+		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 	}
 	_, err = s.experimentFixtures.CreateTestExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	runID := uuid.New().String()
 	run := &models.Run{
-		ID:             strings.ReplaceAll(runID, "-", ""),
+		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *exp.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
@@ -83,108 +80,23 @@ func (s *LogParamTestSuite) Test_Ok() {
 	assert.Empty(s.T(), resp)
 }
 
-func (s *LogParamTestSuite) TestBatch_Ok() {
-	tests := []struct {
-		name    string
-		request *request.LogBatchRequest
-	}{
-		{
-			name: "Batch of one should succeed",
-			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
-				Params: []request.ParamPartialRequest{
-					{
-						Key:   "key1",
-						Value: "value1",
-					},
-				},
-			},
-		},
-		{
-			name: "Duplicate keys with same value should succeed",
-			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
-				Params: []request.ParamPartialRequest{
-					{
-						Key:   "key2",
-						Value: "value2",
-					},
-					{
-						Key:   "key2",
-						Value: "value2",
-					},
-				},
-			},
-		},
-	}
-	var err error
-	resp := map[string]any{}
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
-			err = s.client.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
-				tt.request,
-				&resp,
-			)
-			assert.Nil(s.T(), err)
-			assert.Empty(s.T(), resp)
-		})
-	}
-}
 
-func (s *LogParamTestSuite) TestBatch_Error() {
+func (s *LogParamTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 
-	var testData = []struct {
-		name    string
-		error   string
-		request *request.LogBatchRequest
-	}{
-		{
-			name:  "Missing required field",
-			error: "Missing value for required parameter 'run_id'",
-			request: &request.LogBatchRequest{
-				RunID: "",
-				Params: []request.ParamPartialRequest{
-					{
-						Key:   "key1",
-						Value: "value1",
-					},
-				},
-			},
-		},
-		{
-			name:  "Duplicate keys with different values should error",
-			error: "ERROR: duplicate key",
-			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
-				Params: []request.ParamPartialRequest{
-					{
-						Key:   "key1",
-						Value: "value1",
-					},
-					{
-						Key:   "key1",
-						Value: "value2",
-					},
-				},
-			},
-		},
+	// missing run_id
+	req := request.LogParamRequest{
+		Key:   "key1",
+		Value: "value1",
 	}
-
-	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
-			resp := api.ErrorResponse{}
-			err := s.client.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
-				tt.request,
-				&resp,
-			)
-			assert.Nil(t, err)
-			assert.Contains(s.T(), resp.Error(), tt.error)
-		})
-	}
+	resp := map[string]any{}
+	_ = s.client.DoPostRequest(
+		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
+		req,
+		&resp,
+	)
+	assert.Equal(s.T(), "INVALID_PARAMETER_VALUE", resp["error_code"])
+	assert.Equal(s.T(), "Missing value for required parameter 'run_id'", resp["message"])
 }
-    

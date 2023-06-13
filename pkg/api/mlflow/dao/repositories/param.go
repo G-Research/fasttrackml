@@ -32,47 +32,45 @@ func NewParamRepository(db *gorm.DB) *ParamRepository {
 
 // CreateBatch creates []models.Param entities in batch.
 func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params []models.Param) error {
-	var err error
-	err = r.db.CreateInBatches(params, batchSize).Error
-	if err != nil {
+	// try to create params in batch; error condition requires special handling
+	// to allow certain duplicates
+	if err := r.db.CreateInBatches(params, batchSize).Error; err != nil {
 		// remove duplicate rows and try again
-		params, err1 := r.removeExactMatches(ctx, params)
-		if err1 != nil {
-			return eris.Wrap(err1, "error removing exact matches after: " + err.Error())
+		dedupedParams, errRemovingMatches := r.removeExactMatches(ctx, params)
+		if errRemovingMatches != nil {
+			return eris.Wrap(errRemovingMatches, "error removing duplicates in batch")
 		}
-		err = r.db.CreateInBatches(params, batchSize).Error
-	}
-
-	if err != nil {
-		return eris.Wrap(err, "error creating params in batch")
+		if err := r.db.CreateInBatches(dedupedParams, batchSize).Error; err != nil {
+			return eris.Wrap(err, "error creating params in batch after removing duplicates")
+		}
 	}
 	return nil
 }
 
 // removeExactMatches will return a new slice of params which excludes exact matches
 func (r ParamRepository) removeExactMatches(ctx context.Context, params []models.Param) ([]models.Param, error) {
-	var keys, foundKeys []string
+	var keys []string
 	paramMap := map[string]models.Param{}
-	paramsToReturn := []models.Param{}
 	for _, param := range params {
 		key := fmt.Sprintf("%v-%v-%v", param.RunID, param.Key, param.Value)
 		keys = append(keys, key)
 		paramMap[key] = param
 	}
 
-	tx := r.db.Raw(`
-           select run_uuid || '-' || key || '-' || value
-           from params
-           where run_uuid || '-' || key || '-' || value in ?`, keys).
-		Find(&foundKeys)
-	if tx.Error != nil {
-		return paramsToReturn, eris.Wrap(tx.Error, "problem selecting existing params")
+	var foundKeys []string
+	if err := r.db.Raw(`
+		select run_uuid || '-' || key || '-' || value
+		from params
+		where run_uuid || '-' || key || '-' || value in ?`, keys).
+		Find(&foundKeys).Error; err != nil {
+		return []models.Param{}, eris.Wrap(err, "problem selecting existing params")
 	}
 
 	for _, foundKey := range foundKeys {
 		delete(paramMap, foundKey)
 	}
 
+	paramsToReturn := []models.Param{}
 	for _, v := range paramMap {
 		paramsToReturn = append(paramsToReturn, v)
 	}

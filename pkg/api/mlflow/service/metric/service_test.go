@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/models"
+	"github.com/G-Research/fasttrackml/pkg/repositories"
 )
 
 func TestService_GetMetricHistory_Ok(t *testing.T) {

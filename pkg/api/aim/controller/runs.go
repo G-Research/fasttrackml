@@ -13,9 +13,9 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/models"
+	"github.com/G-Research/fasttrackml/pkg/repositories"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
@@ -910,7 +910,7 @@ func (ctlr Controller) SearchAlignedMetrics(c *fiber.Ctx) error {
 }
 
 // DeleteRun will remove the Run from the repo
-func DeleteRun(c *fiber.Ctx) error {
+func (ctlr Controller) DeleteRun(c *fiber.Ctx) error {
 	params := struct {
 		ID string `params:"id"`
 	}{}
@@ -935,7 +935,7 @@ func DeleteRun(c *fiber.Ctx) error {
 }
 
 // UpdateRun will update the run name, description, and lifecycle stage
-func UpdateRun(c *fiber.Ctx) error {
+func (ctlr Controller) UpdateRun(c *fiber.Ctx) error {
 	params := struct {
 		ID string `params:"id"`
 	}{}
@@ -984,7 +984,7 @@ func UpdateRun(c *fiber.Ctx) error {
 	})
 }
 
-func ArchiveBatch(c *fiber.Ctx) error {
+func (ctlr Controller) ArchiveBatch(c *fiber.Ctx) error {
 	var ids []string
 	if err := c.BodyParser(&ids); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
@@ -1006,7 +1006,7 @@ func ArchiveBatch(c *fiber.Ctx) error {
 	})
 }
 
-func DeleteBatch(c *fiber.Ctx) error {
+func (ctlr Controller) DeleteBatch(c *fiber.Ctx) error {
 	var ids []string
 	if err := c.BodyParser(&ids); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())

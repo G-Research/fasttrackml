@@ -1,10 +1,9 @@
-//go:build integration
-
 package run
 
 import (
 	"context"
 	"fmt"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"os"
 	"strings"
 	"testing"
@@ -80,7 +79,6 @@ func (s *LogParamTestSuite) Test_Ok() {
 	assert.Empty(s.T(), resp)
 }
 
-
 func (s *LogParamTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
@@ -91,12 +89,13 @@ func (s *LogParamTestSuite) Test_Error() {
 		Key:   "key1",
 		Value: "value1",
 	}
-	resp := map[string]any{}
-	_ = s.client.DoPostRequest(
+	resp := api.ErrorResponse{}
+	err := s.client.DoPostRequest(
 		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
 		req,
 		&resp,
 	)
-	assert.Equal(s.T(), "INVALID_PARAMETER_VALUE", resp["error_code"])
-	assert.Equal(s.T(), "Missing value for required parameter 'run_id'", resp["message"])
+	assert.NoError(s.T(), err)
+	assert.Equal(s.T(), api.ErrorCode(api.ErrorCodeInvalidParameterValue), resp.ErrorCode)
+	assert.Equal(s.T(), "Missing value for required parameter 'run_id'", resp.Message)
 }

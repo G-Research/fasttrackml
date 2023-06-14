@@ -16,6 +16,8 @@ import (
 // RunRepositoryProvider provides an interface to work with models.Run entity.
 type RunRepositoryProvider interface {
 	BaseRepositoryProvider
+	// List returns a slice of Run belonging to the experiement
+	List(ctx context.Context, expID int32) ([]models.Run, error)
 	// GetByID returns models.Run entity bt its ID.
 	GetByID(ctx context.Context, id string) (*models.Run, error)
 	// Create creates new models.Run entity.
@@ -54,6 +56,16 @@ func NewRunRepository(db *gorm.DB) *RunRepository {
 		},
 	}
 }
+
+// List returns models.Run entities by experiment id.
+func (r RunRepository) List(ctx context.Context, experimentID int32) ([]models.Run, error) {
+	runs := []models.Run{}
+	if err := r.db.WithContext(ctx).Where("experiment_id = ?", experimentID).Order("start_time desc").Find(&runs).Error; err != nil {
+		return []models.Run{}, eris.Wrapf(err, "error getting `run` entities by experiment id: %v", experimentID)
+	}
+	return runs, nil
+}
+
 
 // GetByID returns models.Run entity bt its ID.
 func (r RunRepository) GetByID(ctx context.Context, id string) (*models.Run, error) {
@@ -131,37 +143,20 @@ func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 	if err := r.db.WithContext(ctx).Model(&run).Delete(run).Error; err != nil {
 		return eris.Wrapf(err, "error deleting run with id: %s", run.ID)
 	}
-
+	
 	if err := r.renumberRows(ctx, int32(run.RowNum), run.ExperimentID); err != nil {
 		return eris.Wrapf(err, "error renumbering runs.row_num")
 	}
+
 
 	return nil
 }
 
 // DeleteBatch removes existing models.Run from the db.
 func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
-	// get the lowest rownum and experiment id from batch
-	runData := struct{
-		minRowNum int32
-		expID int32
-	}{}
-	if err := r.db.WithContext(ctx).Raw(
-		`SELECT MIN(row_num) as min_row_num, experiment_id as exp_id
-                 FROM runs
-                 WHERE run_uuid IN ?`, ids).First(&runData).Error; err != nil {
-		eris.Wrapf(err, "error finding the lowest row num and experiment id from batch runs to delete")
-	}
-
-	// delete the rows
 	run := models.Run{}
 	if err := r.db.WithContext(ctx).Model(&run).Where("run_uuid IN ?", ids).Delete(run).Error; err != nil {
 		return eris.Wrapf(err, "error deleting existing runs with ids: %s", ids)
-	}
-
-	// renumber the remainder
-	if err := r.renumberRows(ctx, runData.minRowNum, runData.expID); err != nil {
-		return eris.Wrapf(err, "error renumbering runs.row_num")
 	}
 
 	return nil
@@ -233,7 +228,7 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 }
 
 // renumberRows will update the runs.row_num field with the correct ordinal
-func (r RunRepository) renumberRows(ctx context.Context, startWith, experiment_id int32) error {
+func (r RunRepository) renumberRows(ctx context.Context, startWith, experimentID int32) error {
 	if err := r.db.WithContext(ctx).Raw(
 		`UPDATE runs
 	         SET row_num = (ROW_NUMBER() OVER (ORDER BY start_time DESC) + ?)
@@ -241,7 +236,7 @@ func (r RunRepository) renumberRows(ctx context.Context, startWith, experiment_i
                  AND runs.experiment_id = ?`,
 		startWith,
 		startWith,
-		experiment_id).Error; err != nil {
+		experimentID).Error; err != nil {
 		return eris.Wrap(err, "error updating runs.row_num")
 	}
 	return nil

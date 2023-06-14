@@ -115,6 +115,14 @@ func TestValidateGetMetricHistoriesRequest_Error(t *testing.T) {
 			},
 		},
 		{
+			name:  "IncorrectViewTypeProperty",
+			error: api.NewInvalidParameterValueError("Invalid run_view_type 'incorrect_value'"),
+			request: &request.GetMetricHistoriesRequest{
+				RunIDs:   []string{"id1"},
+				ViewType: "incorrect_value",
+			},
+		},
+		{
 			name:  "IncorrectMaxResultsProperty",
 			error: api.NewInvalidParameterValueError("Invalid value for parameter 'max_results' supplied."),
 			request: &request.GetMetricHistoriesRequest{

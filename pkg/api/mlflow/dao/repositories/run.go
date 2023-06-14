@@ -22,7 +22,6 @@ type RunRepositoryProvider interface {
 	Create(ctx context.Context, run *models.Run) error
 	// Update updates existing models.Experiment entity.
 	Update(ctx context.Context, run *models.Run) error
-	// Delete marks existing models.Run entity as deleted.
 	// Archive marks existing models.Run entity as archived.
 	Archive(ctx context.Context, run *models.Run) error
 	// Delete removes the existing models.Run

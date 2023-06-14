@@ -63,12 +63,12 @@ func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (
 
 	experiment, err := s.experimentRepository.GetByID(ctx, int32(experimentID))
 	if err != nil {
-		return nil, api.NewResourceDoesNotExistError("unable to find experiment '%v': %s", experiment, err)
+		return nil, api.NewResourceDoesNotExistError("unable to find experiment with id '%s': %s", req.ExperimentID, err)
 	}
 
 	run := convertors.ConvertCreateRunRequestToDBModel(experiment, req)
 	if err := s.runRepository.Create(ctx, run); err != nil {
-		return nil, api.NewInternalError("error inserting run '%s': %s", run.ID, err)
+		return nil, api.NewInternalError("error inserting run: %s", err)
 	}
 
 	return run, nil
@@ -113,7 +113,7 @@ func (s Service) GetRun(ctx context.Context, req *request.GetRunRequest) (*model
 
 	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
 	if err != nil {
-		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", run.ID, err)
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.GetRunID(), err)
 	}
 
 	return run, nil
@@ -422,8 +422,11 @@ func (s Service) LogParam(ctx context.Context, req *request.LogParamRequest) err
 	}
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
-	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", req.RunID, err)
+	if err != nil {
+		return api.NewInternalError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if !run.IsLifecycleStageActive() {
+		return api.NewResourceDoesNotExistError("unable to find active run '%s'", req.RunID)
 	}
 
 	param := convertors.ConvertLogParamRequestToDBModel(run.ID, req)
@@ -440,8 +443,11 @@ func (s Service) SetRunTag(ctx context.Context, req *request.SetRunTagRequest) e
 	}
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
-	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", req.RunID, err)
+	if err != nil {
+		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if !run.IsLifecycleStageActive() {
+		return api.NewResourceDoesNotExistError("unable to find active run '%s'", req.RunID)
 	}
 
 	tag := convertors.ConvertSetRunTagRequestToDBModel(run.ID, req)
@@ -457,8 +463,11 @@ func (s Service) DeleteRunTag(ctx context.Context, req *request.DeleteRunTagRequ
 	}
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
-	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
+	if err != nil {
+		return api.NewResourceDoesNotExistError("Unable to find run '%s': %s", req.RunID, err)
+	}
+	if !run.IsLifecycleStageActive() {
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
 	}
 
 	tag, err := s.tagRepository.GetByRunIDAndKey(ctx, run.ID, req.Key)
@@ -479,8 +488,11 @@ func (s Service) LogBatch(ctx context.Context, req *request.LogBatchRequest) err
 	}
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
-	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", req.RunID, err)
+	if err != nil {
+		return api.NewInternalError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if !run.IsLifecycleStageActive() {
+		return api.NewResourceDoesNotExistError("unable to find active run '%s'", req.RunID)
 	}
 
 	metrics, params, tags, err := convertors.ConvertLogBatchRequestToDBModel(run.ID, req)

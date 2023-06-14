@@ -3,7 +3,10 @@ package run
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -86,12 +89,167 @@ func TestService_CreateRun_Ok(t *testing.T) {
 		},
 	}, run.Tags)
 }
-func TestService_CreateRun_Error(t *testing.T) {}
+func TestService_CreateRun_Error(t *testing.T) {
+	var testData = []struct {
+		name    string
+		error   *api.ErrorResponse
+		request *request.CreateRunRequest
+		service func() *Service
+	}{
+		{
+			name:    "EmptyOrIncorrectExperimentID",
+			error:   api.NewBadRequestError(`unable to parse experiment id '': strconv.ParseInt: parsing "": invalid syntax`),
+			request: &request.CreateRunRequest{},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "ExperimentNotFound",
+			error: api.NewResourceDoesNotExistError("unable to find experiment with id '1': database error"),
+			request: &request.CreateRunRequest{
+				ExperimentID: "1",
+			},
+			service: func() *Service {
+				experimentRepository := repositories.MockExperimentRepositoryProvider{}
+				experimentRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					int32(1),
+				).Return(nil, errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&experimentRepository,
+				)
+			},
+		},
+		{
+			name:  "CreateRunDatabaseError",
+			error: api.NewInternalError("error inserting run: database error"),
+			request: &request.CreateRunRequest{
+				ExperimentID: "1",
+				Name:         "name",
+				UserID:       "1",
+				Tags: []request.RunTagPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+			},
+			service: func() *Service {
+				experimentRepository := repositories.MockExperimentRepositoryProvider{}
+				experimentRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					int32(1),
+				).Return(&models.Experiment{ID: common.GetPointer(int32(1))}, nil)
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"Create",
+					mock.AnythingOfType("*context.emptyCtx"),
+					mock.MatchedBy(func(run *models.Run) bool {
+						assert.NotEmpty(t, run.ID)
+						assert.Equal(t, "name", run.Name)
+						assert.Equal(t, int32(1), run.ExperimentID)
+						assert.Equal(t, "1", run.UserID)
+						assert.Equal(t, models.StatusRunning, run.Status)
+						assert.NotNil(t, run.StartTime)
+						assert.NotNil(t, models.LifecycleStageActive, run.LifecycleStage)
+						assert.NotNil(t, []models.Tag{
+							{
+								Key:   "key",
+								Value: "value",
+							},
+						}, run.Tags)
+						return true
+					}),
+				).Return(errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&experimentRepository,
+				)
+			},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			// call service under testing.
+			_, err := tt.service().CreateRun(context.TODO(), tt.request)
+			assert.Equal(t, tt.error, err)
+		})
+	}
+}
 
 func TestService_UpdateRun_Ok(t *testing.T) {
 	// TODO:DSuhinin skip this test for now. I don't know how to mock `gorm` transaction logic.
 }
-func TestService_UpdateRun_Error(t *testing.T) {}
+func TestService_UpdateRun_Error(t *testing.T) {
+	var testData = []struct {
+		name    string
+		error   *api.ErrorResponse
+		request *request.UpdateRunRequest
+		service func() *Service
+	}{
+		{
+			name:    "EmptyOrIncorrectRunID",
+			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			request: &request.UpdateRunRequest{},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "RunNotFoundOrDatabaseError",
+			error: api.NewResourceDoesNotExistError(`unable to find run '1': database error`),
+			request: &request.UpdateRunRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(nil, errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			// call service under testing.
+			_, err := tt.service().UpdateRun(context.TODO(), tt.request)
+			assert.Equal(t, tt.error, err)
+		})
+	}
+}
 
 func TestService_RestoreRun_Ok(t *testing.T) {
 	// init repository mocks.
@@ -124,7 +282,93 @@ func TestService_RestoreRun_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
-func TestService_RestoreRun_Error(t *testing.T) {}
+func TestService_RestoreRun_Error(t *testing.T) {
+	var testData = []struct {
+		name    string
+		error   *api.ErrorResponse
+		request *request.RestoreRunRequest
+		service func() *Service
+	}{
+		{
+			name:    "EmptyOrIncorrectRunID",
+			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			request: &request.RestoreRunRequest{},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "RunNotFoundDatabaseError",
+			error: api.NewResourceDoesNotExistError(`unable to find run '1': database error`),
+			request: &request.RestoreRunRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(nil, errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "RestoreRunDatabaseError",
+			error: api.NewInternalError(`unable to restore run '1': database error`),
+			request: &request.RestoreRunRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					ID: "1",
+				}, nil)
+				runRepository.On(
+					"Update",
+					mock.AnythingOfType("*context.emptyCtx"),
+					mock.MatchedBy(func(run *models.Run) bool {
+						assert.Equal(t, "1", run.ID)
+						assert.Equal(t, sql.NullInt64{}, run.DeletedTime)
+						assert.Equal(t, models.LifecycleStageActive, run.LifecycleStage)
+						return true
+					}),
+				).Return(errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			// call service under testing.
+			err := tt.service().RestoreRun(context.TODO(), tt.request)
+			assert.Equal(t, tt.error, err)
+		})
+	}
+}
 
 func TestService_SetRunTag_Ok(t *testing.T) {
 	// init repository mocks.
@@ -190,10 +434,273 @@ func TestService_DeleteRun_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
-func TestService_DeleteRun_Error(t *testing.T) {}
+func TestService_DeleteRun_Error(t *testing.T) {
+	var testData = []struct {
+		name    string
+		error   *api.ErrorResponse
+		request *request.DeleteRunRequest
+		service func() *Service
+	}{
+		{
+			name:    "EmptyOrIncorrectRunID",
+			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			request: &request.DeleteRunRequest{},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "RunNotFoundOrDatabaseError",
+			error: api.NewResourceDoesNotExistError(`unable to find run '1': database error`),
+			request: &request.DeleteRunRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(nil, errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "RunNotFoundOrDatabaseError",
+			error: api.NewResourceDoesNotExistError(`unable to find run '1': database error`),
+			request: &request.DeleteRunRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(nil, errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "DeleteRunDatabaseError",
+			error: api.NewInternalError(`unable to delete run '1': database error`),
+			request: &request.DeleteRunRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					ID: "1",
+				}, nil)
+				runRepository.On(
+					"Archive",
+					mock.AnythingOfType("*context.emptyCtx"),
+					mock.MatchedBy(func(run *models.Run) bool {
+						assert.Equal(t, "1", run.ID)
+						return true
+					}),
+				).Return(errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+	}
 
-func TestService_DeleteRunTag_Ok(t *testing.T)    {}
-func TestService_DeleteRunTag_Error(t *testing.T) {}
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			// call service under testing.
+			err := tt.service().DeleteRun(context.TODO(), tt.request)
+			assert.Equal(t, tt.error, err)
+		})
+	}
+}
+
+func TestService_DeleteRunTag_Ok(t *testing.T) {}
+func TestService_DeleteRunTag_Error(t *testing.T) {
+	var testData = []struct {
+		name    string
+		error   *api.ErrorResponse
+		request *request.DeleteRunTagRequest
+		service func() *Service
+	}{
+		{
+			name:    "EmptyOrIncorrectRunID",
+			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			request: &request.DeleteRunTagRequest{},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "RunNotFoundOrDatabaseError",
+			error: api.NewResourceDoesNotExistError(`Unable to find run '1': database error`),
+			request: &request.DeleteRunTagRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(nil, errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "ActiveRunNotFound",
+			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
+			request: &request.DeleteRunTagRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+
+					LifecycleStage: models.LifecycleStageDeleted,
+				}, nil)
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "NotFoundTag",
+			error: api.NewResourceDoesNotExistError(`Unable to find tag 'key' for run '1': database error`),
+			request: &request.DeleteRunTagRequest{
+				RunID: "1",
+				Key:   "key",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
+				tagRepository := repositories.MockTagRepositoryProvider{}
+				tagRepository.On(
+					"GetByRunIDAndKey",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+					"key",
+				).Return(nil, errors.New("database error"))
+				return NewService(
+					&tagRepository,
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "DeleteRunTagDatabaseError",
+			error: api.NewInternalError(`unable to delete tag 'key' for run '1': database error`),
+			request: &request.DeleteRunTagRequest{
+				RunID: "1",
+				Key:   "key",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
+				tagRepository := repositories.MockTagRepositoryProvider{}
+				tagRepository.On(
+					"GetByRunIDAndKey",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+					"key",
+				).Return(&models.Tag{
+					RunID: "1",
+					Key:   "key",
+					Value: "value",
+				}, nil)
+				tagRepository.On(
+					"Delete",
+					mock.AnythingOfType("*context.emptyCtx"),
+					mock.MatchedBy(func(tag *models.Tag) bool {
+						assert.Equal(t, "1", tag.RunID)
+						assert.Equal(t, "key", tag.Key)
+						assert.Equal(t, "value", tag.Value)
+						return true
+					}),
+				).Return(errors.New("database error"))
+				return NewService(
+					&tagRepository,
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			// call service under testing.
+			err := tt.service().DeleteRunTag(context.TODO(), tt.request)
+			assert.Equal(t, tt.error, err)
+		})
+	}
+}
 
 func TestService_GetRun_Ok(t *testing.T) {
 	// init repository mocks.
@@ -286,7 +793,59 @@ func TestService_GetRun_Ok(t *testing.T) {
 		},
 	}, run.Metrics)
 }
-func TestService_GetRun_Error(t *testing.T) {}
+func TestService_GetRun_Error(t *testing.T) {
+	var testData = []struct {
+		name    string
+		error   *api.ErrorResponse
+		request *request.GetRunRequest
+		service func() *Service
+	}{
+		{
+			name:    "EmptyOrIncorrectRunID",
+			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			request: &request.GetRunRequest{},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "RunNotFoundOrDatabaseError",
+			error: api.NewResourceDoesNotExistError(`unable to find run '1': database error`),
+			request: &request.GetRunRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(nil, errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			// call service under testing.
+			_, err := tt.service().GetRun(context.TODO(), tt.request)
+			assert.Equal(t, tt.error, err)
+		})
+	}
+}
 
 func TestService_LogBatch_Ok(t *testing.T) {
 	// init repository mocks.
@@ -374,7 +933,322 @@ func TestService_LogBatch_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
-func TestService_LogBatch_Error(t *testing.T) {}
+func TestService_LogBatch_Error(t *testing.T) {
+	var testData = []struct {
+		name    string
+		error   *api.ErrorResponse
+		request *request.LogBatchRequest
+		service func() *Service
+	}{
+		{
+			name:    "EmptyOrIncorrectRunID",
+			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			request: &request.LogBatchRequest{},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "RunNotFoundDatabaseError",
+			error: api.NewInternalError(`unable to find run '1': database error`),
+			request: &request.LogBatchRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(nil, errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "NoActiveRunFound",
+			error: api.NewResourceDoesNotExistError(`unable to find active run '1'`),
+			request: &request.LogBatchRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					LifecycleStage: models.LifecycleStageDeleted,
+				}, nil)
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "IncorrectMetricValue",
+			error: api.NewInvalidParameterValueError(`invalid metric value 'incorrect_value'`),
+			request: &request.LogBatchRequest{
+				RunID: "1",
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:   "key",
+						Value: "incorrect_value",
+					},
+				},
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "CreateBatchParamsDatabaseError",
+			error: api.NewInternalError(`unable to insert params for run '1': database error`),
+			request: &request.LogBatchRequest{
+				RunID: "1",
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
+				paramRepository := repositories.MockParamRepositoryProvider{}
+				paramRepository.On(
+					"CreateBatch",
+					mock.AnythingOfType("*context.emptyCtx"),
+					100,
+					[]models.Param{
+						{
+							Key:   "key",
+							Value: "value",
+							RunID: "1",
+						},
+					},
+				).Return(errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&paramRepository,
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "CreateBatchMetricsDatabaseError",
+			error: api.NewInternalError(`unable to insert metrics for run '1': database error`),
+			request: &request.LogBatchRequest{
+				RunID: "1",
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+				Metrics: []request.MetricPartialRequest{
+					{
+						Step:      1,
+						Key:       "key",
+						Value:     1.1,
+						Timestamp: 123456789,
+					},
+				},
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
+				paramRepository := repositories.MockParamRepositoryProvider{}
+				paramRepository.On(
+					"CreateBatch",
+					mock.AnythingOfType("*context.emptyCtx"),
+					100,
+					[]models.Param{
+						{
+							Key:   "key",
+							Value: "value",
+							RunID: "1",
+						},
+					},
+				).Return(nil)
+				metricRepository := repositories.MockMetricRepositoryProvider{}
+				metricRepository.On(
+					"CreateBatch",
+					mock.AnythingOfType("*context.emptyCtx"),
+					&models.Run{
+						ID:             "1",
+						LifecycleStage: models.LifecycleStageActive,
+					},
+					100,
+					[]models.Metric{
+						{
+							Step:      1,
+							Key:       "key",
+							Value:     1.1,
+							RunID:     "1",
+							Timestamp: 123456789,
+						},
+					},
+				).Return(errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&paramRepository,
+					&metricRepository,
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "CreateBatchTagsDatabaseError",
+			error: api.NewInternalError(`unable to insert tags for run '1': database error`),
+			request: &request.LogBatchRequest{
+				RunID: "1",
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+				Tags: []request.TagPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+				Metrics: []request.MetricPartialRequest{
+					{
+						Step:      1,
+						Key:       "key",
+						Value:     1.1,
+						Timestamp: 123456789,
+					},
+				},
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
+				runRepository.On(
+					"SetRunTagsBatch",
+					mock.AnythingOfType("*context.emptyCtx"),
+					&models.Run{
+						ID:             "1",
+						LifecycleStage: models.LifecycleStageActive,
+					},
+					100,
+					[]models.Tag{
+						{
+							Key:   "key",
+							Value: "value",
+							RunID: "1",
+						},
+					},
+				).Return(errors.New("database error"))
+				paramRepository := repositories.MockParamRepositoryProvider{}
+				paramRepository.On(
+					"CreateBatch",
+					mock.AnythingOfType("*context.emptyCtx"),
+					100,
+					[]models.Param{
+						{
+							Key:   "key",
+							Value: "value",
+							RunID: "1",
+						},
+					},
+				).Return(nil)
+				metricRepository := repositories.MockMetricRepositoryProvider{}
+				metricRepository.On(
+					"CreateBatch",
+					mock.AnythingOfType("*context.emptyCtx"),
+					&models.Run{
+						ID:             "1",
+						LifecycleStage: models.LifecycleStageActive,
+					},
+					100,
+					[]models.Metric{
+						{
+							Step:      1,
+							Key:       "key",
+							Value:     1.1,
+							RunID:     "1",
+							Timestamp: 123456789,
+						},
+					},
+				).Return(nil)
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&paramRepository,
+					&metricRepository,
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			// call service under testing.
+			err := tt.service().LogBatch(context.TODO(), tt.request)
+			assert.Equal(t, tt.error, err)
+		})
+	}
+}
 
 func TestService_LogMetric_Ok(t *testing.T) {
 	// init repository mocks.
@@ -422,7 +1296,169 @@ func TestService_LogMetric_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
-func TestService_LogMetric_Error(t *testing.T) {}
+func TestService_LogMetric_Error(t *testing.T) {
+	var testData = []struct {
+		name    string
+		error   *api.ErrorResponse
+		request *request.LogMetricRequest
+		service func() *Service
+	}{
+		{
+			name:    "EmptyOrIncorrectRunID",
+			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			request: &request.LogMetricRequest{},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "EmptyOrIncorrectMetricKey",
+			error: api.NewInvalidParameterValueError(`Missing value for required parameter 'key'`),
+			request: &request.LogMetricRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "EmptyOrIncorrectTimestamp",
+			error: api.NewInvalidParameterValueError(`Missing value for required parameter 'timestamp'`),
+			request: &request.LogMetricRequest{
+				RunID: "1",
+				Key:   "key",
+			},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "RunNotFoundOrDatabaseError",
+			error: api.NewResourceDoesNotExistError(`unable to find run '1': database error`),
+			request: &request.LogMetricRequest{
+				RunID:     "1",
+				Key:       "key",
+				Value:     "value",
+				Timestamp: 1234567890,
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(nil, errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "IncorrectMetricValue",
+			error: api.NewInvalidParameterValueError(`invalid metric value 'incorrect_value'`),
+			request: &request.LogMetricRequest{
+				RunID:     "1",
+				Key:       "key",
+				Value:     "incorrect_value",
+				Timestamp: 1234567890,
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					ID: "1",
+				}, nil)
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "LogMetricDatabaseError",
+			error: api.NewInternalError(`unable to log metric 'key' for run '1': database error`),
+			request: &request.LogMetricRequest{
+				RunID:     "1",
+				Key:       "key",
+				Step:      1,
+				Value:     "NaN",
+				Timestamp: 1234567890,
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					ID: "1",
+				}, nil)
+				metricRepository := repositories.MockMetricRepositoryProvider{}
+				metricRepository.On(
+					"CreateBatch",
+					mock.AnythingOfType("*context.emptyCtx"),
+					mock.MatchedBy(func(run *models.Run) bool {
+						assert.Equal(t, "1", run.ID)
+						return true
+					}),
+					1,
+					mock.MatchedBy(func(metrics []models.Metric) bool {
+						assert.Equal(t, 1, len(metrics))
+						assert.Equal(t, "key", metrics[0].Key)
+						assert.Equal(t, float64(0), metrics[0].Value)
+						assert.Equal(t, true, metrics[0].IsNan)
+						assert.Equal(t, int64(1), metrics[0].Step)
+						assert.Equal(t, int64(1234567890), metrics[0].Timestamp)
+						return true
+					}),
+				).Return(errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&metricRepository,
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			// call service under testing.
+			err := tt.service().LogMetric(context.TODO(), tt.request)
+			assert.Equal(t, tt.error, err)
+		})
+	}
+}
 
 func TestService_LogParam_Ok(t *testing.T) {
 	// init repository mocks.
@@ -465,4 +1501,140 @@ func TestService_LogParam_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
-func TestService_LogParam_Error(t *testing.T) {}
+func TestService_LogParam_Error(t *testing.T) {
+	var testData = []struct {
+		name    string
+		error   *api.ErrorResponse
+		request *request.LogParamRequest
+		service func() *Service
+	}{
+		{
+			name:    "EmptyOrIncorrectRunID",
+			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			request: &request.LogParamRequest{},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "EmptyOrIncorrectMetricKey",
+			error: api.NewInvalidParameterValueError(`Missing value for required parameter 'key'`),
+			request: &request.LogParamRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&repositories.MockRunRepositoryProvider{},
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "RunNotFoundDatabaseError",
+			error: api.NewInternalError(`unable to find run '1': database error`),
+			request: &request.LogParamRequest{
+				RunID: "1",
+				Key:   "key",
+				Value: "value",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(nil, errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "NoActiveRunFound",
+			error: api.NewResourceDoesNotExistError(`unable to find active run '1'`),
+			request: &request.LogParamRequest{
+				RunID: "1",
+				Key:   "key",
+				Value: "value",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					LifecycleStage: models.LifecycleStageDeleted,
+				}, nil)
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "CreateParamDatabaseError",
+			error: api.NewInternalError(`unable to insert params for run '1': database error`),
+			request: &request.LogParamRequest{
+				RunID: "1",
+				Key:   "key",
+				Value: "value",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
+				paramRepository := repositories.MockParamRepositoryProvider{}
+				paramRepository.On(
+					"CreateBatch",
+					mock.AnythingOfType("*context.emptyCtx"),
+					1,
+					mock.MatchedBy(func(params []models.Param) bool {
+						assert.Equal(t, 1, len(params))
+						assert.Equal(t, "key", params[0].Key)
+						assert.Equal(t, "value", params[0].Value)
+						assert.Equal(t, "1", params[0].RunID)
+						return true
+					}),
+				).Return(errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&paramRepository,
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			// call service under testing.
+			err := tt.service().LogParam(context.TODO(), tt.request)
+			assert.Equal(t, tt.error, err)
+		})
+	}
+}

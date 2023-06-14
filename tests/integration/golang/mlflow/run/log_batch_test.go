@@ -116,17 +116,17 @@ func (s *LogBatchTestSuite) Test_Error() {
 
 	var testData = []struct {
 		name    string
-		error   string
+		error   *api.ErrorResponse
 		request *request.LogBatchRequest
 	}{
 		{
 			name:    "MissingRunIDFails",
-			error:   "Missing value for required parameter 'run_id'",
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.LogBatchRequest{},
 		},
 		{
 			name:  "DuplicateKeyDifferentValueFails",
-			error: "ERROR: duplicate key",
+			error: api.NewInternalError("duplicate key"),
 			request: &request.LogBatchRequest{
 				RunID: s.run.ID,
 				Params: []request.ParamPartialRequest{
@@ -151,8 +151,9 @@ func (s *LogBatchTestSuite) Test_Error() {
 				tt.request,
 				&resp,
 			)
-			assert.Nil(t, err)
-			assert.Contains(s.T(), resp.Error(), tt.error)
+			assert.NoError(t, err)
+			assert.Equal(s.T(), tt.error.ErrorCode, resp.ErrorCode)
+			assert.Contains(s.T(), resp.Error(), tt.error.Message)
 		})
 	}
 }

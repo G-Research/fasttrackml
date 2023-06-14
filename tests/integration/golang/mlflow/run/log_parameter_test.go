@@ -96,6 +96,5 @@ func (s *LogParamTestSuite) Test_Error() {
 		&resp,
 	)
 	assert.NoError(s.T(), err)
-	assert.Equal(s.T(), api.ErrorCode(api.ErrorCodeInvalidParameterValue), resp.ErrorCode)
-	assert.Equal(s.T(), "Missing value for required parameter 'run_id'", resp.Message)
+	assert.Equal(s.T(), api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'").Error(), resp.Error())
 }

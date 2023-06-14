@@ -168,7 +168,7 @@ func TestService_GetMetricHistoryBulk_Error(t *testing.T) {
 				`GetMetricHistoryBulk request cannot specify more than 200 run_ids. Received 201 run_ids.`,
 			),
 			request: &request.GetMetricHistoryBulkRequest{
-				RunIDs: make([]string, MaxRunIDsForMetricHistoryBulkRequest+1, MaxRunIDsForMetricHistoryBulkRequest+1),
+				RunIDs: make([]string, MaxRunIDsForMetricHistoryBulkRequest+1),
 			},
 			service: func() *Service {
 				metricRepository := repositories.MockMetricRepositoryProvider{}

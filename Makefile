@@ -20,6 +20,12 @@ PATH_DOCKER_COMPOSE_FILE=$(realpath ./docker/docker-compose.yml)
 DOCKER_COMPOSE_OPTIONS= -f $(PATH_DOCKER_COMPOSE_FILE)
 
 #
+# Linter targets.
+#
+lint: ## run set of linters over the code.
+	@docker build -f docker/linter/Dockerfile -t $(SERVICE)-linter . && docker run $(SERVICE)-linter
+
+#
 # Default target (help)
 #
 .PHONY: help

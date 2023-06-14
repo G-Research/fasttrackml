@@ -566,7 +566,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundOrDatabaseError",
-			error: api.NewResourceDoesNotExistError(`Unable to find run '1': database error`),
+			error: api.NewResourceDoesNotExistError(`Unable to find active run '1': database error`),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 			},

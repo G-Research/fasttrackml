@@ -37,6 +37,11 @@ func (r Run) IsLifecycleStageActive() bool {
 	return r.LifecycleStage == LifecycleStageActive
 }
 
+// TableName returns actual table name.
+func (r Run) TableName() string {
+	return "runs"
+}
+
 // RowNum represents custom data type.
 type RowNum int64
 

@@ -12,7 +12,7 @@ const config = {
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
 
-    url: 'https://naskio.github.io',
+    url: 'https://G-Research.github.io',
     baseUrl: '/fasttrackml/',
 
     organizationName: 'G-Research',
@@ -25,7 +25,7 @@ const config = {
 
     customFields: {
         email: 'fasttrackml@gr-oss.io',
-        newIssueUrl: 'https://github.com/naskio/fasttrackml/issues/new',
+        newIssueUrl: 'https://github.com/G-Research/fasttrackml/issues/new',
     },
 
     presets: [

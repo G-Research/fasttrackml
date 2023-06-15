@@ -12,8 +12,11 @@ const config = {
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
 
-    url: 'https://fasttrackml.io',
-    baseUrl: '/',
+    // url: 'https://fasttrackml.io',
+    // baseUrl: '/',
+
+    url: 'https://naskio.github.io',
+    baseUrl: '/fasttrackml/',
 
     organizationName: 'G-Research',
     projectName: 'fasttrackml',

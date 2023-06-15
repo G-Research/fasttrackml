@@ -45,28 +45,3 @@ func (f RunFixtures) CreateTestRun(
 	}
 	return run, nil
 }
-
-// GetTestRuns fetches all runs for an experiment
-func (f RunFixtures) GetTestRuns(
-	ctx context.Context, experimentID int32) ([]models.Run, error) {
-	return f.runRepository.List(ctx, experimentID)
-}
-
-// FindMinMaxRowNums finds min and max rownum for an experiment's runs
-func (f RunFixtures) FindMinMaxRowNums(
-	ctx context.Context, experimentID int32) (int64, int64, error) {
-	runs, err := f.runRepository.List(ctx, experimentID)
-	if err != nil {
-		return 0, 0, eris.Wrap(err, "error fetching test runs")
-	}
-	var min, max models.RowNum
-	for _, run := range runs {
-		if run.RowNum < min {
-			min = run.RowNum
-		}
-		if run.RowNum > max {
-			max = run.RowNum
-		}
-	}
-	return int64(min), int64(max), nil
-}

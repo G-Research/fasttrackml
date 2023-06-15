@@ -128,30 +128,29 @@ func (r RunRepository) ArchiveBatch(ctx context.Context, ids []string) error {
 
 // Delete removes the existing models.Run from the db.
 func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
+
+	minRowNum, err := r.getMinRowNum(ctx, []string{run.ID})
+	if err != nil {
+		return err
+	}
+
 	if err := r.db.WithContext(ctx).Model(&run).Delete(run).Error; err != nil {
 		return eris.Wrapf(err, "error deleting run with id: %s", run.ID)
 	}
-	
-	if err := r.renumberRows(ctx, int32(run.RowNum)); err != nil {
+
+	if err := r.renumberRows(ctx, minRowNum); err != nil {
 		return eris.Wrapf(err, "error renumbering runs.row_num")
 	}
-
 
 	return nil
 }
 
 // DeleteBatch removes existing models.Run from the db.
 func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
-	// get the lowest rownum and experiment id from batch
-	runData := struct{
-		minRowNum int32
-		expID int32
-	}{}
-	if err := r.db.WithContext(ctx).Raw(
-		`SELECT MIN(row_num) as min_row_num, experiment_id as exp_id
-                 FROM runs
-                 WHERE run_uuid IN ?`, ids).First(&runData).Error; err != nil {
-		eris.Wrapf(err, "error finding the lowest row num and experiment id from batch runs to delete")
+
+	minRowNum, err := r.getMinRowNum(ctx, ids)
+	if err != nil {
+		return err
 	}
 
 	// delete the rows
@@ -161,7 +160,7 @@ func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
 	}
 
 	// renumber the remainder
-	if err := r.renumberRows(ctx, runData.minRowNum); err != nil {
+	if err := r.renumberRows(ctx, minRowNum); err != nil {
 		return eris.Wrapf(err, "error renumbering runs.row_num")
 	}
 
@@ -233,13 +232,26 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 	return nil
 }
 
+// getMinRowNum will find the lowest row_num for the selection of run.IDs
+func (r RunRepository) getMinRowNum(ctx context.Context, runIDs []string) (int32, error) {
+	// get the lowest rownum and experiment id from batch
+	minRowNum := int32(0)
+	if err := r.db.WithContext(ctx).Raw(
+		`SELECT MIN(row_num)
+                 FROM runs
+                 WHERE run_uuid IN ?`, runIDs).First(&minRowNum).Error; err != nil {
+		return 0, eris.Wrapf(err, "error finding the lowest row num from run.IDs")
+	}
+	return minRowNum, nil
+}
+
 // renumberRows will update the runs.row_num field with the correct ordinal
 func (r RunRepository) renumberRows(ctx context.Context, startWith int32) error {
-	if err := r.db.WithContext(ctx).Raw(
+	if err := r.db.WithContext(ctx).Exec(
 		`UPDATE runs
-	         SET row_num = rows.row_num
+	         SET row_num = rows.new_row_num
                  FROM (
-                   SELECT run_uuid, ROW_NUMBER() OVER (ORDER BY start_time DESC) + ? as row_num
+                   SELECT run_uuid, ROW_NUMBER() OVER (ORDER BY start_time) + ? - 1 as new_row_num
                    FROM runs
                    WHERE runs.row_num >= ?
                  ) as rows

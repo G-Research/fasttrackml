@@ -125,7 +125,7 @@ const config = {
                     srcDark: 'logo/organization-dark.png',
                     href: 'https://opensource.gresearch.co.uk/',
                 },
-                copyright: `Copyright © ${new Date().getFullYear()} FastTrackML`,
+                copyright: `Copyright © ${new Date().getFullYear()} G-Research`,
             },
             announcementBar: {
                 // https://docusaurus.io/docs/api/themes/configuration#announcement-bar

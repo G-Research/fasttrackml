@@ -127,7 +127,7 @@ func TestValidateGetMetricHistoriesRequest_Error(t *testing.T) {
 			error: api.NewInvalidParameterValueError("Invalid value for parameter 'max_results' supplied."),
 			request: &request.GetMetricHistoriesRequest{
 				RunIDs:     []string{"id1"},
-				MaxResults: MaxResultsPerPage + 1,
+				MaxResults: MaxResultsForMetricHistoriesRequest + 1,
 			},
 		},
 	}

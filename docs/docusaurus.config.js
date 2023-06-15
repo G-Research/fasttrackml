@@ -33,7 +33,13 @@ const config = {
             'classic',
             /** @type {import('@docusaurus/preset-classic').Options} */
             ({
-                docs: false, // disabling docs
+                // docs: {
+                //     path: '../docs',
+                //     sidebarPath: require.resolve('./sidebars.js'),
+                //     editUrl: 'https://github.com/G-Research/fasttrackml/edit/main/docs/',
+                //     exclude: ['example', 'images'],
+                // },
+                docs: false, // disabling docs temporarily
                 theme: {
                     customCss: [require.resolve('./src/css/theming.css'), require.resolve('./src/css/announcement-bar.css'), require.resolve('./src/css/global.css')],
                 },

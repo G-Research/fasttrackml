@@ -12,11 +12,8 @@ const config = {
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
 
-    // url: 'https://fasttrackml.io',
-    // baseUrl: '/',
-
-    url: 'https://naskio.github.io',
-    baseUrl: '/fasttrackml/',
+    url: 'https://fasttrackml.io',
+    baseUrl: '/',
 
     organizationName: 'G-Research',
     projectName: 'fasttrackml',
@@ -36,13 +33,7 @@ const config = {
             'classic',
             /** @type {import('@docusaurus/preset-classic').Options} */
             ({
-                // docs: {
-                //     path: '../docs',
-                //     sidebarPath: require.resolve('./sidebars.js'),
-                //     editUrl: 'https://github.com/G-Research/fasttrackml/edit/main/docs/',
-                //     exclude: ['example', 'images'],
-                // },
-                docs: false, // disabling docs temporarily
+                docs: false, // disabling docs
                 theme: {
                     customCss: [require.resolve('./src/css/theming.css'), require.resolve('./src/css/announcement-bar.css'), require.resolve('./src/css/global.css')],
                 },

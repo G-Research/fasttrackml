@@ -44,12 +44,13 @@ const config = {
     themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
-            image: 'logo/project-logo-text.png', // project's social card
+            image: 'images/project-social-preview.png', // project's social card
             navbar: {
-                title: 'FastTrackML',
                 logo: {
                     alt: 'FastTrackML logo',
-                    src: 'logo/project-icon.png',
+                    src: 'logo/project-logo-light.svg',
+                    srcDark: 'logo/project-logo-dark.svg',
+                    width: 140,
                 },
                 items: [
                     // left
@@ -121,8 +122,8 @@ const config = {
                 ],
                 logo: {
                     alt: 'G-Research Open-Source Software',
-                    src: 'logo/organization.png',
-                    srcDark: 'logo/organization-dark.png',
+                    src: 'logo/organization.svg',
+                    srcDark: 'logo/organization-dark.svg',
                     href: 'https://opensource.gresearch.co.uk/',
                 },
                 copyright: `Copyright © ${new Date().getFullYear()} G-Research`,
@@ -144,7 +145,15 @@ const config = {
                 defaultLanguage: 'bash',
                 additionalLanguages: ['python', 'powershell'],
             },
-            metadata: [{name: 'twitter:card', content: 'summary'}],
+            metadata: [
+                {
+                    name: 'twitter:card', content: 'summary'
+                },
+                {
+                    name: 'keywords',
+                    content: 'machine learning, experiment tracking, mlflow, mlflow tracking server, fasttrackml'
+                },
+            ],
         }),
 };
 

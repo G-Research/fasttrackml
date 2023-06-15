@@ -1,9 +1,10 @@
 import React from "react";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import clsx from "clsx";
-import ProjectLogoUrl from '@site/static/logo/project-icon.png';
+import ThemedImage from '@theme/ThemedImage';
 import Link from "@docusaurus/Link";
 import styles from './HeroSection.module.css';
+import useBaseUrl from "@docusaurus/useBaseUrl";
 
 export default function HeroSection(): React.JSX.Element {
     const {siteConfig} = useDocusaurusContext();
@@ -30,8 +31,14 @@ export default function HeroSection(): React.JSX.Element {
                     <div className={clsx("col", styles.heroIconColumn)}>
                         <div className={styles.heroIconContainer}>
                             <div className={styles.heroIconBackground}></div>
-                            <img className={styles.heroIcon} src={ProjectLogoUrl} alt="FastTrackML logo"
-                                 width={180} height={180}/>
+                            <ThemedImage
+                                className={styles.heroIcon} width={180} height={180}
+                                alt="FastTrackML icon"
+                                sources={{
+                                    light: useBaseUrl('/logo/project-icon-light.svg'),
+                                    dark: useBaseUrl('/logo/project-icon-dark.svg'),
+                                }}
+                            />
                         </div>
                     </div>
                 </div>

@@ -50,3 +50,10 @@ input, textarea {
 }
 
 /* Forms */
+
+/* Navbar */
+.navbar__logo img {
+    object-fit: cover;
+}
+
+/* Navbar */

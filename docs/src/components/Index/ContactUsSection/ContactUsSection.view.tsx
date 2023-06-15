@@ -33,7 +33,7 @@ export default function ContactUsSection(): React.JSX.Element {
     const newIssueUrl = customFields?.newIssueUrl;
 
     const onUsingGitHub: SubmitHandler<Inputs> = data => {
-        openNewIssue(newIssueUrl as string, data.subject, getMessage(data.name, data.company, data.message), ["naskio"], ['help wanted']);
+        openNewIssue(newIssueUrl as string, data.subject, getMessage(data.name, data.company, data.message));
     };
 
     const onSendEmail: SubmitHandler<Inputs> = data => {

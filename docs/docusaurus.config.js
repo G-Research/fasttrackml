@@ -12,8 +12,8 @@ const config = {
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
 
-    url: 'https://G-Research.github.io',
-    baseUrl: '/fasttrackml/',
+    url: 'https://fasttrackml.io',
+    baseUrl: '/',
 
     organizationName: 'G-Research',
     projectName: 'fasttrackml',

@@ -568,7 +568,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundOrDatabaseError",
-			error: api.NewInternalError(`unable to find active run '1': database error`),
+			error: api.NewInternalError(`Unable to find active run '1': database error`),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 			},
@@ -590,7 +590,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundOrDatabaseNotError",
-			error: api.NewResourceDoesNotExistError(`unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 			},
@@ -612,7 +612,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "ActiveRunNotFound",
-			error: api.NewResourceDoesNotExistError(`unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 			},
@@ -1586,7 +1586,7 @@ func TestService_LogParam_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundDatabaseError",
-			error: api.NewInternalError(`unable to find run '1': database error`),
+			error: api.NewInternalError(`Unable to find run '1': database error`),
 			request: &request.LogParamRequest{
 				RunID: "1",
 				Key:   "key",
@@ -1610,7 +1610,7 @@ func TestService_LogParam_Error(t *testing.T) {
 		},
 		{
 			name:  "NoActiveRunFound",
-			error: api.NewResourceDoesNotExistError(`unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
 			request: &request.LogParamRequest{
 				RunID: "1",
 				Key:   "key",

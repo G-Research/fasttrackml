@@ -128,17 +128,24 @@ func (r RunRepository) ArchiveBatch(ctx context.Context, ids []string) error {
 
 // Delete removes the existing models.Run from the db.
 func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		// find the row_num for the run
+		minRowNum, err := r.getMinRowNum(tx, []string{run.ID})
+		if err != nil {
+			return err
+		}
 
-	minRowNum, err := r.getMinRowNum(ctx, []string{run.ID})
-	if err != nil {
-		return err
-	}
+		// delete the row
+		if err := tx.Model(&run).Delete(run).Error; err != nil {
+			return eris.Wrapf(err, "error deleting run with id: %s", run.ID)
+		}
 
-	if err := r.db.WithContext(ctx).Model(&run).Delete(run).Error; err != nil {
-		return eris.Wrapf(err, "error deleting run with id: %s", run.ID)
-	}
-
-	if err := r.renumberRows(ctx, minRowNum); err != nil {
+		// renumber the remainder
+		if err := r.renumberRows(tx, minRowNum); err != nil {
+			return eris.Wrapf(err, "error renumbering runs.row_num")
+		}
+		return nil
+	}); err != nil {
 		return eris.Wrapf(err, "error renumbering runs.row_num")
 	}
 
@@ -147,20 +154,25 @@ func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 
 // DeleteBatch removes existing models.Run from the db.
 func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		// find the min row_num in the batch
+		minRowNum, err := r.getMinRowNum(tx, ids)
+		if err != nil {
+			return err
+		}
 
-	minRowNum, err := r.getMinRowNum(ctx, ids)
-	if err != nil {
-		return err
-	}
+		// delete the rows
+		run := models.Run{}
+		if err := tx.Model(&run).Where("run_uuid IN ?", ids).Delete(run).Error; err != nil {
+			return eris.Wrapf(err, "error deleting existing runs with ids: %s", ids)
+		}
 
-	// delete the rows
-	run := models.Run{}
-	if err := r.db.WithContext(ctx).Model(&run).Where("run_uuid IN ?", ids).Delete(run).Error; err != nil {
-		return eris.Wrapf(err, "error deleting existing runs with ids: %s", ids)
-	}
-
-	// renumber the remainder
-	if err := r.renumberRows(ctx, minRowNum); err != nil {
+		// renumber the remainder
+		if err := r.renumberRows(tx, minRowNum); err != nil {
+			return eris.Wrapf(err, "error renumbering runs.row_num")
+		}
+		return nil
+	}); err != nil {
 		return eris.Wrapf(err, "error renumbering runs.row_num")
 	}
 
@@ -233,10 +245,10 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 }
 
 // getMinRowNum will find the lowest row_num for the selection of run.IDs
-func (r RunRepository) getMinRowNum(ctx context.Context, runIDs []string) (int32, error) {
+func (r RunRepository) getMinRowNum(tx *gorm.DB, runIDs []string) (int32, error) {
 	// get the lowest rownum and experiment id from batch
 	minRowNum := int32(0)
-	if err := r.db.WithContext(ctx).Raw(
+	if err := tx.Raw(
 		`SELECT MIN(row_num)
                  FROM runs
                  WHERE run_uuid IN ?`, runIDs).First(&minRowNum).Error; err != nil {
@@ -246,8 +258,8 @@ func (r RunRepository) getMinRowNum(ctx context.Context, runIDs []string) (int32
 }
 
 // renumberRows will update the runs.row_num field with the correct ordinal
-func (r RunRepository) renumberRows(ctx context.Context, startWith int32) error {
-	if err := r.db.WithContext(ctx).Exec(
+func (r RunRepository) renumberRows(tx *gorm.DB, startWith int32) error {
+	if err := tx.Exec(
 		`UPDATE runs
 	         SET row_num = rows.new_row_num
                  FROM (

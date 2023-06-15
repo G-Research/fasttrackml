@@ -151,7 +151,7 @@ func ConnectDB(
 		tx.First(&schemaVersion)
 	}
 
-	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "ed364de02645" {
+	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "1ce8669664d2" {
 		if !migrate && alembicVersion.Version != "" {
 			return nil, fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
 		}
@@ -312,6 +312,7 @@ func ConnectDB(
 				}); err != nil {
 					return nil, fmt.Errorf("error migrating database to FastTrackML schema 8073e7e037e5: %w", err)
 				}
+				fallthrough
 
 			case "8073e7e037e5":
 				log.Info("Migrating database to FastTrackML schema ed364de02645")
@@ -328,6 +329,27 @@ func ConnectDB(
 						Error
 				}); err != nil {
 					return nil, fmt.Errorf("error migrating database to FastTrackML schema ed364de02645: %w", err)
+				}
+				fallthrough
+				
+			case "ed364de02645":
+				log.Info("Migrating database to FastTrackML schema 1ce8669664d2")
+				if err := DB.Transaction(func(tx *gorm.DB) error {
+					if err := tx.AutoMigrate(
+						&Run{},
+						&Param{},
+						&Tag{},
+						&Metric{},
+						&LatestMetric{},
+					); err != nil {
+						return err
+					}
+					return tx.Model(&SchemaVersion{}).
+						Where("1 = 1").
+						Update("Version", "1ce8669664d2").
+						Error
+				}); err != nil {
+					return nil, fmt.Errorf("error migrating database to FastTrackML schema 1ce8669664d2: %w", err)
 				}
 
 			default:
@@ -358,7 +380,7 @@ func ConnectDB(
 				Version: "97727af70f4d",
 			})
 			tx.Create(&SchemaVersion{
-				Version: "ed364de02645",
+				Version: "1ce8669664d2",
 			})
 			tx.Commit()
 			if tx.Error != nil {

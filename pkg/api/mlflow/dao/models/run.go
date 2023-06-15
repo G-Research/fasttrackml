@@ -24,12 +24,12 @@ type Run struct {
 	ArtifactURI    string         `gorm:"type:varchar(200)"`
 	ExperimentID   int32
 	Experiment     Experiment
-	DeletedTime    sql.NullInt64 `gorm:"type:bigint"`
-	RowNum         RowNum        `gorm:"index"`
-	Params         []Param
-	Tags           []Tag
-	Metrics        []Metric
-	LatestMetrics  []LatestMetric
+	DeletedTime    sql.NullInt64  `gorm:"type:bigint"`
+	RowNum         RowNum         `gorm:"index"`
+	Params         []Param        `gorm:"constraint:OnDelete:CASCADE"`
+	Tags           []Tag          `gorm:"constraint:OnDelete:CASCADE"`
+	Metrics        []Metric       `gorm:"constraint:OnDelete:CASCADE"`
+	LatestMetrics  []LatestMetric `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 // IsLifecycleStageActive makes check that Run is in LifecycleStageActive stage.

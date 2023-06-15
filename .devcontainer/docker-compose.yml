@@ -58,7 +58,7 @@ services:
       # - -c
       # - log_statement=all
     ports:
-      - 5000:5000
+      - 5001:5000
 
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.). Ports

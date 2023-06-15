@@ -144,7 +144,7 @@ func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 		return eris.Wrapf(err, "error deleting run with id: %s", run.ID)
 	}
 	
-	if err := r.renumberRows(ctx, int32(run.RowNum), run.ExperimentID); err != nil {
+	if err := r.renumberRows(ctx, int32(run.RowNum)); err != nil {
 		return eris.Wrapf(err, "error renumbering runs.row_num")
 	}
 
@@ -173,7 +173,7 @@ func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
 	}
 
 	// renumber the remainder
-	if err := r.renumberRows(ctx, runData.minRowNum, runData.expID); err != nil {
+	if err := r.renumberRows(ctx, runData.minRowNum); err != nil {
 		return eris.Wrapf(err, "error renumbering runs.row_num")
 	}
 
@@ -246,15 +246,18 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 }
 
 // renumberRows will update the runs.row_num field with the correct ordinal
-func (r RunRepository) renumberRows(ctx context.Context, startWith, experimentID int32) error {
+func (r RunRepository) renumberRows(ctx context.Context, startWith int32) error {
 	if err := r.db.WithContext(ctx).Raw(
 		`UPDATE runs
-	         SET row_num = (ROW_NUMBER() OVER (ORDER BY start_time DESC) + ?)
-	         WHERE runs.row_num >= ?
-                 AND runs.experiment_id = ?`,
+	         SET row_num = rows.row_num
+                 FROM (
+                   SELECT run_uuid, ROW_NUMBER() OVER (ORDER BY start_time DESC) + ? as row_num
+                   FROM runs
+                   WHERE runs.row_num >= ?
+                 ) as rows
+	         WHERE runs.run_uuid = rows.run_uuid`,
 		startWith,
-		startWith,
-		experimentID).Error; err != nil {
+		startWith).Error; err != nil {
 		return eris.Wrap(err, "error updating runs.row_num")
 	}
 	return nil

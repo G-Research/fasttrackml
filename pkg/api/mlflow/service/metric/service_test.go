@@ -6,11 +6,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -289,7 +288,7 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 			request: &request.GetMetricHistoriesRequest{
 				RunIDs:     []string{"1"},
 				ViewType:   request.ViewTypeAll,
-				MaxResults: MaxResultsPerPage + 1,
+				MaxResults: MaxResultsForMetricHistoriesRequest + 1,
 			},
 			service: func() *Service {
 				metricRepository := repositories.MockMetricRepositoryProvider{}

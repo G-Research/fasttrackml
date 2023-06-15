@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	MetricHistoriesDefaultLimitPerPage   = 10000000
-	MetricHistoryBulkDefaultLimitPerPage = 25000
+	MetricHistoriesDefaultLimit   = 10000000
+	MetricHistoryBulkDefaultLimit = 25000
 )
 
 // MetricRepositoryProvider provides an interface to work with models.Metric entity.
@@ -181,10 +181,12 @@ func (r MetricRepository) GetMetricHistories(
 		"metrics.step",
 	).Order(
 		"metrics.timestamp",
-	).Order("metrics.value")
+	).Order(
+		"metrics.value",
+	)
 
 	if limit == 0 {
-		limit = MetricHistoriesDefaultLimitPerPage
+		limit = MetricHistoriesDefaultLimit
 	}
 	query.Limit(int(limit))
 
@@ -255,7 +257,7 @@ func (r MetricRepository) GetMetricHistoryBulk(
 	)
 
 	if limit == 0 {
-		limit = MetricHistoryBulkDefaultLimitPerPage
+		limit = MetricHistoryBulkDefaultLimit
 	}
 	query.Limit(int(limit))
 

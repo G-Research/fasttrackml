@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	MaxResultsPerPage                    = 1000000000
+	MaxResultsForMetricHistoriesRequest  = 1000000000
 	MaxRunIDsForMetricHistoryBulkRequest = 200
 )
 
@@ -63,7 +63,7 @@ func ValidateGetMetricHistoriesRequest(req *request.GetMetricHistoriesRequest) e
 		}
 	}
 
-	if req.MaxResults > MaxResultsPerPage {
+	if req.MaxResults > MaxResultsForMetricHistoriesRequest {
 		return api.NewInvalidParameterValueError("Invalid value for parameter 'max_results' supplied.")
 	}
 	return nil

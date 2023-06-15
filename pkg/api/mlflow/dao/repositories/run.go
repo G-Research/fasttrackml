@@ -154,9 +154,27 @@ func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 
 // DeleteBatch removes existing models.Run from the db.
 func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
+	// get the lowest rownum and experiment id from batch
+	runData := struct{
+		minRowNum int32
+		expID int32
+	}{}
+	if err := r.db.WithContext(ctx).Raw(
+		`SELECT MIN(row_num) as min_row_num, experiment_id as exp_id
+                 FROM runs
+                 WHERE run_uuid IN ?`, ids).First(&runData).Error; err != nil {
+		eris.Wrapf(err, "error finding the lowest row num and experiment id from batch runs to delete")
+	}
+
+	// delete the rows
 	run := models.Run{}
 	if err := r.db.WithContext(ctx).Model(&run).Where("run_uuid IN ?", ids).Delete(run).Error; err != nil {
 		return eris.Wrapf(err, "error deleting existing runs with ids: %s", ids)
+	}
+
+	// renumber the remainder
+	if err := r.renumberRows(ctx, runData.minRowNum, runData.expID); err != nil {
+		return eris.Wrapf(err, "error renumbering runs.row_num")
 	}
 
 	return nil

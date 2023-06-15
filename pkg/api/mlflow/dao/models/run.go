@@ -32,11 +32,6 @@ type Run struct {
 	LatestMetrics  []LatestMetric
 }
 
-// IsLifecycleStageActive makes check that Run is in LifecycleStageActive stage.
-func (r Run) IsLifecycleStageActive() bool {
-	return r.LifecycleStage == LifecycleStageActive
-}
-
 // RowNum represents custom data type.
 type RowNum int64
 

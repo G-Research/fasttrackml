@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/rotisserie/eris"
@@ -18,6 +19,10 @@ type RunRepositoryProvider interface {
 	BaseRepositoryProvider
 	// GetByID returns models.Run entity bt its ID.
 	GetByID(ctx context.Context, id string) (*models.Run, error)
+	// GetByIDAndLifecycleStage returns models.Run entity bt its ID and Lifecycle Stage
+	GetByIDAndLifecycleStage(
+		ctx context.Context, id string, lifecycleStage models.LifecycleStage,
+	) (*models.Run, error)
 	// Create creates new models.Run entity.
 	Create(ctx context.Context, run *models.Run) error
 	// Update updates existing models.Experiment entity.
@@ -66,6 +71,30 @@ func (r RunRepository) GetByID(ctx context.Context, id string) (*models.Run, err
 	).Preload(
 		"Tags",
 	).First(&run).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting `run` entity by id: %s", id)
+	}
+	return &run, nil
+}
+
+// GetByIDAndLifecycleStage returns models.Run entity bt its ID and Lifecycle Stage
+func (r RunRepository) GetByIDAndLifecycleStage(
+	ctx context.Context, id string, lifecycleStage models.LifecycleStage,
+) (*models.Run, error) {
+	run := models.Run{ID: id}
+	if err := r.db.WithContext(
+		ctx,
+	).Preload(
+		"LatestMetrics",
+	).Preload(
+		"Params",
+	).Preload(
+		"Tags",
+	).Where(
+		`lifecycle_stage = ?`, lifecycleStage,
+	).First(&run).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, eris.Wrapf(err, "error getting `run` entity by id: %s", id)
 	}
 	return &run, nil

@@ -6,8 +6,6 @@ import (
 	"errors"
 	"testing"
 
-	"gorm.io/gorm"
-
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 
 	"github.com/stretchr/testify/assert"
@@ -376,9 +374,10 @@ func TestService_SetRunTag_Ok(t *testing.T) {
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
-		"GetByID",
+		"GetByIDAndLifecycleStage",
 		mock.AnythingOfType("*context.emptyCtx"),
 		"1",
+		models.LifecycleStageActive,
 	).Return(
 		&models.Run{ID: "1", LifecycleStage: models.LifecycleStageActive}, nil,
 	)
@@ -568,39 +567,18 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundOrDatabaseError",
-			error: api.NewInternalError(`Unable to find active run '1': database error`),
+			error: api.NewInternalError(`Unable to find run '1': database error`),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
+					models.LifecycleStageActive,
 				).Return(nil, errors.New("database error"))
-				return NewService(
-					&repositories.MockTagRepositoryProvider{},
-					&runRepository,
-					&repositories.MockParamRepositoryProvider{},
-					&repositories.MockMetricRepositoryProvider{},
-					&repositories.MockExperimentRepositoryProvider{},
-				)
-			},
-		},
-		{
-			name:  "RunNotFoundOrDatabaseNotError",
-			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
-			request: &request.DeleteRunTagRequest{
-				RunID: "1",
-			},
-			service: func() *Service {
-				runRepository := repositories.MockRunRepositoryProvider{}
-				runRepository.On(
-					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
-					"1",
-				).Return(nil, gorm.ErrRecordNotFound)
 				return NewService(
 					&repositories.MockTagRepositoryProvider{},
 					&runRepository,
@@ -619,13 +597,11 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
-				).Return(&models.Run{
-
-					LifecycleStage: models.LifecycleStageDeleted,
-				}, nil)
+					models.LifecycleStageActive,
+				).Return(nil, nil)
 				return NewService(
 					&repositories.MockTagRepositoryProvider{},
 					&runRepository,
@@ -645,9 +621,10 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
+					models.LifecycleStageActive,
 				).Return(&models.Run{
 					ID:             "1",
 					LifecycleStage: models.LifecycleStageActive,
@@ -678,9 +655,10 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
+					models.LifecycleStageActive,
 				).Return(&models.Run{
 					ID:             "1",
 					LifecycleStage: models.LifecycleStageActive,
@@ -875,9 +853,10 @@ func TestService_LogBatch_Ok(t *testing.T) {
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
-		"GetByID",
+		"GetByIDAndLifecycleStage",
 		mock.AnythingOfType("*context.emptyCtx"),
 		"1",
+		models.LifecycleStageActive,
 	).Return(&models.Run{
 		ID:             "1",
 		LifecycleStage: models.LifecycleStageActive,
@@ -980,16 +959,17 @@ func TestService_LogBatch_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundDatabaseError",
-			error: api.NewInternalError(`unable to find active run '1': database error`),
+			error: api.NewInternalError(`Unable to find run '1': database error`),
 			request: &request.LogBatchRequest{
 				RunID: "1",
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
+					models.LifecycleStageActive,
 				).Return(nil, errors.New("database error"))
 				return NewService(
 					&repositories.MockTagRepositoryProvider{},
@@ -1002,17 +982,18 @@ func TestService_LogBatch_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundDatabaseNotFoundError",
-			error: api.NewResourceDoesNotExistError(`unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
 			request: &request.LogBatchRequest{
 				RunID: "1",
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
-				).Return(nil, gorm.ErrRecordNotFound)
+					models.LifecycleStageActive,
+				).Return(nil, nil)
 				return NewService(
 					&repositories.MockTagRepositoryProvider{},
 					&runRepository,
@@ -1024,19 +1005,18 @@ func TestService_LogBatch_Error(t *testing.T) {
 		},
 		{
 			name:  "NoActiveRunFound",
-			error: api.NewResourceDoesNotExistError(`unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
 			request: &request.LogBatchRequest{
 				RunID: "1",
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
-				).Return(&models.Run{
-					LifecycleStage: models.LifecycleStageDeleted,
-				}, nil)
+					models.LifecycleStageActive,
+				).Return(nil, nil)
 				return NewService(
 					&repositories.MockTagRepositoryProvider{},
 					&runRepository,
@@ -1061,12 +1041,12 @@ func TestService_LogBatch_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
+					models.LifecycleStageActive,
 				).Return(&models.Run{
-					ID:             "1",
-					LifecycleStage: models.LifecycleStageActive,
+					ID: "1",
 				}, nil)
 				return NewService(
 					&repositories.MockTagRepositoryProvider{},
@@ -1092,12 +1072,12 @@ func TestService_LogBatch_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
+					models.LifecycleStageActive,
 				).Return(&models.Run{
-					ID:             "1",
-					LifecycleStage: models.LifecycleStageActive,
+					ID: "1",
 				}, nil)
 				paramRepository := repositories.MockParamRepositoryProvider{}
 				paramRepository.On(
@@ -1144,9 +1124,10 @@ func TestService_LogBatch_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
+					models.LifecycleStageActive,
 				).Return(&models.Run{
 					ID:             "1",
 					LifecycleStage: models.LifecycleStageActive,
@@ -1221,9 +1202,10 @@ func TestService_LogBatch_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
+					models.LifecycleStageActive,
 				).Return(&models.Run{
 					ID:             "1",
 					LifecycleStage: models.LifecycleStageActive,
@@ -1510,9 +1492,10 @@ func TestService_LogParam_Ok(t *testing.T) {
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
-		"GetByID",
+		"GetByIDAndLifecycleStage",
 		mock.AnythingOfType("*context.emptyCtx"),
 		"1",
+		models.LifecycleStageActive,
 	).Return(&models.Run{
 		ID:             "1",
 		LifecycleStage: models.LifecycleStageActive,
@@ -1595,9 +1578,10 @@ func TestService_LogParam_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
+					models.LifecycleStageActive,
 				).Return(nil, errors.New("database error"))
 				return NewService(
 					&repositories.MockTagRepositoryProvider{},
@@ -1619,12 +1603,11 @@ func TestService_LogParam_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
-				).Return(&models.Run{
-					LifecycleStage: models.LifecycleStageDeleted,
-				}, nil)
+					models.LifecycleStageActive,
+				).Return(nil, nil)
 				return NewService(
 					&repositories.MockTagRepositoryProvider{},
 					&runRepository,
@@ -1635,7 +1618,7 @@ func TestService_LogParam_Error(t *testing.T) {
 			},
 		},
 		{
-			name:  "CreateParamDatabaseError",
+			name:  "LogParamDatabaseError",
 			error: api.NewInternalError(`unable to insert params for run '1': database error`),
 			request: &request.LogParamRequest{
 				RunID: "1",
@@ -1645,9 +1628,10 @@ func TestService_LogParam_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByIDAndLifecycleStage",
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
+					models.LifecycleStageActive,
 				).Return(&models.Run{
 					ID:             "1",
 					LifecycleStage: models.LifecycleStageActive,

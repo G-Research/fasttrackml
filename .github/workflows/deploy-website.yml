@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - 'website/**'
       - 'docs/**'
   workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
 
@@ -32,7 +33,7 @@ jobs:
         with:
           node-version: "18"
           cache: yarn
-          cache-dependency-path: docs/yarn.lock
+          cache-dependency-path: website/yarn.lock
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
@@ -40,21 +41,21 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            docs/build
-            docs/.docusaurus
-          key: ${{ runner.os }}-docusaurus-build-${{ hashFiles('docs/build') }}
+            website/build
+            website/.docusaurus
+          key: ${{ runner.os }}-docusaurus-build-${{ hashFiles('website/build') }}
           restore-keys: |
             ${{ runner.os }}-docusaurus-build-
       - name: Install dependencies
-        working-directory: ./docs
+        working-directory: ./website
         run: yarn install
       - name: Build
-        working-directory: ./docs
+        working-directory: ./website
         run: yarn run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          path: ./docs/build
+          path: ./website/build
 
   deploy:
     environment:

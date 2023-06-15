@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -444,6 +445,9 @@ func (s Service) SetRunTag(ctx context.Context, req *request.SetRunTagRequest) e
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
+		}
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
 	}
 	if !run.IsLifecycleStageActive() {
@@ -464,10 +468,13 @@ func (s Service) DeleteRunTag(ctx context.Context, req *request.DeleteRunTagRequ
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
 	if err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return api.NewResourceDoesNotExistError("unable to find active run '%s'", req.RunID)
+		}
+		return api.NewInternalError("unable to find active run '%s': %s", req.RunID, err)
 	}
 	if !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
+		return api.NewResourceDoesNotExistError("unable to find active run '%s'", req.RunID)
 	}
 
 	tag, err := s.tagRepository.GetByRunIDAndKey(ctx, run.ID, req.Key)
@@ -489,7 +496,10 @@ func (s Service) LogBatch(ctx context.Context, req *request.LogBatchRequest) err
 
 	run, err := s.runRepository.GetByID(ctx, req.RunID)
 	if err != nil {
-		return api.NewInternalError("unable to find run '%s': %s", req.RunID, err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return api.NewResourceDoesNotExistError("unable to find active run '%s'", req.RunID)
+		}
+		return api.NewInternalError("unable to find active run '%s': %s", req.RunID, err)
 	}
 	if !run.IsLifecycleStageActive() {
 		return api.NewResourceDoesNotExistError("unable to find active run '%s'", req.RunID)

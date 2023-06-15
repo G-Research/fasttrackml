@@ -6,6 +6,8 @@ import (
 	"errors"
 	"testing"
 
+	"gorm.io/gorm"
+
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 
 	"github.com/stretchr/testify/assert"
@@ -566,7 +568,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundOrDatabaseError",
-			error: api.NewResourceDoesNotExistError(`Unable to find active run '1': database error`),
+			error: api.NewInternalError(`unable to find active run '1': database error`),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 			},
@@ -587,8 +589,30 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 			},
 		},
 		{
+			name:  "RunNotFoundOrDatabaseNotError",
+			error: api.NewResourceDoesNotExistError(`unable to find active run '1'`),
+			request: &request.DeleteRunTagRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(nil, gorm.ErrRecordNotFound)
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
 			name:  "ActiveRunNotFound",
-			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError(`unable to find active run '1'`),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 			},
@@ -956,7 +980,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundDatabaseError",
-			error: api.NewInternalError(`unable to find run '1': database error`),
+			error: api.NewInternalError(`unable to find active run '1': database error`),
 			request: &request.LogBatchRequest{
 				RunID: "1",
 			},
@@ -967,6 +991,28 @@ func TestService_LogBatch_Error(t *testing.T) {
 					mock.AnythingOfType("*context.emptyCtx"),
 					"1",
 				).Return(nil, errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "RunNotFoundDatabaseNotFoundError",
+			error: api.NewResourceDoesNotExistError(`unable to find active run '1'`),
+			request: &request.LogBatchRequest{
+				RunID: "1",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByID",
+					mock.AnythingOfType("*context.emptyCtx"),
+					"1",
+				).Return(nil, gorm.ErrRecordNotFound)
 				return NewService(
 					&repositories.MockTagRepositoryProvider{},
 					&runRepository,

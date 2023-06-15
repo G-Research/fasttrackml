@@ -335,13 +335,28 @@ func ConnectDB(
 			case "ed364de02645":
 				log.Info("Migrating database to FastTrackML schema 1ce8669664d2")
 				if err := DB.Transaction(func(tx *gorm.DB) error {
-					if err := tx.AutoMigrate(
-						&Run{},
-						&Param{},
-						&Tag{},
-						&Metric{},
-						&LatestMetric{},
-					); err != nil {
+					if err := tx.Migrator().DropConstraint(&Run{}, "Params"); err != nil {
+						return err
+					}
+					if err := tx.Migrator().DropConstraint(&Run{}, "Tags"); err != nil {
+						return err
+					}
+					if err := tx.Migrator().DropConstraint(&Run{}, "Metrics"); err != nil {
+						return err
+					}
+					if err := tx.Migrator().DropConstraint(&Run{}, "LatestMetrics"); err != nil {
+						return err
+					}
+					if err := tx.Migrator().CreateConstraint(&Run{}, "Params"); err != nil {
+						return err
+					}
+					if err := tx.Migrator().CreateConstraint(&Run{}, "Tags"); err != nil {
+						return err
+					}
+					if err := tx.Migrator().CreateConstraint(&Run{}, "Metrics"); err != nil {
+						return err
+					}
+					if err := tx.Migrator().CreateConstraint(&Run{}, "LatestMetrics"); err != nil {
 						return err
 					}
 					return tx.Model(&SchemaVersion{}).

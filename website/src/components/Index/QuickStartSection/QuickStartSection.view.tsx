@@ -1,7 +1,7 @@
 import React from 'react';
 import clsx from 'clsx';
 import MDXContent from '@theme/MDXContent';
-import QuickStartMD from "@site/content/quickstart-section.md";
+import QuickStartMD from "./quickstart-section.md";
 import styles from './QuickStartSection.module.css';
 
 export default function quickStartSection(): React.JSX.Element {

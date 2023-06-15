@@ -130,6 +130,7 @@ func (r MetricRepository) CreateBatch(
 }
 
 // GetMetricHistories returns metric histories by request parameters.
+// TODO think about to use interface instead of underlying type for -> func(*sql.Rows, interface{})
 func (r MetricRepository) GetMetricHistories(
 	ctx context.Context,
 	experimentIDs []string, runIDs []string, metricKeys []string, viewType request.ViewType, limit int32,

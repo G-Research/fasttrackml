@@ -45,3 +45,12 @@ func (f ExperimentFixtures) CreateTestExperiment(
 	}
 	return experiment, nil
 }
+
+// GetExperimentByID returns the experiment by the given id
+func (f ExperimentFixtures) GetExperimentByID(ctx context.Context, experimentID int32) (*models.Experiment, error) {
+	experiment, err := f.experimentRepository.GetByID(ctx, experimentID)
+	if err != nil {
+		return nil, eris.Wrapf(err, "error getting experiment with ID %d", experimentID)
+	}
+	return experiment, nil
+}

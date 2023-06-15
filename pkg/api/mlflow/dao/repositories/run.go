@@ -19,7 +19,7 @@ type RunRepositoryProvider interface {
 	BaseRepositoryProvider
 	// GetByID returns models.Run entity bt its ID.
 	GetByID(ctx context.Context, id string) (*models.Run, error)
-	// GetByIDAndLifecycleStage returns models.Run entity bt its ID and Lifecycle Stage
+	// GetByIDAndLifecycleStage returns models.Run entity by its ID and Lifecycle Stage
 	GetByIDAndLifecycleStage(
 		ctx context.Context, id string, lifecycleStage models.LifecycleStage,
 	) (*models.Run, error)
@@ -76,7 +76,7 @@ func (r RunRepository) GetByID(ctx context.Context, id string) (*models.Run, err
 	return &run, nil
 }
 
-// GetByIDAndLifecycleStage returns models.Run entity bt its ID and Lifecycle Stage
+// GetByIDAndLifecycleStage returns models.Run entity by its ID and Lifecycle Stage
 func (r RunRepository) GetByIDAndLifecycleStage(
 	ctx context.Context, id string, lifecycleStage models.LifecycleStage,
 ) (*models.Run, error) {

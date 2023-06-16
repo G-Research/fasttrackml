@@ -129,19 +129,13 @@ func (r RunRepository) ArchiveBatch(ctx context.Context, ids []string) error {
 // Delete removes the existing models.Run from the db.
 func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
-		// find the row_num for the run
-		minRowNum, err := r.getMinRowNum(tx, []string{run.ID})
-		if err != nil {
-			return err
-		}
-
 		// delete the row
-		if err := tx.Model(&run).Delete(run).Error; err != nil {
+		if err := tx.Clauses(clause.Returning{}).Model(&run).Delete(&run).Error; err != nil {
 			return eris.Wrapf(err, "error deleting run with id: %s", run.ID)
 		}
 
 		// renumber the remainder
-		if err := r.renumberRows(tx, minRowNum); err != nil {
+		if err := r.renumberRows(tx, getMinRowNum([]models.Run{*run})); err != nil {
 			return eris.Wrapf(err, "error renumbering runs.row_num")
 		}
 		return nil
@@ -155,20 +149,14 @@ func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 // DeleteBatch removes existing models.Run from the db.
 func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
-		// find the min row_num in the batch
-		minRowNum, err := r.getMinRowNum(tx, ids)
-		if err != nil {
-			return err
-		}
-
 		// delete the rows
-		run := models.Run{}
-		if err := tx.Model(&run).Where("run_uuid IN ?", ids).Delete(run).Error; err != nil {
+		runs := []models.Run{}
+		if err := tx.Clauses(clause.Returning{}).Model(models.Run{}).Where("run_uuid IN ?", ids).Delete(&runs).Error; err != nil {
 			return eris.Wrapf(err, "error deleting existing runs with ids: %s", ids)
 		}
 
 		// renumber the remainder
-		if err := r.renumberRows(tx, minRowNum); err != nil {
+		if err := r.renumberRows(tx, getMinRowNum(runs)); err != nil {
 			return eris.Wrapf(err, "error renumbering runs.row_num")
 		}
 		return nil
@@ -244,21 +232,24 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 	return nil
 }
 
-// getMinRowNum will find the lowest row_num for the selection of run.IDs
-func (r RunRepository) getMinRowNum(tx *gorm.DB, runIDs []string) (int32, error) {
-	// get the lowest rownum and experiment id from batch
-	minRowNum := int32(0)
-	if err := tx.Raw(
-		`SELECT MIN(row_num)
-                 FROM runs
-                 WHERE run_uuid IN ?`, runIDs).First(&minRowNum).Error; err != nil {
-		return 0, eris.Wrapf(err, "error finding the lowest row num from run.IDs")
+// getMinRowNum will find the lowest row_num for the slice of runs
+// or 0 for an empty slice
+func getMinRowNum(runs []models.Run) int64 {
+	if len(runs) == 0 {
+		return int64(0)
 	}
-	return minRowNum, nil
+	// get the lowest row number in the slic
+	minRowNum := int64(runs[0].RowNum)
+	for _, run := range runs {
+		if int64(run.RowNum) < minRowNum {
+			minRowNum = int64(run.RowNum)
+		}
+	}
+	return minRowNum
 }
 
 // renumberRows will update the runs.row_num field with the correct ordinal
-func (r RunRepository) renumberRows(tx *gorm.DB, startWith int32) error {
+func (r RunRepository) renumberRows(tx *gorm.DB, startWith int64) error {
 	if err := tx.Exec(
 		`UPDATE runs
 	         SET row_num = rows.new_row_num

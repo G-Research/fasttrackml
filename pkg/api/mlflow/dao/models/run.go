@@ -32,9 +32,9 @@ type Run struct {
 	LatestMetrics  []LatestMetric
 }
 
-// IsLifecycleStageActive makes check that Run is in LifecycleStageActive stage.
-func (r Run) IsLifecycleStageActive() bool {
-	return r.LifecycleStage == LifecycleStageActive
+// TableName returns actual table name.
+func (r Run) TableName() string {
+	return "runs"
 }
 
 // RowNum represents custom data type.
@@ -51,12 +51,12 @@ func (rn *RowNum) Scan(v interface{}) error {
 }
 
 // GormDataType implements Gorm interface for custom data types.
-func (rn *RowNum) GormDataType() string {
+func (rn RowNum) GormDataType() string {
 	return "bigint"
 }
 
 // GormValue implements Gorm interface for custom data types.
-func (rn *RowNum) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
+func (rn RowNum) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 	return clause.Expr{
 		SQL: "(SELECT COALESCE(MAX(row_num), -1) FROM runs) + 1",
 	}

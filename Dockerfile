@@ -45,7 +45,7 @@ RUN bash -c "\
     -ldflags \"-linkmode external -extldflags '-static' -s -w -X 'github.com/G-Research/fasttrackml/pkg/version.Version=$version'\""
 
 # Runtime container
-FROM alpine:3.17
+FROM alpine:3.18
 
 COPY --from=go-build /build/fml /usr/local/bin/
 

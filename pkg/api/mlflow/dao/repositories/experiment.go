@@ -55,7 +55,9 @@ func (r ExperimentRepository) Create(ctx context.Context, experiment *models.Exp
 // GetByID returns experiment by its ID.
 func (r ExperimentRepository) GetByID(ctx context.Context, experimentID int32) (*models.Experiment, error) {
 	var experiment models.Experiment
-	if err := r.db.WithContext(ctx).Where(models.Experiment{ID: &experimentID}).Preload("Tags").First(&experiment).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where(
+		models.Experiment{ID: &experimentID},
+	).Preload("Tags").First(&experiment).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting experiment by id: %d", experimentID)
 	}
 	return &experiment, nil
@@ -80,7 +82,7 @@ func (r ExperimentRepository) GetByName(ctx context.Context, name string) (*mode
 // Update updates existing models.Experiment entity.
 func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Experiment) error {
 
-	if err := r.db.Transaction(func(tx *gorm.DB) error{
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
 
 		if err := r.db.WithContext(ctx).Model(&experiment).Updates(experiment).Error; err != nil {
 			return eris.Wrapf(err, "error updating experiment with id: %d", *experiment.ID)
@@ -90,7 +92,7 @@ func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Exp
 		if experiment.LifecycleStage == models.LifecycleStageDeleted {
 			run := models.Run{
 				LifecycleStage: experiment.LifecycleStage,
-				DeletedTime: experiment.LastUpdateTime,
+				DeletedTime:    experiment.LastUpdateTime,
 			}
 
 			if err := r.db.WithContext(ctx).Model(&run).Where("experiment_id = ?", experiment.ID).Updates(&run).Error; err != nil {

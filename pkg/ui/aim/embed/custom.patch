@@ -598,3 +598,14 @@ index 0fc79c5..867376b 100644
      icon: 'audios',
      displayName: 'Audios',
      isExact: true,
+diff --git a/aim/web/ui/src/utils/formatValue.ts b/aim/web/ui/src/utils/formatValue.ts
+index f328daf..3785841 100644
+--- a/aim/web/ui/src/utils/formatValue.ts
++++ b/aim/web/ui/src/utils/formatValue.ts
+@@ -85,5 +85,5 @@ export function formatValue(
+   undefinedValue: string = UNDEFINED_VALUE,
+ ): string {
+   let formatter = FORMATTERS[typeof value];
+-  return formatter(value, undefinedValue);
++  return JSON.stringify(JSON.parse(formatter(value, undefinedValue)), null, 2);
+ }

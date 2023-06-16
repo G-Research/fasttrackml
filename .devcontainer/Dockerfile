@@ -11,6 +11,10 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends libssl-dev postgresql-client python-is-python3 python3-pip python3-dev python3-venv sqlite3 emacs-nox ripgrep fzf \
     && pip install pipenv
 
+# Install additional Go tools.
+RUN go install github.com/vektra/mockery/v2@v2.20.0 && \
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.2
+
 # [Optional] Uncomment the next lines to use go get to install anything else you need
 # USER vscode
 # RUN go get -x <your-dependency-or-tool>

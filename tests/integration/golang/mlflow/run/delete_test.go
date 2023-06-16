@@ -34,7 +34,7 @@ func TestDeleteRunTestSuite(t *testing.T) {
 }
 
 func (s *DeleteRunTestSuite) SetupTest() {
-	s.client = helpers.NewHttpClient(os.Getenv("SERVICE_BASE_URL"))
+	s.client = helpers.NewMlflowApiClient(os.Getenv("SERVICE_BASE_URL"))
 	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.runFixtures = runFixtures
@@ -51,17 +51,9 @@ func (s *DeleteRunTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 
 	// create run for the experiment 
-	run := &models.Run{
-		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
-		ExperimentID:   *exp.ID,
-		SourceType:     "JOB",
-		LifecycleStage: models.LifecycleStageActive,
-		Status:         models.StatusRunning,
-	}
-	run, err = s.runFixtures.CreateTestRun(context.Background(), run)
+	runs, err = s.runFixtures.CreateTestRuns(context.Background(), exp, 1)
 	assert.Nil(s.T(), err)
-	s.run = run
-
+	s.run = runs[0]
 }
 
 func (s *DeleteRunTestSuite) Test_Ok() {

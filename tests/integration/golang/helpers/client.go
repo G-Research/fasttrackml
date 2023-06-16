@@ -16,15 +16,27 @@ import (
 type HttpClient struct {
 	client  *http.Client
 	baseURL string
+	basePath string
 }
 
-// NewHttpClient creates new HTTP client.
-func NewHttpClient(baseURL string) *HttpClient {
+// NewMlflowApiClient creates new HTTP client for the mlflow api
+func NewMlflowApiClient(baseURL string) *HttpClient {
 	return &HttpClient{
 		client:  &http.Client{},
 		baseURL: baseURL,
+		basePath: "/api/2.0/mlflow",
 	}
 }
+
+// NewAimApiClient creates new HTTP client for the aim api
+func NewAimApiClient(baseURL string) *HttpClient {
+	return &HttpClient{
+		client:  &http.Client{},
+		baseURL: baseURL,
+		basePath: "/aim/api",
+	}
+}
+
 
 // DoPostRequest do POST request.
 func (c HttpClient) DoPostRequest(uri string, request interface{}, response interface{}) error {
@@ -40,8 +52,9 @@ func (c HttpClient) DoPostRequest(uri string, request interface{}, response inte
 		http.MethodPost,
 		StrReplace(
 			fmt.Sprintf(
-				"%s/api/2.0/mlflow%s",
+				"%s%s%s",
 				os.Getenv("SERVICE_BASE_URL"),
+				c.basePath,
 				uri,
 			),
 			[]string{},
@@ -75,10 +88,20 @@ func (c HttpClient) DoPostRequest(uri string, request interface{}, response inte
 
 // DoGetRequest do GET request.
 func (c HttpClient) DoGetRequest(uri string, response interface{}) error {
+	return c.DoRequest(http.MethodGet, uri, response)
+}
+
+// DoDeleteRequest do DELETE request.
+func (c HttpClient) DoDeleteRequest(uri string, response interface{}) error {
+	return c.DoRequest(http.MethodDelete, uri, response)
+}
+
+// DoRequest do request.
+func (c HttpClient) DoRequest(httpMethod string, uri string, response interface{}) error {
 	// 1. create actual request object.
 	req, err := http.NewRequestWithContext(
 		context.Background(),
-		http.MethodGet,
+		httpMethod,
 		StrReplace(
 			fmt.Sprintf(
 				"%s/api/2.0/mlflow%s",

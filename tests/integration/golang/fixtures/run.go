@@ -2,8 +2,10 @@ package fixtures
 
 import (
 	"context"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -44,6 +46,29 @@ func (f RunFixtures) CreateTestRun(
 		return nil, eris.Wrap(err, "error creating test run")
 	}
 	return run, nil
+}
+
+// CreateTestRuns creates some num runs belonging to the experiment
+func (f RunFixtures) CreateTestRuns(
+	ctx context.Context, exp *models.Experiment, num int,
+) ([]*models.Run, error) {
+	var runs []*models.Run
+	// create runs for the experiment 
+	for i := 0; i < num; i++ {
+		run := &models.Run{
+			ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
+			ExperimentID:   *exp.ID,
+			SourceType:     "JOB",
+			LifecycleStage: models.LifecycleStageActive,
+			Status:         models.StatusRunning,
+		}
+		run, err := f.CreateTestRun(context.Background(), run)
+		if err != nil {
+			return nil, err
+		}
+		runs = append(runs, run)
+	}
+	return runs, nil
 }
 
 // GetTestRuns fetches all runs for an experiment

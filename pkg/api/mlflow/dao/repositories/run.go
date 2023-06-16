@@ -158,12 +158,11 @@ func (r RunRepository) ArchiveBatch(ctx context.Context, ids []string) error {
 func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		// delete the row
-		if err := tx.Clauses(clause.Returning{}).Model(&run).Delete(&run).Error; err != nil {
+		if err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "row_num"}}}).Delete(&run).Error; err != nil {
 			return eris.Wrapf(err, "error deleting run with id: %s", run.ID)
 		}
-
 		// renumber the remainder
-		if err := r.renumberRows(tx, getMinRowNum([]models.Run{*run})); err != nil {
+		if err := r.renumberRows(tx, run.RowNum); err != nil {
 			return eris.Wrapf(err, "error renumbering runs.row_num")
 		}
 		return nil
@@ -179,7 +178,7 @@ func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		// delete the rows
 		runs := []models.Run{}
-		if err := tx.Clauses(clause.Returning{}).Model(models.Run{}).Where("run_uuid IN ?", ids).Delete(&runs).Error; err != nil {
+		if err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "row_num"}}}).Where("run_uuid IN ?", ids).Delete(&runs).Error; err != nil {
 			return eris.Wrapf(err, "error deleting existing runs with ids: %s", ids)
 		}
 
@@ -262,22 +261,25 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 
 // getMinRowNum will find the lowest row_num for the slice of runs
 // or 0 for an empty slice
-func getMinRowNum(runs []models.Run) int64 {
+func getMinRowNum(runs []models.Run) models.RowNum {
 	if len(runs) == 0 {
-		return int64(0)
+		return models.RowNum(0)
 	}
 	// get the lowest row_num in the slice
-	minRowNum := int64(runs[0].RowNum)
+	minRowNum := runs[0].RowNum
 	for _, run := range runs {
-		if int64(run.RowNum) < minRowNum {
-			minRowNum = int64(run.RowNum)
+		if run.RowNum < minRowNum {
+			minRowNum = run.RowNum
 		}
 	}
 	return minRowNum
 }
 
 // renumberRows will update the runs.row_num field with the correct ordinal
-func (r RunRepository) renumberRows(tx *gorm.DB, startWith int64) error {
+func (r RunRepository) renumberRows(tx *gorm.DB, startWith models.RowNum) error {
+	if startWith <= models.RowNum(0) {
+		return eris.Errorf("attempting to renumber with 0 or less row number value")
+	}
 	if err := tx.Exec(
 		`UPDATE runs
 	         SET row_num = rows.new_row_num
@@ -287,8 +289,8 @@ func (r RunRepository) renumberRows(tx *gorm.DB, startWith int64) error {
                    WHERE runs.row_num >= ?
                  ) as rows
 	         WHERE runs.run_uuid = rows.run_uuid`,
-		startWith,
-		startWith).Error; err != nil {
+		int64(startWith),
+		int64(startWith)).Error; err != nil {
 		return eris.Wrap(err, "error updating runs.row_num")
 	}
 	return nil

@@ -2,13 +2,20 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
+)
+
+const (
+	MetricHistoriesDefaultLimit   = 10000000
+	MetricHistoryBulkDefaultLimit = 25000
 )
 
 // MetricRepositoryProvider provides an interface to work with models.Metric entity.
@@ -16,6 +23,11 @@ type MetricRepositoryProvider interface {
 	BaseRepositoryProvider
 	// CreateBatch creates []models.Metric entities in batch.
 	CreateBatch(ctx context.Context, run *models.Run, batchSize int, params []models.Metric) error
+	// GetMetricHistories returns metric histories by request parameters.
+	GetMetricHistories(
+		ctx context.Context,
+		experimentIDs []string, runIDs []string, metricKeys []string, viewType request.ViewType, limit int32,
+	) (*sql.Rows, func(*sql.Rows, interface{}) error, error)
 	// GetMetricHistoryBulk returns metrics history bulk.
 	GetMetricHistoryBulk(ctx context.Context, runIDs []string, key string, limit int) ([]models.Metric, error)
 	// GetMetricHistoryByRunIDAndKey returns metrics history by RunID and Key.
@@ -117,6 +129,84 @@ func (r MetricRepository) CreateBatch(
 	return nil
 }
 
+// GetMetricHistories returns metric histories by request parameters.
+// TODO think about to use interface instead of underlying type for -> func(*sql.Rows, interface{})
+func (r MetricRepository) GetMetricHistories(
+	ctx context.Context,
+	experimentIDs []string, runIDs []string, metricKeys []string, viewType request.ViewType, limit int32,
+) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
+	// if experimentIDs has been provided then firstly get the runs by provided experimentIDs.
+	if len(experimentIDs) > 0 {
+		query := r.db.WithContext(ctx).Model(
+			&database.Run{},
+		).Where("experiment_id IN ?", experimentIDs)
+
+		switch viewType {
+		case request.ViewTypeActiveOnly, "":
+			query.Where("lifecycle_stage IN ?", []models.LifecycleStage{
+				models.LifecycleStageActive,
+			})
+		case request.ViewTypeDeletedOnly:
+			query.Where("lifecycle_stage IN ?", []models.LifecycleStage{
+				models.LifecycleStageDeleted,
+			})
+		case request.ViewTypeAll:
+			query.Where("lifecycle_stage IN ?", []models.LifecycleStage{
+				models.LifecycleStageActive,
+				models.LifecycleStageDeleted,
+			})
+		}
+		if err := query.Pluck("run_uuid", runIDs).Error; err != nil {
+			return nil, nil, eris.Wrapf(
+				err, "error getting runs by experimentIDs: %v, viewType: %s", experimentIDs, viewType,
+			)
+		}
+	}
+
+	// if experimentIDs has been provided then runIDs contains values from previous step,
+	// otherwise runIDs may or may not contain values.
+	query := r.db.WithContext(ctx).Model(
+		&database.Metric{},
+	).Where(
+		"metrics.run_uuid IN ?", runIDs,
+	).Joins(
+		"JOIN runs on runs.run_uuid = metrics.run_uuid",
+	).Order(
+		"runs.start_time DESC",
+	).Order(
+		"metrics.run_uuid",
+	).Order(
+		"metrics.key",
+	).Order(
+		"metrics.step",
+	).Order(
+		"metrics.timestamp",
+	).Order(
+		"metrics.value",
+	)
+
+	if limit == 0 {
+		limit = MetricHistoriesDefaultLimit
+	}
+	query.Limit(int(limit))
+
+	if len(metricKeys) > 0 {
+		query.Where("metrics.key IN ?", metricKeys)
+	}
+
+	rows, err := query.Rows()
+	if err != nil {
+		return nil, nil, eris.Wrapf(
+			err, "error getting metrics by experimentIDs: %v, runIDs: %v, metricKeys: %v, viewType: %s",
+			experimentIDs,
+			runIDs,
+			metricKeys,
+			viewType,
+		)
+	}
+	return rows, r.db.ScanRows, nil
+}
+
 // getLatestMetricsByRunIDAndKeys returns the latest metrics by requested Run ID and keys.
 func (r MetricRepository) getLatestMetricsByRunIDAndKeys(
 	ctx context.Context, runID string, keys []string,
@@ -152,7 +242,7 @@ func (r MetricRepository) GetMetricHistoryBulk(
 	ctx context.Context, runIDs []string, key string, limit int,
 ) ([]models.Metric, error) {
 	var metrics []models.Metric
-	if err := r.db.WithContext(ctx).Where(
+	query := r.db.WithContext(ctx).Where(
 		"run_uuid IN ?", runIDs,
 	).Where(
 		"key = ?", key,
@@ -164,9 +254,14 @@ func (r MetricRepository) GetMetricHistoryBulk(
 		"step",
 	).Order(
 		"value",
-	).Limit(
-		limit,
-	).Find(
+	)
+
+	if limit == 0 {
+		limit = MetricHistoryBulkDefaultLimit
+	}
+	query.Limit(int(limit))
+
+	if err := query.Find(
 		&metrics,
 	).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting metric history by run ids: %v and key: %s", runIDs, key)

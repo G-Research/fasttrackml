@@ -161,7 +161,7 @@ func initServer() *fiber.App {
 
 	server.Use(compress.New(compress.Config{
 		Next: func(c *fiber.Ctx) bool {
-			// This is a little bit brittle, maybe there is a better way?
+			// This is a little brittle, maybe there is a better way?
 			// Do not compress metric histories as urllib3 did not support file-like compressed reads until 2.0.0a1
 			return strings.HasSuffix(c.Path(), "/metrics/get-histories")
 		},

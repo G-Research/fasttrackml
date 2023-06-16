@@ -238,7 +238,7 @@ func getMinRowNum(runs []models.Run) int64 {
 	if len(runs) == 0 {
 		return int64(0)
 	}
-	// get the lowest row number in the slic
+	// get the lowest row_num in the slice
 	minRowNum := int64(runs[0].RowNum)
 	for _, run := range runs {
 		if int64(run.RowNum) < minRowNum {

@@ -1,11 +1,11 @@
 # Build MLFlow UI
-FROM --platform=$BUILDPLATFORM node:16 AS mlflow-build
+FROM --platform=$BUILDPLATFORM node:19 AS mlflow-build
 
 COPY pkg/ui/mlflow/embed /mlflow
 RUN /mlflow/build.sh
 
 # Build Aim UI
-FROM --platform=$BUILDPLATFORM node:16 AS aim-build
+FROM --platform=$BUILDPLATFORM node:19 AS aim-build
 
 COPY pkg/ui/aim/embed /aim
 RUN /aim/build.sh

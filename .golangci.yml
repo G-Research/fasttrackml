@@ -80,9 +80,6 @@ linters-settings:
   gocyclo:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
     min-complexity: 20
-  maligned:
-    # print struct with more effective memory layout or not, false by default
-    suggest-new: true
   dupl:
     # tokens count to trigger issue, 150 by default
     threshold: 100
@@ -128,21 +125,17 @@ linters:
   enable:
     - lll
     - ineffassign
-    - interfacer
     - unparam
     - unused
     - unconvert
     - typecheck
     - megacheck
     - staticcheck
-    - varcheck
     - govet
     - goconst
     - gosimple
     - gosec
     - gocyclo
-    - golint
-    - maligned
   enable-all: false
   disable:
     - errorlint

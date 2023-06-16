@@ -32,11 +32,6 @@ type Run struct {
 	LatestMetrics  []LatestMetric `gorm:"constraint:OnDelete:CASCADE"`
 }
 
-// IsLifecycleStageActive makes check that Run is in LifecycleStageActive stage.
-func (r Run) IsLifecycleStageActive() bool {
-	return r.LifecycleStage == LifecycleStageActive
-}
-
 // TableName returns actual table name.
 func (r Run) TableName() string {
 	return "runs"

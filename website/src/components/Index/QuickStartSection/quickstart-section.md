@@ -11,7 +11,7 @@ docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
 
 Verify that you can see the UI by navigating to [http://localhost:5000/](http://localhost:5000/).
 
-![FastTrackML UI](images/main.png)
+![FastTrackML UI](../../../../../docs/images/main_ui.jpg)
 
 ## Track your first experiment
 
@@ -48,6 +48,6 @@ mlflow.log_metric("foo", random.random() + 2)
 After running this script, you should see the following output
 from [http://localhost:5000/aim/](http://localhost:5000/aim/):
 
-![FastTrackML UI](images/runs.png)
+![FastTrackML UI](../../../../../docs/images/runs_ui.jpg)
 
 From here you can check out the metrics and run information to see more details about the run.

@@ -5,7 +5,6 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 )
 
 // List of route prefixes.
@@ -97,7 +96,7 @@ func (r Router) Init(server fiber.Router) {
 		metrics := mainGroup.Group(MetricsRoutePrefix)
 		metrics.Get(MetricsGetHistoryRoute, r.controller.GetMetricHistory)
 		metrics.Get(MetricsGetHistoryBulkRoute, r.controller.GetMetricHistoryBulk)
-		metrics.Post(MetricsGetHistoriesRoute, metric.GetMetricHistories)
+		metrics.Post(MetricsGetHistoriesRoute, r.controller.GetMetricHistories)
 
 		runs := mainGroup.Group(RunsRoutePrefix)
 		runs.Post(RunsCreateRoute, r.controller.CreateRun)

@@ -147,6 +147,46 @@ index a82cad8..80043c4 100644
            </div>
          </Drawer>
        </div>
+diff --git a/aim/web/ui/src/components/kit/DictVisualizer/DictVisualizer.tsx b/aim/web/ui/src/components/kit/DictVisualizer/DictVisualizer.tsx
+index b44e671..165d85d 100644
+--- a/aim/web/ui/src/components/kit/DictVisualizer/DictVisualizer.tsx
++++ b/aim/web/ui/src/components/kit/DictVisualizer/DictVisualizer.tsx
+@@ -206,7 +206,7 @@ function flattenDict(
+         closedValue: '[...]',
+         sub: `${nestedItemsLength} item${nestedItemsLength === 1 ? '' : 's'}`,
+         color: typeToColor('array'),
+-        copyContent: formatValue(dict),
++        copyContent: JSON.stringify(JSON.parse(formatValue(dict)), null, 2),
+       });
+     } else {
+       let nestedItemsLength = Object.keys(dict).length;
+@@ -219,7 +219,7 @@ function flattenDict(
+         closedValue: '{...}',
+         sub: `${nestedItemsLength} item${nestedItemsLength === 1 ? '' : 's'}`,
+         color: typeToColor('object'),
+-        copyContent: formatValue(dict),
++        copyContent: JSON.stringify(JSON.parse(formatValue(dict)), null, 2),
+       });
+     }
+   }
+@@ -240,7 +240,7 @@ function flattenDict(
+         closedValue: '[...]',
+         sub: `${item.length} item${item.length === 1 ? '' : 's'}`,
+         color: typeToColor('array'),
+-        copyContent: value,
++        copyContent: JSON.stringify(JSON.parse(value), null, 2),
+       });
+       if (item.length > 0) {
+         rows.push(...flattenDict(item as unknown[], level + 1, id));
+@@ -266,7 +266,7 @@ function flattenDict(
+         closedValue: '{...}',
+         sub: `${nestedItemsLength} item${nestedItemsLength === 1 ? '' : 's'}`,
+         color: typeToColor('object'),
+-        copyContent: value,
++        copyContent: JSON.stringify(JSON.parse(value), null, 2),
+       });
+       if (nestedItemsLength > 0) {
+         rows.push(
 diff --git a/aim/web/ui/src/config/table/tableConfigs.ts b/aim/web/ui/src/config/table/tableConfigs.ts
 index 05cda50..8fe218c 100644
 --- a/aim/web/ui/src/config/table/tableConfigs.ts
@@ -598,14 +638,3 @@ index 0fc79c5..867376b 100644
      icon: 'audios',
      displayName: 'Audios',
      isExact: true,
-diff --git a/aim/web/ui/src/utils/formatValue.ts b/aim/web/ui/src/utils/formatValue.ts
-index f328daf..3785841 100644
---- a/aim/web/ui/src/utils/formatValue.ts
-+++ b/aim/web/ui/src/utils/formatValue.ts
-@@ -85,5 +85,5 @@ export function formatValue(
-   undefinedValue: string = UNDEFINED_VALUE,
- ): string {
-   let formatter = FORMATTERS[typeof value];
--  return formatter(value, undefinedValue);
-+  return JSON.stringify(JSON.parse(formatter(value, undefinedValue)), null, 2);
- }

@@ -21,3 +21,6 @@ poetry.lock
 
 # Mocks
 mock_*
+
+# Misc
+.DS_Store

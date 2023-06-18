@@ -104,8 +104,9 @@ func (c HttpClient) DoRequest(httpMethod string, uri string, response interface{
 		httpMethod,
 		StrReplace(
 			fmt.Sprintf(
-				"%s/api/2.0/mlflow%s",
+				"%s%s%s",
 				os.Getenv("SERVICE_BASE_URL"),
+				c.basePath,
 				uri,
 			),
 			[]string{},

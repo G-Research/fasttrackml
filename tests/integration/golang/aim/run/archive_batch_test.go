@@ -81,7 +81,7 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 
 			resp := map[string]any{}
 			err = s.client.DoPostRequest(
-				fmt.Sprintf("%s%s?archive=%s", "/runs", "/archive-batch", tt.archiveParam),
+				fmt.Sprintf("/runs/archive-batch?archive=%s", tt.archiveParam),
 				tt.runIDs,
 				&resp,
 			)
@@ -131,7 +131,7 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 
 			var resp api.ErrorResponse
 			err = s.client.DoPostRequest(
-				fmt.Sprintf("/%s/%s?archive=true", "runs", "archive-batch"),
+				"/runs/archive-batch?archive=true",
 				tt.request,
 				&resp,
 			)

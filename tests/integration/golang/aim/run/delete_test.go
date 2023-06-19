@@ -81,7 +81,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 
 			var resp any
 			err = s.client.DoDeleteRequest(
-				fmt.Sprintf("/%s/%s", "runs", tt.request.RunID),
+				fmt.Sprintf("/runs/%s", tt.request.RunID),
 				&resp,
 			)
 			assert.Nil(s.T(), err)
@@ -119,7 +119,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 
 			var resp api.ErrorResponse
 			err = s.client.DoDeleteRequest(
-				fmt.Sprintf("/%s/%s", "runs", tt.request.RunID),
+				fmt.Sprintf("/runs/%s", tt.request.RunID),
 				&resp,
 			)
 			assert.Nil(s.T(), err)

@@ -4,7 +4,6 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 
@@ -74,7 +73,7 @@ func (s *DeleteBatchTestSuite) Test_Ok() {
 
 			resp := map[string]any{}
 			err = s.client.DoPostRequest(
-				fmt.Sprintf("%s%s", "/runs", "/delete-batch"),
+				"/runs/delete-batch",
 				tt.runIDs,
 				&resp,
 			)
@@ -117,7 +116,7 @@ func (s *DeleteBatchTestSuite) Test_Error() {
 
 			var resp api.ErrorResponse
 			err = s.client.DoPostRequest(
-				fmt.Sprintf("/%s/%s", "runs", "delete-batch"),
+				"/runs/delete-batch",
 				tt.request,
 				&resp,
 			)

@@ -116,7 +116,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "", resp.Error())
+			assert.Contains(s.T(), resp.Error(), "error renumbering runs.row_num")
 
 			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)
@@ -125,52 +125,3 @@ func (s *DeleteRunTestSuite) Test_Error() {
 		})
 	}
 }
-
-// func (s *DeleteBatchTestSuite) Test_Error() {
-// 	defer func() {
-// 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-// 	}()
-
-// var testData = []struct {
-// 	name    string
-// 	error   *api.ErrorResponse
-// 	request *request.DeleteBatchRequest
-// }{
-// 	{
-// 		name:    "MissingRunIDFails",
-// 		error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
-// 		request: &request.DeleteBatchRequest{},
-// 	},
-// 	{
-// 		name:  "DuplicateKeyDifferentValueFails",
-// 		error: api.NewInternalError("duplicate key"),
-// 		request: &request.DeleteBatchRequest{
-// 			RunID: s.run.ID,
-// 			Params: []request.ParamPartialRequest{
-// 				{
-// 					Key:   "key1",
-// 					Value: "value1",
-// 				},
-// 				{
-// 					Key:   "key1",
-// 					Value: "value2",
-// 				},
-// 			},
-// 		},
-// 	},
-// }
-
-// for _, tt := range testData {
-// 	s.T().Run(tt.name, func(t *testing.T) {
-// 		resp := api.ErrorResponse{}
-// 		err := s.client.DoPostRequest(
-// 			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteBatchRoute),
-// 			tt.request,
-// 			&resp,
-// 		)
-// 		assert.NoError(t, err)
-// 		assert.Equal(s.T(), tt.error.ErrorCode, resp.ErrorCode)
-// 		assert.Contains(s.T(), resp.Error(), tt.error.Message)
-// 	})
-// }
-// }

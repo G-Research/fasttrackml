@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -51,7 +50,7 @@ func (s *DeleteRunTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 
 	// create run for the experiment
-	runs, err = s.runFixtures.CreateTestRuns(context.Background(), exp, 1)
+	runs, err := s.runFixtures.CreateTestRuns(context.Background(), exp, 1)
 	assert.Nil(s.T(), err)
 	s.run = runs[0]
 }

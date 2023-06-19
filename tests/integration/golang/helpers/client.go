@@ -14,16 +14,16 @@ import (
 
 // HttpClient represents HTTP client.
 type HttpClient struct {
-	client  *http.Client
-	baseURL string
+	client   *http.Client
+	baseURL  string
 	basePath string
 }
 
 // NewMlflowApiClient creates new HTTP client for the mlflow api
 func NewMlflowApiClient(baseURL string) *HttpClient {
 	return &HttpClient{
-		client:  &http.Client{},
-		baseURL: baseURL,
+		client:   &http.Client{},
+		baseURL:  baseURL,
 		basePath: "/api/2.0/mlflow",
 	}
 }
@@ -31,12 +31,11 @@ func NewMlflowApiClient(baseURL string) *HttpClient {
 // NewAimApiClient creates new HTTP client for the aim api
 func NewAimApiClient(baseURL string) *HttpClient {
 	return &HttpClient{
-		client:  &http.Client{},
-		baseURL: baseURL,
+		client:   &http.Client{},
+		baseURL:  baseURL,
 		basePath: "/aim/api",
 	}
 }
-
 
 // DoPostRequest do POST request.
 func (c HttpClient) DoPostRequest(uri string, request interface{}, response interface{}) error {

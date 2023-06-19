@@ -1,5 +1,3 @@
-//go:build integration
-
 package run
 
 import (
@@ -13,13 +11,12 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type DeleteRunTestSuite struct {
+type ArchiveBatchTestSuite struct {
 	suite.Suite
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
@@ -27,17 +24,15 @@ type DeleteRunTestSuite struct {
 	runs               []*models.Run
 }
 
-func TestDeleteRunTestSuite(t *testing.T) {
-	suite.Run(t, new(DeleteRunTestSuite))
+func TestArchiveBatchTestSuite(t *testing.T) {
+	suite.Run(t, new(ArchiveBatchTestSuite))
 }
 
-func (s *DeleteRunTestSuite) SetupTest() {
+func (s *ArchiveBatchTestSuite) SetupTest() {
 	s.client = helpers.NewAimApiClient(os.Getenv("SERVICE_BASE_URL"))
-
 	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.runFixtures = runFixtures
-
 	expFixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
@@ -53,25 +48,30 @@ func (s *DeleteRunTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 }
 
-func (s *DeleteRunTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
-	}()
+func (s *ArchiveBatchTestSuite) Test_Ok() {
 	tests := []struct {
-		name             string
-		request          request.DeleteRunRequest
-		expectedRunCount int
+		name                 string
+		runIDs               []string
+		expectedArchiveCount int
+		archiveParam         string
 	}{
 		{
-			name:             "DeleteOneRunSucceeds",
-			request:          request.DeleteRunRequest{RunID: s.runs[4].ID},
-			expectedRunCount: 9,
+			name:                 "ArchiveBatchOfOneSucceeds",
+			runIDs:               []string{s.runs[4].ID},
+			expectedArchiveCount: 1,
+			archiveParam:         "true",
 		},
 		{
-			name:             "RowNumbersAreRecalculated",
-			request:          request.DeleteRunRequest{RunID: s.runs[1].ID},
-			expectedRunCount: 8,
+			name:                 "ArchiveBatchOfTwoSucceeds",
+			runIDs:               []string{s.runs[3].ID, s.runs[5].ID},
+			expectedArchiveCount: 3,
+			archiveParam:         "true",
+		},
+		{
+			name:                 "RestoreBatchOfTwoSucceeds",
+			runIDs:               []string{s.runs[3].ID, s.runs[5].ID},
+			expectedArchiveCount: 1,
+			archiveParam:         "false",
 		},
 	}
 	for _, tt := range tests {
@@ -79,37 +79,49 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)
 
-			var resp any
-			err = s.client.DoDeleteRequest(
-				fmt.Sprintf("/%s/%s", "runs", tt.request.RunID),
+			resp := map[string]any{}
+			err = s.client.DoPostRequest(
+				fmt.Sprintf("%s%s?archive=%s", "/runs", "/archive-batch", tt.archiveParam),
+				tt.runIDs,
 				&resp,
 			)
-			assert.Nil(s.T(), err)
+			assert.NoError(s.T(), err)
+			assert.Equal(s.T(), map[string]interface{}{"status": "OK"}, resp)
 
 			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)
-			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
+			assert.Equal(s.T(), 10, len(runs))
+			archiveCount := 0
+			for _, run := range runs {
+				if run.LifecycleStage == models.LifecycleStageDeleted {
+					archiveCount++
+				}
+			}
+			assert.Equal(s.T(), tt.expectedArchiveCount, archiveCount)
 
 			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)
 			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
-			assert.Greater(s.T(), originalMaxRowNum, newMaxRowNum)
+			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
+
 		})
 	}
 }
 
-func (s *DeleteRunTestSuite) Test_Error() {
+func (s *ArchiveBatchTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name    string
-		request request.DeleteRunRequest
+		name             string
+		request          []string
+		expectedRunCount int
 	}{
 		{
-			name:    "DeleteWithUnknownIDFails",
-			request: request.DeleteRunRequest{RunID: "some-other-id"},
+			name:             "ArchiveWithUnknownIDFails",
+			request:          []string{"some-other-id"},
+			expectedRunCount: 10,
 		},
 	}
 	for _, tt := range tests {
@@ -118,12 +130,16 @@ func (s *DeleteRunTestSuite) Test_Error() {
 			assert.NoError(s.T(), err)
 
 			var resp api.ErrorResponse
-			err = s.client.DoDeleteRequest(
-				fmt.Sprintf("/%s/%s", "runs", tt.request.RunID),
+			err = s.client.DoPostRequest(
+				fmt.Sprintf("/%s/%s?archive=true", "runs", "archive-batch"),
+				tt.request,
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp.Error(), "error renumbering runs.row_num")
+
+			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+			assert.NoError(s.T(), err)
+			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 
 			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)

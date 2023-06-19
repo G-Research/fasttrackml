@@ -16,7 +16,7 @@ import (
 // RunFixtures represents data fixtures object.
 type RunFixtures struct {
 	baseFixtures
-	runRepository        repositories.RunRepositoryProvider
+	runRepository repositories.RunRepositoryProvider
 }
 
 // NewRunFixtures creates new instance of RunFixtures.
@@ -53,7 +53,7 @@ func (f RunFixtures) CreateTestRuns(
 	ctx context.Context, exp *models.Experiment, num int,
 ) ([]*models.Run, error) {
 	var runs []*models.Run
-	// create runs for the experiment 
+	// create runs for the experiment
 	for i := 0; i < num; i++ {
 		run := &models.Run{
 			ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),

@@ -1,3 +1,4 @@
+//go:build integration
 
 package run
 
@@ -5,13 +6,14 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -21,7 +23,7 @@ type DeleteBatchTestSuite struct {
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
-	runs               []models.Run
+	runs               []*models.Run
 }
 
 func TestDeleteBatchTestSuite(t *testing.T) {
@@ -29,7 +31,7 @@ func TestDeleteBatchTestSuite(t *testing.T) {
 }
 
 func (s *DeleteBatchTestSuite) SetupTest() {
-	s.client = helpers.NewHttpClient(os.Getenv("SERVICE_BASE_URL"))
+	s.client = helpers.NewAimApiClient(os.Getenv("SERVICE_BASE_URL"))
 	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.runFixtures = runFixtures
@@ -44,40 +46,50 @@ func (s *DeleteBatchTestSuite) SetupTest() {
 	_, err = s.experimentFixtures.CreateTestExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	for i = 0; i++; i < 10 {
-		run := &models.Run{
-			ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
-			ExperimentID:   *exp.ID,
-			SourceType:     "JOB",
-			LifecycleStage: models.LifecycleStageActive,
-			Status:         models.StatusRunning,
-		}
-		run, err = s.runFixtures.CreateTestRun(context.Background(), run)
-		assert.Nil(s.T(), err)
-		s.runs = append(s.runs, run)
-	}
+	s.runs, err = s.runFixtures.CreateTestRuns(context.Background(), exp, 10)
+	assert.Nil(s.T(), err)
 }
 
 func (s *DeleteBatchTestSuite) Test_Ok() {
 	tests := []struct {
-		name   string
-		runIDs []string
+		name             string
+		runIDs           []string
+		expectedRunCount int
 	}{
 		{
-			name: "BatchOfOneSucceeds",
-			runIDs: []string{ s.runs[4] }
+			name:             "DeleteBatchOfOneSucceeds",
+			runIDs:           []string{s.runs[4].ID},
+			expectedRunCount: 9,
+		},
+		{
+			name:             "DeleteBatchOfTwoSucceeds",
+			runIDs:           []string{s.runs[3].ID, s.runs[5].ID},
+			expectedRunCount: 7,
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
+			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
+			assert.NoError(s.T(), err)
+
 			resp := map[string]any{}
-			err := s.client.DoPostRequest(
-				fmt.Sprintf("%s%s", aim.RunsRoutePrefix, mlflow.RunsDeleteBatchRoute),
-				tt.request,
+			err = s.client.DoPostRequest(
+				fmt.Sprintf("%s%s", "/runs", "/delete-batch"),
+				tt.runIDs,
 				&resp,
 			)
-			assert.Nil(s.T(), err)
-			assert.Empty(s.T(), resp)
+			assert.NoError(s.T(), err)
+			assert.Equal(s.T(), map[string]interface{}{"status": "OK"}, resp)
+
+			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+			assert.NoError(s.T(), err)
+			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
+
+			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
+			assert.NoError(s.T(), err)
+			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
+			assert.Greater(s.T(), originalMaxRowNum, newMaxRowNum)
+
 		})
 	}
 }
@@ -85,48 +97,41 @@ func (s *DeleteBatchTestSuite) Test_Ok() {
 func (s *DeleteBatchTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
-
-	var testData = []struct {
-		name    string
-		error   *api.ErrorResponse
-		request *request.DeleteBatchRequest
+	tests := []struct {
+		name             string
+		request          []string
+		expectedRunCount int
 	}{
 		{
-			name:    "MissingRunIDFails",
-			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
-			request: &request.DeleteBatchRequest{},
-		},
-		{
-			name:  "DuplicateKeyDifferentValueFails",
-			error: api.NewInternalError("duplicate key"),
-			request: &request.DeleteBatchRequest{
-				RunID: s.run.ID,
-				Params: []request.ParamPartialRequest{
-					{
-						Key:   "key1",
-						Value: "value1",
-					},
-					{
-						Key:   "key1",
-						Value: "value2",
-					},
-				},
-			},
+			name:             "DeleteWithUnknownIDFails",
+			request:          []string{"some-other-id"},
+			expectedRunCount: 10,
 		},
 	}
+	for _, tt := range tests {
+		s.T().Run(tt.name, func(T *testing.T) {
+			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
+			assert.NoError(s.T(), err)
 
-	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
-			resp := api.ErrorResponse{}
-			err := s.client.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteBatchRoute),
+			var resp api.ErrorResponse
+			err = s.client.DoPostRequest(
+				fmt.Sprintf("/%s/%s", "runs", "delete-batch"),
 				tt.request,
 				&resp,
 			)
-			assert.NoError(t, err)
-			assert.Equal(s.T(), tt.error.ErrorCode, resp.ErrorCode)
-			assert.Contains(s.T(), resp.Error(), tt.error.Message)
+			assert.Nil(s.T(), err)
+			assert.Contains(s.T(), resp.Error(), "error renumbering runs.row_num")
+
+			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+			assert.NoError(s.T(), err)
+			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
+
+			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
+			assert.NoError(s.T(), err)
+			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
+			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
 		})
 	}
 }

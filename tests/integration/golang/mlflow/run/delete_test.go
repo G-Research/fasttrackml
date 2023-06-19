@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
@@ -50,7 +50,7 @@ func (s *DeleteRunTestSuite) SetupTest() {
 	_, err = s.experimentFixtures.CreateTestExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	// create run for the experiment 
+	// create run for the experiment
 	runs, err = s.runFixtures.CreateTestRuns(context.Background(), exp, 1)
 	assert.Nil(s.T(), err)
 	s.run = runs[0]
@@ -66,8 +66,8 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 		request request.DeleteRunRequest
 	}{
 		{
-			name: "DeleteRunSucceedsWithExistingRunID",
-			request: request.DeleteRunRequest{ RunID: s.run.ID },
+			name:    "DeleteRunSucceedsWithExistingRunID",
+			request: request.DeleteRunRequest{RunID: s.run.ID},
 		},
 	}
 	for _, tt := range tests {
@@ -82,7 +82,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			assert.Empty(s.T(), resp)
 
 			archivedRuns, err := s.runFixtures.GetTestRuns(context.Background(), s.run.ExperimentID)
-			
+
 			assert.NoError(s.T(), err)
 			assert.Equal(s.T(), s.run.ID, archivedRuns[0].ID)
 			assert.Equal(s.T(), models.LifecycleStageDeleted, archivedRuns[0].LifecycleStage)
@@ -100,8 +100,8 @@ func (s *DeleteRunTestSuite) Test_Error() {
 		request request.DeleteRunRequest
 	}{
 		{
-			name: "DeleteRunFailsWithNonExistingRunID",
-			request: request.DeleteRunRequest{ RunID: "not-an-id" },
+			name:    "DeleteRunFailsWithNonExistingRunID",
+			request: request.DeleteRunRequest{RunID: "not-an-id"},
 		},
 	}
 	for _, tt := range tests {
@@ -115,8 +115,6 @@ func (s *DeleteRunTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "RESOURCE_DOES_NOT_EXIST: unable to find run 'not-an-id': error getting `run` entity by id: not-an-id: record not found", resp.Error())
 
-			
 		})
 	}
 }
-

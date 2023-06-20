@@ -18,7 +18,7 @@ import (
 type RunRepositoryProvider interface {
 	BaseRepositoryProvider
 	// List returns a slice of Run belonging to the experiement
-	List(ctx context.Context, expID int32) ([]models.Run, error)
+	List(ctx context.Context, experimentID int32) ([]models.Run, error)
 	// GetByID returns models.Run entity bt its ID.
 	GetByID(ctx context.Context, id string) (*models.Run, error)
 	// GetByIDAndLifecycleStage returns models.Run entity by its ID and Lifecycle Stage
@@ -64,8 +64,11 @@ func NewRunRepository(db *gorm.DB) *RunRepository {
 // List returns models.Run entities by experiment id.
 func (r RunRepository) List(ctx context.Context, experimentID int32) ([]models.Run, error) {
 	runs := []models.Run{}
-	if err := r.db.WithContext(ctx).Where("experiment_id = ?", experimentID).Order("start_time desc").Find(&runs).Error; err != nil {
-		return []models.Run{}, eris.Wrapf(err, "error getting `run` entities by experiment id: %v", experimentID)
+	if err := r.db.WithContext(ctx).
+		Where("experiment_id = ?", experimentID).
+		Order("start_time desc").
+		Find(&runs).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting `run` entities by experiment id: %v", experimentID)
 	}
 	return runs, nil
 }

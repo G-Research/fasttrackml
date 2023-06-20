@@ -1,3 +1,5 @@
+//go:build integration
+
 package run
 
 import (
@@ -10,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -129,13 +130,14 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)
 
-			var resp api.ErrorResponse
+			var resp map[string]any
 			err = s.client.DoPostRequest(
 				"/runs/archive-batch?archive=true",
 				tt.request,
 				&resp,
 			)
 			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), map[string]any{"status": "OK"}, resp)
 
 			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)

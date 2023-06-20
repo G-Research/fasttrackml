@@ -1,0 +1,15 @@
+.features {
+    row-gap: 2rem;
+    padding-bottom: 4rem;
+}
+
+@media screen and (max-width: 996px) {
+    .features {
+        padding-bottom: 0;
+    }
+}
+
+.featureSvg {
+    height: 200px;
+    width: 200px;
+}

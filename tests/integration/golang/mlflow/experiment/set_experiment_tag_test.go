@@ -32,7 +32,7 @@ func TestSetExperimentTagTestSuite(t *testing.T) {
 }
 
 func (s *SetExperimentTagTestSuite) SetupTest() {
-	s.client = helpers.NewHttpClient(os.Getenv("SERVICE_BASE_URL"))
+	s.client = helpers.NewMlflowApiClient(os.Getenv("SERVICE_BASE_URL"))
 	fixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.fixtures = fixtures

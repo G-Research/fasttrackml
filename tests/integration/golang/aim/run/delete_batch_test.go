@@ -105,7 +105,7 @@ func (s *DeleteBatchTestSuite) Test_Error() {
 	}{
 		{
 			name:             "DeleteWithUnknownIDFails",
-			request:          []string{"some-other-id"},
+			request:          []string{s.runs[1].ID, "some-other-id"},
 			expectedRunCount: 10,
 		},
 	}
@@ -121,7 +121,7 @@ func (s *DeleteBatchTestSuite) Test_Error() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp.Error(), "error renumbering runs.row_num")
+			assert.Contains(s.T(), resp.Error(), "non-existent run id")
 
 			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)

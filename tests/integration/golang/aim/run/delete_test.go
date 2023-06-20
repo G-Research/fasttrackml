@@ -123,7 +123,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp.Error(), "error renumbering runs.row_num")
+			assert.Contains(s.T(), resp.Error(), "non-existent run id provided")
 
 			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)

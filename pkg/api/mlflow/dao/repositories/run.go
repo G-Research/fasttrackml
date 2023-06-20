@@ -156,21 +156,7 @@ func (r RunRepository) ArchiveBatch(ctx context.Context, ids []string) error {
 
 // Delete removes the existing models.Run from the db.
 func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
-	if err := r.db.Transaction(func(tx *gorm.DB) error {
-		// delete the row
-		if err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "row_num"}}}).Delete(&run).Error; err != nil {
-			return eris.Wrapf(err, "error deleting run with id: %s", run.ID)
-		}
-		// renumber the remainder
-		if err := r.renumberRows(tx, run.RowNum); err != nil {
-			return eris.Wrapf(err, "error renumbering runs.row_num")
-		}
-		return nil
-	}); err != nil {
-		return eris.Wrapf(err, "error renumbering runs.row_num")
-	}
-
-	return nil
+	return r.DeleteBatch(ctx, []string{run.ID})
 }
 
 // DeleteBatch removes existing models.Run from the db.
@@ -178,8 +164,14 @@ func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		// delete the rows
 		runs := []models.Run{}
-		if err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "row_num"}}}).Where("run_uuid IN ?", ids).Delete(&runs).Error; err != nil {
-			return eris.Wrapf(err, "error deleting existing runs with ids: %s", ids)
+		tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "row_num"}}}).Where("run_uuid IN ?", ids).Delete(&runs)
+		if tx.Error != nil {
+			return eris.Wrapf(tx.Error, "error deleting existing runs with ids: %s", ids)
+		}
+
+		// verify deletion
+		if len(runs) != len(ids) {
+			return eris.Errorf("non-existent run id provided")
 		}
 
 		// renumber the remainder
@@ -262,13 +254,10 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 // getMinRowNum will find the lowest row_num for the slice of runs
 // or 0 for an empty slice
 func getMinRowNum(runs []models.Run) models.RowNum {
-	if len(runs) == 0 {
-		return models.RowNum(0)
-	}
 	// get the lowest row_num in the slice
-	minRowNum := runs[0].RowNum
+	minRowNum := models.RowNum(0)
 	for _, run := range runs {
-		if run.RowNum < minRowNum {
+		if minRowNum == models.RowNum(0) || run.RowNum < minRowNum {
 			minRowNum = run.RowNum
 		}
 	}

@@ -102,7 +102,7 @@ func (r RunRepository) GetByIDAndLifecycleStage(
 
 // Create creates new models.Run entity.
 func (r RunRepository) Create(ctx context.Context, run *models.Run) error {
-	//TODO:DSuhinin - purpose of lock here?
+	// Lock need to calculate row_num
 	if err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if tx.Dialector.Name() == "postgres" {
 			if err := tx.Exec("LOCK TABLE runs").Error; err != nil {
@@ -269,6 +269,13 @@ func (r RunRepository) renumberRows(tx *gorm.DB, startWith models.RowNum) error 
 	if startWith <= models.RowNum(0) {
 		return eris.Errorf("attempting to renumber with 0 or less row number value")
 	}
+
+	if tx.Dialector.Name() == "postgres" {
+		if err := tx.Exec("LOCK TABLE runs").Error; err != nil {
+			return eris.Wrap(err, "unable to lock table")
+		}
+	}
+
 	if err := tx.Exec(
 		`UPDATE runs
 	         SET row_num = rows.new_row_num

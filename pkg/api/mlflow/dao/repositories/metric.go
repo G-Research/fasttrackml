@@ -75,7 +75,7 @@ func (r MetricRepository) CreateBatch(
 	latestMetrics := make(map[string]models.LatestMetric)
 	for n, metric := range metrics {
 		metrics[n].Iter = lastIters[metric.Key] + 1
-		lastIters[metric.Key] = metric.Iter
+		lastIters[metric.Key] = metrics[n].Iter
 		lm, ok := latestMetrics[metric.Key]
 		if !ok ||
 			metric.Step > lm.Step ||
@@ -93,7 +93,9 @@ func (r MetricRepository) CreateBatch(
 		}
 	}
 
-	if err := r.db.WithContext(ctx).Clauses(clause.OnConflict{DoNothing: true}).CreateInBatches(&metrics, batchSize).Error; err != nil {
+	if err := r.db.WithContext(ctx).Clauses(
+		clause.OnConflict{DoNothing: true},
+	).CreateInBatches(&metrics, batchSize).Error; err != nil {
 		return eris.Wrapf(err, "error creating metrics for run: %s", run.ID)
 	}
 

@@ -1,0 +1,21 @@
+div[class^='announcementBar'], div[class*='announcementBar'], div[class^='announcementBarContent'], div[class*='announcementBarContent'] {
+    background-color: var(--ifm-color-warning-lightest);
+    color: var(--ifm-color-gray-900);
+    border-bottom: none;
+}
+
+
+button[class^='announcementBarClose'], button[class*='announcementBarClose'] {
+    color: var(--ifm-color-gray-900);
+}
+
+
+div[class^='announcementBarContent'] a, div[class*='announcementBarContent'] a {
+    color: var(--ifm-link-color);
+    text-decoration: var(--ifm-link-decoration);
+}
+
+div[class^='announcementBarContent'] a:hover, div[class*='announcementBarContent'] a:hover {
+    color: var(--ifm-link-hover-color);
+    text-decoration: var(--ifm-link-hover-decoration);
+}

@@ -1,0 +1,59 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+
+/* Hero Title */
+.hero__title {
+    background: -webkit-linear-gradient(0deg, var(--ifm-color-primary-lightest) 0%, var(--ifm-color-primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Hero Title */
+
+/* Section */
+.section__ref::before {
+    content: '';
+    display: block;
+    height: 4rem;
+    margin: -2rem 0 0;
+}
+
+.section__ref {
+    text-decoration: underline;
+    text-underline-offset: 0.75rem;
+    text-decoration-color: var(--ifm-color-primary);
+    text-decoration-style: wavy;
+    font-size: 2.5rem;
+    padding-bottom: 1.5rem;
+}
+
+/* Section */
+
+/* Forms */
+label {
+    text-align: start;
+    display: block;
+}
+
+input, textarea {
+    width: 100%;
+    background-color: transparent;
+    border: var(--ifm-button-border-width) solid var(--ifm-button-border-color);
+    border-radius: var(--ifm-button-border-radius);
+    font-size: calc(0.875rem * var(--ifm-button-size-multiplier));
+    line-height: 1.5;
+    padding: calc(var(--ifm-button-padding-vertical) * var(--ifm-button-size-multiplier)) calc(var(--ifm-button-padding-horizontal) * var(--ifm-button-size-multiplier));
+}
+
+/* Forms */
+
+/* Navbar */
+.navbar__logo img {
+    object-fit: cover;
+}
+
+/* Navbar */

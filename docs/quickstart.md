@@ -23,7 +23,7 @@ Verify that you can see the UI by navigating to http://localhost:5000/.
 
 ```bash
 # Install mflow and poetry
-cd docs/dev
+cd docs/example
 poetry install
 # MLFlow will not be installed by poetry, so we need to install it manually
 poetry run pip install mlflow boto3
@@ -45,11 +45,11 @@ From here you can check out the metrics and run information to see more details 
 
 From Kaggle, download https://www.kaggle.com/datasets/kyr7plus/emg-4?resource=download
 
-Extract the zip file and move the files to `docs/dev/data`.
+Extract the zip file and move the files to `docs/example/data`.
 
 ```bash
 # Install mflow and poetry
-cd docs/dev
+cd docs/example
 poetry install
 # MLFlow will not be installed by poetry, so we need to install it manually
 poetry run pip install mlflow boto3

@@ -184,8 +184,9 @@ func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
 		}
 
 		// verify deletion
+		// NOTE: tx.RowsAffected does not provide correct number of deleted, using the returning slice instead
 		if len(runs) != len(ids) {
-			return eris.Errorf("non-existent run id provided")
+			return eris.Errorf("count of deleted runs does not match length of ids input (invalid run ID?)")
 		}
 
 		// renumber the remainder

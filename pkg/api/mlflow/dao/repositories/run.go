@@ -176,8 +176,7 @@ func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
 // DeleteBatch removes existing models.Run from the db.
 func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
-		// delete the rows
-		runs := []models.Run{}
+		runs := make([]models.Run, 0, len(ids))
 		if err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "row_num"}}}).
 			Where("run_uuid IN ?", ids).
 			Delete(&runs).Error; err != nil {

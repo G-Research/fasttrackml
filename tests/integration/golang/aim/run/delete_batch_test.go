@@ -121,7 +121,7 @@ func (s *DeleteBatchTestSuite) Test_Error() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp.Error(), "non-existent run id")
+			assert.Contains(s.T(), resp.Error(), "count of deleted runs does not match length of ids input")
 
 			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)

@@ -123,7 +123,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp.Error(), "non-existent run id provided")
+			assert.Contains(s.T(), resp.Error(), "count of deleted runs does not match length of ids input")
 
 			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)

@@ -59,7 +59,7 @@ func NewRunRepository(db *gorm.DB) *RunRepository {
 	}
 }
 
-// GetByID returns models.Run entity bt its ID.
+// GetByID returns models.Run entity by its ID.
 func (r RunRepository) GetByID(ctx context.Context, id string) (*models.Run, error) {
 	run := models.Run{ID: id}
 	if err := r.db.WithContext(

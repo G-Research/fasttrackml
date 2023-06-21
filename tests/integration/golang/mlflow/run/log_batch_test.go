@@ -35,7 +35,7 @@ func TestLogBatchTestSuite(t *testing.T) {
 }
 
 func (s *LogBatchTestSuite) SetupTest() {
-	s.client = helpers.NewHttpClient(os.Getenv("SERVICE_BASE_URL"))
+	s.client = helpers.NewMlflowApiClient(os.Getenv("SERVICE_BASE_URL"))
 	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.runFixtures = runFixtures

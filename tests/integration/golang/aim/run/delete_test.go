@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -25,7 +24,7 @@ type DeleteRunTestSuite struct {
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
-	run                *models.Run
+	runs               []*models.Run
 }
 
 func TestDeleteRunTestSuite(t *testing.T) {
@@ -33,15 +32,16 @@ func TestDeleteRunTestSuite(t *testing.T) {
 }
 
 func (s *DeleteRunTestSuite) SetupTest() {
-	s.client = helpers.NewMlflowApiClient(os.Getenv("SERVICE_BASE_URL"))
+	s.client = helpers.NewAimApiClient(os.Getenv("SERVICE_BASE_URL"))
+
 	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.runFixtures = runFixtures
+
 	expFixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
 
-	// create experiment
 	exp := &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
@@ -49,10 +49,8 @@ func (s *DeleteRunTestSuite) SetupTest() {
 	_, err = s.experimentFixtures.CreateTestExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	// create run for the experiment
-	runs, err := s.runFixtures.CreateTestRuns(context.Background(), exp, 1)
+	s.runs, err = s.runFixtures.CreateTestRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
-	s.run = runs[0]
 }
 
 func (s *DeleteRunTestSuite) Test_Ok() {
@@ -61,30 +59,41 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name    string
-		request request.DeleteRunRequest
+		name             string
+		request          request.DeleteRunRequest
+		expectedRunCount int
 	}{
 		{
-			name:    "DeleteRunSucceedsWithExistingRunID",
-			request: request.DeleteRunRequest{RunID: s.run.ID},
+			name:             "DeleteOneRunSucceeds",
+			request:          request.DeleteRunRequest{RunID: s.runs[4].ID},
+			expectedRunCount: 9,
+		},
+		{
+			name:             "RowNumbersAreRecalculated",
+			request:          request.DeleteRunRequest{RunID: s.runs[1].ID},
+			expectedRunCount: 8,
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			resp := map[string]any{}
-			err := s.client.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute),
-				tt.request,
+			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
+			assert.NoError(s.T(), err)
+
+			var resp any
+			err = s.client.DoDeleteRequest(
+				fmt.Sprintf("/runs/%s", tt.request.RunID),
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Empty(s.T(), resp)
 
-			archivedRuns, err := s.runFixtures.GetTestRuns(context.Background(), s.run.ExperimentID)
-
+			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.NoError(s.T(), err)
-			assert.Equal(s.T(), s.run.ID, archivedRuns[0].ID)
-			assert.Equal(s.T(), models.LifecycleStageDeleted, archivedRuns[0].LifecycleStage)
+			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
+
+			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
+			assert.NoError(s.T(), err)
+			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
+			assert.Greater(s.T(), originalMaxRowNum, newMaxRowNum)
 		})
 	}
 }
@@ -99,21 +108,27 @@ func (s *DeleteRunTestSuite) Test_Error() {
 		request request.DeleteRunRequest
 	}{
 		{
-			name:    "DeleteRunFailsWithNonExistingRunID",
-			request: request.DeleteRunRequest{RunID: "not-an-id"},
+			name:    "DeleteWithUnknownIDFails",
+			request: request.DeleteRunRequest{RunID: "some-other-id"},
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			resp := api.ErrorResponse{}
-			err := s.client.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute),
-				tt.request,
+			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
+			assert.NoError(s.T(), err)
+
+			var resp api.ErrorResponse
+			err = s.client.DoDeleteRequest(
+				fmt.Sprintf("/runs/%s", tt.request.RunID),
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "RESOURCE_DOES_NOT_EXIST: unable to find run 'not-an-id': error getting `run` entity by id: not-an-id: record not found", resp.Error())
+			assert.Contains(s.T(), resp.Error(), "count of deleted runs does not match length of ids input")
 
+			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
+			assert.NoError(s.T(), err)
+			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
+			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
 		})
 	}
 }

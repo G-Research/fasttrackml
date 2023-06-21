@@ -1,10 +1,7 @@
 name: Build and Deploy website to Pages
 
 on:
-  push: # Runs on pushes targeting the default branch
-    branches:
-      - "main"
-      - "dependabot/**"
+  push: # Runs on pushes targeting any branch
     paths:
       - 'website/**'
       - 'docs/**'

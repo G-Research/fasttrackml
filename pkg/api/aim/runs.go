@@ -514,6 +514,11 @@ func SearchMetrics(c *fiber.Ctx) error {
 		q.Steps = 50
 	}
 
+	// require a metric.name
+	if !strings.Contains(q.Query, "metric.name") {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "No metrics are selected")
+	}
+
 	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")

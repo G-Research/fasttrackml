@@ -16,8 +16,8 @@ permissions: # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHu
   pages: write
   id-token: write
 
-concurrency: # Allow one concurrent deployment
-  group: "pages"
+concurrency: # Allow one concurrent run by branch
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 defaults: # Default to bash

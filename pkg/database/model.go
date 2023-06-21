@@ -60,7 +60,7 @@ type Run struct {
 	SourceVersion  string         `gorm:"type:varchar(50)"`
 	LifecycleStage LifecycleStage `gorm:"type:varchar(20);check:lifecycle_stage IN ('active', 'deleted')"`
 	ArtifactURI    string         `gorm:"type:varchar(200)"`
-	ExperimentID   int32          `gorm:"type:integer;not null"`
+	ExperimentID   int32
 	Experiment     Experiment
 	DeletedTime    sql.NullInt64  `gorm:"type:bigint"`
 	RowNum         RowNum         `gorm:"index"`

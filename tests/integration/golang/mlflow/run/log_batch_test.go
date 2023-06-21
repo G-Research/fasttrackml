@@ -23,10 +23,11 @@ import (
 
 type LogBatchTestSuite struct {
 	suite.Suite
+	run                *models.Run
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
+	metricFixtures     *fixtures.MetricFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
-	run                *models.Run
 }
 
 func TestLogBatchTestSuite(t *testing.T) {
@@ -38,6 +39,9 @@ func (s *LogBatchTestSuite) SetupTest() {
 	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.runFixtures = runFixtures
+	metricFixtures, err := fixtures.NewMetricFixtures(os.Getenv("DATABASE_DSN"))
+	assert.Nil(s.T(), err)
+	s.metricFixtures = metricFixtures
 	expFixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
@@ -61,13 +65,45 @@ func (s *LogBatchTestSuite) SetupTest() {
 	s.run = run
 }
 
-func (s *LogBatchTestSuite) Test_Ok() {
+func (s *LogBatchTestSuite) TestTags_Ok() {
 	tests := []struct {
 		name    string
 		request *request.LogBatchRequest
 	}{
 		{
-			name: "BatchOfOneSucceeds",
+			name: "LogOne",
+			request: &request.LogBatchRequest{
+				RunID: s.run.ID,
+				Tags: []request.TagPartialRequest{
+					{
+						Key:   "key1",
+						Value: "value1",
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		s.T().Run(tt.name, func(T *testing.T) {
+			resp := map[string]any{}
+			err := s.client.DoPostRequest(
+				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+				tt.request,
+				&resp,
+			)
+			assert.Nil(s.T(), err)
+			assert.Empty(s.T(), resp)
+		})
+	}
+}
+
+func (s *LogBatchTestSuite) TestParams_Ok() {
+	tests := []struct {
+		name    string
+		request *request.LogBatchRequest
+	}{
+		{
+			name: "LogOne",
 			request: &request.LogBatchRequest{
 				RunID: s.run.ID,
 				Params: []request.ParamPartialRequest{
@@ -79,7 +115,7 @@ func (s *LogBatchTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "DuplicateKeySameValueSucceeds",
+			name: "LogDuplicate",
 			request: &request.LogBatchRequest{
 				RunID: s.run.ID,
 				Params: []request.ParamPartialRequest{
@@ -105,6 +141,123 @@ func (s *LogBatchTestSuite) Test_Ok() {
 			)
 			assert.Nil(s.T(), err)
 			assert.Empty(s.T(), resp)
+		})
+	}
+}
+
+func (s *LogBatchTestSuite) TestMetrics_Ok() {
+	tests := []struct {
+		name                  string
+		request               *request.LogBatchRequest
+		latestMetricIteration map[string]int64
+	}{
+		{
+			name: "LogOne",
+			request: &request.LogBatchRequest{
+				RunID: s.run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key1",
+						Value:     1.0,
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key1": 1,
+			},
+		},
+		{
+			name: "LogSeveral",
+			request: &request.LogBatchRequest{
+				RunID: s.run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key1",
+						Value:     1.1,
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+					{
+						Key:       "key1",
+						Value:     1.1,
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+					{
+						Key:       "key2",
+						Value:     1.1,
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+					{
+						Key:       "key2",
+						Value:     1.2,
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+					{
+						Key:       "key2",
+						Value:     1.3,
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+					{
+						Key:       "key2",
+						Value:     1.4,
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key1": 3,
+				"key2": 4,
+			},
+		},
+		{
+			name: "LogDuplicate",
+			request: &request.LogBatchRequest{
+				RunID: s.run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key3",
+						Value:     1.0,
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+					{
+						Key:       "key3",
+						Value:     1.0,
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key3": 2,
+			},
+		},
+	}
+	for _, tt := range tests {
+		s.T().Run(tt.name, func(T *testing.T) {
+			// do actual call to API.
+			resp := map[string]any{}
+			err := s.client.DoPostRequest(
+				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+				tt.request,
+				&resp,
+			)
+			assert.Nil(s.T(), err)
+			assert.Empty(s.T(), resp)
+
+			// make sure that `iter` and `last_iter` for each metric has been updated correctly.
+			for key, iteration := range tt.latestMetricIteration {
+				lastMetric, err := s.metricFixtures.GetLatestMetricByKey(context.Background(), key)
+				assert.Nil(s.T(), err)
+				assert.Equal(s.T(), iteration, lastMetric.LastIter)
+			}
 		})
 	}
 }

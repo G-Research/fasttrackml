@@ -3,7 +3,8 @@ name: Deploy website to Pages
 on:
   push: # Runs on pushes targeting the default branch
     branches:
-      - main
+      - "main"
+      - "dependabot/**"
     paths:
       - 'website/**'
       - 'docs/**'
@@ -53,6 +54,7 @@ jobs:
         working-directory: ./website
         run: yarn run build
       - name: Upload artifact
+        if: github.ref == 'refs/heads/main' # run only if main branch
         uses: actions/upload-pages-artifact@v1
         with:
           path: ./website/build
@@ -63,6 +65,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    if: github.ref == 'refs/heads/main' # run only if main branch
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

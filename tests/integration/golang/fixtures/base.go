@@ -3,7 +3,6 @@ package fixtures
 import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
@@ -15,7 +14,7 @@ type baseFixtures struct {
 
 // UnloadFixtures cleans database from the old data.
 func (f baseFixtures) UnloadFixtures() error {
-	for _, table := range []schema.Tabler{
+	for _, table := range []interface{}{
 		models.Tag{},
 		models.Param{},
 		models.LatestMetric{},
@@ -25,7 +24,7 @@ func (f baseFixtures) UnloadFixtures() error {
 		models.Experiment{},
 	} {
 		if err := f.db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(table).Error; err != nil {
-			return errors.Wrapf(err, "error deleting data from %s table", table.TableName())
+			return errors.Wrap(err, "error deleting data")
 		}
 	}
 	return nil

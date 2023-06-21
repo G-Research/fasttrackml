@@ -52,7 +52,13 @@ func (rn RowNum) GormDataType() string {
 
 // GormValue implements Gorm interface for custom data types.
 func (rn RowNum) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
+	if rn == 0 {
+		return clause.Expr{
+			SQL: "(SELECT COALESCE(MAX(row_num), -1) FROM runs) + 1",
+		}
+	}
 	return clause.Expr{
-		SQL: "(SELECT COALESCE(MAX(row_num), -1) FROM runs) + 1",
+		SQL:  "?",
+		Vars: []interface{}{int64(rn)},
 	}
 }

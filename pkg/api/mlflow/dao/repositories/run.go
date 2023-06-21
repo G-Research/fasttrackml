@@ -102,7 +102,7 @@ func (r RunRepository) GetByIDAndLifecycleStage(
 
 // Create creates new models.Run entity.
 func (r RunRepository) Create(ctx context.Context, run *models.Run) error {
-	//TODO:DSuhinin - purpose of lock here?
+	// Lock need to calculate row_num
 	if err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if tx.Dialector.Name() == "postgres" {
 			if err := tx.Exec("LOCK TABLE runs").Error; err != nil {
@@ -156,18 +156,32 @@ func (r RunRepository) ArchiveBatch(ctx context.Context, ids []string) error {
 
 // Delete removes the existing models.Run from the db.
 func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
-	if err := r.db.WithContext(ctx).Model(&run).Delete(run).Error; err != nil {
-		return eris.Wrapf(err, "error deleting run with id: %s", run.ID)
-	}
-
-	return nil
+	return r.DeleteBatch(ctx, []string{run.ID})
 }
 
 // DeleteBatch removes existing models.Run from the db.
 func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
-	run := models.Run{}
-	if err := r.db.WithContext(ctx).Model(&run).Where("run_uuid IN ?", ids).Delete(run).Error; err != nil {
-		return eris.Wrapf(err, "error deleting existing runs with ids: %s", ids)
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		runs := make([]models.Run, 0, len(ids))
+		if err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "row_num"}}}).
+			Where("run_uuid IN ?", ids).
+			Delete(&runs).Error; err != nil {
+			return eris.Wrapf(err, "error deleting existing runs with ids: %s", ids)
+		}
+
+		// verify deletion
+		// NOTE: tx.RowsAffected does not provide correct number of deleted, using the returning slice instead
+		if len(runs) != len(ids) {
+			return eris.Errorf("count of deleted runs does not match length of ids input (invalid run ID?)")
+		}
+
+		// renumber the remainder
+		if err := r.renumberRows(tx, getMinRowNum(runs)); err != nil {
+			return eris.Wrapf(err, "error renumbering runs.row_num")
+		}
+		return nil
+	}); err != nil {
+		return eris.Wrapf(err, "error deleting runs")
 	}
 
 	return nil
@@ -234,6 +248,46 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 		return nil
 	}); err != nil {
 		return err
+	}
+	return nil
+}
+
+// getMinRowNum will find the lowest row_num for the slice of runs
+// or 0 for an empty slice
+func getMinRowNum(runs []models.Run) models.RowNum {
+	var minRowNum models.RowNum
+	for _, run := range runs {
+		if minRowNum == models.RowNum(0) || run.RowNum < minRowNum {
+			minRowNum = run.RowNum
+		}
+	}
+	return minRowNum
+}
+
+// renumberRows will update the runs.row_num field with the correct ordinal
+func (r RunRepository) renumberRows(tx *gorm.DB, startWith models.RowNum) error {
+	if startWith <= models.RowNum(0) {
+		return eris.Errorf("attempting to renumber with 0 or less row number value")
+	}
+
+	if tx.Dialector.Name() == "postgres" {
+		if err := tx.Exec("LOCK TABLE runs").Error; err != nil {
+			return eris.Wrap(err, "unable to lock table")
+		}
+	}
+
+	if err := tx.Exec(
+		`UPDATE runs
+	         SET row_num = rows.new_row_num
+                 FROM (
+                   SELECT run_uuid, ROW_NUMBER() OVER (ORDER BY start_time) + ? - 1 as new_row_num
+                   FROM runs
+                   WHERE runs.row_num >= ?
+                 ) as rows
+	         WHERE runs.run_uuid = rows.run_uuid`,
+		int64(startWith),
+		int64(startWith)).Error; err != nil {
+		return eris.Wrap(err, "error updating runs.row_num")
 	}
 	return nil
 }

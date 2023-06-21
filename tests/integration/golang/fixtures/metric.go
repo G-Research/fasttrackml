@@ -36,15 +36,6 @@ func NewMetricFixtures(databaseDSN string) (*MetricFixtures, error) {
 	}, nil
 }
 
-// GetMetricByKey returns metric by provided key.
-func (f MetricFixtures) GetMetricByKey(ctx context.Context, key string) (*models.Metric, error) {
-	metric, err := f.metricRepository.GetMetricByKey(ctx, key)
-	if err != nil {
-		return nil, eris.Wrap(err, "error getting metric")
-	}
-	return metric, nil
-}
-
 // GetLatestMetricByKey returns the latest metric by provided key.
 func (f MetricFixtures) GetLatestMetricByKey(ctx context.Context, key string) (*models.LatestMetric, error) {
 	metric, err := f.metricRepository.GetLatestMetricByKey(ctx, key)

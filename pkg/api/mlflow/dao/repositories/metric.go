@@ -23,8 +23,6 @@ type MetricRepositoryProvider interface {
 	BaseRepositoryProvider
 	// CreateBatch creates []models.Metric entities in batch.
 	CreateBatch(ctx context.Context, run *models.Run, batchSize int, params []models.Metric) error
-	// GetMetricByKey returns metric by provided key.
-	GetMetricByKey(ctx context.Context, key string) (*models.Metric, error)
 	// GetMetricHistories returns metric histories by request parameters.
 	GetMetricHistories(
 		ctx context.Context,
@@ -133,17 +131,6 @@ func (r MetricRepository) CreateBatch(
 	}
 
 	return nil
-}
-
-// GetMetricByKey returns metric by provided key.
-func (r MetricRepository) GetMetricByKey(ctx context.Context, key string) (*models.Metric, error) {
-	var metric models.Metric
-	if err := r.db.WithContext(ctx).Where(
-		"key = ?", key,
-	).First(&metric).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting metric by key: %v", key)
-	}
-	return &metric, nil
 }
 
 // GetMetricHistories returns metric histories by request parameters.

@@ -6,3 +6,8 @@ type Tag struct {
 	Value string `gorm:"type:varchar(5000)"`
 	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
+
+// TableName returns actual table name.
+func (p Tag) TableName() string {
+	return "tags"
+}

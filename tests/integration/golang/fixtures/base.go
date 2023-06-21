@@ -16,7 +16,10 @@ type baseFixtures struct {
 // UnloadFixtures cleans database from the old data.
 func (f baseFixtures) UnloadFixtures() error {
 	for _, table := range []schema.Tabler{
+		models.Tag{},
 		models.Param{},
+		models.LatestMetric{},
+		models.Metric{},
 		models.Run{},
 		models.ExperimentTag{},
 		models.Experiment{},

@@ -11,6 +11,11 @@ type Metric struct {
 	Iter      int64   `gorm:"index"`
 }
 
+// TableName returns actual table name.
+func (p Metric) TableName() string {
+	return "metrics"
+}
+
 // LatestMetric represents model to work with `last_metrics` table.
 type LatestMetric struct {
 	Key       string  `gorm:"type:varchar(250);not null;primaryKey"`
@@ -20,4 +25,9 @@ type LatestMetric struct {
 	IsNan     bool   `gorm:"not null"`
 	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
 	LastIter  int64
+}
+
+// TableName returns actual table name.
+func (p LatestMetric) TableName() string {
+	return "latest_metrics"
 }

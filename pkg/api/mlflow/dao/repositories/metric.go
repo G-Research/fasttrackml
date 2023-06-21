@@ -23,11 +23,15 @@ type MetricRepositoryProvider interface {
 	BaseRepositoryProvider
 	// CreateBatch creates []models.Metric entities in batch.
 	CreateBatch(ctx context.Context, run *models.Run, batchSize int, params []models.Metric) error
+	// GetMetricByKey returns metric by provided key.
+	GetMetricByKey(ctx context.Context, key string) (*models.Metric, error)
 	// GetMetricHistories returns metric histories by request parameters.
 	GetMetricHistories(
 		ctx context.Context,
 		experimentIDs []string, runIDs []string, metricKeys []string, viewType request.ViewType, limit int32,
 	) (*sql.Rows, func(*sql.Rows, interface{}) error, error)
+	// GetLatestMetricByKey returns the latest metric by provided key.
+	GetLatestMetricByKey(ctx context.Context, key string) (*models.LatestMetric, error)
 	// GetMetricHistoryBulk returns metrics history bulk.
 	GetMetricHistoryBulk(ctx context.Context, runIDs []string, key string, limit int) ([]models.Metric, error)
 	// GetMetricHistoryByRunIDAndKey returns metrics history by RunID and Key.
@@ -131,6 +135,17 @@ func (r MetricRepository) CreateBatch(
 	return nil
 }
 
+// GetMetricByKey returns metric by provided key.
+func (r MetricRepository) GetMetricByKey(ctx context.Context, key string) (*models.Metric, error) {
+	var metric models.Metric
+	if err := r.db.WithContext(ctx).Where(
+		"key = ?", key,
+	).First(&metric).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting metric by key: %v", key)
+	}
+	return &metric, nil
+}
+
 // GetMetricHistories returns metric histories by request parameters.
 // TODO think about to use interface instead of underlying type for -> func(*sql.Rows, interface{})
 func (r MetricRepository) GetMetricHistories(
@@ -207,6 +222,17 @@ func (r MetricRepository) GetMetricHistories(
 		)
 	}
 	return rows, r.db.ScanRows, nil
+}
+
+// GetLatestMetricByKey returns the latest metric by provided key.
+func (r MetricRepository) GetLatestMetricByKey(ctx context.Context, key string) (*models.LatestMetric, error) {
+	var metric models.LatestMetric
+	if err := r.db.WithContext(ctx).Where(
+		"key = ?", key,
+	).First(&metric).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting latest metric by key: %v", key)
+	}
+	return &metric, nil
 }
 
 // getLatestMetricsByRunIDAndKeys returns the latest metrics by requested Run ID and keys.

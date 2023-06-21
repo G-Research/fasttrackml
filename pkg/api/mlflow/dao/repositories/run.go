@@ -17,7 +17,7 @@ import (
 // RunRepositoryProvider provides an interface to work with models.Run entity.
 type RunRepositoryProvider interface {
 	BaseRepositoryProvider
-	// GetByID returns models.Run entity bt its ID.
+	// GetByID returns models.Run entity by its ID.
 	GetByID(ctx context.Context, id string) (*models.Run, error)
 	// GetByIDAndLifecycleStage returns models.Run entity by its ID and Lifecycle Stage
 	GetByIDAndLifecycleStage(

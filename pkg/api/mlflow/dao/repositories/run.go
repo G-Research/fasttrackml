@@ -164,9 +164,8 @@ func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		// delete the rows
 		runs := []models.Run{}
-		tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "row_num"}}}).Where("run_uuid IN ?", ids).Delete(&runs)
-		if tx.Error != nil {
-			return eris.Wrapf(tx.Error, "error deleting existing runs with ids: %s", ids)
+		if err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "row_num"}}}).Where("run_uuid IN ?", ids).Delete(&runs).Error; err != nil {
+			return eris.Wrapf(err, "error deleting existing runs with ids: %s", ids)
 		}
 
 		// verify deletion
@@ -180,7 +179,7 @@ func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
 		}
 		return nil
 	}); err != nil {
-		return eris.Wrapf(err, "error renumbering runs.row_num")
+		return eris.Wrapf(err, "error deleting runs")
 	}
 
 	return nil
@@ -254,8 +253,7 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 // getMinRowNum will find the lowest row_num for the slice of runs
 // or 0 for an empty slice
 func getMinRowNum(runs []models.Run) models.RowNum {
-	// get the lowest row_num in the slice
-	minRowNum := models.RowNum(0)
+	var minRowNum models.RowNum
 	for _, run := range runs {
 		if minRowNum == models.RowNum(0) || run.RowNum < minRowNum {
 			minRowNum = run.RowNum

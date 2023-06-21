@@ -6,8 +6,3 @@ type Param struct {
 	Value string `gorm:"type:varchar(500);not null"`
 	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
-
-// TableName returns actual table name.
-func (p Param) TableName() string {
-	return "params"
-}

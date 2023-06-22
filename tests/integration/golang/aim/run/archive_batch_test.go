@@ -8,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -19,10 +20,10 @@ import (
 
 type ArchiveBatchTestSuite struct {
 	suite.Suite
+	runs               []*models.Run
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
-	runs               []*models.Run
 }
 
 func TestArchiveBatchTestSuite(t *testing.T) {
@@ -57,19 +58,19 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 		archiveParam         string
 	}{
 		{
-			name:                 "ArchiveBatchOfOneSucceeds",
+			name:                 "ArchiveBatchOfOne",
 			runIDs:               []string{s.runs[4].ID},
 			expectedArchiveCount: 1,
 			archiveParam:         "true",
 		},
 		{
-			name:                 "ArchiveBatchOfTwoSucceeds",
+			name:                 "ArchiveBatchOfTwo",
 			runIDs:               []string{s.runs[3].ID, s.runs[5].ID},
 			expectedArchiveCount: 3,
 			archiveParam:         "true",
 		},
 		{
-			name:                 "RestoreBatchOfTwoSucceeds",
+			name:                 "RestoreBatchOfTwo",
 			runIDs:               []string{s.runs[3].ID, s.runs[5].ID},
 			expectedArchiveCount: 1,
 			archiveParam:         "false",
@@ -77,8 +78,10 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+				context.Background(), s.runs[0].ExperimentID,
+			)
+			assert.Nil(s.T(), err)
 
 			resp := map[string]any{}
 			err = s.client.DoPostRequest(
@@ -86,11 +89,11 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 				tt.runIDs,
 				&resp,
 			)
-			assert.NoError(s.T(), err)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), map[string]interface{}{"status": "OK"}, resp)
 
 			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), 10, len(runs))
 			archiveCount := 0
 			for _, run := range runs {
@@ -100,8 +103,10 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 			}
 			assert.Equal(s.T(), tt.expectedArchiveCount, archiveCount)
 
-			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+				context.Background(), s.runs[0].ExperimentID,
+			)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
 			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
 
@@ -120,31 +125,35 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 		expectedRunCount int
 	}{
 		{
-			name:             "ArchiveWithUnknownIDFails",
+			name:             "ArchiveWithUnknownID",
 			request:          []string{"some-other-id"},
 			expectedRunCount: 10,
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+				context.Background(), s.runs[0].ExperimentID,
+			)
+			assert.Nil(s.T(), err)
 
-			var resp map[string]any
+			var resp fiber.Map
 			err = s.client.DoPostRequest(
 				"/runs/archive-batch?archive=true",
 				tt.request,
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), map[string]any{"status": "OK"}, resp)
+			assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
 
 			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 
-			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+				context.Background(), s.runs[0].ExperimentID,
+			)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
 			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
 		})

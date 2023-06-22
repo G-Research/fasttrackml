@@ -304,7 +304,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 				tt.request,
 				&resp,
 			)
-			assert.NoError(t, err)
+			assert.Nil(t, err)
 			assert.Equal(s.T(), tt.error.ErrorCode, resp.ErrorCode)
 			assert.Contains(s.T(), resp.Error(), tt.error.Message)
 		})

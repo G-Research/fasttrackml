@@ -5,10 +5,11 @@ package run
 import (
 	"context"
 	"fmt"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -97,6 +98,6 @@ func (s *LogParamTestSuite) Test_Error() {
 		req,
 		&resp,
 	)
-	assert.NoError(s.T(), err)
+	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'").Error(), resp.Error())
 }

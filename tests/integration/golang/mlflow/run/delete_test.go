@@ -82,7 +82,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 
 			archivedRuns, err := s.runFixtures.GetTestRuns(context.Background(), s.run.ExperimentID)
 
-			assert.NoError(s.T(), err)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), s.run.ID, archivedRuns[0].ID)
 			assert.Equal(s.T(), models.LifecycleStageDeleted, archivedRuns[0].LifecycleStage)
 		})

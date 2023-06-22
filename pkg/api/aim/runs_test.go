@@ -18,8 +18,28 @@ func Test_validateMetricNamePresent(t *testing.T) {
 			wantResult: true,
 		},
 		{
+			name: "QueryWithMetricNameNoSpaces",
+			query: `(run.active == true) and ((metric.name=="accuracy"))`,
+			wantResult: true,
+		},
+		{
+			name: "QueryWithStringSyntax",
+			query: `(run.active == true) and (metric.name.startswith("acc"))`,
+			wantResult: true,
+		},
+		{
+			name: "QueryWithInSyntax",
+			query: `(run.active == true) and ("accuracy" in metric.name)`,
+			wantResult: true,
+		},
+		{
 			name: "QueryWithoutMetricName",
 			query: `(run.active == true)`,
+			wantResult: false,
+		},
+		{
+			name: "QueryWithTrickyAttributeKey",
+			query: `(run.active == true) and (run.tags["mymetric.name"] == "foo")`,
 			wantResult: false,
 		},
 	}

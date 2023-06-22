@@ -17,7 +17,7 @@ permissions: # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHu
   id-token: write
 
 concurrency: # Allow one concurrent run by branch
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 defaults: # Default to bash

@@ -7,6 +7,7 @@ import (
 	"io"
 	glog "log"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -62,6 +63,17 @@ func ConnectDB(
 			q.Set("_journal", "WAL")
 		}
 		dbURL.RawQuery = q.Encode()
+
+		if reset && q.Get("mode") != "memory" {
+			file := dbURL.Host
+			if file == "" {
+				file = dbURL.Path
+			}
+			log.Infof("Removing database file %s", file)
+			if err := os.Remove(file); err != nil && !errors.Is(err, os.ErrNotExist) {
+				return nil, fmt.Errorf("failed to remove database file: %w", err)
+			}
+		}
 
 		s, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
@@ -137,12 +149,12 @@ func ConnectDB(
 		sqlDB.SetConnMaxIdleTime(time.Minute)
 		sqlDB.SetMaxIdleConns(poolMax)
 		sqlDB.SetMaxOpenConns(poolMax)
-	}
 
-	if reset {
-		if err := resetDB(DB); err != nil {
-			DB.Close()
-			return nil, err
+		if reset {
+			if err := resetDB(DB); err != nil {
+				DB.Close()
+				return nil, err
+			}
 		}
 	}
 

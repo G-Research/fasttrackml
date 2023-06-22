@@ -98,7 +98,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 	addr := viper.GetString("listen-address")
 	log.Infof("Listening on %s", addr)
-	if err := server.Listen(addr); err != http.ErrServerClosed {
+	if err := server.Listen(addr); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("error listening: %v", err)
 	}
 

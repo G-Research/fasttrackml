@@ -276,7 +276,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 						}, nil
 					}), nil
 				default:
-					fmt.Errorf("unsupported attribute value or function %#parsedNode", parsedNode)
+					return nil, fmt.Errorf("unsupported attribute value or function %#parsedNode", parsedNode)
 				}
 			}
 		}

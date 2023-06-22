@@ -515,7 +515,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 	}
 
 	// require a metric.name
-	if !strings.Contains(q.Query, "metric.name") {
+	if !strings.Contains(q.Query, "metric.name == \"") {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "No metrics are selected")
 	}
 

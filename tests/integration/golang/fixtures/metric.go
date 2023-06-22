@@ -31,8 +31,8 @@ func NewMetricFixtures(databaseDSN string) (*MetricFixtures, error) {
 		return nil, eris.Wrap(err, "error connection to database")
 	}
 	return &MetricFixtures{
-		baseFixtures:     baseFixtures{db: db},
-		metricRepository: repositories.NewMetricRepository(db),
+		baseFixtures:     baseFixtures{db: db.DB},
+		metricRepository: repositories.NewMetricRepository(db.DB),
 	}, nil
 }
 

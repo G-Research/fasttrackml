@@ -515,7 +515,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 	}
 
 	// require a metric.name
-	if !strings.Contains(q.Query, "metric.name == \"") {
+	if !validateMetricNamePresent(q.Query) {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "No metrics are selected")
 	}
 
@@ -1038,4 +1038,9 @@ func toNumpy(values []float64) fiber.Map {
 		"shape": len(values),
 		"blob":  buf.Bytes(),
 	}
+}
+
+// validateMetricNamePresent scans the query for metric.name condition
+func validateMetricNamePresent(query string) bool {
+	return strings.Contains(query, "metric.name == \"")
 }

@@ -16,3 +16,6 @@ updates:
     directory: "/website"
     schedule:
       interval: "weekly"
+    allow:
+      - dependency-name: "@docusaurus/*"
+    open-pull-requests-limit: 0 # keep only security updates and disable version updates

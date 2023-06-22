@@ -1043,7 +1043,6 @@ func toNumpy(values []float64) fiber.Map {
 
 // validateMetricNamePresent scans the query for metric.name condition
 func validateMetricNamePresent(query string) bool {
-	attributeRegEx := regexp.MustCompile(`(in\s)?metric.name[\.|(\s?==)]?`)
-	tagKeyRegEx := regexp.MustCompile(`"(\w*)?metric.name(\w*)?"`)
-	return attributeRegEx.Match([]byte(query)) && !tagKeyRegEx.Match([]byte(query))
+	re := regexp.MustCompile(`(in\s)?metric.name[\.|(\s?==)]+`)
+	return re.Match([]byte(query))
 }

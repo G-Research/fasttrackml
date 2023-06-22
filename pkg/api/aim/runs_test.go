@@ -38,9 +38,14 @@ func Test_validateMetricNamePresent(t *testing.T) {
 			wantResult: false,
 		},
 		{
-			name: "QueryWithTrickyAttributeKey",
-			query: `(run.active == true) and (run.tags["mymetric.name"] == "foo")`,
+			name: "QueryWithTrickyDictKey",
+			query: `(run.active == true) and (run.tags["metric.name"] == "foo")`,
 			wantResult: false,
+		},
+		{
+			name: "QueryWithTrickyDictKeyAndMetricName",
+			query: `(run.active == true) and (run.tags["mymetric.name"] == "foo") and (metric.name == "accuracy")`,
+			wantResult: true,
 		},
 	}
 	for _, tt := range tests {

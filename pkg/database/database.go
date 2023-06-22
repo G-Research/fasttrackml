@@ -54,15 +54,16 @@ func ConnectDB(
 	case "postgres", "postgresql":
 		sourceConn = postgres.Open(u.String())
 	case "sqlite":
+		dbURL := *u
 		q := u.Query()
 		q.Set("_case_sensitive_like", "true")
 		q.Set("_mutex", "no")
 		if q.Get("mode") != "memory" && !(q.Has("_journal") || q.Has("_journal_mode")) {
 			q.Set("_journal", "WAL")
 		}
-		u.RawQuery = q.Encode()
+		dbURL.RawQuery = q.Encode()
 
-		s, err := sql.Open(sqlite.DriverName, strings.Replace(u.String(), "sqlite://", "file:", 1))
+		s, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}
@@ -76,8 +77,8 @@ func ConnectDB(
 		}
 
 		q.Set("_query_only", "true")
-		u.RawQuery = q.Encode()
-		r, err := sql.Open(sqlite.DriverName, strings.Replace(u.String(), "sqlite://", "file:", 1))
+		dbURL.RawQuery = q.Encode()
+		r, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
 			DB.Close()
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
@@ -90,7 +91,13 @@ func ConnectDB(
 		return nil, fmt.Errorf("unsupported database scheme %s", u.Scheme)
 	}
 
-	log.Infof("Using database %s", dsn)
+	logURL := *u
+	q := logURL.Query()
+	if q.Has("_key") {
+		q.Set("_key", "xxxxx")
+	}
+	logURL.RawQuery = q.Encode()
+	log.Infof("Using database %s", logURL.Redacted())
 
 	dbLogLevel := logger.Warn
 	if log.GetLevel() == log.DebugLevel {

@@ -216,69 +216,61 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 			return nil, err
 		}
 		attribute := string(node.Attr)
-		parentNode, ok := node.Value.(*ast.Attribute)
-		if ok {
-			switch parentNode.Attr {
-			case "name":
-				switch strings.ToLower(attribute) {
-				case OperationEndWith:
-					return callable(func(args []ast.Expr) (any, error) {
-						if len(args) != 1 {
-							return nil, errors.New("`endwith` function support exactly one argument")
-						}
-						c, ok := parsedNode.(clause.Column)
-						if !ok {
-							return nil, errors.New("unsupported node type. has to be clause.Column")
-						}
-
-						arg, ok := args[0].(*ast.Str)
-						if !ok {
-							return nil, errors.New("unsupported argument type. has to be `string` only")
-						}
-						return clause.Expr{
-							SQL: fmt.Sprintf(`"%s"."%s" ILIKE '%%%s'`, c.Table, c.Name, arg.S),
-						}, nil
-					}), nil
-				case OperationContains:
-					return callable(func(args []ast.Expr) (any, error) {
-						if len(args) != 1 {
-							return nil, errors.New("`contains` function support exactly one argument")
-						}
-						c, ok := parsedNode.(clause.Column)
-						if !ok {
-							return nil, errors.New("unsupported node type. has to be clause.Column")
-						}
-
-						arg, ok := args[0].(*ast.Str)
-						if !ok {
-							return nil, errors.New("unsupported argument type. has to be `string` only")
-						}
-						return clause.Expr{
-							SQL: fmt.Sprintf(`"%s"."%s" ILIKE '%%%s%%'`, c.Table, c.Name, arg.S),
-						}, nil
-					}), nil
-				case OperationStartWith:
-					return callable(func(args []ast.Expr) (any, error) {
-						if len(args) != 1 {
-							return nil, errors.New("`startwith` function support exactly one argument")
-						}
-						c, ok := parsedNode.(clause.Column)
-						if !ok {
-							return nil, errors.New("unsupported node type. has to be clause.Column")
-						}
-
-						arg, ok := args[0].(*ast.Str)
-						if !ok {
-							return nil, errors.New("unsupported argument type. has to be `string` only")
-						}
-						return clause.Expr{
-							SQL: fmt.Sprintf(`"%s"."%s" ILIKE '%s%%'`, c.Table, c.Name, arg.S),
-						}, nil
-					}), nil
-				default:
-					return nil, fmt.Errorf("unsupported attribute value or function %#parsedNode", parsedNode)
+		switch strings.ToLower(attribute) {
+		case OperationEndWith:
+			return callable(func(args []ast.Expr) (any, error) {
+				if len(args) != 1 {
+					return nil, errors.New("`endwith` function support exactly one argument")
 				}
-			}
+				c, ok := parsedNode.(clause.Column)
+				if !ok {
+					return nil, errors.New("unsupported node type. has to be clause.Column")
+				}
+
+				arg, ok := args[0].(*ast.Str)
+				if !ok {
+					return nil, errors.New("unsupported argument type. has to be `string` only")
+				}
+				return clause.Expr{
+					SQL: fmt.Sprintf(`"%s"."%s" ILIKE '%%%s'`, c.Table, c.Name, arg.S),
+				}, nil
+			}), nil
+		case OperationContains:
+			return callable(func(args []ast.Expr) (any, error) {
+				if len(args) != 1 {
+					return nil, errors.New("`contains` function support exactly one argument")
+				}
+				c, ok := parsedNode.(clause.Column)
+				if !ok {
+					return nil, errors.New("unsupported node type. has to be clause.Column")
+				}
+
+				arg, ok := args[0].(*ast.Str)
+				if !ok {
+					return nil, errors.New("unsupported argument type. has to be `string` only")
+				}
+				return clause.Expr{
+					SQL: fmt.Sprintf(`"%s"."%s" ILIKE '%%%s%%'`, c.Table, c.Name, arg.S),
+				}, nil
+			}), nil
+		case OperationStartWith:
+			return callable(func(args []ast.Expr) (any, error) {
+				if len(args) != 1 {
+					return nil, errors.New("`startwith` function support exactly one argument")
+				}
+				c, ok := parsedNode.(clause.Column)
+				if !ok {
+					return nil, errors.New("unsupported node type. has to be clause.Column")
+				}
+
+				arg, ok := args[0].(*ast.Str)
+				if !ok {
+					return nil, errors.New("unsupported argument type. has to be `string` only")
+				}
+				return clause.Expr{
+					SQL: fmt.Sprintf(`"%s"."%s" ILIKE '%s%%'`, c.Table, c.Name, arg.S),
+				}, nil
+			}), nil
 		}
 
 		switch value := parsedNode.(type) {

@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 const (
@@ -443,7 +443,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								Table: table,
 								Name:  "lifecycle_stage",
 							},
-							Value: database.LifecycleStageDeleted,
+							Value: models.LifecycleStageDeleted,
 						}, nil
 					case "active":
 						return clause.Eq{
@@ -451,7 +451,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								Table: table,
 								Name:  "status",
 							},
-							Value: database.StatusRunning,
+							Value: models.StatusRunning,
 						}, nil
 					case "duration":
 						return clause.Column{

@@ -34,8 +34,8 @@ func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
 		return nil, eris.Wrap(err, "error connection to database")
 	}
 	return &RunFixtures{
-		baseFixtures:  baseFixtures{db: db},
-		runRepository: repositories.NewRunRepository(db),
+		baseFixtures:  baseFixtures{db: db.DB},
+		runRepository: repositories.NewRunRepository(db.DB),
 	}, nil
 }
 

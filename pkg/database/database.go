@@ -7,6 +7,7 @@ import (
 	"io"
 	glog "log"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -42,7 +43,7 @@ var DB *DbInstance = &DbInstance{}
 
 func ConnectDB(
 	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string,
-) (*gorm.DB, error) {
+) (*DbInstance, error) {
 	DB.dsn = dsn
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
@@ -54,15 +55,27 @@ func ConnectDB(
 	case "postgres", "postgresql":
 		sourceConn = postgres.Open(u.String())
 	case "sqlite":
+		dbURL := *u
 		q := u.Query()
 		q.Set("_case_sensitive_like", "true")
 		q.Set("_mutex", "no")
 		if q.Get("mode") != "memory" && !(q.Has("_journal") || q.Has("_journal_mode")) {
 			q.Set("_journal", "WAL")
 		}
-		u.RawQuery = q.Encode()
+		dbURL.RawQuery = q.Encode()
 
-		s, err := sql.Open(sqlite.DriverName, strings.Replace(u.String(), "sqlite://", "file:", 1))
+		if reset && q.Get("mode") != "memory" {
+			file := dbURL.Host
+			if file == "" {
+				file = dbURL.Path
+			}
+			log.Infof("Removing database file %s", file)
+			if err := os.Remove(file); err != nil && !errors.Is(err, os.ErrNotExist) {
+				return nil, fmt.Errorf("failed to remove database file: %w", err)
+			}
+		}
+
+		s, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}
@@ -76,9 +89,10 @@ func ConnectDB(
 		}
 
 		q.Set("_query_only", "true")
-		u.RawQuery = q.Encode()
-		r, err := sql.Open(sqlite.DriverName, strings.Replace(u.String(), "sqlite://", "file:", 1))
+		dbURL.RawQuery = q.Encode()
+		r, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
+			DB.Close()
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}
 		DB.closers = append(DB.closers, r)
@@ -89,7 +103,13 @@ func ConnectDB(
 		return nil, fmt.Errorf("unsupported database scheme %s", u.Scheme)
 	}
 
-	log.Infof("Using database %s", dsn)
+	logURL := *u
+	q := logURL.Query()
+	if q.Has("_key") {
+		q.Set("_key", "xxxxx")
+	}
+	logURL.RawQuery = q.Encode()
+	log.Infof("Using database %s", logURL.Redacted())
 
 	dbLogLevel := logger.Warn
 	if log.GetLevel() == log.DebugLevel {
@@ -110,6 +130,7 @@ func ConnectDB(
 		),
 	})
 	if err != nil {
+		DB.Close()
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
@@ -128,23 +149,45 @@ func ConnectDB(
 		sqlDB.SetConnMaxIdleTime(time.Minute)
 		sqlDB.SetMaxIdleConns(poolMax)
 		sqlDB.SetMaxOpenConns(poolMax)
-	}
 
-	if reset {
-		switch u.Scheme {
-		case "postgres", "postgresql":
-			log.Info("Resetting database")
-			DB.Exec("drop schema public cascade")
-			DB.Exec("create schema public")
-		default:
-			return nil, fmt.Errorf("unable to reset database with scheme \"%s\"", u.Scheme)
+		if reset {
+			if err := resetDB(DB); err != nil {
+				DB.Close()
+				return nil, err
+			}
 		}
 	}
 
+	if err := checkAndMigrateDB(DB, migrate); err != nil {
+		DB.Close()
+		return nil, err
+	}
+
+	if err := createDefaultExperiment(DB, artifactRoot); err != nil {
+		DB.Close()
+		return nil, err
+	}
+
+	return DB, nil
+}
+
+func resetDB(db *DbInstance) error {
+	switch db.Dialector.Name() {
+	case "postgres":
+		log.Info("Resetting database schema")
+		db.Exec("drop schema public cascade")
+		db.Exec("create schema public")
+	default:
+		return fmt.Errorf("unable to reset database with backend \"%s\"", db.Dialector.Name())
+	}
+	return nil
+}
+
+func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion
 	{
-		tx := DB.Session(&gorm.Session{
+		tx := db.Session(&gorm.Session{
 			Logger: logger.Discard,
 		})
 		tx.First(&alembicVersion)
@@ -153,13 +196,13 @@ func ConnectDB(
 
 	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "1ce8669664d2" {
 		if !migrate && alembicVersion.Version != "" {
-			return nil, fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
+			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
 		}
 
 		switch alembicVersion.Version {
 		case "c48cb773bb87":
 			log.Info("Migrating database to alembic schema bd07f7e963c5")
-			if err := DB.Transaction(func(tx *gorm.DB) error {
+			if err := db.Transaction(func(tx *gorm.DB) error {
 				for _, table := range []any{
 					&Param{},
 					&Metric{},
@@ -175,13 +218,13 @@ func ConnectDB(
 					Update("Version", "bd07f7e963c5").
 					Error
 			}); err != nil {
-				return nil, fmt.Errorf("error migrating database to alembic schema bd07f7e963c5: %w", err)
+				return fmt.Errorf("error migrating database to alembic schema bd07f7e963c5: %w", err)
 			}
 			fallthrough
 
 		case "bd07f7e963c5":
 			log.Info("Migrating database to alembic schema 0c779009ac13")
-			if err := DB.Transaction(func(tx *gorm.DB) error {
+			if err := db.Transaction(func(tx *gorm.DB) error {
 				if err := tx.Migrator().AddColumn(&Run{}, "DeletedTime"); err != nil {
 					return err
 				}
@@ -190,13 +233,13 @@ func ConnectDB(
 					Update("Version", "0c779009ac13").
 					Error
 			}); err != nil {
-				return nil, fmt.Errorf("error migrating database to alembic schema 0c779009ac13: %w", err)
+				return fmt.Errorf("error migrating database to alembic schema 0c779009ac13: %w", err)
 			}
 			fallthrough
 
 		case "0c779009ac13":
 			log.Info("Migrating database to alembic schema cc1f77228345")
-			if err := DB.Transaction(func(tx *gorm.DB) error {
+			if err := db.Transaction(func(tx *gorm.DB) error {
 				if err := tx.Migrator().AlterColumn(&Param{}, "value"); err != nil {
 					return err
 				}
@@ -205,13 +248,13 @@ func ConnectDB(
 					Update("Version", "cc1f77228345").
 					Error
 			}); err != nil {
-				return nil, fmt.Errorf("error migrating database to alembic schema cc1f77228345: %w", err)
+				return fmt.Errorf("error migrating database to alembic schema cc1f77228345: %w", err)
 			}
 			fallthrough
 
 		case "cc1f77228345":
 			log.Info("Migrating database to alembic schema 97727af70f4d")
-			if err := DB.Transaction(func(tx *gorm.DB) error {
+			if err := db.Transaction(func(tx *gorm.DB) error {
 				for _, column := range []string{
 					"CreationTime",
 					"LastUpdateTime",
@@ -225,7 +268,7 @@ func ConnectDB(
 					Update("Version", "97727af70f4d").
 					Error
 			}); err != nil {
-				return nil, fmt.Errorf("error migrating database to alembic schema 97727af70f4d: %w", err)
+				return fmt.Errorf("error migrating database to alembic schema 97727af70f4d: %w", err)
 			}
 			fallthrough
 
@@ -233,7 +276,7 @@ func ConnectDB(
 			switch schemaVersion.Version {
 			case "":
 				log.Info("Migrating database to FastTrackML schema ac0b8b7c0014")
-				if err := DB.Transaction(func(tx *gorm.DB) error {
+				if err := db.Transaction(func(tx *gorm.DB) error {
 					for _, column := range []struct {
 						dst   any
 						field string
@@ -292,13 +335,13 @@ func ConnectDB(
 						Version: "ac0b8b7c0014",
 					}).Error
 				}); err != nil {
-					return nil, fmt.Errorf("error migrating database to FastTrackML schema ac0b8b7c0014: %w", err)
+					return fmt.Errorf("error migrating database to FastTrackML schema ac0b8b7c0014: %w", err)
 				}
 				fallthrough
 
 			case "ac0b8b7c0014":
 				log.Info("Migrating database to FastTrackML schema 8073e7e037e5")
-				if err := DB.Transaction(func(tx *gorm.DB) error {
+				if err := db.Transaction(func(tx *gorm.DB) error {
 					if err := tx.AutoMigrate(
 						&Dashboard{},
 						&App{},
@@ -310,13 +353,13 @@ func ConnectDB(
 						Update("Version", "8073e7e037e5").
 						Error
 				}); err != nil {
-					return nil, fmt.Errorf("error migrating database to FastTrackML schema 8073e7e037e5: %w", err)
+					return fmt.Errorf("error migrating database to FastTrackML schema 8073e7e037e5: %w", err)
 				}
 				fallthrough
 
 			case "8073e7e037e5":
 				log.Info("Migrating database to FastTrackML schema ed364de02645")
-				if err := DB.Transaction(func(tx *gorm.DB) error {
+				if err := db.Transaction(func(tx *gorm.DB) error {
 					if err := tx.Migrator().CreateIndex(&Run{}, "RowNum"); err != nil {
 						return err
 					}
@@ -328,14 +371,14 @@ func ConnectDB(
 						Update("Version", "ed364de02645").
 						Error
 				}); err != nil {
-					return nil, fmt.Errorf("error migrating database to FastTrackML schema ed364de02645: %w", err)
+					return fmt.Errorf("error migrating database to FastTrackML schema ed364de02645: %w", err)
 				}
 				fallthrough
-				
+
 			case "ed364de02645":
 				log.Info("Migrating database to FastTrackML schema 1ce8669664d2")
-				if err := DB.Transaction(func(tx *gorm.DB) error {
-					constraints := []string{ "Params", "Tags", "Metrics", "LatestMetrics" }
+				if err := db.Transaction(func(tx *gorm.DB) error {
+					constraints := []string{"Params", "Tags", "Metrics", "LatestMetrics"}
 					for _, constraint := range constraints {
 						if err := tx.Migrator().DropConstraint(&Run{}, constraint); err != nil {
 							return err
@@ -349,18 +392,18 @@ func ConnectDB(
 						Update("Version", "1ce8669664d2").
 						Error
 				}); err != nil {
-					return nil, fmt.Errorf("error migrating database to FastTrackML schema 1ce8669664d2: %w", err)
+					return fmt.Errorf("error migrating database to FastTrackML schema 1ce8669664d2: %w", err)
 				}
 
 			default:
-				return nil, fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
+				return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
 			}
 
 			log.Info("Database migration done")
 
 		case "":
 			log.Info("Initializing database")
-			tx := DB.Begin()
+			tx := db.Begin()
 			if err := tx.AutoMigrate(
 				&Experiment{},
 				&ExperimentTag{},
@@ -374,7 +417,7 @@ func ConnectDB(
 				&App{},
 				&SchemaVersion{},
 			); err != nil {
-				return nil, fmt.Errorf("error initializing database: %w", err)
+				return fmt.Errorf("error initializing database: %w", err)
 			}
 			tx.Create(&AlembicVersion{
 				Version: "97727af70f4d",
@@ -384,15 +427,19 @@ func ConnectDB(
 			})
 			tx.Commit()
 			if tx.Error != nil {
-				return nil, fmt.Errorf("error initializing database: %w", tx.Error)
+				return fmt.Errorf("error initializing database: %w", tx.Error)
 			}
 
 		default:
-			return nil, fmt.Errorf("unsupported database alembic schema version %s", alembicVersion.Version)
+			return fmt.Errorf("unsupported database alembic schema version %s", alembicVersion.Version)
 		}
 	}
 
-	if tx := DB.First(&Experiment{}, 0); tx.Error != nil {
+	return nil
+}
+
+func createDefaultExperiment(db *DbInstance, artifactRoot string) error {
+	if tx := db.First(&Experiment{}, 0); tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			log.Info("Creating default experiment")
 			var id int32 = 0
@@ -410,18 +457,17 @@ func ConnectDB(
 					Valid: true,
 				},
 			}
-			if tx := DB.Create(&exp); tx.Error != nil {
-				return nil, fmt.Errorf("error creating default experiment: %s", tx.Error)
+			if tx := db.Create(&exp); tx.Error != nil {
+				return fmt.Errorf("error creating default experiment: %s", tx.Error)
 			}
 
 			exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(artifactRoot, "/"), *exp.ID)
-			if tx := DB.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
-				return nil, fmt.Errorf("error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)
+			if tx := db.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
+				return fmt.Errorf("error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)
 			}
 		} else {
-			return nil, fmt.Errorf("unable to find default experiment: %s", tx.Error)
+			return fmt.Errorf("unable to find default experiment: %s", tx.Error)
 		}
 	}
-
-	return DB.DB, nil
+	return nil
 }

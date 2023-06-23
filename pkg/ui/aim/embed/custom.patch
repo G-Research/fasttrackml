@@ -638,3 +638,26 @@ index 0fc79c5..867376b 100644
      icon: 'audios',
      displayName: 'Audios',
      isExact: true,
+diff --git a/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx b/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx
+index 4608789..cec61aa 100644
+--- a/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx
++++ b/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx
+@@ -10,6 +10,9 @@ import { DOCUMENTATIONS } from 'config/references';
+ import './QuickStart.scss';
+ 
+ function QuickStart() {
++  // Get fasttrack server hostname from current browser location
++  const { hostname, port } = window.location;
++  const fasttrack_server = `http://${hostname}:${port}`;
+   return (
+     <div className='QuickStart'>
+       <Text
+@@ -34,7 +37,7 @@ function QuickStart() {
+           code={`from aim import Run
+ 
+ # Initialize a new run
+-run = Run()
++run = Run(repo=${fasttrack_server})
+ 
+ # Log run parameters
+ run["hparams"] = {

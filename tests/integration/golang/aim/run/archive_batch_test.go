@@ -43,10 +43,10 @@ func (s *ArchiveBatchTestSuite) SetupTest() {
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 	}
-	_, err = s.experimentFixtures.CreateTestExperiment(context.Background(), exp)
+	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	s.runs, err = s.runFixtures.CreateTestRuns(context.Background(), exp, 10)
+	s.runs, err = s.runFixtures.CreateRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
 }
 

@@ -39,8 +39,8 @@ func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
 	}, nil
 }
 
-// CreateTestRun creates a new test Run.
-func (f RunFixtures) CreateTestRun(
+// CreateRun creates a new test Run.
+func (f RunFixtures) CreateRun(
 	ctx context.Context, run *models.Run,
 ) (*models.Run, error) {
 	if err := f.runRepository.Create(ctx, run); err != nil {
@@ -49,8 +49,8 @@ func (f RunFixtures) CreateTestRun(
 	return run, nil
 }
 
-// CreateTestRuns creates some num runs belonging to the experiment
-func (f RunFixtures) CreateTestRuns(
+// CreateRuns creates some num runs belonging to the experiment
+func (f RunFixtures) CreateRuns(
 	ctx context.Context, exp *models.Experiment, num int,
 ) ([]*models.Run, error) {
 	var runs []*models.Run
@@ -64,7 +64,7 @@ func (f RunFixtures) CreateTestRuns(
 			ExperimentID:   *exp.ID,
 			LifecycleStage: models.LifecycleStageActive,
 		}
-		run, err := f.CreateTestRun(ctx, run)
+		run, err := f.CreateRun(ctx, run)
 		if err != nil {
 			return nil, err
 		}

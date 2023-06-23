@@ -48,19 +48,19 @@ func (s *QueryTestSuite) Test_Ok() {
 		{
 			name:         "TestRunNameWithContainsFunction",
 			query:        `(run.name.contains('run'))`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" ILIKE '%run%' AND "runs"."lifecycle_stage" <> $1) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE '%run%' AND "runs"."lifecycle_stage" <> $1) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithStartWithFunction",
-			query:        `(run.name.startwith('run'))`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" ILIKE 'run%' AND "runs"."lifecycle_stage" <> $1) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			query:        `(run.name.startswith('run'))`,
+			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE 'run%' AND "runs"."lifecycle_stage" <> $1) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithEndWithFunction",
-			query:        `(run.name.endwith('run'))`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" ILIKE '%run' AND "runs"."lifecycle_stage" <> $1) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			query:        `(run.name.endswith('run'))`,
+			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE '%run' AND "runs"."lifecycle_stage" <> $1) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{models.LifecycleStageDeleted},
 		},
 	}

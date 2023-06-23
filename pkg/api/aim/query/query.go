@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	OperationEndWith   = "endwith"
-	OperationContains  = "contains"
-	OperationStartWith = "startwith"
+	OperationEndsWith   = "endswith"
+	OperationContains   = "contains"
+	OperationStartsWith = "startswith"
 )
 
 type DefaultExpression struct {
@@ -217,7 +217,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 		}
 		attribute := string(node.Attr)
 		switch strings.ToLower(attribute) {
-		case OperationEndWith:
+		case OperationEndsWith:
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
 					return nil, errors.New("`endwith` function support exactly one argument")
@@ -232,7 +232,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
 				return clause.Expr{
-					SQL: fmt.Sprintf(`"%s"."%s" ILIKE '%%%s'`, c.Table, c.Name, arg.S),
+					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%%%s'`, c.Table, c.Name, arg.S),
 				}, nil
 			}), nil
 		case OperationContains:
@@ -250,10 +250,10 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
 				return clause.Expr{
-					SQL: fmt.Sprintf(`"%s"."%s" ILIKE '%%%s%%'`, c.Table, c.Name, arg.S),
+					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%%%s%%'`, c.Table, c.Name, arg.S),
 				}, nil
 			}), nil
-		case OperationStartWith:
+		case OperationStartsWith:
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
 					return nil, errors.New("`startwith` function support exactly one argument")
@@ -268,7 +268,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
 				return clause.Expr{
-					SQL: fmt.Sprintf(`"%s"."%s" ILIKE '%s%%'`, c.Table, c.Name, arg.S),
+					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%s%%'`, c.Table, c.Name, arg.S),
 				}, nil
 			}), nil
 		}

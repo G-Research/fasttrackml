@@ -31,8 +31,8 @@ func NewExperimentFixtures(databaseDSN string) (*ExperimentFixtures, error) {
 		return nil, eris.Wrap(err, "error connection to database")
 	}
 	return &ExperimentFixtures{
-		baseFixtures:         baseFixtures{db: db},
-		experimentRepository: repositories.NewExperimentRepository(db),
+		baseFixtures:         baseFixtures{db: db.DB},
+		experimentRepository: repositories.NewExperimentRepository(db.DB),
 	}, nil
 }
 

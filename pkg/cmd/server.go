@@ -16,7 +16,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gorm.io/gorm"
 
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -47,6 +46,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	defer db.Close()
 
 	// 2. init main HTTP server.
 	server := initServer()
@@ -60,22 +60,22 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	mlflowAPI.NewRouter(
 		controller.NewController(
 			run.NewService(
-				repositories.NewTagRepository(db),
-				repositories.NewRunRepository(db),
-				repositories.NewParamRepository(db),
-				repositories.NewMetricRepository(db),
-				repositories.NewExperimentRepository(db),
+				repositories.NewTagRepository(db.DB),
+				repositories.NewRunRepository(db.DB),
+				repositories.NewParamRepository(db.DB),
+				repositories.NewMetricRepository(db.DB),
+				repositories.NewExperimentRepository(db.DB),
 			),
 			model.NewService(),
 			metric.NewService(
-				repositories.NewMetricRepository(db),
+				repositories.NewMetricRepository(db.DB),
 			),
 			artifact.NewService(
-				repositories.NewRunRepository(db),
+				repositories.NewRunRepository(db.DB),
 			),
 			experiment.NewService(
-				repositories.NewTagRepository(db),
-				repositories.NewExperimentRepository(db),
+				repositories.NewTagRepository(db.DB),
+				repositories.NewExperimentRepository(db.DB),
 			),
 		),
 	).Init(server)
@@ -98,7 +98,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 	addr := viper.GetString("listen-address")
 	log.Infof("Listening on %s", addr)
-	if err := server.Listen(addr); err != http.ErrServerClosed {
+	if err := server.Listen(addr); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("error listening: %v", err)
 	}
 
@@ -108,7 +108,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 }
 
 // initDB init DB connection.
-func initDB() (*gorm.DB, error) {
+func initDB() (*database.DbInstance, error) {
 	db, err := database.ConnectDB(
 		viper.GetString("database-uri"),
 		viper.GetDuration("database-slow-threshold"),

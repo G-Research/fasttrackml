@@ -132,6 +132,23 @@ jobs:
       - name: Run ${{ matrix.api }} integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
 
+  goreleaser:
+    - name: Set up Go
+      uses: actions/setup-go@v3
+
+    - name: Run GoReleaser to build Docker image
+      uses: goreleaser/goreleaser-action@v4
+      with:
+        distribution: goreleaser
+        version: latest
+        args: release --snapshot --clean
+
+    - name: Upload dist folder artifacts
+      uses: actions/upload-artifact@v3.1.1
+      with:
+        asset-path: ${{ env.GORELEASER_DIST }}/*
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
     name: Build container image

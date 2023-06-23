@@ -23,6 +23,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// validation rule for SearchMetrics
+var metricNameRegExp = regexp.MustCompile(`in\s*metric\.name|metric\.name(?:\.|\s*==)`)
+
 func GetRunInfo(c *fiber.Ctx) error {
 	q := struct {
 		// TODO skip_system is unused - should we keep it?
@@ -1043,6 +1046,5 @@ func toNumpy(values []float64) fiber.Map {
 
 // validateMetricNamePresent scans the query for metric.name condition
 func validateMetricNamePresent(query string) bool {
-	re := regexp.MustCompile(`(in\s)?metric.name[\.|(\s?==)]+`)
-	return re.Match([]byte(query))
+	return metricNameRegExp.Match([]byte(query))
 }

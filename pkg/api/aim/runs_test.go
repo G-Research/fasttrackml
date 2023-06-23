@@ -33,8 +33,23 @@ func Test_validateMetricNamePresent(t *testing.T) {
 			wantResult: true,
 		},
 		{
+			name: "QueryWithMetricNameAtEnd",
+			query: `(run.active == true) and "accuracy" in metric.name`,
+			wantResult: true,
+		},
+		{
 			name: "QueryWithoutMetricName",
 			query: `(run.active == true)`,
+			wantResult: false,
+		},
+		{
+			name: "QueryWithoutDot",
+			query: `(run.active == true) and (metricname === "accuracy")`,
+			wantResult: false,
+		},
+		{
+			name: "QueryWithOrCharacter",
+			query: `(run.active == true) and (metric.name| === "accuracy")`,
 			wantResult: false,
 		},
 		{

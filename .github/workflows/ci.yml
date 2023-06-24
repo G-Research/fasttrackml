@@ -139,10 +139,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+
+      - name: Run Aim and Mlflow builds
+        run: make node-build
+
       - name: Set up Go
         uses: actions/setup-go@v3
 
-      - name: Run GoReleaser to build Docker image
+      - name: Run GoReleaser to build release artifacts
         uses: goreleaser/goreleaser-action@v4
         with:
           distribution: goreleaser

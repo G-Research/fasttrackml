@@ -139,13 +139,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: 14
+      - name: Node build Mlflow
+        run:  docker run -v ${{ github.workspace }}:/app node:16 /app/pkg/ui/mlflow/embed/build.sh
 
-      - name: Run Aim and Mlflow builds
-        run: make node-build
+      - name: Node build Aim
+        run:  docker run -v ${{ github.workspace }}:/app node:16 /app/pkg/ui/aim/embed/build.sh
 
       - name: Set up Go
         uses: actions/setup-go@v3

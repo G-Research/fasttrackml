@@ -158,8 +158,8 @@ jobs:
       - name: Upload dist folder artifacts
         uses: actions/upload-artifact@v3.1.1
         with:
-          asset-path: ${{ env.GORELEASER_DIST }}/*
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: Binary artifacts
+          path: dist
 
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

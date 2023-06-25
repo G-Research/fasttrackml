@@ -91,15 +91,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	}{
 		{
 			name:  "TestContainsFunction",
-			query: `q=(run.name.contains("chill"))&p=500&report_progress=false`,
+			query: `q=(metric.name=='key1' and run.name.contains("chill"))&p=500&report_progress=false`,
 		},
 		{
 			name:  "TestStartWithFunction",
-			query: `q=(run.name.startswith("chill"))&p=500&report_progress=false`,
+			query: `q=(metric.name=='key1' and run.name.startswith("chill"))&p=500&report_progress=false`,
 		},
 		{
 			name:  "TestEndWithFunction",
-			query: `q=(run.name.endswith("run"))&p=500&report_progress=false`,
+			query: `q=(metric.name=='key1' and run.name.endswith("run"))&p=500&report_progress=false`,
 		},
 	}
 	for _, tt := range tests {

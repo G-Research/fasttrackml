@@ -6,7 +6,7 @@ on:
   schedule:
     # Run daily at 01:34 so we get notified if CI is broken before a pull request
     # is submitted.
-    - cron: "5 * * * * *"
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: read

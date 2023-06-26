@@ -30,7 +30,7 @@ var DecodeCmd = &cobra.Command{
 			return eris.Wrap(err, "error decoding binary AIM stream")
 		}
 
-		fmt.Println(fmt.Sprintf("decoded Aim stream data: %+v", data))
+		fmt.Printf("decoded Aim stream data: %+v", data)
 		return nil
 	},
 }

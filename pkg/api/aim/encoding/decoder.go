@@ -37,7 +37,7 @@ func (d *reader) readField() ([]byte, error) {
 	data := make([]byte, binary.LittleEndian.Uint32(bufferLength))
 	_, err = io.ReadFull(d, data)
 	if err != nil {
-		return nil, err
+		return nil, eris.Wrap(err, "error reading data into the buffer")
 	}
 	return data, nil
 }
@@ -49,7 +49,7 @@ func Decode(data io.Reader) (map[string]interface{}, error) {
 	for {
 		key, err := d.readField()
 		if err != nil {
-			if err == io.EOF {
+			if err := eris.Unwrap(err); err == io.EOF {
 				return result, nil
 			}
 			return result, eris.Wrap(err, "error reading data line")

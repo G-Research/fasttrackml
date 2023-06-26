@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    # Run daily at 01:34 so we get notified if CI is broken before a pull request
+    # is submitted.
+    - cron: "5 * * * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  goreleaser:
+    name: Goreleaser artifact build
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Node build Mlflow
+        run:  docker run -v ${{ github.workspace }}:/app node:16 /app/pkg/ui/mlflow/embed/build.sh
+
+      - name: Node build Aim
+        run:  docker run -v ${{ github.workspace }}:/app node:16 /app/pkg/ui/aim/embed/build.sh
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+
+      - name: Run GoReleaser to build release artifacts
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --snapshot --clean
+
+      - name: Upload dist folder artifacts
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: Binary artifacts
+          path: dist

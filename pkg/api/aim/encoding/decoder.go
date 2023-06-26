@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"math"
 	"strconv"
@@ -13,9 +12,40 @@ import (
 	"github.com/rotisserie/eris"
 )
 
+// supported list of reader types.
+const (
+	TypeNil = iota
+	TypeBool
+	TypeInt
+	TypeFloat
+	TypeString
+	TypeSlice
+	TypeArray
+	TypeObject
+)
+
+type reader struct {
+	io.Reader
+}
+
+func (d *reader) readField() ([]byte, error) {
+	bufferLength := make([]byte, 4)
+	_, err := io.ReadFull(d, bufferLength)
+	if err != nil {
+		return nil, eris.Wrap(err, "error reading data into the buffer")
+	}
+	data := make([]byte, binary.LittleEndian.Uint32(bufferLength))
+	_, err = io.ReadFull(d, data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+// Decode decodes input stream of data into map[string]interface{}.
 func Decode(data io.Reader) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
-	d := decoder{bufio.NewReader(data)}
+	d := reader{bufio.NewReader(data)}
 	for {
 		key, err := d.readField()
 		if err != nil {
@@ -46,11 +76,11 @@ func Decode(data io.Reader) (map[string]interface{}, error) {
 
 		var value any
 		switch valuebuf[0] {
-		case 0:
+		case TypeNil:
 			value = nil
-		case 1:
+		case TypeBool:
 			value = valuebuf[1] != 0
-		case 2:
+		case TypeInt:
 			switch len(valuebuf) - 1 {
 			case 2:
 				value = int16(binary.LittleEndian.Uint16(valuebuf[1:]))
@@ -59,52 +89,33 @@ func Decode(data io.Reader) (map[string]interface{}, error) {
 			case 8:
 				value = int64(binary.LittleEndian.Uint64(valuebuf[1:]))
 			default:
-				return nil, fmt.Errorf("unsupported int length %d", len(valuebuf)-1)
+				return nil, eris.Errorf("unsupported int length %d", len(valuebuf)-1)
 			}
-		case 3:
+		case TypeFloat:
 			switch len(valuebuf) - 1 {
 			case 4:
 				value = math.Float32frombits(binary.LittleEndian.Uint32(valuebuf[1:]))
 			case 8:
 				value = math.Float64frombits(binary.LittleEndian.Uint64(valuebuf[1:]))
 			default:
-				return nil, fmt.Errorf("unsupported float length %d", len(valuebuf)-1)
+				return nil, eris.Errorf("unsupported float length %d", len(valuebuf)-1)
 			}
-		case 4:
+		case TypeString:
 			value = string(valuebuf[1:])
-		case 5:
+		case TypeSlice:
 			v := make([]float64, 0, (len(valuebuf)-1)/8)
 			for i := 0; i < len(valuebuf)-1; i += 8 {
 				v = append(v, math.Float64frombits(binary.LittleEndian.Uint64(valuebuf[i+1:])))
 			}
 			value = v
-		case 6:
+		case TypeArray:
 			value = "<ARRAY>"
-		case 7:
+		case TypeObject:
 			value = "<OBJECT>"
 		default:
-			return nil, fmt.Errorf("unsupported type %x", valuebuf[0])
+			return nil, eris.Errorf("unsupported type %x", valuebuf[0])
 		}
 
 		result[strings.Join(path, ".")] = value
 	}
-}
-
-type decoder struct {
-	io.Reader
-}
-
-func (d *decoder) readField() ([]byte, error) {
-	lenbuf := make([]byte, 4)
-	_, err := io.ReadFull(d, lenbuf)
-	if err != nil {
-		return nil, err
-	}
-	len := binary.LittleEndian.Uint32(lenbuf)
-	field := make([]byte, len)
-	_, err = io.ReadFull(d, field)
-	if err != nil {
-		return nil, err
-	}
-	return field, nil
 }

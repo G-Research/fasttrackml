@@ -132,35 +132,6 @@ jobs:
       - name: Run ${{ matrix.api }} integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
 
-  goreleaser:
-    name: Goreleaser artifact build
-    runs-on: self-hosted
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Node build Mlflow
-        run:  docker run -v ${{ github.workspace }}:/app node:16 /app/pkg/ui/mlflow/embed/build.sh
-
-      - name: Node build Aim
-        run:  docker run -v ${{ github.workspace }}:/app node:16 /app/pkg/ui/aim/embed/build.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-
-      - name: Run GoReleaser to build release artifacts
-        uses: goreleaser/goreleaser-action@v4
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --snapshot --clean
-
-      - name: Upload dist folder artifacts
-        uses: actions/upload-artifact@v3.1.1
-        with:
-          name: Binary artifacts
-          path: dist
-
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
     name: Build container image

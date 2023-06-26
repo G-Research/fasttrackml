@@ -2,6 +2,8 @@ name: Goreleaser
 
 on:
   release:
+    types:
+      - created
 
 permissions:
   contents: read
@@ -29,9 +31,25 @@ jobs:
           distribution: goreleaser
           version: latest
           args: release --snapshot --clean
-
-      - name: Upload dist folder artifacts
-        uses: actions/upload-artifact@v3.1.1
+          
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: Binary artifacts
-          path: dist
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload release assets
+        id: upload_assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist
+          asset_name: dist
+          asset_content_type: application/octet-stream

@@ -639,7 +639,7 @@ index 0fc79c5..867376b 100644
      displayName: 'Audios',
      isExact: true,
 diff --git a/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx b/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx
-index 4608789..cec61aa 100644
+index 4608789..ac2005b 100644
 --- a/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx
 +++ b/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx
 @@ -10,6 +10,9 @@ import { DOCUMENTATIONS } from 'config/references';
@@ -657,7 +657,7 @@ index 4608789..cec61aa 100644
  
  # Initialize a new run
 -run = Run()
-+run = Run(repo=${fasttrack_server})
++run = Run(repo="${fasttrack_server}")
  
  # Log run parameters
  run["hparams"] = {

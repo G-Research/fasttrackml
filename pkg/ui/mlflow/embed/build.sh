@@ -2,10 +2,10 @@
 
 # current directory and checkout location
 current=$(dirname $(realpath $0))
-repo="/tmp/mlflow-repo"
+repo="${current}/repo"
 
 # Checkout source and build if necessary
-if [ ! -d "${current}/build" ]; then
+if [ ! -d "${repo}" ]; then
   git clone --depth 1 -b $(cat ${current}/version) https://github.com/mlflow/mlflow.git ${repo}
 
   # Apply our customizations

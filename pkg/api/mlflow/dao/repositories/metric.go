@@ -158,7 +158,7 @@ func (r MetricRepository) GetMetricHistories(
 				models.LifecycleStageDeleted,
 			})
 		}
-		if err := query.Pluck("run_uuid", runIDs).Error; err != nil {
+		if err := query.Pluck("run_uuid", &runIDs).Error; err != nil {
 			return nil, nil, eris.Wrapf(
 				err, "error getting runs by experimentIDs: %v, viewType: %s", experimentIDs, viewType,
 			)

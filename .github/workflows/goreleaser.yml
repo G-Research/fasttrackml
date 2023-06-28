@@ -31,14 +31,8 @@ jobs:
           distribution: goreleaser
           version: latest
           args: release --snapshot --clean
-
-      - name: Upload release assets
-        id: upload_assets
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./dist
-          asset_name: dist
-          asset_content_type: application/octet-stream
+        env:  
+          GH_RELEASE: true
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GH_OWNER: "suprjinx"
+          GH_REPO_NAME: "fasttrackml"

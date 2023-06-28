@@ -15,6 +15,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 USER vscode
 RUN go install github.com/vektra/mockery/v2@v2.30.1
 RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
+RUN go install github.com/goreleaser/goreleaser@v1.18.2
 USER root
 
 # [Optional] Uncomment this line to install global node packages.

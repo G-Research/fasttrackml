@@ -33,12 +33,12 @@ jobs:
           args: release --snapshot --clean
 
       - name: Upload release assets
-        id: upload_assets
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./dist
-          asset_name: dist
-          asset_content_type: application/octet-stream
+          files: |
+            ./dist/fasttrackml_Darwin_arm64.tar.gz
+            ./dist/fasttrackml_Darwin_x86_64.tar.gz
+            ./dist/fasttrackml_Linux_arm64.tar.gz
+            ./dist/fasttrackml_Linux_x86_64.tar.gz
+            ./dist/fasttrackml_Windows_arm64.zip
+            ./dist/fasttrackml_Windows_x86_64.zip

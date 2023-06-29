@@ -9,14 +9,13 @@ import (
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // AppFixtures represents data fixtures object.
 type AppFixtures struct {
 	baseFixtures
-	appRepository repositories.AppRepositoryProvider
+	*database.DbInstance
 }
 
 // NewAppFixtures creates new instance of AppFixtures.
@@ -34,7 +33,7 @@ func NewAppFixtures(databaseDSN string) (*AppFixtures, error) {
 	}
 	return &AppFixtures{
 		baseFixtures:  baseFixtures{db: db.DB},
-		appRepository: repositories.NewAppRepository(db.DB),
+		DbInstance: db,
 	}, nil
 }
 

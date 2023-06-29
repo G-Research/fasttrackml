@@ -16,11 +16,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Node build Mlflow
-        run:  docker run -v ${{ github.workspace }}:/app node:16 /app/pkg/ui/mlflow/embed/build.sh
-
-      - name: Node build Aim
-        run:  docker run -v ${{ github.workspace }}:/app node:16 /app/pkg/ui/aim/embed/build.sh
+      - name: Node build
+        run:  docker run -v ${{ github.workspace }}:/app -w "/app" node:16 make node-build
 
       - name: Set up Go
         uses: actions/setup-go@v3

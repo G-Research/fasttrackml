@@ -34,12 +34,6 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-release:
-  disable: '{{ if index .Env "GH_RELEASE" }}false{{ else }}true{{ end }}'
-  github:
-    owner: '{{ if index .Env "GH_OWNER" }}{{ .Env.GH_OWNER }}{{ else }}""{{ end }}'
-    name: '{{ if index .Env "GH_REPO_NAME" }}{{ .Env.GH_REPO_NAME }}{{ else }}""{{ end }}'
-
 
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.

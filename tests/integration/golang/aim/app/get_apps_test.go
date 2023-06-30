@@ -1,4 +1,3 @@
-//go:build integration
 
 package run
 
@@ -8,7 +7,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -22,9 +20,8 @@ import (
 type GetAppsTestSuite struct {
 	suite.Suite
 	client             *helpers.HttpClient
-	runFixtures        *fixtures.RunFixtures
-	experimentFixtures *fixtures.ExperimentFixtures
-	runs               []*models.Run
+	appFixtures        *fixtures.AppFixtures
+	apps               []*models.App
 }
 
 func TestGetAppsTestSuite(t *testing.T) {
@@ -34,74 +31,45 @@ func TestGetAppsTestSuite(t *testing.T) {
 func (s *GetAppsTestSuite) SetupTest() {
 	s.client = helpers.NewAimApiClient(os.Getenv("SERVICE_BASE_URL"))
 
-	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
+	appFixtures, err := fixtures.NewAppFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
+	s.appFixtures = appFixtures
 
-	expFixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = expFixtures
-
-	exp := &models.Experiment{
-		Name:           uuid.New().String(),
-		LifecycleStage: models.LifecycleStageActive,
-	}
-	_, err = s.experimentFixtures.CreateTestExperiment(context.Background(), exp)
-	assert.Nil(s.T(), err)
-
-	s.runs, err = s.runFixtures.CreateTestRuns(context.Background(), exp, 10)
+	s.apps, err = s.appFixtures.CreateTestApps(context.Background(), 10)
 	assert.Nil(s.T(), err)
 }
 
 func (s *GetAppsTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string
-		request          request.DeleteRunRequest
-		expectedRunCount int
+		expectedAppCount int
 	}{
 		{
-			name:             "DeleteOneRunSucceeds",
-			request:          request.DeleteRunRequest{RunID: s.runs[4].ID},
-			expectedRunCount: 9,
-		},
-		{
-			name:             "RowNumbersAreRecalculated",
-			request:          request.DeleteRunRequest{RunID: s.runs[1].ID},
-			expectedRunCount: 8,
+			name:             "GetAppsSucceeds",
+			expectedAppCount: 10,
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
 
-			var resp any
-			err = s.client.DoDeleteRequest(
-				fmt.Sprintf("/runs/%s", tt.request.RunID),
+			var resp []any
+			err := s.client.DoGetRequest(
+				"/runs",
 				&resp,
 			)
 			assert.Nil(s.T(), err)
 
-			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
-			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
-
-			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
-			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
-			assert.Greater(s.T(), originalMaxRowNum, newMaxRowNum)
+			assert.Equal(s.T(), tt.expectedAppCount, len(resp))
 		})
 	}
 }
 
 func (s *GetAppsTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name    string
@@ -114,21 +82,14 @@ func (s *GetAppsTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
 
 			var resp api.ErrorResponse
-			err = s.client.DoDeleteRequest(
+			err := s.client.DoDeleteRequest(
 				fmt.Sprintf("/runs/%s", tt.request.RunID),
 				&resp,
 			)
 			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), resp.Error(), "count of deleted runs does not match length of ids input")
-
-			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
-			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
-			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
 		})
 	}
 }

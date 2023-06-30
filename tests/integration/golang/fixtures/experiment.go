@@ -36,8 +36,8 @@ func NewExperimentFixtures(databaseDSN string) (*ExperimentFixtures, error) {
 	}, nil
 }
 
-// CreateTestExperiment creates a new test Experiment.
-func (f ExperimentFixtures) CreateTestExperiment(
+// CreateExperiment creates a new test Experiment.
+func (f ExperimentFixtures) CreateExperiment(
 	ctx context.Context, experiment *models.Experiment,
 ) (*models.Experiment, error) {
 	if err := f.experimentRepository.Create(ctx, experiment); err != nil {

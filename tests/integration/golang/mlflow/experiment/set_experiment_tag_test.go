@@ -56,7 +56,7 @@ func SetExperimentTag(s *SetExperimentTagTestSuite, experiment *models.Experimen
 
 func (s *SetExperimentTagTestSuite) Test_Ok() {
 	// 1. prepare database with test data.
-	experiment, err := s.fixtures.CreateTestExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		CreationTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
@@ -70,7 +70,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		ArtifactLocation: "/artifact/location",
 	})
 	assert.Nil(s.T(), err)
-	experiment1, err := s.fixtures.CreateTestExperiment(context.Background(), &models.Experiment{
+	experiment1, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment2",
 		CreationTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),

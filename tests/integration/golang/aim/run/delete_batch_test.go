@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -42,10 +43,10 @@ func (s *DeleteBatchTestSuite) SetupTest() {
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 	}
-	_, err = s.experimentFixtures.CreateTestExperiment(context.Background(), exp)
+	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	s.runs, err = s.runFixtures.CreateTestRuns(context.Background(), exp, 10)
+	s.runs, err = s.runFixtures.CreateRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
 }
 
@@ -56,36 +57,40 @@ func (s *DeleteBatchTestSuite) Test_Ok() {
 		expectedRunCount int
 	}{
 		{
-			name:             "DeleteBatchOfOneSucceeds",
+			name:             "DeleteBatchOfOne",
 			runIDs:           []string{s.runs[4].ID},
 			expectedRunCount: 9,
 		},
 		{
-			name:             "DeleteBatchOfTwoSucceeds",
+			name:             "DeleteBatchOfTwo",
 			runIDs:           []string{s.runs[3].ID, s.runs[5].ID},
 			expectedRunCount: 7,
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+				context.Background(), s.runs[0].ExperimentID,
+			)
+			assert.Nil(s.T(), err)
 
-			resp := map[string]any{}
+			resp := fiber.Map{}
 			err = s.client.DoPostRequest(
 				"/runs/delete-batch",
 				tt.runIDs,
 				&resp,
 			)
-			assert.NoError(s.T(), err)
-			assert.Equal(s.T(), map[string]interface{}{"status": "OK"}, resp)
+			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
 
 			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 
-			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+				context.Background(), s.runs[0].ExperimentID,
+			)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
 			assert.Greater(s.T(), originalMaxRowNum, newMaxRowNum)
 
@@ -104,15 +109,17 @@ func (s *DeleteBatchTestSuite) Test_Error() {
 		expectedRunCount int
 	}{
 		{
-			name:             "DeleteWithUnknownIDFails",
+			name:             "DeleteWithUnknownID",
 			request:          []string{s.runs[1].ID, "some-other-id"},
 			expectedRunCount: 10,
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+				context.Background(), s.runs[0].ExperimentID,
+			)
+			assert.Nil(s.T(), err)
 
 			var resp api.ErrorResponse
 			err = s.client.DoPostRequest(
@@ -124,11 +131,13 @@ func (s *DeleteBatchTestSuite) Test_Error() {
 			assert.Contains(s.T(), resp.Error(), "count of deleted runs does not match length of ids input")
 
 			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 
-			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(context.Background(), s.runs[0].ExperimentID)
-			assert.NoError(s.T(), err)
+			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+				context.Background(), s.runs[0].ExperimentID,
+			)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
 			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
 		})

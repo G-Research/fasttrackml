@@ -31,4 +31,4 @@ RUN make go-build
 # Container settings.
 ENV LISTEN-ADDRESS 8080
 EXPOSE 8080
-ENTRYPOINT ["./fasttrack-service", "server", "--database-uri=postgres://postgres:postgres@fasttrack-postgres:5432/postgres", "--listen-address=:8080"]
+ENTRYPOINT ["./fasttrack-service", "server", "--database-uri=postgres://postgres:postgres@fasttrack-postgres:5432/postgres", "--listen-address=:8080", "--log-level=debug"]

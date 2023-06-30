@@ -22,7 +22,7 @@ require (
 	github.com/zeebo/assert v1.3.0
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/driver/sqlite v1.4.3
-	gorm.io/gorm v1.25.1
+	gorm.io/gorm v1.25.2
 	gorm.io/plugin/dbresolver v1.4.1
 )
 

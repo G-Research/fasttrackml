@@ -13,8 +13,8 @@ jobs:
     name: Publish container image to DockerHub
     runs-on: ubuntu-latest
     environment: release
-    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && !github.event.repository.fork
-    steps:
+    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' # && !github.event.repository.fork
+
       - name: Checkout
         uses: actions/checkout@v3
         with:

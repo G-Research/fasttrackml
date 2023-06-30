@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -42,7 +41,7 @@ func (s *DeleteExperimentTestSuite) SetupTest() {
 
 func (s *DeleteExperimentTestSuite) Test_Ok() {
 	// 1. prepare database with test data.
-	experiment, err := s.fixtures.CreateTestExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{

@@ -5,7 +5,6 @@ package run
 import (
 	"context"
 	"fmt"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"os"
 	"strings"
 	"testing"
@@ -15,6 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
@@ -46,7 +46,7 @@ func (s *LogParamTestSuite) SetupTest() {
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 	}
-	_, err = s.experimentFixtures.CreateTestExperiment(context.Background(), exp)
+	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
 	run := &models.Run{
@@ -56,7 +56,7 @@ func (s *LogParamTestSuite) SetupTest() {
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
 	}
-	run, err = s.runFixtures.CreateTestRun(context.Background(), run)
+	run, err = s.runFixtures.CreateRun(context.Background(), run)
 	assert.Nil(s.T(), err)
 	s.run = run
 }
@@ -97,6 +97,6 @@ func (s *LogParamTestSuite) Test_Error() {
 		req,
 		&resp,
 	)
-	assert.NoError(s.T(), err)
+	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'").Error(), resp.Error())
 }

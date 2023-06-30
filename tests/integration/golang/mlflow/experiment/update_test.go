@@ -40,7 +40,7 @@ func (s *UpdateExperimentTestSuite) SetupTest() {
 
 func (s *UpdateExperimentTestSuite) Test_Ok() {
 	// 1. prepare database with test data.
-	experiment, err := s.fixtures.CreateTestExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		CreationTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),

@@ -36,6 +36,24 @@ func NewMetricFixtures(databaseDSN string) (*MetricFixtures, error) {
 	}, nil
 }
 
+// CreateMetric creates new test Metric.
+func (f MetricFixtures) CreateMetric(ctx context.Context, metric *models.Metric) (*models.Metric, error) {
+	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
+		return nil, eris.Wrap(err, "error creating test metric")
+	}
+	return metric, nil
+}
+
+// CreateLatestMetric creates new test Latest Metric.
+func (f MetricFixtures) CreateLatestMetric(
+	ctx context.Context, metric *models.LatestMetric,
+) (*models.LatestMetric, error) {
+	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
+		return nil, eris.Wrap(err, "error creating test latest metric")
+	}
+	return metric, nil
+}
+
 // GetLatestMetricByKey returns the latest metric by provided key.
 func (f MetricFixtures) GetLatestMetricByKey(ctx context.Context, key string) (*models.LatestMetric, error) {
 	var metric models.LatestMetric

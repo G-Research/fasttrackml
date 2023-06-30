@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/rotisserie/eris"
 )
@@ -52,7 +51,7 @@ func (c HttpClient) DoPostRequest(uri string, request interface{}, response inte
 		StrReplace(
 			fmt.Sprintf(
 				"%s%s%s",
-				os.Getenv("SERVICE_BASE_URL"),
+				c.baseURL,
 				c.basePath,
 				uri,
 			),
@@ -87,16 +86,53 @@ func (c HttpClient) DoPostRequest(uri string, request interface{}, response inte
 
 // DoGetRequest do GET request.
 func (c HttpClient) DoGetRequest(uri string, response interface{}) error {
-	return c.DoRequest(http.MethodGet, uri, response)
+	return c.doRequest(http.MethodGet, uri, response)
 }
 
 // DoDeleteRequest do DELETE request.
 func (c HttpClient) DoDeleteRequest(uri string, response interface{}) error {
-	return c.DoRequest(http.MethodDelete, uri, response)
+	return c.doRequest(http.MethodDelete, uri, response)
 }
 
-// DoRequest do request.
-func (c HttpClient) DoRequest(httpMethod string, uri string, response interface{}) error {
+// DoStreamRequest do stream request.
+func (c HttpClient) DoStreamRequest(method, uri string) ([]byte, error) {
+	// 1. create actual request object.
+	req, err := http.NewRequestWithContext(
+		context.Background(),
+		method,
+		StrReplace(
+			fmt.Sprintf(
+				"%s%s%s",
+				c.baseURL,
+				c.basePath,
+				uri,
+			),
+			[]string{},
+			[]interface{}{},
+		),
+		nil,
+	)
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating request")
+	}
+
+	// 3. send request data.
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, eris.Wrap(err, "error doing request")
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, eris.Wrap(err, "error reading streaming response")
+	}
+
+	return data, nil
+}
+
+// doRequest do request.
+func (c HttpClient) doRequest(httpMethod string, uri string, response interface{}) error {
 	// 1. create actual request object.
 	req, err := http.NewRequestWithContext(
 		context.Background(),
@@ -104,7 +140,7 @@ func (c HttpClient) DoRequest(httpMethod string, uri string, response interface{
 		StrReplace(
 			fmt.Sprintf(
 				"%s%s%s",
-				os.Getenv("SERVICE_BASE_URL"),
+				c.baseURL,
 				c.basePath,
 				uri,
 			),

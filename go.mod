@@ -19,6 +19,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
+	github.com/zeebo/assert v1.3.0
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.25.2
@@ -26,6 +27,7 @@ require (
 )
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/apache/thrift v0.16.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

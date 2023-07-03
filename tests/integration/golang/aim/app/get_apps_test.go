@@ -70,7 +70,7 @@ func (s *GetAppsTestSuite) Test_Error() {
 		expectedAppCount int
 	}{
 		{
-			name:             "GetAppsWithEmptyDb",
+			name:             "GetAppsWithNoRows",
 			expectedAppCount: 0,
 		},
 	}

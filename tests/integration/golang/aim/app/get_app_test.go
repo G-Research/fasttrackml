@@ -46,7 +46,7 @@ func (s *GetAppTestSuite) Test_Ok() {
 		expectedAppCount int
 	}{
 		{
-			name: "GetAppWithExistingRows",
+			name: "GetAppWithExistingID",
 		},
 	}
 	for _, tt := range tests {

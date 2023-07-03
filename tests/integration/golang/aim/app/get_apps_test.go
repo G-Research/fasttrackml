@@ -1,17 +1,13 @@
-
 package run
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -57,7 +53,7 @@ func (s *GetAppsTestSuite) Test_Ok() {
 
 			var resp []any
 			err := s.client.DoGetRequest(
-				"/runs",
+				"/apps",
 				&resp,
 			)
 			assert.Nil(s.T(), err)
@@ -68,28 +64,27 @@ func (s *GetAppsTestSuite) Test_Ok() {
 }
 
 func (s *GetAppsTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
-	}()
+	assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	tests := []struct {
-		name    string
-		request request.DeleteRunRequest
+		name             string
+		expectedAppCount int
 	}{
 		{
-			name:    "DeleteWithUnknownIDFails",
-			request: request.DeleteRunRequest{RunID: "some-other-id"},
+			name:             "GetAppsSucceeds",
+			expectedAppCount: 0,
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 
-			var resp api.ErrorResponse
-			err := s.client.DoDeleteRequest(
-				fmt.Sprintf("/runs/%s", tt.request.RunID),
+			var resp []any
+			err := s.client.DoGetRequest(
+				"/apps",
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp.Error(), "count of deleted runs does not match length of ids input")
+
+			assert.Equal(s.T(), tt.expectedAppCount, len(resp))
 		})
 	}
 }

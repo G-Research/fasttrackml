@@ -15,8 +15,8 @@ type App struct {
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 	IsArchived bool      `json:"-"`
-	Type  string   `gorm:"not null" json:"type"`
-	State AppState `json:"state"`
+	Type       string    `gorm:"not null" json:"type"`
+	State      AppState  `json:"state"`
 }
 
 type AppState map[string]any

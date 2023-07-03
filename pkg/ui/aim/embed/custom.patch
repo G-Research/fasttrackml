@@ -638,3 +638,63 @@ index 0fc79c5..867376b 100644
      icon: 'audios',
      displayName: 'Audios',
      isExact: true,
+diff --git a/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx b/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx
+index 4608789..417b5bf 100644
+--- a/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx
++++ b/aim/web/ui/src/pages/Dashboard/components/QuickStart/QuickStart.tsx
+@@ -10,6 +10,9 @@ import { DOCUMENTATIONS } from 'config/references';
+ import './QuickStart.scss';
+ 
+ function QuickStart() {
++  // Get fasttrack server hostname from current browser location
++  const { hostname, port } = window.location;
++  const fasttrack_server = `http://${hostname}:${port}`;
+   return (
+     <div className='QuickStart'>
+       <Text
+@@ -28,24 +31,32 @@ function QuickStart() {
+           tint={100}
+           className='QuickStart__section__title'
+         >
+-          Integrate Aim with your code
++          Integrate Fasttrack with your code
+         </Text>
+         <CodeBlock
+-          code={`from aim import Run
++          code={`import tensorflow as tf
++import mlflow
++data = tf.keras.datasets.fashion_mnist
+ 
+-# Initialize a new run
+-run = Run()
++mlflow.set_tracking_uri("${fasttrack_server}")
++mlflow.tensorflow.autolog()
+ 
+-# Log run parameters
+-run["hparams"] = {
+-    "learning_rate": 0.001,
+-    "batch_size": 32
+-}
++(training_images, training_labels), (test_images, test_labels) = data.load_data()
++
++training_images  = training_images / 255.0
++test_images = test_images / 255.0
++
++model = tf.keras.models.Sequential([
++            tf.keras.layers.Flatten(input_shape=(28, 28)),
++            tf.keras.layers.Dense(128, activation=tf.nn.relu),
++            tf.keras.layers.Dense(10, activation=tf.nn.softmax)
++        ])
+ 
+-# Log metrics
+-for i in range(10):
+-    run.track(i, name='loss', step=i, context={ "subset":"train" })
+-    run.track(i, name='acc', step=i, context={ "subset":"train" })`}
++model.compile(optimizer='adam',
++              loss='sparse_categorical_crossentropy',
++              metrics=['accuracy'])
++model.fit(training_images, training_labels, epochs=10)
++model.evaluate(test_images, test_labels)`}
+         />
+         <Text
+           component='p'

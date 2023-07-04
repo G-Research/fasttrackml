@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
@@ -21,6 +19,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -62,7 +61,7 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 	}()
 
 	// 1. create test experiment.
-	experiment, err := s.experimentFixtures.CreateTestExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
@@ -84,7 +83,7 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	// 2. create test run.
-	run, err := s.runFixtures.CreateTestRun(context.Background(), &models.Run{
+	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		Status:         models.StatusRunning,
 		SourceType:     "JOB",

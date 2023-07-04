@@ -10,11 +10,10 @@ replace (
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/apache/arrow/go/v11 v11.0.0
-	github.com/go-python/gpython v0.2.0
 	github.com/aws/aws-sdk-go-v2 v1.18.1
 	github.com/aws/aws-sdk-go-v2/config v1.18.27
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.36.0
-	github.com/go-python/gpython v0.1.0
+	github.com/go-python/gpython v0.2.0
 	github.com/gofiber/fiber/v2 v2.47.0
 	github.com/google/uuid v1.3.0
 	github.com/hetiansu5/urlquery v1.2.7

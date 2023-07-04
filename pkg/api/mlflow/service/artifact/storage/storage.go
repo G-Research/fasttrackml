@@ -46,13 +46,7 @@ func NewArtifactStorage(config *config.ServiceConfig) (Provider, error) {
 		switch u.Scheme {
 		case "s3":
 			return NewS3(u.Host, config)
-		case "http", "https":
-			return nil, eris.Errorf("storage not yet implemented: %s", u.Scheme)
-		case "file":
-			return nil, eris.Errorf("storage not yet implemented: %s", u.Scheme)
 		}
-
-		return nil, eris.Errorf("unsupported storage type: %s", u.Scheme)
 	}
 	return NewNope(), nil
 }

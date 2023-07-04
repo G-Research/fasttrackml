@@ -33,6 +33,7 @@ ENV LISTEN-ADDRESS 8080
 EXPOSE 8080
 ENTRYPOINT [ \
     "./fasttrack-service", "server", \
+    "--log-level=debug", \
     "--database-uri=postgres://postgres:postgres@fasttrack-postgres:5432/postgres", \
     "--listen-address=:8080", \
     "--artifact-root=s3://fasttrackml", \

@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +22,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
+
+// validation rule for SearchMetrics
+var metricNameRegExp = regexp.MustCompile(`in\s*metric\.name|metric\.name(?:\.|\s*==)`)
 
 func GetRunInfo(c *fiber.Ctx) error {
 	q := struct {
@@ -512,6 +516,11 @@ func SearchMetrics(c *fiber.Ctx) error {
 
 	if c.Query("p") == "" {
 		q.Steps = 50
+	}
+
+	// require a metric.name
+	if !validateMetricNamePresent(q.Query) {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "No metrics are selected")
 	}
 
 	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
@@ -1033,4 +1042,9 @@ func toNumpy(values []float64) fiber.Map {
 		"shape": len(values),
 		"blob":  buf.Bytes(),
 	}
+}
+
+// validateMetricNamePresent scans the query for metric.name condition
+func validateMetricNamePresent(query string) bool {
+	return metricNameRegExp.Match([]byte(query))
 }

@@ -4,6 +4,7 @@ volumes:
   home:
   workspaces:
   postgres-data:
+  minio-storage:
 
 services:
   app:
@@ -63,3 +64,15 @@ services:
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.). Ports
     # section will work when running the compose file standalone.
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-storage:/data
+    environment:
+      MINIO_ROOT_USER: user
+      MINIO_ROOT_PASSWORD: password
+    command: server --console-address ":9001" /data

@@ -13,16 +13,19 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
@@ -41,21 +44,29 @@ var ServerCmd = &cobra.Command{
 }
 
 func serverCmd(cmd *cobra.Command, args []string) error {
-	// 1. init database connection.
-	db, err := initDB()
+	// 1. process config parameters.
+	mlflowConfig := mlflowConfig.NewServiceConfig()
+
+	// 2. init database connection.
+	db, err := initDB(mlflowConfig)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
 
-	// 2. init main HTTP server.
-	server := initServer()
+	// 3. init main HTTP server.
+	server := initServer(mlflowConfig)
 
-	// 3. init `aim` api and ui routes.
+	// 4. init `aim` api and ui routes.
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
 	aimUI.AddRoutes(server.Group("/aim/"))
 
-	// 4. init `mlflow` api and ui routes.
+	storage, err := storage.NewArtifactStorage(mlflowConfig)
+	if err != nil {
+		return eris.Wrap(err, "error initializing artifact storage")
+	}
+
+	// 5. init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
 		controller.NewController(
@@ -71,9 +82,11 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 				repositories.NewMetricRepository(db.DB),
 			),
 			artifact.NewService(
+				storage,
 				repositories.NewRunRepository(db.DB),
 			),
 			experiment.NewService(
+				mlflowConfig,
 				repositories.NewTagRepository(db.DB),
 				repositories.NewExperimentRepository(db.DB),
 			),
@@ -108,14 +121,14 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 }
 
 // initDB init DB connection.
-func initDB() (*database.DbInstance, error) {
+func initDB(config *mlflowConfig.ServiceConfig) (*database.DbInstance, error) {
 	db, err := database.ConnectDB(
-		viper.GetString("database-uri"),
-		viper.GetDuration("database-slow-threshold"),
-		viper.GetInt("database-pool-max"),
-		viper.GetBool("database-reset"),
-		viper.GetBool("database-migrate"),
-		viper.GetString("artifact-root"),
+		config.DatabaseURI,
+		config.DatabaseSlowThreshold,
+		config.DatabasePoolMax,
+		config.DatabaseReset,
+		config.DatabaseMigrate,
+		config.ArtifactRoot,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to DB: %w", err)
@@ -124,7 +137,7 @@ func initDB() (*database.DbInstance, error) {
 }
 
 // initServer init HTTP server with base configuration.
-func initServer() *fiber.App {
+func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 	server := fiber.New(fiber.Config{
 		ReadBufferSize:        16384,
 		ReadTimeout:           5 * time.Second,
@@ -148,13 +161,11 @@ func initServer() *fiber.App {
 		},
 	})
 
-	authUsername := viper.GetString("auth-username")
-	authPassword := viper.GetString("auth-password")
-	if authUsername != "" && authPassword != "" {
-		log.Infof(`BasicAuth enabled with user "%s"`, authUsername)
+	if config.AuthUsername != "" && config.AuthPassword != "" {
+		log.Infof(`BasicAuth enabled with user "%s"`, config.AuthUsername)
 		server.Use(basicauth.New(basicauth.Config{
 			Users: map[string]string{
-				authUsername: authPassword,
+				config.AuthUsername: config.AuthPassword,
 			},
 		}))
 	}
@@ -188,6 +199,7 @@ func init() {
 
 	ServerCmd.Flags().StringP("listen-address", "a", "localhost:5000", "Address (host:post) to listen to")
 	ServerCmd.Flags().String("artifact-root", "s3://fasttrackml", "Artifact root")
+	ServerCmd.Flags().String("s3-endpoint-url", "", "S3 compatible storage base endpoint url")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")
 	ServerCmd.Flags().StringP("database-uri", "d", "sqlite://fasttrackml.db", "Database URI")

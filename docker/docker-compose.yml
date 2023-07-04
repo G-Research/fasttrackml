@@ -6,8 +6,13 @@ services:
       dockerfile: ./docker/Dockerfile
     depends_on:
       - fasttrack-postgres
+      - fasttrack-localstack
     ports:
       - "8080:8080"
+    environment:
+      AWS_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: "key"
+      AWS_SECRET_ACCESS_KEY: "secret"
     networks:
       - fasttrack-network
 
@@ -29,10 +34,27 @@ services:
     external_links:
       - fasttrack-service:fasttrack-service
     environment:
+      AWS_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: "key"
+      AWS_SECRET_ACCESS_KEY: "secret"
+      S3_BASE_URL: http://fasttrack-localstack:4566
       DATABASE_DSN: postgres://postgres:postgres@fasttrack-postgres:5432/postgres
       SERVICE_BASE_URL: http://fasttrack-service:8080
     networks:
       - fasttrack-network
+
+  fasttrack-localstack:
+    build:
+      context: ../
+      dockerfile: docker/tests/localstack/Dockerfile
+    ports:
+      - "4566:4566"
+    networks:
+      - fasttrack-network
+    environment:
+      - DEBUG=1
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
 
 networks:
   fasttrack-network:

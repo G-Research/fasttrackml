@@ -26,6 +26,22 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.ListArtifactsRequest{},
 		},
+		{
+			name:  "1DotRelativePathProvided",
+			error: api.NewInvalidParameterValueError("incorrect path has been provided. path has to be absolute"),
+			request: &request.ListArtifactsRequest{
+				RunID: "run_id",
+				Path:  ".",
+			},
+		},
+		{
+			name:  "2DotsRelativePathProvided",
+			error: api.NewInvalidParameterValueError("incorrect path has been provided. path has to be absolute"),
+			request: &request.ListArtifactsRequest{
+				RunID: "run_id",
+				Path:  "..",
+			},
+		},
 	}
 
 	for _, tt := range testData {

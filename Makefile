@@ -78,7 +78,7 @@ service-start-dependencies: ## start service dependencies in docker.
 	@echo ">>> Start all Service dependencies."
 	@docker-compose $(DOCKER_COMPOSE_OPTIONS) up \
 	-d \
-	fasttrack-postgres
+	fasttrack-postgres fasttrack-localstack
 
 .PHONY: service-start
 service-start: service-build service-start-dependencies ## start service in docker.

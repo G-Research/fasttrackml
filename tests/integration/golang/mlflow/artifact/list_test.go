@@ -78,7 +78,7 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 			Valid: true,
 		},
 		LifecycleStage:   models.LifecycleStageActive,
-		ArtifactLocation: "artifact/location",
+		ArtifactLocation: "experiment/experiment_id",
 	})
 	assert.Nil(s.T(), err)
 
@@ -95,7 +95,7 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 
 	// 3. upload artifact object to S3.
 	_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
-		Key:    aws.String(fmt.Sprintf("%s/%s/artifacts/artifact.file", experiment.ArtifactLocation, run.ID)),
+		Key:    aws.String(fmt.Sprintf("%s/artifact.file", run.ArtifactURI)),
 		Body:   strings.NewReader(`content`),
 		Bucket: aws.String("fasttrackml"),
 	})
@@ -116,7 +116,7 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 
 	assert.Equal(s.T(), 1, len(resp.Files))
 	assert.Equal(s.T(), response.FilePartialResponse{
-		Path:     fmt.Sprintf("artifact/location/%s/artifacts/artifact.file", runID),
+		Path:     fmt.Sprintf("experiment/experiment_id/%s/artifacts/artifact.file", runID),
 		IsDir:    false,
 		FileSize: 7,
 	}, resp.Files[0])

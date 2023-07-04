@@ -31,14 +31,16 @@ func (s Service) ListArtifacts(
 		return "", "", nil, err
 	}
 
-	_, err := s.runRepository.GetByID(ctx, req.GetRunID())
+	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
 	if err != nil {
 		return "", "", nil, api.NewInternalError("unable to get artifact URI for run '%s'", req.GetRunID())
 	}
 
-	nextPageToken, rootURI, artifacts, err := s.artifactStorage.List(req.Path, req.Token)
+	nextPageToken, rootURI, artifacts, err := s.artifactStorage.List(
+		run.ArtifactURI, req.Path, req.Token,
+	)
 	if err != nil {
-		return "", "", nil, api.NewInternalError("error getting artifact lis")
+		return "", "", nil, api.NewInternalError("error getting artifact list from storage")
 	}
 
 	return nextPageToken, rootURI, artifacts, nil

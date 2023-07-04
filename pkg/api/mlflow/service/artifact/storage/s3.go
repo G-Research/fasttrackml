@@ -2,6 +2,8 @@ package storage
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -56,12 +58,14 @@ func NewS3(bucket string, config *config.ServiceConfig) (*S3, error) {
 }
 
 // List implements Provider interface.
-func (s S3) List(path, nextPageToken string) (string, string, []ArtifactObject, error) {
+func (s S3) List(artifactURI, path, nextPageToken string) (string, string, []ArtifactObject, error) {
 	input := s3.ListObjectsV2Input{
 		Bucket: aws.String(s.bucket),
+		Prefix: aws.String(PrepareS3Prefix(s.config.ArtifactRoot, artifactURI)),
 	}
 	if path != "" {
-		input.Prefix = aws.String(path)
+		// filter first `/` just to make sure that Prefix will be always correct.
+		input.Prefix = aws.String(fmt.Sprintf("%s/%s", *input.Prefix, strings.TrimLeft(path, "/")))
 	}
 	if nextPageToken != "" {
 		input.ContinuationToken = aws.String(nextPageToken)

@@ -32,7 +32,7 @@ func (o ArtifactObject) IsDirectory() bool {
 
 // Provider provides and interface to work with artifact storage.
 type Provider interface {
-	List(path, nextPageToken string) (string, string, []ArtifactObject, error)
+	List(artifactURI, path, nextPageToken string) (string, string, []ArtifactObject, error)
 }
 
 // NewArtifactStorage creates

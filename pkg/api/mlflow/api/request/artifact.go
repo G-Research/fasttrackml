@@ -10,7 +10,7 @@ type ListArtifactsRequest struct {
 
 // GetRunID returns Run ID.
 func (r ListArtifactsRequest) GetRunID() string {
-	if r.RunID == "" {
+	if r.RunID != "" {
 		return r.RunID
 	}
 	return r.RunUUID

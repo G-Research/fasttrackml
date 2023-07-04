@@ -9,6 +9,6 @@ func NewNope() *Nope {
 }
 
 // List implements Provider interface.
-func (s Nope) List(path, nextPageToken string) (string, string, []ArtifactObject, error) {
+func (s Nope) List(artifactURI, path, nextPageToken string) (string, string, []ArtifactObject, error) {
 	return "", "", make([]ArtifactObject, 0), nil
 }

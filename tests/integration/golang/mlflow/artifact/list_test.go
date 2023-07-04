@@ -78,23 +78,24 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 			Valid: true,
 		},
 		LifecycleStage:   models.LifecycleStageActive,
-		ArtifactLocation: "/artifact/location",
+		ArtifactLocation: "artifact/location",
 	})
 	assert.Nil(s.T(), err)
 
 	// 2. create test run.
+	runID := strings.ReplaceAll(uuid.New().String(), "-", "")
 	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
-		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
+		ID:             runID,
 		Status:         models.StatusRunning,
 		SourceType:     "JOB",
 		ExperimentID:   *experiment.ID,
+		ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 		LifecycleStage: models.LifecycleStageActive,
 	})
 
 	// 3. upload artifact object to S3.
-	key := fmt.Sprintf("%d/%s/artifacts", *experiment.ID, run.ID)
 	_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
-		Key:    aws.String(fmt.Sprintf("%s/artifact.file", key)),
+		Key:    aws.String(fmt.Sprintf("%s/%s/artifacts/artifact.file", experiment.ArtifactLocation, run.ID)),
 		Body:   strings.NewReader(`content`),
 		Bucket: aws.String("fasttrackml"),
 	})
@@ -102,7 +103,6 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 
 	// 4. make actual API call.
 	query, err := urlquery.Marshal(request.ListArtifactsRequest{
-		Path:  key,
 		RunID: run.ID,
 	})
 	assert.Nil(s.T(), err)
@@ -116,7 +116,7 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 
 	assert.Equal(s.T(), 1, len(resp.Files))
 	assert.Equal(s.T(), response.FilePartialResponse{
-		Path:     fmt.Sprintf("%s/artifact.file", key),
+		Path:     fmt.Sprintf("artifact/location/%s/artifacts/artifact.file", runID),
 		IsDir:    false,
 		FileSize: 7,
 	}, resp.Files[0])

@@ -3,6 +3,7 @@ package run
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -14,18 +15,18 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type CreateAppTestSuite struct {
+type UpdateAppTestSuite struct {
 	suite.Suite
 	client      *helpers.HttpClient
 	appFixtures *fixtures.AppFixtures
 	apps        []*models.App
 }
 
-func TestCreateAppTestSuite(t *testing.T) {
-	suite.Run(t, new(CreateAppTestSuite))
+func TestUpdateAppTestSuite(t *testing.T) {
+	suite.Run(t, new(UpdateAppTestSuite))
 }
 
-func (s *CreateAppTestSuite) SetupTest() {
+func (s *UpdateAppTestSuite) SetupTest() {
 	s.client = helpers.NewAimApiClient(os.Getenv("SERVICE_BASE_URL"))
 
 	appFixtures, err := fixtures.NewAppFixtures(os.Getenv("DATABASE_DSN"))
@@ -36,7 +37,7 @@ func (s *CreateAppTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 }
 
-func (s *CreateAppTestSuite) Test_Ok() {
+func (s *UpdateAppTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
@@ -45,7 +46,7 @@ func (s *CreateAppTestSuite) Test_Ok() {
 		requestBody models.App
 	}{
 		{
-			name: "CreateValidApp",
+			name: "UpdateValidApp",
 			requestBody: models.App{
 				Type: "app-type",
 				State: models.AppState{
@@ -58,8 +59,8 @@ func (s *CreateAppTestSuite) Test_Ok() {
 		s.T().Run(tt.name, func(T *testing.T) {
 
 			var resp models.App
-			err := s.client.DoPostRequest(
-				"/apps",
+			err := s.client.DoPutRequest(
+				fmt.Sprintf("/apps/%s", s.apps[0].ID),
 				tt.requestBody,
 				&resp,
 			)
@@ -69,7 +70,7 @@ func (s *CreateAppTestSuite) Test_Ok() {
 	}
 }
 
-func (s *CreateAppTestSuite) Test_Error() {
+func (s *UpdateAppTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
@@ -78,7 +79,7 @@ func (s *CreateAppTestSuite) Test_Error() {
 		requestBody any
 	}{
 		{
-			name: "CreateAppWithIncorrectBody",
+			name: "UpdateAppWithIncorrectBody",
 			requestBody: map[string]any{
 				"State": "this-cannot-unmarshal",
 			},
@@ -88,8 +89,8 @@ func (s *CreateAppTestSuite) Test_Error() {
 		s.T().Run(tt.name, func(T *testing.T) {
 
 			var resp map[string]any
-			err := s.client.DoPostRequest(
-				"/apps",
+			err := s.client.DoPutRequest(
+				fmt.Sprintf("/apps/%s", s.apps[0].ID),
 				tt.requestBody,
 				&resp,
 			)

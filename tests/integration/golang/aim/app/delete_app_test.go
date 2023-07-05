@@ -3,6 +3,7 @@ package run
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -14,18 +15,18 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type CreateAppTestSuite struct {
+type DeleteAppTestSuite struct {
 	suite.Suite
 	client      *helpers.HttpClient
 	appFixtures *fixtures.AppFixtures
 	apps        []*models.App
 }
 
-func TestCreateAppTestSuite(t *testing.T) {
-	suite.Run(t, new(CreateAppTestSuite))
+func TestDeleteAppTestSuite(t *testing.T) {
+	suite.Run(t, new(DeleteAppTestSuite))
 }
 
-func (s *CreateAppTestSuite) SetupTest() {
+func (s *DeleteAppTestSuite) SetupTest() {
 	s.client = helpers.NewAimApiClient(os.Getenv("SERVICE_BASE_URL"))
 
 	appFixtures, err := fixtures.NewAppFixtures(os.Getenv("DATABASE_DSN"))
@@ -36,65 +37,78 @@ func (s *CreateAppTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 }
 
-func (s *CreateAppTestSuite) Test_Ok() {
+func (s *DeleteAppTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name        string
-		requestBody models.App
+		wantAppCount int
 	}{
 		{
-			name: "CreateValidApp",
-			requestBody: models.App{
-				Type: "app-type",
-				State: models.AppState{
-					"app-state-key": "app-state-value",
-				},
-			},
+			name: "DeleteApp",
+			wantAppCount: 9,
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 
-			var resp models.App
-			err := s.client.DoPostRequest(
-				"/apps",
-				tt.requestBody,
-				&resp,
+			var deleteResponse map[string]any
+			err := s.client.DoDeleteRequest(
+				fmt.Sprintf("/apps/%s", s.apps[0].ID),
+				&deleteResponse,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "app-type", resp.Type)
+
+			var getResponse []models.App
+			err = s.client.DoGetRequest(
+				"/apps",
+				&getResponse,
+			)
+			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), tt.wantAppCount, len(getResponse))
+
 		})
 	}
 }
 
-func (s *CreateAppTestSuite) Test_Error() {
+func (s *DeleteAppTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name        string
 		requestBody any
+		wantAppCount int
 	}{
 		{
-			name: "CreateAppWithIncorrectBody",
+			name: "DeleteAppWithIncorrectBody",
 			requestBody: map[string]any{
 				"State": "this-cannot-unmarshal",
 			},
+			wantAppCount: 10,
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 
-			var resp map[string]any
-			err := s.client.DoPostRequest(
-				"/apps",
+			var deleteResponse map[string]any
+			err := s.client.DoPutRequest(
+				fmt.Sprintf("/apps/%s", s.apps[0].ID),
 				tt.requestBody,
-				&resp,
+				&deleteResponse,
 			)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp["message"], "cannot unmarshal")
+			assert.Contains(s.T(), deleteResponse["message"], "cannot unmarshal")
+
+			var getResponse []models.App
+			err = s.client.DoGetRequest(
+				"/apps",
+				&getResponse,
+			)
+			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), tt.wantAppCount, len(getResponse))
+
 		})
 	}
 }

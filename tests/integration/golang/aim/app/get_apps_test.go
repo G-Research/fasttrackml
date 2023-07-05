@@ -1,3 +1,5 @@
+//go:build integration
+
 package run
 
 import (
@@ -15,9 +17,9 @@ import (
 
 type GetAppsTestSuite struct {
 	suite.Suite
-	client             *helpers.HttpClient
-	appFixtures        *fixtures.AppFixtures
-	apps               []*models.App
+	client      *helpers.HttpClient
+	appFixtures *fixtures.AppFixtures
+	apps        []*models.App
 }
 
 func TestGetAppsTestSuite(t *testing.T) {

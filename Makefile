@@ -45,7 +45,7 @@ go-get: ## get go modules.
 .PHONY: go-build
 go-build: ## build service binary.
 	@echo '>>> Building go binary.'
-	@go build -ldflags="-s -w" -o $(SERVICE) ./main.go
+	@go build -ldflags="-linkmode external -extldflags -static -s -w" -tags "$$(jq -r '."go.buildTags"' .vscode/settings.json)" -o $(SERVICE) ./main.go
 
 #
 # Tests targets.

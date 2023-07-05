@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -33,8 +32,8 @@ func TestDeleteExperimentTestSuite(t *testing.T) {
 }
 
 func (s *DeleteExperimentTestSuite) SetupTest() {
-	s.client = helpers.NewMlflowApiClient(os.Getenv("SERVICE_BASE_URL"))
-	fixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.fixtures = fixtures
 }
@@ -65,7 +64,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
 	}()
 
-	//check that the experiment lifecycle is active
+	// check that the experiment lifecycle is active
 	assert.Equal(s.T(), models.LifecycleStageActive, experiment.LifecycleStage)
 
 	// 2. make actual API call.
@@ -87,7 +86,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 }
 
 func (s *DeleteExperimentTestSuite) Test_Error() {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.DeleteExperimentRequest

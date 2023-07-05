@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -32,12 +31,12 @@ func TestSearchMetricsTestSuite(t *testing.T) {
 }
 
 func (s *SearchMetricsTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(os.Getenv("SERVICE_BASE_URL"))
-	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
+	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
-	metricFixtures, err := fixtures.NewMetricFixtures(os.Getenv("DATABASE_DSN"))
+	metricFixtures, err := fixtures.NewMetricFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
-	experimentFixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = experimentFixtures
 

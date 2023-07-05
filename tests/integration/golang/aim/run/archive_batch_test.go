@@ -5,7 +5,6 @@ package run
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -31,11 +30,11 @@ func TestArchiveBatchTestSuite(t *testing.T) {
 }
 
 func (s *ArchiveBatchTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(os.Getenv("SERVICE_BASE_URL"))
-	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
+	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.runFixtures = runFixtures
-	expFixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
 
@@ -109,7 +108,6 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
 			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
-
 		})
 	}
 }

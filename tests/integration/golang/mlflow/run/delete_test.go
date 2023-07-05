@@ -46,11 +46,11 @@ func (s *DeleteRunTestSuite) SetupTest() {
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 	}
-	_, err = s.experimentFixtures.CreateTestExperiment(context.Background(), exp)
+	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
 	// create run for the experiment
-	runs, err := s.runFixtures.CreateTestRuns(context.Background(), exp, 1)
+	runs, err := s.runFixtures.CreateRuns(context.Background(), exp, 1)
 	assert.Nil(s.T(), err)
 	s.run = runs[0]
 }
@@ -82,7 +82,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 
 			archivedRuns, err := s.runFixtures.GetTestRuns(context.Background(), s.run.ExperimentID)
 
-			assert.NoError(s.T(), err)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), s.run.ID, archivedRuns[0].ID)
 			assert.Equal(s.T(), models.LifecycleStageDeleted, archivedRuns[0].LifecycleStage)
 		})

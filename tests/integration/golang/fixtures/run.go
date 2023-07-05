@@ -2,6 +2,7 @@ package fixtures
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -38,8 +39,8 @@ func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
 	}, nil
 }
 
-// CreateTestRun creates a new test Run.
-func (f RunFixtures) CreateTestRun(
+// CreateRun creates a new test Run.
+func (f RunFixtures) CreateRun(
 	ctx context.Context, run *models.Run,
 ) (*models.Run, error) {
 	if err := f.runRepository.Create(ctx, run); err != nil {
@@ -48,8 +49,8 @@ func (f RunFixtures) CreateTestRun(
 	return run, nil
 }
 
-// CreateTestRuns creates some num runs belonging to the experiment
-func (f RunFixtures) CreateTestRuns(
+// CreateRuns creates some num runs belonging to the experiment
+func (f RunFixtures) CreateRuns(
 	ctx context.Context, exp *models.Experiment, num int,
 ) ([]*models.Run, error) {
 	var runs []*models.Run
@@ -57,12 +58,13 @@ func (f RunFixtures) CreateTestRuns(
 	for i := 0; i < num; i++ {
 		run := &models.Run{
 			ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
-			ExperimentID:   *exp.ID,
-			SourceType:     "JOB",
-			LifecycleStage: models.LifecycleStageActive,
+			Name:           fmt.Sprintf("TestRun_%d", i),
 			Status:         models.StatusRunning,
+			SourceType:     "JOB",
+			ExperimentID:   *exp.ID,
+			LifecycleStage: models.LifecycleStageActive,
 		}
-		run, err := f.CreateTestRun(context.Background(), run)
+		run, err := f.CreateRun(ctx, run)
 		if err != nil {
 			return nil, err
 		}
@@ -74,11 +76,14 @@ func (f RunFixtures) CreateTestRuns(
 // GetTestRuns fetches all runs for an experiment
 func (f RunFixtures) GetTestRuns(
 	ctx context.Context, experimentID int32) ([]models.Run, error) {
-	runs := []models.Run{}
-	if err := f.db.WithContext(ctx).
-		Where("experiment_id = ?", experimentID).
-		Order("start_time desc").
-		Find(&runs).Error; err != nil {
+	var runs []models.Run
+	if err := f.db.WithContext(ctx).Where(
+		"experiment_id = ?", experimentID,
+	).Order(
+		"start_time desc",
+	).Find(
+		&runs,
+	).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting `run` entities by experiment id: %v", experimentID)
 	}
 	return runs, nil

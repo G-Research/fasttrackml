@@ -96,7 +96,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		},
 	}
 	for _, ex := range experiments {
-		_, err := s.fixtures.CreateTestExperiment(context.Background(), &models.Experiment{
+		_, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
 			Name: ex.Name,
 			Tags: ex.Tags,
 			CreationTime: sql.NullInt64{

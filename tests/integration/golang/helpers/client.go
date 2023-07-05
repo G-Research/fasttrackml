@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/rotisserie/eris"
 )
@@ -43,7 +42,7 @@ func (c HttpClient) DoPostRequest(uri string, request interface{}, response inte
 	if err != nil {
 		return eris.Wrap(err, "error marshaling request")
 	}
-	return c.DoRequest(http.MethodPost, uri, response, bytes.NewBuffer(data))}
+	return c.doRequest(http.MethodPost, uri, response, bytes.NewBuffer(data))}
 
 // DoPostRequest do PUT request.
 func (c HttpClient) DoPutRequest(uri string, request interface{}, response interface{}) error {
@@ -51,21 +50,58 @@ func (c HttpClient) DoPutRequest(uri string, request interface{}, response inter
 	if err != nil {
 		return eris.Wrap(err, "error marshaling request")
 	}
-	return c.DoRequest(http.MethodPut, uri, response, bytes.NewBuffer(data))
+	return c.doRequest(http.MethodPut, uri, response, bytes.NewBuffer(data))
 }
 
 // DoGetRequest do GET request.
 func (c HttpClient) DoGetRequest(uri string, response interface{}) error {
-	return c.DoRequest(http.MethodGet, uri, response, nil)
+	return c.doRequest(http.MethodGet, uri, response, nil)
 }
 
 // DoDeleteRequest do DELETE request.
 func (c HttpClient) DoDeleteRequest(uri string, response interface{}) error {
-	return c.DoRequest(http.MethodDelete, uri, response, nil)
+	return c.doRequest(http.MethodDelete, uri, response, nil)
 }
 
-// DoRequest do request of any http method
-func (c HttpClient) DoRequest(httpMethod string, uri string, response interface{}, requestBody io.Reader) error {
+// DoStreamRequest do stream request.
+func (c HttpClient) DoStreamRequest(method, uri string) ([]byte, error) {
+	// 1. create actual request object.
+	req, err := http.NewRequestWithContext(
+		context.Background(),
+		method,
+		StrReplace(
+			fmt.Sprintf(
+				"%s%s%s",
+				c.baseURL,
+				c.basePath,
+				uri,
+			),
+			[]string{},
+			[]interface{}{},
+		),
+		nil,
+	)
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating request")
+	}
+
+	// 3. send request data.
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, eris.Wrap(err, "error doing request")
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, eris.Wrap(err, "error reading streaming response")
+	}
+
+	return data, nil
+}
+
+// doRequest do request of any http method
+func (c HttpClient) doRequest(httpMethod string, uri string, response interface{}, requestBody io.Reader) error {
 	// 1. create actual request object.
 	req, err := http.NewRequestWithContext(
 		context.Background(),
@@ -73,7 +109,7 @@ func (c HttpClient) DoRequest(httpMethod string, uri string, response interface{
 		StrReplace(
 			fmt.Sprintf(
 				"%s%s%s",
-				os.Getenv("SERVICE_BASE_URL"),
+				c.baseURL,
 				c.basePath,
 				uri,
 			),

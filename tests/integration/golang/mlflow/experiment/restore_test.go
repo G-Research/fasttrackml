@@ -42,7 +42,7 @@ func (s *RestoreExperimentTestSuite) SetupTest() {
 
 func (s *RestoreExperimentTestSuite) Test_Ok() {
 	// 1. prepare database with test data.
-	experiment, err := s.fixtures.CreateTestExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{

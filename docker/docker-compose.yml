@@ -5,14 +5,13 @@ services:
       context: ..
       dockerfile: ./docker/Dockerfile
     depends_on:
+      - fasttrack-minio
       - fasttrack-postgres
-      - fasttrack-localstack
     ports:
       - "8080:8080"
     environment:
-      AWS_REGION: "us-east-1"
-      AWS_ACCESS_KEY_ID: "key"
-      AWS_SECRET_ACCESS_KEY: "secret"
+      AWS_ACCESS_KEY_ID: "YFptmVrlVdOgnHZ8Idse"
+      AWS_SECRET_ACCESS_KEY: "ZeKsyUJikIAJQVtYsQNtdXx8qv9eevL94qFOx0Jh"
     networks:
       - fasttrack-network
 
@@ -34,27 +33,28 @@ services:
     external_links:
       - fasttrack-service:fasttrack-service
     environment:
-      AWS_REGION: "us-east-1"
-      AWS_ACCESS_KEY_ID: "key"
-      AWS_SECRET_ACCESS_KEY: "secret"
-      S3_BASE_URL: http://fasttrack-localstack:4566
+      AWS_ACCESS_KEY_ID: "YFptmVrlVdOgnHZ8Idse"
+      AWS_SECRET_ACCESS_KEY: "ZeKsyUJikIAJQVtYsQNtdXx8qv9eevL94qFOx0Jh"
+      S3_BASE_URL: http://fasttrack-minio:9000
       DATABASE_DSN: postgres://postgres:postgres@fasttrack-postgres:5432/postgres
       SERVICE_BASE_URL: http://fasttrack-service:8080
     networks:
       - fasttrack-network
 
-  fasttrack-localstack:
-    build:
-      context: ../
-      dockerfile: docker/tests/localstack/Dockerfile
+  fasttrack-minio:
+    image: minio/minio:latest
+    entrypoint: sh
+    command: -c 'mkdir -p /data/fasttrackml && minio server /data'
+    environment:
+      MINIO_ROOT_USER: "YFptmVrlVdOgnHZ8Idse"
+      MINIO_ROOT_PASSWORD: "ZeKsyUJikIAJQVtYsQNtdXx8qv9eevL94qFOx0Jh"
+      MINIO_ADDRESS: ":9000"
+      MINIO_CONSOLE_ADDRESS: ":9001"
     ports:
-      - "4566:4566"
+      - "9000:9000"
+      - "9001:9001"
     networks:
       - fasttrack-network
-    environment:
-      - DEBUG=1
-      - SERVICES=s3
-      - DEFAULT_REGION=us-east-1
 
 networks:
   fasttrack-network:

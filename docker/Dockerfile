@@ -37,5 +37,5 @@ ENTRYPOINT [ \
     "--database-uri=postgres://postgres:postgres@fasttrack-postgres:5432/postgres", \
     "--listen-address=:8080", \
     "--artifact-root=s3://fasttrackml", \
-    "--s3-endpoint-url=http://fasttrack-localstack:4566" \
+    "--s3-endpoint-url=http://fasttrack-minio:9000" \
 ]

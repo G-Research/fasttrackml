@@ -73,6 +73,7 @@ func (s S3) List(artifactURI, path, nextPageToken string) (string, string, []Art
 
 	output, err := s.client.ListObjectsV2(context.TODO(), &input)
 	if err != nil {
+		fmt.Println(err)
 		return "", "", nil, eris.Wrap(err, "error getting s3 objects")
 	}
 

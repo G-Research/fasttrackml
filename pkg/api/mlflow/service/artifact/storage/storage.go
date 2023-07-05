@@ -35,7 +35,7 @@ type Provider interface {
 	List(artifactURI, path, nextPageToken string) (string, string, []ArtifactObject, error)
 }
 
-// NewArtifactStorage creates
+// NewArtifactStorage creates new Artifact storage.
 func NewArtifactStorage(config *config.ServiceConfig) (Provider, error) {
 	if config.ArtifactRoot != "" {
 		u, err := url.Parse(config.ArtifactRoot)
@@ -48,5 +48,5 @@ func NewArtifactStorage(config *config.ServiceConfig) (Provider, error) {
 			return NewS3(u.Host, config)
 		}
 	}
-	return NewNope(), nil
+	return NewNoop(), nil
 }

@@ -50,8 +50,9 @@ func TestService_GetMetricHistory_Ok(t *testing.T) {
 		},
 	}, metrics)
 }
+
 func TestService_GetMetricHistory_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetMetricHistoryRequest
@@ -143,8 +144,9 @@ func TestService_GetMetricHistoryBulk_Ok(t *testing.T) {
 		},
 	}, metrics)
 }
+
 func TestService_GetMetricHistoryBulk_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetMetricHistoryBulkRequest
@@ -249,8 +251,9 @@ func TestNewService_GetMetricHistories_Ok(t *testing.T) {
 	assert.NotNil(t, rows)
 	assert.NotNil(t, iterator)
 }
+
 func TestNewService_GetMetricHistories_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetMetricHistoriesRequest

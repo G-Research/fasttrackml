@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/G-Research/fasttrackml/pkg/cmd"
-
 	log "github.com/sirupsen/logrus"
+
+	"github.com/G-Research/fasttrackml/pkg/cmd"
 )
 
 func main() {

@@ -12,10 +12,8 @@
             "program": "${workspaceFolder}",
             "args": [
                 "server",
-                "--log-level",
-                "debug",
                 "--database-uri",
-                "postgres://postgres:postgres@localhost:5432/postgres"
+                "postgres://postgres:postgres@localhost/postgres"
             ]
         },
         {
@@ -26,8 +24,6 @@
             "program": "${workspaceFolder}",
             "args": [
                 "server",
-                "--log-level",
-                "debug",
                 "--database-uri",
                 "sqlite://fasttrackml.db?mode=memory&cache=shared"
             ]
@@ -40,8 +36,6 @@
             "program": "${workspaceFolder}",
             "args": [
                 "server",
-                "--log-level",
-                "debug",
                 "--database-uri",
                 "sqlite://fasttrackml.db"
             ]
@@ -54,8 +48,6 @@
             "program": "${workspaceFolder}",
             "args": [
                 "server",
-                "--log-level",
-                "debug",
                 "--database-uri",
                 "sqlite://encrypted.db?_key=passphrase"
             ]

@@ -29,11 +29,26 @@ jobs:
         id: tags
         run: echo tags=$(jq -r '."go.buildTags"' .vscode/settings.json) >> $GITHUB_OUTPUT
 
+      - name: Download formatters
+        run: |
+          go install golang.org/x/tools/cmd/goimports@v0.11.0
+          go install mvdan.cc/gofumpt@v0.5.0
+
       - name: Check formatting
-        run: gofmt -l .
+        run: |
+          unformatted=$(
+            gofumpt -l .
+            goimports -l --local github.com/G-Research/fasttrackml .
+          )
+          if [ -n "$unformatted" ]; then
+            for file in $unformatted; do
+              echo "::error file=$file::$file is not formatted properly (hint: run \"make go-format\" to fix this)"
+            done
+            exit 1
+          fi
 
       - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.20.0
+        run: go install github.com/vektra/mockery/v2@v2.30.16
 
       - name: Generate mocks
         run: make mocks-generate
@@ -60,7 +75,7 @@ jobs:
           go-version: "1.20"
 
       - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.20.0
+        run: go install github.com/vektra/mockery/v2@v2.30.16
 
       - name: Generate mocks
         run: make mocks-generate
@@ -69,11 +84,15 @@ jobs:
         run: make test-go-unit
 
   golang-integration-tests:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
     name: Golang Integration Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Setup Go
         uses: actions/setup-go@v4
@@ -82,6 +101,8 @@ jobs:
 
       - name: Run Integration Tests
         run: make service-test
+        env:
+          DOCKER_BUILDKIT: 1
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

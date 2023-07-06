@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -36,29 +35,29 @@ func NewAppFixtures(databaseDSN string) (*AppFixtures, error) {
 	}, nil
 }
 
-// CreateTestApp creates a new test App.
-func (f AppFixtures) CreateTestApp(
-	ctx context.Context, app *models.App,
-) (*models.App, error) {
+// CreateApp creates a new test App.
+func (f AppFixtures) CreateApp(
+	ctx context.Context, app *database.App,
+) (*database.App, error) {
 	if err := f.db.WithContext(ctx).Create(app).Error; err != nil {
 		return nil, eris.Wrap(err, "error creating test app")
 	}
 	return app, nil
 }
 
-// CreateTestApps creates some num apps belonging to the experiment
-func (f AppFixtures) CreateTestApps(
+// CreateApps creates some num apps belonging to the experiment
+func (f AppFixtures) CreateApps(
 	ctx context.Context, num int,
-) ([]*models.App, error) {
-	var apps []*models.App
+) ([]*database.App, error) {
+	var apps []*database.App
 	// create apps for the experiment
 	for i := 0; i < num; i++ {
-		app := &models.App{
-			ID:    uuid.New(),
+		app := &database.App{
+			Base:  database.Base{ ID: uuid.New() },
 			Type:  "mpi",
-			State: models.AppState{},
+			State: database.AppState{},
 		}
-		app, err := f.CreateTestApp(context.Background(), app)
+		app, err := f.CreateApp(context.Background(), app)
 		if err != nil {
 			return nil, err
 		}
@@ -69,8 +68,8 @@ func (f AppFixtures) CreateTestApps(
 
 // GetTestApps fetches all apps for an experiment
 func (f AppFixtures) GetTestApps(
-	ctx context.Context) ([]models.App, error) {
-	apps := []models.App{}
+	ctx context.Context) ([]database.App, error) {
+	apps := []database.App{}
 	if err := f.db.WithContext(ctx).
 		Order("start_time desc").
 		Find(&apps).Error; err != nil {

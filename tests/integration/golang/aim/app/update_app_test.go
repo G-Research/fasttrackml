@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -19,7 +19,7 @@ type UpdateAppTestSuite struct {
 	suite.Suite
 	client      *helpers.HttpClient
 	appFixtures *fixtures.AppFixtures
-	apps        []*models.App
+	apps        []*database.App
 }
 
 func TestUpdateAppTestSuite(t *testing.T) {
@@ -33,7 +33,7 @@ func (s *UpdateAppTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.appFixtures = appFixtures
 
-	s.apps, err = s.appFixtures.CreateTestApps(context.Background(), 10)
+	s.apps, err = s.appFixtures.CreateApps(context.Background(), 10)
 	assert.Nil(s.T(), err)
 }
 
@@ -43,13 +43,13 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 	}()
 	tests := []struct {
 		name        string
-		requestBody models.App
+		requestBody database.App
 	}{
 		{
 			name: "UpdateValidApp",
-			requestBody: models.App{
+			requestBody: database.App{
 				Type: "app-type",
-				State: models.AppState{
+				State: database.AppState{
 					"app-state-key": "app-state-value",
 				},
 			},
@@ -58,7 +58,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 
-			var resp models.App
+			var resp database.App
 			err := s.client.DoPutRequest(
 				fmt.Sprintf("/apps/%s", s.apps[0].ID),
 				tt.requestBody,

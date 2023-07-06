@@ -1,8 +1,8 @@
 //go:build integration
+
 package run
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -31,24 +31,19 @@ func (s *CreateAppTestSuite) SetupTest() {
 	appFixtures, err := fixtures.NewAppFixtures(os.Getenv("DATABASE_DSN"))
 	assert.Nil(s.T(), err)
 	s.appFixtures = appFixtures
-
-	s.apps, err = s.appFixtures.CreateApps(context.Background(), 10)
-	assert.Nil(s.T(), err)
 }
 
 func (s *CreateAppTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
-	}()
+	defer func() { assert.Nil(s.T(), s.appFixtures.UnloadFixtures()) }()
 	tests := []struct {
 		name        string
-		requestBody database.App
+		requestBody map[string]any
 	}{
 		{
 			name: "CreateValidApp",
-			requestBody: database.App{
-				Type: "app-type",
-				State: database.AppState{
+			requestBody: map[string]any{
+				"type": "app-type",
+				"state": map[string]any{
 					"app-state-key": "app-state-value",
 				},
 			},
@@ -57,30 +52,31 @@ func (s *CreateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 
-			var resp database.App
+			var resp map[string]any
 			err := s.client.DoPostRequest(
 				"/apps",
 				tt.requestBody,
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "app-type", resp.Type)
+			assert.Equal(s.T(), tt.requestBody["type"], resp["type"])
+			assert.Equal(s.T(), tt.requestBody["state"], resp["state"])
+			assert.NotEmpty(s.T(), resp["id"])
+			assert.NotEmpty(s.T(), resp["created_at"])
+			assert.NotEmpty(s.T(), resp["updated_at"])
 		})
 	}
 }
 
 func (s *CreateAppTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name        string
 		requestBody any
 	}{
 		{
-			name: "CreateAppWithIncorrectBody",
+			name: "CreateAppWithIncorrectJson",
 			requestBody: map[string]any{
-				"State": "this-cannot-unmarshal",
+				"State": "this-will-not-unmarshal",
 			},
 		},
 	}

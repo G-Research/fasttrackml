@@ -1,4 +1,5 @@
 //go:build integration
+
 package run
 
 import (
@@ -7,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -33,7 +35,7 @@ func (s *DeleteAppTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.appFixtures = appFixtures
 
-	s.apps, err = s.appFixtures.CreateApps(context.Background(), 10)
+	s.apps, err = s.appFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
 }
 
@@ -42,12 +44,12 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name        string
+		name         string
 		wantAppCount int
 	}{
 		{
-			name: "DeleteApp",
-			wantAppCount: 9,
+			name:         "DeleteApp",
+			wantAppCount: 0,
 		},
 	}
 	for _, tt := range tests {
@@ -60,14 +62,9 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 			)
 			assert.Nil(s.T(), err)
 
-			var getResponse []database.App
-			err = s.client.DoGetRequest(
-				"/apps",
-				&getResponse,
-			)
+			apps, err := s.appFixtures.GetApps(context.Background())
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.wantAppCount, len(getResponse))
-
+			assert.Equal(s.T(), tt.wantAppCount, len(apps))
 		})
 	}
 }
@@ -77,38 +74,30 @@ func (s *DeleteAppTestSuite) Test_Error() {
 		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name        string
-		requestBody any
+		name         string
+		idParam  uuid.UUID
 		wantAppCount int
 	}{
 		{
-			name: "DeleteAppWithIncorrectBody",
-			requestBody: map[string]any{
-				"State": "this-cannot-unmarshal",
-			},
-			wantAppCount: 10,
+			name: "DeleteAppWithIncorrectID",
+			idParam: uuid.New(),
+			wantAppCount: 1,
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 
 			var deleteResponse map[string]any
-			err := s.client.DoPutRequest(
-				fmt.Sprintf("/apps/%s", s.apps[0].ID),
-				tt.requestBody,
+			err := s.client.DoDeleteRequest(
+				fmt.Sprintf("/apps/%s", tt.idParam),
 				&deleteResponse,
 			)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), deleteResponse["message"], "cannot unmarshal")
+			assert.Contains(s.T(), deleteResponse["message"], "Not Found")
 
-			var getResponse []database.App
-			err = s.client.DoGetRequest(
-				"/apps",
-				&getResponse,
-			)
+			apps, err := s.appFixtures.GetApps(context.Background())
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.wantAppCount, len(getResponse))
-
+			assert.Equal(s.T(), tt.wantAppCount, len(apps))
 		})
 	}
 }

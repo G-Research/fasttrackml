@@ -66,12 +66,12 @@ func (f AppFixtures) CreateApps(
 	return apps, nil
 }
 
-// GetTestApps fetches all apps for an experiment
-func (f AppFixtures) GetTestApps(
+// GetApps fetches all apps which are not archived
+func (f AppFixtures) GetApps(
 	ctx context.Context) ([]database.App, error) {
 	apps := []database.App{}
 	if err := f.db.WithContext(ctx).
-		Order("start_time desc").
+		Where("NOT is_archived").
 		Find(&apps).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting `app` entities")
 	}

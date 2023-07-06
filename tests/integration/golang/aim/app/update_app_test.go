@@ -1,4 +1,5 @@
 //go:build integration
+
 package run
 
 import (
@@ -33,7 +34,7 @@ func (s *UpdateAppTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.appFixtures = appFixtures
 
-	s.apps, err = s.appFixtures.CreateApps(context.Background(), 10)
+	s.apps, err = s.appFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
 }
 
@@ -43,13 +44,13 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 	}()
 	tests := []struct {
 		name        string
-		requestBody database.App
+		requestBody map[string]any
 	}{
 		{
 			name: "UpdateValidApp",
-			requestBody: database.App{
-				Type: "app-type",
-				State: database.AppState{
+			requestBody: map[string]any{
+				"type": "app-type",
+				"state": map[string]string{
 					"app-state-key": "app-state-value",
 				},
 			},
@@ -66,6 +67,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "app-type", resp.Type)
+			assert.Equal(s.T(), database.AppState{ "app-state-key": "app-state-value"}, resp.State)
 		})
 	}
 }

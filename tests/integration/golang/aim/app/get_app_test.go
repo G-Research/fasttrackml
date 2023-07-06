@@ -1,4 +1,5 @@
 //go:build integration
+
 package run
 
 import (
@@ -34,7 +35,7 @@ func (s *GetAppTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.appFixtures = appFixtures
 
-	s.apps, err = s.appFixtures.CreateApps(context.Background(), 10)
+	s.apps, err = s.appFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
 }
 
@@ -43,8 +44,7 @@ func (s *GetAppTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name             string
-		expectedAppCount int
+		name string
 	}{
 		{
 			name: "GetAppWithExistingID",
@@ -67,10 +67,12 @@ func (s *GetAppTestSuite) Test_Ok() {
 func (s *GetAppTestSuite) Test_Error() {
 	assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	tests := []struct {
-		name string
+		name    string
+		idParam uuid.UUID
 	}{
 		{
-			name: "GetAppWithUnknownID",
+			name:    "GetAppWithUnknownID",
+			idParam: uuid.New(),
 		},
 	}
 	for _, tt := range tests {
@@ -78,11 +80,11 @@ func (s *GetAppTestSuite) Test_Error() {
 
 			var resp map[string]string
 			err := s.client.DoGetRequest(
-				fmt.Sprintf("/apps/%v", uuid.New().String()),
+				fmt.Sprintf("/apps/%v", tt.idParam),
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "Not Found", resp["message"]) 
+			assert.Equal(s.T(), "Not Found", resp["message"])
 		})
 	}
 }

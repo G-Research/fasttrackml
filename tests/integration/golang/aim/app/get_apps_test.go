@@ -33,7 +33,7 @@ func (s *GetAppsTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.appFixtures = appFixtures
 
-	s.apps, err = s.appFixtures.CreateApps(context.Background(), 10)
+	s.apps, err = s.appFixtures.CreateApps(context.Background(), 2)
 	assert.Nil(s.T(), err)
 }
 
@@ -47,7 +47,11 @@ func (s *GetAppsTestSuite) Test_Ok() {
 	}{
 		{
 			name:             "GetAppsWithExistingRows",
-			expectedAppCount: 10,
+			expectedAppCount: 2,
+		},
+		{
+			name:             "GetAppsWithNoRows",
+			expectedAppCount: 0,
 		},
 	}
 	for _, tt := range tests {
@@ -59,13 +63,19 @@ func (s *GetAppsTestSuite) Test_Ok() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), s.apps[0].ID, resp[0].ID)
-			assert.Equal(s.T(), tt.expectedAppCount, len(resp))
+			for idx := 0; idx < tt.expectedAppCount; idx++ {
+				assert.Equal(s.T(), tt.expectedAppCount, len(resp))
+				assert.Equal(s.T(), s.apps[0].ID, resp[0].ID)
+				assert.Equal(s.T(), s.apps[0].Type, resp[0].Type)
+				assert.Equal(s.T(), s.apps[0].State, resp[0].State)
+				assert.NotEmpty(s.T(), resp[0].CreatedAt)
+				assert.NotEmpty(s.T(), resp[0].UpdatedAt)
+			}
 		})
 	}
 }
 
-func (s *GetAppsTestSuite) Test_Error() {
+func (s *GetAppsTestSuite) Test_Empty() {
 	assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	tests := []struct {
 		name             string

@@ -61,7 +61,7 @@ func NewS3(bucket string, config *config.ServiceConfig) (*S3, error) {
 func (s S3) List(artifactURI, path, nextPageToken string) (string, string, []ArtifactObject, error) {
 	input := s3.ListObjectsV2Input{
 		Bucket: aws.String(s.bucket),
-		Prefix: aws.String(PrepareS3Prefix(s.config.ArtifactRoot, artifactURI)),
+		Prefix: aws.String(ExtractS3Path(s.config.ArtifactRoot, artifactURI)),
 	}
 	if path != "" {
 		// filter first `/` just to make sure that Prefix will be always correct.

@@ -29,8 +29,8 @@ func NewListArtifactsResponse(
 	for i, artifact := range artifacts {
 		response.Files[i] = FilePartialResponse{
 			Path:     artifact.GetPath(),
-			FileSize: artifact.GetSize(),
 			IsDir:    artifact.IsDirectory(),
+			FileSize: artifact.GetSize(),
 		}
 	}
 

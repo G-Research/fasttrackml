@@ -46,5 +46,5 @@
 		"ghcr.io/dhoeric/features/k6:1": {},
 		"ghcr.io/christophermacgown/devcontainer-features/minio-client:1": {}
 	},
-	"postStartCommand": "bash -c 'mc config host add minio http://127.0.0.1:9000 user password && mc mb minio/fasttrackml'"
+	"postStartCommand": "mc config host add minio http://127.0.0.1:9000 user password && mc mb minio/fasttrackml"
 }

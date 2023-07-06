@@ -4,21 +4,12 @@
 #
 # Project-specific variables
 #
-# Service name. Used for binary name, docker-compose service name, etc...
-SERVICE=fasttrack-service
+# App name.
+APP=fml
 # Enable Go Modules.
 GO111MODULE=on
 
 #
-# General variables
-#
-# Path to Docker file
-PATH_DOCKER_FILE=$(realpath ./docker/Dockerfile)
-# Path to docker-compose file
-PATH_DOCKER_COMPOSE_FILE=$(realpath ./docker/docker-compose.yml)
-# Docker compose starting options.
-DOCKER_COMPOSE_OPTIONS= -f $(PATH_DOCKER_COMPOSE_FILE)
-
 # Default target (help)
 #
 .PHONY: help
@@ -43,9 +34,9 @@ go-get: ## get go modules.
 	@go mod download
 
 .PHONY: go-build
-go-build: ## build service binary.
+go-build: ## build app binary.
 	@echo '>>> Building go binary.'
-	@go build -ldflags="-s -w" -o $(SERVICE) ./main.go
+	@go build -ldflags="-linkmode external -extldflags -static -s -w" -tags "$$(jq -r '."go.buildTags"' .vscode/settings.json)" -o $(APP) ./main.go
 
 #
 # Tests targets.
@@ -61,23 +52,31 @@ test-go-integration: ## run go integration tests.
 	go test -v -p 1 -tags="integration" ./tests/integration/golang/...
 
 PHONY: test-python-integration
-test-python-integration: build ## run the MLFlow python integration tests.
+test-python-integration: test-python-integration-mlflow test-python-integration-aim  ## run all the python integration tests.
+
+PHONY: test-python-integration-mlflow
+test-python-integration-mlflow: build ## run the MLFlow python integration tests.
 	@echo ">>> Running MLFlow python integration tests."
-	tests/mlflow/test.sh
+	tests/integration/python/mlflow/test.sh
+
+PHONY: test-python-integration-aim
+test-python-integration-aim: build ## run the Aim python integration tests.
+	@echo ">>> Running Aim python integration tests."
+	tests/integration/python/aim/test.sh
 
 #
 # Service test targets
 #
 .PHONY: service-build
-service-build: ## build service and all it's dependencies
-	@docker-compose $(DOCKER_COMPOSE_OPTIONS) build --no-cache
+service-build: ## build service and all its dependencies
+	@docker-compose build
 
 .PHONY: start-service-dependencies
 service-start-dependencies: ## start service dependencies in docker.
 	@echo ">>> Start all Service dependencies."
-	@docker-compose $(DOCKER_COMPOSE_OPTIONS) up \
+	@docker-compose up \
 	-d \
-	fasttrack-postgres
+	postgres
 
 .PHONY: service-start
 service-start: service-build service-start-dependencies ## start service in docker.
@@ -85,12 +84,12 @@ service-start: service-build service-start-dependencies ## start service in dock
 	@sleep 5
 	@echo ">>> Starting service."
 	@echo ">>> Starting up service container."
-	@docker-compose $(DOCKER_COMPOSE_OPTIONS) up -d $(SERVICE)
+	@docker-compose up -d service
 
 .PHONY: service-stop
 service-stop: ## stop service in docker.
 	@echo ">>> Stopping service."
-	@docker-compose $(DOCKER_COMPOSE_OPTIONS) down -v --remove-orphans
+	@docker-compose stop
 
 .PHONY: service-restart
 service-restart: service-stop service-start ## restart service in docker
@@ -98,8 +97,13 @@ service-restart: service-stop service-start ## restart service in docker
 .PHONY: service-test
 service-test: service-stop service-start ## run tests over the service in docker.
 	@echo ">>> Running tests over service."
-	@docker-compose $(DOCKER_COMPOSE_OPTIONS) \
-		run fasttrack-integration-tests
+	@docker-compose \
+		run integration-tests
+
+.PHONY: service-clean
+service-clean: ## clean service in docker.
+	@echo ">>> Cleaning service."
+	@docker-compose down -v --remove-orphans
 
 #
 # Mockery targets.
@@ -126,4 +130,4 @@ build: go-build ## build the go components
 PHONY: run
 run: build ## run the FastTrackML server
 	@echo ">>> Running the FasttrackML server."
-	./$(SERVICE) server
+	./$(APP) server

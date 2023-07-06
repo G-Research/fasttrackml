@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -34,8 +33,8 @@ func TestSearchExperimentsTestSuite(t *testing.T) {
 }
 
 func (s *SearchExperimentsTestSuite) SetupTest() {
-	s.client = helpers.NewMlflowApiClient(os.Getenv("SERVICE_BASE_URL"))
-	fixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.fixtures = fixtures
 }
@@ -175,7 +174,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 }
 
 func (s *SearchExperimentsTestSuite) Test_Error() {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.SearchExperimentsRequest
@@ -258,5 +257,4 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}
-
 }

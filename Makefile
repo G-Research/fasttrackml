@@ -52,7 +52,7 @@ test-go-integration: ## run go integration tests.
 	go test -v -p 1 -tags="integration" ./tests/integration/golang/...
 
 PHONY: test-python-integration
-test-python-integration: test-python-integration-mlflow test-python-integration-aim
+test-python-integration: test-python-integration-mlflow test-python-integration-aim  ## run all the python integration tests.
 
 PHONY: test-python-integration-mlflow
 test-python-integration-mlflow: build ## run the MLFlow python integration tests.
@@ -101,7 +101,7 @@ service-test: service-stop service-start ## run tests over the service in docker
 		run integration-tests
 
 .PHONY: service-clean
-service-clean:
+service-clean: ## clean service in docker.
 	@echo ">>> Cleaning service."
 	@docker-compose down -v --remove-orphans
 

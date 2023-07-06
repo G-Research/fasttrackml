@@ -30,7 +30,7 @@ func NewS3(bucket string, config *config.ServiceConfig) (*S3, error) {
 
 	var clientOptions []func(o *s3.Options)
 	var configOptions []func(*awsConfig.LoadOptions) error
-	if config.S3EndpointURL != "" {
+	if config.S3EndpointURI != "" {
 		clientOptions = append(clientOptions, func(o *s3.Options) {
 			o.UsePathStyle = true
 		})
@@ -39,7 +39,7 @@ func NewS3(bucket string, config *config.ServiceConfig) (*S3, error) {
 				func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 					if service == s3.ServiceID {
 						return aws.Endpoint{
-							URL:           config.S3EndpointURL,
+							URL:           config.S3EndpointURI,
 							SigningRegion: region,
 						}, nil
 					}

@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -40,7 +39,7 @@ func TestListArtifactTestSuite(t *testing.T) {
 }
 
 func (s *ListArtifactTestSuite) SetupTest() {
-	s3Client, err := helpers.NewS3Client(os.Getenv("FML_S3_ENDPOINT_URI"))
+	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	assert.Nil(s.T(), err)
 
 	s.s3Client = s3Client

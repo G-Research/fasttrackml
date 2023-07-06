@@ -46,5 +46,5 @@
 		"ghcr.io/dhoeric/features/k6:1": {},
 		"ghcr.io/christophermacgown/devcontainer-features/minio-client:1": {}
 	},
-	"postStartCommand": "mc config host add minio http://127.0.0.1:9000 user password && mc mb minio/fasttrackml"
+	"postStartCommand": "mc alias set local http://localhost:9000 $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY && mc mb -p local/fasttrackml"
 }

@@ -11,7 +11,7 @@ type ServiceConfig struct {
 	AuthUsername          string
 	AuthPassword          string
 	ArtifactRoot          string
-	S3EndpointURL         string
+	S3EndpointURI         string
 	DatabaseURI           string
 	DatabaseReset         bool
 	DatabasePoolMax       int
@@ -25,7 +25,7 @@ func NewServiceConfig() *ServiceConfig {
 		AuthUsername:          viper.GetString("auth-username"),
 		AuthPassword:          viper.GetString("auth-password"),
 		ArtifactRoot:          viper.GetString("artifact-root"),
-		S3EndpointURL:         viper.GetString("s3-endpoint-url"),
+		S3EndpointURI:         viper.GetString("s3-endpoint-uri"),
 		DatabaseURI:           viper.GetString("database-uri"),
 		DatabaseReset:         viper.GetBool("database-reset"),
 		DatabasePoolMax:       viper.GetInt("database-pool-max"),

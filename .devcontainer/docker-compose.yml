@@ -75,4 +75,5 @@ services:
     environment:
       MINIO_ROOT_USER: user
       MINIO_ROOT_PASSWORD: password
-    command: server --console-address ":9001" /data
+      MINIO_CONSOLE_ADDRESS: ":9001"
+    command: server /data

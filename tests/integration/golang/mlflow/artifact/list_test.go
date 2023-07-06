@@ -40,7 +40,7 @@ func TestListArtifactTestSuite(t *testing.T) {
 }
 
 func (s *ListArtifactTestSuite) SetupTest() {
-	s3Client, err := helpers.NewS3Client(os.Getenv("S3_BASE_URL"))
+	s3Client, err := helpers.NewS3Client(os.Getenv("FML_S3_ENDPOINT_URI"))
 	assert.Nil(s.T(), err)
 
 	s.s3Client = s3Client

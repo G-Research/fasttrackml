@@ -59,7 +59,9 @@ services:
       # - -c
       # - log_statement=all
     ports:
-      - 5000:5000
+      - "5000:5000"
+      - "9000:9000"
+      - "9001:9001"
 
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.). Ports
@@ -67,9 +69,6 @@ services:
 
   minio:
     image: minio/minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     volumes:
       - minio-data:/data
     environment:
@@ -77,3 +76,4 @@ services:
       MINIO_ROOT_PASSWORD: password
       MINIO_CONSOLE_ADDRESS: ":9001"
     command: server /data
+    network_mode: service:db

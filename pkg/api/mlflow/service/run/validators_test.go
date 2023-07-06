@@ -16,8 +16,9 @@ func TestValidateUpdateRunRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateUpdateRunRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.UpdateRunRequest
@@ -43,8 +44,9 @@ func TestValidateGetRunRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateGetRunRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetRunRequest
@@ -70,8 +72,9 @@ func TestValidateDeleteRunRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateDeleteRunRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.DeleteRunRequest
@@ -97,8 +100,9 @@ func TestValidateRestoreRunRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateRestoreRunRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.RestoreRunRequest
@@ -127,8 +131,9 @@ func TestValidateLogMetricRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateLogMetricRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.LogMetricRequest
@@ -171,8 +176,9 @@ func TestValidateLogParamRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateLogParamRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.LogParamRequest
@@ -207,8 +213,9 @@ func TestValidateSetRunTagRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateSetRunTagRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.SetRunTagRequest
@@ -241,8 +248,9 @@ func TestValidateDeleteRunTagRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateDeleteRunTagRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.DeleteRunTagRequest
@@ -268,8 +276,9 @@ func TestValidateLogBatchRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateLogBatchRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.LogBatchRequest
@@ -296,9 +305,9 @@ func TestValidateSearchRunsRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
-func TestValidateSearchRunsRequest_Error(t *testing.T) {
 
-	var testData = []struct {
+func TestValidateSearchRunsRequest_Error(t *testing.T) {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.SearchRunsRequest

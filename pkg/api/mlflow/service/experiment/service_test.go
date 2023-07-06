@@ -53,8 +53,9 @@ func TestService_CreateExperiment_Ok(t *testing.T) {
 	assert.NotEmpty(t, experiment.CreationTime.Int64)
 	assert.NotEmpty(t, experiment.LastUpdateTime.Int64)
 }
+
 func TestService_CreateExperiment_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.CreateExperimentRequest
@@ -207,8 +208,9 @@ func TestService_DeleteExperiment_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
+
 func TestService_DeleteExperiment_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.DeleteExperimentRequest
@@ -340,8 +342,9 @@ func TestService_GetExperiment_Ok(t *testing.T) {
 	assert.Equal(t, sql.NullInt64{Int64: 1234567891, Valid: true}, experiment.LastUpdateTime)
 	assert.Equal(t, "/artifact/location", experiment.ArtifactLocation)
 }
+
 func TestService_GetExperiment_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetExperimentRequest
@@ -452,8 +455,9 @@ func TestService_GetExperimentByName_Ok(t *testing.T) {
 	assert.Equal(t, sql.NullInt64{Int64: 1234567891, Valid: true}, experiment.LastUpdateTime)
 	assert.Equal(t, "/artifact/location", experiment.ArtifactLocation)
 }
+
 func TestService_GetExperimentByName_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetExperimentRequest
@@ -542,8 +546,9 @@ func TestService_RestoreExperiment_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
+
 func TestService_RestoreExperiment_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.RestoreExperimentRequest
@@ -655,8 +660,9 @@ func TestService_SetExperimentTag_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
+
 func TestService_SetExperimentTag_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.SetExperimentTagRequest
@@ -785,8 +791,9 @@ func TestService_UpdateExperiment_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
+
 func TestService_UpdateExperiment_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.UpdateExperimentRequest

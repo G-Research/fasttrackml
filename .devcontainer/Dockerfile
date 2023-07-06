@@ -13,9 +13,11 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 
 # [Optional] Uncomment the next lines to use go get to install anything else you need
 USER vscode
-RUN go install github.com/vektra/mockery/v2@v2.30.1
-RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
-RUN go install github.com/goreleaser/goreleaser@v1.18.2
+RUN go install github.com/vektra/mockery/v2@v2.30.16 \
+ && go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3 \
+ && go install golang.org/x/tools/cmd/goimports@v0.11.0 \
+ && go install mvdan.cc/gofumpt@v0.5.0
+ && go install github.com/goreleaser/goreleaser@v1.18.2
 USER root
 
 # [Optional] Uncomment this line to install global node packages.

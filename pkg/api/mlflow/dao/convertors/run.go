@@ -1,9 +1,8 @@
 package convertors
 
 import (
-	"fmt"
-
 	"database/sql"
+	"fmt"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"

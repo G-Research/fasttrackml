@@ -9,7 +9,7 @@ fasttrackml
 fasttrackml.db*
 
 # Imported integration tests
-tests/**/*.src
+tests/integration/python/*/*.src
 
 # Quick start
 outputs

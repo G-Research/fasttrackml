@@ -1,0 +1,33 @@
+services:
+  service:
+    build:
+      context: .
+      args:
+        tags: netgo osusergo sqlite_foreign_keys sqlite_math_functions sqlite_omit_load_extension sqlite_unlock_notify sqlite_vacuum_incr
+    depends_on:
+      - postgres
+    environment:
+      FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
+      FML_LOG_LEVEL: debug
+
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=postgres
+
+  integration-tests:
+    image: golang:1.20
+    command: make test-go-integration
+    volumes:
+      - .:/go/src
+      - go-cache:/go/pkg
+    working_dir: /go/src
+    depends_on:
+      - service
+      - postgres
+    environment:
+      FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
+      FML_SERVICE_URI: http://service:5000
+
+volumes:
+  go-cache:

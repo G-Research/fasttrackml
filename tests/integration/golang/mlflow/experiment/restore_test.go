@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -34,8 +33,8 @@ func TestRestoreExperimentTestSuite(t *testing.T) {
 }
 
 func (s *RestoreExperimentTestSuite) SetupTest() {
-	s.client = helpers.NewMlflowApiClient(os.Getenv("SERVICE_BASE_URL"))
-	fixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.fixtures = fixtures
 }
@@ -87,7 +86,7 @@ func (s *RestoreExperimentTestSuite) Test_Ok() {
 }
 
 func (s *RestoreExperimentTestSuite) Test_Error() {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.RestoreExperimentRequest

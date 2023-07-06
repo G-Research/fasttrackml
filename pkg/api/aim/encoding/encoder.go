@@ -8,8 +8,10 @@ import (
 	"reflect"
 )
 
-type arrayFlag struct{}
-type objectFlag struct{}
+type (
+	arrayFlag  struct{}
+	objectFlag struct{}
+)
 
 var pathSentinel = []byte{0xfe}
 

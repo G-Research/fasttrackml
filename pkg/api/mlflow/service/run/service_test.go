@@ -89,8 +89,9 @@ func TestService_CreateRun_Ok(t *testing.T) {
 		},
 	}, run.Tags)
 }
+
 func TestService_CreateRun_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.CreateRunRequest
@@ -197,8 +198,9 @@ func TestService_CreateRun_Error(t *testing.T) {
 func TestService_UpdateRun_Ok(t *testing.T) {
 	// TODO:DSuhinin skip this test for now. I don't know how to mock `gorm` transaction logic.
 }
+
 func TestService_UpdateRun_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.UpdateRunRequest
@@ -282,8 +284,9 @@ func TestService_RestoreRun_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
+
 func TestService_RestoreRun_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.RestoreRunRequest
@@ -435,8 +438,9 @@ func TestService_DeleteRun_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
+
 func TestService_DeleteRun_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.DeleteRunRequest
@@ -545,7 +549,7 @@ func TestService_DeleteRun_Error(t *testing.T) {
 
 func TestService_DeleteRunTag_Ok(t *testing.T) {}
 func TestService_DeleteRunTag_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.DeleteRunTagRequest
@@ -795,8 +799,9 @@ func TestService_GetRun_Ok(t *testing.T) {
 		},
 	}, run.Metrics)
 }
+
 func TestService_GetRun_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetRunRequest
@@ -936,8 +941,9 @@ func TestService_LogBatch_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
+
 func TestService_LogBatch_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.LogBatchRequest
@@ -1324,8 +1330,9 @@ func TestService_LogMetric_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
+
 func TestService_LogMetric_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.LogMetricRequest
@@ -1530,8 +1537,9 @@ func TestService_LogParam_Ok(t *testing.T) {
 	// compare results.
 	assert.Nil(t, err)
 }
+
 func TestService_LogParam_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.LogParamRequest

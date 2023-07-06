@@ -44,13 +44,13 @@ func (s *ListArtifactTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 
 	s.s3Client = s3Client
-	s.serviceClient = helpers.NewMlflowApiClient(os.Getenv("SERVICE_BASE_URL"))
+	s.serviceClient = helpers.NewMlflowApiClient(helpers.GetServiceUri())
 
-	experimentFixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = experimentFixtures
 
-	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.runFixtures = runFixtures
 }

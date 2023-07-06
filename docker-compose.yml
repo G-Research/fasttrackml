@@ -5,15 +5,32 @@ services:
       args:
         tags: netgo osusergo sqlite_foreign_keys sqlite_math_functions sqlite_omit_load_extension sqlite_unlock_notify sqlite_vacuum_incr
     depends_on:
+      - minio
       - postgres
     environment:
-      FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
       FML_LOG_LEVEL: debug
+      FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
+      FML_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: "YFptmVrlVdOgnHZ8Idse"
+      AWS_SECRET_ACCESS_KEY: "ZeKsyUJikIAJQVtYsQNtdXx8qv9eevL94qFOx0Jh"
 
   postgres:
     image: postgres:latest
     environment:
       - POSTGRES_PASSWORD=postgres
+
+  minio:
+    image: minio/minio:latest
+    entrypoint: sh
+    command: -c 'mkdir -p /data/fasttrackml && minio server /data'
+    environment:
+      MINIO_ADDRESS: ":9000"
+      MINIO_ROOT_USER: "YFptmVrlVdOgnHZ8Idse"
+      MINIO_ROOT_PASSWORD: "ZeKsyUJikIAJQVtYsQNtdXx8qv9eevL94qFOx0Jh"
+      MINIO_CONSOLE_ADDRESS: ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
 
   integration-tests:
     image: golang:1.20
@@ -23,9 +40,13 @@ services:
       - go-cache:/go/pkg
     working_dir: /go/src
     depends_on:
-      - service
+      - minio
       - postgres
+      - service
     environment:
+      AWS_ACCESS_KEY_ID: "YFptmVrlVdOgnHZ8Idse"
+      AWS_SECRET_ACCESS_KEY: "ZeKsyUJikIAJQVtYsQNtdXx8qv9eevL94qFOx0Jh"
+      S3_BASE_URL: http://minio:9000
       FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
       FML_SERVICE_URI: http://service:5000
 

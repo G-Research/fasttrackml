@@ -50,7 +50,7 @@ func (s *LogBatchTestSuite) SetupTest() {
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 	}
-	_, err = s.experimentFixtures.CreateTestExperiment(context.Background(), exp)
+	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
 	run := &models.Run{
@@ -60,7 +60,7 @@ func (s *LogBatchTestSuite) SetupTest() {
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
 	}
-	run, err = s.runFixtures.CreateTestRun(context.Background(), run)
+	run, err = s.runFixtures.CreateRun(context.Background(), run)
 	assert.Nil(s.T(), err)
 	s.run = run
 }
@@ -304,7 +304,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 				tt.request,
 				&resp,
 			)
-			assert.NoError(t, err)
+			assert.Nil(t, err)
 			assert.Equal(s.T(), tt.error.ErrorCode, resp.ErrorCode)
 			assert.Contains(s.T(), resp.Error(), tt.error.Message)
 		})

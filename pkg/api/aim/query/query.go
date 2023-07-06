@@ -6,14 +6,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
-
 	"github.com/go-python/gpython/ast"
 	"github.com/go-python/gpython/parser"
 	"github.com/go-python/gpython/py"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+)
+
+const (
+	OperationEndsWith   = "endswith"
+	OperationContains   = "contains"
+	OperationStartsWith = "startswith"
 )
 
 type DefaultExpression struct {
@@ -205,16 +211,73 @@ func (pq *parsedQuery) _parseNode(node ast.Expr) (any, error) {
 func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 	switch node.Ctx {
 	case ast.Load:
-		v, err := pq.parseNode(node.Value)
+		parsedNode, err := pq.parseNode(node.Value)
 		if err != nil {
 			return nil, err
 		}
-		a := string(node.Attr)
-		switch v := v.(type) {
+		attribute := string(node.Attr)
+		switch strings.ToLower(attribute) {
+		case OperationEndsWith:
+			return callable(func(args []ast.Expr) (any, error) {
+				if len(args) != 1 {
+					return nil, errors.New("`endwith` function support exactly one argument")
+				}
+				c, ok := parsedNode.(clause.Column)
+				if !ok {
+					return nil, errors.New("unsupported node type. has to be clause.Column")
+				}
+
+				arg, ok := args[0].(*ast.Str)
+				if !ok {
+					return nil, errors.New("unsupported argument type. has to be `string` only")
+				}
+				return clause.Expr{
+					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%%%s'`, c.Table, c.Name, arg.S),
+				}, nil
+			}), nil
+		case OperationContains:
+			return callable(func(args []ast.Expr) (any, error) {
+				if len(args) != 1 {
+					return nil, errors.New("`contains` function support exactly one argument")
+				}
+				c, ok := parsedNode.(clause.Column)
+				if !ok {
+					return nil, errors.New("unsupported node type. has to be clause.Column")
+				}
+
+				arg, ok := args[0].(*ast.Str)
+				if !ok {
+					return nil, errors.New("unsupported argument type. has to be `string` only")
+				}
+				return clause.Expr{
+					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%%%s%%'`, c.Table, c.Name, arg.S),
+				}, nil
+			}), nil
+		case OperationStartsWith:
+			return callable(func(args []ast.Expr) (any, error) {
+				if len(args) != 1 {
+					return nil, errors.New("`startwith` function support exactly one argument")
+				}
+				c, ok := parsedNode.(clause.Column)
+				if !ok {
+					return nil, errors.New("unsupported node type. has to be clause.Column")
+				}
+
+				arg, ok := args[0].(*ast.Str)
+				if !ok {
+					return nil, errors.New("unsupported argument type. has to be `string` only")
+				}
+				return clause.Expr{
+					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%s%%'`, c.Table, c.Name, arg.S),
+				}, nil
+			}), nil
+		}
+
+		switch value := parsedNode.(type) {
 		case attributeGetter:
-			return v(a)
+			return value(attribute)
 		default:
-			return nil, fmt.Errorf("unsupported attribute value %#v", v)
+			return nil, fmt.Errorf("unsupported attribute value %#parsedNode", value)
 		}
 	default:
 		return nil, fmt.Errorf("unsupported attribute context %q", node.Ctx)
@@ -380,7 +443,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								Table: table,
 								Name:  "lifecycle_stage",
 							},
-							Value: database.LifecycleStageDeleted,
+							Value: models.LifecycleStageDeleted,
 						}, nil
 					case "active":
 						return clause.Eq{
@@ -388,7 +451,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								Table: table,
 								Name:  "status",
 							},
-							Value: database.StatusRunning,
+							Value: models.StatusRunning,
 						}, nil
 					case "duration":
 						return clause.Column{

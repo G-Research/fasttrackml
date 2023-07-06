@@ -8,11 +8,6 @@ fasttrackml
 # Local database
 fasttrackml.db*
 
-# UI builds
-pkg/ui/*/embed/build*
-pkg/ui/*/embed/repo*
-!pkg/ui/*/embed/build.sh
-
 # Imported integration tests
 tests/**/*.src
 

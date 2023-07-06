@@ -19,13 +19,6 @@ PATH_DOCKER_COMPOSE_FILE=$(realpath ./docker/docker-compose.yml)
 # Docker compose starting options.
 DOCKER_COMPOSE_OPTIONS= -f $(PATH_DOCKER_COMPOSE_FILE)
 
-#
-# Linter targets.
-#
-lint: ## run set of linters over the code.
-	@golangci-lint run -v
-
-#
 # Default target (help)
 #
 .PHONY: help
@@ -34,6 +27,12 @@ help: ## display this help
 	@echo
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-24s\033[0m - %s\n", $$1, $$2}'
 	@echo
+
+#
+# Linter targets.
+#
+lint: ## run set of linters over the code.
+	@golangci-lint run -v
 
 #
 # Go targets.
@@ -117,17 +116,12 @@ mocks-generate: mocks-clean ## generate mock based on all project interfaces.
 # Build targets
 # 
 PHONY: clean
-clean: ## clean the go and node build artifacts
-	@echo ">>> Cleaning go and node build artifacts."
-	rm -Rf pkg/ui/aim/embed/repo
-	rm -Rf pkg/ui/mlflow/embed/repo
-	rm -Rf $(SERVICE)
+clean: ## clean the go build artifacts
+	@echo ">>> Cleaning go build artifacts."
+	rm -Rf $(APP)
 
 PHONY: build
-build: go-build ## build the go and node components
-	@echo ">>> Building node UI components."
-	pkg/ui/aim/embed/build.sh
-	pkg/ui/mlflow/embed/build.sh
+build: go-build ## build the go components
 
 PHONY: run
 run: build ## run the FastTrackML server

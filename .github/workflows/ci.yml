@@ -32,11 +32,6 @@ jobs:
       - name: Check formatting
         run: gofmt -l .
 
-      - name: Mock UI builds
-        run: |
-          mkdir pkg/ui/{aim,mlflow}/embed/build
-          touch pkg/ui/{aim,mlflow}/embed/build/index.html
-
       - name: Download mockery
         run: go install github.com/vektra/mockery/v2@v2.20.0
 
@@ -63,11 +58,6 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "1.20"
-
-      - name: Mock UI builds
-        run: |
-          mkdir pkg/ui/{aim,mlflow}/embed/build
-          touch pkg/ui/{aim,mlflow}/embed/build/index.html
 
       - name: Download mockery
         run: go install github.com/vektra/mockery/v2@v2.20.0
@@ -124,11 +114,6 @@ jobs:
         with:
           go-version: "1.20"
 
-      - name: Mock UI builds
-        run: |
-          mkdir pkg/ui/{aim,mlflow}/embed/build
-          touch pkg/ui/{aim,mlflow}/embed/build/index.html
-
       - name: Run ${{ matrix.api }} integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
 
@@ -152,14 +137,8 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
-      # Setup buildx with only one parallel worker.
-      # This is to avoid OOM during UI build.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-        with:
-          config-inline: |
-            [worker.oci]
-            max-parallelism = 1
 
       - name: Docker meta
         id: meta

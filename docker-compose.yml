@@ -11,8 +11,8 @@ services:
       FML_LOG_LEVEL: debug
       FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
       FML_S3_ENDPOINT_URL: http://minio:9000
-      AWS_ACCESS_KEY_ID: "YFptmVrlVdOgnHZ8Idse"
-      AWS_SECRET_ACCESS_KEY: "ZeKsyUJikIAJQVtYsQNtdXx8qv9eevL94qFOx0Jh"
+      AWS_ACCESS_KEY_ID: "user"
+      AWS_SECRET_ACCESS_KEY: "password"
 
   postgres:
     image: postgres:latest
@@ -40,11 +40,11 @@ services:
       - postgres
       - service
     environment:
+      S3_BASE_URL: http://minio:9000
+      FML_SERVICE_URI: http://service:5000
+      FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
       AWS_ACCESS_KEY_ID: "user"
       AWS_SECRET_ACCESS_KEY: "password"
-      S3_BASE_URL: http://minio:9000
-      FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
-      FML_SERVICE_URI: http://service:5000
 
 volumes:
   go-cache:

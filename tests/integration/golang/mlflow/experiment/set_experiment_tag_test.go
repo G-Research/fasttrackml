@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -32,8 +31,8 @@ func TestSetExperimentTagTestSuite(t *testing.T) {
 }
 
 func (s *SetExperimentTagTestSuite) SetupTest() {
-	s.client = helpers.NewMlflowApiClient(os.Getenv("SERVICE_BASE_URL"))
-	fixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.fixtures = fixtures
 }
@@ -102,12 +101,12 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 
 	assert.True(s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'")
 
-	//test that setting a tag on 1 experiment does not impact another experiment.
+	// test that setting a tag on 1 experiment does not impact another experiment.
 	exp, err = s.fixtures.GetExperimentByID(context.Background(), *experiment1.ID)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), len(exp.Tags), 0)
 
-	//test that setting a tag on different experiments maintain different values across experiments
+	// test that setting a tag on different experiments maintain different values across experiments
 	SetExperimentTag(s, experiment1, "KeyTag1", "ValueTag3")
 	exp, err = s.fixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
@@ -115,10 +114,10 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 	assert.True(s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag2'")
 	assert.True(s.T(), helpers.CheckTagExists(exp1.Tags, "KeyTag1", "ValueTag3"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag3'")
-
 }
+
 func (s *SetExperimentTagTestSuite) Test_Error() {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.SetExperimentTagRequest

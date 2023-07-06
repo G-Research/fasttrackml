@@ -32,7 +32,7 @@ services:
     volumes:
       - home:/home/vscode
       - workspaces:/workspaces
-      - ..:/workspaces/fasttrack:cached
+      - ..:/workspaces/fasttrackml:cached
       
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity

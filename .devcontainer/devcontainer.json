@@ -4,7 +4,7 @@
 	"name": "Fasttrack",
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "app",
-	"workspaceFolder": "/workspaces/fasttrack",
+	"workspaceFolder": "/workspaces/fasttrackml",
 	// Configure tool-specific properties.
 	"customizations": {
 		// Configure properties specific to VS Code.
@@ -15,7 +15,7 @@
 				"go.useLanguageServer": true,
 				"go.gopath": "/go",
 				"go.goroot": "/usr/local/go",
-				"terminal.integrated.defaultProfile.linux": "zsh",
+				"terminal.integrated.defaultProfile.linux": "zsh"
 			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
@@ -38,6 +38,9 @@
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
+			"dockerDashComposeVersion": "v2"
+		},
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/dhoeric/features/k6:1": {}

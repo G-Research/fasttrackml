@@ -166,7 +166,6 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 			),
 		).Decode(&token); err != nil {
 			return nil, 0, 0, api.NewInvalidParameterValueError("invalid page_token '%s': %s", req.PageToken, err)
-
 		}
 		offset = int(token.Offset)
 	}

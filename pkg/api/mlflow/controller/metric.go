@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/apache/arrow/go/v11/arrow"
 	"github.com/apache/arrow/go/v11/arrow/array"
 	"github.com/apache/arrow/go/v11/arrow/ipc"
 	"github.com/apache/arrow/go/v11/arrow/memory"
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/G-Research/fasttrackml/pkg/database"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"

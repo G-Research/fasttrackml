@@ -11,8 +11,7 @@ import (
 )
 
 func TestConvertCreateRunRequestToDBModel(t *testing.T) {
-
-	var testData = []struct {
+	testData := []struct {
 		name   string
 		req    *request.CreateRunRequest
 		result func(run *models.Run)

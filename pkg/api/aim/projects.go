@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
-
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetProject(c *fiber.Ctx) error {

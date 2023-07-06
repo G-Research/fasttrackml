@@ -28,7 +28,6 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 		}},
 		Params: []request.ParamPartialRequest{
 			{
-
 				Key:   "key",
 				Value: "value",
 			},

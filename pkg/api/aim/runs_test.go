@@ -7,59 +7,59 @@ import (
 )
 
 func Test_validateMetricNamePresent(t *testing.T) {
-	tests := []struct{
-		name string
-		query string
+	tests := []struct {
+		name       string
+		query      string
 		wantResult bool
 	}{
 		{
-			name: "QueryWithMetricName",
-			query: `(run.active == true) and ((metric.name == "accuracy"))`,
+			name:       "QueryWithMetricName",
+			query:      `(run.active == true) and ((metric.name == "accuracy"))`,
 			wantResult: true,
 		},
 		{
-			name: "QueryWithMetricNameNoSpaces",
-			query: `(run.active == true) and ((metric.name=="accuracy"))`,
+			name:       "QueryWithMetricNameNoSpaces",
+			query:      `(run.active == true) and ((metric.name=="accuracy"))`,
 			wantResult: true,
 		},
 		{
-			name: "QueryWithStringSyntax",
-			query: `(run.active == true) and (metric.name.startswith("acc"))`,
+			name:       "QueryWithStringSyntax",
+			query:      `(run.active == true) and (metric.name.startswith("acc"))`,
 			wantResult: true,
 		},
 		{
-			name: "QueryWithInSyntax",
-			query: `(run.active == true) and ("accuracy" in metric.name)`,
+			name:       "QueryWithInSyntax",
+			query:      `(run.active == true) and ("accuracy" in metric.name)`,
 			wantResult: true,
 		},
 		{
-			name: "QueryWithMetricNameAtEnd",
-			query: `(run.active == true) and "accuracy" in metric.name`,
+			name:       "QueryWithMetricNameAtEnd",
+			query:      `(run.active == true) and "accuracy" in metric.name`,
 			wantResult: true,
 		},
 		{
-			name: "QueryWithoutMetricName",
-			query: `(run.active == true)`,
+			name:       "QueryWithoutMetricName",
+			query:      `(run.active == true)`,
 			wantResult: false,
 		},
 		{
-			name: "QueryWithoutDot",
-			query: `(run.active == true) and (metricname === "accuracy")`,
+			name:       "QueryWithoutDot",
+			query:      `(run.active == true) and (metricname === "accuracy")`,
 			wantResult: false,
 		},
 		{
-			name: "QueryWithOrCharacter",
-			query: `(run.active == true) and (metric.name| === "accuracy")`,
+			name:       "QueryWithOrCharacter",
+			query:      `(run.active == true) and (metric.name| === "accuracy")`,
 			wantResult: false,
 		},
 		{
-			name: "QueryWithTrickyDictKey",
-			query: `(run.active == true) and (run.tags["metric.name"] == "foo")`,
+			name:       "QueryWithTrickyDictKey",
+			query:      `(run.active == true) and (run.tags["metric.name"] == "foo")`,
 			wantResult: false,
 		},
 		{
-			name: "QueryWithTrickyDictKeyAndMetricName",
-			query: `(run.active == true) and (run.tags["mymetric.name"] == "foo") and (metric.name == "accuracy")`,
+			name:       "QueryWithTrickyDictKeyAndMetricName",
+			query:      `(run.active == true) and (run.tags["mymetric.name"] == "foo") and (metric.name == "accuracy")`,
 			wantResult: true,
 		},
 	}

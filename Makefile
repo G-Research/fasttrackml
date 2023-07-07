@@ -133,10 +133,6 @@ clean: ## clean the go build artifacts
 PHONY: build
 build: go-build ## build the go components
 
-PHONY: build
-build: node-build go-build
-	@echo ">>> Building node and go components."
-
 PHONY: run
 run: build ## run the FastTrackML server
 	@echo ">>> Running the FasttrackML server."

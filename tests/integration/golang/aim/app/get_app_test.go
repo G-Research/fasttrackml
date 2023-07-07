@@ -60,6 +60,10 @@ func (s *GetAppTestSuite) Test_Ok() {
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), s.apps[0].ID, resp.ID)
+			assert.Equal(s.T(), s.apps[0].Type, resp.Type)
+			assert.Equal(s.T(), s.apps[0].State, resp.State)
+			assert.NotEmpty(s.T(), resp.CreatedAt)
+			assert.NotEmpty(s.T(), resp.UpdatedAt)
 		})
 	}
 }

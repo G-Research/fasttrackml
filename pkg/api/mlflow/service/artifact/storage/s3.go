@@ -16,15 +16,13 @@ import (
 
 // S3 represents S3 adapter to work with artifacts.
 type S3 struct {
-	bucket string
 	client *s3.Client
 	config *config.ServiceConfig
 }
 
 // NewS3 creates new S3 instance.
-func NewS3(bucket string, config *config.ServiceConfig) (*S3, error) {
+func NewS3(config *config.ServiceConfig) (*S3, error) {
 	storage := S3{
-		bucket: bucket,
 		config: config,
 	}
 
@@ -59,9 +57,13 @@ func NewS3(bucket string, config *config.ServiceConfig) (*S3, error) {
 
 // List implements Provider interface.
 func (s S3) List(artifactURI, path, nextPageToken string) (string, string, []ArtifactObject, error) {
+	bucket, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
+	if err != nil {
+		return "", "", nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
+	}
 	input := s3.ListObjectsV2Input{
-		Bucket: aws.String(s.bucket),
-		Prefix: aws.String(ExtractS3Path(s.config.ArtifactRoot, artifactURI)),
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(prefix),
 	}
 	if path != "" {
 		// filter first `/` just to make sure that Prefix will be always correct.
@@ -73,7 +75,6 @@ func (s S3) List(artifactURI, path, nextPageToken string) (string, string, []Art
 
 	output, err := s.client.ListObjectsV2(context.TODO(), &input)
 	if err != nil {
-		fmt.Println(err)
 		return "", "", nil, eris.Wrap(err, "error getting s3 objects")
 	}
 
@@ -91,5 +92,5 @@ func (s S3) List(artifactURI, path, nextPageToken string) (string, string, []Art
 		return *output.NextContinuationToken, s.config.ArtifactRoot, artifactList, nil
 	}
 
-	return "", s.config.ArtifactRoot, artifactList, nil
+	return "", fmt.Sprintf("s3://%s", bucket), artifactList, nil
 }

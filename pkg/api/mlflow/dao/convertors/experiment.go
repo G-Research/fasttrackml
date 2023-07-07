@@ -2,6 +2,7 @@ package convertors
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -23,7 +24,7 @@ func ConvertCreateExperimentToDBModel(req *request.CreateExperimentRequest) *mod
 			Valid: true,
 		},
 		Tags:             make([]models.ExperimentTag, len(req.Tags)),
-		ArtifactLocation: req.ArtifactLocation,
+		ArtifactLocation: strings.TrimLeft(req.ArtifactLocation, "/"),
 	}
 
 	for n, tag := range req.Tags {

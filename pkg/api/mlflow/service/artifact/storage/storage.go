@@ -45,7 +45,7 @@ func NewArtifactStorage(config *config.ServiceConfig) (Provider, error) {
 
 		switch u.Scheme {
 		case "s3":
-			return NewS3(u.Host, config)
+			return NewS3(config)
 		}
 	}
 	return NewNoop(), nil

@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewMetricHistoryResponse_Ok(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name             string
 		metrics          []models.Metric
 		expectedResponse *GetMetricHistoryResponse
@@ -73,7 +73,7 @@ func TestNewMetricHistoryResponse_Ok(t *testing.T) {
 }
 
 func TestNewMetricHistoryBulkResponse_Ok(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name             string
 		metrics          []models.Metric
 		expectedResponse *GetMetricHistoryBulkResponse

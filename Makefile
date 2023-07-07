@@ -38,6 +38,12 @@ go-build: ## build app binary.
 	@echo '>>> Building go binary.'
 	@go build -ldflags="-linkmode external -extldflags -static -s -w" -tags "$$(jq -r '."go.buildTags"' .vscode/settings.json)" -o $(APP) ./main.go
 
+.PHONY: go-format
+go-format: ## format go code.
+	@echo '>>> Formatting go code.'
+	@gofumpt -w .
+	@goimports -w -local github.com/G-Research/fasttrackml .
+
 #
 # Tests targets.
 #

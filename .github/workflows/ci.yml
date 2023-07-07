@@ -29,11 +29,26 @@ jobs:
         id: tags
         run: echo tags=$(jq -r '."go.buildTags"' .vscode/settings.json) >> $GITHUB_OUTPUT
 
+      - name: Download formatters
+        run: |
+          go install golang.org/x/tools/cmd/goimports@v0.11.0
+          go install mvdan.cc/gofumpt@v0.5.0
+
       - name: Check formatting
-        run: gofmt -l .
+        run: |
+          unformatted=$(
+            gofumpt -l .
+            goimports -l --local github.com/G-Research/fasttrackml .
+          )
+          if [ -n "$unformatted" ]; then
+            for file in $unformatted; do
+              echo "::error file=$file::$file is not formatted properly (hint: run \"make go-format\" to fix this)"
+            done
+            exit 1
+          fi
 
       - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.20.0
+        run: go install github.com/vektra/mockery/v2@v2.30.16
 
       - name: Generate mocks
         run: make mocks-generate
@@ -60,7 +75,7 @@ jobs:
           go-version: "1.20"
 
       - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.20.0
+        run: go install github.com/vektra/mockery/v2@v2.30.16
 
       - name: Generate mocks
         run: make mocks-generate

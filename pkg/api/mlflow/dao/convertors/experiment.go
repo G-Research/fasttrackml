@@ -8,7 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/rotisserie/eris"
+
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
@@ -41,7 +42,7 @@ func ConvertCreateExperimentToDBModel(req *request.CreateExperimentRequest) (*mo
 	if req.ArtifactLocation != "" {
 		u, err := url.Parse(req.ArtifactLocation)
 		if err != nil {
-			return nil, api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
+			return nil, eris.Wrap(err, "error parsing artifact location")
 		}
 
 		switch u.Scheme {
@@ -55,7 +56,7 @@ func ConvertCreateExperimentToDBModel(req *request.CreateExperimentRequest) (*mo
 			// TODO:DSuhinin - default case right now has to satisfy Python integration tests.
 			p, err := filepath.Abs(u.Path)
 			if err != nil {
-				return nil, api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
+				return nil, eris.Wrap(err, "error getting absolute path")
 			}
 			u.Path = p
 			experiment.ArtifactLocation = u.String()

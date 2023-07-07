@@ -65,7 +65,7 @@ func (s Service) CreateExperiment(
 
 	experiment, err = convertors.ConvertCreateExperimentToDBModel(req)
 	if err != nil {
-		return nil, err
+		return nil, api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
 	}
 
 	if err := s.experimentRepository.Create(ctx, experiment); err != nil {

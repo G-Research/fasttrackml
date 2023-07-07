@@ -81,7 +81,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 		{
 			name: "EmptyOrIncorrectArtifactLocation",
 			error: api.NewInvalidParameterValueError(
-				`Invalid value for parameter 'artifact_location': parse "incorrect-protocol,:/incorrect-location": first path segment in URL cannot contain colon`,
+				`Invalid value for parameter 'artifact_location': error parsing artifact location: parse "incorrect-protocol,:/incorrect-location": first path segment in URL cannot contain colon`,
 			),
 			request: &request.CreateExperimentRequest{
 				Name:             "name",

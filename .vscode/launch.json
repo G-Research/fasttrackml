@@ -10,11 +10,12 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
+            "buildFlags": "-tags '${config:go.buildTags}'",
             "args": [
                 "server",
                 "--database-uri",
                 "postgres://postgres:postgres@localhost/postgres"
-            ]
+            ],
         },
         {
             "name": "Launch server (sqlite memory)",
@@ -22,11 +23,12 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
+            "buildFlags": "-tags '${config:go.buildTags}'",
             "args": [
                 "server",
                 "--database-uri",
                 "sqlite://fasttrackml.db?mode=memory&cache=shared"
-            ]
+            ],
         },
         {
             "name": "Launch server (sqlite file)",
@@ -34,11 +36,12 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
+            "buildFlags": "-tags '${config:go.buildTags}'",
             "args": [
                 "server",
                 "--database-uri",
                 "sqlite://fasttrackml.db"
-            ]
+            ],
         },
         {
             "name": "Launch server (encrypted sqlite file)",
@@ -46,11 +49,12 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
+            "buildFlags": "-tags '${config:go.buildTags}'",
             "args": [
                 "server",
                 "--database-uri",
                 "sqlite://encrypted.db?_key=passphrase"
-            ]
+            ],
         }
     ]
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	log "github.com/sirupsen/logrus"
@@ -148,6 +149,12 @@ func initServer() *fiber.App {
 		},
 	})
 
+	server.Use(cors.New(cors.Config{
+		AllowOrigins:     viper.GetString("cors-allow-origins"),
+		AllowHeaders:     "Origin, Content-Type, Accept, X-Timezone-Offset",
+		AllowCredentials: true,
+	}))
+
 	authUsername := viper.GetString("auth-username")
 	authPassword := viper.GetString("auth-password")
 	if authUsername != "" && authPassword != "" {
@@ -190,6 +197,7 @@ func init() {
 	ServerCmd.Flags().String("artifact-root", "s3://fasttrackml", "Artifact root")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")
+	ServerCmd.Flags().String("cors-allow-origins", "*", "CORS allowed origins")
 	ServerCmd.Flags().StringP("database-uri", "d", "sqlite://fasttrackml.db", "Database URI")
 	ServerCmd.Flags().Int("database-pool-max", 20, "Maximum number of database connections in the pool")
 	ServerCmd.Flags().Duration("database-slow-threshold", 1*time.Second, "Slow SQL warning threshold")

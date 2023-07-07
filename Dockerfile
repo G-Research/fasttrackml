@@ -2,10 +2,10 @@
 FROM --platform=$BUILDPLATFORM golang:1.20 AS go-build
 
 WORKDIR /build
-COPY go.mod go.sum /build
+COPY go.mod go.sum ./
 RUN go mod download
-COPY main.go /build
-COPY pkg /build
+COPY main.go .
+COPY pkg ./pkg
 
 ARG TARGETARCH
 RUN bash -c "\

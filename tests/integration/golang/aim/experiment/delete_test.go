@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -30,9 +29,9 @@ func TestDeleteExperimentTestSuite(t *testing.T) {
 }
 
 func (s *DeleteExperimentTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(os.Getenv("SERVICE_BASE_URL"))
+	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
 
-	fixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.fixtures = fixtures
 }

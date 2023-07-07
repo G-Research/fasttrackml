@@ -1,8 +1,6 @@
 package experiment
 
 import (
-	"net/url"
-
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 )
@@ -25,11 +23,6 @@ var (
 func ValidateCreateExperimentRequest(req *request.CreateExperimentRequest) error {
 	if req.Name == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'name'")
-	}
-	if req.ArtifactLocation != "" {
-		if _, err := url.Parse(req.ArtifactLocation); err != nil {
-			return api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
-		}
 	}
 	return nil
 }

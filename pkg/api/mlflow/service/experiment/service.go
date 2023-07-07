@@ -63,7 +63,11 @@ func (s Service) CreateExperiment(
 		return nil, api.NewResourceAlreadyExistsError("experiment(name=%s) already exists", req.Name)
 	}
 
-	experiment = convertors.ConvertCreateExperimentToDBModel(req)
+	experiment, err = convertors.ConvertCreateExperimentToDBModel(req)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := s.experimentRepository.Create(ctx, experiment); err != nil {
 		return nil, api.NewInternalError("error inserting experiment '%s': %s", req.Name, err)
 	}

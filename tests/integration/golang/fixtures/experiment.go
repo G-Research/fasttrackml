@@ -48,7 +48,8 @@ func (f ExperimentFixtures) CreateExperiment(
 
 // GetTestExperiments fetches all experiments
 func (f ExperimentFixtures) GetTestExperiments(
-	ctx context.Context) ([]models.Experiment, error) {
+	ctx context.Context,
+) ([]models.Experiment, error) {
 	experiments := []models.Experiment{}
 	if err := f.db.WithContext(ctx).
 		Find(&experiments).Error; err != nil {

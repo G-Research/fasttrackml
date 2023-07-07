@@ -86,9 +86,7 @@ func (r ExperimentRepository) GetByName(ctx context.Context, name string) (*mode
 
 // Update updates existing models.Experiment entity.
 func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Experiment) error {
-
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
-
 		if err := r.db.WithContext(ctx).Model(&experiment).Updates(experiment).Error; err != nil {
 			return eris.Wrapf(err, "error updating experiment with id: %d", *experiment.ID)
 		}
@@ -105,7 +103,6 @@ func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Exp
 			}
 		}
 		return nil
-
 	}); err != nil {
 		return err
 	}

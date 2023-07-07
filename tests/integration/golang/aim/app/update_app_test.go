@@ -51,7 +51,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 			requestBody: map[string]any{
 				"type": "app-type",
 				"state": map[string]string{
-					"app-state-key": "app-state-value",
+					"app-state-key": "new-app-state-value",
 				},
 			},
 		},
@@ -67,7 +67,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "app-type", resp.Type)
-			assert.Equal(s.T(), database.AppState{ "app-state-key": "app-state-value"}, resp.State)
+			assert.Equal(s.T(), database.AppState{ "app-state-key": "new-app-state-value"}, resp.State)
 		})
 	}
 }
@@ -81,7 +81,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 		requestBody any
 	}{
 		{
-			name: "UpdateAppWithIncorrectBody",
+			name: "UpdateAppWithIncorrectState",
 			requestBody: map[string]any{
 				"State": "this-cannot-unmarshal",
 			},

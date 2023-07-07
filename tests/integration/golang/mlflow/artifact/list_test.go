@@ -59,7 +59,7 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
-	var testData = []struct {
+	testData := []struct {
 		name   string
 		bucket string
 	}{
@@ -141,7 +141,7 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 }
 
 func (s *ListArtifactTestSuite) Test_Error() {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.ListArtifactsRequest

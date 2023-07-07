@@ -71,11 +71,10 @@ func TestService_ListArtifacts_Ok(t *testing.T) {
 			IsDir: true,
 		},
 	}, artifacts)
-
 }
 
 func TestService_ListArtifacts_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.ListArtifactsRequest

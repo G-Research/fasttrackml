@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -18,7 +17,6 @@ type CreateAppTestSuite struct {
 	suite.Suite
 	client      *helpers.HttpClient
 	appFixtures *fixtures.AppFixtures
-	apps        []*database.App
 }
 
 func TestCreateAppTestSuite(t *testing.T) {
@@ -51,7 +49,6 @@ func (s *CreateAppTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-
 			var resp map[string]any
 			err := s.client.DoPostRequest(
 				"/apps",
@@ -82,7 +79,6 @@ func (s *CreateAppTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-
 			var resp map[string]any
 			err := s.client.DoPostRequest(
 				"/apps",

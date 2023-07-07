@@ -42,7 +42,8 @@ func (c HttpClient) DoPostRequest(uri string, request interface{}, response inte
 	if err != nil {
 		return eris.Wrap(err, "error marshaling request")
 	}
-	return c.doRequest(http.MethodPost, uri, response, bytes.NewBuffer(data))}
+	return c.doRequest(http.MethodPost, uri, response, bytes.NewBuffer(data))
+}
 
 // DoPostRequest do PUT request.
 func (c HttpClient) DoPutRequest(uri string, request interface{}, response interface{}) error {

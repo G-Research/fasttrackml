@@ -52,7 +52,6 @@ func (s *GetAppTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-
 			var resp database.App
 			err := s.client.DoGetRequest(
 				fmt.Sprintf("/apps/%v", s.apps[0].ID),
@@ -81,7 +80,6 @@ func (s *GetAppTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-
 			var resp map[string]string
 			err := s.client.DoGetRequest(
 				fmt.Sprintf("/apps/%v", tt.idParam),

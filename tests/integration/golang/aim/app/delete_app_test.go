@@ -54,7 +54,6 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-
 			var deleteResponse map[string]any
 			err := s.client.DoDeleteRequest(
 				fmt.Sprintf("/apps/%s", s.apps[0].ID),
@@ -75,18 +74,17 @@ func (s *DeleteAppTestSuite) Test_Error() {
 	}()
 	tests := []struct {
 		name         string
-		idParam  uuid.UUID
+		idParam      uuid.UUID
 		wantAppCount int
 	}{
 		{
-			name: "DeleteAppWithIncorrectID",
-			idParam: uuid.New(),
+			name:         "DeleteAppWithIncorrectID",
+			idParam:      uuid.New(),
 			wantAppCount: 1,
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-
 			var deleteResponse map[string]any
 			err := s.client.DoDeleteRequest(
 				fmt.Sprintf("/apps/%s", tt.idParam),

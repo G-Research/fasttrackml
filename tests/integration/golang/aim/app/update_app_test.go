@@ -58,7 +58,6 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-
 			var resp database.App
 			err := s.client.DoPutRequest(
 				fmt.Sprintf("/apps/%s", s.apps[0].ID),
@@ -67,7 +66,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "app-type", resp.Type)
-			assert.Equal(s.T(), database.AppState{ "app-state-key": "new-app-state-value"}, resp.State)
+			assert.Equal(s.T(), database.AppState{"app-state-key": "new-app-state-value"}, resp.State)
 		})
 	}
 }
@@ -89,7 +88,6 @@ func (s *UpdateAppTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-
 			var resp map[string]any
 			err := s.client.DoPutRequest(
 				fmt.Sprintf("/apps/%s", s.apps[0].ID),

@@ -56,7 +56,6 @@ func (s *GetAppsTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-
 			var resp []database.App
 			err := s.client.DoGetRequest(
 				"/apps",
@@ -88,7 +87,6 @@ func (s *GetAppsTestSuite) Test_Empty() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-
 			var resp []any
 			err := s.client.DoGetRequest(
 				"/apps",

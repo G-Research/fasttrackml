@@ -53,11 +53,11 @@ func (f AppFixtures) CreateApps(
 	// create apps for the experiment
 	for i := 0; i < num; i++ {
 		app := &database.App{
-			Base:  database.Base{ ID: uuid.New() },
+			Base:  database.Base{ID: uuid.New()},
 			Type:  "mpi",
 			State: database.AppState{},
 		}
-		app, err := f.CreateApp(context.Background(), app)
+		app, err := f.CreateApp(ctx, app)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +68,8 @@ func (f AppFixtures) CreateApps(
 
 // GetApps fetches all apps which are not archived
 func (f AppFixtures) GetApps(
-	ctx context.Context) ([]database.App, error) {
+	ctx context.Context,
+) ([]database.App, error) {
 	apps := []database.App{}
 	if err := f.db.WithContext(ctx).
 		Where("NOT is_archived").

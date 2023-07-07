@@ -7,6 +7,7 @@ fasttrackml
 
 # Local database
 fasttrackml.db*
+encrypted.db*
 
 # Imported integration tests
 tests/integration/python/*/*.src

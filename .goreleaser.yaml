@@ -1,0 +1,27 @@
+before:
+  hooks:
+    - go mod download
+    - sh -c "docker run --rm alpine tar -C / -c tmp > tmp.tar"
+builds:
+  - env:
+      - CGO_ENABLED=0
+    ldflags:
+     - -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - format: binary
+dockers:
+  - image_templates:
+      - "gresearch/fasttrackml:{{ .Tag }}"
+      - "gresearch/fasttrackml:v{{ .Major }}"
+      - "gresearch/fasttrackml:v{{ .Major }}.{{ .Minor }}"
+      - "gresearch/fasttrackml:latest"
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256

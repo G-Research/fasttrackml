@@ -46,6 +46,17 @@ func (f ExperimentFixtures) CreateExperiment(
 	return experiment, nil
 }
 
+// GetTestExperiments fetches all experiments
+func (f ExperimentFixtures) GetTestExperiments(
+	ctx context.Context) ([]models.Experiment, error) {
+	experiments := []models.Experiment{}
+	if err := f.db.WithContext(ctx).
+		Find(&experiments).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting `experiment` entities")
+	}
+	return experiments, nil
+}
+
 // GetExperimentByID returns the experiment by the given id
 func (f ExperimentFixtures) GetExperimentByID(ctx context.Context, experimentID int32) (*models.Experiment, error) {
 	experiment, err := f.experimentRepository.GetByID(ctx, experimentID)

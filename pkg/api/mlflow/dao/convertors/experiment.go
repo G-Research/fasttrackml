@@ -38,26 +38,28 @@ func ConvertCreateExperimentToDBModel(req *request.CreateExperimentRequest) (*mo
 		}
 	}
 
-	u, err := url.Parse(req.ArtifactLocation)
-	if err != nil {
-		return nil, api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
-	}
-
-	switch u.Scheme {
-	case "s3":
-		artifactLocation := fmt.Sprintf("%s://%s", u.Scheme, strings.Trim(u.Host, "/"))
-		if path := strings.Trim(u.Path, "/"); len(path) > 0 {
-			artifactLocation = fmt.Sprintf("%s/%s", artifactLocation, path)
-		}
-		experiment.ArtifactLocation = artifactLocation
-	default:
-		// TODO:DSuhinin - default case right now has to satisfy Python integration tests.
-		p, err := filepath.Abs(u.Path)
+	if req.ArtifactLocation != "" {
+		u, err := url.Parse(req.ArtifactLocation)
 		if err != nil {
 			return nil, api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
 		}
-		u.Path = p
-		experiment.ArtifactLocation = u.String()
+
+		switch u.Scheme {
+		case "s3":
+			artifactLocation := fmt.Sprintf("%s://%s", u.Scheme, strings.Trim(u.Host, "/"))
+			if path := strings.Trim(u.Path, "/"); path != "" {
+				artifactLocation = fmt.Sprintf("%s/%s", artifactLocation, path)
+			}
+			experiment.ArtifactLocation = artifactLocation
+		default:
+			// TODO:DSuhinin - default case right now has to satisfy Python integration tests.
+			p, err := filepath.Abs(u.Path)
+			if err != nil {
+				return nil, api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
+			}
+			u.Path = p
+			experiment.ArtifactLocation = u.String()
+		}
 	}
 
 	return &experiment, nil

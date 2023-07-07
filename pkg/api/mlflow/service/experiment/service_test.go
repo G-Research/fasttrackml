@@ -88,10 +88,14 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 				ArtifactLocation: "incorrect-protocol,:/incorrect-location",
 			},
 			service: func() *Service {
+				experimentRepository := repositories.MockExperimentRepositoryProvider{}
+				experimentRepository.On(
+					"GetByName", mock.AnythingOfType("*context.emptyCtx"), "name",
+				).Return(nil, nil)
 				return NewService(
 					&config.ServiceConfig{},
 					&repositories.MockTagRepositoryProvider{},
-					&repositories.MockExperimentRepositoryProvider{},
+					&experimentRepository,
 				)
 			},
 		},

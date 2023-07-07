@@ -1,0 +1,10 @@
+1. run server with -> mlflow server --serve-artifacts --artifacts-destination s3://fasttrackml --default-artifact-root s3://fasttrackml
+   run client with -> export MLFLOW_S3_ENDPOINT_URL=http://localhost:9000 && export AWS_DEFAULT_REGION=us-west-rack-2
+        leads to save everything:
+            - s3://fasttrackml/1/5aa9ec8a235e4ca49b3ed7e39b2d2994/artifacts, where 1 - experiment id, 5aa9ec8a235e4ca49b3ed7e39b2d2994 - run id.
+2. run server with -> mlflow server --serve-artifacts --artifacts-destination s3://fasttrackml
+   run client with -> export MLFLOW_S3_ENDPOINT_URL=http://localhost:9000 && export AWS_DEFAULT_REGION=us-west-rack-2
+        leads to save everything:
+            - s3://fasttrackml/1/d7cc4102dee84b52a49e2af1f1e4d23d/artifacts
+
+

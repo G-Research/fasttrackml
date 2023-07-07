@@ -2,7 +2,6 @@ package experiment
 
 import (
 	"net/url"
-	"path/filepath"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -28,16 +27,9 @@ func ValidateCreateExperimentRequest(req *request.CreateExperimentRequest) error
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'name'")
 	}
 	if req.ArtifactLocation != "" {
-		u, err := url.Parse(req.ArtifactLocation)
-		if err != nil {
+		if _, err := url.Parse(req.ArtifactLocation); err != nil {
 			return api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
 		}
-		p, err := filepath.Abs(u.Path)
-		if err != nil {
-			return api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
-		}
-		u.Path = p
-		req.ArtifactLocation = u.String()
 	}
 	return nil
 }

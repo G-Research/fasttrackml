@@ -6,6 +6,7 @@ import (
 
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
@@ -21,6 +22,10 @@ type ExperimentRepositoryProvider interface {
 	GetByName(ctx context.Context, name string) (*models.Experiment, error)
 	// Update updates existing models.Experiment entity.
 	Update(ctx context.Context, experiment *models.Experiment) error
+	// Delete removes the existing models.Experiment from the db.
+	Delete(ctx context.Context, experiment *models.Experiment) error
+	// DeleteBatch removes existing []models.Experiment in batch from the db.
+	DeleteBatch(ctx context.Context, ids []*int32) error
 }
 
 // ExperimentRepository repository to work with `experiment` entity.
@@ -81,7 +86,9 @@ func (r ExperimentRepository) GetByName(ctx context.Context, name string) (*mode
 
 // Update updates existing models.Experiment entity.
 func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Experiment) error {
+
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
+
 		if err := r.db.WithContext(ctx).Model(&experiment).Updates(experiment).Error; err != nil {
 			return eris.Wrapf(err, "error updating experiment with id: %d", *experiment.ID)
 		}
@@ -98,8 +105,37 @@ func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Exp
 			}
 		}
 		return nil
+
 	}); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// Delete removes the existing models.Experiment from the db.
+func (r ExperimentRepository) Delete(ctx context.Context, experiment *models.Experiment) error {
+	return r.DeleteBatch(ctx, []*int32{experiment.ID})
+}
+
+// DeleteBatch removes existing []models.Experiment in batch from the db.
+func (r ExperimentRepository) DeleteBatch(ctx context.Context, ids []*int32) error {
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		experiments := make([]models.Experiment, 0, len(ids))
+		if err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "experiment_id"}}}).
+			Where("experiment_id IN ?", ids).
+			Delete(&experiments).Error; err != nil {
+			return eris.Wrapf(err, "error deleting existing experiments with ids: %d", ids)
+		}
+
+		// verify deletion
+		if len(experiments) != len(ids) {
+			return eris.Errorf("count of deleted experiments does not match length of ids input (invalid experiment ID?)")
+		}
+
+		return nil
+	}); err != nil {
+		return eris.Wrapf(err, "error deleting experiments")
 	}
 
 	return nil

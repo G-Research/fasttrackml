@@ -1,12 +1,9 @@
-before:
-  hooks:
-    - go mod download
-    - sh -c "docker run --rm alpine tar -C / -c tmp > tmp.tar"
+project_name: fasttrackml
 builds:
   - env:
       - CGO_ENABLED=0
     ldflags:
-     - -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
+      - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
     goos:
       - linux
       - windows
@@ -15,13 +12,27 @@ builds:
       - amd64
       - arm64
 archives:
-  - format: binary
-dockers:
-  - image_templates:
-      - "gresearch/fasttrackml:{{ .Tag }}"
-      - "gresearch/fasttrackml:v{{ .Major }}"
-      - "gresearch/fasttrackml:v{{ .Major }}.{{ .Minor }}"
-      - "gresearch/fasttrackml:latest"
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of uname.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+    - goos: windows
+      format: zip
 checksum:
-  name_template: checksums.txt
-  algorithm: sha256
+  name_template: 'checksums.txt'
+  algorithm: 'sha256'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

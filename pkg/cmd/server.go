@@ -151,9 +151,7 @@ func initServer() *fiber.App {
 
 	if viper.GetBool("dev-mode") {
 		log.Info("Development mode - enabling CORS")
-		server.Use(cors.New(cors.Config{
-			AllowOrigins: "*",
-		}))
+		server.Use(cors.New())
 	}
 
 	authUsername := viper.GetString("auth-username")

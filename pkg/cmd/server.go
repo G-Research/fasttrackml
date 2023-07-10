@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/rotisserie/eris"
@@ -161,8 +162,14 @@ func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 		},
 	})
 
-	if config.AuthUsername != "" && config.AuthPassword != "" {
-		log.Infof(`BasicAuth enabled with user "%s"`, config.AuthUsername)
+	if viper.GetBool("dev-mode") {
+		log.Info("Development mode - enabling CORS")
+		server.Use(cors.New())
+	}
+
+	authUsername := viper.GetString("auth-username")
+	authPassword := viper.GetString("auth-password")
+	if authUsername != "" && authPassword != "" {
 		server.Use(basicauth.New(basicauth.Config{
 			Users: map[string]string{
 				config.AuthUsername: config.AuthPassword,
@@ -208,6 +215,8 @@ func init() {
 	ServerCmd.Flags().Bool("database-migrate", true, "Run database migrations")
 	ServerCmd.Flags().Bool("database-reset", false, "Reinitialize database - WARNING all data will be lost!")
 	ServerCmd.Flags().MarkHidden("database-reset")
+	ServerCmd.Flags().Bool("dev-mode", false, "Development mode - enable CORS")
+	ServerCmd.Flags().MarkHidden("dev-mode")
 	viper.BindEnv("auth-username", "MLFLOW_TRACKING_USERNAME")
 	viper.BindEnv("auth-password", "MLFLOW_TRACKING_PASSWORD")
 }

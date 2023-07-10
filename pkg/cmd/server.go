@@ -149,11 +149,12 @@ func initServer() *fiber.App {
 		},
 	})
 
-	server.Use(cors.New(cors.Config{
-		AllowOrigins:     viper.GetString("cors-allow-origins"),
-		AllowHeaders:     "Origin, Content-Type, Accept, X-Timezone-Offset",
-		AllowCredentials: true,
-	}))
+	if viper.GetBool("dev-mode") {
+		log.Info("Development mode - enabling CORS")
+		server.Use(cors.New(cors.Config{
+			AllowOrigins: "*",
+		}))
+	}
 
 	authUsername := viper.GetString("auth-username")
 	authPassword := viper.GetString("auth-password")
@@ -197,13 +198,14 @@ func init() {
 	ServerCmd.Flags().String("artifact-root", "s3://fasttrackml", "Artifact root")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")
-	ServerCmd.Flags().String("cors-allow-origins", "*", "CORS allowed origins")
 	ServerCmd.Flags().StringP("database-uri", "d", "sqlite://fasttrackml.db", "Database URI")
 	ServerCmd.Flags().Int("database-pool-max", 20, "Maximum number of database connections in the pool")
 	ServerCmd.Flags().Duration("database-slow-threshold", 1*time.Second, "Slow SQL warning threshold")
 	ServerCmd.Flags().Bool("database-migrate", true, "Run database migrations")
 	ServerCmd.Flags().Bool("database-reset", false, "Reinitialize database - WARNING all data will be lost!")
 	ServerCmd.Flags().MarkHidden("database-reset")
+	ServerCmd.Flags().Bool("dev-mode", false, "Development mode - enable CORS")
+	ServerCmd.Flags().MarkHidden("dev-mode")
 	viper.BindEnv("auth-username", "MLFLOW_TRACKING_USERNAME")
 	viper.BindEnv("auth-password", "MLFLOW_TRACKING_PASSWORD")
 }

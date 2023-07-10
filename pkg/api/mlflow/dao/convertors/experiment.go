@@ -47,7 +47,7 @@ func ConvertCreateExperimentToDBModel(req *request.CreateExperimentRequest) (*mo
 
 		switch u.Scheme {
 		case "s3":
-			artifactLocation := fmt.Sprintf("%s://%s", u.Scheme, strings.Trim(u.Host, "/"))
+			artifactLocation := fmt.Sprintf("%s://%s", u.Scheme, u.Host)
 			if path := strings.Trim(u.Path, "/"); path != "" {
 				artifactLocation = fmt.Sprintf("%s/%s", artifactLocation, path)
 			}

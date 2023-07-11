@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	stdlib "github.com/multiprocessio/go-sqlite3-stdlib"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -75,7 +76,8 @@ func ConnectDB(
 			}
 		}
 
-		s, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
+		stdlib.Register("sqlite3_ext")
+		s, err := sql.Open("sqlite3_ext", strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}
@@ -90,7 +92,7 @@ func ConnectDB(
 
 		q.Set("_query_only", "true")
 		dbURL.RawQuery = q.Encode()
-		r, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
+		r, err := sql.Open("sqlite3_ext", strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
 			DB.Close()
 			return nil, fmt.Errorf("failed to connect to database: %w", err)

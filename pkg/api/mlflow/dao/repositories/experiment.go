@@ -118,11 +118,23 @@ func (r ExperimentRepository) Delete(ctx context.Context, experiment *models.Exp
 // DeleteBatch removes existing []models.Experiment in batch from the db.
 func (r ExperimentRepository) DeleteBatch(ctx context.Context, ids []*int32) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		// finding all the runs
+		var runs []models.Run
+		if err := tx.Where("experiment_id IN (?)", ids).Find(&runs).Error; err != nil {
+			return err
+		}
+
 		experiments := make([]models.Experiment, 0, len(ids))
 		if err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "experiment_id"}}}).
 			Where("experiment_id IN ?", ids).
 			Delete(&experiments).Error; err != nil {
 			return eris.Wrapf(err, "error deleting existing experiments with ids: %d", ids)
+		}
+
+		// renumbering the remainder runs
+		runRepo := NewRunRepository(tx)
+		if err := runRepo.renumberRows(tx, getMinRowNum(runs)); err != nil {
+			return eris.Wrapf(err, "error renumbering runs.row_num")
 		}
 
 		// verify deletion

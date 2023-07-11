@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+
 	"github.com/go-python/gpython/ast"
 	"github.com/go-python/gpython/parser"
 	"github.com/go-python/gpython/py"
@@ -17,6 +20,7 @@ import (
 )
 
 const (
+	OperationMatch      = "match"
 	OperationEndsWith   = "endswith"
 	OperationContains   = "contains"
 	OperationStartsWith = "startswith"
@@ -28,9 +32,10 @@ type DefaultExpression struct {
 }
 
 type QueryParser struct {
-	Default  DefaultExpression
-	Tables   map[string]string
-	TzOffset int
+	Default   DefaultExpression
+	Tables    map[string]string
+	TzOffset  int
+	Dialector string
 }
 
 type ParsedQuery interface {
@@ -217,6 +222,34 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 		}
 		attribute := string(node.Attr)
 		switch strings.ToLower(attribute) {
+		case OperationMatch:
+			return callable(func(args []ast.Expr) (any, error) {
+				if len(args) != 1 {
+					return nil, errors.New("`match` function support exactly one argument")
+				}
+				c, ok := parsedNode.(clause.Column)
+				if !ok {
+					return nil, errors.New("unsupported node type. has to be clause.Column")
+				}
+
+				arg, ok := args[0].(*ast.Str)
+				if !ok {
+					return nil, errors.New("unsupported argument type. has to be `string` only")
+				}
+
+				switch pq.qp.Dialector {
+				case sqlite.Dialector{}.Name():
+					return clause.Expr{
+						SQL: fmt.Sprintf(`"%s"."%s" regexp '%s'`, c.Table, c.Name, arg.S),
+					}, nil
+				case postgres.Dialector{}.Name():
+					return clause.Expr{
+						SQL: fmt.Sprintf(`"%s"."%s" ~ '%s'`, c.Table, c.Name, arg.S),
+					}, nil
+				default:
+					return nil, fmt.Errorf("unsupported dialector type: %s", pq.qp.Dialector)
+				}
+			}), nil
 		case OperationEndsWith:
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {

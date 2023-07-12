@@ -74,7 +74,6 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 
 	remaining_experiments, err := s.fixtures.GetTestExperiments(context.Background())
 	assert.Nil(s.T(), err)
-
 	assert.Equal(s.T(), length, len(remaining_experiments))
 }
 

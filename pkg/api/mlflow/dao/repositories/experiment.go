@@ -137,9 +137,11 @@ func (r ExperimentRepository) DeleteBatch(ctx context.Context, ids []*int32) err
 		}
 
 		// renumbering the remainder runs
-		runRepo := NewRunRepository(tx)
-		if err := runRepo.renumberRows(tx, getMinRowNum(runs)); err != nil {
-			return eris.Wrapf(err, "error renumbering runs.row_num")
+		if len(runs) > 0 {
+			runRepo := NewRunRepository(tx)
+			if err := runRepo.renumberRows(tx, getMinRowNum(runs)); err != nil {
+				return eris.Wrapf(err, "error renumbering runs.row_num")
+			}
 		}
 
 		return nil

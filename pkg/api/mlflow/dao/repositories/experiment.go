@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"github.com/rotisserie/eris"
@@ -119,8 +120,9 @@ func (r ExperimentRepository) Delete(ctx context.Context, experiment *models.Exp
 func (r ExperimentRepository) DeleteBatch(ctx context.Context, ids []*int32) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		// finding all the runs
-		var runs []models.Run
-		if err := tx.Where("experiment_id IN (?)", ids).Find(&runs).Error; err != nil {
+		var minRowNum sql.NullInt64
+
+		if err := tx.Model(&models.Run{}).Where("experiment_id IN (?)", ids).Pluck("MIN(row_num)", &minRowNum).Error; err != nil {
 			return err
 		}
 
@@ -137,9 +139,9 @@ func (r ExperimentRepository) DeleteBatch(ctx context.Context, ids []*int32) err
 		}
 
 		// renumbering the remainder runs
-		if len(runs) > 0 {
+		if minRowNum.Valid {
 			runRepo := NewRunRepository(tx)
-			if err := runRepo.renumberRows(tx, getMinRowNum(runs)); err != nil {
+			if err := runRepo.renumberRows(tx, models.RowNum(minRowNum.Int64)); err != nil {
 				return eris.Wrapf(err, "error renumbering runs.row_num")
 			}
 		}

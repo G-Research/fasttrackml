@@ -50,7 +50,7 @@ func (f ExperimentFixtures) CreateExperiment(
 func (f ExperimentFixtures) GetTestExperiments(
 	ctx context.Context,
 ) ([]models.Experiment, error) {
-	experiments := []models.Experiment{}
+	var experiments []models.Experiment
 	if err := f.db.WithContext(ctx).
 		Find(&experiments).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting `experiment` entities")

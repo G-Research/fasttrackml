@@ -1,6 +1,7 @@
 <div align="center">
 <img src="https://raw.githubusercontent.com/naskio/fasttrackml/main/website/static/logo/project-logo-light.svg" height="228"
-     style="filter: drop-shadow(2px 2px 0 white) drop-shadow(-2px 2px 0 white) drop-shadow(2px -2px 0 white) drop-shadow(-2px -2px 0 white);"/>
+     style="-webkit-filter: drop-shadow(2px 2px 0 white) drop-shadow(-2px 2px 0 white) drop-shadow(2px -2px 0 white) drop-shadow(-2px -2px 0 white); 
+            filter: drop-shadow(2px 2px 0 white) drop-shadow(-2px 2px 0 white) drop-shadow(2px -2px 0 white) drop-shadow(-2px -2px 0 white);"/>
 </div>
 
 # _FastTrackML_

@@ -3,7 +3,6 @@
 package run
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,9 +23,9 @@ func TestCreateAppTestSuite(t *testing.T) {
 }
 
 func (s *CreateAppTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(os.Getenv("SERVICE_BASE_URL"))
+	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
 
-	appFixtures, err := fixtures.NewAppFixtures(os.Getenv("DATABASE_DSN"))
+	appFixtures, err := fixtures.NewAppFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.appFixtures = appFixtures
 }

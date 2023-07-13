@@ -1,3 +1,7 @@
+<div align="center">
+<img src="https://raw.githubusercontent.com/naskio/fasttrackml/main/website/static/logo/project-logo-light.svg" height="228"/>
+</div>
+
 # _FastTrackML_
 Rewrite of the MLFlow tracking server with a focus on scalability
 

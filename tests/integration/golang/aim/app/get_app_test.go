@@ -20,7 +20,7 @@ type GetAppTestSuite struct {
 	suite.Suite
 	client      *helpers.HttpClient
 	appFixtures *fixtures.AppFixtures
-	apps        []*database.App
+	app         *database.App
 }
 
 func TestGetAppTestSuite(t *testing.T) {
@@ -34,36 +34,26 @@ func (s *GetAppTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.appFixtures = appFixtures
 
-	s.apps, err = s.appFixtures.CreateApps(context.Background(), 1)
+	apps, err := s.appFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
+	s.app = apps[0]
 }
 
 func (s *GetAppTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "GetAppWithExistingID",
-		},
-	}
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
-			var resp database.App
-			err := s.client.DoGetRequest(
-				fmt.Sprintf("/apps/%v", s.apps[0].ID),
-				&resp,
-			)
-			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), s.apps[0].ID, resp.ID)
-			assert.Equal(s.T(), s.apps[0].Type, resp.Type)
-			assert.Equal(s.T(), s.apps[0].State, resp.State)
-			assert.NotEmpty(s.T(), resp.CreatedAt)
-			assert.NotEmpty(s.T(), resp.UpdatedAt)
-		})
-	}
+	var resp database.App
+	err := s.client.DoGetRequest(
+		fmt.Sprintf("/apps/%v", s.app.ID),
+		&resp,
+	)
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), s.app.ID, resp.ID)
+	assert.Equal(s.T(), s.app.Type, resp.Type)
+	assert.Equal(s.T(), s.app.State, resp.State)
+	assert.NotEmpty(s.T(), resp.CreatedAt)
+	assert.NotEmpty(s.T(), resp.UpdatedAt)
 }
 
 func (s *GetAppTestSuite) Test_Error() {
@@ -73,7 +63,7 @@ func (s *GetAppTestSuite) Test_Error() {
 		idParam uuid.UUID
 	}{
 		{
-			name:    "GetAppWithUnknownID",
+			name:    "GetAppWithNotFoundID",
 			idParam: uuid.New(),
 		},
 	}

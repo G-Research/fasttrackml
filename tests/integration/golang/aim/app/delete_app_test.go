@@ -43,12 +43,12 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name         string
-		wantAppCount int
+		name             string
+		expectedAppCount int
 	}{
 		{
-			name:         "DeleteApp",
-			wantAppCount: 0,
+			name:             "DeleteApp",
+			expectedAppCount: 0,
 		},
 	}
 	for _, tt := range tests {
@@ -62,7 +62,7 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 
 			apps, err := s.appFixtures.GetApps(context.Background())
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.wantAppCount, len(apps))
+			assert.Equal(s.T(), tt.expectedAppCount, len(apps))
 		})
 	}
 }
@@ -72,14 +72,14 @@ func (s *DeleteAppTestSuite) Test_Error() {
 		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name         string
-		idParam      uuid.UUID
-		wantAppCount int
+		name             string
+		idParam          uuid.UUID
+		expectedAppCount int
 	}{
 		{
-			name:         "DeleteAppWithIncorrectID",
-			idParam:      uuid.New(),
-			wantAppCount: 1,
+			name:             "DeleteAppWithNotFoundID",
+			idParam:          uuid.New(),
+			expectedAppCount: 1,
 		},
 	}
 	for _, tt := range tests {
@@ -94,7 +94,7 @@ func (s *DeleteAppTestSuite) Test_Error() {
 
 			apps, err := s.appFixtures.GetApps(context.Background())
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.wantAppCount, len(apps))
+			assert.Equal(s.T(), tt.expectedAppCount, len(apps))
 		})
 	}
 }

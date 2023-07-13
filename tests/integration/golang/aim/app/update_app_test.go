@@ -46,7 +46,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 		requestBody map[string]any
 	}{
 		{
-			name: "UpdateValidApp",
+			name: "UpdateApplication",
 			requestBody: map[string]any{
 				"type": "app-type",
 				"state": map[string]string{

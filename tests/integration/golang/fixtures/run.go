@@ -49,6 +49,16 @@ func (f RunFixtures) CreateRun(
 	return run, nil
 }
 
+// UpdateRun updates existing Run.
+func (f RunFixtures) UpdateRun(
+	ctx context.Context, run *models.Run,
+) error {
+	if err := f.runRepository.Update(ctx, run); err != nil {
+		return eris.Wrap(err, "error updating test run")
+	}
+	return nil
+}
+
 // CreateRuns creates some num runs belonging to the experiment
 func (f RunFixtures) CreateRuns(
 	ctx context.Context, exp *models.Experiment, num int,

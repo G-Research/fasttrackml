@@ -51,10 +51,10 @@ func (s *GetAppsTestSuite) Test_Ok() {
 			defer func() {
 				assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
 			}()
-			
+
 			apps, err := s.appFixtures.CreateApps(context.Background(), tt.expectedAppCount)
 			assert.Nil(s.T(), err)
-			
+
 			var resp []database.App
 			err = s.client.DoGetRequest(
 				"/apps",

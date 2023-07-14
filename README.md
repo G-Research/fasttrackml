@@ -1,7 +1,4 @@
-<div align="center">
-<img src="https://raw.githubusercontent.com/naskio/fasttrackml/main/website/static/logo/project-logo-light.svg" height="228" width="100%"
-     style="background-color: #f7f8fa; border: 1px solid #ebeef2; border-radius: 20px;"/>
-</div>
+![Banner](https://github.com/G-Research/fasttrackml/assets/18899702/0cf3772f-0e2a-42d6-95da-406a8adb6b3e)
 
 # _FastTrackML_
 Rewrite of the MLFlow tracking server with a focus on scalability

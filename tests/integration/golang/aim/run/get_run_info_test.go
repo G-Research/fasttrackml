@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -67,7 +68,7 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var resp response.GetRunInfoResponse
+			var resp response.GetRunInfo
 			err := s.client.DoGetRequest(
 				fmt.Sprintf("/runs/%s/info", tt.runID),
 				&resp,

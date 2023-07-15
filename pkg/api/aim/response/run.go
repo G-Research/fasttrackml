@@ -1,12 +1,5 @@
 package response
 
-import (
-	"time"
-
-	"github.com/gogo/protobuf/test/tags"
-	"github.com/google/flatbuffers/tests/namespace_test/NamespaceA"
-)
-
 // GetRunInfo represents the response struct for GetRunInfo endpoint
 type GetRunInfo struct {
 	Params GetRunInfoParams `json:"params"`
@@ -30,10 +23,10 @@ type GetRunInfoProps struct {
 	Description string               `json:"description"`
 	Experiment  GetRunInfoExperiment `json:"experiment"`
 	Tags        []string             `json:"tags"`
-	StartTime   time.Time            `json:"creation_time"`
-	EndTime     time.Time            `json:"end_time"`
+	StartTime   float64              `json:"creation_time"`
+	EndTime     float64              `json:"end_time"`
 	Archived    bool                 `json:"archived"`
-	Active      bool                 `json:"archived"`
+	Active      bool                 `json:"active"`
 }
 
 // GetRunInfoExperiment experiment properties

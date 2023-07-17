@@ -16,14 +16,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
-
-      - name: Run GoReleaser to build release artifacts
-        uses: goreleaser/goreleaser-action@v4
-        with:
-          version: v1.18.2
-          args: release --snapshot --clean
+      - name: Run goreleaser in docker
+        run: |
+          docker run \
+          --rm \
+          -e CGO_ENABLED=1 \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v `pwd`:/go/src/fasttrackml \
+          -v `pwd`/sysroot:/sysroot \
+          -w /go/src/fasttrackml \
+          ghcr.io/goreleaser/goreleaser-cross:v1.19.5 \
+          release --snapshot --clean
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v1

@@ -1,16 +1,41 @@
 project_name: fasttrackml
 builds:
-  - id: linux-build
+  - id: darwin-amd64
+    main: ./
+    binary: {{ .ProjectName }}
+    goos:
+      - darwin
+    goarch:
+      - amd64
     env:
-      - CGO_ENABLED=1
-      - CC_FOR_TARGET=aarch64-linux-gnu-gcc
+      - PKG_CONFIG_SYSROOT_DIR=/sysroot/macos/amd64
+      - PKG_CONFIG_PATH=/sysroot/macos/amd64/usr/local/lib/pkgconfig
+      - CC=o64-clang
+      - CXX=o64-clang++
+    flags:
+      - -mod=readonly
     ldflags:
       - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
+  - id: linux-armhf
+    main: ./
+    binary: golang-cross
     goos:
       - linux
     goarch:
-      - amd64
-      - arm64
+      - arm
+    goarm:
+      - 7
+    env:
+      - CC=arm-linux-gnueabihf-gcc
+      - CXX=arm-linux-gnueabihf-g++
+      - CGO_CFLAGS=--sysroot=/sysroot/linux/armhf
+      - CGO_LDFLAGS=--sysroot=/sysroot/linux/armhf
+      - PKG_CONFIG_SYSROOT_DIR=/sysroot/linux/armhf
+      - PKG_CONFIG_PATH=/sysroot/linux/armhf/opt/vc/lib/pkgconfig:/sysroot/linux/armhf/usr/lib/arm-linux-gnueabihf/pkgconfig:/sysroot/linux/armhf/usr/lib/pkgconfig:/sysroot/linux/armhf/usr/local/lib/pkgconfig
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of uname.
@@ -21,6 +46,9 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
+    builds:
+      - darwin-amd64
+      - linux-armhf
     # use zip for windows archives
     format_overrides:
     - goos: windows

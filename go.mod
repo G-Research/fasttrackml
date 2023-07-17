@@ -9,7 +9,7 @@ replace (
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/G-Research/fasttrackml-ui-aim v0.31602.2
+	github.com/G-Research/fasttrackml-ui-aim v0.31602.5
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.1
 	github.com/apache/arrow/go/v11 v11.0.0
 	github.com/go-python/gpython v0.2.0

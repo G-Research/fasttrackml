@@ -43,10 +43,9 @@ func ConvertCreateExperimentToDBModel(req *request.CreateExperimentRequest) (*mo
 		if err != nil {
 			return nil, eris.Wrap(err, "error parsing artifact location")
 		}
-
 		switch u.Scheme {
 		case "s3":
-			experiment.ArtifactLocation = strings.TrimRight("/", u.String())
+			experiment.ArtifactLocation = strings.TrimRight(u.String(), "/")
 		default:
 			// TODO:DSuhinin - default case right now has to satisfy Python integration tests.
 			p, err := filepath.Abs(u.Path)

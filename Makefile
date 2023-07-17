@@ -137,3 +137,15 @@ PHONY: run
 run: build ## run the FastTrackML server
 	@echo ">>> Running the FasttrackML server."
 	./$(APP) server
+
+PHONY: release
+release:
+	docker run \
+	--rm \
+	-e CGO_ENABLED=1 \
+	-v /var/run/docker.sock:/var/run/docker.sock \
+	-v `pwd`:/go/src/fasttrackml \
+	-v `pwd`/sysroot:/sysroot \
+	-w /go/src/fasttrackml \
+	ghcr.io/goreleaser/goreleaser-cross:v1.20 \
+	release --clean --snapshot

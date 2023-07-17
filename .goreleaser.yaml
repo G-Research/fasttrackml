@@ -1,37 +1,77 @@
 project_name: fasttrackml
+env:
+  - CGO_ENABLED=1
 builds:
   - id: darwin-amd64
     main: ./
-    binary: {{ .ProjectName }}
+    binary: fasttrackml
     goos:
       - darwin
     goarch:
       - amd64
     env:
-      - PKG_CONFIG_SYSROOT_DIR=/sysroot/macos/amd64
-      - PKG_CONFIG_PATH=/sysroot/macos/amd64/usr/local/lib/pkgconfig
       - CC=o64-clang
       - CXX=o64-clang++
     flags:
       - -mod=readonly
     ldflags:
       - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
-  - id: linux-armhf
+
+  - id: darwin-arm64
     main: ./
-    binary: golang-cross
+    binary: fasttrackml
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    env:
+      - CC=oa64-clang
+      - CXX=oa64-clang++
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
+
+  - id: linux-arm64
+    main: ./
+    binary: fasttrackml
     goos:
       - linux
     goarch:
-      - arm
-    goarm:
-      - 7
+      - arm64
     env:
-      - CC=arm-linux-gnueabihf-gcc
-      - CXX=arm-linux-gnueabihf-g++
-      - CGO_CFLAGS=--sysroot=/sysroot/linux/armhf
-      - CGO_LDFLAGS=--sysroot=/sysroot/linux/armhf
-      - PKG_CONFIG_SYSROOT_DIR=/sysroot/linux/armhf
-      - PKG_CONFIG_PATH=/sysroot/linux/armhf/opt/vc/lib/pkgconfig:/sysroot/linux/armhf/usr/lib/arm-linux-gnueabihf/pkgconfig:/sysroot/linux/armhf/usr/lib/pkgconfig:/sysroot/linux/armhf/usr/local/lib/pkgconfig
+      - CC=aarch64-linux-gnu-gcc
+      - CXX=aarch64-linux-gnu-g++
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
+
+  - id: linux-amd64
+    main: ./
+    binary: fasttrackml
+    goos:
+      - linux
+    goarch:
+      - amd64
+    env:
+      - CC=x86_64-linux-gnu-gcc
+      - CXX=x86_64-linux-gnu-g++
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
+
+  - id: windows-amd64
+    main: ./
+    binary: fasttrackml
+    goos:
+      - windows
+    goarch:
+      - amd64
+    env:
+      - CC=x86_64-w64-mingw32-gcc
+      - CXX=x86_64-w64-mingw32-g++
     flags:
       - -mod=readonly
     ldflags:
@@ -48,7 +88,7 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     builds:
       - darwin-amd64
-      - linux-armhf
+      - linux-arm64
     # use zip for windows archives
     format_overrides:
     - goos: windows

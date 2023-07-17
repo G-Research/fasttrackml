@@ -2,7 +2,6 @@ package convertors
 
 import (
 	"database/sql"
-	"fmt"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -47,11 +46,7 @@ func ConvertCreateExperimentToDBModel(req *request.CreateExperimentRequest) (*mo
 
 		switch u.Scheme {
 		case "s3":
-			artifactLocation := fmt.Sprintf("%s://%s", u.Scheme, u.Host)
-			if path := strings.Trim(u.Path, "/"); path != "" {
-				artifactLocation = fmt.Sprintf("%s/%s", artifactLocation, path)
-			}
-			experiment.ArtifactLocation = artifactLocation
+			experiment.ArtifactLocation = strings.TrimRight("/", u.String())
 		default:
 			// TODO:DSuhinin - default case right now has to satisfy Python integration tests.
 			p, err := filepath.Abs(u.Path)

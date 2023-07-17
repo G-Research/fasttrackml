@@ -2,6 +2,7 @@ project_name: fasttrackml
 builds:
   - env:
       - CGO_ENABLED=1
+      - CC_FOR_TARGET=aarch64-linux-gnu-gcc
     ldflags:
       - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
     goos:

@@ -96,7 +96,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 			error: api.NewInvalidParameterValueError("incorrect path has been provided. path has to be absolute"),
 			request: &request.ListArtifactsRequest{
 				RunID: "id",
-				Path:  ".",
+				Path:  "./",
 			},
 			service: func() *Service {
 				return NewService(
@@ -110,7 +110,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 			error: api.NewInvalidParameterValueError("incorrect path has been provided. path has to be absolute"),
 			request: &request.ListArtifactsRequest{
 				RunID: "id",
-				Path:  "..",
+				Path:  "../",
 			},
 			service: func() *Service {
 				return NewService(

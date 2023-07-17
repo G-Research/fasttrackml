@@ -110,9 +110,8 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		close(isRunning)
 	}()
 
-	addr := viper.GetString("listen-address")
-	log.Infof("Listening on %s", addr)
-	if err := server.Listen(addr); err != nil && err != http.ErrServerClosed {
+	log.Infof("Listening on %s", mlflowConfig.ListenAddress)
+	if err := server.Listen(mlflowConfig.ListenAddress); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("error listening: %v", err)
 	}
 
@@ -162,14 +161,12 @@ func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 		},
 	})
 
-	if viper.GetBool("dev-mode") {
+	if config.DevMode {
 		log.Info("Development mode - enabling CORS")
 		server.Use(cors.New())
 	}
 
-	authUsername := viper.GetString("auth-username")
-	authPassword := viper.GetString("auth-password")
-	if authUsername != "" && authPassword != "" {
+	if config.AuthUsername != "" && config.AuthPassword != "" {
 		server.Use(basicauth.New(basicauth.Config{
 			Users: map[string]string{
 				config.AuthUsername: config.AuthPassword,

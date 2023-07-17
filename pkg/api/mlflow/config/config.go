@@ -8,6 +8,8 @@ import (
 
 // ServiceConfig represents main service configuration.
 type ServiceConfig struct {
+	DevMode               bool
+	ListenAddress         string
 	AuthUsername          string
 	AuthPassword          string
 	ArtifactRoot          string
@@ -22,6 +24,8 @@ type ServiceConfig struct {
 // NewServiceConfig creates new instance of ServiceConfig.
 func NewServiceConfig() *ServiceConfig {
 	return &ServiceConfig{
+		DevMode:               viper.GetBool("dev-mode"),
+		ListenAddress:         viper.GetString("listen-address"),
 		AuthUsername:          viper.GetString("auth-username"),
 		AuthPassword:          viper.GetString("auth-password"),
 		ArtifactRoot:          viper.GetString("artifact-root"),

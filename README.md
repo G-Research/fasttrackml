@@ -1,4 +1,4 @@
-[![FastTrackML banner](https://user-images.githubusercontent.com/18899702/253519435-d9d51415-f437-4229-9d11-9519543c4399.svg)](https://fasttrackml.io/)
+[![FastTrackML banner](https://raw.githubusercontent.com/G-Research/fasttrackml/main/website/static/images/github-banner.svg)](https://fasttrackml.io/)
 
 # _FastTrackML_
 Rewrite of the MLFlow tracking server with a focus on scalability

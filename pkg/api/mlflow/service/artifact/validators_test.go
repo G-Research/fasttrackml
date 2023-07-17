@@ -32,7 +32,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 			error: api.NewInvalidParameterValueError("incorrect path has been provided. path has to be absolute"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
-				Path:  ".",
+				Path:  "./",
 			},
 		},
 		{
@@ -40,7 +40,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 			error: api.NewInvalidParameterValueError("incorrect path has been provided. path has to be absolute"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
-				Path:  "..",
+				Path:  "../",
 			},
 		},
 	}

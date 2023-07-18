@@ -8,16 +8,21 @@ import (
 	glog "log"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
-	stdlib "github.com/multiprocessio/go-sqlite3-stdlib"
+	goSqlite3 "github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/plugin/dbresolver"
+)
+
+const (
+	SQLiteCustomDriverName = "sqlite3_custom_driver"
 )
 
 type DbInstance struct {
@@ -76,11 +81,27 @@ func ConnectDB(
 			}
 		}
 
-		stdlib.Register("sqlite3_ext")
-		s, err := sql.Open("sqlite3_ext", strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
+		sql.Register(SQLiteCustomDriverName, &goSqlite3.SQLiteDriver{
+			ConnectHook: func(conn *goSqlite3.SQLiteConn) error {
+				if err := conn.RegisterFunc("regexp", func(re, s string) bool {
+					c, err := regexp.Compile(re)
+					if err != nil {
+						return false
+					}
+
+					return c.MatchString(s)
+				}, true); err != nil {
+					return err
+				}
+				return nil
+			},
+		})
+
+		s, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}
+
 		DB.closers = append(DB.closers, s)
 		s.SetMaxIdleConns(1)
 		s.SetMaxOpenConns(4)
@@ -92,7 +113,7 @@ func ConnectDB(
 
 		q.Set("_query_only", "true")
 		dbURL.RawQuery = q.Encode()
-		r, err := sql.Open("sqlite3_ext", strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
+		r, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
 			DB.Close()
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
@@ -196,7 +217,7 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 		tx.First(&schemaVersion)
 	}
 
-	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "5d042539be4f" {
+	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "1ce8669664d2" {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
 		}
@@ -396,27 +417,6 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 				}); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema 1ce8669664d2: %w", err)
 				}
-				fallthrough
-
-			case "1ce8669664d2":
-				log.Info("Migrating database to FastTrackML schema 5d042539be4f")
-				if err := db.Transaction(func(tx *gorm.DB) error {
-					constraints := []string{"Tags", "Runs"}
-					for _, constraint := range constraints {
-						if err := tx.Migrator().DropConstraint(&Experiment{}, constraint); err != nil {
-							return err
-						}
-						if err := tx.Migrator().CreateConstraint(&Experiment{}, constraint); err != nil {
-							return err
-						}
-					}
-					return tx.Model(&SchemaVersion{}).
-						Where("1 = 1").
-						Update("Version", "5d042539be4f").
-						Error
-				}); err != nil {
-					return fmt.Errorf("error migrating database to FastTrackML schema 5d042539be4f: %w", err)
-				}
 
 			default:
 				return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
@@ -446,7 +446,7 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 				Version: "97727af70f4d",
 			})
 			tx.Create(&SchemaVersion{
-				Version: "5d042539be4f",
+				Version: "1ce8669664d2",
 			})
 			tx.Commit()
 			if tx.Error != nil {

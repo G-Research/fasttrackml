@@ -47,6 +47,9 @@ var ServerCmd = &cobra.Command{
 func serverCmd(cmd *cobra.Command, args []string) error {
 	// 1. process config parameters.
 	mlflowConfig := mlflowConfig.NewServiceConfig()
+	if err := mlflowConfig.Validate(); err != nil {
+		return err
+	}
 
 	// 2. init database connection.
 	db, err := initDB(mlflowConfig)

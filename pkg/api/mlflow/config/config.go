@@ -1,7 +1,10 @@
 package config
 
 import (
+	"net/url"
 	"time"
+
+	"github.com/rotisserie/eris"
 
 	"github.com/spf13/viper"
 )
@@ -39,6 +42,23 @@ func NewServiceConfig() *ServiceConfig {
 }
 
 // Validate validates service configuration.
-func (c ServiceConfig) Validate() bool {
-	return true
+func (c ServiceConfig) Validate() error {
+	if err := c.validateArtifactRoot(); err != nil {
+		return eris.Wrap(err, "error validating service configuration")
+	}
+	return nil
+}
+
+func (c ServiceConfig) validateArtifactRoot() error {
+	parsedArtifactRoot, err := url.Parse(c.ArtifactRoot)
+	if err != nil {
+		return eris.Wrap(err, "error parsing `artifact-root` flag")
+	}
+	switch parsedArtifactRoot.Scheme {
+	case "s3":
+		if parsedArtifactRoot.User != nil || parsedArtifactRoot.RawQuery != "" || parsedArtifactRoot.RawFragment != "" {
+			return eris.New("incorrect format of `artifact-root` flag. has to be s3://bucket_name")
+		}
+	}
+	return nil
 }

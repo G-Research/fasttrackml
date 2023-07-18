@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -73,9 +74,13 @@ func (s Service) CreateExperiment(
 	}
 
 	if experiment.ArtifactLocation == "" {
-		experiment.ArtifactLocation = fmt.Sprintf(
-			"%s/%d", s.config.ArtifactRoot, *experiment.ID,
-		)
+		path, err := url.JoinPath(s.config.ArtifactRoot, fmt.Sprintf("%d", *experiment.ID))
+		if err != nil {
+			return nil, api.NewInternalError(
+				"error creating artifact_location for experiment'%s': %s", experiment.Name, err,
+			)
+		}
+		experiment.ArtifactLocation = path
 		if err := s.experimentRepository.Update(ctx, experiment); err != nil {
 			return nil, api.NewInternalError(
 				"error updating artifact_location for experiment '%s': %s", experiment.Name, err,

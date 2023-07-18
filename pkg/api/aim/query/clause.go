@@ -25,7 +25,7 @@ func (regexp Regexp) Build(builder clause.Builder) {
 		operator = "~"
 	}
 	builder.WriteString(fmt.Sprintf(" %s ", operator))
-	builder.AddVar(builder, regexp.Value)
+	builder.AddVar(builder, fmt.Sprintf("%s", regexp.Value))
 }
 
 // NegationBuild builds negative statement.

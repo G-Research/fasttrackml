@@ -237,18 +237,21 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
 
+				regexpOperator := ""
 				switch pq.qp.Dialector {
 				case sqlite.Dialector{}.Name():
-					return clause.Expr{
-						SQL: fmt.Sprintf(`"%s"."%s" regexp '%s'`, c.Table, c.Name, arg.S),
-					}, nil
+					regexpOperator = "regexp"
 				case postgres.Dialector{}.Name():
-					return clause.Expr{
-						SQL: fmt.Sprintf(`"%s"."%s" ~ '%s'`, c.Table, c.Name, arg.S),
-					}, nil
+					regexpOperator = "~"
 				default:
 					return nil, fmt.Errorf("unsupported dialector type: %s", pq.qp.Dialector)
 				}
+				return clause.Expr{
+					SQL: fmt.Sprintf(`"%s"."%s" %s ?`, c.Table, c.Name, regexpOperator),
+					Vars: []interface{}{
+						fmt.Sprintf("'%s'", arg.S),
+					},
+				}, nil
 			}), nil
 		case OperationEndsWith:
 			return callable(func(args []ast.Expr) (any, error) {
@@ -264,8 +267,9 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 				if !ok {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
-				return clause.Expr{
-					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%%%s'`, c.Table, c.Name, arg.S),
+				return clause.Like{
+					Value:  fmt.Sprintf(`'%%%s'`, arg.S),
+					Column: fmt.Sprintf(`"%s"."%s"`, c.Table, c.Name),
 				}, nil
 			}), nil
 		case OperationContains:
@@ -282,8 +286,9 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 				if !ok {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
-				return clause.Expr{
-					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%%%s%%'`, c.Table, c.Name, arg.S),
+				return clause.Like{
+					Value:  fmt.Sprintf(`'%%%s%%'`, arg.S),
+					Column: fmt.Sprintf(`"%s"."%s"`, c.Table, c.Name),
 				}, nil
 			}), nil
 		case OperationStartsWith:
@@ -300,9 +305,11 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 				if !ok {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
-				return clause.Expr{
-					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%s%%'`, c.Table, c.Name, arg.S),
+				return clause.Like{
+					Value:  fmt.Sprintf(`'%s%%'`, arg.S),
+					Column: fmt.Sprintf(`"%s"."%s"`, c.Table, c.Name),
 				}, nil
+
 			}), nil
 		}
 

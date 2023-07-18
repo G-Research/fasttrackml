@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	goSqlite3 "github.com/mattn/go-sqlite3"
+	sqlite3 "github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -81,19 +81,16 @@ func ConnectDB(
 			}
 		}
 
-		sql.Register(SQLiteCustomDriverName, &goSqlite3.SQLiteDriver{
-			ConnectHook: func(conn *goSqlite3.SQLiteConn) error {
-				if err := conn.RegisterFunc("regexp", func(re, s string) bool {
+		sql.Register(SQLiteCustomDriverName, &sqlite3.SQLiteDriver{
+			ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+				return conn.RegisterFunc("regexp", func(re, s string) bool {
 					c, err := regexp.Compile(re)
 					if err != nil {
 						return false
 					}
 
 					return c.MatchString(s)
-				}, true); err != nil {
-					return err
-				}
-				return nil
+				}, true)
 			},
 		})
 
@@ -101,7 +98,6 @@ func ConnectDB(
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}
-
 		DB.closers = append(DB.closers, s)
 		s.SetMaxIdleConns(1)
 		s.SetMaxOpenConns(4)
@@ -217,7 +213,7 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 		tx.First(&schemaVersion)
 	}
 
-	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "1ce8669664d2" {
+	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "5d042539be4f" {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
 		}

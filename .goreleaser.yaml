@@ -3,8 +3,7 @@ env:
   - CGO_ENABLED=1
 builds:
   - id: darwin-amd64
-    main: ./
-    binary: fasttrackml
+    binary: fml
     goos:
       - darwin
     goarch:
@@ -12,12 +11,9 @@ builds:
     env:
       - CC=o64-clang
       - CXX=o64-clang++
-    flags:
-      - -mod=readonly
 
   - id: darwin-arm64
-    main: ./
-    binary: fasttrackml
+    binary: fml
     goos:
       - darwin
     goarch:
@@ -25,12 +21,9 @@ builds:
     env:
       - CC=oa64-clang
       - CXX=oa64-clang++
-    flags:
-      - -mod=readonly
 
   - id: linux-arm64
-    main: ./
-    binary: fasttrackml
+    binary: fml
     goos:
       - linux
     goarch:
@@ -38,14 +31,11 @@ builds:
     env:
       - CC=aarch64-linux-gnu-gcc
       - CXX=aarch64-linux-gnu-g++
-    flags:
-      - -mod=readonly
     ldflags:
       - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
 
   - id: linux-amd64
-    main: ./
-    binary: fasttrackml
+    binary: fml
     goos:
       - linux
     goarch:
@@ -53,14 +43,11 @@ builds:
     env:
       - CC=x86_64-linux-gnu-gcc
       - CXX=x86_64-linux-gnu-g++
-    flags:
-      - -mod=readonly
     ldflags:
       - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
 
   - id: windows-amd64
-    main: ./
-    binary: fasttrackml
+    binary: fml
     goos:
       - windows
     goarch:
@@ -68,8 +55,6 @@ builds:
     env:
       - CC=x86_64-w64-mingw32-gcc
       - CXX=x86_64-w64-mingw32-g++
-    flags:
-      - -mod=readonly
     ldflags:
       - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
 archives:

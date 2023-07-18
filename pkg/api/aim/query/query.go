@@ -240,7 +240,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 							Table: c.Table,
 							Name:  c.Name,
 						},
-						Value: fmt.Sprintf("%s", arg.S),
+						Value: arg.S,
 					},
 					Dialector: pq.qp.Dialector,
 				}, nil

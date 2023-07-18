@@ -139,7 +139,7 @@ run: build ## run the FastTrackML server
 	./$(APP) server
 
 PHONY: release
-release:
+release: ## use goreleaser to cross-compile the executables on various os/arch combos
 	docker run \
 	--rm \
 	-e CGO_ENABLED=1 \

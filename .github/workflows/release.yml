@@ -17,17 +17,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run goreleaser in docker
-        run: |
-          docker run \
-          --rm \
-          -e CGO_ENABLED=1 \
-          -v /var/run/docker.sock:/var/run/docker.sock \
-          -v `pwd`:/go/src/fasttrackml \
-          -v `pwd`/sysroot:/sysroot \
-          -w /go/src/fasttrackml \
-          ghcr.io/goreleaser/goreleaser-cross:v1.20 \
-          release --snapshot --clean
-
+        run: make release
+          
       - name: Upload release assets
         uses: softprops/action-gh-release@v1
         with:

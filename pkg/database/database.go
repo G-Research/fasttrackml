@@ -12,7 +12,8 @@ import (
 	"strings"
 	"time"
 
-	sqlite3 "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
+
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -413,6 +414,27 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 				}); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema 1ce8669664d2: %w", err)
 				}
+				fallthrough
+
+			case "1ce8669664d2":
+				log.Info("Migrating database to FastTrackML schema 5d042539be4f")
+				if err := db.Transaction(func(tx *gorm.DB) error {
+					constraints := []string{"Tags", "Runs"}
+					for _, constraint := range constraints {
+						if err := tx.Migrator().DropConstraint(&Experiment{}, constraint); err != nil {
+							return err
+						}
+						if err := tx.Migrator().CreateConstraint(&Experiment{}, constraint); err != nil {
+							return err
+						}
+					}
+					return tx.Model(&SchemaVersion{}).
+						Where("1 = 1").
+						Update("Version", "5d042539be4f").
+						Error
+				}); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema 5d042539be4f: %w", err)
+				}
 
 			default:
 				return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
@@ -442,7 +464,7 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 				Version: "97727af70f4d",
 			})
 			tx.Create(&SchemaVersion{
-				Version: "1ce8669664d2",
+				Version: "5d042539be4f",
 			})
 			tx.Commit()
 			if tx.Error != nil {

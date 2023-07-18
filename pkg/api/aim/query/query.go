@@ -247,7 +247,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					return nil, fmt.Errorf("unsupported dialector type: %s", pq.qp.Dialector)
 				}
 				return clause.Expr{
-					SQL: fmt.Sprintf(`"%s"."%s" %s ?`, c.Table, c.Name, regexpOperator),
+					SQL: fmt.Sprintf("%s.%s %s ?", c.Table, c.Name, regexpOperator),
 					Vars: []interface{}{
 						fmt.Sprintf("'%s'", arg.S),
 					},
@@ -268,8 +268,11 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
 				return clause.Like{
-					Value:  fmt.Sprintf(`'%%%s'`, arg.S),
-					Column: fmt.Sprintf(`"%s"."%s"`, c.Table, c.Name),
+					Value: fmt.Sprintf("%%%s", arg.S),
+					Column: clause.Column{
+						Table: c.Table,
+						Name:  c.Name,
+					},
 				}, nil
 			}), nil
 		case OperationContains:
@@ -287,8 +290,11 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
 				return clause.Like{
-					Value:  fmt.Sprintf(`'%%%s%%'`, arg.S),
-					Column: fmt.Sprintf(`"%s"."%s"`, c.Table, c.Name),
+					Value: fmt.Sprintf("%%%s%%", arg.S),
+					Column: clause.Column{
+						Table: c.Table,
+						Name:  c.Name,
+					},
 				}, nil
 			}), nil
 		case OperationStartsWith:
@@ -306,8 +312,11 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
 				return clause.Like{
-					Value:  fmt.Sprintf(`'%s%%'`, arg.S),
-					Column: fmt.Sprintf(`"%s"."%s"`, c.Table, c.Name),
+					Value: fmt.Sprintf("%s%%", arg.S),
+					Column: clause.Column{
+						Table: c.Table,
+						Name:  c.Name,
+					},
 				}, nil
 			}), nil
 		}

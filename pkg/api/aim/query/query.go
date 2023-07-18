@@ -6,9 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
-
 	"github.com/go-python/gpython/ast"
 	"github.com/go-python/gpython/parser"
 	"github.com/go-python/gpython/py"
@@ -237,20 +234,15 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
 
-				regexpOperator := ""
-				switch pq.qp.Dialector {
-				case sqlite.Dialector{}.Name():
-					regexpOperator = "regexp"
-				case postgres.Dialector{}.Name():
-					regexpOperator = "~"
-				default:
-					return nil, fmt.Errorf("unsupported dialector type: %s", pq.qp.Dialector)
-				}
-				return clause.Expr{
-					SQL: fmt.Sprintf("%s.%s %s ?", c.Table, c.Name, regexpOperator),
-					Vars: []interface{}{
-						fmt.Sprintf("'%s'", arg.S),
+				return Regexp{
+					Eq: clause.Eq{
+						Column: clause.Column{
+							Table: c.Table,
+							Name:  c.Name,
+						},
+						Value: fmt.Sprintf("%s", arg.S),
 					},
+					Dialector: pq.qp.Dialector,
 				}, nil
 			}), nil
 		case OperationEndsWith:

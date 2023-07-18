@@ -75,8 +75,8 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			name:         "TestRunNameWithMatchFunction",
 			query:        `(run.name.match('run'))`,
 			dialector:    postgres.Dialector{}.Name(),
-			expectedSQL:  `SELECT * FROM "runs" WHERE (runs.name ~ $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
-			expectedVars: []interface{}{"'run'", models.LifecycleStageDeleted},
+			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" ~ $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 	}
 
@@ -145,8 +145,8 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			name:         "SqliteDialector/TestRunNameWithMatchFunction",
 			query:        `(run.name.match('run'))`,
 			dialector:    sqlite.Dialector{}.Name(),
-			expectedSQL:  `SELECT * FROM "runs" WHERE (runs.name regexp $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
-			expectedVars: []interface{}{"'run'", models.LifecycleStageDeleted},
+			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" regexp $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 	}
 

@@ -309,7 +309,6 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					Value:  fmt.Sprintf(`'%s%%'`, arg.S),
 					Column: fmt.Sprintf(`"%s"."%s"`, c.Table, c.Name),
 				}, nil
-
 			}), nil
 		}
 

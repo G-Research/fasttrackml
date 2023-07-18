@@ -213,7 +213,7 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 		tx.First(&schemaVersion)
 	}
 
-	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "5d042539be4f" {
+	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "1ce8669664d2" {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
 		}

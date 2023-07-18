@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"strings"
+	"net/url"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -65,10 +65,15 @@ func (s S3) List(artifactURI, path, nextPageToken string) (string, string, []Art
 		Bucket: aws.String(bucket),
 		Prefix: aws.String(prefix),
 	}
-	if path != "" {
-		// filter first `/` just to make sure that Prefix will be always correct.
-		input.Prefix = aws.String(fmt.Sprintf("%s/%s", *input.Prefix, strings.TrimLeft(path, "/")))
+
+	// 1. process search `prefix` parameter.
+	path, err = url.JoinPath(*input.Prefix, path)
+	if err != nil {
+		return "", "", nil, eris.Wrap(err, "error constructing s3 prefix")
 	}
+	input.Prefix = aws.String(path)
+
+	// 2. process search `nextPageToken` parameter.
 	if nextPageToken != "" {
 		input.ContinuationToken = aws.String(nextPageToken)
 	}

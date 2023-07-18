@@ -1,6 +1,7 @@
 package artifact
 
 import (
+	"net/url"
 	"regexp"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -16,8 +17,16 @@ func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
 
-	if RelativePathRegExp.MatchString(req.Path) {
-		return api.NewInvalidParameterValueError("incorrect path has been provided. path has to be absolute")
+	parsedUrl, err := url.Parse(req.Path)
+	if err != nil {
+		return api.NewInvalidParameterValueError("error parsing `path` parameter")
+	}
+	if parsedUrl.Scheme != "" || parsedUrl.Host != "" || parsedUrl.RawQuery != "" ||
+		parsedUrl.RawFragment != "" || parsedUrl.User != nil {
+		return api.NewInvalidParameterValueError("incorrect `path` parameter has been provided")
+	}
+	if RelativePathRegExp.MatchString(parsedUrl.Path) {
+		return api.NewInvalidParameterValueError("provided `path` parameter has to be absolute")
 	}
 	return nil
 }

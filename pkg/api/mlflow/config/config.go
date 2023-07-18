@@ -37,3 +37,8 @@ func NewServiceConfig() *ServiceConfig {
 		DatabaseSlowThreshold: viper.GetDuration("database-slow-threshold"),
 	}
 }
+
+// Validate validates service configuration.
+func (c ServiceConfig) Validate() bool {
+	return true
+}

@@ -23,10 +23,10 @@ func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {
 	}
 	if parsedUrl.Scheme != "" || parsedUrl.Host != "" || parsedUrl.RawQuery != "" ||
 		parsedUrl.RawFragment != "" || parsedUrl.User != nil {
-		return api.NewInvalidParameterValueError("incorrect `path` parameter has been provided")
+		return api.NewInvalidParameterValueError("incorrect 'path' parameter has been provided")
 	}
 	if RelativePathRegExp.MatchString(parsedUrl.Path) {
-		return api.NewInvalidParameterValueError("provided `path` parameter has to be absolute")
+		return api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute")
 	}
 	return nil
 }

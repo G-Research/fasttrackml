@@ -49,14 +49,16 @@ func (c ServiceConfig) Validate() error {
 	return nil
 }
 
+// validateArtifactRoot validates `artifact-root` configuration parameter.
+// for s3 storage it has to be: s3://bucket_name.
 func (c ServiceConfig) validateArtifactRoot() error {
-	parsedArtifactRoot, err := url.Parse(c.ArtifactRoot)
+	parsed, err := url.Parse(c.ArtifactRoot)
 	if err != nil {
 		return eris.Wrap(err, "error parsing `artifact-root` flag")
 	}
-	switch parsedArtifactRoot.Scheme {
+	switch parsed.Scheme {
 	case "s3":
-		if parsedArtifactRoot.User != nil || parsedArtifactRoot.RawQuery != "" || parsedArtifactRoot.RawFragment != "" {
+		if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
 			return eris.New("incorrect format of `artifact-root` flag. has to be s3://bucket_name")
 		}
 	}

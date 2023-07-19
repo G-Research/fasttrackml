@@ -29,7 +29,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "1DotRelativePathProvided",
-			error: api.NewInvalidParameterValueError("provided `path` parameter has to be absolute"),
+			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "./",
@@ -37,7 +37,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "2DotsRelativePathProvided",
-			error: api.NewInvalidParameterValueError("provided `path` parameter has to be absolute"),
+			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "../",

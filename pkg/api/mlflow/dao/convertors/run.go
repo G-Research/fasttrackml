@@ -2,7 +2,9 @@ package convertors
 
 import (
 	"database/sql"
-	"fmt"
+	"net/url"
+
+	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -18,8 +20,14 @@ const (
 )
 
 // ConvertCreateRunRequestToDBModel converts request.CreateRunRequest into actual models.Run model.
-func ConvertCreateRunRequestToDBModel(experiment *models.Experiment, req *request.CreateRunRequest) *models.Run {
+func ConvertCreateRunRequestToDBModel(
+	experiment *models.Experiment, req *request.CreateRunRequest,
+) (*models.Run, error) {
 	runID := database.NewUUID()
+	artifactURI, err := url.JoinPath(experiment.ArtifactLocation, runID, "artifacts")
+	if err != nil {
+		return nil, eris.Wrap(err, "error constructing artifact_uri")
+	}
 	run := models.Run{
 		ID:     runID,
 		Name:   req.Name,
@@ -30,7 +38,7 @@ func ConvertCreateRunRequestToDBModel(experiment *models.Experiment, req *reques
 			Int64: req.StartTime,
 			Valid: true,
 		},
-		ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
+		ArtifactURI:    artifactURI,
 		ExperimentID:   *experiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	}
@@ -67,7 +75,7 @@ func ConvertCreateRunRequestToDBModel(experiment *models.Experiment, req *reques
 	if run.SourceType == "" {
 		run.SourceType = "UNKNOWN"
 	}
-	return &run
+	return &run, nil
 }
 
 // ConvertUpdateRunRequestToDBModel converts request.UpdateRunRequest into actual models.Run model.

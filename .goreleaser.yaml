@@ -15,7 +15,7 @@ builds:
       - goos: windows
         goarch: arm64
     ldflags:
-      - "-s -w -X 'github.com/G-Research/fasttrackml/version.version={{.Version}}'"
+      - -s -w -X 'github.com/G-Research/fasttrackml/pkg/version.Version={{.Version}}'
       - >-
         {{- if eq .Os "linux" }}
         -linkmode external -extldflags -static

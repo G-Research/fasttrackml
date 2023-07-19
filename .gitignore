@@ -29,3 +29,4 @@ dist/
 # Optional workspace
 go.work
 *.code-workspace
+

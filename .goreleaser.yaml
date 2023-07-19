@@ -1,62 +1,47 @@
 project_name: fasttrackml
-env:
-  - CGO_ENABLED=1
 builds:
-  - id: darwin-amd64
-    binary: fml
-    goos:
-      - darwin
-    goarch:
-      - amd64
-    env:
-      - CC=o64-clang
-      - CXX=o64-clang++
-
-  - id: darwin-arm64
-    binary: fml
-    goos:
-      - darwin
-    goarch:
-      - arm64
-    env:
-      - CC=oa64-clang
-      - CXX=oa64-clang++
-
-  - id: linux-arm64
-    binary: fml
+  - binary: fml
     goos:
       - linux
-    goarch:
-      - arm64
-    env:
-      - CC=aarch64-linux-gnu-gcc
-      - CXX=aarch64-linux-gnu-g++
-    ldflags:
-      - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
-
-  - id: linux-amd64
-    binary: fml
-    goos:
-      - linux
-    goarch:
-      - amd64
-    env:
-      - CC=x86_64-linux-gnu-gcc
-      - CXX=x86_64-linux-gnu-g++
-    ldflags:
-      - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
-
-  - id: windows-amd64
-    binary: fml
-    goos:
+      - darwin
       - windows
     goarch:
+      - arm64
       - amd64
-    env:
-      - CC=x86_64-w64-mingw32-gcc
-      - CXX=x86_64-w64-mingw32-g++
+    ignore:
+      - goos: windows
+        goarch: arm64
     ldflags:
-      - -linkmode external -extldflags '-static' -s -w -X github.com/G-Research/fasttrackml/version.version={{.Version}}
+      - "-s -w -X 'github.com/G-Research/fasttrackml/version.version={{.Version}}'"
+    flags:
+      - -tags=netgo,osusergo,sqlite_foreign_keys,sqlite_math_functions,sqlite_omit_load_extension,sqlite_unlock_notify,sqlite_vacuum_incr
+    env:
+      - CGO_ENABLED=1
+      - >-
+        {{- if eq .Os "darwin" }}
+          {{- if eq .Arch "amd64"}}CC=o64-clang{{- end }}
+          {{- if eq .Arch "arm64"}}CC=oa64-clang{{- end }}
+        {{- end }}
+        {{- if eq .Os "linux" }}
+          {{- if eq .Arch "amd64"}}CC=x86_64-linux-gnu-gcc{{- end }}
+          {{- if eq .Arch "arm64"}}CC=aarch64-linux-gnu-gcc{{- end }}
+        {{- end }}
+        {{- if eq .Os "windows" }}
+          {{- if eq .Arch "amd64" }}CC=x86_64-w64-mingw32-gcc{{- end }}
+        {{- end }}
+      - >-
+        {{- if eq .Os "darwin" }}
+          {{- if eq .Arch "amd64"}}CXX=o64-clang++{{- end }}
+          {{- if eq .Arch "arm64"}}CXX=oa64-clang++{{- end }}
+        {{- end }}
+        {{- if eq .Os "linux" }}
+          {{- if eq .Arch "amd64"}}CXX=x86_64-linux-gnu-g++{{- end }}
+          {{- if eq .Arch "arm64"}}CXX=aarch64-linux-gnu-g++{{- end }}
+        {{- end }}
+        {{- if eq .Os "windows" }}
+          {{- if eq .Arch "amd64" }}CXX=x86_64-w64-mingw32-g++{{- end }}
+        {{- end }}
+
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of uname.
@@ -64,15 +49,7 @@ archives:
       {{ .ProjectName }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    builds:
-      - darwin-amd64
-      - darwin-arm64
-      - linux-arm64
-      - linux-amd64
-      - windows-amd64
     # use zip for windows archives
     format_overrides:
     - goos: windows

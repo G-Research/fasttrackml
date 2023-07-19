@@ -1,4 +1,7 @@
 project_name: fasttrackml
+before:
+  hooks:
+    - sh -c "ln -s /usr/x86_64-linux-gnu/lib/lib*.a /usr/lib/x86_64-linux-gnu/"
 builds:
   - binary: fml
     goos:
@@ -13,6 +16,10 @@ builds:
         goarch: arm64
     ldflags:
       - "-s -w -X 'github.com/G-Research/fasttrackml/version.version={{.Version}}'"
+      - >-
+        {{- if eq .Os "linux" }}
+        -linkmode external -extldflags -static
+        {{- end }}
     flags:
       - -tags=netgo,osusergo,sqlite_foreign_keys,sqlite_math_functions,sqlite_omit_load_extension,sqlite_unlock_notify,sqlite_vacuum_incr
     env:

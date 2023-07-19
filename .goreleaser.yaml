@@ -21,7 +21,8 @@ builds:
         -linkmode external -extldflags -static
         {{- end }}
     flags:
-      - -tags=netgo,osusergo,sqlite_foreign_keys,sqlite_math_functions,sqlite_omit_load_extension,sqlite_unlock_notify,sqlite_vacuum_incr
+      - -tags
+      - netgo,osusergo,sqlite_foreign_keys,sqlite_math_functions,sqlite_omit_load_extension,sqlite_unlock_notify,sqlite_vacuum_incr
     env:
       - CGO_ENABLED=1
       - >-
@@ -47,16 +48,16 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
     # use zip for windows archives
     format_overrides:
-    - goos: windows
-      format: zip
+      - goos: windows
+        format: zip
 checksum:
-  name_template: 'checksums.txt'
-  algorithm: 'sha256'
+  name_template: checksums.txt
+  algorithm: sha256
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
+      - "^docs:"
+      - "^test:"

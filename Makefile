@@ -144,7 +144,6 @@ release: ## use goreleaser to cross-compile the executables on various os/arch c
 	--rm \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-v `pwd`:/go/src/fasttrackml \
-	-v `pwd`/sysroot:/sysroot \
 	-w /go/src/fasttrackml \
 	ghcr.io/goreleaser/goreleaser-cross:v1.20 \
 	release --clean --snapshot

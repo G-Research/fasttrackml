@@ -142,7 +142,6 @@ PHONY: release
 release: ## use goreleaser to cross-compile the executables on various os/arch combos
 	docker run \
 	--rm \
-	-v /var/run/docker.sock:/var/run/docker.sock \
 	-v `pwd`:/go/src/fasttrackml \
 	-w /go/src/fasttrackml \
 	ghcr.io/goreleaser/goreleaser-cross:v1.20 \

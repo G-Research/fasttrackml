@@ -138,6 +138,25 @@ jobs:
       - name: Run ${{ matrix.api }} integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
 
+  golang-build:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Build Go binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Run GoReleaser
+        run: make go-release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: golang-binaries
+          path: dist
+
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
     name: Build container image
@@ -202,6 +221,7 @@ jobs:
       - golang-unit-tests
       - golang-integration-tests
       - python-integration-tests
+      - golang-build
       - build-image
     runs-on: ubuntu-latest
     steps:

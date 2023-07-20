@@ -86,7 +86,15 @@ func GetProjectParams(c *fiber.Ctx) error {
 
 	if !q.ExcludeParams {
 		var paramKeys []string
-		if tx := database.DB.Model(&database.Param{}).Distinct().Pluck("Key", &paramKeys); tx.Error != nil {
+		if tx := database.DB.Model(
+			&database.Param{},
+		).Joins(
+			"JOIN runs USING(run_uuid)",
+		).Where(
+			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
+		).Distinct().Pluck(
+			"Key", &paramKeys,
+		); tx.Error != nil {
 			return fmt.Errorf("error retrieving param keys: %w", tx.Error)
 		}
 
@@ -98,7 +106,15 @@ func GetProjectParams(c *fiber.Ctx) error {
 		}
 
 		var tagKeys []string
-		if tx := database.DB.Model(&database.Tag{}).Distinct().Pluck("Key", &tagKeys); tx.Error != nil {
+		if tx := database.DB.Model(
+			&database.Tag{},
+		).Joins(
+			"JOIN runs USING(run_uuid)",
+		).Where(
+			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
+		).Distinct().Pluck(
+			"Key", &tagKeys,
+		); tx.Error != nil {
 			return fmt.Errorf("error retrieving tag keys: %w", tx.Error)
 		}
 
@@ -136,7 +152,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 			).Joins(
 				"JOIN runs USING(run_uuid)",
 			).Where(
-				"runs.lifecycle_stage <> ?", database.LifecycleStageDeleted,
+				"runs.lifecycle_stage = ?", database.LifecycleStageActive,
 			).Pluck(
 				"Key", &metricKeys,
 			); tx.Error != nil {

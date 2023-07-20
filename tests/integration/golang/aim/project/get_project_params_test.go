@@ -20,6 +20,8 @@ type GetProjectParamsTestSuite struct {
 	suite.Suite
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
+	tagFixtures        *fixtures.TagFixtures
+	paramFixtures      *fixtures.ParamFixtures
 	metricFixtures     *fixtures.MetricFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
 }
@@ -38,6 +40,14 @@ func (s *GetProjectParamsTestSuite) SetupTest() {
 	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = experimentFixtures
+
+	tagFixtures, err := fixtures.NewTagFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.tagFixtures = tagFixtures
+
+	paramFixtures, err := fixtures.NewParamFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.paramFixtures = paramFixtures
 
 	metricFixtures, err := fixtures.NewMetricFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
@@ -78,6 +88,21 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
+	// 3. create test param and tag.
+	tag, err := s.tagFixtures.CreateTag(context.Background(), &models.Tag{
+		Key:   "tag1",
+		Value: "value1",
+		RunID: run.ID,
+	})
+	assert.Nil(s.T(), err)
+
+	param, err := s.paramFixtures.CreateParam(context.Background(), &models.Param{
+		Key:   "param1",
+		Value: "value1",
+		RunID: run.ID,
+	})
+	assert.Nil(s.T(), err)
+
 	// 3. check that response contains metric from previous step.
 	resp := response.ProjectParamsResponse{}
 	err = s.client.DoGetRequest(
@@ -88,6 +113,16 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	assert.Equal(s.T(), 1, len(resp.Metric))
 	_, ok := resp.Metric[metric.Key]
 	assert.True(s.T(), ok)
+	assert.Equal(s.T(), map[string]interface{}{
+		param.Key: map[string]interface{}{
+			"__example_type__": "<class 'str'>",
+		},
+		"tags": map[string]interface{}{
+			tag.Key: map[string]interface{}{
+				"__example_type__": "<class 'str'>",
+			},
+		},
+	}, resp.Params)
 
 	// 4. mark run as `deleted`.
 	run.LifecycleStage = models.LifecycleStageDeleted
@@ -103,6 +138,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	assert.Equal(s.T(), 0, len(resp.Metric))
 	_, ok = resp.Metric[metric.Key]
 	assert.False(s.T(), ok)
+	assert.Equal(s.T(), map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
 }
 
 func (s *GetProjectParamsTestSuite) Test_Error() {}

@@ -9,7 +9,7 @@ import (
 )
 
 // RelativePathRegExp checks for the sequence `./` or `../` in provided path.
-var RelativePathRegExp = regexp.MustCompile(`\.{1,2}\/`)
+var RelativePathRegExp = regexp.MustCompile(`\.{2}\/?`)
 
 // ValidateListArtifactsRequest validates `GET /mlflow/artifacts/list` request.
 func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {
@@ -19,7 +19,7 @@ func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {
 
 	parsedUrl, err := url.Parse(req.Path)
 	if err != nil {
-		return api.NewInvalidParameterValueError("error parsing `path` parameter")
+		return api.NewInvalidParameterValueError("error parsing 'path' parameter")
 	}
 	if parsedUrl.Scheme != "" || parsedUrl.Host != "" || parsedUrl.RawQuery != "" ||
 		parsedUrl.RawFragment != "" || parsedUrl.User != nil {

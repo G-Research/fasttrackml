@@ -18,6 +18,7 @@ import (
 type RunFixtures struct {
 	baseFixtures
 	runRepository repositories.RunRepositoryProvider
+	tagRepository repositories.TagRepositoryProvider
 }
 
 // NewRunFixtures creates new instance of RunFixtures.
@@ -36,6 +37,7 @@ func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
 	return &RunFixtures{
 		baseFixtures:  baseFixtures{db: db.DB},
 		runRepository: repositories.NewRunRepository(db.DB),
+		tagRepository: repositories.NewTagRepository(db.DB),
 	}, nil
 }
 
@@ -47,6 +49,16 @@ func (f RunFixtures) CreateRun(
 		return nil, eris.Wrap(err, "error creating test run")
 	}
 	return run, nil
+}
+
+// CreateTag creates a new Tag for a run
+func (f RunFixtures) CreateTag(
+	ctx context.Context, tag models.Tag,
+) error {
+	if err := f.tagRepository.CreateRunTagWithTransaction(ctx, f.db, tag.RunID, tag.Key, tag.Value); err != nil {
+		return eris.Wrap(err, "error creating run tag")
+	}
+	return nil
 }
 
 // CreateRuns creates some num runs belonging to the experiment
@@ -68,6 +80,17 @@ func (f RunFixtures) CreateRuns(
 		if err != nil {
 			return nil, err
 		}
+		tag := models.Tag{
+			Key: "my tag key",
+			Value: "my tag value",
+			RunID: run.ID,
+		}
+	        err = f.CreateTag(ctx, tag)
+		if err != nil {
+			return nil, err
+		}
+		run.Tags = []models.Tag{ tag }
+			
 		runs = append(runs, run)
 	}
 	return runs, nil

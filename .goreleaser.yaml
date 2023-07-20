@@ -1,7 +1,4 @@
 project_name: fasttrackml
-before:
-  hooks:
-    - sh -c "ln -s /usr/x86_64-linux-gnu/lib/lib*.a /usr/lib/x86_64-linux-gnu/"
 builds:
   - binary: fml
     goos:
@@ -23,6 +20,13 @@ builds:
     flags:
       - -tags
       - netgo,osusergo,sqlite_foreign_keys,sqlite_math_functions,sqlite_omit_load_extension,sqlite_unlock_notify,sqlite_vacuum_incr
+    hooks:
+      pre:
+        # fix wrong path in libm.a on linux/arm64 cross-compiler for linux/amd64
+        - >-
+          {{- if and (eq .Os "linux") (eq .Arch "amd64") (eq .Runtime.Goos "linux") (eq .Runtime.Goarch "arm64") }}
+          sh -c "sed -i -e 's,lib/x86_64-linux-gnu,x86_64-linux-gnu/lib,g' /usr/x86_64-linux-gnu/lib/libm.a"
+          {{- else }}true{{ end }}
     env:
       - CGO_ENABLED=1
       - >-

@@ -8,6 +8,18 @@
 APP=fml
 # Enable Go Modules.
 GO111MODULE=on
+# GoReleaser flags.
+# Snapshot if no GITHUB_TOKEN is set or if not running in CI.
+GORELEASER_FLAGS=--clean
+ifndef GITHUB_TOKEN
+GORELEASER_SNAPSHOT=true
+endif
+ifndef CI
+GORELEASER_SNAPSHOT=true
+endif
+ifeq ($(GORELEASER_SNAPSHOT),true)
+GORELEASER_FLAGS+=--snapshot
+endif
 
 #
 # Default target (help)
@@ -143,7 +155,8 @@ go-release: ## use GoReleaser to cross-compile the executables on various os/arc
 	@echo ">>> Running GoReleaser."
 	@docker run \
 	--rm \
+	-e GITHUB_TOKEN \
 	-v `pwd`:/go/src/fasttrackml \
 	-w /go/src/fasttrackml \
 	ghcr.io/goreleaser/goreleaser-cross:v1.20 \
-	release --clean --snapshot
+	release $(GORELEASER_FLAGS)

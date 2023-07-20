@@ -138,9 +138,10 @@ run: build ## run the FastTrackML server
 	@echo ">>> Running the FasttrackML server."
 	./$(APP) server
 
-PHONY: release
-release: ## use goreleaser to cross-compile the executables on various os/arch combos
-	docker run \
+PHONY: go-release
+go-release: ## use GoReleaser to cross-compile the executables on various os/arch combos
+	@echo ">>> Running GoReleaser."
+	@docker run \
 	--rm \
 	-v `pwd`:/go/src/fasttrackml \
 	-w /go/src/fasttrackml \

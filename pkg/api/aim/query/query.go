@@ -17,10 +17,11 @@ import (
 )
 
 const (
-	OperationMatch      = "match"
-	OperationEndsWith   = "endswith"
-	OperationContains   = "contains"
-	OperationStartsWith = "startswith"
+	RegexpOperationMatch  = "match"
+	RegexpOperationSearch = "search"
+	OperationEndsWith     = "endswith"
+	OperationContains     = "contains"
+	OperationStartsWith   = "startswith"
 )
 
 type DefaultExpression struct {
@@ -219,31 +220,21 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 		}
 		attribute := string(node.Attr)
 		switch strings.ToLower(attribute) {
-		case OperationMatch:
+		case RegexpOperationMatch:
+			fallthrough
+		case RegexpOperationSearch:
 			return callable(func(args []ast.Expr) (any, error) {
-				if len(args) != 1 {
-					return nil, errors.New("`match` function support exactly one argument")
+				if len(args) != 2 {
+					return nil, errors.New("`match` function support exactly two arguments")
 				}
-				c, ok := parsedNode.(clause.Column)
+				c, ok := parsedNode.(callable)
 				if !ok {
-					return nil, errors.New("unsupported node type. has to be clause.Column")
+					return nil, errors.New("unsupported node type. has to be callable type")
 				}
 
-				arg, ok := args[0].(*ast.Str)
-				if !ok {
-					return nil, errors.New("unsupported argument type. has to be `string` only")
-				}
-
-				return Regexp{
-					Eq: clause.Eq{
-						Column: clause.Column{
-							Table: c.Table,
-							Name:  c.Name,
-						},
-						Value: arg.S,
-					},
-					Dialector: pq.qp.Dialector,
-				}, nil
+				return c(append([]ast.Expr{&ast.Str{
+					S: py.String(strings.ToLower(attribute)),
+				}}, args...))
 			}), nil
 		case OperationEndsWith:
 			return callable(func(args []ast.Expr) (any, error) {
@@ -443,7 +434,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 		case "run":
 			table, ok := pq.qp.Tables["runs"]
 			if !ok {
-				return nil, errors.New("unsupported name identifier \"run\"")
+				return nil, errors.New(`unsupported name identifier "run"`)
 			}
 			return attributeGetter(
 				func(attr string) (any, error) {
@@ -471,7 +462,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 					case "experiment":
 						e, ok := pq.qp.Tables["experiments"]
 						if !ok {
-							return nil, errors.New("unsupported attribute \"experiment\"")
+							return nil, errors.New(`unsupported attribute "experiment"`)
 						}
 						return clause.Column{
 							Table: e,
@@ -594,7 +585,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 		case "metric":
 			table, ok := pq.qp.Tables["metrics"]
 			if !ok {
-				return nil, errors.New("unsupported name identifier \"metric\"")
+				return nil, errors.New(`unsupported name identifier "metric"`)
 			}
 			return attributeGetter(
 				func(attr string) (any, error) {
@@ -618,6 +609,57 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 						return 0, nil
 					default:
 						return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
+					}
+				},
+			), nil
+		case "re":
+			return callable(
+				func(args []ast.Expr) (any, error) {
+					operation, ok := args[0].(*ast.Str)
+					if !ok {
+						return nil, errors.New("re operation type has to be ast.Str")
+					}
+					switch operation.S {
+					case RegexpOperationMatch:
+						fallthrough
+					case RegexpOperationSearch:
+						// subtract 1, because first argument is an operation argument.
+						if len(args)-1 != 2 {
+							return nil, errors.New("re.match function support exactly 2 arguments")
+						}
+
+						regexp, ok := args[1].(*ast.Str)
+						if !ok {
+							return nil, errors.New("first argument type for re.match function has to be ast.Str")
+						}
+						attribute, ok := args[2].(*ast.Attribute)
+						if !ok {
+							return nil, errors.New("second argument type for re.match function has to be ast.Attribute")
+						}
+
+						attributes, err := pq.parseName(attribute.Value.(*ast.Name))
+						if err != nil {
+							return nil, err
+						}
+
+						column, err := attributes.(attributeGetter)(string(attribute.Attr))
+						if err != nil {
+							return nil, err
+						}
+
+						// handle difference between `re.match` and `re.search`.
+						if operation.S == RegexpOperationMatch {
+							regexp.S = py.String(fmt.Sprintf("^%s", regexp.S))
+						}
+						return Regexp{
+							Eq: clause.Eq{
+								Column: column,
+								Value:  regexp.S,
+							},
+							Dialector: pq.qp.Dialector,
+						}, nil
+					default:
+						return nil, fmt.Errorf("unsupported re operation type: %s", operation.S)
 					}
 				},
 			), nil

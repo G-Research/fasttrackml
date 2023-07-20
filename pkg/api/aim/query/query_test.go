@@ -38,49 +38,42 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 	tests := []struct {
 		name         string
 		query        string
-		dialector    string
 		expectedSQL  string
 		expectedVars []interface{}
 	}{
 		{
 			name:         "TestRunNameWithoutFunction",
 			query:        `(run.name == 'run')`,
-			dialector:    postgres.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" = $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithContainsFunction",
 			query:        `(run.name.contains('run'))`,
-			dialector:    postgres.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithStartWithFunction",
 			query:        `(run.name.startswith('run'))`,
-			dialector:    postgres.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run%", models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithEndWithFunction",
 			query:        `(run.name.endswith('run'))`,
-			dialector:    postgres.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run", models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithRegexpMatchFunction",
 			query:        `(re.match('run', run.name))`,
-			dialector:    postgres.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" ~ $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithRegexpSearchFunction",
 			query:        `(re.search('run', run.name))`,
-			dialector:    postgres.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" ~ $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
@@ -97,7 +90,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 					"runs":        "runs",
 					"experiments": "Experiment",
 				},
-				Dialector: tt.dialector,
+				Dialector: postgres.Dialector{}.Name(),
 			}
 			parsedQuery, err := pq.Parse(tt.query)
 			assert.Nil(s.T(), err)
@@ -115,49 +108,42 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 	tests := []struct {
 		name         string
 		query        string
-		dialector    string
 		expectedSQL  string
 		expectedVars []interface{}
 	}{
 		{
 			name:         "TestRunNameWithoutFunction",
 			query:        `(run.name == 'run')`,
-			dialector:    sqlite.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" = $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithContainsFunction",
 			query:        `(run.name.contains('run'))`,
-			dialector:    sqlite.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithStartWithFunction",
 			query:        `(run.name.startswith('run'))`,
-			dialector:    sqlite.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run%", models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithEndWithFunction",
 			query:        `(run.name.endswith('run'))`,
-			dialector:    sqlite.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run", models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithRegexpMatchFunction",
 			query:        `(re.match('run', run.name))`,
-			dialector:    sqlite.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" regexp $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
 		},
 		{
 			name:         "TestRunNameWithRegexpSearchFunction",
 			query:        `(re.search('run', run.name))`,
-			dialector:    sqlite.Dialector{}.Name(),
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" regexp $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
@@ -174,7 +160,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 					"runs":        "runs",
 					"experiments": "Experiment",
 				},
-				Dialector: tt.dialector,
+				Dialector: sqlite.Dialector{}.Name(),
 			}
 			parsedQuery, err := pq.Parse(tt.query)
 			assert.Nil(s.T(), err)

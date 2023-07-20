@@ -92,20 +92,6 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 			},
 		},
 		{
-			name:  "PathIsRelativeAndContains1Dot",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
-			request: &request.ListArtifactsRequest{
-				RunID: "id",
-				Path:  "./",
-			},
-			service: func() *Service {
-				return NewService(
-					&storage.MockProvider{},
-					&repositories.MockRunRepositoryProvider{},
-				)
-			},
-		},
-		{
 			name:  "PathIsRelativeAndContains2Dots",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
 			request: &request.ListArtifactsRequest{

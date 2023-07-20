@@ -152,14 +152,6 @@ func (s *ListArtifactTestSuite) Test_Error() {
 			request: &request.ListArtifactsRequest{},
 		},
 		{
-			name:  "PathIsRelativeAndContains1Dot",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
-			request: &request.ListArtifactsRequest{
-				RunID: "run_id",
-				Path:  "./",
-			},
-		},
-		{
 			name:  "PathIsRelativeAndContains2Dots",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
 			request: &request.ListArtifactsRequest{

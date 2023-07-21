@@ -86,13 +86,13 @@ func GetProjectParams(c *fiber.Ctx) error {
 
 	if !q.ExcludeParams {
 		var paramKeys []string
-		if tx := database.DB.Model(
+		if tx := database.DB.Distinct().Model(
 			&database.Param{},
 		).Joins(
 			"JOIN runs USING(run_uuid)",
 		).Where(
 			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
-		).Distinct().Pluck(
+		).Pluck(
 			"Key", &paramKeys,
 		); tx.Error != nil {
 			return fmt.Errorf("error retrieving param keys: %w", tx.Error)
@@ -106,13 +106,13 @@ func GetProjectParams(c *fiber.Ctx) error {
 		}
 
 		var tagKeys []string
-		if tx := database.DB.Model(
+		if tx := database.DB.Distinct().Model(
 			&database.Tag{},
 		).Joins(
 			"JOIN runs USING(run_uuid)",
 		).Where(
 			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
-		).Distinct().Pluck(
+		).Pluck(
 			"Key", &tagKeys,
 		); tx.Error != nil {
 			return fmt.Errorf("error retrieving tag keys: %w", tx.Error)

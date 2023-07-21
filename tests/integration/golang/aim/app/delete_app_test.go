@@ -21,7 +21,7 @@ type DeleteAppTestSuite struct {
 	suite.Suite
 	client      *helpers.HttpClient
 	appFixtures *fixtures.AppFixtures
-	apps        []*database.App
+	app         *database.App
 }
 
 func TestDeleteAppTestSuite(t *testing.T) {
@@ -35,8 +35,9 @@ func (s *DeleteAppTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.appFixtures = appFixtures
 
-	s.apps, err = s.appFixtures.CreateApps(context.Background(), 1)
+	apps, err := s.appFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
+	s.app = apps[0]
 }
 
 func (s *DeleteAppTestSuite) Test_Ok() {
@@ -56,7 +57,7 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var deleteResponse response.Error
 			err := s.client.DoDeleteRequest(
-				fmt.Sprintf("/apps/%s", s.apps[0].ID),
+				fmt.Sprintf("/apps/%s", s.app.ID),
 				&deleteResponse,
 			)
 			assert.Nil(s.T(), err)

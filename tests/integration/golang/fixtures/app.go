@@ -53,8 +53,8 @@ func (f AppFixtures) CreateApps(
 	// create apps for the experiment
 	for i := 0; i < num; i++ {
 		app := &database.App{
-			Base:  database.Base{
-				ID: uuid.New(),
+			Base: database.Base{
+				ID:        uuid.New(),
 				CreatedAt: time.Now(),
 			},
 			Type:  "mpi",

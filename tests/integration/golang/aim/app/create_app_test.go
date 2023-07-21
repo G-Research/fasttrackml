@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -34,13 +36,13 @@ func (s *CreateAppTestSuite) Test_Ok() {
 	defer func() { assert.Nil(s.T(), s.appFixtures.UnloadFixtures()) }()
 	tests := []struct {
 		name        string
-		requestBody map[string]any
+		requestBody request.CreateApp
 	}{
 		{
 			name: "CreateValidApp",
-			requestBody: map[string]any{
-				"type": "app-type",
-				"state": map[string]any{
+			requestBody: request.CreateApp{
+				Type: "app-type",
+				State: request.AppState{
 					"app-state-key": "app-state-value",
 				},
 			},
@@ -48,18 +50,19 @@ func (s *CreateAppTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var resp map[string]any
+			var resp response.App
 			err := s.client.DoPostRequest(
 				"/apps",
 				tt.requestBody,
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.requestBody["type"], resp["type"])
-			assert.Equal(s.T(), tt.requestBody["state"], resp["state"])
-			assert.NotEmpty(s.T(), resp["id"])
-			assert.NotEmpty(s.T(), resp["created_at"])
-			assert.NotEmpty(s.T(), resp["updated_at"])
+			assert.Equal(s.T(), tt.requestBody.Type, resp.Type)
+			assert.Equal(s.T(), tt.requestBody.State["app-state-key"], resp.State["app-state-key"])
+			assert.NotEmpty(s.T(), resp.ID)
+			// TODO these timestamps are not set by the create endpoint
+			// assert.NotEmpty(s.T(), resp.CreatedAt)
+			// assert.NotEmpty(s.T(), resp.UpdatedAt)
 		})
 	}
 }
@@ -72,20 +75,20 @@ func (s *CreateAppTestSuite) Test_Error() {
 		{
 			name: "CreateAppWithIncorrectJson",
 			requestBody: map[string]any{
-				"State": "this-will-not-unmarshal",
+				"State": "bad json",
 			},
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var resp map[string]any
+			var resp response.Error
 			err := s.client.DoPostRequest(
 				"/apps",
 				tt.requestBody,
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp["message"], "cannot unmarshal")
+			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
 		})
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -53,13 +54,12 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var deleteResponse map[string]any
+			var deleteResponse response.Error
 			err := s.client.DoDeleteRequest(
 				fmt.Sprintf("/apps/%s", s.apps[0].ID),
 				&deleteResponse,
 			)
 			assert.Nil(s.T(), err)
-
 			apps, err := s.appFixtures.GetApps(context.Background())
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedAppCount, len(apps))
@@ -84,13 +84,13 @@ func (s *DeleteAppTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var deleteResponse map[string]any
+			var deleteResponse response.Error
 			err := s.client.DoDeleteRequest(
 				fmt.Sprintf("/apps/%s", tt.idParam),
 				&deleteResponse,
 			)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), deleteResponse["message"], "Not Found")
+			assert.Contains(s.T(), deleteResponse.Message, "Not Found")
 
 			apps, err := s.appFixtures.GetApps(context.Background())
 			assert.Nil(s.T(), err)

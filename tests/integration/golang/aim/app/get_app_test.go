@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -69,13 +70,13 @@ func (s *GetAppTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var resp map[string]string
+			var resp response.Error
 			err := s.client.DoGetRequest(
 				fmt.Sprintf("/apps/%v", tt.idParam),
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "Not Found", resp["message"])
+			assert.Equal(s.T(), "Not Found", resp.Message)
 		})
 	}
 }

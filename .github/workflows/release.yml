@@ -8,12 +8,14 @@ on:
       - main
       - v*
 
+permissions:
+  contents: read
+
 jobs:
-  release:
-    name: Publish container image to DockerHub
-    runs-on: ubuntu-latest
-    environment: release
+  validate:
+    name: Validate ref
     if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && !github.event.repository.fork
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -46,6 +48,56 @@ jobs:
             echo "::error ::Invalid ref $ref $sha"
             exit 1
           fi
+
+  github-release:
+    name: Publish GitHub release
+    needs: validate
+    if: github.event.workflow_run.head_branch != 'main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifact
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "fasttrackml-archives"
+            })[0];
+            let download = await github.rest.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            let fs = require('fs');
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/fasttrackml-archives.zip`, Buffer.from(download.data));
+
+      - name: Unzip artifact
+        run: unzip -d dist fasttrackml-archives.zip
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          files: dist/*
+          tag_name: ${{ github.event.workflow_run.head_branch }}
+
+  docker-release:
+    name: Publish container image to DockerHub
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Compute tags
         id: tags

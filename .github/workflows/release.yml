@@ -35,7 +35,7 @@ jobs:
               ;;
             v?*)
               [[ $ref =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] &&
-              [ $(git rev-parse refs/tags/$ref) == $sha ] &&
+              [ $(git tag --points-at $sha | grep -E "^$ref\$" | wc -l) -eq 1 ] &&
               [ $(git branch --contains=$sha main | wc -l) -eq 1 ]
               ;;
             *)

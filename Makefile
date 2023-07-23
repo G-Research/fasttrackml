@@ -6,8 +6,21 @@
 #
 # App name.
 APP=fml
+ifeq ($(shell go env GOOS),windows)
+  APP:=$(APP).exe
+endif
 # Enable Go Modules.
 GO111MODULE=on
+# Go ldflags.
+# Set version to git tag if available, otherwise use commit hash.
+# Strip debug symbols and disable DWARF generation.
+# Build static binaries on Linux.
+GO_LDFLAGS=-s -w -X github.com/G-Research/fasttrackml/pkg/version.Version=$(shell git describe --tags --always --dirty --match='v*' 2> /dev/null | sed 's/^v//')
+ifeq ($(shell go env GOOS),linux)
+  GO_LDFLAGS+=-linkmode external -extldflags -static
+endif
+# Go build tags.
+GO_BUILDTAGS=$(shell jq -r '."go.buildTags"' .vscode/settings.json)
 
 #
 # Default target (help)
@@ -36,7 +49,7 @@ go-get: ## get go modules.
 .PHONY: go-build
 go-build: ## build app binary.
 	@echo '>>> Building go binary.'
-	@go build -ldflags="-linkmode external -extldflags -static -s -w" -tags "$$(jq -r '."go.buildTags"' .vscode/settings.json)" -o $(APP) ./main.go
+	@CGO_ENABLED=1 go build -ldflags="$(GO_LDFLAGS)" -tags="$(GO_BUILDTAGS)" -o $(APP) ./main.go
 
 .PHONY: go-format
 go-format: ## format go code.

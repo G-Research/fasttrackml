@@ -104,13 +104,13 @@ func (s *GetRunInfoTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var resp map[string]any
+			var resp response.Error
 			err := s.client.DoGetRequest(
 				fmt.Sprintf("/runs/%s/info", tt.runID),
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "Not Found", resp["message"])
+			assert.Equal(s.T(), "Not Found", resp.Message)
 		})
 	}
 }

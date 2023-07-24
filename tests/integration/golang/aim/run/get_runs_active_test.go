@@ -54,8 +54,7 @@ func (s *GetRunsActiveTestSuite) SetupTest() {
 
 	// set 3rd run to status = StatusFinished
 	s.runs[2].Status = models.StatusFinished
-	_, err = s.runFixtures.UpdateRun(context.Background(), s.runs[2])
-	assert.Nil(s.T(), err)
+	assert.Nil(s.T(), s.runFixtures.UpdateRun(context.Background(), s.runs[2]))
 }
 
 func (s *GetRunsActiveTestSuite) Test_Ok() {

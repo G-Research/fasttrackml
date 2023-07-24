@@ -51,22 +51,12 @@ func (f RunFixtures) CreateRun(
 	return run, nil
 }
 
-// UpdateRun creates a new test Run.
+// UpdateRun updates existing Run.
 func (f RunFixtures) UpdateRun(
 	ctx context.Context, run *models.Run,
-) (*models.Run, error) {
-	if err := f.runRepository.Update(ctx, run); err != nil {
-		return nil, eris.Wrap(err, "error updating test run")
-	}
-	return run, nil
-}
-
-// CreateTag creates a new Tag for a run
-func (f RunFixtures) CreateTag(
-	ctx context.Context, tag models.Tag,
 ) error {
-	if err := f.tagRepository.CreateRunTagWithTransaction(ctx, f.db, tag.RunID, tag.Key, tag.Value); err != nil {
-		return eris.Wrap(err, "error creating run tag")
+	if err := f.runRepository.Update(ctx, run); err != nil {
+		return eris.Wrap(err, "error updating test run")
 	}
 	return nil
 }
@@ -141,4 +131,14 @@ func (f RunFixtures) FindMinMaxRowNums(
 		}
 	}
 	return int64(min), int64(max), nil
+}
+
+// CreateTag creates a new Tag for a run
+func (f RunFixtures) CreateTag(
+	ctx context.Context, tag models.Tag,
+) error {
+	if err := f.tagRepository.CreateRunTagWithTransaction(ctx, f.db, tag.RunID, tag.Key, tag.Value); err != nil {
+		return eris.Wrap(err, "error creating run tag")
+	}
+	return nil
 }

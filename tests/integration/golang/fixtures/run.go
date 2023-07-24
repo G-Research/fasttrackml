@@ -51,6 +51,16 @@ func (f RunFixtures) CreateRun(
 	return run, nil
 }
 
+// UpdateRun creates a new test Run.
+func (f RunFixtures) UpdateRun(
+	ctx context.Context, run *models.Run,
+) (*models.Run, error) {
+	if err := f.runRepository.Update(ctx, run); err != nil {
+		return nil, eris.Wrap(err, "error updating test run")
+	}
+	return run, nil
+}
+
 // CreateTag creates a new Tag for a run
 func (f RunFixtures) CreateTag(
 	ctx context.Context, tag models.Tag,

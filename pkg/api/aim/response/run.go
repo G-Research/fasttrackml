@@ -7,6 +7,9 @@ type GetRunInfo struct {
 	Props  GetRunInfoProps  `json:"props"`
 }
 
+// GetRunsActive represents the response struct for GetRunsActive endpoint
+type GetRunsActive map[string]GetRunInfo
+
 // GetRunInfoParams params
 type GetRunInfoParams struct {
 	Tags map[string]string `json:"tags"`

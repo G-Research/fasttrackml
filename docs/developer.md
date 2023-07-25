@@ -10,8 +10,11 @@ Install the [Dev Containers](https://marketplace.visualstudio.com/items?itemName
 
 FastTrackML requires the following dependencies to be installed on your system:
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Buildx](https://docs.docker.com/buildx/working-with-buildx/)
+- [Go SDK](https://go.dev/dl/)
+- A working C compiler for your platform
+  - macOS: `xcode-select --install`
+  - Debian/Ubuntu: `sudo apt install build-essential`
+  - Windows: Install [MSYS2](https://www.msys2.org)
 
 ### Build FastTrackML
 

@@ -37,6 +37,9 @@ func (s *DeleteExperimentTestSuite) SetupTest() {
 }
 
 func (s *DeleteExperimentTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
+	}()
 	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
@@ -57,9 +60,6 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 		ArtifactLocation: "/artifact/location",
 	})
 	assert.Nil(s.T(), err)
-	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
-	}()
 
 	experiments, err := s.fixtures.GetTestExperiments(context.Background())
 	length := len(experiments)
@@ -71,9 +71,9 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 	)
 	assert.Nil(s.T(), err)
 
-	remaining_experiments, err := s.fixtures.GetTestExperiments(context.Background())
+	remainingExperiments, err := s.fixtures.GetTestExperiments(context.Background())
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), length-1, len(remaining_experiments))
+	assert.Equal(s.T(), length-1, len(remainingExperiments))
 }
 
 func (s *DeleteExperimentTestSuite) Test_Error() {

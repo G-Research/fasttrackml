@@ -89,8 +89,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		query string
 	}{
 		{
-			name:  "TestContainsFunction",
-			query: `q=(metric.name=='key1' and run.name.contains("chill"))&p=500&report_progress=false`,
+			name:  "TestInFunction",
+			query: `q=(metric.name=='key1' and 'chill' in run.name)&p=500&report_progress=false`,
+		},
+		{
+			name:  "TestNotInFunction",
+			query: `q=(metric.name=='key1' and 'grill' not in run.name)&p=500&report_progress=false`,
 		},
 		{
 			name:  "TestStartWithFunction",

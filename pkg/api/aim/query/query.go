@@ -235,24 +235,6 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%%%s'`, c.Table, c.Name, arg.S),
 				}, nil
 			}), nil
-		case OperationContains:
-			return callable(func(args []ast.Expr) (any, error) {
-				if len(args) != 1 {
-					return nil, errors.New("`contains` function support exactly one argument")
-				}
-				c, ok := parsedNode.(clause.Column)
-				if !ok {
-					return nil, errors.New("unsupported node type. has to be clause.Column")
-				}
-
-				arg, ok := args[0].(*ast.Str)
-				if !ok {
-					return nil, errors.New("unsupported argument type. has to be `string` only")
-				}
-				return clause.Expr{
-					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%%%s%%'`, c.Table, c.Name, arg.S),
-				}, nil
-			}), nil
 		case OperationStartsWith:
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
@@ -730,27 +712,49 @@ func newSqlComparison(op ast.CmpOp, left clause.Column, right any) (clause.Expre
 			Value:  right,
 		}, nil
 	case ast.In:
-		r, ok := right.([]any)
-		if !ok {
-			return nil, fmt.Errorf("right value in \"in\" comparison is not a list: %#v", right)
-		}
-		return clause.IN{
-			Column: left,
-			Values: r,
-		}, nil
-	case ast.NotIn:
-		r, ok := right.([]any)
-		if !ok {
-			return nil, fmt.Errorf("right value in \"not in\" comparison is not a list: %#v", right)
-		}
-		return clause.NotConditions{
-			Exprs: []clause.Expression{
-				clause.IN{
-					Column: left,
-					Values: r,
+		switch right.(type) {
+		case []any:
+			return clause.IN{
+				Column: left,
+				Values: right.([]any),
+			}, nil
+		case string:
+			return clause.Like{
+				Value: fmt.Sprintf("%%%s%%", right),
+				Column: clause.Column{
+					Table: left.Table,
+					Name:  left.Name,
 				},
-			},
-		}, nil
+			}, nil
+		default:
+			return nil, fmt.Errorf(`right value in "in" comparison is not a list or string: %#v`, right)
+		}
+	case ast.NotIn:
+		switch right.(type) {
+		case []any:
+			return clause.NotConditions{
+				Exprs: []clause.Expression{
+					clause.IN{
+						Column: left,
+						Values: right.([]any),
+					},
+				},
+			}, nil
+		case string:
+			return clause.NotConditions{
+				Exprs: []clause.Expression{
+					clause.Like{
+						Value: fmt.Sprintf("%%%s%%", right),
+						Column: clause.Column{
+							Table: left.Table,
+							Name:  left.Name,
+						},
+					},
+				},
+			}, nil
+		default:
+			return nil, fmt.Errorf(`right value in "not in" comparison is not a list or string: %#v`, right)
+		}
 	default:
 		return nil, fmt.Errorf("unsupported comparison operation %q", op)
 	}
@@ -766,7 +770,7 @@ func reverseComparison(op ast.CmpOp, left any, right clause.Column) (ast.CmpOp, 
 		return ast.Lt, right, left, nil
 	case ast.GtE:
 		return ast.LtE, right, left, nil
-	case ast.Eq, ast.Is, ast.NotEq, ast.IsNot:
+	case ast.NotIn, ast.In, ast.Eq, ast.Is, ast.NotEq, ast.IsNot:
 		return op, right, left, nil
 	default:
 		return op, right, left, fmt.Errorf("unable to reverse comparison operator %q", op)

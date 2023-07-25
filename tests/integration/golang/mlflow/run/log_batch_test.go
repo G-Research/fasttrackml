@@ -278,7 +278,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 		},
 		{
 			name:  "DuplicateKeyDifferentValueFails",
-			error: api.NewInternalError("duplicate key"),
+			error: api.NewInternalError("unable to insert params for run"),
 			request: &request.LogBatchRequest{
 				RunID: s.run.ID,
 				Params: []request.ParamPartialRequest{

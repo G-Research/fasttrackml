@@ -712,11 +712,11 @@ func newSqlComparison(op ast.CmpOp, left clause.Column, right any) (clause.Expre
 			Value:  right,
 		}, nil
 	case ast.In:
-		switch right.(type) {
+		switch right := right.(type) {
 		case []any:
 			return clause.IN{
 				Column: left,
-				Values: right.([]any),
+				Values: right,
 			}, nil
 		case string:
 			return clause.Like{
@@ -730,13 +730,13 @@ func newSqlComparison(op ast.CmpOp, left clause.Column, right any) (clause.Expre
 			return nil, fmt.Errorf(`right value in "in" comparison is not a list or string: %#v`, right)
 		}
 	case ast.NotIn:
-		switch right.(type) {
+		switch right := right.(type) {
 		case []any:
 			return clause.NotConditions{
 				Exprs: []clause.Expression{
 					clause.IN{
 						Column: left,
-						Values: right.([]any),
+						Values: right,
 					},
 				},
 			}, nil

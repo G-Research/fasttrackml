@@ -69,3 +69,16 @@ func (f DashboardFixtures) CreateDashboards(
 	}
 	return dashboards, nil
 }
+
+// GetDashboards fetches all dashboards which are not archived
+func (f DashboardFixtures) GetDashboards(
+	ctx context.Context,
+) ([]database.App, error) {
+	dashboards := []database.App{}
+	if err := f.db.WithContext(ctx).
+		Where("NOT is_archived").
+		Find(&dashboards).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting `dashboard` entities")
+	}
+	return dashboards, nil
+}

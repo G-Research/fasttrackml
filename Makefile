@@ -9,18 +9,20 @@ APP=fml
 ifeq ($(shell go env GOOS),windows)
   APP:=$(APP).exe
 endif
+# Version.
+VERSION?=$(shell git describe --tags --always --dirty --match='v*' 2> /dev/null | sed 's/^v//')
 # Enable Go Modules.
 GO111MODULE=on
 # Go ldflags.
 # Set version to git tag if available, otherwise use commit hash.
 # Strip debug symbols and disable DWARF generation.
 # Build static binaries on Linux.
-GO_LDFLAGS=-s -w -X github.com/G-Research/fasttrackml/pkg/version.Version=$(shell git describe --tags --always --dirty --match='v*' 2> /dev/null | sed 's/^v//')
+GO_LDFLAGS=-s -w -X github.com/G-Research/fasttrackml/pkg/version.Version=$(VERSION)
 ifeq ($(shell go env GOOS),linux)
   GO_LDFLAGS+=-linkmode external -extldflags -static
 endif
 # Go build tags.
-GO_BUILDTAGS=$(shell jq -r '."go.buildTags"' .vscode/settings.json)
+GO_BUILDTAGS=$(shell cat .go-build-tags 2> /dev/null)
 # Archive information.
 # Use zip on Windows, tar.gz on Linux and macOS.
 # Use GNU tar on macOS if available, to avoid issues with BSD tar.
@@ -51,7 +53,7 @@ help: ## display this help
 # Linter targets.
 #
 lint: ## run set of linters over the code.
-	@golangci-lint run -v
+	@golangci-lint run -v --build-tags $(GO_BUILDTAGS)
 
 #
 # Go targets.

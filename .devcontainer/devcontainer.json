@@ -22,7 +22,8 @@
 				"golang.Go",
 				"ms-python.python",
 				"pbkit.vscode-pbkit",
-				"redhat.vscode-yaml"
+				"redhat.vscode-yaml",
+				"rioj7.command-variable"
 			]
 		}
 	},

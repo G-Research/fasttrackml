@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "buildFlags": "-tags '${config:go.buildTags}'",
+            "buildFlags": "-tags '${input:goBuildTags}'",
             "args": [
                 "server",
                 "--database-uri",
@@ -23,7 +23,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "buildFlags": "-tags '${config:go.buildTags}'",
+            "buildFlags": "-tags '${input:goBuildTags}'",
             "args": [
                 "server",
                 "--database-uri",
@@ -36,7 +36,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "buildFlags": "-tags '${config:go.buildTags}'",
+            "buildFlags": "-tags '${input:goBuildTags}'",
             "args": [
                 "server",
                 "--database-uri",
@@ -49,12 +49,22 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "buildFlags": "-tags '${config:go.buildTags}'",
+            "buildFlags": "-tags '${input:goBuildTags}'",
             "args": [
                 "server",
                 "--database-uri",
                 "sqlite://encrypted.db?_key=passphrase"
             ],
+        }
+    ],
+    "inputs": [
+        {
+            "id": "goBuildTags",
+            "type": "command",
+            "command": "extension.commandvariable.file.content",
+            "args": {
+                "fileName": "${workspaceFolder}/.go-build-tags",
+            }
         }
     ]
 }

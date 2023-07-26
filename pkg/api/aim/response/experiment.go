@@ -1,5 +1,6 @@
 package response
 
+// GetExperiment represents the response json fot the GetExperimnt endpoint
 type GetExperiment struct {
 	ID       int32  `json:"id"`
 	Name     string `json:"name"`
@@ -7,6 +8,7 @@ type GetExperiment struct {
 	RunCount int    `json:"run_count"`
 }
 
+// GetExperiment represents the response json fot the GetExperimntActivity endpoint
 type GetExperimentActivity struct {
 	NumRuns         int            `json:"num_runs"`
 	NumArchivedRuns int            `json:"num_archived_runs"`
@@ -14,11 +16,13 @@ type GetExperimentActivity struct {
 	ActivityMap     map[string]int `json:"activity_map"`
 }
 
+// GetExperiment represents the response json fot the GetExperimntRuns endpoint
 type GetExperimentRuns struct {
 	ID   string          `json:"id"`
 	Runs []ExperimentRun `json:"runs"`
 }
 
+// ExperimentRun represents a run of an experiment
 type ExperimentRun struct {
 	ID           string  `json:"run_id"`
 	Name         string  `json:"name"`
@@ -27,6 +31,7 @@ type ExperimentRun struct {
 	Archived     bool    `json:"archived"`
 }
 
+// DeleteExperiment represents the response json fot the DeleteExperimnt endpoint
 type DeleteExperiment struct {
 	ID     string `json:"id"`
 	Status string `json:"status"`

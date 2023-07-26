@@ -75,8 +75,14 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "new-dashboard-name", resp.Name)
-			assert.Equal(s.T(), "new-dashboard-description", resp.Description)
+
+			dashboards, err := s.dashboardFixtures.GetDashboards(context.Background())
+			s.dashboard = &dashboards[0]
+
+			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), (s.dashboard.ID).String(), resp.ID)
+			assert.Equal(s.T(), s.dashboard.Name, resp.Name)
+			assert.Equal(s.T(), s.dashboard.Description, resp.Description)
 		})
 	}
 }

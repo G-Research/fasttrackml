@@ -69,9 +69,13 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.requestBody.Name, resp.Name)
-			assert.Equal(s.T(), s.app.Type, resp.Type)
-			assert.Equal(s.T(), tt.requestBody.AppID, resp.AppID)
+
+			dashboards, err := s.dashboardFixtures.GetDashboards(context.Background())
+			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), dashboards[0].Name, resp.Name)
+			assert.Equal(s.T(), dashboards[0].Description, resp.Description)
+			assert.Equal(s.T(), dashboards[0].ID.String(), resp.ID)
+			assert.Equal(s.T(), dashboards[0].AppID, &resp.AppID)
 			assert.NotEmpty(s.T(), resp.ID)
 		})
 	}

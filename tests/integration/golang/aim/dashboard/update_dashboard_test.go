@@ -90,7 +90,7 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
 		requestBody map[string]interface{}
 	}{
 		{
-			name: "UpdateDashboardWithObjectDescription",
+			name: "UpdateDashboardWithIncorrectDescriptionType",
 			requestBody: map[string]interface{}{
 				"Description": map[string]interface{}{"Description": "latest-description"},
 			},

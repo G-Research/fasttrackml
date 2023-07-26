@@ -55,6 +55,7 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
+
 	offset := 8
 	var resp response.GetExperimentRuns
 	err = s.client.DoGetRequest(
@@ -73,17 +74,25 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 }
 
 func (s *GetExperimentRunsTestSuite) Test_Error() {
-	tests := []struct {
-		name string
-		ID   string
+	testData := []struct {
+		name  string
+		error string
+		ID    string
 	}{
 		{
-			name: "GetInvalidExperimentID",
-			ID:   "123",
+			name:  "IncorrectExperimentID",
+			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`,
+			ID:    "incorrect_experiment_id",
+		},
+		{
+			name:  "NotFoundExperiment",
+			error: `: Not Found`,
+			ID:    "123",
 		},
 	}
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+
+	for _, tt := range testData {
+		s.T().Run(tt.name, func(t *testing.T) {
 			var resp api.ErrorResponse
 			err := s.client.DoGetRequest(
 				fmt.Sprintf(
@@ -91,8 +100,8 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 				),
 				&resp,
 			)
-			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp.Error(), "Not Found")
+			assert.Nil(t, err)
+			assert.Equal(s.T(), tt.error, resp.Error())
 		})
 	}
 }

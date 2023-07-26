@@ -35,14 +35,13 @@ func (s *GetExperimentsTestSuite) SetupTest() {
 }
 
 func (s *GetExperimentsTestSuite) Test_Ok() {
-	// 1. prepare database with test data.
 	experiments, err := s.fixtures.CreateExperiments(context.Background(), 5)
 	assert.Nil(s.T(), err)
 	defer func() {
 		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
 	}()
 	var resp []response.GetExperiment
-	// 2. make actual API call.
+
 	err = s.client.DoGetRequest(
 		fmt.Sprintf(
 			"/experiments/",
@@ -50,7 +49,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 		&resp,
 	)
 	assert.Nil(s.T(), err)
-	// 3. check actual API response.
+
 	for idx := 0; idx < 5; idx++ {
 		assert.Equal(s.T(), *experiments[idx].ID, resp[idx].ID)
 		assert.Equal(s.T(), experiments[idx].Name, resp[idx].Name)

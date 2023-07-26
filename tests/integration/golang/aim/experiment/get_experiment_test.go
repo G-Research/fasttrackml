@@ -38,7 +38,6 @@ func (s *GetExperimentTestSuite) SetupTest() {
 }
 
 func (s *GetExperimentTestSuite) Test_Ok() {
-	// 1. prepare database with test data.
 	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
@@ -62,8 +61,8 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
 	}()
+
 	var resp response.GetExperiment
-	// 2. make actual API call.
 	err = s.client.DoGetRequest(
 		fmt.Sprintf(
 			"/experiments/%d", *experiment.ID,
@@ -71,7 +70,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		&resp,
 	)
 	assert.Nil(s.T(), err)
-	// 3. check actual API response.
+
 	assert.Equal(s.T(), *experiment.ID, resp.ID)
 	assert.Equal(s.T(), experiment.Name, resp.Name)
 	assert.Equal(s.T(), experiment.LifecycleStage == models.LifecycleStageDeleted, resp.Archived)

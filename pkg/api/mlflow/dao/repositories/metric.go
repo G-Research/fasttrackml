@@ -56,9 +56,13 @@ func (r MetricRepository) CreateBatch(
 		return nil
 	}
 
-	metricKeys := make([]string, 0)
+	metricKeysMap := make(map[string]any)
 	for _, m := range metrics {
-		metricKeys = append(metricKeys, m.Key)
+		metricKeysMap[m.Key] = nil
+	}
+	metricKeys := make([]string, 0, len(metricKeysMap))
+	for k := range metricKeysMap {
+		metricKeys = append(metricKeys, k)
 	}
 
 	// get the latest metrics by requested Run ID and metric keys.

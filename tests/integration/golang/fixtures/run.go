@@ -96,6 +96,21 @@ func (f RunFixtures) CreateRuns(
 	return runs, nil
 }
 
+// GetTestRun fetches one run
+func (f RunFixtures) GetTestRun(
+	ctx context.Context, runID string,
+) (*models.Run, error) {
+	var run models.Run
+	if err := f.db.WithContext(ctx).Where(
+		"run_uuid = ?", runID,
+	).First(
+		&run,
+	).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting `run` by experiment id: %v", runID)
+	}
+	return &run, nil
+}
+
 // GetTestRuns fetches all runs for an experiment
 func (f RunFixtures) GetTestRuns(
 	ctx context.Context, experimentID int32,

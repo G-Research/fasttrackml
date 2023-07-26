@@ -72,6 +72,8 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 
 			dashboards, err := s.dashboardFixtures.GetDashboards(context.Background())
 			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), tt.requestBody.Name, resp.Name)
+			assert.Equal(s.T(), tt.requestBody.Description, resp.Description)
 			assert.Equal(s.T(), dashboards[0].Name, resp.Name)
 			assert.Equal(s.T(), dashboards[0].Description, resp.Description)
 			assert.Equal(s.T(), dashboards[0].ID.String(), resp.ID)

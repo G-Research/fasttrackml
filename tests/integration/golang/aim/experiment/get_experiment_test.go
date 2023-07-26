@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
@@ -62,7 +62,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
 	}()
-	var resp fiber.Map
+	var resp response.GetExperiment
 	// 2. make actual API call.
 	err = s.client.DoGetRequest(
 		fmt.Sprintf(
@@ -72,10 +72,10 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	)
 	assert.Nil(s.T(), err)
 	// 3. check actual API response.
-	assert.Equal(s.T(), *experiment.ID, int32(resp["id"].(float64)))
-	assert.Equal(s.T(), experiment.Name, resp["name"])
-	assert.Equal(s.T(), experiment.LifecycleStage == models.LifecycleStageDeleted, resp["archived"])
-	assert.Equal(s.T(), len(experiment.Runs), int(resp["run_count"].(float64)))
+	assert.Equal(s.T(), *experiment.ID, resp.ID)
+	assert.Equal(s.T(), experiment.Name, resp.Name)
+	assert.Equal(s.T(), experiment.LifecycleStage == models.LifecycleStageDeleted, resp.Archived)
+	assert.Equal(s.T(), len(experiment.Runs), resp.RunCount)
 }
 
 func (s *GetExperimentTestSuite) Test_Error() {

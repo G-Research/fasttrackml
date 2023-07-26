@@ -61,7 +61,7 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 		{
 			name: "UpdateDashboard",
 			requestBody: request.UpdateDashboard{
-				Name: "new-dashboard-name",
+				Name:        "new-dashboard-name",
 				Description: "new-dashboard-description",
 			},
 		},

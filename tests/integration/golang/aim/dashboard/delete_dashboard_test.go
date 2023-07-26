@@ -55,11 +55,11 @@ func (s *DeleteDashboardTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.dashboardFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name             string
+		name                   string
 		expectedDashboardCount int
 	}{
 		{
-			name:             "DeleteDashboard",
+			name:                   "DeleteDashboard",
 			expectedDashboardCount: 0,
 		},
 	}
@@ -83,13 +83,13 @@ func (s *DeleteDashboardTestSuite) Test_Error() {
 		assert.Nil(s.T(), s.dashboardFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name             string
-		idParam          uuid.UUID
+		name                   string
+		idParam                uuid.UUID
 		expectedDashboardCount int
 	}{
 		{
-			name:             "DeleteDashboardWithNotFoundID",
-			idParam:          uuid.New(),
+			name:                   "DeleteDashboardWithNotFoundID",
+			idParam:                uuid.New(),
 			expectedDashboardCount: 1,
 		},
 	}

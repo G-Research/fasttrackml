@@ -57,9 +57,9 @@ func (f DashboardFixtures) CreateDashboards(
 				ID:        uuid.New(),
 				CreatedAt: time.Now(),
 			},
-			Name:  "dashboard-exp",
+			Name:        "dashboard-exp",
 			Description: "dashboard for experiment",
-			AppID: appId,
+			AppID:       appId,
 		}
 		dashboard, err := f.CreateDashboard(ctx, dashboard)
 		if err != nil {

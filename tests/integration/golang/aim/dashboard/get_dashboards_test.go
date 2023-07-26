@@ -45,15 +45,15 @@ func (s *GetDashboardsTestSuite) SetupTest() {
 
 func (s *GetDashboardsTestSuite) Test_Ok() {
 	tests := []struct {
-		name             string
+		name                   string
 		expectedDashboardCount int
 	}{
 		{
-			name:             "GetDashboardsWithExistingRows",
+			name:                   "GetDashboardsWithExistingRows",
 			expectedDashboardCount: 2,
 		},
 		{
-			name:             "GetDashboardsWithNoRows",
+			name:                   "GetDashboardsWithNoRows",
 			expectedDashboardCount: 0,
 		},
 	}

@@ -50,6 +50,9 @@ func (s *ArchiveBatchTestSuite) SetupTest() {
 }
 
 func (s *ArchiveBatchTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+	}()
 	tests := []struct {
 		name                 string
 		runIDs               []string
@@ -115,7 +118,6 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 func (s *ArchiveBatchTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string

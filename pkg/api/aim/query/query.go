@@ -305,7 +305,6 @@ func (pq *parsedQuery) parseCall(node *ast.Call) (any, error) {
 
 func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 	exprs := make([]clause.Expression, len(node.Ops))
-
 	for i, op := range node.Ops {
 		leftAst := node.Left
 		if i > 0 {
@@ -339,13 +338,23 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 		default:
 			switch right := right.(type) {
 			case clause.Column:
-				o, l, r, err := reverseComparison(op, left, right)
-				if err != nil {
-					return nil, err
-				}
-				exprs[i], err = newSqlComparison(o, l, r)
-				if err != nil {
-					return nil, err
+				switch op {
+				case ast.In:
+					fallthrough
+				case ast.NotIn:
+					exprs[i], err = newSqlComparison(op, right, left)
+					if err != nil {
+						return nil, err
+					}
+				default:
+					o, l, r, err := reverseComparison(op, left, right)
+					if err != nil {
+						return nil, err
+					}
+					exprs[i], err = newSqlComparison(o, l, r)
+					if err != nil {
+						return nil, err
+					}
 				}
 			case clause.Eq:
 				switch left := left.(type) {
@@ -770,7 +779,7 @@ func reverseComparison(op ast.CmpOp, left any, right clause.Column) (ast.CmpOp, 
 		return ast.Lt, right, left, nil
 	case ast.GtE:
 		return ast.LtE, right, left, nil
-	case ast.NotIn, ast.In, ast.Eq, ast.Is, ast.NotEq, ast.IsNot:
+	case ast.Eq, ast.Is, ast.NotEq, ast.IsNot:
 		return op, right, left, nil
 	default:
 		return op, right, left, fmt.Errorf("unable to reverse comparison operator %q", op)

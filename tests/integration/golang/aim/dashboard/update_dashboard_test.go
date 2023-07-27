@@ -83,6 +83,8 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 			assert.Equal(s.T(), tt.requestBody.Name, resp.Name)
 			assert.Equal(s.T(), tt.requestBody.Description, resp.Description)
 			assert.Equal(s.T(), (s.dashboard.ID).String(), resp.ID)
+			assert.Equal(s.T(), tt.requestBody.Name, s.dashboard.Name)
+			assert.Equal(s.T(), tt.requestBody.Description, s.dashboard.Description)
 			assert.Equal(s.T(), s.dashboard.Name, resp.Name)
 			assert.Equal(s.T(), s.dashboard.Description, resp.Description)
 		})

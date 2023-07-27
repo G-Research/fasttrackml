@@ -2,8 +2,6 @@ services:
   service:
     build:
       context: .
-      args:
-        tags: netgo osusergo sqlite_foreign_keys sqlite_math_functions sqlite_omit_load_extension sqlite_unlock_notify sqlite_vacuum_incr
     depends_on:
       - postgres
     environment:

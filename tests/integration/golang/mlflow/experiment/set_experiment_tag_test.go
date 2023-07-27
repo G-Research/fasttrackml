@@ -22,8 +22,8 @@ import (
 
 type SetExperimentTagTestSuite struct {
 	suite.Suite
-	client   *helpers.HttpClient
-	fixtures *fixtures.ExperimentFixtures
+	client             *helpers.HttpClient
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestSetExperimentTagTestSuite(t *testing.T) {
@@ -32,9 +32,9 @@ func TestSetExperimentTagTestSuite(t *testing.T) {
 
 func (s *SetExperimentTagTestSuite) SetupTest() {
 	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
-	s.fixtures = fixtures
+	s.experimentFixtures = experimentFixtures
 }
 
 func SetExperimentTag(s *SetExperimentTagTestSuite, experiment *models.Experiment, key, value string) {
@@ -54,8 +54,11 @@ func SetExperimentTag(s *SetExperimentTagTestSuite, experiment *models.Experimen
 }
 
 func (s *SetExperimentTagTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+	}()
 	// 1. prepare database with test data.
-	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		CreationTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
@@ -69,7 +72,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		ArtifactLocation: "/artifact/location",
 	})
 	assert.Nil(s.T(), err)
-	experiment1, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment1, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment2",
 		CreationTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
@@ -83,34 +86,31 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		ArtifactLocation: "/artifact/location",
 	})
 	assert.Nil(s.T(), err)
-	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
-	}()
 
 	// Set tag on experiment
 	SetExperimentTag(s, experiment, "KeyTag1", "ValueTag1")
-	exp, err := s.fixtures.GetExperimentByID(context.Background(), *experiment.ID)
+	exp, err := s.experimentFixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
 
 	assert.True(s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag1"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'")
 
 	// Update tag on experiment
 	SetExperimentTag(s, experiment, "KeyTag1", "ValueTag2")
-	exp, err = s.fixtures.GetExperimentByID(context.Background(), *experiment.ID)
+	exp, err = s.experimentFixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
 
 	assert.True(s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'")
 
 	// test that setting a tag on 1 experiment does not impact another experiment.
-	exp, err = s.fixtures.GetExperimentByID(context.Background(), *experiment1.ID)
+	exp, err = s.experimentFixtures.GetExperimentByID(context.Background(), *experiment1.ID)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), len(exp.Tags), 0)
 
 	// test that setting a tag on different experiments maintain different values across experiments
 	SetExperimentTag(s, experiment1, "KeyTag1", "ValueTag3")
-	exp, err = s.fixtures.GetExperimentByID(context.Background(), *experiment.ID)
+	exp, err = s.experimentFixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
-	exp1, err := s.fixtures.GetExperimentByID(context.Background(), *experiment1.ID)
+	exp1, err := s.experimentFixtures.GetExperimentByID(context.Background(), *experiment1.ID)
 	assert.Nil(s.T(), err)
 	assert.True(s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag2'")
 	assert.True(s.T(), helpers.CheckTagExists(exp1.Tags, "KeyTag1", "ValueTag3"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag3'")

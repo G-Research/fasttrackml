@@ -24,8 +24,8 @@ import (
 
 type RestoreExperimentTestSuite struct {
 	suite.Suite
-	client   *helpers.HttpClient
-	fixtures *fixtures.ExperimentFixtures
+	client             *helpers.HttpClient
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestRestoreExperimentTestSuite(t *testing.T) {
@@ -34,14 +34,17 @@ func TestRestoreExperimentTestSuite(t *testing.T) {
 
 func (s *RestoreExperimentTestSuite) SetupTest() {
 	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
-	s.fixtures = fixtures
+	s.experimentFixtures = experimentFixtures
 }
 
 func (s *RestoreExperimentTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+	}()
 	// 1. prepare database with test data.
-	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
@@ -61,10 +64,6 @@ func (s *RestoreExperimentTestSuite) Test_Ok() {
 		ArtifactLocation: "/artifact/location",
 	})
 	assert.Nil(s.T(), err)
-	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
-	}()
-
 	assert.Equal(s.T(), models.LifecycleStageDeleted, experiment.LifecycleStage)
 
 	// 2. make actual API call.
@@ -80,7 +79,7 @@ func (s *RestoreExperimentTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	// 3. check actual API response.
-	exp, err := s.fixtures.GetExperimentByID(context.Background(), *experiment.ID)
+	exp, err := s.experimentFixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), models.LifecycleStageActive, exp.LifecycleStage)
 }

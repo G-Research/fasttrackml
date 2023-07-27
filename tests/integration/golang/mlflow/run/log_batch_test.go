@@ -22,7 +22,6 @@ import (
 
 type LogBatchTestSuite struct {
 	suite.Suite
-	run                *models.Run
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
 	metricFixtures     *fixtures.MetricFixtures
@@ -44,27 +43,30 @@ func (s *LogBatchTestSuite) SetupTest() {
 	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
+}
 
-	exp := &models.Experiment{
+func (s *LogBatchTestSuite) TestTags_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+	}()
+
+	experiment := &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 	}
-	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
+	_, err := s.experimentFixtures.CreateExperiment(context.Background(), experiment)
 	assert.Nil(s.T(), err)
 
 	run := &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
-		ExperimentID:   *exp.ID,
+		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
 	}
 	run, err = s.runFixtures.CreateRun(context.Background(), run)
 	assert.Nil(s.T(), err)
-	s.run = run
-}
 
-func (s *LogBatchTestSuite) TestTags_Ok() {
 	tests := []struct {
 		name    string
 		request *request.LogBatchRequest
@@ -72,7 +74,7 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 		{
 			name: "LogOne",
 			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
+				RunID: run.ID,
 				Tags: []request.TagPartialRequest{
 					{
 						Key:   "key1",
@@ -97,6 +99,27 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 }
 
 func (s *LogBatchTestSuite) TestParams_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+	}()
+
+	experiment := &models.Experiment{
+		Name:           uuid.New().String(),
+		LifecycleStage: models.LifecycleStageActive,
+	}
+	_, err := s.experimentFixtures.CreateExperiment(context.Background(), experiment)
+	assert.Nil(s.T(), err)
+
+	run := &models.Run{
+		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
+		ExperimentID:   *experiment.ID,
+		SourceType:     "JOB",
+		LifecycleStage: models.LifecycleStageActive,
+		Status:         models.StatusRunning,
+	}
+	run, err = s.runFixtures.CreateRun(context.Background(), run)
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name    string
 		request *request.LogBatchRequest
@@ -104,7 +127,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 		{
 			name: "LogOne",
 			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
+				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "key1",
@@ -116,7 +139,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 		{
 			name: "LogDuplicate",
 			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
+				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "key2",
@@ -145,6 +168,27 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 }
 
 func (s *LogBatchTestSuite) TestMetrics_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+	}()
+
+	experiment := &models.Experiment{
+		Name:           uuid.New().String(),
+		LifecycleStage: models.LifecycleStageActive,
+	}
+	_, err := s.experimentFixtures.CreateExperiment(context.Background(), experiment)
+	assert.Nil(s.T(), err)
+
+	run := &models.Run{
+		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
+		ExperimentID:   *experiment.ID,
+		SourceType:     "JOB",
+		LifecycleStage: models.LifecycleStageActive,
+		Status:         models.StatusRunning,
+	}
+	run, err = s.runFixtures.CreateRun(context.Background(), run)
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name                  string
 		request               *request.LogBatchRequest
@@ -153,7 +197,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 		{
 			name: "LogOne",
 			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
+				RunID: run.ID,
 				Metrics: []request.MetricPartialRequest{
 					{
 						Key:       "key1",
@@ -170,7 +214,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 		{
 			name: "LogSeveral",
 			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
+				RunID: run.ID,
 				Metrics: []request.MetricPartialRequest{
 					{
 						Key:       "key1",
@@ -218,7 +262,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 		{
 			name: "LogDuplicate",
 			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
+				RunID: run.ID,
 				Metrics: []request.MetricPartialRequest{
 					{
 						Key:       "key3",
@@ -266,6 +310,23 @@ func (s *LogBatchTestSuite) Test_Error() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 
+	experiment := &models.Experiment{
+		Name:           uuid.New().String(),
+		LifecycleStage: models.LifecycleStageActive,
+	}
+	_, err := s.experimentFixtures.CreateExperiment(context.Background(), experiment)
+	assert.Nil(s.T(), err)
+
+	run := &models.Run{
+		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
+		ExperimentID:   *experiment.ID,
+		SourceType:     "JOB",
+		LifecycleStage: models.LifecycleStageActive,
+		Status:         models.StatusRunning,
+	}
+	run, err = s.runFixtures.CreateRun(context.Background(), run)
+	assert.Nil(s.T(), err)
+
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -280,7 +341,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 			name:  "DuplicateKeyDifferentValueFails",
 			error: api.NewInternalError("unable to insert params for run"),
 			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
+				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "key1",

@@ -320,6 +320,16 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 		}
 
 		switch left := left.(type) {
+		case string:
+			switch right := right.(type) {
+			case clause.Column:
+				exprs[i], err = newSqlComparison(op, right, left)
+				if err != nil {
+					return nil, err
+				}
+			default:
+				return nil, fmt.Errorf("unsupported comparison %q", ast.Dump(node))
+			}
 		case clause.Column:
 			exprs[i], err = newSqlComparison(op, left, right)
 			if err != nil {
@@ -338,23 +348,13 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 		default:
 			switch right := right.(type) {
 			case clause.Column:
-				switch op {
-				case ast.In:
-					fallthrough
-				case ast.NotIn:
-					exprs[i], err = newSqlComparison(op, right, left)
-					if err != nil {
-						return nil, err
-					}
-				default:
-					o, l, r, err := reverseComparison(op, left, right)
-					if err != nil {
-						return nil, err
-					}
-					exprs[i], err = newSqlComparison(o, l, r)
-					if err != nil {
-						return nil, err
-					}
+				o, l, r, err := reverseComparison(op, left, right)
+				if err != nil {
+					return nil, err
+				}
+				exprs[i], err = newSqlComparison(o, l, r)
+				if err != nil {
+					return nil, err
 				}
 			case clause.Eq:
 				switch left := left.(type) {

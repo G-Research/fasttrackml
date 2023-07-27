@@ -123,7 +123,6 @@ func (s *DeleteRunTagTestSuite) Test_Ok() {
 			Value: "value2",
 		},
 	}, tags)
-
 }
 
 func (s *DeleteRunTagTestSuite) Test_Error() {

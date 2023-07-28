@@ -100,7 +100,7 @@ func ConnectDB(
 		}
 		DB.closers = append(DB.closers, s)
 		s.SetMaxIdleConns(1)
-		s.SetMaxOpenConns(4)
+		s.SetMaxOpenConns(1)
 		s.SetConnMaxIdleTime(0)
 		s.SetConnMaxLifetime(0)
 		sourceConn = sqlite.Dialector{

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm/clause"
 )
 
@@ -19,10 +18,10 @@ func (regexp Regexp) Build(builder clause.Builder) {
 	builder.WriteQuoted(regexp.Column)
 	operator := ""
 	switch regexp.Dialector {
-	case sqlite.Dialector{}.Name():
-		operator = "regexp"
 	case postgres.Dialector{}.Name():
 		operator = "~"
+	default:
+		operator = "regexp"
 	}
 	builder.WriteString(fmt.Sprintf(" %s ", operator))
 	builder.AddVar(builder, fmt.Sprintf("%s", regexp.Value))
@@ -32,10 +31,10 @@ func (regexp Regexp) Build(builder clause.Builder) {
 func (regexp Regexp) NegationBuild(builder clause.Builder) {
 	builder.WriteQuoted(regexp.Column)
 	switch regexp.Dialector {
-	case sqlite.Dialector{}.Name():
-		builder.WriteString(" NOT regexp ")
 	case postgres.Dialector{}.Name():
 		builder.WriteString(" !~ ")
+	default:
+		builder.WriteString(" NOT regexp ")
 	}
 	builder.AddVar(builder, regexp.Value)
 }

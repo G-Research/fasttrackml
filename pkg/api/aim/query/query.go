@@ -16,14 +16,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-const (
-	RegexpOperationMatch  = "match"
-	RegexpOperationSearch = "search"
-	OperationEndsWith     = "endswith"
-	OperationContains     = "contains"
-	OperationStartsWith   = "startswith"
-)
-
 type DefaultExpression struct {
 	Contains   string
 	Expression string
@@ -220,23 +212,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 		}
 		attribute := string(node.Attr)
 		switch strings.ToLower(attribute) {
-		case RegexpOperationMatch:
-			fallthrough
-		case RegexpOperationSearch:
-			return callable(func(args []ast.Expr) (any, error) {
-				if len(args) != 2 {
-					return nil, errors.New("`match` function support exactly two arguments")
-				}
-				c, ok := parsedNode.(callable)
-				if !ok {
-					return nil, errors.New("unsupported node type. has to be callable type")
-				}
-
-				return c(append([]ast.Expr{&ast.Str{
-					S: py.String(strings.ToLower(attribute)),
-				}}, args...))
-			}), nil
-		case OperationEndsWith:
+		case "endswith":
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
 					return nil, errors.New("`endwith` function support exactly one argument")
@@ -258,7 +234,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					},
 				}, nil
 			}), nil
-		case OperationContains:
+		case "contains":
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
 					return nil, errors.New("`contains` function support exactly one argument")
@@ -280,7 +256,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					},
 				}, nil
 			}), nil
-		case OperationStartsWith:
+		case "startswith":
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
 					return nil, errors.New("`startwith` function support exactly one argument")
@@ -613,53 +589,84 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 				},
 			), nil
 		case "re":
-			return callable(
-				func(args []ast.Expr) (any, error) {
-					operation, ok := args[0].(*ast.Str)
-					if !ok {
-						return nil, errors.New("re operation type has to be ast.Str")
-					}
-					switch operation.S {
-					case RegexpOperationMatch:
-						fallthrough
-					case RegexpOperationSearch:
-						// subtract 1, because first argument is an operation argument.
-						if len(args)-1 != 2 {
-							return nil, errors.New("re.match function support exactly 2 arguments")
-						}
+			return attributeGetter(
+				func(attr string) (any, error) {
+					switch attr {
+					case "match":
+						return callable(
+							func(args []ast.Expr) (any, error) {
+								if len(args) != 2 {
+									return nil, errors.New("re.match function support exactly 2 arguments")
+								}
 
-						regexp, ok := args[1].(*ast.Str)
-						if !ok {
-							return nil, errors.New("first argument type for re.match function has to be ast.Str")
-						}
-						attribute, ok := args[2].(*ast.Attribute)
-						if !ok {
-							return nil, errors.New("second argument type for re.match function has to be ast.Attribute")
-						}
+								parsedNode, err := pq.parseNode(args[0])
+								if err != nil {
+									return nil, err
+								}
+								str, ok := parsedNode.(string)
+								if !ok {
+									return nil, errors.New("first argument type for re.match function has to be ast.Str")
+								}
 
-						attributes, err := pq.parseName(attribute.Value.(*ast.Name))
-						if err != nil {
-							return nil, err
-						}
+								parsedNode, err = pq.parseNode(args[1])
+								if err != nil {
+									return nil, err
+								}
 
-						column, err := attributes.(attributeGetter)(string(attribute.Attr))
-						if err != nil {
-							return nil, err
-						}
+								column, ok := parsedNode.(clause.Column)
+								if !ok {
+									return nil, errors.New(
+										"second argument type for re.match function has to be clause.Column",
+									)
+								}
 
-						// handle difference between `re.match` and `re.search`.
-						if operation.S == RegexpOperationMatch {
-							regexp.S = py.String(fmt.Sprintf("^%s", regexp.S))
-						}
-						return Regexp{
-							Eq: clause.Eq{
-								Column: column,
-								Value:  regexp.S,
+								return Regexp{
+									Eq: clause.Eq{
+										Column: column,
+										Value:  fmt.Sprintf("^%s", str),
+									},
+									Dialector: pq.qp.Dialector,
+								}, nil
 							},
-							Dialector: pq.qp.Dialector,
-						}, nil
+						), nil
+					case "search":
+						return callable(
+							func(args []ast.Expr) (any, error) {
+								if len(args) != 2 {
+									return nil, errors.New("re.match function support exactly 2 arguments")
+								}
+
+								parsedNode, err := pq.parseNode(args[0])
+								if err != nil {
+									return nil, err
+								}
+								str, ok := parsedNode.(string)
+								if !ok {
+									return nil, errors.New("first argument type for re.match function has to be ast.Str")
+								}
+
+								parsedNode, err = pq.parseNode(args[1])
+								if err != nil {
+									return nil, err
+								}
+								column, ok := parsedNode.(clause.Column)
+								if !ok {
+									return nil, errors.New(
+										"second argument type for re.match function has to be clause.Column",
+									)
+								}
+
+								return Regexp{
+									Eq: clause.Eq{
+										Column: column,
+										Value:  str,
+									},
+									Dialector: pq.qp.Dialector,
+								}, nil
+							},
+						), nil
 					default:
-						return nil, fmt.Errorf("unsupported re operation type: %s", operation.S)
+						return nil, fmt.Errorf("unsupported re function %s", attr)
 					}
 				},
 			), nil

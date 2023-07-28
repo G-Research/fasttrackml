@@ -75,6 +75,10 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					Context: map[string]string{},
 					Name:    "key1",
 				},
+				{
+					Context: map[string]string{},
+					Name:    "key2",
+				},
 			},
 		},
 	}
@@ -87,6 +91,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), len(tt.request), len(resp))
 		})
 	}
 }

@@ -63,7 +63,7 @@ func (f RunFixtures) UpdateRun(
 	return nil
 }
 
-// CreateRuns creates some num runs belonging to the experiment
+// CreateRuns creates some num runs belonging to the experiment, with tags and metrics
 func (f RunFixtures) CreateRuns(
 	ctx context.Context, exp *models.Experiment, num int,
 ) ([]*models.Run, error) {
@@ -93,7 +93,7 @@ func (f RunFixtures) CreateRuns(
 		}
 		run.Tags = []models.Tag{tag}
 
-		err = f.CreateMetrics(ctx, run)
+		err = f.CreateMetrics(ctx, run, 2)
 		if err != nil {
 			return nil, err
 		}
@@ -166,32 +166,34 @@ func (f RunFixtures) CreateTag(
 }
 
 func (f RunFixtures) CreateMetrics(
-	ctx context.Context, run *models.Run,
+	ctx context.Context, run *models.Run, count int,
 ) error {
-	// create test `metric` and test `latest metric` and connect to run.
-	err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
-		Key:       "key1",
-		Value:     123.1,
-		Timestamp: 1234567890,
-		RunID:     run.ID,
-		Step:      1,
-		IsNan:     false,
-		Iter:      1,
-	}).Error
-	if err != nil {
-		return err
-	}
-	err = f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
-		Key:       "key1",
-		Value:     123.1,
-		Timestamp: 1234567890,
-		Step:      1,
-		IsNan:     false,
-		RunID:     run.ID,
-		LastIter:  1,
-	}).Error
-	if err != nil {
-		return err
+	for i := 1; i <= count; i++ {
+		// create test `metric` and test `latest metric` and connect to run.
+		err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
+			Key:       fmt.Sprintf("key%d", i),
+			Value:     123.1,
+			Timestamp: 1234567890,
+			RunID:     run.ID,
+			Step:      1,
+			IsNan:     false,
+			Iter:      1,
+		}).Error
+		if err != nil {
+			return err
+		}
+		err = f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
+			Key:       fmt.Sprintf("key%d", i),
+			Value:     123.1,
+			Timestamp: 1234567890,
+			Step:      1,
+			IsNan:     false,
+			RunID:     run.ID,
+			LastIter:  1,
+		}).Error
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

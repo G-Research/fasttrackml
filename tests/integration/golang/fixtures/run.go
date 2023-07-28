@@ -17,8 +17,9 @@ import (
 // RunFixtures represents data fixtures object.
 type RunFixtures struct {
 	baseFixtures
-	runRepository repositories.RunRepositoryProvider
-	tagRepository repositories.TagRepositoryProvider
+	runRepository    repositories.RunRepositoryProvider
+	tagRepository    repositories.TagRepositoryProvider
+	metricRepository repositories.MetricRepositoryProvider
 }
 
 // NewRunFixtures creates new instance of RunFixtures.
@@ -35,9 +36,10 @@ func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
 		return nil, eris.Wrap(err, "error connection to database")
 	}
 	return &RunFixtures{
-		baseFixtures:  baseFixtures{db: db.DB},
-		runRepository: repositories.NewRunRepository(db.DB),
-		tagRepository: repositories.NewTagRepository(db.DB),
+		baseFixtures:     baseFixtures{db: db.DB},
+		runRepository:    repositories.NewRunRepository(db.DB),
+		tagRepository:    repositories.NewTagRepository(db.DB),
+		metricRepository: repositories.NewMetricRepository(db.DB),
 	}, nil
 }
 
@@ -81,16 +83,21 @@ func (f RunFixtures) CreateRuns(
 			return nil, err
 		}
 		tag := models.Tag{
-			Key: "my tag key",
+			Key:   "my tag key",
 			Value: "my tag value",
 			RunID: run.ID,
 		}
-	        err = f.CreateTag(ctx, tag)
+		err = f.CreateTag(ctx, tag)
 		if err != nil {
 			return nil, err
 		}
-		run.Tags = []models.Tag{ tag }
-			
+		run.Tags = []models.Tag{tag}
+
+		err = f.CreateMetrics(ctx, run)
+		if err != nil {
+			return nil, err
+		}
+
 		runs = append(runs, run)
 	}
 	return runs, nil
@@ -154,6 +161,37 @@ func (f RunFixtures) CreateTag(
 ) error {
 	if err := f.tagRepository.CreateRunTagWithTransaction(ctx, f.db, tag.RunID, tag.Key, tag.Value); err != nil {
 		return eris.Wrap(err, "error creating run tag")
+	}
+	return nil
+}
+
+func (f RunFixtures) CreateMetrics(
+	ctx context.Context, run *models.Run,
+) error {
+	// create test `metric` and test `latest metric` and connect to run.
+	err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
+		Key:       "key1",
+		Value:     123.1,
+		Timestamp: 1234567890,
+		RunID:     run.ID,
+		Step:      1,
+		IsNan:     false,
+		Iter:      1,
+	}).Error
+	if err != nil {
+		return err
+	}
+	err = f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
+		Key:       "key1",
+		Value:     123.1,
+		Timestamp: 1234567890,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run.ID,
+		LastIter:  1,
+	}).Error
+	if err != nil {
+		return err
 	}
 	return nil
 }

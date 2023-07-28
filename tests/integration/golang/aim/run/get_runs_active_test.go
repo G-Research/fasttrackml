@@ -62,15 +62,15 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name  string
+		name         string
 		wantRunCount int
 	}{
 		{
-			name:  "GetActiveRunsWhenPresent",
+			name:         "GetActiveRunsWhenPresent",
 			wantRunCount: 2,
 		},
 		{
-			name:  "GetActiveRunsWhenNotPresent",
+			name:         "GetActiveRunsWhenNotPresent",
 			wantRunCount: 0,
 		},
 	}
@@ -87,7 +87,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 
 			decodedData, err := encoding.Decode(bytes.NewBuffer(data))
 			assert.Nil(s.T(), err)
-			
+
 			for idx := 0; idx < tt.wantRunCount; idx++ {
 				respNameKey := fmt.Sprintf("%v.props.name", s.runs[idx].ID)
 				expIdKey := fmt.Sprintf("%v.props.experiment.id", s.runs[idx].ID)

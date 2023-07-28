@@ -11,25 +11,27 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type GetRunInfoTestSuite struct {
+type GetRunMetricsTestSuite struct {
 	suite.Suite
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
+	metricFixtures     *fixtures.MetricFixtures
 	run                *models.Run
 }
 
-func TestGetRunInfoTestSuite(t *testing.T) {
-	suite.Run(t, new(GetRunInfoTestSuite))
+func TestGetRunMetricsTestSuite(t *testing.T) {
+	suite.Run(t, new(GetRunMetricsTestSuite))
 }
 
-func (s *GetRunInfoTestSuite) SetupTest() {
+func (s *GetRunMetricsTestSuite) SetupTest() {
 	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
 
 	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
@@ -39,6 +41,10 @@ func (s *GetRunInfoTestSuite) SetupTest() {
 	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
+
+	metricFixtures, err := fixtures.NewMetricFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.metricFixtures = metricFixtures
 
 	exp := &models.Experiment{
 		Name:           uuid.New().String(),
@@ -52,42 +58,40 @@ func (s *GetRunInfoTestSuite) SetupTest() {
 	s.run = runs[0]
 }
 
-func (s *GetRunInfoTestSuite) Test_Ok() {
+func (s *GetRunMetricsTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name  string
-		runID string
+		name    string
+		runID   string
+		request request.GetRunMetrics
 	}{
 		{
 			name:  "GetOneRun",
 			runID: s.run.ID,
+			request: request.GetRunMetrics{
+				{
+					Context: map[string]string{},
+					Name:    "key1",
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var resp response.GetRunInfo
-			err := s.client.DoGetRequest(
-				fmt.Sprintf("/runs/%s/info", tt.runID),
+			var resp response.GetRunMetrics
+			err := s.client.DoPostRequest(
+				fmt.Sprintf("/runs/%s/metric/get-batch", tt.runID),
+				tt.request,
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			// TODO this assertion fails because ID is not rendered by the endpoint
-			// assert.Equal(s.T(), s.run.ID, resp.Props.ID)
-			assert.Equal(s.T(), s.run.Name, resp.Props.Name)
-			assert.Equal(s.T(), fmt.Sprintf("%v", s.run.ExperimentID), resp.Props.Experiment.ID)
-			assert.Equal(s.T(), s.run.StartTime.Int64, resp.Props.CreationTime)
-			assert.Equal(s.T(), s.run.EndTime.Int64, resp.Props.EndTime)
-			// TODO this assertion fails because tags are not rendered by endpoint
-			// assert.Equal(s.T(), s.run.Tags[0].Key, resp.Props.Tags[0])
-			// TODO this assertion fails so maybe the endpoint is not populating correctly
-			// assert.NotEmpty(s.T(), resp.Props.CreationTime)
 		})
 	}
 }
 
-func (s *GetRunInfoTestSuite) Test_Error() {
+func (s *GetRunMetricsTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()

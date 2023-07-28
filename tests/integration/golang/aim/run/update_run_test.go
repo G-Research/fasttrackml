@@ -86,7 +86,6 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-
 			var resp response.Success
 			err := s.client.DoPutRequest(
 				fmt.Sprintf("/runs/%s", *tt.request.RunID),

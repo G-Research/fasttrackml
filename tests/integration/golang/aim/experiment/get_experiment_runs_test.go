@@ -56,11 +56,10 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	runs, err := s.runFixtures.CreateRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
 
-	offset := 8
 	var resp response.GetExperimentRuns
 	err = s.client.DoGetRequest(
 		fmt.Sprintf(
-			"/experiments/%d/runs?limit=4&offset=%s", *experiment.ID, runs[offset].ID,
+			"/experiments/%d/runs?limit=4&offset=8", *experiment.ID, runs[8].ID,
 		),
 		&resp,
 	)
@@ -68,7 +67,7 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 
 	assert.Equal(s.T(), 4, len(resp.Runs))
 	for index := 0; index < len(resp.Runs); index++ {
-		r := runs[offset-(index+1)]
+		r := runs[8-(index+1)]
 		assert.Equal(s.T(), r.ID, resp.Runs[index].ID)
 		assert.Equal(s.T(), r.Name, resp.Runs[index].Name)
 		assert.Equal(s.T(), float64(r.StartTime.Int64)/1000, resp.Runs[index].CreationTime)

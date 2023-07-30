@@ -6,8 +6,38 @@
 #
 # App name.
 APP=fml
+ifeq ($(shell go env GOOS),windows)
+  APP:=$(APP).exe
+endif
+# Version.
+VERSION?=$(shell git describe --tags --always --dirty --match='v*' 2> /dev/null | sed 's/^v//')
 # Enable Go Modules.
 GO111MODULE=on
+# Go ldflags.
+# Set version to git tag if available, otherwise use commit hash.
+# Strip debug symbols and disable DWARF generation.
+# Build static binaries on Linux.
+GO_LDFLAGS=-s -w -X github.com/G-Research/fasttrackml/pkg/version.Version=$(VERSION)
+ifeq ($(shell go env GOOS),linux)
+  GO_LDFLAGS+=-linkmode external -extldflags -static
+endif
+# Go build tags.
+GO_BUILDTAGS=$(shell cat .go-build-tags 2> /dev/null)
+# Archive information.
+# Use zip on Windows, tar.gz on Linux and macOS.
+# Use GNU tar on macOS if available, to avoid issues with BSD tar.
+ifeq ($(shell go env GOOS),windows)
+  ARCHIVE_EXT=zip
+  ARCHIVE_CMD=zip -r
+else
+  ARCHIVE_EXT=tar.gz
+  ARCHIVE_CMD=tar -czf
+  ifeq ($(shell which gtar >/dev/null 2>/dev/null; echo $$?),0)
+    ARCHIVE_CMD:=g$(ARCHIVE_CMD)
+  endif
+endif
+ARCHIVE_NAME=dist/fasttrackml_$(shell go env GOOS | sed s/darwin/macos/)_$(shell go env GOARCH | sed s/amd64/x86_64/).$(ARCHIVE_EXT)
+ARCHIVE_FILES=$(APP) LICENSE README.md
 
 #
 # Default target (help)
@@ -23,7 +53,7 @@ help: ## display this help
 # Linter targets.
 #
 lint: ## run set of linters over the code.
-	@golangci-lint run -v
+	@golangci-lint run -v --build-tags $(GO_BUILDTAGS)
 
 #
 # Go targets.
@@ -36,13 +66,20 @@ go-get: ## get go modules.
 .PHONY: go-build
 go-build: ## build app binary.
 	@echo '>>> Building go binary.'
-	@go build -ldflags="-linkmode external -extldflags -static -s -w" -tags "$$(jq -r '."go.buildTags"' .vscode/settings.json)" -o $(APP) ./main.go
+	@CGO_ENABLED=1 go build -ldflags="$(GO_LDFLAGS)" -tags="$(GO_BUILDTAGS)" -o $(APP) ./main.go
 
 .PHONY: go-format
 go-format: ## format go code.
 	@echo '>>> Formatting go code.'
 	@gofumpt -w .
 	@goimports -w -local github.com/G-Research/fasttrackml .
+
+.PHONY: go-dist
+go-dist: go-build ## archive app binary.
+	@echo '>>> Archiving go binary.'
+	@dir=$$(dirname $(ARCHIVE_NAME)); if [ ! -d $$dir ]; then mkdir -p $$dir; fi
+	@if [ -f $(ARCHIVE_NAME) ]; then rm -f $(ARCHIVE_NAME); fi
+	@$(ARCHIVE_CMD) $(ARCHIVE_NAME) $(ARCHIVE_FILES)
 
 #
 # Tests targets.
@@ -132,6 +169,9 @@ clean: ## clean the go build artifacts
 
 PHONY: build
 build: go-build ## build the go components
+
+PHONY: dist
+dist: go-dist ## archive the go components
 
 PHONY: run
 run: build ## run the FastTrackML server

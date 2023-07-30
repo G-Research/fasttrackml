@@ -92,6 +92,10 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), len(tt.request), len(resp))
+			for i := 0; i < 2; i++ {
+				assert.Equal(s.T(), 2, len(resp[i].Values))
+				assert.Equal(s.T(), 2, len(resp[i].Iters))
+			}
 		})
 	}
 }
@@ -113,7 +117,7 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
 			err := s.client.DoGetRequest(
-				fmt.Sprintf("/runs/%s/info", tt.runID),
+				fmt.Sprintf("/runs/%s/metric/get-batch", tt.runID),
 				&resp,
 			)
 			assert.Nil(s.T(), err)

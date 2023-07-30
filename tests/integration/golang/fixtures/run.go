@@ -170,26 +170,29 @@ func (f RunFixtures) CreateMetrics(
 ) error {
 	for i := 1; i <= count; i++ {
 		// create test `metric` and test `latest metric` and connect to run.
-		err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
-			Key:       fmt.Sprintf("key%d", i),
-			Value:     123.1,
-			Timestamp: 1234567890,
-			RunID:     run.ID,
-			Step:      1,
-			IsNan:     false,
-			Iter:      1,
-		}).Error
-		if err != nil {
-			return err
+
+		for iter := 1; iter <= count; iter++ {
+			err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
+				Key:       fmt.Sprintf("key%d", i),
+				Value:     123.1 + float64(iter),
+				Timestamp: 1234567890 + int64(iter),
+				RunID:     run.ID,
+				Step:      int64(iter),
+				IsNan:     false,
+				Iter:      int64(iter),
+			}).Error
+			if err != nil {
+				return err
+			}
 		}
-		err = f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
+		err := f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
 			Key:       fmt.Sprintf("key%d", i),
-			Value:     123.1,
-			Timestamp: 1234567890,
-			Step:      1,
+			Value:     123.1 + float64(count),
+			Timestamp: 1234567890 + int64(count),
+			Step:      int64(count),
 			IsNan:     false,
 			RunID:     run.ID,
-			LastIter:  1,
+			LastIter:  int64(count),
 		}).Error
 		if err != nil {
 			return err

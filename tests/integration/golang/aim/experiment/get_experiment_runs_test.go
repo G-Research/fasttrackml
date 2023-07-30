@@ -42,6 +42,10 @@ func (s *GetExperimentRunsTestSuite) SetupTest() {
 }
 
 func (s *GetExperimentRunsTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+	}()
 	exp := &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
@@ -51,10 +55,6 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 
 	runs, err := s.runFixtures.CreateRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
-	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
-	}()
 
 	offset := 8
 	var resp response.GetExperimentRuns
@@ -67,10 +67,14 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	assert.Equal(s.T(), 4, len(resp.Runs))
-	assert.Equal(s.T(), runs[offset-1].ID, resp.Runs[0].ID)
-	assert.Equal(s.T(), runs[offset-2].ID, resp.Runs[1].ID)
-	assert.Equal(s.T(), runs[offset-3].ID, resp.Runs[2].ID)
-	assert.Equal(s.T(), runs[offset-4].ID, resp.Runs[3].ID)
+	for index := 0; index < len(resp.Runs); index++ {
+		r := runs[offset-(index+1)]
+		assert.Equal(s.T(), r.ID, resp.Runs[index].ID)
+		assert.Equal(s.T(), r.Name, resp.Runs[index].Name)
+		assert.Equal(s.T(), float64(r.StartTime.Int64)/1000, resp.Runs[index].CreationTime)
+		assert.Equal(s.T(), float64(r.EndTime.Int64)/1000, resp.Runs[index].EndTime)
+		assert.Equal(s.T(), r.LifecycleStage == models.LifecycleStageDeleted, resp.Runs[index].Archived)
+	}
 }
 
 func (s *GetExperimentRunsTestSuite) Test_Error() {
@@ -96,7 +100,7 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 			var resp api.ErrorResponse
 			err := s.client.DoGetRequest(
 				fmt.Sprintf(
-					"/experiments/%s/runs?limit=4", tt.ID,
+					"/experiments/%s/runs", tt.ID,
 				),
 				&resp,
 			)

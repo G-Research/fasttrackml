@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -43,6 +42,9 @@ func (s *GetExperimentActivityTestSuite) SetupTest() {
 }
 
 func (s *GetExperimentActivityTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+	}()
 	exp := &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
@@ -52,10 +54,11 @@ func (s *GetExperimentActivityTestSuite) Test_Ok() {
 
 	runs, err := s.runFixtures.CreateRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
-	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
-	}()
+
+	archivedRunsIds := []string{runs[0].ID, runs[1].ID}
+	err = s.runFixtures.ArchiveRun(context.Background(), archivedRunsIds)
+	assert.Nil(s.T(), err)
+
 	var resp response.GetExperimentActivity
 	err = s.client.DoGetRequest(
 		fmt.Sprintf(
@@ -64,16 +67,11 @@ func (s *GetExperimentActivityTestSuite) Test_Ok() {
 		&resp,
 	)
 	assert.Nil(s.T(), err)
-	activity := map[string]int{}
-	for _, r := range runs {
-		key := time.UnixMilli(r.StartTime.Int64).Format("2006-01-02T15:00:00")
-		activity[key] += 1
-	}
 
 	assert.Equal(s.T(), resp.NumRuns, len(runs))
-	assert.Equal(s.T(), resp.NumArchivedRuns, 0)
-	assert.Equal(s.T(), resp.NumActiveRuns, len(runs))
-	assert.Equal(s.T(), resp.ActivityMap, activity)
+	assert.Equal(s.T(), resp.NumArchivedRuns, len(archivedRunsIds))
+	assert.Equal(s.T(), resp.NumActiveRuns, len(runs)-len(archivedRunsIds))
+	assert.Equal(s.T(), resp.ActivityMap, helpers.TransformRunsToActivityMap(runs))
 }
 
 func (s *GetExperimentActivityTestSuite) Test_Error() {

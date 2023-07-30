@@ -35,11 +35,11 @@ func (s *GetExperimentsTestSuite) SetupTest() {
 }
 
 func (s *GetExperimentsTestSuite) Test_Ok() {
-	experiments, err := s.fixtures.CreateExperiments(context.Background(), 5)
-	assert.Nil(s.T(), err)
 	defer func() {
 		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
 	}()
+	experiments, err := s.fixtures.CreateExperiments(context.Background(), 5)
+	assert.Nil(s.T(), err)
 	var resp []response.GetExperiment
 
 	err = s.client.DoGetRequest(
@@ -49,8 +49,8 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 		&resp,
 	)
 	assert.Nil(s.T(), err)
-
-	for idx := 0; idx < 5; idx++ {
+	assert.Equal(s.T(), len(experiments), len(resp))
+	for idx := 0; idx < len(experiments); idx++ {
 		assert.Equal(s.T(), *experiments[idx].ID, resp[idx].ID)
 		assert.Equal(s.T(), experiments[idx].Name, resp[idx].Name)
 		assert.Equal(s.T(), experiments[idx].LifecycleStage == models.LifecycleStageDeleted, resp[idx].Archived)

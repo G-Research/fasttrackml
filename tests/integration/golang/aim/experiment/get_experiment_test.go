@@ -38,6 +38,9 @@ func (s *GetExperimentTestSuite) SetupTest() {
 }
 
 func (s *GetExperimentTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
+	}()
 	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
@@ -58,9 +61,6 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		ArtifactLocation: "/artifact/location",
 	})
 	assert.Nil(s.T(), err)
-	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
-	}()
 
 	var resp response.GetExperiment
 	err = s.client.DoGetRequest(

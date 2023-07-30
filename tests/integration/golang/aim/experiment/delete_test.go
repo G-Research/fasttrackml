@@ -4,14 +4,17 @@ package experiment
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -38,9 +41,26 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
 	}()
-	test_experiments, err := s.fixtures.CreateExperiments(context.Background(), 1)
+	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name: "Test Experiment",
+		Tags: []models.ExperimentTag{
+			{
+				Key:   "key1",
+				Value: "value1",
+			},
+		},
+		CreationTime: sql.NullInt64{
+			Int64: time.Now().UTC().UnixMilli(),
+			Valid: true,
+		},
+		LastUpdateTime: sql.NullInt64{
+			Int64: time.Now().UTC().UnixMilli(),
+			Valid: true,
+		},
+		LifecycleStage:   models.LifecycleStageActive,
+		ArtifactLocation: "/artifact/location",
+	})
 	assert.Nil(s.T(), err)
-	experiment := test_experiments[0]
 
 	experiments, err := s.fixtures.GetTestExperiments(context.Background())
 	length := len(experiments)

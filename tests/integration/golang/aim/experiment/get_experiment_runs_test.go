@@ -59,7 +59,7 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	var resp response.GetExperimentRuns
 	err = s.client.DoGetRequest(
 		fmt.Sprintf(
-			"/experiments/%d/runs?limit=4&offset=8", *experiment.ID, runs[8].ID,
+			"/experiments/%d/runs?limit=4&offset=%s", *experiment.ID, runs[8].ID,
 		),
 		&resp,
 	)

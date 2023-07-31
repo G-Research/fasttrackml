@@ -12,6 +12,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rotisserie/eris"
+
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
@@ -83,13 +86,22 @@ func ConnectDB(
 
 		sql.Register(SQLiteCustomDriverName, &sqlite3.SQLiteDriver{
 			ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+				// create LRU cache to cache regexp statements and results.
+				cache, err := lru.New[string, *regexp.Regexp](1000)
+				if err != nil {
+					return eris.Wrap(err, "error creating lru cache to cache regexp statements")
+				}
 				return conn.RegisterFunc("regexp", func(re, s string) bool {
-					c, err := regexp.Compile(re)
-					if err != nil {
-						return false
+					result, ok := cache.Get(re)
+					if !ok {
+						complied, err := regexp.Compile(re)
+						if err != nil {
+							return false
+						}
+						cache.Add(re, complied)
+						return complied.MatchString(s)
 					}
-
-					return c.MatchString(s)
+					return result.MatchString(s)
 				}, true)
 			},
 		})

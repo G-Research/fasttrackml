@@ -18,23 +18,6 @@ class FmlBuildExt(build_ext):
         if not isinstance(ext, FmlExtension):
             return super().build_extension(ext)
 
-class bdist_wheel_universal(bdist_wheel):
-    def get_tag(self):
-        *_, plat = super().get_tag()
-        return "py2.py3", "none", plat
-
-
-class SdistCommand(sdist):
-    def run(self):
-        errno = subprocess.call(["make", "generate-git-tag-info"])
-        assert errno == 0, "Failed to generate git tag info"
-        if not os.path.isfile(".GIT_TAG_INFO"):
-            logging.warning(".GIT_TAG_INFO not found")
-        else:
-            logging.info(".GIT_TAG_INFO generated")
-        super().run()
-
-
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Topic :: Software Development :: Build Tools",
@@ -65,7 +48,7 @@ setup(
     ],
     cmdclass=dict(
         build_ext=FmlBuildExt,
-        sdist=SdistCommand,
-        bdist_wheel=bdist_wheel_universal,
+        sdist=sdist,
+        bdist_wheel=bdist_wheel,
     ),
 )

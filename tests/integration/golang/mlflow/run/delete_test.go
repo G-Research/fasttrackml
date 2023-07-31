@@ -84,7 +84,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 			assert.Empty(s.T(), resp)
 
-			archivedRuns, err := s.runFixtures.GetTestRuns(context.Background(), run.ExperimentID)
+			archivedRuns, err := s.runFixtures.GetRuns(context.Background(), run.ExperimentID)
 
 			assert.Nil(s.T(), err)
 			assert.Equal(T, 1, len(archivedRuns))

@@ -9,13 +9,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -97,6 +96,13 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	assert.Equal(s.T(), string(models.StatusScheduled), resp.RunInfo.Status)
 	assert.NotEmpty(s.T(), resp.RunInfo.ArtifactURI)
 	assert.Equal(s.T(), string(models.LifecycleStageActive), resp.RunInfo.LifecycleStage)
+
+	// check that run has been updated in database.
+	run, err = s.runFixtures.GetRun(context.Background(), run.ID)
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), "UpdatedName", run.Name)
+	assert.Equal(s.T(), models.StatusScheduled, run.Status)
+	assert.Equal(s.T(), 1111111111, run.EndTime)
 }
 
 func (s *UpdateRunTestSuite) Test_Error() {

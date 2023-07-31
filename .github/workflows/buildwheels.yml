@@ -1,14 +1,6 @@
 name: buildwheels
 
-on:
-  push:
-    tags:
-      - 'v*'
-  pull_request:
-    paths:
-    - '.github/workflows/release.yml'
-    - '.goreleaser/'
-    - '.goreleaser.yaml'
+on: workflow_dispatch
 
 jobs:
   pypi_publish:

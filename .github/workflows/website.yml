@@ -61,7 +61,7 @@ jobs:
         run: yarn run build
       - name: Upload artifact
         if: github.ref == 'refs/heads/main' && steps.has-pages.outputs.has_pages == 'true'
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v2
         with:
           path: ./website/build
 

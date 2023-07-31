@@ -1,3 +1,5 @@
+[![FastTrackML banner](./website/static/images/github-banner.svg)](https://fasttrackml.io/)
+
 # _FastTrackML_
 Rewrite of the MLFlow tracking server with a focus on scalability
 
@@ -73,16 +75,15 @@ the underlying docker container can be used. The Makefile offers some basic targ
 ```
 cd .devcontainer
 docker-compose up -d
-docker-compose exec app bash
+docker-compose exec -w /workspaces/fasttrackml app bash
 
-root ➜ /go $ cd /workspaces/fasttrack
-root ➜ /workspaces/fastrack $ make build
-root ➜ /workspaces/fastrack $ make run
-root ➜ /workspaces/fastrack $ make test
-root ➜ /workspaces/fastrack $ emacs .
+root ➜ /workspaces/fastrackml $ make build
+root ➜ /workspaces/fastrackml $ make run
+root ➜ /workspaces/fastrackml $ make test
+root ➜ /workspaces/fastrackml $ emacs .
 ```
 
-Note that on MacOS, port 5000 is already occupied, so some adjustments are necessary.
+Note that on MacOS, port 5000 is already occupied, so some [adjustments](https://apple.stackexchange.com/a/431164) are necessary.
 
 ### License
 

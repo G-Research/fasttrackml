@@ -16,8 +16,9 @@ func TestValidateCreateExperimentRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateCreateExperimentRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.CreateExperimentRequest
@@ -54,8 +55,9 @@ func TestValidateUpdateExperimentRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateUpdateExperimentRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.UpdateExperimentRequest
@@ -88,8 +90,9 @@ func TestValidateGetExperimentByIDRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateGetExperimentByIDRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.UpdateExperimentRequest
@@ -122,8 +125,9 @@ func TestValidateGetExperimentByNameRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateGetExperimentByNameRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetExperimentRequest
@@ -149,8 +153,9 @@ func TestValidateDeleteExperimentRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateDeleteExperimentRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.DeleteExperimentRequest
@@ -176,8 +181,9 @@ func TestValidateRestoreExperimentRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateRestoreExperimentRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.RestoreExperimentRequest
@@ -204,8 +210,9 @@ func TestValidateSearchExperimentsRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateSearchExperimentsRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.SearchExperimentsRequest
@@ -242,8 +249,9 @@ func TestValidateSetExperimentTagRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateSetExperimentTagRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.SetExperimentTagRequest

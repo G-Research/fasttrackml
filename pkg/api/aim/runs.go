@@ -11,16 +11,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/database"
-
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // validation rule for SearchMetrics
@@ -952,7 +952,7 @@ func UpdateRun(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	var update request.UpdateRun
+	var update request.UpdateRunRequest
 	if err := c.BodyParser(&update); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}

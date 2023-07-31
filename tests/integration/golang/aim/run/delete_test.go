@@ -5,11 +5,9 @@ package run
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -34,13 +32,13 @@ func TestDeleteRunTestSuite(t *testing.T) {
 }
 
 func (s *DeleteRunTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(os.Getenv("SERVICE_BASE_URL"))
+	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
 
-	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.runFixtures = runFixtures
 
-	expFixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
 

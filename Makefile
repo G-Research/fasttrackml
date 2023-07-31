@@ -4,26 +4,40 @@
 #
 # Project-specific variables
 #
-# Service name. Used for binary name, docker-compose service name, etc...
-SERVICE=fasttrack-service
+# App name.
+APP=fml
+ifeq ($(shell go env GOOS),windows)
+  APP:=$(APP).exe
+endif
+# Version.
+VERSION?=$(shell git describe --tags --always --dirty --match='v*' 2> /dev/null | sed 's/^v//')
 # Enable Go Modules.
 GO111MODULE=on
-
-#
-# General variables
-#
-# Path to Docker file
-PATH_DOCKER_FILE=$(realpath ./docker/Dockerfile)
-# Path to docker-compose file
-PATH_DOCKER_COMPOSE_FILE=$(realpath ./docker/docker-compose.yml)
-# Docker compose starting options.
-DOCKER_COMPOSE_OPTIONS= -f $(PATH_DOCKER_COMPOSE_FILE)
-
-#
-# Linter targets.
-#
-lint: ## run set of linters over the code.
-	@golangci-lint run -v
+# Go ldflags.
+# Set version to git tag if available, otherwise use commit hash.
+# Strip debug symbols and disable DWARF generation.
+# Build static binaries on Linux.
+GO_LDFLAGS=-s -w -X github.com/G-Research/fasttrackml/pkg/version.Version=$(VERSION)
+ifeq ($(shell go env GOOS),linux)
+  GO_LDFLAGS+=-linkmode external -extldflags -static
+endif
+# Go build tags.
+GO_BUILDTAGS=$(shell cat .go-build-tags 2> /dev/null)
+# Archive information.
+# Use zip on Windows, tar.gz on Linux and macOS.
+# Use GNU tar on macOS if available, to avoid issues with BSD tar.
+ifeq ($(shell go env GOOS),windows)
+  ARCHIVE_EXT=zip
+  ARCHIVE_CMD=zip -r
+else
+  ARCHIVE_EXT=tar.gz
+  ARCHIVE_CMD=tar -czf
+  ifeq ($(shell which gtar >/dev/null 2>/dev/null; echo $$?),0)
+    ARCHIVE_CMD:=g$(ARCHIVE_CMD)
+  endif
+endif
+ARCHIVE_NAME=dist/fasttrackml_$(shell go env GOOS | sed s/darwin/macos/)_$(shell go env GOARCH | sed s/amd64/x86_64/).$(ARCHIVE_EXT)
+ARCHIVE_FILES=$(APP) LICENSE README.md
 
 #
 # Default target (help)
@@ -36,6 +50,12 @@ help: ## display this help
 	@echo
 
 #
+# Linter targets.
+#
+lint: ## run set of linters over the code.
+	@golangci-lint run -v --build-tags $(GO_BUILDTAGS)
+
+#
 # Go targets.
 #
 .PHONY: go-get
@@ -44,9 +64,22 @@ go-get: ## get go modules.
 	@go mod download
 
 .PHONY: go-build
-go-build: ## build service binary.
+go-build: ## build app binary.
 	@echo '>>> Building go binary.'
-	@go build -ldflags="-s -w" -o $(SERVICE) ./main.go
+	@CGO_ENABLED=1 go build -ldflags="$(GO_LDFLAGS)" -tags="$(GO_BUILDTAGS)" -o $(APP) ./main.go
+
+.PHONY: go-format
+go-format: ## format go code.
+	@echo '>>> Formatting go code.'
+	@gofumpt -w .
+	@goimports -w -local github.com/G-Research/fasttrackml .
+
+.PHONY: go-dist
+go-dist: go-build ## archive app binary.
+	@echo '>>> Archiving go binary.'
+	@dir=$$(dirname $(ARCHIVE_NAME)); if [ ! -d $$dir ]; then mkdir -p $$dir; fi
+	@if [ -f $(ARCHIVE_NAME) ]; then rm -f $(ARCHIVE_NAME); fi
+	@$(ARCHIVE_CMD) $(ARCHIVE_NAME) $(ARCHIVE_FILES)
 
 #
 # Tests targets.
@@ -62,23 +95,31 @@ test-go-integration: ## run go integration tests.
 	go test -v -p 1 -tags="integration" ./tests/integration/golang/...
 
 PHONY: test-python-integration
-test-python-integration: build ## run the MLFlow python integration tests.
+test-python-integration: test-python-integration-mlflow test-python-integration-aim  ## run all the python integration tests.
+
+PHONY: test-python-integration-mlflow
+test-python-integration-mlflow: build ## run the MLFlow python integration tests.
 	@echo ">>> Running MLFlow python integration tests."
-	tests/mlflow/test.sh
+	tests/integration/python/mlflow/test.sh
+
+PHONY: test-python-integration-aim
+test-python-integration-aim: build ## run the Aim python integration tests.
+	@echo ">>> Running Aim python integration tests."
+	tests/integration/python/aim/test.sh
 
 #
 # Service test targets
 #
 .PHONY: service-build
-service-build: ## build service and all it's dependencies
-	@docker-compose $(DOCKER_COMPOSE_OPTIONS) build --no-cache
+service-build: ## build service and all its dependencies
+	@docker-compose build
 
 .PHONY: start-service-dependencies
 service-start-dependencies: ## start service dependencies in docker.
 	@echo ">>> Start all Service dependencies."
-	@docker-compose $(DOCKER_COMPOSE_OPTIONS) up \
+	@docker-compose up \
 	-d \
-	fasttrack-postgres
+	postgres
 
 .PHONY: service-start
 service-start: service-build service-start-dependencies ## start service in docker.
@@ -86,12 +127,12 @@ service-start: service-build service-start-dependencies ## start service in dock
 	@sleep 5
 	@echo ">>> Starting service."
 	@echo ">>> Starting up service container."
-	@docker-compose $(DOCKER_COMPOSE_OPTIONS) up -d $(SERVICE)
+	@docker-compose up -d service
 
 .PHONY: service-stop
 service-stop: ## stop service in docker.
 	@echo ">>> Stopping service."
-	@docker-compose $(DOCKER_COMPOSE_OPTIONS) down -v --remove-orphans
+	@docker-compose stop
 
 .PHONY: service-restart
 service-restart: service-stop service-start ## restart service in docker
@@ -99,8 +140,13 @@ service-restart: service-stop service-start ## restart service in docker
 .PHONY: service-test
 service-test: service-stop service-start ## run tests over the service in docker.
 	@echo ">>> Running tests over service."
-	@docker-compose $(DOCKER_COMPOSE_OPTIONS) \
-		run fasttrack-integration-tests
+	@docker-compose \
+		run integration-tests
+
+.PHONY: service-clean
+service-clean: ## clean service in docker.
+	@echo ">>> Cleaning service."
+	@docker-compose down -v --remove-orphans
 
 #
 # Mockery targets.
@@ -117,19 +163,17 @@ mocks-generate: mocks-clean ## generate mock based on all project interfaces.
 # Build targets
 # 
 PHONY: clean
-clean: ## clean the go and node build artifacts
-	@echo ">>> Cleaning go and node build artifacts."
-	rm -Rf pkg/ui/aim/embed/repo
-	rm -Rf pkg/ui/mlflow/embed/repo
-	rm -Rf $(SERVICE)
+clean: ## clean the go build artifacts
+	@echo ">>> Cleaning go build artifacts."
+	rm -Rf $(APP)
 
 PHONY: build
-build: go-build ## build the go and node components
-	@echo ">>> Building node UI components."
-	pkg/ui/aim/embed/build.sh
-	pkg/ui/mlflow/embed/build.sh
+build: go-build ## build the go components
+
+PHONY: dist
+dist: go-dist ## archive the go components
 
 PHONY: run
 run: build ## run the FastTrackML server
 	@echo ">>> Running the FasttrackML server."
-	./$(SERVICE) server
+	./$(APP) server

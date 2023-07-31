@@ -5,7 +5,6 @@ package run
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -35,14 +34,14 @@ func TestLogBatchTestSuite(t *testing.T) {
 }
 
 func (s *LogBatchTestSuite) SetupTest() {
-	s.client = helpers.NewMlflowApiClient(os.Getenv("SERVICE_BASE_URL"))
-	runFixtures, err := fixtures.NewRunFixtures(os.Getenv("DATABASE_DSN"))
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.runFixtures = runFixtures
-	metricFixtures, err := fixtures.NewMetricFixtures(os.Getenv("DATABASE_DSN"))
+	metricFixtures, err := fixtures.NewMetricFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.metricFixtures = metricFixtures
-	expFixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
 
@@ -267,7 +266,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.LogBatchRequest
@@ -279,7 +278,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 		},
 		{
 			name:  "DuplicateKeyDifferentValueFails",
-			error: api.NewInternalError("duplicate key"),
+			error: api.NewInternalError("unable to insert params for run"),
 			request: &request.LogBatchRequest{
 				RunID: s.run.ID,
 				Params: []request.ParamPartialRequest{

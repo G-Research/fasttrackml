@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/G-Research/fasttrackml/pkg/version"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/G-Research/fasttrackml/pkg/version"
 )
 
 const (

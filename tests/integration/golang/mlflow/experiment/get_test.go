@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -34,15 +33,15 @@ func TestGetExperimentTestSuite(t *testing.T) {
 }
 
 func (s *GetExperimentTestSuite) SetupTest() {
-	s.client = helpers.NewHttpClient(os.Getenv("SERVICE_BASE_URL"))
-	fixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.fixtures = fixtures
 }
 
 func (s *GetExperimentTestSuite) Test_Ok() {
 	// 1. prepare database with test data.
-	experiment, err := s.fixtures.CreateTestExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
@@ -95,7 +94,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 }
 
 func (s *GetExperimentTestSuite) Test_Error() {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetExperimentRequest

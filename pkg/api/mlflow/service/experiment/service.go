@@ -92,7 +92,7 @@ func (s Service) UpdateExperiment(ctx context.Context, req *request.UpdateExperi
 
 	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
 	if err != nil {
-		return api.NewResourceDoesNotExistError("unable to find experiment '%d': %s", *experiment.ID, err)
+		return api.NewResourceDoesNotExistError("unable to find experiment '%d': %s", parsedID, err)
 	}
 
 	experiment = convertors.ConvertUpdateExperimentToDBModel(experiment, req)
@@ -263,7 +263,6 @@ func (s Service) SearchExperiments(
 			),
 		).Decode(&token); err != nil {
 			return nil, 0, 0, api.NewInvalidParameterValueError("invalid page_token '%s': %s", req.PageToken, err)
-
 		}
 		offset = int(token.Offset)
 	}

@@ -2,10 +2,10 @@ package run
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -63,12 +63,12 @@ func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (
 
 	experiment, err := s.experimentRepository.GetByID(ctx, int32(experimentID))
 	if err != nil {
-		return nil, api.NewResourceDoesNotExistError("unable to find experiment '%v': %s", experiment, err)
+		return nil, api.NewResourceDoesNotExistError("unable to find experiment with id '%s': %s", req.ExperimentID, err)
 	}
 
 	run := convertors.ConvertCreateRunRequestToDBModel(experiment, req)
 	if err := s.runRepository.Create(ctx, run); err != nil {
-		return nil, api.NewInternalError("error inserting run '%s': %s", run.ID, err)
+		return nil, api.NewInternalError("error inserting run: %s", err)
 	}
 
 	return run, nil
@@ -91,7 +91,7 @@ func (s Service) UpdateRun(ctx context.Context, req *request.UpdateRunRequest) (
 		}
 		if req.Name != "" {
 			// TODO:DSuhinin - move "mlflow.runName" to be a constant somewhere.
-			// Also Im not fully sure that this is right place to keep this logic here.
+			// Also, Im not fully sure that this is right place to keep this logic here.
 			if err := s.tagRepository.CreateRunTagWithTransaction(
 				ctx, tx, run.ID, "mlflow.runName", req.Name,
 			); err != nil {
@@ -113,7 +113,7 @@ func (s Service) GetRun(ctx context.Context, req *request.GetRunRequest) (*model
 
 	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
 	if err != nil {
-		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", run.ID, err)
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.GetRunID(), err)
 	}
 
 	return run, nil
@@ -166,7 +166,6 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 			),
 		).Decode(&token); err != nil {
 			return nil, 0, 0, api.NewInvalidParameterValueError("invalid page_token '%s': %s", req.PageToken, err)
-
 		}
 		offset = int(token.Offset)
 	}
@@ -369,7 +368,7 @@ func (s Service) DeleteRun(ctx context.Context, req *request.DeleteRunRequest) e
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
 	}
 
-	if err := s.runRepository.Delete(ctx, run); err != nil {
+	if err := s.runRepository.Archive(ctx, run); err != nil {
 		return api.NewInternalError("unable to delete run '%s': %s", run.ID, err)
 	}
 
@@ -386,7 +385,9 @@ func (s Service) RestoreRun(ctx context.Context, req *request.RestoreRunRequest)
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
 	}
 
-	if err := s.runRepository.Restore(ctx, run); err != nil {
+	run.DeletedTime = sql.NullInt64{Valid: false}
+	run.LifecycleStage = models.LifecycleStageActive
+	if err := s.runRepository.Update(ctx, run); err != nil {
 		return api.NewInternalError("unable to restore run '%s': %s", run.ID, err)
 	}
 
@@ -403,12 +404,11 @@ func (s Service) LogMetric(ctx context.Context, req *request.LogMetricRequest) e
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
 	}
 
-	if err := logMetrics(run.ID, []request.MetricPartialRequest{{
-		Key:       req.Key,
-		Step:      req.Step,
-		Value:     req.Value,
-		Timestamp: req.Timestamp,
-	}}); err != nil {
+	metric, err := convertors.ConvertMetricParamRequestToDBModel(run.ID, req)
+	if err != nil {
+		return api.NewInvalidParameterValueError(err.Error())
+	}
+	if err := s.metricRepository.CreateBatch(ctx, run, 1, []models.Metric{*metric}); err != nil {
 		return api.NewInternalError("unable to log metric '%s' for run '%s': %s", req.Key, req.GetRunID(), err)
 	}
 
@@ -420,13 +420,16 @@ func (s Service) LogParam(ctx context.Context, req *request.LogParamRequest) err
 		return err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.RunID)
-	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", req.RunID, err)
+	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	if err != nil {
+		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
 	}
 
 	param := convertors.ConvertLogParamRequestToDBModel(run.ID, req)
-	if err := s.paramRepository.Create(ctx, param); err != nil {
+	if err := s.paramRepository.CreateBatch(ctx, 1, []models.Param{*param}); err != nil {
 		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 	}
 
@@ -438,13 +441,16 @@ func (s Service) SetRunTag(ctx context.Context, req *request.SetRunTagRequest) e
 		return err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.RunID)
-	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", req.RunID, err)
+	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	if err != nil {
+		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
 	}
 
 	tag := convertors.ConvertSetRunTagRequestToDBModel(run.ID, req)
-	if err := s.runRepository.SetRunTagsBatch(ctx, 1, run, []models.Tag{*tag}); err != nil {
+	if err := s.runRepository.SetRunTagsBatch(ctx, run, 1, []models.Tag{*tag}); err != nil {
 		return api.NewInternalError("unable to insert tags for run '%s': %s", run.ID, err)
 	}
 	return nil
@@ -455,9 +461,12 @@ func (s Service) DeleteRunTag(ctx context.Context, req *request.DeleteRunTagRequ
 		return err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.RunID)
-	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s': %s", req.RunID, err)
+	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	if err != nil {
+		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
 	}
 
 	tag, err := s.tagRepository.GetByRunIDAndKey(ctx, run.ID, req.Key)
@@ -477,158 +486,26 @@ func (s Service) LogBatch(ctx context.Context, req *request.LogBatchRequest) err
 		return err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.RunID)
-	if err != nil || !run.IsLifecycleStageActive() {
-		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", req.RunID, err)
+	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	if err != nil {
+		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
 	}
 
-	params, tags := convertors.ConvertLogBatchRequestToDBModel(run.ID, req)
+	metrics, params, tags, err := convertors.ConvertLogBatchRequestToDBModel(run.ID, req)
+	if err != nil {
+		return api.NewInvalidParameterValueError(err.Error())
+	}
 	if err := s.paramRepository.CreateBatch(ctx, 100, params); err != nil {
 		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 	}
-
-	if err := logMetrics(req.RunID, req.Metrics); err != nil {
-		return err
+	if err := s.metricRepository.CreateBatch(ctx, run, 100, metrics); err != nil {
+		return api.NewInternalError("unable to insert metrics for run '%s': %s", run.ID, err)
 	}
-
-	if err := s.runRepository.SetRunTagsBatch(ctx, 100, run, tags); err != nil {
+	if err := s.runRepository.SetRunTagsBatch(ctx, run, 100, tags); err != nil {
 		return api.NewInternalError("unable to insert tags for run '%s': %s", run.ID, err)
-	}
-
-	return nil
-}
-
-func logMetrics(id string, metrics []request.MetricPartialRequest) error {
-	if len(metrics) == 0 {
-		return nil
-	}
-
-	if tx := database.DB.Select(
-		"run_uuid",
-	).Where(
-		"lifecycle_stage = ?", database.LifecycleStageActive,
-	).First(
-		&database.Run{ID: id},
-	); tx.Error != nil {
-		return api.NewResourceDoesNotExistError("unable to find active run '%s': %s", id, tx.Error)
-	}
-
-	lastIters := make(map[string]int64)
-	for _, m := range metrics {
-		lastIters[m.Key] = -1
-	}
-	keys := make([]string, 0, len(lastIters))
-	for k := range lastIters {
-		keys = append(keys, k)
-	}
-
-	if err := func() error {
-		rows, err := database.DB.Table("latest_metrics").Select("key", "last_iter").Where("run_uuid = ?", id).Where("key IN ?", keys).Rows()
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var key string
-			var iter int64
-			if err := rows.Scan(&key, &iter); err != nil {
-				return err
-			}
-			lastIters[key] = iter
-		}
-
-		return nil
-	}(); err != nil {
-		return api.NewInternalError("unable to get latest metric iters for run '%s': %s", id, err)
-	}
-
-	dbMetrics := make([]database.Metric, len(metrics))
-	latestMetrics := make(map[string]database.LatestMetric)
-	for n, metric := range metrics {
-		m := database.Metric{
-			RunID:     id,
-			Key:       metric.Key,
-			Timestamp: metric.Timestamp,
-			Step:      metric.Step,
-			Iter:      lastIters[metric.Key] + 1,
-		}
-		if v, ok := metric.Value.(float64); ok {
-			m.Value = v
-		} else if v, ok := metric.Value.(string); ok {
-			switch v {
-			case "NaN":
-				m.Value = 0
-				m.IsNan = true
-			case "Infinity":
-				m.Value = math.MaxFloat64
-				// m.Value = math.Inf(1)
-			case "-Infinity":
-				m.Value = -math.MaxFloat64
-				// m.Value = math.Inf(-1)
-			default:
-				return api.NewInvalidParameterValueError("invalid metric value '%s'", v)
-			}
-		} else {
-			return api.NewInvalidParameterValueError("invalid metric value '%s'", v)
-		}
-		dbMetrics[n] = m
-
-		lastIters[metric.Key] = m.Iter
-
-		lm, ok := latestMetrics[m.Key]
-		if !ok ||
-			m.Step > lm.Step ||
-			(m.Step == lm.Step && m.Timestamp > lm.Timestamp) ||
-			(m.Step == lm.Step && m.Timestamp == lm.Timestamp && m.Value > lm.Value) {
-			latestMetrics[m.Key] = database.LatestMetric{
-				RunID:     m.RunID,
-				Key:       m.Key,
-				Value:     m.Value,
-				Timestamp: m.Timestamp,
-				Step:      m.Step,
-				IsNan:     m.IsNan,
-				LastIter:  m.Iter,
-			}
-		}
-	}
-
-	if tx := database.DB.CreateInBatches(&dbMetrics, 100); tx.Error != nil {
-		return api.NewInternalError("unable to insert metrics for run '%s': %s", id, tx.Error)
-	}
-
-	// TODO update latest metrics in the background?
-
-	var currentLatestMetrics []database.LatestMetric
-	if tx := database.DB.Where("run_uuid = ?", id).Where("key IN ?", keys).Find(&currentLatestMetrics); tx.Error != nil {
-		return api.NewInternalError("unable to get latest metrics for run '%s': %s", id, tx.Error)
-	}
-
-	currentLatestMetricsMap := make(map[string]database.LatestMetric, len(currentLatestMetrics))
-	for _, m := range currentLatestMetrics {
-		currentLatestMetricsMap[m.Key] = m
-	}
-
-	updatedLatestMetrics := make([]database.LatestMetric, 0, len(latestMetrics))
-	for k, m := range latestMetrics {
-		lm, ok := currentLatestMetricsMap[k]
-		if !ok ||
-			m.Step > lm.Step ||
-			(m.Step == lm.Step && m.Timestamp > lm.Timestamp) ||
-			(m.Step == lm.Step && m.Timestamp == lm.Timestamp && m.Value > lm.Value) {
-			updatedLatestMetrics = append(updatedLatestMetrics, m)
-		} else {
-			lm.LastIter = lastIters[k]
-			updatedLatestMetrics = append(updatedLatestMetrics, lm)
-		}
-	}
-
-	if len(updatedLatestMetrics) > 0 {
-		if tx := database.DB.Clauses(clause.OnConflict{
-			UpdateAll: true,
-		}).Create(&updatedLatestMetrics); tx.Error != nil {
-			return api.NewInternalError("unable to update latest metrics for run '%s': %s", id, tx.Error)
-		}
 	}
 
 	return nil

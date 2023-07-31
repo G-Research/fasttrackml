@@ -1,0 +1,48 @@
+name: buildwheels
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    paths:
+    - '.github/workflows/release.yml'
+    - '.goreleaser/'
+    - '.goreleaser.yaml'
+
+jobs:
+  pypi_publish:
+    # only trigger on main repo when tag starts with v
+    if: github.repository == 'tensorchord/envd' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macos-11]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Configure linux build environment
+      if: runner.os == 'Linux'
+      run: |
+        mkdir -p bin
+        mv dist/fasttrckml_linux_amd64/fml bin/fml
+        chmod +x bin/fml
+    - name: Configure macOS build environment
+      if: runner.os == 'macOS'
+      run: |
+        mkdir -p bin
+        mv dist/fasttrckml_macos_arm64/fml bin/fml
+        chmod +x bin/fml
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.14.1
+      env:
+        CIBW_ARCHS_MACOS: arm64, x86_64
+        CIBW_ARCHS_LINUX: auto64
+        CIBW_SKIP: pp*
+    - name: Build source distribution
+      if: runner.os == 'Linux' # Only release source under linux to avoid conflict
+      run: |
+        python3 -m pip install wheel
+        python3 setup.py sdist
+        mv dist/*.tar.gz wheelhouse/
+ 

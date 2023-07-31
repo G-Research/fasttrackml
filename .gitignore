@@ -4,16 +4,14 @@
 # Binaries
 fml
 fasttrackml
+*.exe
 
 # Local database
 fasttrackml.db*
-
-# UI builds
-pkg/ui/*/embed/build*
-!pkg/ui/*/embed/build.sh
+encrypted.db*
 
 # Imported integration tests
-tests/*/*.src
+tests/integration/python/*/*.src
 
 # Quick start
 outputs
@@ -21,3 +19,10 @@ poetry.lock
 
 # Mocks
 mock_*
+
+# Misc
+.DS_Store
+
+# Optional workspace
+go.work
+*.code-workspace

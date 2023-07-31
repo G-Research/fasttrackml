@@ -4,7 +4,6 @@ package experiment
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,8 +28,8 @@ func TestCreateExperimentTestSuite(t *testing.T) {
 }
 
 func (s *CreateExperimentTestSuite) SetupTest() {
-	s.client = helpers.NewHttpClient(os.Getenv("SERVICE_BASE_URL"))
-	fixtures, err := fixtures.NewExperimentFixtures(os.Getenv("DATABASE_DSN"))
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.fixtures = fixtures
 }
@@ -63,8 +62,9 @@ func (s *CreateExperimentTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 	assert.NotEmpty(s.T(), resp.ID)
 }
+
 func (s *CreateExperimentTestSuite) Test_Error() {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.CreateExperimentRequest

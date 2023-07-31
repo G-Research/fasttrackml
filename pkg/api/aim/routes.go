@@ -24,6 +24,7 @@ func AddRoutes(r fiber.Router) {
 	experiments.Get("/:id/", GetExperiment)
 	experiments.Get("/:id/activity/", GetExperimentActivity)
 	experiments.Get("/:id/runs/", GetExperimentRuns)
+	experiments.Delete("/:id/", DeleteExperiment)
 
 	projects := r.Group("/projects")
 	projects.Get("/", GetProject)
@@ -40,6 +41,10 @@ func AddRoutes(r fiber.Router) {
 	runs.Post("/search/metric/align/", SearchAlignedMetrics)
 	runs.Get("/:id/info/", GetRunInfo)
 	runs.Post("/:id/metric/get-batch/", GetRunMetrics)
+	runs.Put("/:id/", UpdateRun)
+	runs.Delete("/:id/", DeleteRun)
+	runs.Post("/delete-batch/", DeleteBatch)
+	runs.Post("/archive-batch/", ArchiveBatch)
 
 	tags := r.Group("/tags")
 	tags.Get("/", GetTags)

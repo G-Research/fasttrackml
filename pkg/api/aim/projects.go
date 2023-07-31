@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
-
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetProject(c *fiber.Ctx) error {
@@ -86,16 +86,46 @@ func GetProjectParams(c *fiber.Ctx) error {
 
 	if !q.ExcludeParams {
 		var paramKeys []string
-		if tx := database.DB.Model(&database.Param{}).Distinct().Pluck("Key", &paramKeys); tx.Error != nil {
+		if tx := database.DB.Distinct().Model(
+			&database.Param{},
+		).Joins(
+			"JOIN runs USING(run_uuid)",
+		).Where(
+			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
+		).Pluck(
+			"Key", &paramKeys,
+		); tx.Error != nil {
 			return fmt.Errorf("error retrieving param keys: %w", tx.Error)
 		}
 
-		params := make(map[string]map[string]string, len(paramKeys))
+		params := make(map[string]any, len(paramKeys)+1)
 		for _, p := range paramKeys {
 			params[p] = map[string]string{
 				"__example_type__": "<class 'str'>",
 			}
 		}
+
+		var tagKeys []string
+		if tx := database.DB.Distinct().Model(
+			&database.Tag{},
+		).Joins(
+			"JOIN runs USING(run_uuid)",
+		).Where(
+			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
+		).Pluck(
+			"Key", &tagKeys,
+		); tx.Error != nil {
+			return fmt.Errorf("error retrieving tag keys: %w", tx.Error)
+		}
+
+		tags := make(map[string]map[string]string, len(tagKeys))
+		for _, t := range tagKeys {
+			tags[t] = map[string]string{
+				"__example_type__": "<class 'str'>",
+			}
+		}
+
+		params["tags"] = tags
 
 		resp["params"] = params
 	}
@@ -117,7 +147,15 @@ func GetProjectParams(c *fiber.Ctx) error {
 			resp[s] = fiber.Map{}
 		case "metric":
 			var metricKeys []string
-			if tx := database.DB.Model(&database.Metric{}).Distinct().Pluck("Key", &metricKeys); tx.Error != nil {
+			if tx := database.DB.Distinct().Model(
+				&database.LatestMetric{},
+			).Joins(
+				"JOIN runs USING(run_uuid)",
+			).Where(
+				"runs.lifecycle_stage = ?", database.LifecycleStageActive,
+			).Pluck(
+				"Key", &metricKeys,
+			); tx.Error != nil {
 				return fmt.Errorf("error retrieving metric keys: %w", tx.Error)
 			}
 

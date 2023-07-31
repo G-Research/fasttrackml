@@ -6,7 +6,18 @@ import (
 )
 
 const (
-	MaxResultsPerPage = 1000000000
+	MaxResultsForMetricHistoriesRequest  = 1000000000
+	MaxRunIDsForMetricHistoryBulkRequest = 200
+)
+
+// AllowedViewTypeList supported list of ViewType.
+var (
+	AllowedViewTypeList = map[request.ViewType]struct{}{
+		"":                          {},
+		request.ViewTypeAll:         {},
+		request.ViewTypeActiveOnly:  {},
+		request.ViewTypeDeletedOnly: {},
+	}
 )
 
 // ValidateGetMetricHistoryRequest validates `GET /mlflow/metrics/get-history` request.
@@ -26,7 +37,7 @@ func ValidateGetMetricHistoryBulkRequest(req *request.GetMetricHistoryBulkReques
 		return api.NewInvalidParameterValueError("GetMetricHistoryBulk request must specify at least one run_id.")
 	}
 
-	if len(req.RunIDs) > 200 {
+	if len(req.RunIDs) > MaxRunIDsForMetricHistoryBulkRequest {
 		return api.NewInvalidParameterValueError(
 			"GetMetricHistoryBulk request cannot specify more than 200 run_ids. Received %d run_ids.", len(req.RunIDs),
 		)
@@ -34,11 +45,6 @@ func ValidateGetMetricHistoryBulkRequest(req *request.GetMetricHistoryBulkReques
 
 	if req.MetricKey == "" {
 		return api.NewInvalidParameterValueError("GetMetricHistoryBulk request must specify a metric_key.")
-	}
-
-	// TODO:DSuhinin - I don't like the idea of that but let's keep it for now.
-	if req.MaxResults == 0 {
-		req.MaxResults = 25000
 	}
 	return nil
 }
@@ -50,7 +56,14 @@ func ValidateGetMetricHistoriesRequest(req *request.GetMetricHistoriesRequest) e
 			"experiment_ids and run_ids cannot both be specified at the same time",
 		)
 	}
-	if req.MaxResults > MaxResultsPerPage {
+
+	if req.ViewType != "" {
+		if _, ok := AllowedViewTypeList[req.ViewType]; !ok {
+			return api.NewInvalidParameterValueError("Invalid run_view_type '%s'", req.ViewType)
+		}
+	}
+
+	if req.MaxResults > MaxResultsForMetricHistoriesRequest {
 		return api.NewInvalidParameterValueError("Invalid value for parameter 'max_results' supplied.")
 	}
 	return nil

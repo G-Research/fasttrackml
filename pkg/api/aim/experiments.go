@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 
 	"github.com/gofiber/fiber/v2"
@@ -236,5 +238,34 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 		"num_archived_runs": numArchivedRuns,
 		"num_active_runs":   numActiveRuns,
 		"activity_map":      activity,
+	})
+}
+
+func DeleteExperiment(c *fiber.Ctx) error {
+	params := struct {
+		ID string `params:"id"`
+	}{}
+
+	if err := c.ParamsParser(&params); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+	id, err := strconv.ParseInt(params.ID, 10, 32)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("unable to parse experiment id %q: %s", params.ID, err))
+	}
+	id32 := int32(id)
+
+	// TODO this code should move to service with injected repository
+	experimentRepo := repositories.NewExperimentRepository(database.DB.DB)
+	experiment := models.Experiment{ID: &id32}
+	err = experimentRepo.Delete(c.Context(), &experiment)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError,
+			fmt.Sprintf("unable to delete experiment %q: %s", params.ID, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"id":     params.ID,
+		"status": "OK",
 	})
 }

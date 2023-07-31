@@ -15,14 +15,15 @@ func TestValidateListArtifactsRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateListArtifactsRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.ListArtifactsRequest
 	}{
 		{
-			name:    "EmptyRunIDProperty",
+			name:    "EmptyRunIDAndRunUUID",
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.ListArtifactsRequest{},
 		},

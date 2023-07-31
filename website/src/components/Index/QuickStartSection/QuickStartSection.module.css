@@ -1,0 +1,9 @@
+.section {
+    background-color: var(--ifm-footer-background-color);
+    color: var(--ifm-footer-color);
+}
+
+.markdownContainer h1 {
+    display: none;
+    text-align: center;
+}

@@ -17,8 +17,9 @@ func TestValidateGetMetricHistoryRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateGetMetricHistoryRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetMetricHistoryRequest
@@ -53,8 +54,9 @@ func TestValidateGetMetricHistoryBulkRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateGetMetricHistoryBulkRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetMetricHistoryBulkRequest
@@ -98,8 +100,9 @@ func TestValidateGetMetricHistoriesRequest_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 }
+
 func TestValidateGetMetricHistoriesRequest_Error(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetMetricHistoriesRequest
@@ -115,11 +118,19 @@ func TestValidateGetMetricHistoriesRequest_Error(t *testing.T) {
 			},
 		},
 		{
+			name:  "IncorrectViewTypeProperty",
+			error: api.NewInvalidParameterValueError("Invalid run_view_type 'incorrect_value'"),
+			request: &request.GetMetricHistoriesRequest{
+				RunIDs:   []string{"id1"},
+				ViewType: "incorrect_value",
+			},
+		},
+		{
 			name:  "IncorrectMaxResultsProperty",
 			error: api.NewInvalidParameterValueError("Invalid value for parameter 'max_results' supplied."),
 			request: &request.GetMetricHistoriesRequest{
 				RunIDs:     []string{"id1"},
-				MaxResults: MaxResultsPerPage + 1,
+				MaxResults: MaxResultsForMetricHistoriesRequest + 1,
 			},
 		},
 	}

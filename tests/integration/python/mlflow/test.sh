@@ -36,11 +36,8 @@ then
 fi
 
 # Build fml
-go build \
-  -C ${workspace} \
-  -tags "$(jq -r '."go.buildTags"' ${workspace}/.vscode/settings.json)" \
-  -ldflags "-linkmode external -extldflags '-static' -s -w" \
-  -o ${repo}/fml
+make -C ${workspace} build
+cp ${workspace}/fml ${repo}/fml
 
 # Create postgres test database if needed
 psql postgres://postgres:postgres@localhost <<EOF

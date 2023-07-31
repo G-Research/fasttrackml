@@ -1,25 +1,5 @@
-# Build MLFlow UI
-FROM --platform=$BUILDPLATFORM node:16 AS mlflow-build
-
-COPY pkg/ui/mlflow/embed /mlflow
-RUN /mlflow/build.sh
-
-# Build Aim UI
-FROM --platform=$BUILDPLATFORM node:16 AS aim-build
-
-COPY pkg/ui/aim/embed /aim
-RUN /aim/build.sh
-
 # Build fml binary
 FROM --platform=$BUILDPLATFORM golang:1.20 AS go-build
-
-WORKDIR /build
-COPY go.mod go.sum ./
-RUN go mod download
-COPY main.go .
-COPY pkg ./pkg
-COPY --from=mlflow-build /mlflow/build ./pkg/ui/mlflow/embed/build
-COPY --from=aim-build /aim/build ./pkg/ui/aim/embed/build
 
 ARG TARGETARCH
 RUN bash -c "\
@@ -33,19 +13,23 @@ RUN bash -c "\
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*"
 
-ARG tags=netgo osusergo
+WORKDIR /build
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY Makefile .go-build-tags main.go .
+COPY pkg ./pkg
+
 ARG version=dev
 RUN bash -c "\
     GCCARCH=\${TARGETARCH/amd64/x86_64} \
  && GCCARCH=\${GCCARCH/arm64/aarch64} \
- && CC=\$GCCARCH-linux-gnu-gcc CGO_ENABLED=1 GOARCH=$TARGETARCH \
-    go build \
-    -o fml \
-    -tags \"$tags\" \
-    -ldflags \"-linkmode external -extldflags '-static' -s -w -X 'github.com/G-Research/fasttrackml/pkg/version.Version=$version'\""
+ && CC=\$GCCARCH-linux-gnu-gcc GOARCH=$TARGETARCH VERSION=$version \
+    make build"
 
 # Runtime container
-FROM alpine:3.17
+FROM alpine:3.18
 
 COPY --from=go-build /build/fml /usr/local/bin/
 

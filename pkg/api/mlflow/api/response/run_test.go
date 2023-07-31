@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewRunPartialResponse(t *testing.T) {
-	var testData = []struct {
+	testData := []struct {
 		name             string
 		run              *models.Run
 		expectedResponse *RunPartialResponse

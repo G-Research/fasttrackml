@@ -4,8 +4,6 @@ on: workflow_dispatch
 
 jobs:
   build_wheels:
-    # only trigger on main repo when tag starts with v
-    if: github.repository == 'tensorchord/envd' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:

@@ -43,7 +43,6 @@ func (s *DeleteRunTestSuite) SetupTest() {
 
 func (s *DeleteRunTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
@@ -97,7 +96,6 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 
 func (s *DeleteRunTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 	tests := []struct {

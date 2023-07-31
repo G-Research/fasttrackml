@@ -49,7 +49,7 @@ func (s *GetRunsActiveTestSuite) SetupTest() {
 	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	s.runs, err = s.runFixtures.CreateRuns(context.Background(), exp, 3)
+	s.runs, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 3)
 	assert.Nil(s.T(), err)
 
 	// set 3rd run to status = StatusFinished

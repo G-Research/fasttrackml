@@ -49,9 +49,8 @@ func (s *DeleteRunTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 
 	// create run for the experiment
-	runs, err := s.runFixtures.CreateRuns(context.Background(), exp, 1)
+	s.run, err = s.runFixtures.CreateExampleRun(context.Background(), exp)
 	assert.Nil(s.T(), err)
-	s.run = runs[0]
 }
 
 func (s *DeleteRunTestSuite) Test_Ok() {

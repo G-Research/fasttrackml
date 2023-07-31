@@ -63,8 +63,20 @@ func (f RunFixtures) UpdateRun(
 	return nil
 }
 
-// CreateRuns creates some num runs belonging to the experiment, with tags and metrics
-func (f RunFixtures) CreateRuns(
+// CreateExampleRun creates one example run belonging to the experiment, with tags and metrics.
+func (f RunFixtures) CreateExampleRun(
+	ctx context.Context, exp *models.Experiment,
+) (*models.Run, error) {
+	runs, err := f.CreateExampleRuns(ctx, exp, 1)
+	if err != nil {
+		return nil, err
+	}
+	return runs[0], err
+}
+
+
+// CreateExampleRuns creates some example runs belonging to the experiment, with tags and metrics.
+func (f RunFixtures) CreateExampleRuns(
 	ctx context.Context, exp *models.Experiment, num int,
 ) ([]*models.Run, error) {
 	var runs []*models.Run
@@ -103,7 +115,7 @@ func (f RunFixtures) CreateRuns(
 	return runs, nil
 }
 
-// GetTestRun fetches one run
+// GetTestRun fetches one run.
 func (f RunFixtures) GetTestRun(
 	ctx context.Context, runID string,
 ) (*models.Run, error) {
@@ -118,7 +130,7 @@ func (f RunFixtures) GetTestRun(
 	return &run, nil
 }
 
-// GetTestRuns fetches all runs for an experiment
+// GetTestRuns fetches all runs for an experiment.
 func (f RunFixtures) GetTestRuns(
 	ctx context.Context, experimentID int32,
 ) ([]models.Run, error) {
@@ -135,7 +147,7 @@ func (f RunFixtures) GetTestRuns(
 	return runs, nil
 }
 
-// FindMinMaxRowNums finds min and max rownum for an experiment's runs
+// FindMinMaxRowNums finds min and max rownum for an experiment's runs.
 func (f RunFixtures) FindMinMaxRowNums(
 	ctx context.Context, experimentID int32,
 ) (int64, int64, error) {
@@ -155,7 +167,7 @@ func (f RunFixtures) FindMinMaxRowNums(
 	return int64(min), int64(max), nil
 }
 
-// CreateTag creates a new Tag for a run
+// CreateTag creates a new Tag for a run.
 func (f RunFixtures) CreateTag(
 	ctx context.Context, tag models.Tag,
 ) error {
@@ -165,6 +177,7 @@ func (f RunFixtures) CreateTag(
 	return nil
 }
 
+// CreateMetrics creats some example metrics for a Run, up to count.
 func (f RunFixtures) CreateMetrics(
 	ctx context.Context, run *models.Run, count int,
 ) error {

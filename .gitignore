@@ -1,11 +1,6 @@
 # IDE
 .idea
 
-# Binaries
-fml
-fasttrackml
-*.exe
-
 # Local database
 fasttrackml.db*
 encrypted.db*

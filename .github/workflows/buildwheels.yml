@@ -15,13 +15,13 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         mkdir -p bin
-        mv dist/fasttrckml_linux_amd64/fml bin/fml
+        mv dist/fasttrackml_linux_amd64/fml bin/fml
         chmod +x bin/fml
     - name: Configure macOS build environment
       if: runner.os == 'macOS'
       run: |
         mkdir -p bin
-        mv dist/fasttrckml_macos_arm64/fml bin/fml
+        mv dist/fasttrackml_macos_arm64/fml bin/fml
         chmod +x bin/fml
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.14.1

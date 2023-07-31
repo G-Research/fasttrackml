@@ -76,6 +76,8 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
+			// for empty table test (indicated by wantRunCount: 0) we clear the
+			// records created by the setup method
 			if tt.wantRunCount == 0 {
 				assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 			}

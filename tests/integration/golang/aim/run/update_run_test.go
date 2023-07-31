@@ -62,7 +62,6 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	tests := []struct {
 		name     string
 		request  request.UpdateRunRequest
-		verifyFn func(*testing.T, response.Success)
 	}{
 		{
 			name: "UpdateOneRun",
@@ -71,15 +70,6 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 				Name:     &newName,
 				Status:   &newStatus,
 				Archived: &archived,
-			},
-			verifyFn: func(t *testing.T, resp response.Success) {
-				run, err := s.runFixtures.GetTestRun(context.Background(), s.run.ID)
-				assert.Nil(t, err)
-				// TODO the PUT endpoint only updates LifecycleStage
-				// assert.Equal(t, newName, run.Name)
-				// assert.Equal(t, models.Status(newStatus), run.Status)
-				assert.Equal(t, models.LifecycleStageDeleted, run.LifecycleStage)
-				return
 			},
 		},
 	}
@@ -92,9 +82,12 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			if tt.verifyFn != nil {
-				tt.verifyFn(s.T(), resp)
-			}
+			run, err := s.runFixtures.GetTestRun(context.Background(), s.run.ID)
+			assert.Nil(s.T(), err)
+			// TODO the PUT endpoint only updates LifecycleStage
+			// assert.Equal(t, newName, run.Name)
+			// assert.Equal(t, models.Status(newStatus), run.Status)
+			assert.Equal(s.T(), models.LifecycleStageDeleted, run.LifecycleStage)
 		})
 	}
 }

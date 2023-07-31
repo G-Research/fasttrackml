@@ -8,8 +8,6 @@ from wheel.bdist_wheel import bdist_wheel
 import subprocess
 import logging
 
-with open("README.md", "r", encoding="utf-8") as f:
-    readme = f.read()
 
 class FmlExtension(Extension):
     """Extension for `fml`"""
@@ -37,15 +35,6 @@ class SdistCommand(sdist):
         super().run()
 
 
-def get_version():
-    # Remove prefix v in versioning
-    version = subprocess.check_output(
-        ["./bin/fml", "version", "--short"], universal_newlines=True
-    ).strip()
-    ver = version.rsplit(" ", 1)[-1][1:]
-    return ver
-
-
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Topic :: Software Development :: Build Tools",
@@ -63,9 +52,7 @@ classifiers = [
 
 setup(
     name="fml",
-    version=get_version(),
-    use_scm_version=True,
-    setup_requires=["setuptools_scm"],
+    version="1.0.0",
     description="A development environment management tool for data scientists.",
     packages=find_packages(),
     include_package_data=True,

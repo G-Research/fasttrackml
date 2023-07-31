@@ -40,7 +40,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 	}()
 	experiments, err := s.fixtures.CreateExperiments(context.Background(), 5)
 	assert.Nil(s.T(), err)
-	var resp []response.GetExperiment
+	var resp response.Experiments
 
 	err = s.client.DoGetRequest(
 		fmt.Sprintf(
@@ -53,6 +53,8 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 	for idx := 0; idx < len(experiments); idx++ {
 		assert.Equal(s.T(), *experiments[idx].ID, resp[idx].ID)
 		assert.Equal(s.T(), experiments[idx].Name, resp[idx].Name)
+		assert.Equal(s.T(), "", resp[idx].Description)
+		assert.Equal(s.T(), float64(experiments[idx].CreationTime.Int64)/1000, resp[idx].CreationTime)
 		assert.Equal(s.T(), experiments[idx].LifecycleStage == models.LifecycleStageDeleted, resp[idx].Archived)
 		assert.Equal(s.T(), len(experiments[idx].Runs), resp[idx].RunCount)
 	}

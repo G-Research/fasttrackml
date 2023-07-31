@@ -49,6 +49,7 @@ func (f RunFixtures) CreateRun(
 	return run, nil
 }
 
+// ArchiveRun archive existing runs by their ids.
 func (f RunFixtures) ArchiveRun(ctx context.Context, ids []string) error {
 	err := f.runRepository.ArchiveBatch(ctx, ids)
 	return err
@@ -64,7 +65,7 @@ func (f RunFixtures) UpdateRun(
 	return nil
 }
 
-// CreateRuns creates some num runs belonging to the experiment
+// CreateRuns creates some num runs belonging to the experiment.
 func (f RunFixtures) CreateRuns(
 	ctx context.Context, exp *models.Experiment, num int,
 ) ([]*models.Run, error) {

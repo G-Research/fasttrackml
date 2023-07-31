@@ -73,7 +73,9 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 
 	assert.Equal(s.T(), *experiment.ID, resp.ID)
 	assert.Equal(s.T(), experiment.Name, resp.Name)
-	assert.Equal(s.T(), experiment.LifecycleStage == models.LifecycleStageDeleted, resp.Archived)
+	assert.Equal(s.T(), "", resp.Description)
+	assert.Equal(s.T(), float64(experiment.CreationTime.Int64)/1000, resp.CreationTime)
+	assert.Equal(s.T(), false, resp.Archived)
 	assert.Equal(s.T(), len(experiment.Runs), resp.RunCount)
 }
 

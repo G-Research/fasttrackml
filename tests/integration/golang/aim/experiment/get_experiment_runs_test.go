@@ -44,7 +44,6 @@ func (s *GetExperimentRunsTestSuite) SetupTest() {
 func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 	exp := &models.Experiment{
 		Name:           uuid.New().String(),

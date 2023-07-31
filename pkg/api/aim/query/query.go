@@ -605,7 +605,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								}
 								str, ok := parsedNode.(string)
 								if !ok {
-									return nil, errors.New("first argument type for re.match function has to be ast.Str")
+									return nil, errors.New("first argument type for re.match function has to be s string")
 								}
 
 								parsedNode, err = pq.parseNode(args[1])
@@ -642,7 +642,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								}
 								str, ok := parsedNode.(string)
 								if !ok {
-									return nil, errors.New("first argument type for re.match function has to be ast.Str")
+									return nil, errors.New("first argument type for re.match function has to be a string")
 								}
 
 								parsedNode, err = pq.parseNode(args[1])

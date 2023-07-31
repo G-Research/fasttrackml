@@ -16,14 +16,12 @@ type Regexp struct {
 // Build builds positive statement.
 func (regexp Regexp) Build(builder clause.Builder) {
 	builder.WriteQuoted(regexp.Column)
-	operator := ""
 	switch regexp.Dialector {
 	case postgres.Dialector{}.Name():
-		operator = "~"
+		builder.WriteString(" ~ ")
 	default:
-		operator = "regexp"
+		builder.WriteString(" regexp ")
 	}
-	builder.WriteString(fmt.Sprintf(" %s ", operator))
 	builder.AddVar(builder, fmt.Sprintf("%s", regexp.Value))
 }
 

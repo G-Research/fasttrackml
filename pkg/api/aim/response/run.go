@@ -47,5 +47,5 @@ type RunMetrics struct {
 	Name    string         `json:"name"`
 	Context map[string]any `json:"context"`
 	Values  []float64      `json:"values"`
-	Iters   []int          `json:"iters"`
+	Iters   []int64        `json:"iters"`
 }

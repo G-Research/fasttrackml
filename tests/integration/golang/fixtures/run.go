@@ -122,6 +122,7 @@ func (f RunFixtures) GetTestRun(
 	var run models.Run
 	if err := f.db.WithContext(ctx).Where(
 		"run_uuid = ?", runID,
+	).Preload("Metrics",
 	).First(
 		&run,
 	).Error; err != nil {

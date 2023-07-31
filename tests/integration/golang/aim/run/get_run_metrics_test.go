@@ -83,17 +83,21 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
+			run, err := s.runFixtures.GetTestRun(context.Background(), tt.runID)
+			assert.Nil(T, err)
 			var resp response.GetRunMetrics
-			err := s.client.DoPostRequest(
+			err = s.client.DoPostRequest(
 				fmt.Sprintf("/runs/%s/metric/get-batch", tt.runID),
 				tt.request,
 				&resp,
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), len(tt.request), len(resp))
-			for i := 0; i < 2; i++ {
-				assert.Equal(s.T(), 2, len(resp[i].Values))
-				assert.Equal(s.T(), 2, len(resp[i].Iters))
+			// this is a test-side conversion of models to response to verify
+			// the response given by the endpoint
+			runMetricMap := convertModelToResponse(run.Metrics)
+			for _, respElement := range resp {
+				assert.Equal(s.T(), runMetricMap[respElement.Name], respElement)
 			}
 		})
 	}
@@ -123,4 +127,21 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 			assert.Equal(s.T(), "Not Found", resp.Message)
 		})
 	}
+}
+
+// convertModelToResponse will convert []models.Metric to response struct like the endpoint response.
+func convertModelToResponse(metrics []models.Metric) map[string]response.RunMetrics {
+	responseMap := map[string]response.RunMetrics{}
+	for _, metric := range metrics {
+		v, ok := responseMap[metric.Key]
+		if !ok {
+			v = response.RunMetrics{Name: metric.Key}
+			responseMap[metric.Key] = v
+		}
+		v.Values = append(v.Values, metric.Value)
+		v.Iters = append(v.Iters, metric.Iter)
+		v.Context = map[string]any{}
+		responseMap[metric.Key] = v
+	}
+	return responseMap
 }

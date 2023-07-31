@@ -15,7 +15,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         mkdir -p bin
-        mv dist/fasttrackml_linux_amd64/fml bin/fml
+        mv dist/fasttrackml_linux_arm64/fml bin/fml
         chmod +x bin/fml
     - name: Configure macOS build environment
       if: runner.os == 'macOS'

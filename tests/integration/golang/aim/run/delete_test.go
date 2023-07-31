@@ -73,6 +73,11 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			request:          request.DeleteRunRequest{RunID: s.runs[1].ID},
 			expectedRunCount: 8,
 		},
+		{
+			name:             "DeleteFirstRun",
+			request:          request.DeleteRunRequest{RunID: s.runs[0].ID},
+			expectedRunCount: 7,
+		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {

@@ -138,8 +138,57 @@ jobs:
       - name: Run ${{ matrix.api }} integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
 
-      - name: Run ${{ matrix.api }} integration tests
-        run: ./tests/integration/python/${{ matrix.api }}/test.sh
+  golang-build:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Build Go binary for ${{ matrix.os }}/${{ matrix.arch }}
+    strategy:
+      matrix:
+        os: [darwin, linux, windows]
+        arch: [amd64, arm64]
+        exclude:
+          - os: windows
+            arch: arm64
+        include:
+          - os: darwin
+            runner: macos-latest
+          - os: linux
+            runner: ubuntu-latest
+          - os: windows
+            runner: ubuntu-latest
+      fail-fast: true
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install arm64 cross-compilation toolchain on Linux
+        if: matrix.os == 'linux' && matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+          echo CC=aarch64-linux-gnu-gcc >> $GITHUB_ENV
+
+      - name: Install Windows cross-compilation toolchain on Linux
+        if: matrix.os == 'windows'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64-win32
+          echo CC=x86_64-w64-mingw32-gcc >> $GITHUB_ENV
+
+      - name: Build and archive Go binary
+        run: make go-dist
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: fasttrackml-archives
+          path: dist/*
 
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

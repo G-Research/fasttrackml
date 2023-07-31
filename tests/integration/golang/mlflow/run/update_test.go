@@ -102,7 +102,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), "UpdatedName", run.Name)
 	assert.Equal(s.T(), models.StatusScheduled, run.Status)
-	assert.Equal(s.T(), 1111111111, run.EndTime)
+	assert.Equal(s.T(), int64(1111111111), run.EndTime.Int64)
 }
 
 func (s *UpdateRunTestSuite) Test_Error() {

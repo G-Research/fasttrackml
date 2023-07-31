@@ -3,7 +3,7 @@ name: buildwheels
 on: workflow_dispatch
 
 jobs:
-  pypi_publish:
+  build_wheels:
     # only trigger on main repo when tag starts with v
     if: github.repository == 'tensorchord/envd' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}

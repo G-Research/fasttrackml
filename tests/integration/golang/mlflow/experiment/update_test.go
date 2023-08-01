@@ -95,8 +95,10 @@ func (s *UpdateExperimentTestSuite) Test_Error() {
 			},
 		},
 		{
-			name:  "InvalidIDFormat",
-			error: api.NewBadRequestError(`unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing "invalid_id": invalid syntax`),
+			name: "InvalidIDFormat",
+			error: api.NewBadRequestError(
+				`unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing "invalid_id": invalid syntax`,
+			),
 			request: &request.UpdateExperimentRequest{
 				ID:   "invalid_id",
 				Name: "New Name",

@@ -139,7 +139,14 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 			request: request.SearchExperimentsRequest{
 				OrderBy: []string{"name ASC"},
 			},
-			expected: []string{"Default", "Test Experiment 1", "Test Experiment 2", "Test Experiment 3", "Test Experiment 4", "Test Experiment 5"},
+			expected: []string{
+				"Default",
+				"Test Experiment 1",
+				"Test Experiment 2",
+				"Test Experiment 3",
+				"Test Experiment 4",
+				"Test Experiment 5",
+			},
 		},
 		{
 			name: "TestMaxResults",

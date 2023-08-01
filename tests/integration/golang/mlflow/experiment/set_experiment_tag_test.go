@@ -92,14 +92,20 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	exp, err := s.experimentFixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
 
-	assert.True(s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag1"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'")
+	assert.True(s.T(), helpers.CheckTagExists(
+		exp.Tags, "KeyTag1", "ValueTag1"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'",
+	)
 
 	// Update tag on experiment
 	SetExperimentTag(s, experiment, "KeyTag1", "ValueTag2")
 	exp, err = s.experimentFixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
 
-	assert.True(s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'")
+	assert.True(
+		s.T(),
+		helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"),
+		"Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'",
+	)
 
 	// test that setting a tag on 1 experiment does not impact another experiment.
 	exp, err = s.experimentFixtures.GetExperimentByID(context.Background(), *experiment1.ID)
@@ -112,8 +118,15 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 	exp1, err := s.experimentFixtures.GetExperimentByID(context.Background(), *experiment1.ID)
 	assert.Nil(s.T(), err)
-	assert.True(s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag2'")
-	assert.True(s.T(), helpers.CheckTagExists(exp1.Tags, "KeyTag1", "ValueTag3"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag3'")
+	assert.True(
+		s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"),
+		"Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag2'",
+	)
+	assert.True(
+		s.T(),
+		helpers.CheckTagExists(exp1.Tags, "KeyTag1", "ValueTag3"),
+		"Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag3'",
+	)
 }
 
 func (s *SetExperimentTagTestSuite) Test_Error() {
@@ -138,8 +151,10 @@ func (s *SetExperimentTagTestSuite) Test_Error() {
 			},
 		},
 		{
-			name:  "IncorrectExperimentID",
-			error: api.NewBadRequestError(`Unable to parse experiment id 'incorrect_experiment_id': strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`),
+			name: "IncorrectExperimentID",
+			error: api.NewBadRequestError(
+				`Unable to parse experiment id 'incorrect_experiment_id': strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`,
+			),
 			request: &request.SetExperimentTagRequest{
 				ID:  "incorrect_experiment_id",
 				Key: "test_key",

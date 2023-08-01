@@ -156,10 +156,6 @@ func (s *GetRunTestSuite) Test_Ok() {
 }
 
 func (s *GetRunTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
-	}()
-
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse

@@ -101,15 +101,19 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		request *request.GetExperimentRequest
 	}{
 		{
-			name:  "IncorrectExperimentID",
-			error: api.NewBadRequestError(`unable to parse experiment id 'incorrect_experiment_id': strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`),
+			name: "IncorrectExperimentID",
+			error: api.NewBadRequestError(
+				`unable to parse experiment id 'incorrect_experiment_id': strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`,
+			),
 			request: &request.GetExperimentRequest{
 				ID: "incorrect_experiment_id",
 			},
 		},
 		{
-			name:  "NotFoundExperiment",
-			error: api.NewResourceDoesNotExistError(`unable to find experiment '1': error getting experiment by id: 1: record not found`),
+			name: "NotFoundExperiment",
+			error: api.NewResourceDoesNotExistError(
+				`unable to find experiment '1': error getting experiment by id: 1: record not found`,
+			),
 			request: &request.GetExperimentRequest{
 				ID: "1",
 			},

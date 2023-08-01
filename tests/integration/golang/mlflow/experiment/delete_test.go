@@ -99,15 +99,19 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 			},
 		},
 		{
-			name:  "InvalidIDFormat",
-			error: api.NewBadRequestError(`unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing "invalid_id": invalid syntax`),
+			name: "InvalidIDFormat",
+			error: api.NewBadRequestError(
+				`unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing "invalid_id": invalid syntax`,
+			),
 			request: &request.DeleteExperimentRequest{
 				ID: "invalid_id",
 			},
 		},
 		{
-			name:  "ExperimentNotFound",
-			error: api.NewResourceDoesNotExistError("unable to find experiment '123': error getting experiment by id: 123: record not found"),
+			name: "ExperimentNotFound",
+			error: api.NewResourceDoesNotExistError(
+				"unable to find experiment '123': error getting experiment by id: 123: record not found",
+			),
 			request: &request.DeleteExperimentRequest{
 				ID: "123",
 			},

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -98,15 +97,19 @@ func (s *RestoreExperimentTestSuite) Test_Error() {
 			},
 		},
 		{
-			name:  "InvalidIDFormat",
-			error: api.NewBadRequestError("Unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing \"invalid_id\": invalid syntax"),
+			name: "InvalidIDFormat",
+			error: api.NewBadRequestError(
+				"Unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing \"invalid_id\": invalid syntax",
+			),
 			request: &request.RestoreExperimentRequest{
 				ID: "invalid_id",
 			},
 		},
 		{
-			name:  "ExperimentNotFound",
-			error: api.NewResourceDoesNotExistError("unable to find experiment '123': error getting experiment by id: 123: record not found"),
+			name: "ExperimentNotFound",
+			error: api.NewResourceDoesNotExistError(
+				"unable to find experiment '123': error getting experiment by id: 123: record not found",
+			),
 			request: &request.RestoreExperimentRequest{
 				ID: "123",
 			},

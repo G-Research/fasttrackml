@@ -79,10 +79,6 @@ func (s *LogParamTestSuite) Test_Ok() {
 }
 
 func (s *LogParamTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
-	}()
-
 	// missing run_id
 	req := request.LogParamRequest{
 		Key:   "key1",

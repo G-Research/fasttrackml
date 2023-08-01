@@ -72,6 +72,7 @@ func (f RunFixtures) CreateRuns(
 			Status:         models.StatusRunning,
 			SourceType:     "JOB",
 			ExperimentID:   *exp.ID,
+			ArtifactURI:    "artifact_uri",
 			LifecycleStage: models.LifecycleStageActive,
 		}
 		run, err := f.CreateRun(ctx, run)

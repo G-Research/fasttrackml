@@ -5,6 +5,7 @@
 fml
 fasttrackml
 *.exe
+__debug_bin
 
 # Local database
 fasttrackml.db*
@@ -24,5 +25,5 @@ mock_*
 .DS_Store
 
 # Optional workspace
-go.work
+go.work*
 *.code-workspace

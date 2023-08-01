@@ -43,11 +43,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download artifact
-        run: gh run download ${{ github.event.workflow_run.id }} --repo ${{ github.event.workflow_run.repository.full_name }} --name fasttrackml-archives --dir dist
-        env:
-          GH_TOKEN: ${{ github.token }}
-
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:

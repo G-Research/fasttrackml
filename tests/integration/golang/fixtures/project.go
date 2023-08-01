@@ -6,7 +6,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
- 
+
+	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -44,7 +45,7 @@ func (f *ProjectFixtures) GetProject(ctx context.Context) *fiber.Map {
 
 func (f *ProjectFixtures) GetProjectActivity(
 	ctx context.Context,
-) (*fiber.Map, error) {
+) (*response.ProjectActivity, error) {
 	var numExperiments int64
 	if err := f.db.WithContext(ctx).
 		Table("experiments").
@@ -75,15 +76,15 @@ func (f *ProjectFixtures) GetProjectActivity(
 		return nil, eris.Wrapf(err, "error counting archived runs")
 	}
 
-    activity := map[string]int{}
-    key := time.Now().Format("2006-01-02T15:00:00")
+	activity := map[string]int{}
+	key := time.Now().Format("2006-01-02T15:00:00")
 	activity[key] = int(numRuns)
 
-	return &fiber.Map{
-		"num_experiments":   float64(numExperiments),
-		"num_runs":          float64(numRuns),
-		"num_archived_runs": float64(numArchivedRuns),
-		"num_active_runs":   float64(numActiveRuns),
-		"activity_map":      activity,
+	return &response.ProjectActivity{
+		NumExperiments:  float64(numExperiments),
+		NumRuns:         float64(numRuns),
+		NumArchivedRuns: float64(numArchivedRuns),
+		NumActiveRuns:   float64(numActiveRuns),
+		ActivityMap:     activity,
 	}, nil
 }

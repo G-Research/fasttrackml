@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -24,6 +24,7 @@ type GetProjectActivityTestSuite struct {
 	experimentFixtures *fixtures.ExperimentFixtures
 	runFixtures        *fixtures.RunFixtures
 	runs               []*models.Run
+	activity           response.ProjectActivity
 }
 
 func TestGetProjectActivityTestSuite(t *testing.T) {
@@ -61,19 +62,18 @@ func (s *GetProjectActivityTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.projectFixtures.UnloadFixtures())
 	}()
-	var resp fiber.Map
+	var resp response.ProjectActivity
 	err := s.client.DoGetRequest(
 		fmt.Sprintf("/projects/activity"),
 		&resp,
 	)
 	assert.Nil(s.T(), err)
-	fmt.Println(resp)
 
 	activity, err := s.projectFixtures.GetProjectActivity(context.Background())
-	fmt.Println(*activity)
-	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), (*activity)["num_active_runs"], resp["num_active_runs"])
-	assert.Equal(s.T(), (*activity)["num_archived_runs"], resp["num_archived_runs"])
-	assert.Equal(s.T(), (*activity)["num_experiments"], resp["num_experiments"])
-	assert.Equal(s.T(), (*activity)["num_runs"], resp["num_runs"])
+	s.activity = *activity
+
+	assert.Equal(s.T(), s.activity.NumActiveRuns, resp.NumActiveRuns)
+	assert.Equal(s.T(), s.activity.NumArchivedRuns, resp.NumArchivedRuns)
+	assert.Equal(s.T(), s.activity.NumExperiments, resp.NumExperiments)
+	assert.Equal(s.T(), s.activity.NumRuns, resp.NumRuns)
 }

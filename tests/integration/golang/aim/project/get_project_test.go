@@ -4,8 +4,8 @@ package run
 
 import (
 	"context"
-	"testing"
 	"fmt"
+	"testing"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
@@ -52,4 +52,3 @@ func (s *GetProjectTestSuite) Test_Ok() {
 	assert.Equal(s.T(), (*s.project)["description"], resp["description"])
 	assert.Equal(s.T(), (*s.project)["telemetry_enabled"], resp["telemetry_enabled"])
 }
-

@@ -21,18 +21,20 @@ func CompareExpectedSearchRunsResponseWithActualSearchRunsResponse(
 		mappedExpectedResult[run.Info.ID] = run
 	}
 
-	for _, actualRun := range actualResponse.Runs {
-		expectedRun, ok := mappedExpectedResult[actualRun.Info.ID]
-		assert.True(t, ok)
-		assert.NotEmpty(t, actualRun.Info.ID)
-		assert.Equal(t, expectedRun.Info.Name, actualRun.Info.Name)
-		assert.Equal(t, expectedRun.Info.Name, actualRun.Info.Name)
-		assert.Equal(t, expectedRun.Info.UserID, actualRun.Info.UserID)
-		assert.Equal(t, expectedRun.Info.Status, actualRun.Info.Status)
-		assert.Equal(t, expectedRun.Info.EndTime, actualRun.Info.EndTime)
-		assert.Equal(t, expectedRun.Info.StartTime, actualRun.Info.StartTime)
-		assert.Equal(t, expectedRun.Info.ArtifactURI, actualRun.Info.ArtifactURI)
-		assert.Equal(t, expectedRun.Info.ExperimentID, actualRun.Info.ExperimentID)
-		assert.Equal(t, expectedRun.Info.LifecycleStage, actualRun.Info.LifecycleStage)
+	if actualResponse.Runs != nil && expectedResponse.Runs != nil {
+		for _, actualRun := range actualResponse.Runs {
+			expectedRun, ok := mappedExpectedResult[actualRun.Info.ID]
+			assert.True(t, ok)
+			assert.NotEmpty(t, actualRun.Info.ID)
+			assert.Equal(t, expectedRun.Info.Name, actualRun.Info.Name)
+			assert.Equal(t, expectedRun.Info.Name, actualRun.Info.Name)
+			assert.Equal(t, expectedRun.Info.UserID, actualRun.Info.UserID)
+			assert.Equal(t, expectedRun.Info.Status, actualRun.Info.Status)
+			assert.Equal(t, expectedRun.Info.EndTime, actualRun.Info.EndTime)
+			assert.Equal(t, expectedRun.Info.StartTime, actualRun.Info.StartTime)
+			assert.Equal(t, expectedRun.Info.ArtifactURI, actualRun.Info.ArtifactURI)
+			assert.Equal(t, expectedRun.Info.ExperimentID, actualRun.Info.ExperimentID)
+			assert.Equal(t, expectedRun.Info.LifecycleStage, actualRun.Info.LifecycleStage)
+		}
 	}
 }

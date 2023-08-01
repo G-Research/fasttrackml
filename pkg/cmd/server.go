@@ -183,16 +183,14 @@ func initServer() *fiber.App {
 
 	server.Use(func(c *fiber.Ctx) error {
 		log.Debugf("Checking namespace for path: %s", c.Path())
-		nsUrl := regexp.MustCompile(`^/(?:ns/([^/]+)/)?(?:aim|mlflow|(?:ajax-)?api/2\.0/mlflow)/`)
+		nsUrl := regexp.MustCompile(`^/ns/([^/]+)/`)
 		if matches := nsUrl.FindStringSubmatch(c.Path()); matches != nil {
-			if matches[1] == "" {
-				c.Locals("namespace", "default")
-			} else {
-				ns := strings.Clone(matches[1])
-				c.Locals("namespace", ns)
-				c.Path(strings.TrimPrefix(c.Path(), fmt.Sprintf("/ns/%s", ns)))
-			}
+			ns := strings.Clone(matches[1])
+			c.Locals("namespace", ns)
+			c.Path(strings.TrimPrefix(c.Path(), fmt.Sprintf("/ns/%s", ns)))
 			log.Debugf("Namespace: %s", c.Locals("namespace"))
+		} else {
+			c.Locals("namespace", "default")
 		}
 		return c.Next()
 	})

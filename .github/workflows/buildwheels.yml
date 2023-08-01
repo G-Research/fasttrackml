@@ -38,6 +38,7 @@ jobs:
         mv dist/*.tar.gz wheelhouse/
   github-release:
     name: Publish GitHub release
+    needs: build_wheels
     runs-on: ubuntu-latest
     permissions:
       contents: write

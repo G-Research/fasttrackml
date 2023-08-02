@@ -98,6 +98,7 @@ func ConnectDB(
 						if err != nil {
 							return false
 						}
+						cache.Add(re, result)
 					}
 					return result.MatchString(s)
 				}, true)

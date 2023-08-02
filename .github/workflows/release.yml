@@ -52,7 +52,6 @@ jobs:
   github-release:
     name: Publish GitHub release
     needs: validate
-    if: github.event.workflow_run.head_branch != 'main'
     runs-on: ubuntu-latest
     permissions:
       contents: write

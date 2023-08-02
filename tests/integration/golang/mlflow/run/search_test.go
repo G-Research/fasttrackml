@@ -221,6 +221,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 					{
 						Info: response.RunInfoPartialResponse{
@@ -234,6 +256,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri2",
 							LifecycleStage: string(models.LifecycleStageDeleted),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag2",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param2",
+									Value: "value2",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run2",
+									Value:     2.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 					{
 						Info: response.RunInfoPartialResponse{
@@ -246,6 +290,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -272,6 +338,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 					{
 						Info: response.RunInfoPartialResponse{
@@ -284,6 +372,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -310,6 +420,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri2",
 							LifecycleStage: string(models.LifecycleStageDeleted),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag2",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param2",
+									Value: "value2",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run2",
+									Value:     2.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -334,6 +466,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -360,6 +514,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 					{
 						Info: response.RunInfoPartialResponse{
@@ -372,6 +548,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -398,6 +596,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -422,6 +642,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        123456789,
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -448,6 +690,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -473,6 +737,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 					{
 						Info: response.RunInfoPartialResponse{
@@ -485,6 +771,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -511,6 +819,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -536,6 +866,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 					{
 						Info: response.RunInfoPartialResponse{
@@ -548,6 +900,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -574,6 +948,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -598,6 +994,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        123456789,
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -624,6 +1042,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -649,6 +1089,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 					{
 						Info: response.RunInfoPartialResponse{
@@ -661,6 +1123,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -687,6 +1171,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -711,6 +1217,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        123456789,
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -737,6 +1265,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -761,6 +1311,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        123456789,
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -795,6 +1367,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 					{
 						Info: response.RunInfoPartialResponse{
@@ -807,6 +1401,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -833,6 +1449,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 					{
 						Info: response.RunInfoPartialResponse{
@@ -845,6 +1483,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -871,6 +1531,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 					{
 						Info: response.RunInfoPartialResponse{
@@ -883,6 +1565,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -909,6 +1613,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -933,6 +1659,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -959,6 +1707,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -983,6 +1753,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -1009,6 +1801,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1033,6 +1847,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -1059,6 +1895,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1083,6 +1941,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -1109,6 +1989,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1133,6 +2035,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -1159,6 +2083,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1183,6 +2129,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -1209,6 +2177,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1233,6 +2223,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -1259,6 +2271,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1283,6 +2317,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -1309,6 +2365,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1333,6 +2411,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -1369,6 +2469,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1393,6 +2515,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -1419,6 +2563,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1443,6 +2609,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -1469,6 +2657,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1493,6 +2703,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag3",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param3",
+									Value: "value3",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run3",
+									Value:     3.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},
@@ -1519,6 +2751,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1544,6 +2798,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
+						},
 					},
 				},
 				NextPageToken: "",
@@ -1568,6 +2844,28 @@ func (s *SearchTestSuite) Test_Ok() {
 							EndTime:        123456789,
 							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
+						},
+						Data: response.RunDataPartialResponse{
+							Tags: []response.RunTagPartialResponse{
+								{
+									Key:   "mlflow.runName",
+									Value: "TestRunTag1",
+								},
+							},
+							Params: []response.RunParamPartialResponse{
+								{
+									Key:   "param1",
+									Value: "value1",
+								},
+							},
+							Metrics: []response.RunMetricPartialResponse{
+								{
+									Key:       "run1",
+									Value:     1.1,
+									Timestamp: 1234567890,
+									Step:      1,
+								},
+							},
 						},
 					},
 				},

@@ -132,7 +132,6 @@ func (c HttpClient) doRequest(httpMethod string, uri string, response interface{
 
 	// 4. read and check response data.
 	body, err := io.ReadAll(resp.Body)
-	fmt.Println(string(body))
 	if err != nil {
 		return eris.Wrap(err, "error reading response data")
 	}

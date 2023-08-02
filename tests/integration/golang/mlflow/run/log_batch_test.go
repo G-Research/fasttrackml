@@ -254,9 +254,32 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 			},
 		},
 		{
+			name: "LogDuplicate",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key3",
+						Value:     1.0,
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+					{
+						Key:       "key3",
+						Value:     1.0,
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key3": 2,
+			},
+		},
+		{
 			name: "LogMany",
 			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
+				RunID: run.ID,
 				Metrics: func() []request.MetricPartialRequest {
 					metrics := make([]request.MetricPartialRequest, 100*1000)
 					for k := 0; k < 100; k++ {
@@ -281,29 +304,6 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				}
 				return metrics
 			}(),
-		},
-		{
-			name: "LogDuplicate",
-			request: &request.LogBatchRequest{
-				RunID: s.run.ID,
-				Metrics: []request.MetricPartialRequest{
-					{
-						Key:       "key3",
-						Value:     1.0,
-						Timestamp: 1687325991,
-						Step:      1,
-					},
-					{
-						Key:       "key3",
-						Value:     1.0,
-						Timestamp: 1687325991,
-						Step:      1,
-					},
-				},
-			},
-			latestMetricIteration: map[string]int64{
-				"key3": 2,
-			},
 		},
 	}
 	for _, tt := range tests {

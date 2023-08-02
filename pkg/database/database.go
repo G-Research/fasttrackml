@@ -42,7 +42,8 @@ func (db *DbInstance) DSN() string {
 // DB is a global db instance.
 var DB *DbInstance = &DbInstance{}
 
-// ConnectDB will establish a DbInstance and cache it in the global var database.DB
+// ConnectDB will establish and return a DbInstance while also caching it in the global
+// var database.DB.
 func ConnectDB(
 	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string,
 ) (*DbInstance, error) {

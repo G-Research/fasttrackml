@@ -9,7 +9,7 @@ replace (
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/G-Research/fasttrackml-ui-aim v0.31602.5
+	github.com/G-Research/fasttrackml-ui-aim v0.31602.7
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.1
 	github.com/apache/arrow/go/v12 v12.0.1
 	github.com/go-python/gpython v0.2.0
@@ -26,7 +26,7 @@ require (
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.25.2
-	gorm.io/plugin/dbresolver v1.4.1
+	gorm.io/plugin/dbresolver v1.4.2
 )
 
 require (

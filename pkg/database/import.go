@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 
+	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -10,40 +11,47 @@ import (
 // Import will copy the contents of input db to output db.
 func Import(input, output *DbInstance, dryRun bool) error {
 
-	if err := importTable(input.DB, output.DB, dryRun, Experiment{}); err != nil {
-		return err
-	}
-	if err := importTable(input.DB, output.DB, dryRun, ExperimentTag{}); err != nil {
-		return err
-	}
-	if err := importTable(input.DB, output.DB, dryRun, Run{}); err != nil {
-		return err
-	}
-	if err := importTable(input.DB, output.DB, dryRun, Tag{}); err != nil {
-		return err
-	}
-	if err := importTable(input.DB, output.DB, dryRun, Metric{}); err != nil {
-		return err
-	}
-	if err := importTable(input.DB, output.DB, dryRun, LatestMetric{}); err != nil {
-		return err
-	}
-	if err := importTable(input.DB, output.DB, dryRun, Param{}); err != nil {
-		return err
-	}
-	if err := importTable(input.DB, output.DB, dryRun, Dashboard{}); err != nil {
-		return err
-	}
-	if err := importTable(input.DB, output.DB, dryRun, App{}); err != nil {
-		return err
-	}
+	in := input.DB
+	if err := output.DB.Transaction(func(out *gorm.DB) error {
 
+		if err := importTable(in, out, dryRun, Experiment{}); err != nil {
+			return err
+		}
+		if err := importTable(in, out, dryRun, ExperimentTag{}); err != nil {
+			return err
+		}
+		if err := importTable(in, out, dryRun, Run{}); err != nil {
+			return err
+		}
+		if err := importTable(in, out, dryRun, Tag{}); err != nil {
+			return err
+		}
+		if err := importTable(in, out, dryRun, Metric{}); err != nil {
+			return err
+		}
+		if err := importTable(in, out, dryRun, LatestMetric{}); err != nil {
+			return err
+		}
+		if err := importTable(in, out, dryRun, Param{}); err != nil {
+			return err
+		}
+		if err := importTable(in, out, dryRun, Dashboard{}); err != nil {
+			return err
+		}
+		if err := importTable(in, out, dryRun, App{}); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return eris.Wrapf(err, "error importing table data")
+	}
 
 	fmt.Println("Data transfer complete")
 	return nil
 }
 
-// importTable will copy the contents of one table (model) from sourceDB to destDB
+// importTable will copy the contents of one table (model) from sourceDB to destDB.
 func importTable[T any](sourceDB, destDB *gorm.DB, dryRun bool, model T) error {
 
 	// Query data from the source database

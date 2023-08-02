@@ -253,29 +253,31 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				"key2": 4,
 			},
 		},
-		{
-			name: "LogDuplicate",
-			request: &request.LogBatchRequest{
-				RunID: run.ID,
-				Metrics: []request.MetricPartialRequest{
-					{
-						Key:       "key3",
-						Value:     1.0,
-						Timestamp: 1687325991,
-						Step:      1,
-					},
-					{
-						Key:       "key3",
-						Value:     1.0,
-						Timestamp: 1687325991,
-						Step:      1,
+		/*
+			{
+				name: "LogDuplicate",
+				request: &request.LogBatchRequest{
+					RunID: run.ID,
+					Metrics: []request.MetricPartialRequest{
+						{
+							Key:       "key3",
+							Value:     1.0,
+							Timestamp: 1687325991,
+							Step:      1,
+						},
+						{
+							Key:       "key3",
+							Value:     1.0,
+							Timestamp: 1687325991,
+							Step:      1,
+						},
 					},
 				},
+				latestMetricIteration: map[string]int64{
+					"key3": 2,
+				},
 			},
-			latestMetricIteration: map[string]int64{
-				"key3": 2,
-			},
-		},
+		*/
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {

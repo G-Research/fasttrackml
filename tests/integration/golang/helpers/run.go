@@ -35,6 +35,9 @@ func CompareExpectedSearchRunsResponseWithActualSearchRunsResponse(
 			assert.Equal(t, expectedRun.Info.ArtifactURI, actualRun.Info.ArtifactURI)
 			assert.Equal(t, expectedRun.Info.ExperimentID, actualRun.Info.ExperimentID)
 			assert.Equal(t, expectedRun.Info.LifecycleStage, actualRun.Info.LifecycleStage)
+			assert.Equal(t, expectedRun.Data.Tags, actualRun.Data.Tags)
+			assert.Equal(t, expectedRun.Data.Params, actualRun.Data.Params)
+			assert.Equal(t, expectedRun.Data.Metrics, actualRun.Data.Metrics)
 		}
 	}
 }

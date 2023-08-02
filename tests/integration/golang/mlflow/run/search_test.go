@@ -28,6 +28,7 @@ type SearchTestSuite struct {
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
 	tagFixtures        *fixtures.TagFixtures
+	paramFixtures      *fixtures.ParamFixtures
 	metricFixtures     *fixtures.MetricFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
 }
@@ -44,6 +45,9 @@ func (s *SearchTestSuite) SetupTest() {
 	tagFixtures, err := fixtures.NewTagFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.tagFixtures = tagFixtures
+	paramFixtures, err := fixtures.NewParamFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.paramFixtures = paramFixtures
 	metricFixtures, err := fixtures.NewMetricFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.metricFixtures = metricFixtures
@@ -100,6 +104,12 @@ func (s *SearchTestSuite) Test_Ok() {
 		LastIter:  1,
 	})
 	assert.Nil(s.T(), err)
+	_, err = s.paramFixtures.CreateParam(context.Background(), &models.Param{
+		Key:   "param1",
+		Value: "value1",
+		RunID: run1.ID,
+	})
+	assert.Nil(s.T(), err)
 
 	run2, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id2",
@@ -136,6 +146,12 @@ func (s *SearchTestSuite) Test_Ok() {
 		LastIter:  1,
 	})
 	assert.Nil(s.T(), err)
+	_, err = s.paramFixtures.CreateParam(context.Background(), &models.Param{
+		Key:   "param2",
+		Value: "value2",
+		RunID: run2.ID,
+	})
+	assert.Nil(s.T(), err)
 
 	run3, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id3",
@@ -170,6 +186,12 @@ func (s *SearchTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run3.ID,
 		LastIter:  1,
+	})
+	assert.Nil(s.T(), err)
+	_, err = s.paramFixtures.CreateParam(context.Background(), &models.Param{
+		Key:   "param3",
+		Value: "value3",
+		RunID: run3.ID,
 	})
 	assert.Nil(s.T(), err)
 
@@ -1345,6 +1367,206 @@ func (s *SearchTestSuite) Test_Ok() {
 							StartTime:      333444444,
 							EndTime:        444555555,
 							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeParamsOperationNotEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `params.param3 != "value1"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeParamsOperationEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `params.param3 = "value3"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeParamsOperationLike1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `params.param3 LIKE "value3"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeParamsOperationILike1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `params.param3 ILIKE "VaLuE3"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeTagsOperationNotEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `tags.mlflow.runName != "TestRunTag1"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeTagsOperationEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `tags.mlflow.runName = "TestRunTag1"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run1.ID,
+							Name:           "TestRunTag1",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "1",
+							Status:         string(models.StatusRunning),
+							StartTime:      123456789,
+							EndTime:        123456789,
+							ArtifactURI:    "artifact_uri1",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeTagsOperationLike1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `tags.mlflow.runName LIKE "TestRunTag1"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run1.ID,
+							Name:           "TestRunTag1",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "1",
+							Status:         string(models.StatusRunning),
+							StartTime:      123456789,
+							EndTime:        123456789,
+							ArtifactURI:    "artifact_uri1",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeTagsOperationILike1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `tags.mlflow.runName ILIKE "TeStRuNTaG1"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run1.ID,
+							Name:           "TestRunTag1",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "1",
+							Status:         string(models.StatusRunning),
+							StartTime:      123456789,
+							EndTime:        123456789,
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},

@@ -44,7 +44,19 @@ var DB *DbInstance = &DbInstance{}
 
 // ConnectDB will establish and return a DbInstance while also caching it in the global
 // var database.DB.
-func ConnectDB(
+func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string,
+) (*DbInstance, error) {
+	db, err := MakeDBInstance(dsn, slowThreshold, poolMax, reset, migrate, artifactRoot)
+	if err != nil {
+		return nil, err
+	}
+	// set the global DB
+	DB = db
+	return DB, nil
+}
+
+// MakeDbInstance will create a DbInstance from the parameters.
+func MakeDBInstance(
 	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string,
 ) (*DbInstance, error) {
 	// local db instance
@@ -172,11 +184,6 @@ func ConnectDB(
 		db.Close()
 		return nil, err
 	}
-
-	// set singleton DBinstance to the method local instance
-	DB = &db
-	// return the method local instance -- needed by import command where
-	// two db instances are active
 	return &db, nil
 }
 

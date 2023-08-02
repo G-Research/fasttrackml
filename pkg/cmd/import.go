@@ -42,9 +42,9 @@ func initDBs() (input, output *database.DbInstance, err error) {
 	databaseSlowThreshold := time.Second * 1
 	databasePoolMax := 20
 	databaseReset := false
-	databaseMigrate := true
+	databaseMigrate := false
 	artifactRoot := "s3://fasttrackml"
-	input, err = database.ConnectDB(
+	input, err = database.MakeDBInstance(
 		viper.GetString("input-database-uri"),
 		databaseSlowThreshold,
 		databasePoolMax,
@@ -56,7 +56,8 @@ func initDBs() (input, output *database.DbInstance, err error) {
 		return input, output, fmt.Errorf("error connecting to input DB: %w", err)
 	}
 
-	output, err = database.ConnectDB(
+	databaseMigrate = true
+	output, err = database.MakeDBInstance(
 		viper.GetString("output-database-uri"),
 		databaseSlowThreshold,
 		databasePoolMax,

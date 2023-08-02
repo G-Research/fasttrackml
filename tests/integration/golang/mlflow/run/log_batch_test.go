@@ -50,21 +50,19 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
-	experiment := &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
-	}
-	_, err := s.experimentFixtures.CreateExperiment(context.Background(), experiment)
+	})
 	assert.Nil(s.T(), err)
 
-	run := &models.Run{
+	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
-	}
-	run, err = s.runFixtures.CreateRun(context.Background(), run)
+	})
 	assert.Nil(s.T(), err)
 
 	tests := []struct {
@@ -103,21 +101,19 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
-	experiment := &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
-	}
-	_, err := s.experimentFixtures.CreateExperiment(context.Background(), experiment)
+	})
 	assert.Nil(s.T(), err)
 
-	run := &models.Run{
+	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
-	}
-	run, err = s.runFixtures.CreateRun(context.Background(), run)
+	})
 	assert.Nil(s.T(), err)
 
 	tests := []struct {
@@ -172,21 +168,19 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
-	experiment := &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
-	}
-	_, err := s.experimentFixtures.CreateExperiment(context.Background(), experiment)
+	})
 	assert.Nil(s.T(), err)
 
-	run := &models.Run{
+	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
-	}
-	run, err = s.runFixtures.CreateRun(context.Background(), run)
+	})
 	assert.Nil(s.T(), err)
 
 	tests := []struct {
@@ -310,21 +304,19 @@ func (s *LogBatchTestSuite) Test_Error() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 
-	experiment := &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
-	}
-	_, err := s.experimentFixtures.CreateExperiment(context.Background(), experiment)
+	})
 	assert.Nil(s.T(), err)
 
-	run := &models.Run{
+	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
-	}
-	run, err = s.runFixtures.CreateRun(context.Background(), run)
+	})
 	assert.Nil(s.T(), err)
 
 	testData := []struct {

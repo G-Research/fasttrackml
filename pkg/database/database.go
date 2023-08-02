@@ -94,12 +94,10 @@ func ConnectDB(
 				return conn.RegisterFunc("regexp", func(re, s string) bool {
 					result, ok := cache.Get(re)
 					if !ok {
-						complied, err := regexp.Compile(re)
+						result, err = regexp.Compile(re)
 						if err != nil {
 							return false
 						}
-						cache.Add(re, complied)
-						return complied.MatchString(s)
 					}
 					return result.MatchString(s)
 				}, true)

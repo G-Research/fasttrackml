@@ -593,42 +593,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 				func(attr string) (any, error) {
 					switch attr {
 					case "match":
-						return callable(
-							func(args []ast.Expr) (any, error) {
-								if len(args) != 2 {
-									return nil, errors.New("re.match function support exactly 2 arguments")
-								}
-
-								parsedNode, err := pq.parseNode(args[0])
-								if err != nil {
-									return nil, err
-								}
-								str, ok := parsedNode.(string)
-								if !ok {
-									return nil, errors.New("first argument type for re.match function has to be s string")
-								}
-
-								parsedNode, err = pq.parseNode(args[1])
-								if err != nil {
-									return nil, err
-								}
-
-								column, ok := parsedNode.(clause.Column)
-								if !ok {
-									return nil, errors.New(
-										"second argument type for re.match function has to be clause.Column",
-									)
-								}
-
-								return Regexp{
-									Eq: clause.Eq{
-										Column: column,
-										Value:  fmt.Sprintf("^%s", str),
-									},
-									Dialector: pq.qp.Dialector,
-								}, nil
-							},
-						), nil
+						fallthrough
 					case "search":
 						return callable(
 							func(args []ast.Expr) (any, error) {
@@ -654,6 +619,11 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 									return nil, errors.New(
 										"second argument type for re.match function has to be clause.Column",
 									)
+								}
+
+								// handle difference between `match` and `search`.
+								if attr == "match" {
+									str = fmt.Sprintf("^%s", str)
 								}
 
 								return Regexp{

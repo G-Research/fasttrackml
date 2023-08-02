@@ -39,12 +39,16 @@ func (db *DbInstance) DSN() string {
 	return db.dsn
 }
 
+// DB is a global db instance.
 var DB *DbInstance = &DbInstance{}
 
+// ConnectDB will establish a DbInstance and cache it in the global var database.DB
 func ConnectDB(
 	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string,
 ) (*DbInstance, error) {
-	DB.dsn = dsn
+	// local db instance
+	db := DbInstance{}
+	db.dsn = dsn
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
 	u, err := url.Parse(dsn)
@@ -79,7 +83,7 @@ func ConnectDB(
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}
-		DB.closers = append(DB.closers, s)
+		db.closers = append(db.closers, s)
 		s.SetMaxIdleConns(1)
 		s.SetMaxOpenConns(1)
 		s.SetConnMaxIdleTime(0)
@@ -92,10 +96,10 @@ func ConnectDB(
 		dbURL.RawQuery = q.Encode()
 		r, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
-			DB.Close()
+			db.Close()
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}
-		DB.closers = append(DB.closers, r)
+		db.closers = append(db.closers, r)
 		replicaConn = sqlite.Dialector{
 			Conn: r,
 		}
@@ -115,7 +119,7 @@ func ConnectDB(
 	if log.GetLevel() == log.DebugLevel {
 		dbLogLevel = logger.Info
 	}
-	DB.DB, err = gorm.Open(sourceConn, &gorm.Config{
+	db.DB, err = gorm.Open(sourceConn, &gorm.Config{
 		Logger: logger.New(
 			glog.New(
 				log.StandardLogger().WriterLevel(log.WarnLevel),
@@ -130,12 +134,12 @@ func ConnectDB(
 		),
 	})
 	if err != nil {
-		DB.Close()
+		db.Close()
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
 	if replicaConn != nil {
-		DB.Use(
+		db.Use(
 			dbresolver.Register(dbresolver.Config{
 				Replicas: []gorm.Dialector{
 					replicaConn,
@@ -145,30 +149,34 @@ func ConnectDB(
 	}
 
 	if u.Scheme != "sqlite" {
-		sqlDB, _ := DB.DB.DB()
+		sqlDB, _ := db.DB.DB()
 		sqlDB.SetConnMaxIdleTime(time.Minute)
 		sqlDB.SetMaxIdleConns(poolMax)
 		sqlDB.SetMaxOpenConns(poolMax)
 
 		if reset {
-			if err := resetDB(DB); err != nil {
-				DB.Close()
+			if err := resetDB(&db); err != nil {
+				db.Close()
 				return nil, err
 			}
 		}
 	}
 
-	if err := checkAndMigrateDB(DB, migrate); err != nil {
-		DB.Close()
+	if err := checkAndMigrateDB(&db, migrate); err != nil {
+		db.Close()
 		return nil, err
 	}
 
-	if err := createDefaultExperiment(DB, artifactRoot); err != nil {
-		DB.Close()
+	if err := createDefaultExperiment(&db, artifactRoot); err != nil {
+		db.Close()
 		return nil, err
 	}
 
-	return DB, nil
+	// set singleton DBinstance to the method local instance
+	DB = &db
+	// return the method local instance -- needed by import command where
+	// two db instances are active
+	return &db, nil
 }
 
 func resetDB(db *DbInstance) error {

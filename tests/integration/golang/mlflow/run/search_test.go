@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -79,7 +80,7 @@ func (s *SearchTestSuite) Test_Ok() {
 			Valid: true,
 		},
 		ExperimentID:   *experiment.ID,
-		ArtifactURI:    "artifact_uri",
+		ArtifactURI:    "artifact_uri1",
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
@@ -87,6 +88,16 @@ func (s *SearchTestSuite) Test_Ok() {
 		Key:   "mlflow.runName",
 		Value: "TestRunTag1",
 		RunID: run1.ID,
+	})
+	assert.Nil(s.T(), err)
+	_, err = s.metricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+		Key:       "run1",
+		Value:     1.1,
+		Timestamp: 1234567890,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run1.ID,
+		LastIter:  1,
 	})
 	assert.Nil(s.T(), err)
 
@@ -105,7 +116,7 @@ func (s *SearchTestSuite) Test_Ok() {
 			Valid: true,
 		},
 		ExperimentID:   *experiment.ID,
-		ArtifactURI:    "artifact_uri",
+		ArtifactURI:    "artifact_uri2",
 		LifecycleStage: models.LifecycleStageDeleted,
 	})
 	assert.Nil(s.T(), err)
@@ -113,6 +124,16 @@ func (s *SearchTestSuite) Test_Ok() {
 		Key:   "mlflow.runName",
 		Value: "TestRunTag2",
 		RunID: run2.ID,
+	})
+	assert.Nil(s.T(), err)
+	_, err = s.metricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+		Key:       "run2",
+		Value:     2.1,
+		Timestamp: 1234567890,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run2.ID,
+		LastIter:  1,
 	})
 	assert.Nil(s.T(), err)
 
@@ -131,7 +152,7 @@ func (s *SearchTestSuite) Test_Ok() {
 			Valid: true,
 		},
 		ExperimentID:   *experiment.ID,
-		ArtifactURI:    "artifact_uri",
+		ArtifactURI:    "artifact_uri3",
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
@@ -139,6 +160,16 @@ func (s *SearchTestSuite) Test_Ok() {
 		Key:   "mlflow.runName",
 		Value: "TestRunTag3",
 		RunID: run3.ID,
+	})
+	assert.Nil(s.T(), err)
+	_, err = s.metricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+		Key:       "run3",
+		Value:     3.1,
+		Timestamp: 1234567890,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run3.ID,
+		LastIter:  1,
 	})
 	assert.Nil(s.T(), err)
 
@@ -165,7 +196,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -178,7 +209,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusScheduled),
 							StartTime:      111111111,
 							EndTime:        222222222,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri2",
 							LifecycleStage: string(models.LifecycleStageDeleted),
 						},
 					},
@@ -191,7 +222,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -216,7 +247,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -229,7 +260,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -254,7 +285,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusScheduled),
 							StartTime:      111111111,
 							EndTime:        222222222,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri2",
 							LifecycleStage: string(models.LifecycleStageDeleted),
 						},
 					},
@@ -279,7 +310,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -304,7 +335,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -317,7 +348,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -342,7 +373,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -367,7 +398,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -392,7 +423,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -417,7 +448,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -430,7 +461,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -455,7 +486,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -480,7 +511,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -493,7 +524,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -518,7 +549,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -543,7 +574,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -568,7 +599,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -593,7 +624,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -606,7 +637,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -631,7 +662,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -656,7 +687,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -681,7 +712,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -706,7 +737,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -739,7 +770,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -752,7 +783,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -777,7 +808,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -790,7 +821,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -815,7 +846,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      123456789,
 							EndTime:        123456789,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri1",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -828,7 +859,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -853,7 +884,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -878,7 +909,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -903,7 +934,7 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},
@@ -928,7 +959,392 @@ func (s *SearchTestSuite) Test_Ok() {
 							Status:         string(models.StatusRunning),
 							StartTime:      333444444,
 							EndTime:        444555555,
-							ArtifactURI:    "artifact_uri",
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeArtifactURIOperationNotEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `attributes.artifact_uri != "artifact_uri1"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeArtifactURIOperationEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `attributes.artifact_uri = "artifact_uri3"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeArtifactURIOperationLike1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `attributes.artifact_uri LIKE "artifact_uri3"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeArtifactURIOperationILike1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `attributes.artifact_uri ILIKE "ArTiFaCt_UrI3"`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeRunIDOperationNotEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        fmt.Sprintf(`attributes.run_id != "%s"`, run1.ID),
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeRunIDOperationEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        fmt.Sprintf(`attributes.run_id = "%s"`, run3.ID),
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeRunIDOperationLike1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        fmt.Sprintf(`attributes.run_id LIKE "%s"`, run3.ID),
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeRunIDOperationILike1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        fmt.Sprintf(`attributes.run_id ILIKE "%s"`, strings.ToUpper(run3.ID)),
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeRunIDOperationIN1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        fmt.Sprintf(`attributes.run_id IN ('%s')`, run3.ID),
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeRunIDOperationIN1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        fmt.Sprintf(`attributes.run_id NOT IN ('%s')`, run1.ID),
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeMetricsOperationGrater1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `metrics.run3 > 1.1`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeMetricsOperationGraterOrEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `metrics.run3 >= 1.1`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeMetricsOperationNotEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `metrics.run3 != 1.1`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeMetricsOperationEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `metrics.run3 = 3.1`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
+							LifecycleStage: string(models.LifecycleStageActive),
+						},
+					},
+				},
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeMetricsOperationLess0RunsShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `metrics.run3 < 3.1`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				NextPageToken: "",
+			},
+		},
+		{
+			name: "SearchWithAttributeMetricsOperationLessOrEqual1RunShouldBeReturned",
+			request: &request.SearchRunsRequest{
+				Filter:        `metrics.run3 <= 3.1`,
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			response: &response.SearchRunsResponse{
+				Runs: []*response.RunPartialResponse{
+					{
+						Info: response.RunInfoPartialResponse{
+							ID:             run3.ID,
+							Name:           "TestRunTag3",
+							ExperimentID:   fmt.Sprintf("%d", *experiment.ID),
+							UserID:         "3",
+							Status:         string(models.StatusRunning),
+							StartTime:      333444444,
+							EndTime:        444555555,
+							ArtifactURI:    "artifact_uri3",
 							LifecycleStage: string(models.LifecycleStageActive),
 						},
 					},

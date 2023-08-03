@@ -68,15 +68,16 @@ func importTable[T any](sourceDB, destDB *gorm.DB, dryRun bool, model T) error {
 	var destModels []T
 	for _, item := range sourceData {
 
-		// Check for a collision before attempting to insert
-		// var existingRecord T
-		// if err := destDB.First(&existingRecord, item.Finder()).Error; err != nil {
-		// No collision, add to the slice for bulk insert
-		destModels = append(destModels, item)
-		// } else {
-		// 	// Handle the collision with a warning (print to console in this example)
-		// 	fmt.Printf("Warning: Skipping record (type/id) '%T/%s', a record with the same already exists.\n", item, )
-		// }
+		found, err := findCollision(destDB, item)
+		if err != nil {
+			return err
+		}
+		if  found == true {
+		 	// Handle the collision with a warning (print to console in this example)
+		 	fmt.Printf("Warning: Skipping record (type/values) '%T/%v', a record with the same ID already exists.\n", item, item )
+		} else {
+			destModels = append(destModels, item)
+		}
 	}
 
 	// Perform bulk insert of non-colliding records
@@ -84,5 +85,87 @@ func importTable[T any](sourceDB, destDB *gorm.DB, dryRun bool, model T) error {
 		destDB.Clauses(clause.OnConflict{DoNothing: true}).CreateInBatches(destModels, len(destModels))
 	}
 	return nil
+}
 
+// findCollision will return true when the sourceItem appears to already exist in the
+// destination DB
+func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
+	switch sourceItem.(type) {
+	case Experiment:
+		typedItem := sourceItem.(Experiment)
+		c := int64(0)
+		tx := destDB.Model(typedItem).Where(
+			"name = ?",
+			typedItem.Name,
+		).Count(&c)
+		return c > 0, tx.Error
+	case ExperimentTag:
+		typedItem := sourceItem.(ExperimentTag)
+		c := int64(0)
+		tx := destDB.Model(typedItem).Where(
+			"experiment_id = ? AND key = ?",
+			typedItem.ExperimentID,
+			typedItem.Key,
+		).Count(&c)
+		return c > 0, tx.Error
+	case Run:
+		typedItem := sourceItem.(Run)
+		c := int64(0)
+		tx := destDB.Model(typedItem).Where("run_uuid = ?",
+			typedItem.ID,
+		).Count(&c)
+		return c > 0, tx.Error
+	case Param:
+		typedItem := sourceItem.(Param)
+		c := int64(0)
+		tx := destDB.Model(typedItem).Where(
+			"run_uuid = ? AND key = ?",
+			typedItem.RunID,
+			typedItem.Key,
+		).Count(&c)
+		return c > 0, tx.Error
+	case Tag:
+		typedItem := sourceItem.(Tag)
+		c := int64(0)
+		tx := destDB.Model(typedItem).Where(
+			"run_uuid = ? AND key = ?",
+			typedItem.RunID,
+			typedItem.Key,
+		).Count(&c)
+		return c > 0, tx.Error
+	case Metric:
+		typedItem := sourceItem.(Metric)
+		c := int64(0)
+		tx := destDB.Model(typedItem).Where(
+			"run_uuid = ? AND key = ?",
+			typedItem.RunID,
+			typedItem.Key,
+		).Count(&c)
+		return c > 0, tx.Error
+	case LatestMetric:
+		typedItem := sourceItem.(LatestMetric)
+		c := int64(0)
+		tx := destDB.Model(typedItem).Where(
+			"run_uuid = ? AND key = ?",
+			typedItem.RunID,
+			typedItem.Key,
+		).Count(&c)
+		return c > 0, tx.Error
+	case Dashboard:
+		typedItem := sourceItem.(Dashboard)
+		c := int64(0)
+		tx := destDB.Model(typedItem).Where(
+			"name = ? AND app_id = ?",
+			typedItem.Name,
+			typedItem.AppID,
+		).Count(&c)
+		return c > 0, tx.Error
+	case App:
+		typedItem := sourceItem.(App)
+		c := int64(0)
+		tx := destDB.Model(typedItem).Where("id = ? ", typedItem.ID).Count(&c)
+		return c > 0, tx.Error
+	default:
+		return false, eris.New("Could not determine source item type")
+	}
 }

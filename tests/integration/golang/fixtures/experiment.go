@@ -2,6 +2,7 @@ package fixtures
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/rotisserie/eris"
@@ -44,6 +45,40 @@ func (f ExperimentFixtures) CreateExperiment(
 		return nil, eris.Wrap(err, "error creating test experiment")
 	}
 	return experiment, nil
+}
+
+// CreateExperiments creates some num new test experiments.
+func (f ExperimentFixtures) CreateExperiments(
+	ctx context.Context, num int,
+) ([]*models.Experiment, error) {
+	var experiments []*models.Experiment
+	for i := 0; i < num; i++ {
+		experiment := &models.Experiment{
+			Name: "Test Experiment",
+			Tags: []models.ExperimentTag{
+				{
+					Key:   "key1",
+					Value: "value1",
+				},
+			},
+			CreationTime: sql.NullInt64{
+				Int64: time.Now().UTC().UnixMilli(),
+				Valid: true,
+			},
+			LastUpdateTime: sql.NullInt64{
+				Int64: time.Now().UTC().UnixMilli(),
+				Valid: true,
+			},
+			LifecycleStage:   models.LifecycleStageActive,
+			ArtifactLocation: "/artifact/location",
+		}
+		experiment, err := f.CreateExperiment(ctx, experiment)
+		if err != nil {
+			return nil, err
+		}
+		experiments = append(experiments, experiment)
+	}
+	return experiments, nil
 }
 
 // GetTestExperiments fetches all experiments.

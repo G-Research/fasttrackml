@@ -1,12 +1,24 @@
 package helpers
 
 import (
+	"time"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 )
+
+// TransformRunsToActivityMap transform a slice of runs into a map of experiments activity to match the GetExperimentsActivity endpoint response.
+func TransformRunsToActivityMap(runs []*models.Run) map[string]int {
+	activity := map[string]int{}
+	for _, r := range runs {
+		key := time.UnixMilli(r.StartTime.Int64).Format("2006-01-02T15:00:00")
+		activity[key] += 1
+	}
+	return activity
+}
 
 // CompareExpectedSearchRunsResponseWithActualSearchRunsResponse compares
 // expected response object with the response from POST /runs/search` endpoint.

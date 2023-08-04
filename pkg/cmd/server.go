@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"regexp"
 	"strings"
 	"time"
 
@@ -21,6 +20,7 @@ import (
 	"github.com/spf13/viper"
 
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
+	"github.com/G-Research/fasttrackml/pkg/api/middleware/namespace"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
@@ -192,20 +192,7 @@ func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
-
-	server.Use(func(c *fiber.Ctx) error {
-		log.Debugf("Checking namespace for path: %s", c.Path())
-		nsUrl := regexp.MustCompile(`^/ns/([^/]+)/`)
-		if matches := nsUrl.FindStringSubmatch(c.Path()); matches != nil {
-			ns := strings.Clone(matches[1])
-			c.Locals("namespace", ns)
-			c.Path(strings.TrimPrefix(c.Path(), fmt.Sprintf("/ns/%s", ns)))
-			log.Debugf("Namespace: %s", c.Locals("namespace"))
-		} else {
-			c.Locals("namespace", "default")
-		}
-		return c.Next()
-	})
+	server.Use(namespace.New())
 
 	server.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")

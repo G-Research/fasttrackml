@@ -66,7 +66,7 @@ func importTable[T any](sourceDB, destDB *gorm.DB, dryRun bool, model T) error {
 		if err != nil {
 			return err
 		}
-		if found == true {
+		if found {
 			// Handle the collision with a warning
 			log.Infof(
 				`Skipping record (type/values) '%T/%v', already present in dest`,
@@ -85,9 +85,8 @@ func importTable[T any](sourceDB, destDB *gorm.DB, dryRun bool, model T) error {
 // findCollision will return true when the sourceItem appears to already exist in the
 // destination DB
 func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
-	switch sourceItem.(type) {
+	switch typedItem := sourceItem.(type) {
 	case Experiment:
-		typedItem := sourceItem.(Experiment)
 		c := int64(0)
 		tx := destDB.Model(typedItem).Where(
 			"name = ?",
@@ -95,7 +94,6 @@ func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
 		).Count(&c)
 		return c > 0, tx.Error
 	case ExperimentTag:
-		typedItem := sourceItem.(ExperimentTag)
 		c := int64(0)
 		tx := destDB.Model(typedItem).Where(
 			"experiment_id = ? AND key = ?",
@@ -104,7 +102,6 @@ func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
 		).Count(&c)
 		return c > 0, tx.Error
 	case Run:
-		typedItem := sourceItem.(Run)
 		c := int64(0)
 		tx := destDB.Model(typedItem).Where(
 			"run_uuid = ?",
@@ -112,7 +109,6 @@ func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
 		).Count(&c)
 		return c > 0, tx.Error
 	case Param:
-		typedItem := sourceItem.(Param)
 		c := int64(0)
 		tx := destDB.Model(typedItem).Where(
 			"run_uuid = ? AND key = ?",
@@ -121,7 +117,6 @@ func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
 		).Count(&c)
 		return c > 0, tx.Error
 	case Tag:
-		typedItem := sourceItem.(Tag)
 		c := int64(0)
 		tx := destDB.Model(typedItem).Where(
 			"run_uuid = ? AND key = ?",
@@ -130,7 +125,6 @@ func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
 		).Count(&c)
 		return c > 0, tx.Error
 	case Metric:
-		typedItem := sourceItem.(Metric)
 		c := int64(0)
 		tx := destDB.Model(typedItem).Where(
 			"run_uuid = ? AND key = ?",
@@ -139,7 +133,6 @@ func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
 		).Count(&c)
 		return c > 0, tx.Error
 	case LatestMetric:
-		typedItem := sourceItem.(LatestMetric)
 		c := int64(0)
 		tx := destDB.Model(typedItem).Where(
 			"run_uuid = ? AND key = ?",
@@ -148,7 +141,6 @@ func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
 		).Count(&c)
 		return c > 0, tx.Error
 	case Dashboard:
-		typedItem := sourceItem.(Dashboard)
 		c := int64(0)
 		tx := destDB.Model(typedItem).Where(
 			"name = ? AND app_id = ?",
@@ -157,7 +149,6 @@ func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
 		).Count(&c)
 		return c > 0, tx.Error
 	case App:
-		typedItem := sourceItem.(App)
 		c := int64(0)
 		tx := destDB.Model(typedItem).Where("id = ? ", typedItem.ID).Count(&c)
 		return c > 0, tx.Error

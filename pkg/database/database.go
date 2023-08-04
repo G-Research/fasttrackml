@@ -101,26 +101,35 @@ func MakeDBInstance(
 			}
 		}
 
-		sql.Register(SQLiteCustomDriverName, &sqlite3.SQLiteDriver{
-			ConnectHook: func(conn *sqlite3.SQLiteConn) error {
-				// create LRU cache to cache regexp statements and results.
-				cache, err := lru.New[string, *regexp.Regexp](1000)
-				if err != nil {
-					return eris.Wrap(err, "error creating lru cache to cache regexp statements")
-				}
-				return conn.RegisterFunc("regexp", func(re, s string) bool {
-					result, ok := cache.Get(re)
-					if !ok {
-						result, err = regexp.Compile(re)
-						if err != nil {
-							return false
-						}
-						cache.Add(re, result)
+		needToRegister := true
+		for _, driver := range sql.Drivers() {
+			if driver == SQLiteCustomDriverName {
+				needToRegister = false
+			}
+		}
+
+		if needToRegister {
+			sql.Register(SQLiteCustomDriverName, &sqlite3.SQLiteDriver{
+				ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+					// create LRU cache to cache regexp statements and results.
+					cache, err := lru.New[string, *regexp.Regexp](1000)
+					if err != nil {
+						return eris.Wrap(err, "error creating lru cache to cache regexp statements")
 					}
-					return result.MatchString(s)
-				}, true)
-			},
-		})
+					return conn.RegisterFunc("regexp", func(re, s string) bool {
+						result, ok := cache.Get(re)
+						if !ok {
+							result, err = regexp.Compile(re)
+							if err != nil {
+								return false
+							}
+							cache.Add(re, result)
+						}
+						return result.MatchString(s)
+					}, true)
+				},
+			})
+		}
 
 		s, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {

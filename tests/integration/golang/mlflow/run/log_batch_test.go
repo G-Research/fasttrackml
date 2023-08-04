@@ -216,6 +216,35 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 			},
 		},
 		{
+			name: "LogMany",
+			request: &request.LogBatchRequest{
+				RunID: s.run.ID,
+				Metrics: func() []request.MetricPartialRequest {
+					metrics := make([]request.MetricPartialRequest, 100*1000)
+					for k := 0; k < 100; k++ {
+						key := fmt.Sprintf("many%d", k)
+						for i := 0; i < 1000; i++ {
+							metrics[k*1000+i] = request.MetricPartialRequest{
+								Key:       key,
+								Value:     float64(i) + 0.1,
+								Timestamp: 1687325991,
+								Step:      1,
+							}
+						}
+					}
+					return metrics
+				}(),
+			},
+			latestMetricIteration: func() map[string]int64 {
+				metrics := make(map[string]int64, 100)
+				for k := 0; k < 100; k++ {
+					key := fmt.Sprintf("many%d", k)
+					metrics[key] = 1000
+				}
+				return metrics
+			}(),
+		},
+		{
 			name: "LogDuplicate",
 			request: &request.LogBatchRequest{
 				RunID: s.run.ID,

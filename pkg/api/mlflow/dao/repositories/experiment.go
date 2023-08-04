@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/G-Research/fasttrackml/pkg/api/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
@@ -43,6 +44,11 @@ func NewExperimentRepository(db *gorm.DB) *ExperimentRepository {
 
 // Create creates new models.Experiment entity.
 func (r ExperimentRepository) Create(ctx context.Context, experiment *models.Experiment) error {
+	var err error
+	experiment.NamespaceID, err = namespace.GetIDFromContext(r.db, ctx)
+	if err != nil {
+		return eris.Wrap(err, "error getting namespace id")
+	}
 	if err := r.db.Create(&experiment).Error; err != nil {
 		return eris.Wrap(err, "error creating experiment entity")
 	}
@@ -74,6 +80,9 @@ func (r ExperimentRepository) GetByName(ctx context.Context, name string) (*mode
 	var experiment models.Experiment
 	if err := r.db.WithContext(ctx).Preload(
 		"Tags",
+	).Joins(
+		"RIGHT JOIN namespaces ON namespaces.id = experiments.namespace_id AND namespaces.code = ?",
+		namespace.GetCodeFromContext(ctx),
 	).Where(
 		models.Experiment{Name: name},
 	).First(&experiment).Error; err != nil {

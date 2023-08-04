@@ -1,11 +1,9 @@
 package database
 
 import (
-	"fmt"
-
 	"github.com/rotisserie/eris"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // Import will copy the contents of input db to output db.
@@ -47,7 +45,6 @@ func Import(input, output *DbInstance, dryRun bool) error {
 		return eris.Wrapf(err, "error importing table data")
 	}
 
-	fmt.Println("Data transfer complete")
 	return nil
 }
 
@@ -55,34 +52,36 @@ func Import(input, output *DbInstance, dryRun bool) error {
 func importTable[T any](sourceDB, destDB *gorm.DB, dryRun bool, model T) error {
 
 	// Query data from the source database
-	var sourceData []T
-	fmt.Printf("Importing %T\n", sourceData)
-	tx := sourceDB.Model(&model).Find(&sourceData)
-	if tx.Error != nil {
-		return tx.Error
+	log.Infof("Importing %T", model)
+	rows, err := sourceDB.Model(&model).Rows()
+	if err != nil {
+		return err
 	}
+	defer rows.Close()
 
-	fmt.Printf("Transferring %d records (dry run? %v)\n\n", len(sourceData), dryRun)
+	log.Infof("Transferring records (dry run? %v)", dryRun)
 
-	// Transfer data to the destination database in bulk with collision handling
-	var destModels []T
-	for _, item := range sourceData {
-
+	// Stream data to the destination database in bulk with collision handling
+	for rows.Next() {
+		var item T
+		sourceDB.ScanRows(rows, &item)
 		found, err := findCollision(destDB, item)
 		if err != nil {
 			return err
 		}
-		if  found == true {
-		 	// Handle the collision with a warning (print to console in this example)
-		 	fmt.Printf("Warning: Skipping record (type/values) '%T/%v', a record with the same ID already exists.\n", item, item )
-		} else {
-			destModels = append(destModels, item)
-		}
-	}
+		if found == true {
+			// Handle the collision with a warning
+			log.Infof(
+				`Skipping record (type/values) '%T/%v', already present in dest`,
+				item,
+				item,
+			)
 
-	// Perform bulk insert of non-colliding records
-	if len(destModels) > 0 && !dryRun {
-		destDB.Clauses(clause.OnConflict{DoNothing: true}).CreateInBatches(destModels, len(destModels))
+		} else {
+			if !dryRun {
+				destDB.Create(&item)
+			}
+		}
 	}
 	return nil
 }

@@ -110,7 +110,8 @@ func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
 	case Run:
 		typedItem := sourceItem.(Run)
 		c := int64(0)
-		tx := destDB.Model(typedItem).Where("run_uuid = ?",
+		tx := destDB.Model(typedItem).Where(
+			"run_uuid = ?",
 			typedItem.ID,
 		).Count(&c)
 		return c > 0, tx.Error

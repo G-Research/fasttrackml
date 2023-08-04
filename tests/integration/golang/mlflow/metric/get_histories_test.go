@@ -8,15 +8,14 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -127,7 +126,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 				tt.request,
 			)
 			assert.Nil(s.T(), err)
-			//TODO:DSuhinin - data is encoded so we need a bit more smart way to check the data.
+			// TODO:DSuhinin - data is encoded so we need a bit more smart way to check the data.
 			// right now we can go with this simple approach.
 			assert.NotNil(s.T(), data)
 		})

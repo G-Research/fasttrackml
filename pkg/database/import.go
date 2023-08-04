@@ -8,10 +8,8 @@ import (
 
 // Import will copy the contents of input db to output db.
 func Import(input, output *DbInstance, dryRun bool) error {
-
 	in := input.DB
 	if err := output.DB.Transaction(func(out *gorm.DB) error {
-
 		if err := importTable(in, out, dryRun, Experiment{}); err != nil {
 			return err
 		}
@@ -50,7 +48,6 @@ func Import(input, output *DbInstance, dryRun bool) error {
 
 // importTable will copy the contents of one table (model) from sourceDB to destDB.
 func importTable[T any](sourceDB, destDB *gorm.DB, dryRun bool, model T) error {
-
 	// Query data from the source database
 	log.Infof("Importing %T", model)
 	rows, err := sourceDB.Model(&model).Rows()
@@ -76,7 +73,6 @@ func importTable[T any](sourceDB, destDB *gorm.DB, dryRun bool, model T) error {
 				item,
 				item,
 			)
-
 		} else {
 			if !dryRun {
 				destDB.Create(&item)

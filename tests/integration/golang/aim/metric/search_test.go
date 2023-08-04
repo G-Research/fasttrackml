@@ -100,6 +100,14 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			name:  "TestEndWithFunction",
 			query: `q=(metric.name=='key1' and run.name.endswith("run"))&p=500&report_progress=false`,
 		},
+		{
+			name:  "TestRegexpMatchFunction",
+			query: `q=(metric.name=='key1' and re.match("chill", run.name))&p=500&report_progress=false`,
+		},
+		{
+			name:  "TestRegexpSearchFunction",
+			query: `q=(metric.name=='key1' and re.search("run", run.name))&p=500&report_progress=false`,
+		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {

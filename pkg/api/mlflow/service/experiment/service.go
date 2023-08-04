@@ -14,6 +14,7 @@ import (
 
 	"gorm.io/gorm/clause"
 
+	"github.com/G-Research/fasttrackml/pkg/api/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
@@ -237,6 +238,11 @@ func (s Service) SearchExperiments(
 		return nil, 0, 0, err
 	}
 
+	tx := database.DB.Joins(
+		"RIGHT JOIN namespaces ON namespaces.id = experiments.namespace_id AND namespaces.code = ?",
+		namespace.GetCodeFromContext(ctx),
+	)
+
 	// ViewType
 	var lifecyleStages []database.LifecycleStage
 	switch req.ViewType {
@@ -254,7 +260,7 @@ func (s Service) SearchExperiments(
 			database.LifecycleStageDeleted,
 		}
 	}
-	tx := database.DB.Where("lifecycle_stage IN ?", lifecyleStages)
+	tx.Where("lifecycle_stage IN ?", lifecyleStages)
 
 	// MaxResults
 	limit := int(req.MaxResults)

@@ -35,6 +35,21 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/version"
 )
 
+type Config struct {
+	DatabaseURI           string
+	ListenAddress         string
+	ArtifactRoot          string
+	AuthUsername          string
+	AuthPassword          string
+	DatabasePoolMax       int
+	DatabaseSlowThreshold time.Duration
+	DatabaseMigrate       bool
+	DatabaseReset         bool
+	DevMode               bool
+}
+
+var config Config
+
 var ServerCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Starts the tracking server",
@@ -42,6 +57,18 @@ var ServerCmd = &cobra.Command{
 }
 
 func serverCmd(cmd *cobra.Command, args []string) error {
+	// Access the viper instance to read the flag values
+	config.DatabaseURI = viper.GetString("database-uri")
+	config.ListenAddress = viper.GetString("listen-address")
+	config.ArtifactRoot = viper.GetString("artifact-root")
+	config.AuthUsername = viper.GetString("auth-username")
+	config.AuthPassword = viper.GetString("auth-password")
+	config.DatabasePoolMax = viper.GetInt("database-pool-max")
+	config.DatabaseSlowThreshold = viper.GetDuration("database-slow-threshold")
+	config.DatabaseMigrate = viper.GetBool("database-migrate")
+	config.DatabaseReset = viper.GetBool("database-reset")
+	config.DevMode = viper.GetBool("dev-mode")
+
 	// 1. init database connection.
 	db, err := initDB()
 	if err != nil {
@@ -111,12 +138,12 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 // initDB init DB connection.
 func initDB() (*database.DbInstance, error) {
 	db, err := database.ConnectDB(
-		viper.GetString("database-uri"),
-		viper.GetDuration("database-slow-threshold"),
-		viper.GetInt("database-pool-max"),
-		viper.GetBool("database-reset"),
-		viper.GetBool("database-migrate"),
-		viper.GetString("artifact-root"),
+		config.DatabaseURI,
+		config.DatabaseSlowThreshold,
+		config.DatabasePoolMax,
+		config.DatabaseReset,
+		config.DatabaseMigrate,
+		config.ArtifactRoot,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to DB: %w", err)

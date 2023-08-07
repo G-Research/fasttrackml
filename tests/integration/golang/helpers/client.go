@@ -65,7 +65,12 @@ func (c HttpClient) DoDeleteRequest(uri string, response interface{}) error {
 }
 
 // DoStreamRequest do stream request.
-func (c HttpClient) DoStreamRequest(method, uri string) ([]byte, error) {
+func (c HttpClient) DoStreamRequest(method, uri string, request interface{}) ([]byte, error) {
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, eris.Wrap(err, "error marshaling request")
+	}
+
 	// 1. create actual request object.
 	req, err := http.NewRequestWithContext(
 		context.Background(),
@@ -80,25 +85,26 @@ func (c HttpClient) DoStreamRequest(method, uri string) ([]byte, error) {
 			[]string{},
 			[]interface{}{},
 		),
-		nil,
+		bytes.NewBuffer(data),
 	)
 	if err != nil {
 		return nil, eris.Wrap(err, "error creating request")
 	}
+	req.Header.Set("Content-Type", "application/json")
 
-	// 3. send request data.
+	// 2. send request data.
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, eris.Wrap(err, "error doing request")
 	}
 
-	data, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
 		return nil, eris.Wrap(err, "error reading streaming response")
 	}
 
-	return data, nil
+	return body, nil
 }
 
 // doRequest do request of any http method

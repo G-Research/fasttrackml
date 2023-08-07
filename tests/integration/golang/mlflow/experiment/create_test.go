@@ -19,8 +19,8 @@ import (
 
 type CreateExperimentTestSuite struct {
 	suite.Suite
-	client   *helpers.HttpClient
-	fixtures *fixtures.ExperimentFixtures
+	client             *helpers.HttpClient
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestCreateExperimentTestSuite(t *testing.T) {
@@ -29,14 +29,14 @@ func TestCreateExperimentTestSuite(t *testing.T) {
 
 func (s *CreateExperimentTestSuite) SetupTest() {
 	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
-	s.fixtures = fixtures
+	s.experimentFixtures = experimentFixtures
 }
 
 func (s *CreateExperimentTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
 	req := request.CreateExperimentRequest{

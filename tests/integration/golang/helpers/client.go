@@ -45,7 +45,7 @@ func (c HttpClient) DoPostRequest(uri string, request interface{}, response inte
 	return c.doRequest(http.MethodPost, uri, response, bytes.NewBuffer(data))
 }
 
-// DoPostRequest do PUT request.
+// DoPutRequest do PUT request.
 func (c HttpClient) DoPutRequest(uri string, request interface{}, response interface{}) error {
 	data, err := json.Marshal(request)
 	if err != nil {

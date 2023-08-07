@@ -323,9 +323,29 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 		case string:
 			switch right := right.(type) {
 			case clause.Column:
-				exprs[i], err = newSqlComparison(op, right, left)
-				if err != nil {
-					return nil, err
+				switch op {
+				case ast.In:
+					return clause.Like{
+						Value: fmt.Sprintf("%%%s%%", left),
+						Column: clause.Column{
+							Table: right.Table,
+							Name:  right.Name,
+						},
+					}, nil
+				case ast.NotIn:
+					return clause.NotConditions{
+						Exprs: []clause.Expression{
+							clause.Like{
+								Value: fmt.Sprintf("%%%s%%", left),
+								Column: clause.Column{
+									Table: right.Table,
+									Name:  right.Name,
+								},
+							},
+						},
+					}, nil
+				default:
+					return nil, fmt.Errorf("unsupported comparison operation %s", op)
 				}
 			default:
 				return nil, fmt.Errorf("unsupported comparison %q", ast.Dump(node))
@@ -727,16 +747,8 @@ func newSqlComparison(op ast.CmpOp, left clause.Column, right any) (clause.Expre
 				Column: left,
 				Values: right,
 			}, nil
-		case string:
-			return clause.Like{
-				Value: fmt.Sprintf("%%%s%%", right),
-				Column: clause.Column{
-					Table: left.Table,
-					Name:  left.Name,
-				},
-			}, nil
 		default:
-			return nil, fmt.Errorf(`right value in "in" comparison is not a list or string: %#v`, right)
+			return nil, fmt.Errorf(`right value in "in" comparison is not a list: %#v`, right)
 		}
 	case ast.NotIn:
 		switch right := right.(type) {
@@ -749,20 +761,8 @@ func newSqlComparison(op ast.CmpOp, left clause.Column, right any) (clause.Expre
 					},
 				},
 			}, nil
-		case string:
-			return clause.NotConditions{
-				Exprs: []clause.Expression{
-					clause.Like{
-						Value: fmt.Sprintf("%%%s%%", right),
-						Column: clause.Column{
-							Table: left.Table,
-							Name:  left.Name,
-						},
-					},
-				},
-			}, nil
 		default:
-			return nil, fmt.Errorf(`right value in "not in" comparison is not a list or string: %#v`, right)
+			return nil, fmt.Errorf(`right value in "not in" comparison is not a list: %#v`, right)
 		}
 	default:
 		return nil, fmt.Errorf("unsupported comparison operation %q", op)

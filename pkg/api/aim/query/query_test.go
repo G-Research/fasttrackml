@@ -48,9 +48,15 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithContainsFunction",
-			query:        `(run.name.contains('run'))`,
+			name:         "TestRunNameWithInFunction",
+			query:        `('run' in run.name)`,
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
+		},
+		{
+			name:         "TestRunNameWithNotInFunction",
+			query:        `('run' not in run.name)`,
+			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" NOT LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{
@@ -118,9 +124,15 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithContainsFunction",
-			query:        `(run.name.contains('run'))`,
+			name:         "TestRunNameWithInFunction",
+			query:        `('run' in run.name)`,
 			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
+		},
+		{
+			name:         "TestRunNameWithNotInFunction",
+			query:        `('run' not in run.name)`,
+			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" NOT LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{

@@ -234,28 +234,6 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					},
 				}, nil
 			}), nil
-		case "contains":
-			return callable(func(args []ast.Expr) (any, error) {
-				if len(args) != 1 {
-					return nil, errors.New("`contains` function support exactly one argument")
-				}
-				c, ok := parsedNode.(clause.Column)
-				if !ok {
-					return nil, errors.New("unsupported node type. has to be clause.Column")
-				}
-
-				arg, ok := args[0].(*ast.Str)
-				if !ok {
-					return nil, errors.New("unsupported argument type. has to be `string` only")
-				}
-				return clause.Like{
-					Value: fmt.Sprintf("%%%s%%", arg.S),
-					Column: clause.Column{
-						Table: c.Table,
-						Name:  c.Name,
-					},
-				}, nil
-			}), nil
 		case "startswith":
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
@@ -364,13 +342,36 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 		default:
 			switch right := right.(type) {
 			case clause.Column:
-				o, l, r, err := reverseComparison(op, left, right)
-				if err != nil {
-					return nil, err
-				}
-				exprs[i], err = newSqlComparison(o, l, r)
-				if err != nil {
-					return nil, err
+				switch op {
+				case ast.In:
+					return clause.Like{
+						Value: fmt.Sprintf("%%%s%%", left),
+						Column: clause.Column{
+							Table: right.Table,
+							Name:  right.Name,
+						},
+					}, nil
+				case ast.NotIn:
+					return clause.NotConditions{
+						Exprs: []clause.Expression{
+							clause.Like{
+								Value: fmt.Sprintf("%%%s%%", left),
+								Column: clause.Column{
+									Table: right.Table,
+									Name:  right.Name,
+								},
+							},
+						},
+					}, nil
+				default:
+					o, l, r, err := reverseComparison(op, left, right)
+					if err != nil {
+						return nil, err
+					}
+					exprs[i], err = newSqlComparison(o, l, r)
+					if err != nil {
+						return nil, err
+					}
 				}
 			case clause.Eq:
 				switch left := left.(type) {

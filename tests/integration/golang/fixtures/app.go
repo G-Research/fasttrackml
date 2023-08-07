@@ -12,25 +12,18 @@ import (
 
 // AppFixtures represents data fixtures object.
 type AppFixtures struct {
-	baseFixtures
+	BaseFixtures
 	*database.DbInstance
 }
 
 // NewAppFixtures creates new instance of AppFixtures.
 func NewAppFixtures(databaseDSN string) (*AppFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
+	db, err := CreateDB(databaseDSN)
 	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
+		return nil, err
 	}
 	return &AppFixtures{
-		baseFixtures: baseFixtures{db: db.DB},
+		BaseFixtures: BaseFixtures{db: db.DB},
 		DbInstance:   db,
 	}, nil
 }

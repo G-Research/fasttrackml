@@ -1,6 +1,8 @@
 package fixtures
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
@@ -9,12 +11,12 @@ import (
 )
 
 // BaseFixtures represents base fixtures object.
-type baseFixtures struct {
+type BaseFixtures struct {
 	db *gorm.DB
 }
 
 // UnloadFixtures cleans database from the old data.
-func (f baseFixtures) UnloadFixtures() error {
+func (f BaseFixtures) UnloadFixtures() error {
 	for _, table := range []interface{}{
 		database.App{}, // TODO update to models when available
 		models.Tag{},
@@ -30,4 +32,17 @@ func (f baseFixtures) UnloadFixtures() error {
 		}
 	}
 	return nil
+}
+
+// CreateDB will convert the a DSN input into a database connection
+func CreateDB(databaseDSN string) (db *database.DbInstance, err error) {
+	db, err = database.ConnectDB(
+		databaseDSN,
+		1*time.Second,
+		20,
+		false,
+		false,
+		"",
+	)
+	return
 }

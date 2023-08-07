@@ -23,8 +23,8 @@ run:
   # can use regexp here: generated.*, regexp is applied on full path;
   # default value is empty creators, but next dirs are always skipped independently
   # from this option's value:
-  #   	vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
-  skip-dirs:
+  #   vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
+  skip-dirs: []
 
   # which files to skip: they will be analyzed, but issues from them
   # won't be reported. Default value is empty creators, but there is
@@ -43,7 +43,6 @@ output:
   # print linter name in the end of issue text, default is true
   print-linter-name: true
 
-
   # all available settings of specific linters
 linters-settings:
   errcheck:
@@ -54,6 +53,17 @@ linters-settings:
     # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`;
     # default is false: such cases aren't reported by default.
     check-blank: true
+
+  goconst:
+    # minimal length of string constant, 3 by default
+    min-len: 3
+    # minimal occurrences count to trigger, 3 by default
+    min-occurrences: 3
+
+  gocyclo:
+    # minimal code complexity to report, 30 by default (but we recommend 10-20)
+    min-complexity: 20
+
   govet:
     # report about shadowed variables
     check-shadowing: true
@@ -71,42 +81,11 @@ linters-settings:
     #  2. you use go >= 1.10
     #  3. you do repeated runs (false for CI) or cache $GOPATH/pkg or `go env GOCACHE` dir in CI.
     use-installed-packages: false
-  golint:
-    # minimal confidence for issues, default is 0.8
-    min-confidence: 0.8
-  gofmt:
-    # simplify code: gofmt with `-s` option, true by default
-    simplify: true
-  gocyclo:
-    # minimal code complexity to report, 30 by default (but we recommend 10-20)
-    min-complexity: 20
-  dupl:
-    # tokens count to trigger issue, 150 by default
-    threshold: 100
-  goconst:
-    # minimal length of string constant, 3 by default
-    min-len: 3
-    # minimal occurrences count to trigger, 3 by default
-    min-occurrences: 3
-  depguard:
-    list-type: blacklist
-    include-go-root: false
-    packages:
-      - github.com/davecgh/go-spew/spew
-  misspell:
-    # Correct spellings using locale preferences for US or UK.
-    # Default is to use a neutral variety of English.
-    # Setting locale to US will correct the British spelling of 'colour' to 'color'.
-    locale: US
+
   lll:
     # max line length, lines longer will be reported. Default is 120. '\t' is counted as 1 character.
     line-length: 120
-  unused:
-    # treat code as a program (not a library) and report unused exported identifiers; default is false.
-    # XXX: if you enable this setting, unused will report a lot of false-positives in text editors:
-    # if it's called for subdir of a project it can't find funcs usages. All text editor integrations
-    # with golangci-lint call it on a directory with the changed file.
-    check-exported: false
+
   unparam:
     # call graph construction algorithm (cha, rta). In general, use cha for libraries,
     # and rta for programs with main packages. Default is cha.
@@ -117,25 +96,29 @@ linters-settings:
     # if it's called for subdir of a project it can't find external interfaces. All text editor integrations
     # with golangci-lint call it on a directory with the changed file.
     check-exported: false
-  nakedret:
-    # make an issue if func has more lines of code than this setting and it has naked returns; default is 30
-    max-func-lines: 30
+
+  unused:
+    # treat code as a program (not a library) and report unused exported identifiers; default is false.
+    # XXX: if you enable this setting, unused will report a lot of false-positives in text editors:
+    # if it's called for subdir of a project it can't find funcs usages. All text editor integrations
+    # with golangci-lint call it on a directory with the changed file.
+    check-exported: false
 
 linters:
   enable:
-    - lll
+    - goconst
+    - gocyclo
+    - gosec
+    - gosimple
+    - govet
     - ineffassign
-    - unparam
-    - unused
-    - unconvert
-    - typecheck
+    - lll
     - megacheck
     - staticcheck
-    - govet
-    - goconst
-    - gosimple
-    - gosec
-    - gocyclo
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
   enable-all: false
   disable:
     - errorlint
@@ -144,7 +127,6 @@ linters:
     - bugs
     - unused
   fast: false
-
 
 issues:
   # List of regexps of issue texts to exclude, empty creators by default.
@@ -175,7 +157,7 @@ issues:
   new: false
 
   # Show only new issues created after git revision `REV`
-  new-from-rev:
+  new-from-rev: ""
 
   # Show only new issues created in git patch with set file path.
-  new-from-patch:
+  new-from-patch: ""

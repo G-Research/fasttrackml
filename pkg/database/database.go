@@ -558,9 +558,11 @@ func createDefaultNamespace(db *DbInstance) error {
 	}); tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			log.Info("Creating default namespace")
+			var exp int32 = 0
 			ns := Namespace{
-				Code:        "default",
-				Description: "Default",
+				Code:                "default",
+				Description:         "Default",
+				DefaultExperimentID: &exp,
 			}
 			if err := db.Transaction(func(tx *gorm.DB) error {
 				if err := tx.Create(&ns).Error; err != nil {

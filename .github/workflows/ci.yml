@@ -313,6 +313,7 @@ jobs:
       - python-integration-tests
       - golang-build
       - build-image
+      - build-wheels
     runs-on: ubuntu-latest
     steps:
       - run: echo "All required checks done"

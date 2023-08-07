@@ -49,6 +49,12 @@ func (f RunFixtures) CreateRun(
 	return run, nil
 }
 
+// ArchiveRun archive existing runs by their ids.
+func (f RunFixtures) ArchiveRun(ctx context.Context, ids []string) error {
+	err := f.runRepository.ArchiveBatch(ctx, ids)
+	return err
+}
+
 // UpdateRun updates existing Run.
 func (f RunFixtures) UpdateRun(
 	ctx context.Context, run *models.Run,
@@ -59,7 +65,7 @@ func (f RunFixtures) UpdateRun(
 	return nil
 }
 
-// CreateRuns creates some num runs belonging to the experiment
+// CreateRuns creates some num runs belonging to the experiment.
 func (f RunFixtures) CreateRuns(
 	ctx context.Context, exp *models.Experiment, num int,
 ) ([]*models.Run, error) {
@@ -72,6 +78,7 @@ func (f RunFixtures) CreateRuns(
 			Status:         models.StatusRunning,
 			SourceType:     "JOB",
 			ExperimentID:   *exp.ID,
+			ArtifactURI:    "artifact_uri",
 			LifecycleStage: models.LifecycleStageActive,
 		}
 		run, err := f.CreateRun(ctx, run)
@@ -83,8 +90,17 @@ func (f RunFixtures) CreateRuns(
 	return runs, nil
 }
 
-// GetTestRuns fetches all runs for an experiment
-func (f RunFixtures) GetTestRuns(
+// GetRun returns run by requested run id.
+func (f RunFixtures) GetRun(ctx context.Context, runID string) (*models.Run, error) {
+	run, err := f.runRepository.GetByID(ctx, runID)
+	if err != nil {
+		return nil, eris.Wrap(err, "error getting test run")
+	}
+	return run, nil
+}
+
+// GetRuns fetches all runs for an experiment.
+func (f RunFixtures) GetRuns(
 	ctx context.Context, experimentID int32,
 ) ([]models.Run, error) {
 	var runs []models.Run
@@ -104,7 +120,7 @@ func (f RunFixtures) GetTestRuns(
 func (f RunFixtures) FindMinMaxRowNums(
 	ctx context.Context, experimentID int32,
 ) (int64, int64, error) {
-	runs, err := f.GetTestRuns(ctx, experimentID)
+	runs, err := f.GetRuns(ctx, experimentID)
 	if err != nil {
 		return 0, 0, eris.Wrap(err, "error fetching test runs")
 	}

@@ -17,18 +17,14 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-const (
-	numberOfRuns = 5
-)
-
 type ImportTestSuite struct {
 	suite.Suite
-	runs                     []*models.Run
-	client                   *helpers.HttpClient
+	runs              []*models.Run
+	client            *helpers.HttpClient
 	inputRunFixtures  *fixtures.RunFixtures
 	outputRunFixtures *fixtures.RunFixtures
 	inputDB           *database.DbInstance
-	outputDB           *database.DbInstance
+	outputDB          *database.DbInstance
 }
 
 func TestImportTestSuite(t *testing.T) {
@@ -53,7 +49,7 @@ func (s *ImportTestSuite) SetupTest() {
 	})
 	assert.Nil(s.T(), err)
 
-	runs, err := inputRunFixtures.CreateExampleRuns(context.Background(), experiment, numberOfRuns)
+	runs, err := inputRunFixtures.CreateExampleRuns(context.Background(), experiment, 5)
 	assert.Nil(s.T(), err)
 	s.runs = runs
 
@@ -84,7 +80,6 @@ func (s *ImportTestSuite) SetupTest() {
 	s.inputDB = input
 	s.outputDB = output
 
-
 }
 
 func (s *ImportTestSuite) Test_Ok() {
@@ -93,18 +88,48 @@ func (s *ImportTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.outputRunFixtures.UnloadFixtures())
 	}()
 
-	runs, err := s.inputRunFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
-	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), numberOfRuns, len(runs))
+	validateDB(s.T(), s.inputDB)
 
-	runs, err = s.outputRunFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+	// initially, ouput db has 0 rows
+	outputRuns, err := s.outputRunFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), 0, len(runs))
+	assert.Equal(s.T(), 0, len(outputRuns))
 
-	// invoke the subject method
+	// invoke the Import method
 	database.Import(s.inputDB, s.outputDB, false)
 
-	runs, err = s.outputRunFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
-	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), numberOfRuns, len(runs))
+	validateDB(s.T(), s.outputDB)
+}
+
+// validateDB will make assertions about the db based on the test setup.
+// a db imported from the test setup db should also pass these
+// assertions.
+func validateDB(t *testing.T, db *database.DbInstance) {
+
+	numberOfRuns := 5
+	numberOfMetrics := 20
+	numberOfLatestMetrics := 10
+	numberOfTags := 5
+	numberOfParams := 0
+	
+	var countVal int64
+	tx := db.DB.Model(&database.Run{}).Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, numberOfRuns, int(countVal))
+
+	tx = db.DB.Model(&database.Metric{}).Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, numberOfMetrics, int(countVal))
+
+	tx = db.DB.Model(&database.LatestMetric{}).Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, numberOfLatestMetrics, int(countVal))
+
+	tx = db.DB.Model(&database.Tag{}).Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, numberOfTags, int(countVal))
+
+	tx = db.DB.Model(&database.Param{}).Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, numberOfParams, int(countVal))
 }

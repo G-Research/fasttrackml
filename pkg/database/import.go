@@ -127,17 +127,25 @@ func findCollision(destDB *gorm.DB, sourceItem any) (bool, error) {
 	case Metric:
 		c := int64(0)
 		tx := destDB.Model(typedItem).Where(
-			"run_uuid = ? AND key = ?",
+			"run_uuid = ? AND key = ? AND value = ? AND timestamp = ? AND step = ? AND is_nan = ?",
 			typedItem.RunID,
 			typedItem.Key,
+			typedItem.Value,
+			typedItem.Timestamp,
+			typedItem.Step,
+			typedItem.IsNan,
 		).Count(&c)
 		return c > 0, tx.Error
 	case LatestMetric:
 		c := int64(0)
 		tx := destDB.Model(typedItem).Where(
-			"run_uuid = ? AND key = ?",
+			"run_uuid = ? AND key = ? AND value = ? AND timestamp = ? AND step = ? AND is_nan = ?",
 			typedItem.RunID,
 			typedItem.Key,
+			typedItem.Value,
+			typedItem.Timestamp,
+			typedItem.Step,
+			typedItem.IsNan,
 		).Count(&c)
 		return c > 0, tx.Error
 	case Dashboard:

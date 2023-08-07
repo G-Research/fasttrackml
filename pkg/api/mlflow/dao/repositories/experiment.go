@@ -66,10 +66,25 @@ func (r ExperimentRepository) Create(ctx context.Context, experiment *models.Exp
 
 // GetByID returns experiment by its ID.
 func (r ExperimentRepository) GetByID(ctx context.Context, experimentID int32) (*models.Experiment, error) {
+	nsCode := namespace.GetCodeFromContext(ctx)
+	if experimentID == 0 {
+		if err := r.db.WithContext(ctx).
+			Model(&models.Namespace{}).
+			Where("code = ?", nsCode).
+			Pluck("DefaultExperimentID", &experimentID).
+			Error; err != nil {
+			return nil, eris.Wrapf(err, "error getting default experiment for namespace code %q", nsCode)
+		}
+	}
 	var experiment models.Experiment
-	if err := r.db.WithContext(ctx).Where(
+	if err := r.db.WithContext(ctx).Preload(
+		"Tags",
+	).Joins(
+		"RIGHT JOIN namespaces ON namespaces.id = experiments.namespace_id AND namespaces.code = ?",
+		namespace.GetCodeFromContext(ctx),
+	).Where(
 		models.Experiment{ID: &experimentID},
-	).Preload("Tags").First(&experiment).Error; err != nil {
+	).First(&experiment).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting experiment by id: %d", experimentID)
 	}
 	return &experiment, nil

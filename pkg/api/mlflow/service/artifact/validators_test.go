@@ -17,49 +17,57 @@ func TestValidateListArtifactsRequest_Ok(t *testing.T) {
 		{
 			name: "NotEmptyPathCase1",
 			request: &request.ListArtifactsRequest{
-				RunID: "foo",
+				RunID: "run_id",
+				Path:  "foo",
 			},
 		},
 		{
 			name: "NotEmptyPathCase2",
 			request: &request.ListArtifactsRequest{
-				RunID: "./foo",
+				RunID: "run_id",
+				Path:  "./foo",
 			},
 		},
 		{
 			name: "NotEmptyPathCase3",
 			request: &request.ListArtifactsRequest{
-				RunID: "./foo/",
+				RunID: "run_id",
+				Path:  "./foo/",
 			},
 		},
 		{
 			name: "NotEmptyPathCase4",
 			request: &request.ListArtifactsRequest{
-				RunID: ".foo",
+				RunID: "run_id",
+				Path:  ".foo",
 			},
 		},
 		{
 			name: "NotEmptyPathCase5",
 			request: &request.ListArtifactsRequest{
-				RunID: "foo.bar",
+				RunID: "run_id",
+				Path:  "foo.bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase6",
 			request: &request.ListArtifactsRequest{
-				RunID: "foo..bar",
+				RunID: "run_id",
+				Path:  "foo..bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase7",
 			request: &request.ListArtifactsRequest{
-				RunID: "foo../bar",
+				RunID: "run_id",
+				Path:  "foo../bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase8",
 			request: &request.ListArtifactsRequest{
-				RunID: "foo/..bar",
+				RunID: "run_id",
+				Path:  "foo/..bar",
 			},
 		},
 	}

@@ -40,9 +40,9 @@ type parsedQuery struct {
 
 type callable func(args []ast.Expr) (any, error)
 
-type subscriptSlicer func(index ast.Slicer) (any, error)
-
 type attributeGetter func(attr string) (any, error)
+
+type subscriptSlicer func(index ast.Slicer) (any, error)
 
 type join struct {
 	alias string

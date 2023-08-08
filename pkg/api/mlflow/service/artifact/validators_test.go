@@ -10,10 +10,56 @@ import (
 )
 
 func TestValidateListArtifactsRequest_Ok(t *testing.T) {
-	err := ValidateListArtifactsRequest(&request.ListArtifactsRequest{
-		RunID: "run_id",
-	})
-	assert.Nil(t, err)
+	testData := []struct {
+		name    string
+		request *request.ListArtifactsRequest
+	}{
+		{
+			name: "NotEmptyPathCase1",
+			request: &request.ListArtifactsRequest{
+				RunID: "foo",
+			},
+		},
+		{
+			name: "NotEmptyPathCase2",
+			request: &request.ListArtifactsRequest{
+				RunID: "./foo",
+			},
+		},
+		{
+			name: "NotEmptyPathCase3",
+			request: &request.ListArtifactsRequest{
+				RunID: "./foo/",
+			},
+		},
+		{
+			name: "NotEmptyPathCase4",
+			request: &request.ListArtifactsRequest{
+				RunID: ".foo",
+			},
+		},
+		{
+			name: "NotEmptyPathCase5",
+			request: &request.ListArtifactsRequest{
+				RunID: "foo.bar",
+			},
+		},
+		{
+			name: "NotEmptyPathCase6",
+			request: &request.ListArtifactsRequest{
+				RunID: "foo..bar",
+			},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateListArtifactsRequest(&request.ListArtifactsRequest{
+				RunID: "run_id",
+			})
+			assert.Nil(t, err)
+		})
+	}
 }
 
 func TestValidateListArtifactsRequest_Error(t *testing.T) {
@@ -28,11 +74,19 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 			request: &request.ListArtifactsRequest{},
 		},
 		{
-			name:  "2DotsRelativePathProvided",
+			name:  "IncorrectPathProvidedCase1",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
-				Path:  "../",
+				Path:  "..",
+			},
+		},
+		{
+			name:  "IncorrectPathProvidedCase2",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
+			request: &request.ListArtifactsRequest{
+				RunID: "run_id",
+				Path:  "foo/../bar",
 			},
 		},
 	}

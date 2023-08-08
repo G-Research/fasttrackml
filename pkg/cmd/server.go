@@ -142,6 +142,7 @@ func initDB(config *mlflowConfig.ServiceConfig) (*database.DbInstance, error) {
 // initServer init HTTP server with base configuration.
 func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 	server := fiber.New(fiber.Config{
+		BodyLimit:             16 * 1024 * 1024,
 		ReadBufferSize:        16384,
 		ReadTimeout:           5 * time.Second,
 		WriteTimeout:          600 * time.Second,

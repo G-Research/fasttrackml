@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -90,7 +89,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			)
 			assert.Nil(s.T(), err)
 
-			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+			runs, err := s.runFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 

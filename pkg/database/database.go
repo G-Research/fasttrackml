@@ -8,15 +8,24 @@ import (
 	glog "log"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
+	"github.com/rotisserie/eris"
+
+	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/plugin/dbresolver"
+)
+
+const (
+	SQLiteCustomDriverName = "sqlite3_custom_driver"
 )
 
 type DbInstance struct {
@@ -75,13 +84,34 @@ func ConnectDB(
 			}
 		}
 
-		s, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
+		sql.Register(SQLiteCustomDriverName, &sqlite3.SQLiteDriver{
+			ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+				// create LRU cache to cache regexp statements and results.
+				cache, err := lru.New[string, *regexp.Regexp](1000)
+				if err != nil {
+					return eris.Wrap(err, "error creating lru cache to cache regexp statements")
+				}
+				return conn.RegisterFunc("regexp", func(re, s string) bool {
+					result, ok := cache.Get(re)
+					if !ok {
+						result, err = regexp.Compile(re)
+						if err != nil {
+							return false
+						}
+						cache.Add(re, result)
+					}
+					return result.MatchString(s)
+				}, true)
+			},
+		})
+
+		s, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}
 		DB.closers = append(DB.closers, s)
 		s.SetMaxIdleConns(1)
-		s.SetMaxOpenConns(4)
+		s.SetMaxOpenConns(1)
 		s.SetConnMaxIdleTime(0)
 		s.SetConnMaxLifetime(0)
 		sourceConn = sqlite.Dialector{
@@ -90,7 +120,7 @@ func ConnectDB(
 
 		q.Set("_query_only", "true")
 		dbURL.RawQuery = q.Encode()
-		r, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
+		r, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {
 			DB.Close()
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
@@ -197,6 +227,13 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "5d042539be4f" {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
+		}
+
+		runWithoutForeignKeyIfNeeded := func(fn func() error) error { return fn() }
+		switch db.Dialector.Name() {
+		case "sqlite":
+			migrator := db.Migrator().(sqlite.Migrator)
+			runWithoutForeignKeyIfNeeded = migrator.RunWithoutForeignKey
 		}
 
 		switch alembicVersion.Version {
@@ -380,8 +417,12 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 				if err := db.Transaction(func(tx *gorm.DB) error {
 					constraints := []string{"Params", "Tags", "Metrics", "LatestMetrics"}
 					for _, constraint := range constraints {
-						if err := tx.Migrator().DropConstraint(&Run{}, constraint); err != nil {
-							return err
+						// SQLite tables need to be recreated to add or remove constraints.
+						// By not dropping the constraint, we can avoid having to recreate the table twice.
+						if db.Dialector.Name() != "sqlite" {
+							if err := tx.Migrator().DropConstraint(&Run{}, constraint); err != nil {
+								return err
+							}
 						}
 						if err := tx.Migrator().CreateConstraint(&Run{}, constraint); err != nil {
 							return err
@@ -398,22 +439,33 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 
 			case "1ce8669664d2":
 				log.Info("Migrating database to FastTrackML schema 5d042539be4f")
-				if err := db.Transaction(func(tx *gorm.DB) error {
-					constraints := []string{"Tags", "Runs"}
-					for _, constraint := range constraints {
-						if err := tx.Migrator().DropConstraint(&Experiment{}, constraint); err != nil {
-							return err
+				// We need to run this migration without foreign key constraints to avoid
+				// the cascading delete to kick in and delete all the run data.
+				if err := runWithoutForeignKeyIfNeeded(func() error {
+					if err := db.Transaction(func(tx *gorm.DB) error {
+						constraints := []string{"Tags", "Runs"}
+						for _, constraint := range constraints {
+							// SQLite tables need to be recreated to add or remove constraints.
+							// By not dropping the constraint, we can avoid having to recreate the table twice.
+							if db.Dialector.Name() != "sqlite" {
+								if err := tx.Migrator().DropConstraint(&Experiment{}, constraint); err != nil {
+									return err
+								}
+							}
+							if err := tx.Migrator().CreateConstraint(&Experiment{}, constraint); err != nil {
+								return err
+							}
 						}
-						if err := tx.Migrator().CreateConstraint(&Experiment{}, constraint); err != nil {
-							return err
-						}
+						return tx.Model(&SchemaVersion{}).
+							Where("1 = 1").
+							Update("Version", "5d042539be4f").
+							Error
+					}); err != nil {
+						return fmt.Errorf("error migrating database to FastTrackML schema 5d042539be4f: %w", err)
 					}
-					return tx.Model(&SchemaVersion{}).
-						Where("1 = 1").
-						Update("Version", "5d042539be4f").
-						Error
+					return nil
 				}); err != nil {
-					return fmt.Errorf("error migrating database to FastTrackML schema 5d042539be4f: %w", err)
+					return err
 				}
 
 			default:

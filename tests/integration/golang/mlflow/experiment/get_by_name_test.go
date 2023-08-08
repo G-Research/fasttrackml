@@ -24,8 +24,8 @@ import (
 
 type GetExperimentByNameTestSuite struct {
 	suite.Suite
-	client   *helpers.HttpClient
-	fixtures *fixtures.ExperimentFixtures
+	client             *helpers.HttpClient
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestGetExperimentByNameTestSuite(t *testing.T) {
@@ -34,14 +34,17 @@ func TestGetExperimentByNameTestSuite(t *testing.T) {
 
 func (s *GetExperimentByNameTestSuite) SetupTest() {
 	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
-	s.fixtures = fixtures
+	s.experimentFixtures = experimentFixtures
 }
 
 func (s *GetExperimentByNameTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+	}()
 	// 1. prepare database with test data.
-	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
@@ -61,9 +64,6 @@ func (s *GetExperimentByNameTestSuite) Test_Ok() {
 		ArtifactLocation: "/artifact/location",
 	})
 	assert.Nil(s.T(), err)
-	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
-	}()
 
 	// 2. make actual API call.
 	query, err := urlquery.Marshal(request.GetExperimentRequest{

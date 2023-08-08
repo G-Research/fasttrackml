@@ -16,21 +16,16 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-const (
-	OperationEndsWith   = "endswith"
-	OperationContains   = "contains"
-	OperationStartsWith = "startswith"
-)
-
 type DefaultExpression struct {
 	Contains   string
 	Expression string
 }
 
 type QueryParser struct {
-	Default  DefaultExpression
-	Tables   map[string]string
-	TzOffset int
+	Default   DefaultExpression
+	Tables    map[string]string
+	TzOffset  int
+	Dialector string
 }
 
 type ParsedQuery interface {
@@ -43,9 +38,9 @@ type parsedQuery struct {
 	conditions []clause.Expression
 }
 
-type attributeGetter func(attr string) (any, error)
-
 type callable func(args []ast.Expr) (any, error)
+
+type attributeGetter func(attr string) (any, error)
 
 type subscriptSlicer func(index ast.Slicer) (any, error)
 
@@ -217,7 +212,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 		}
 		attribute := string(node.Attr)
 		switch strings.ToLower(attribute) {
-		case OperationEndsWith:
+		case "endswith":
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
 					return nil, errors.New("`endwith` function support exactly one argument")
@@ -231,29 +226,15 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 				if !ok {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
-				return clause.Expr{
-					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%%%s'`, c.Table, c.Name, arg.S),
+				return clause.Like{
+					Value: fmt.Sprintf("%%%s", arg.S),
+					Column: clause.Column{
+						Table: c.Table,
+						Name:  c.Name,
+					},
 				}, nil
 			}), nil
-		case OperationContains:
-			return callable(func(args []ast.Expr) (any, error) {
-				if len(args) != 1 {
-					return nil, errors.New("`contains` function support exactly one argument")
-				}
-				c, ok := parsedNode.(clause.Column)
-				if !ok {
-					return nil, errors.New("unsupported node type. has to be clause.Column")
-				}
-
-				arg, ok := args[0].(*ast.Str)
-				if !ok {
-					return nil, errors.New("unsupported argument type. has to be `string` only")
-				}
-				return clause.Expr{
-					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%%%s%%'`, c.Table, c.Name, arg.S),
-				}, nil
-			}), nil
-		case OperationStartsWith:
+		case "startswith":
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
 					return nil, errors.New("`startwith` function support exactly one argument")
@@ -267,8 +248,12 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 				if !ok {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
-				return clause.Expr{
-					SQL: fmt.Sprintf(`"%s"."%s" LIKE '%s%%'`, c.Table, c.Name, arg.S),
+				return clause.Like{
+					Value: fmt.Sprintf("%s%%", arg.S),
+					Column: clause.Column{
+						Table: c.Table,
+						Name:  c.Name,
+					},
 				}, nil
 			}), nil
 		}
@@ -357,13 +342,34 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 		default:
 			switch right := right.(type) {
 			case clause.Column:
-				o, l, r, err := reverseComparison(op, left, right)
-				if err != nil {
-					return nil, err
-				}
-				exprs[i], err = newSqlComparison(o, l, r)
-				if err != nil {
-					return nil, err
+				switch op {
+				case ast.In:
+					// for `IN` statement, left parameter has to be always `string`.
+					if _, ok := left.(string); !ok {
+						return nil, errors.New("left parameter has to be a string")
+					}
+					return clause.Like{
+						Value:  fmt.Sprintf("%%%s%%", left),
+						Column: right,
+					}, nil
+				case ast.NotIn:
+					// for `NOT IN` statement, left parameter has to be always `string`.
+					if _, ok := left.(string); !ok {
+						return nil, errors.New("left parameter has to be a string")
+					}
+					return negativeClause(clause.Like{
+						Value:  fmt.Sprintf("%%%s%%", left),
+						Column: right,
+					}), nil
+				default:
+					o, l, r, err := reverseComparison(op, left, right)
+					if err != nil {
+						return nil, err
+					}
+					exprs[i], err = newSqlComparison(o, l, r)
+					if err != nil {
+						return nil, err
+					}
 				}
 			case clause.Eq:
 				switch left := left.(type) {
@@ -403,7 +409,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 		case "run":
 			table, ok := pq.qp.Tables["runs"]
 			if !ok {
-				return nil, errors.New("unsupported name identifier \"run\"")
+				return nil, errors.New(`unsupported name identifier "run"`)
 			}
 			return attributeGetter(
 				func(attr string) (any, error) {
@@ -431,7 +437,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 					case "experiment":
 						e, ok := pq.qp.Tables["experiments"]
 						if !ok {
-							return nil, errors.New("unsupported attribute \"experiment\"")
+							return nil, errors.New(`unsupported attribute "experiment"`)
 						}
 						return clause.Column{
 							Table: e,
@@ -554,7 +560,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 		case "metric":
 			table, ok := pq.qp.Tables["metrics"]
 			if !ok {
-				return nil, errors.New("unsupported name identifier \"metric\"")
+				return nil, errors.New(`unsupported name identifier "metric"`)
 			}
 			return attributeGetter(
 				func(attr string) (any, error) {
@@ -578,6 +584,58 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 						return 0, nil
 					default:
 						return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
+					}
+				},
+			), nil
+		case "re":
+			return attributeGetter(
+				func(attr string) (any, error) {
+					switch attr {
+					case "match":
+						fallthrough
+					case "search":
+						return callable(
+							func(args []ast.Expr) (any, error) {
+								if len(args) != 2 {
+									return nil, errors.New("re.match function support exactly 2 arguments")
+								}
+
+								parsedNode, err := pq.parseNode(args[0])
+								if err != nil {
+									return nil, err
+								}
+								str, ok := parsedNode.(string)
+								if !ok {
+									return nil, errors.New("first argument type for re.match function has to be a string")
+								}
+
+								parsedNode, err = pq.parseNode(args[1])
+								if err != nil {
+									return nil, err
+								}
+								column, ok := parsedNode.(clause.Column)
+								if !ok {
+									return nil, errors.New(
+										"second argument type for re.match function has to be clause.Column",
+									)
+								}
+
+								// handle difference between `match` and `search`.
+								if attr == "match" {
+									str = fmt.Sprintf("^%s", str)
+								}
+
+								return Regexp{
+									Eq: clause.Eq{
+										Column: column,
+										Value:  str,
+									},
+									Dialector: pq.qp.Dialector,
+								}, nil
+							},
+						), nil
+					default:
+						return nil, fmt.Errorf("unsupported re function %s", attr)
 					}
 				},
 			), nil
@@ -743,14 +801,10 @@ func newSqlComparison(op ast.CmpOp, left clause.Column, right any) (clause.Expre
 		if !ok {
 			return nil, fmt.Errorf("right value in \"not in\" comparison is not a list: %#v", right)
 		}
-		return clause.NotConditions{
-			Exprs: []clause.Expression{
-				clause.IN{
-					Column: left,
-					Values: r,
-				},
-			},
-		}, nil
+		return negativeClause(clause.IN{
+			Column: left,
+			Values: r,
+		}), nil
 	default:
 		return nil, fmt.Errorf("unsupported comparison operation %q", op)
 	}
@@ -770,5 +824,13 @@ func reverseComparison(op ast.CmpOp, left any, right clause.Column) (ast.CmpOp, 
 		return op, right, left, nil
 	default:
 		return op, right, left, fmt.Errorf("unable to reverse comparison operator %q", op)
+	}
+}
+
+func negativeClause(expression clause.Expression) clause.Expression {
+	return clause.NotConditions{
+		Exprs: []clause.Expression{
+			expression,
+		},
 	}
 }

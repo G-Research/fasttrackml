@@ -15,9 +15,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
@@ -344,7 +344,8 @@ func SearchRuns(c *fiber.Ctx) error {
 			"runs":        "runs",
 			"experiments": "Experiment",
 		},
-		TzOffset: tzOffset,
+		TzOffset:  tzOffset,
+		Dialector: database.DB.Dialector.Name(),
 	}
 	qp, err := pq.Parse(q.Query)
 	if err != nil {
@@ -538,7 +539,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 			"experiments": "experiments",
 			"metrics":     "latest_metrics",
 		},
-		TzOffset: tzOffset,
+		TzOffset:  tzOffset,
+		Dialector: database.DB.Dialector.Name(),
 	}
 	qp, err := pq.Parse(q.Query)
 	if err != nil {
@@ -952,7 +954,7 @@ func UpdateRun(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	var update request.UpdateRun
+	var update request.UpdateRunRequest
 	if err := c.BodyParser(&update); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}

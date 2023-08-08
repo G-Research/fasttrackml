@@ -10,6 +10,7 @@ import (
 	"github.com/go-python/gpython/parser"
 	"github.com/go-python/gpython/py"
 	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -38,11 +39,19 @@ type parsedQuery struct {
 	conditions []clause.Expression
 }
 
-type attributeGetter func(attr string) (any, error)
-
 type callable func(args []ast.Expr) (any, error)
 
+var negativeClause = func(expression clause.Expression) clause.Expression {
+	return clause.NotConditions{
+		Exprs: []clause.Expression{
+			expression,
+		},
+	}
+}
+
 type subscriptSlicer func(index ast.Slicer) (any, error)
+
+type attributeGetter func(attr string) (any, error)
 
 type join struct {
 	alias string
@@ -344,25 +353,23 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 			case clause.Column:
 				switch op {
 				case ast.In:
+					// for `IN` statement, left parameter has to be always `string`.
+					if _, ok := left.(string); !ok {
+						return nil, eris.New("left parameter has to be a string")
+					}
 					return clause.Like{
-						Value: fmt.Sprintf("%%%s%%", left),
-						Column: clause.Column{
-							Table: right.Table,
-							Name:  right.Name,
-						},
+						Value:  fmt.Sprintf("%%%s%%", left),
+						Column: right,
 					}, nil
 				case ast.NotIn:
-					return clause.NotConditions{
-						Exprs: []clause.Expression{
-							clause.Like{
-								Value: fmt.Sprintf("%%%s%%", left),
-								Column: clause.Column{
-									Table: right.Table,
-									Name:  right.Name,
-								},
-							},
-						},
-					}, nil
+					// for `NOT IN` statement, left parameter has to be always `string`.
+					if _, ok := left.(string); !ok {
+						return nil, eris.New("left parameter has to be a string")
+					}
+					return negativeClause(clause.Like{
+						Value:  fmt.Sprintf("%%%s%%", left),
+						Column: right,
+					}), nil
 				default:
 					o, l, r, err := reverseComparison(op, left, right)
 					if err != nil {
@@ -803,14 +810,10 @@ func newSqlComparison(op ast.CmpOp, left clause.Column, right any) (clause.Expre
 		if !ok {
 			return nil, fmt.Errorf("right value in \"not in\" comparison is not a list: %#v", right)
 		}
-		return clause.NotConditions{
-			Exprs: []clause.Expression{
-				clause.IN{
-					Column: left,
-					Values: r,
-				},
-			},
-		}, nil
+		return negativeClause(clause.IN{
+			Column: left,
+			Values: r,
+		}), nil
 	default:
 		return nil, fmt.Errorf("unsupported comparison operation %q", op)
 	}

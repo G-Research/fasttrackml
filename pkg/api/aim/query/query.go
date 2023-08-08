@@ -10,7 +10,6 @@ import (
 	"github.com/go-python/gpython/parser"
 	"github.com/go-python/gpython/py"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -40,14 +39,6 @@ type parsedQuery struct {
 }
 
 type callable func(args []ast.Expr) (any, error)
-
-var negativeClause = func(expression clause.Expression) clause.Expression {
-	return clause.NotConditions{
-		Exprs: []clause.Expression{
-			expression,
-		},
-	}
-}
 
 type subscriptSlicer func(index ast.Slicer) (any, error)
 
@@ -355,7 +346,7 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 				case ast.In:
 					// for `IN` statement, left parameter has to be always `string`.
 					if _, ok := left.(string); !ok {
-						return nil, eris.New("left parameter has to be a string")
+						return nil, errors.New("left parameter has to be a string")
 					}
 					return clause.Like{
 						Value:  fmt.Sprintf("%%%s%%", left),
@@ -364,7 +355,7 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 				case ast.NotIn:
 					// for `NOT IN` statement, left parameter has to be always `string`.
 					if _, ok := left.(string); !ok {
-						return nil, eris.New("left parameter has to be a string")
+						return nil, errors.New("left parameter has to be a string")
 					}
 					return negativeClause(clause.Like{
 						Value:  fmt.Sprintf("%%%s%%", left),
@@ -833,5 +824,13 @@ func reverseComparison(op ast.CmpOp, left any, right clause.Column) (ast.CmpOp, 
 		return op, right, left, nil
 	default:
 		return op, right, left, fmt.Errorf("unable to reverse comparison operator %q", op)
+	}
+}
+
+func negativeClause(expression clause.Expression) clause.Expression {
+	return clause.NotConditions{
+		Exprs: []clause.Expression{
+			expression,
+		},
 	}
 }

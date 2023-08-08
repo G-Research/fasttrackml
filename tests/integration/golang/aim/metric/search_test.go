@@ -114,6 +114,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			data, err := s.client.DoStreamRequest(
 				http.MethodGet,
 				fmt.Sprintf("/runs/search/metric?%s", tt.query),
+				nil,
 			)
 			decodedData, err := encoding.Decode(bytes.NewBuffer(data))
 			assert.Nil(s.T(), err)

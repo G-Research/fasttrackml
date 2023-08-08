@@ -2,15 +2,11 @@ package artifact
 
 import (
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 )
-
-// RelativePathRegExp checks for the `../` in provided path.
-var RelativePathRegExp = regexp.MustCompile(`\^\.{2}$`)
 
 // ValidateListArtifactsRequest validates `GET /mlflow/artifacts/list` request.
 func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {
@@ -28,7 +24,7 @@ func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {
 	}
 
 	for _, path := range strings.Split(parsedUrl.Path, "/") {
-		if RelativePathRegExp.MatchString(path) {
+		if path == ".." {
 			return api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute")
 		}
 	}

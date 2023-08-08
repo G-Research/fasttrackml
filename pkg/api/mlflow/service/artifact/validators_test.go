@@ -18,7 +18,7 @@ func TestValidateListArtifactsRequest_Ok(t *testing.T) {
 			name: "NotEmptyPathCase1",
 			request: request.ListArtifactsRequest{
 				RunID: "run_id",
-				Path:  "foo/../..asd../",
+				Path:  "foo/..asd../",
 			},
 		},
 		{

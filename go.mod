@@ -12,7 +12,6 @@ require (
 	github.com/G-Research/fasttrackml-ui-aim v0.31602.7
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.1
 	github.com/apache/arrow/go/v12 v12.0.1
-	github.com/apache/arrow/go/v11 v11.0.0
 	github.com/aws/aws-sdk-go-v2 v1.18.1
 	github.com/aws/aws-sdk-go-v2/config v1.18.27
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.36.0

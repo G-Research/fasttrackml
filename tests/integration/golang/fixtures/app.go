@@ -12,7 +12,7 @@ import (
 
 // AppFixtures represents data fixtures object.
 type AppFixtures struct {
-	BaseFixtures
+	baseFixtures
 	*database.DbInstance
 }
 
@@ -23,7 +23,7 @@ func NewAppFixtures(databaseDSN string) (*AppFixtures, error) {
 		return nil, err
 	}
 	return &AppFixtures{
-		BaseFixtures: BaseFixtures{db: db.DB},
+		baseFixtures: baseFixtures{db: db.DB},
 		DbInstance:   db,
 	}, nil
 }

@@ -11,7 +11,7 @@ import (
 
 // MetricFixtures represents data fixtures object.
 type MetricFixtures struct {
-	BaseFixtures
+	baseFixtures
 	metricRepository repositories.MetricRepositoryProvider
 }
 
@@ -22,14 +22,14 @@ func NewMetricFixtures(databaseDSN string) (*MetricFixtures, error) {
 		return nil, err
 	}
 	return &MetricFixtures{
-		BaseFixtures:     BaseFixtures{db: db.DB},
+		baseFixtures:     baseFixtures{db: db.DB},
 		metricRepository: repositories.NewMetricRepository(db.DB),
 	}, nil
 }
 
 // CreateMetric creates new test Metric.
 func (f MetricFixtures) CreateMetric(ctx context.Context, metric *models.Metric) (*models.Metric, error) {
-	if err := f.BaseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
+	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
 		return nil, eris.Wrap(err, "error creating test metric")
 	}
 	return metric, nil
@@ -39,7 +39,7 @@ func (f MetricFixtures) CreateMetric(ctx context.Context, metric *models.Metric)
 func (f MetricFixtures) CreateLatestMetric(
 	ctx context.Context, metric *models.LatestMetric,
 ) (*models.LatestMetric, error) {
-	if err := f.BaseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
+	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
 		return nil, eris.Wrap(err, "error creating test latest metric")
 	}
 	return metric, nil

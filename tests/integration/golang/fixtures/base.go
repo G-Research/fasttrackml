@@ -10,13 +10,13 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-// BaseFixtures represents base fixtures object.
-type BaseFixtures struct {
+// baseFixtures represents base fixtures object.
+type baseFixtures struct {
 	db *gorm.DB
 }
 
 // UnloadFixtures cleans database from the old data.
-func (f BaseFixtures) UnloadFixtures() error {
+func (f baseFixtures) UnloadFixtures() error {
 	for _, table := range []interface{}{
 		database.App{}, // TODO update to models when available
 		models.Tag{},

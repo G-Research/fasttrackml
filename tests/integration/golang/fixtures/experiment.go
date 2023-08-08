@@ -13,7 +13,7 @@ import (
 
 // ExperimentFixtures represents data fixtures object.
 type ExperimentFixtures struct {
-	BaseFixtures
+	baseFixtures
 	experimentRepository repositories.ExperimentRepositoryProvider
 }
 
@@ -24,7 +24,7 @@ func NewExperimentFixtures(databaseDSN string) (*ExperimentFixtures, error) {
 		return nil, err
 	}
 	return &ExperimentFixtures{
-		BaseFixtures:         BaseFixtures{db: db.DB},
+		baseFixtures:         baseFixtures{db: db.DB},
 		experimentRepository: repositories.NewExperimentRepository(db.DB),
 	}, nil
 }

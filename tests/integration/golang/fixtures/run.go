@@ -14,7 +14,7 @@ import (
 
 // RunFixtures represents data fixtures object.
 type RunFixtures struct {
-	BaseFixtures
+	baseFixtures
 	runRepository    repositories.RunRepositoryProvider
 	tagRepository    repositories.TagRepositoryProvider
 	metricRepository repositories.MetricRepositoryProvider
@@ -27,7 +27,7 @@ func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
 		return nil, err
 	}
 	return &RunFixtures{
-		BaseFixtures:     BaseFixtures{db: db.DB},
+		baseFixtures:     baseFixtures{db: db.DB},
 		runRepository:    repositories.NewRunRepository(db.DB),
 		tagRepository:    repositories.NewTagRepository(db.DB),
 		metricRepository: repositories.NewMetricRepository(db.DB),
@@ -177,7 +177,7 @@ func (f RunFixtures) CreateMetrics(
 		// create test `metric` and test `latest metric` and connect to run.
 
 		for iter := 1; iter <= count; iter++ {
-			err := f.BaseFixtures.db.WithContext(ctx).Create(&models.Metric{
+			err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
 				Key:       fmt.Sprintf("key%d", i),
 				Value:     123.1 + float64(iter),
 				Timestamp: 1234567890 + int64(iter),
@@ -190,7 +190,7 @@ func (f RunFixtures) CreateMetrics(
 				return err
 			}
 		}
-		err := f.BaseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
+		err := f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
 			Key:       fmt.Sprintf("key%d", i),
 			Value:     123.1 + float64(count),
 			Timestamp: 1234567890 + int64(count),

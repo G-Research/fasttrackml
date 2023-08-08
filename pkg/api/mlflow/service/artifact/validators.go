@@ -8,8 +8,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 )
 
-// RelativePathRegExp checks for the sequence `./` or `../` in provided path.
-var RelativePathRegExp = regexp.MustCompile(`\.{2}\/?`)
+// RelativePathRegExp checks for the `../` in provided path.
+var RelativePathRegExp = regexp.MustCompile(`\.{2}\/`)
 
 // ValidateListArtifactsRequest validates `GET /mlflow/artifacts/list` request.
 func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {

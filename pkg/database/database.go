@@ -229,11 +229,11 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
 		}
 
-		runWithoutForeignKeyIfPossible := func(fn func() error) error { return fn() }
+		runWithoutForeignKeyIfNeeded := func(fn func() error) error { return fn() }
 		switch db.Dialector.Name() {
 		case "sqlite":
 			migrator := db.Migrator().(sqlite.Migrator)
-			runWithoutForeignKeyIfPossible = migrator.RunWithoutForeignKey
+			runWithoutForeignKeyIfNeeded = migrator.RunWithoutForeignKey
 		}
 
 		switch alembicVersion.Version {
@@ -441,7 +441,7 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 				log.Info("Migrating database to FastTrackML schema 5d042539be4f")
 				// We need to run this migration without foreign key constraints to avoid
 				// the cascading delete to kick in and delete all the run data.
-				if err := runWithoutForeignKeyIfPossible(func() error {
+				if err := runWithoutForeignKeyIfNeeded(func() error {
 					if err := db.Transaction(func(tx *gorm.DB) error {
 						constraints := []string{"Tags", "Runs"}
 						for _, constraint := range constraints {

@@ -12,60 +12,60 @@ import (
 func TestValidateListArtifactsRequest_Ok(t *testing.T) {
 	testData := []struct {
 		name    string
-		request *request.ListArtifactsRequest
+		request request.ListArtifactsRequest
 	}{
 		{
 			name: "NotEmptyPathCase1",
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
-				Path:  "foo",
+				Path:  "foo/../..asd../",
 			},
 		},
 		{
 			name: "NotEmptyPathCase2",
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "./foo",
 			},
 		},
 		{
 			name: "NotEmptyPathCase3",
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "./foo/",
 			},
 		},
 		{
 			name: "NotEmptyPathCase4",
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  ".foo",
 			},
 		},
 		{
 			name: "NotEmptyPathCase5",
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo.bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase6",
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo..bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase7",
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo../bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase8",
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo/..bar",
 			},
@@ -74,10 +74,7 @@ func TestValidateListArtifactsRequest_Ok(t *testing.T) {
 
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateListArtifactsRequest(&request.ListArtifactsRequest{
-				RunID: "run_id",
-			})
-			assert.Nil(t, err)
+			assert.Nil(t, ValidateListArtifactsRequest(&tt.request))
 		})
 	}
 }

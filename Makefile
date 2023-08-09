@@ -119,7 +119,7 @@ service-start-dependencies: ## start service dependencies in docker.
 	@echo ">>> Start all Service dependencies."
 	@docker-compose up \
 	-d \
-	postgres
+	minio postgres
 
 .PHONY: service-start
 service-start: service-build service-start-dependencies ## start service in docker.

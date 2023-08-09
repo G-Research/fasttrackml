@@ -28,8 +28,9 @@
 	},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [
-		5000,
-		5432
+		5432,
+		9000,
+		9001
 	],
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "go version",
@@ -41,6 +42,8 @@
 		},
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers/features/github-cli:1": {},
-		"ghcr.io/dhoeric/features/k6:1": {}
-	}
+		"ghcr.io/dhoeric/features/k6:1": {},
+		"ghcr.io/christophermacgown/devcontainer-features/minio-client:1": {}
+	},
+	"postStartCommand": "mc alias set local http://localhost:9000 $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY && mc mb -p local/fasttrackml"
 }

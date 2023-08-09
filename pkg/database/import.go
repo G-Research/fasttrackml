@@ -49,24 +49,31 @@ func Import(input, output *DbInstance, dryRun bool) error {
 
 // importTable will copy the contents of one table (model) from sourceDB to destDB.
 func importTable[T any](sourceDB, destDB *gorm.DB, dryRun bool, model T) error {
-	// Query data from the source database
-	rows, err := sourceDB.Model(&model).Rows()
+	// Start transaction in the destDB
+	err := destDB.Transaction(func(destTX *gorm.DB) error {
+		// Query data from the source database
+		rows, err := sourceDB.Model(&model).Rows()
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		count := 0
+		for rows.Next() {
+			var item T
+			sourceDB.ScanRows(rows, &item)
+			if !dryRun {
+				if err := destTX.Clauses(clause.OnConflict{DoNothing: true}).Create(&item).Error; err != nil {
+					return err
+				}
+			}
+			count++
+		}
+		log.Infof("Importing %T - found %v records", model, count)
+		return nil
+	})
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
-
-	count := 0
-	for rows.Next() {
-		var item T
-		sourceDB.ScanRows(rows, &item)
-		if !dryRun {
-			if err := destDB.Clauses(clause.OnConflict{DoNothing: true}).Create(&item).Error; err != nil {
-				return err
-			}
-		}
-		count++
-	}
-	log.Infof("Importing %T - found %v records", model, count)
 	return nil
 }

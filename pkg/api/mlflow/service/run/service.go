@@ -66,7 +66,10 @@ func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (
 		return nil, api.NewResourceDoesNotExistError("unable to find experiment with id '%s': %s", req.ExperimentID, err)
 	}
 
-	run := convertors.ConvertCreateRunRequestToDBModel(experiment, req)
+	run, err := convertors.ConvertCreateRunRequestToDBModel(experiment, req)
+	if err != nil {
+		return nil, api.NewInternalError("error converting request to actual run model: %s", err)
+	}
 	if err := s.runRepository.Create(ctx, run); err != nil {
 		return nil, api.NewInternalError("error inserting run: %s", err)
 	}

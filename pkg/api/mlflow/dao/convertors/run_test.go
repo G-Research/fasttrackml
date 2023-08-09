@@ -180,10 +180,11 @@ func TestConvertCreateRunRequestToDBModel(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			experimentID := int32(123)
-			result := ConvertCreateRunRequestToDBModel(&models.Experiment{
+			result, err := ConvertCreateRunRequestToDBModel(&models.Experiment{
 				ID:               &experimentID,
 				ArtifactLocation: "artifact_location",
 			}, tt.req)
+			assert.Nil(t, err)
 			tt.result(result)
 		})
 	}

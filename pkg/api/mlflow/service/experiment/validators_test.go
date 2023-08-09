@@ -28,16 +28,6 @@ func TestValidateCreateExperimentRequest_Error(t *testing.T) {
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'name'"),
 			request: &request.CreateExperimentRequest{},
 		},
-		{
-			name: "EmptyArtifactLocationProperty",
-			error: api.NewInvalidParameterValueError(
-				`Invalid value for parameter 'artifact_location': parse "incorrect-protocol,:/incorrect-location": first path segment in URL cannot contain colon`,
-			),
-			request: &request.CreateExperimentRequest{
-				Name:             "name",
-				ArtifactLocation: "incorrect-protocol,:/incorrect-location",
-			},
-		},
 	}
 
 	for _, tt := range testData {

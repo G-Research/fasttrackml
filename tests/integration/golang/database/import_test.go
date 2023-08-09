@@ -53,6 +53,27 @@ func (s *ImportTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.runs = runs
 
+	appFixtures, err := fixtures.NewAppFixtures(helpers.GetInputDatabaseUri())
+	app, err := appFixtures.CreateApp(context.Background(), &database.App{
+		Base: database.Base{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+		},
+		Type:  "mpi",
+		State: database.AppState{},
+	})
+
+	dashboardFixtures, err := fixtures.NewDashboardFixtures(helpers.GetInputDatabaseUri())
+	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
+		Base: database.Base{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+		},
+		AppID: &app.ID,
+		Name:  uuid.NewString(),
+	})
+
+	
 	databaseSlowThreshold := time.Second * 1
 	databasePoolMax := 20
 	databaseReset := false

@@ -79,6 +79,7 @@ func (f RunFixtures) CreateExampleRuns(
 			Status:         models.StatusRunning,
 			SourceType:     "JOB",
 			ExperimentID:   *exp.ID,
+			ArtifactURI:    "artifact_uri",
 			LifecycleStage: models.LifecycleStageActive,
 		}
 		run, err := f.CreateRun(ctx, run)
@@ -106,24 +107,17 @@ func (f RunFixtures) CreateExampleRuns(
 	return runs, nil
 }
 
-// GetTestRun fetches one run.
-func (f RunFixtures) GetTestRun(
-	ctx context.Context, runID string,
-) (*models.Run, error) {
-	var run models.Run
-	if err := f.db.WithContext(ctx).Where(
-		"run_uuid = ?", runID,
-	).Preload("Metrics",
-	).First(
-		&run,
-	).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting `run` by experiment id: %v", runID)
+// GetRun returns run by requested run id.
+func (f RunFixtures) GetRun(ctx context.Context, runID string) (*models.Run, error) {
+	run, err := f.runRepository.GetByID(ctx, runID)
+	if err != nil {
+		return nil, eris.Wrap(err, "error getting test run")
 	}
-	return &run, nil
+	return run, nil
 }
 
-// GetTestRuns fetches all runs for an experiment.
-func (f RunFixtures) GetTestRuns(
+// GetRuns fetches all runs for an experiment.
+func (f RunFixtures) GetRuns(
 	ctx context.Context, experimentID int32,
 ) ([]models.Run, error) {
 	var runs []models.Run
@@ -143,7 +137,7 @@ func (f RunFixtures) GetTestRuns(
 func (f RunFixtures) FindMinMaxRowNums(
 	ctx context.Context, experimentID int32,
 ) (int64, int64, error) {
-	runs, err := f.GetTestRuns(ctx, experimentID)
+	runs, err := f.GetRuns(ctx, experimentID)
 	if err != nil {
 		return 0, 0, eris.Wrap(err, "error fetching test runs")
 	}

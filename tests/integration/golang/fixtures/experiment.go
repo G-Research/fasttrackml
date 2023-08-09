@@ -73,7 +73,7 @@ func (f ExperimentFixtures) CreateExperiments(
 	return experiments, nil
 }
 
-// GetTestExperiments fetches all experiments
+// GetTestExperiments fetches all experiments.
 func (f ExperimentFixtures) GetTestExperiments(
 	ctx context.Context,
 ) ([]models.Experiment, error) {
@@ -85,7 +85,7 @@ func (f ExperimentFixtures) GetTestExperiments(
 	return experiments, nil
 }
 
-// GetExperimentByID returns the experiment by the given id
+// GetExperimentByID returns the experiment by the given id.
 func (f ExperimentFixtures) GetExperimentByID(ctx context.Context, experimentID int32) (*models.Experiment, error) {
 	experiment, err := f.experimentRepository.GetByID(ctx, experimentID)
 	if err != nil {

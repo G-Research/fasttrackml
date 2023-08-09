@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -24,8 +23,8 @@ import (
 
 type RestoreExperimentTestSuite struct {
 	suite.Suite
-	client   *helpers.HttpClient
-	fixtures *fixtures.ExperimentFixtures
+	client             *helpers.HttpClient
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestRestoreExperimentTestSuite(t *testing.T) {
@@ -34,14 +33,17 @@ func TestRestoreExperimentTestSuite(t *testing.T) {
 
 func (s *RestoreExperimentTestSuite) SetupTest() {
 	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
-	s.fixtures = fixtures
+	s.experimentFixtures = experimentFixtures
 }
 
 func (s *RestoreExperimentTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+	}()
 	// 1. prepare database with test data.
-	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
@@ -61,10 +63,6 @@ func (s *RestoreExperimentTestSuite) Test_Ok() {
 		ArtifactLocation: "/artifact/location",
 	})
 	assert.Nil(s.T(), err)
-	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
-	}()
-
 	assert.Equal(s.T(), models.LifecycleStageDeleted, experiment.LifecycleStage)
 
 	// 2. make actual API call.
@@ -80,7 +78,7 @@ func (s *RestoreExperimentTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	// 3. check actual API response.
-	exp, err := s.fixtures.GetExperimentByID(context.Background(), *experiment.ID)
+	exp, err := s.experimentFixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), models.LifecycleStageActive, exp.LifecycleStage)
 }
@@ -99,15 +97,19 @@ func (s *RestoreExperimentTestSuite) Test_Error() {
 			},
 		},
 		{
-			name:  "InvalidIDFormat",
-			error: api.NewBadRequestError("Unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing \"invalid_id\": invalid syntax"),
+			name: "InvalidIDFormat",
+			error: api.NewBadRequestError(
+				"Unable to parse experiment id 'invalid_id': strconv.ParseInt: parsing \"invalid_id\": invalid syntax",
+			),
 			request: &request.RestoreExperimentRequest{
 				ID: "invalid_id",
 			},
 		},
 		{
-			name:  "ExperimentNotFound",
-			error: api.NewResourceDoesNotExistError("unable to find experiment '123': error getting experiment by id: 123: record not found"),
+			name: "ExperimentNotFound",
+			error: api.NewResourceDoesNotExistError(
+				"unable to find experiment '123': error getting experiment by id: 123: record not found",
+			),
 			request: &request.RestoreExperimentRequest{
 				ID: "123",
 			},

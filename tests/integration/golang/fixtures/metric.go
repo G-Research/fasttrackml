@@ -55,3 +55,14 @@ func (f MetricFixtures) GetLatestMetricByKey(ctx context.Context, key string) (*
 	}
 	return &metric, nil
 }
+
+// GetLatestMetricByRunID returns the latest metric by provide Run ID.
+func (f MetricFixtures) GetLatestMetricByRunID(ctx context.Context, runID string) (*models.LatestMetric, error) {
+	var metric models.LatestMetric
+	if err := f.db.WithContext(ctx).Where(
+		"run_uuid = ?", runID,
+	).First(&metric).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting latest metric by run_uuid: %v", runID)
+	}
+	return &metric, nil
+}

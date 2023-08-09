@@ -38,7 +38,7 @@ func (f AppFixtures) CreateApp(
 	return app, nil
 }
 
-// CreateApps creates some num apps belonging to the experiment
+// CreateApps creates some num apps belonging to the experiment.
 func (f AppFixtures) CreateApps(
 	ctx context.Context, num int,
 ) ([]*database.App, error) {
@@ -62,7 +62,7 @@ func (f AppFixtures) CreateApps(
 	return apps, nil
 }
 
-// GetApps fetches all apps which are not archived
+// GetApps fetches all apps which are not archived.
 func (f AppFixtures) GetApps(
 	ctx context.Context,
 ) ([]database.App, error) {

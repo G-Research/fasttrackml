@@ -2,10 +2,10 @@ package config
 
 import (
 	"net/url"
+	"path/filepath"
 	"time"
 
 	"github.com/rotisserie/eris"
-
 	"github.com/spf13/viper"
 )
 
@@ -42,16 +42,21 @@ func NewServiceConfig() *ServiceConfig {
 }
 
 // Validate validates service configuration.
-func (c ServiceConfig) Validate() error {
-	if err := c.validateArtifactRoot(); err != nil {
+func (c *ServiceConfig) Validate() error {
+	if err := c.validateConfiguration(); err != nil {
 		return eris.Wrap(err, "error validating service configuration")
+	}
+	if err := c.normaliseConfiguration(); err != nil {
+		return eris.Wrap(err, "error normalising service configuration")
 	}
 	return nil
 }
 
-// validateArtifactRoot validates `artifact-root` configuration parameter.
-// for s3 storage it has to be: s3://bucket_name.
-func (c ServiceConfig) validateArtifactRoot() error {
+// validateConfiguration validates service configuration:
+// - `artifact-root` configuration parameter. for s3 storage it has to be: s3://bucket_name.
+// by default, it should be a local storage path.
+func (c *ServiceConfig) validateConfiguration() error {
+	// 1. validate ArtifactRoot configuration parameter.
 	parsed, err := url.Parse(c.ArtifactRoot)
 	if err != nil {
 		return eris.Wrap(err, "error parsing `artifact-root` flag")
@@ -61,6 +66,31 @@ func (c ServiceConfig) validateArtifactRoot() error {
 		if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
 			return eris.New("incorrect format of `artifact-root` flag. has to be s3://bucket_name")
 		}
+	default:
+		if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
+			return eris.New("incorrect format of `artifact-root` flag. has to be `/path/to/artifacts`")
+		}
+	}
+	return nil
+}
+
+// normaliseConfiguration normalizes service configuration:
+// - `artifact-root` configuration parameter. if provided schema is empty,
+// it means that storage is a local storage, we have to transform it to be absolute.
+func (c *ServiceConfig) normaliseConfiguration() error {
+	parsed, err := url.Parse(c.ArtifactRoot)
+	if err != nil {
+		return eris.Wrap(err, "error parsing `artifact-root` flag")
+	}
+	switch parsed.Scheme {
+	case "s3":
+		return nil
+	default:
+		absoluteArtifactRoot, err := filepath.Abs(c.ArtifactRoot)
+		if err != nil {
+			return eris.Wrapf(err, "error getting absolute path for `artifact-root`: %s", c.ArtifactRoot)
+		}
+		c.ArtifactRoot = absoluteArtifactRoot
 	}
 	return nil
 }

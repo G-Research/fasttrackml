@@ -11,24 +11,24 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
-// File represents local file storage adapter to work with artifacts.
-type File struct {
+// Local represents local file storage adapter to work with artifacts.
+type Local struct {
 	config *config.ServiceConfig
 }
 
-// NewFile creates new File storage instance.
-func NewFile(config *config.ServiceConfig) (*File, error) {
-	return &File{
+// NewLocal creates new Local storage instance.
+func NewLocal(config *config.ServiceConfig) (*Local, error) {
+	return &Local{
 		config: config,
 	}, nil
 }
 
 // List implements Provider interface.
-func (s File) List(artifactURI, path, _ string) (string, string, []ArtifactObject, error) {
+func (s Local) List(artifactURI, path, _ string) (string, string, []ArtifactObject, error) {
 	// 1. process search `prefix` parameter.
 	path, err := url.JoinPath(artifactURI, path)
 	if err != nil {
-		return "", "", nil, eris.Wrap(err, "error constructing s3 prefix")
+		return "", "", nil, eris.Wrap(err, "error constructing full path")
 	}
 
 	// 2. read data from local storage.

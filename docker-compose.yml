@@ -44,5 +44,17 @@ services:
       AWS_ACCESS_KEY_ID: "user"
       AWS_SECRET_ACCESS_KEY: "password"
 
+  database-copy:
+    image: ruby:3.2-bullseye
+    command: ./database-copy.sh
+    working_dir: /work
+    volumes:
+      - .:/work
+    depends_on:
+      - postgres
+    environment:
+      - INPUT_DATABASE_URI
+      - OUTPUT_DATABASE_URI
+
 volumes:
   go-cache:

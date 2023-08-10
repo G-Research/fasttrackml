@@ -177,3 +177,14 @@ PHONY: run
 run: build ## run the FastTrackML server
 	@echo ">>> Running the FasttrackML server."
 	./$(APP) server
+
+#
+# Utility targets
+#
+PHONY: database-copy
+database-copy: ## copy the INPUT_DATABASE_URI to the OUTPUT_DATABASE_URI
+	@echo ">>> Running the FasttrackML db copy"
+	docker-compose run \
+          -e INPUT_DATABASE_URI \
+          -e OUTPUT_DATABASE_URI \
+          database-copy

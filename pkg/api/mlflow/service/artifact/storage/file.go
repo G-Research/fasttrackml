@@ -11,7 +11,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
-// File represents S3 adapter to work with artifacts.
+// File represents local file storage adapter to work with artifacts.
 type File struct {
 	config *config.ServiceConfig
 }

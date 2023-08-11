@@ -112,12 +112,12 @@ func (s *ImportTestSuite) Test_Ok() {
 	validateDB(s.T(), s.inputDB)
 
 	// initially, ouput db has 0 rows
-	outputRuns, err := s.outputRunFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+	outputRuns, err := s.outputRunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), 0, len(outputRuns))
 
 	// invoke the Import method
-	database.Import(s.inputDB, s.outputDB, false)
+	database.Import(s.inputDB, s.outputDB)
 
 	validateDB(s.T(), s.outputDB)
 }

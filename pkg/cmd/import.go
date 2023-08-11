@@ -29,8 +29,8 @@ func importCmd(cmd *cobra.Command, args []string) error {
 	defer inputDB.Close()
 	defer outputDB.Close()
 
-	dryRun := viper.GetBool("dry-run")
-	if err := database.Import(inputDB, outputDB, dryRun); err != nil {
+	// TODO set gorm config DryRun as needed
+	if err := database.Import(inputDB, outputDB); err != nil {
 		return err
 	}
 

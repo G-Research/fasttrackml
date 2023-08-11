@@ -24,7 +24,7 @@ jobs:
     name: Golang Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - run: exit 0
+      - run: exit 1
 
   # Virtual job that can be configured as a required check before a PR can be merged.
   all-required-checks-done:

@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
@@ -45,7 +45,7 @@ func (s Local) List(artifactURI, path, _ string) (string, string, []ArtifactObje
 			return "", "", nil, eris.Wrapf(err, "error getting info for object: %s", object.Name())
 		}
 		artifactList[i] = ArtifactObject{
-			Path:  fmt.Sprintf("%s/%s", path, info.Name()),
+			Path:  filepath.Join(path, info.Name()),
 			Size:  info.Size(),
 			IsDir: object.IsDir(),
 		}

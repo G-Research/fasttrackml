@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/rotisserie/eris"
 	"github.com/spf13/viper"
 )
@@ -56,21 +58,20 @@ func (c *ServiceConfig) Validate() error {
 // - `artifact-root` configuration parameter. for s3 storage it has to be: s3://bucket_name.
 // by default, it should be a local storage path.
 func (c *ServiceConfig) validateConfiguration() error {
-	// 1. validate ArtifactRoot configuration parameter.
+	// 1. validate ArtifactRoot configuration parameter for correctness and valid values.
 	parsed, err := url.Parse(c.ArtifactRoot)
 	if err != nil {
 		return eris.Wrap(err, "error parsing `artifact-root` flag")
 	}
-	switch parsed.Scheme {
-	case "s3":
-		if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
-			return eris.New("incorrect format of `artifact-root` flag. has to be s3://bucket_name")
-		}
-	default:
-		if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
-			return eris.New("incorrect format of `artifact-root` flag. has to be `/path/to/artifacts`")
-		}
+
+	if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
+		return eris.New("incorrect format of `artifact-root` flag")
 	}
+
+	if !slices.Contains([]string{"", "file", "s3"}, parsed.Scheme) {
+		return eris.New("unsupportable schema of `artifact-root` flag")
+	}
+
 	return nil
 }
 
@@ -85,7 +86,7 @@ func (c *ServiceConfig) normaliseConfiguration() error {
 	switch parsed.Scheme {
 	case "s3":
 		return nil
-	default:
+	case "", "file":
 		absoluteArtifactRoot, err := filepath.Abs(c.ArtifactRoot)
 		if err != nil {
 			return eris.Wrapf(err, "error getting absolute path for `artifact-root`: %s", c.ArtifactRoot)

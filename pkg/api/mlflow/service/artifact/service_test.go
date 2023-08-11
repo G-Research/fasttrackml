@@ -93,7 +93,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 		},
 		{
 			name:  "PathIsRelativeAndContains2Dots",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
 			request: &request.ListArtifactsRequest{
 				RunID: "id",
 				Path:  "../",

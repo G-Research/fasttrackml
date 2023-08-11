@@ -2,6 +2,7 @@ package artifact
 
 import (
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -20,12 +21,12 @@ func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {
 	}
 	if parsedUrl.Scheme != "" || parsedUrl.Host != "" || parsedUrl.RawQuery != "" ||
 		parsedUrl.RawFragment != "" || parsedUrl.User != nil {
-		return api.NewInvalidParameterValueError("incorrect 'path' parameter has been provided")
+		return api.NewInvalidParameterValueError("provided 'path' parameter is invalid")
 	}
 
 	for _, path := range strings.Split(parsedUrl.Path, "/") {
-		if path == ".." {
-			return api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute")
+		if path == ".." || filepath.IsAbs(path) {
+			return api.NewInvalidParameterValueError("provided 'path' parameter is invalid")
 		}
 	}
 	return nil

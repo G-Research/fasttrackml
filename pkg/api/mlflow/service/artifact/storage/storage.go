@@ -46,7 +46,7 @@ func NewArtifactStorage(config *config.ServiceConfig) (Provider, error) {
 		switch u.Scheme {
 		case "s3":
 			return NewS3(config)
-		default:
+		case "", "file":
 			return NewLocal(config)
 		}
 	}

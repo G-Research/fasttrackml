@@ -23,9 +23,11 @@ func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {
 		parsedUrl.RawFragment != "" || parsedUrl.User != nil {
 		return api.NewInvalidParameterValueError("provided 'path' parameter is invalid")
 	}
-
+	if filepath.IsAbs(parsedUrl.Path) {
+		return api.NewInvalidParameterValueError("provided 'path' parameter is invalid")
+	}
 	for _, path := range strings.Split(parsedUrl.Path, "/") {
-		if path == ".." || filepath.IsAbs(path) {
+		if path == ".." {
 			return api.NewInvalidParameterValueError("provided 'path' parameter is invalid")
 		}
 	}

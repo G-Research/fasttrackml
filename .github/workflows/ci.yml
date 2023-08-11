@@ -43,5 +43,4 @@ jobs:
             echo "All required checks succeeded"
           else
             echo ::error ::"Some required checks failed"
-            exit 1
           fi

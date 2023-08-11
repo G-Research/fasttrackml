@@ -36,4 +36,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo ${{ toJson(needs.*.result) }}
+          if [ $(jq 'all(. == "success")' <<EOF
+          ${{ toJson(needs.*.result) }}
+          EOF
+          ) == "true" ]; then
+            echo "All required checks succeeded"
+          else
+            echo "Some required checks failed"
+            exit 1
+          fi

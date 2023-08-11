@@ -74,7 +74,6 @@ func (s *ImportTestSuite) SetupTest() {
 		Name:  uuid.NewString(),
 	})
 
-	
 	databaseSlowThreshold := time.Second * 1
 	databasePoolMax := 20
 	databaseReset := false
@@ -136,7 +135,7 @@ func validateDB(t *testing.T, db *database.DbInstance) {
 	numberOfLatestMetrics := 10
 	numberOfTags := 5
 	numberOfParams := 0
-	
+
 	var countVal int64
 	tx := db.DB.Model(&database.Run{}).Count(&countVal)
 	assert.Nil(t, tx.Error)

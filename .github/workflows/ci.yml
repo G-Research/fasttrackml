@@ -36,4 +36,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo ${{ needs.*.result }}
+          echo ${{ toJson(needs.*.result) }}

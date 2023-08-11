@@ -29,7 +29,6 @@ func importCmd(cmd *cobra.Command, args []string) error {
 	defer inputDB.Close()
 	defer outputDB.Close()
 
-	// TODO set gorm config DryRun as needed
 	if err := database.Import(inputDB, outputDB); err != nil {
 		return err
 	}
@@ -39,6 +38,7 @@ func importCmd(cmd *cobra.Command, args []string) error {
 
 // initDBs inits the input and output DB connections.
 func initDBs() (input, output *database.DbInstance, err error) {
+	// TODO set dry-run as attribute in db configs
 	databaseSlowThreshold := time.Second * 1
 	databasePoolMax := 20
 	databaseReset := false

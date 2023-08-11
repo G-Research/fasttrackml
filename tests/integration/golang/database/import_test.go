@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rotisserie/eris"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -117,8 +118,11 @@ func (s *ImportTestSuite) Test_Ok() {
 	assert.Equal(s.T(), 0, len(outputRuns))
 
 	// invoke the Import method
-	database.Import(s.inputDB, s.outputDB)
-
+	err = database.Import(s.inputDB, s.outputDB)
+	if err != nil {
+		eris.Wrap(err, "import returned error")
+	}
+	assert.Nil(s.T(), err)
 	validateDB(s.T(), s.outputDB)
 }
 

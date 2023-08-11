@@ -9,56 +9,38 @@ import (
 
 // Import will copy the contents of input db to output db.
 func Import(input, output *DbInstance) error {
-	if err := importExperimentTree(input.DB, output.DB); err != nil {
-		return eris.Wrap(err, "unable to import database")
+	in := input.DB
+	tables := []string{
+		"experiments",
+		"experiment_tags",
+		"runs",
+		"tags",
+		"params",
+		"metrics",
+		"latest_metrics",
+		"apps",
+		"dashboards",
 	}
-	return nil
-}
-
-// importExperimentTree will copy the contents of the experiements tree from sourceDB to destDB.
-// experiment_id is renumbered.
-func importExperimentTree(sourceDB, destDB *gorm.DB) error {
-	// Start transaction in the destDB
-	err := destDB.Transaction(func(destTX *gorm.DB) error {
-		// Query data from the source
-		rows, err := sourceDB.Model(&Experiment{}).Rows()
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		count := 0
-		for rows.Next() {
-			var item Experiment
-			sourceDB.ScanRows(rows, &item)
-			originalExpId := item.ID
-			item.ID = nil
-			if err := destTX.Clauses(
-				clause.OnConflict{DoNothing: true},
-				clause.Returning{Columns: []clause.Column{{Name: "experiment_id"}}},
-			).Create(&item).Error; err != nil {
-				return err
+	if err := output.DB.Transaction(func(out *gorm.DB) error {
+		for _, table := range tables {
+			if err := importTable(in, out, table); err != nil {
+				return eris.Wrapf(err, "error importing table %s", table)
 			}
-			importExperimentTags(sourceDB, destDB, originalExpId, item.ID)
-			// importRuns(sourceDB, destDB, originalExpId, item.ID)
-			count++
 		}
-		log.Infof("Importing Experiments - found %v records", count)
 		return nil
-	})
-	if err != nil {
-		return err
+	}); err != nil {
+		return eris.Wrapf(err, "error importing database")
 	}
+
 	return nil
 }
 
-func importExperimentTags(sourceDB, destDB *gorm.DB, originalID, newID *int32) error {
+// importTable will copy the contents of one table (model) from sourceDB to destDB.
+func importTable(sourceDB, destDB *gorm.DB, table string) error {
 	// Start transaction in the destDB
 	err := destDB.Transaction(func(destTX *gorm.DB) error {
-		// Query data from the source
-		rows, err := sourceDB.Model(&ExperimentTag{}).
-			Where("experiment_id = ?", originalID).
-			Rows()
+		// Query data from the source database
+		rows, err := sourceDB.Table(table).Rows()
 		if err != nil {
 			return err
 		}
@@ -66,18 +48,17 @@ func importExperimentTags(sourceDB, destDB *gorm.DB, originalID, newID *int32) e
 
 		count := 0
 		for rows.Next() {
-			var item ExperimentTag
+			var item map[string]any
 			sourceDB.ScanRows(rows, &item)
-			item.ExperimentID = *newID
-			if err := destTX.Clauses(
-				clause.OnConflict{DoNothing: true},
-				clause.Returning{Columns: []clause.Column{{Name: "experiment_id"}}},
-			).Create(&item).Error; err != nil {
+			if err := destTX.
+				Table(table).
+				Clauses(clause.OnConflict{DoNothing: true}).
+				Create(&item).Error; err != nil {
 				return err
 			}
 			count++
 		}
-		log.Infof("Importing ExperimentTags - found %v records", count)
+		log.Infof("Importing %s - found %v records", table, count)
 		return nil
 	})
 	if err != nil {

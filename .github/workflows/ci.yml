@@ -35,12 +35,11 @@ jobs:
       - golang-unit-tests
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          if [ $(jq 'all(. == "success")' <<EOF
-          ${{ toJson(needs.*.result) }}
-          EOF
-          ) == "true" ]; then
-            echo "All required checks succeeded"
-          else
-            echo ::error ::"Some required checks failed"
-          fi
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            if (Object.values(context.needs).every(x => x.result === 'success')) {
+              core.info('All required checks succeeded');
+            } else {
+              core.setFailed('Some required checks failed');
+            }

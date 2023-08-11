@@ -38,7 +38,8 @@ jobs:
       - uses: actions/github-script@v6
         with:
           script: |
-            if (Object.values(context.needs).every(x => x.result === 'success')) {
+            const results = ${{ toJSON(needs.*.result) }};
+            if (results.every(res => res === 'success')) {
               core.info('All required checks succeeded');
             } else {
               core.setFailed('Some required checks failed');

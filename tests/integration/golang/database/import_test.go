@@ -44,6 +44,7 @@ func (s *ImportTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.outputRunFixtures = outputRunFixtures
 
+	// experiment 1
 	experiment, err := inputExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
@@ -51,6 +52,17 @@ func (s *ImportTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 
 	runs, err := inputRunFixtures.CreateExampleRuns(context.Background(), experiment, 5)
+	assert.Nil(s.T(), err)
+	s.runs = runs
+
+	// experiment 2
+	experiment, err = inputExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	assert.Nil(s.T(), err)
+
+	runs, err = inputRunFixtures.CreateExampleRuns(context.Background(), experiment, 5)
 	assert.Nil(s.T(), err)
 	s.runs = runs
 
@@ -109,9 +121,10 @@ func (s *ImportTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.outputRunFixtures.UnloadFixtures())
 	}()
 
+	// source DB should have expected
 	validateDB(s.T(), s.inputDB)
 
-	// initially, ouput db has 0 rows
+	// initially, dest DB is empty
 	outputRuns, err := s.outputRunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), 0, len(outputRuns))
@@ -122,6 +135,18 @@ func (s *ImportTestSuite) Test_Ok() {
 		eris.Wrap(err, "import returned error")
 	}
 	assert.Nil(s.T(), err)
+
+	// dest DB should now have the expected
+	validateDB(s.T(), s.outputDB)
+
+	// invoke the Import method a 2nd time
+	err = database.Import(s.inputDB, s.outputDB)
+	if err != nil {
+		eris.Wrap(err, "import returned error")
+	}
+	assert.Nil(s.T(), err)
+
+	// dest DB should still only have the expected
 	validateDB(s.T(), s.outputDB)
 }
 
@@ -130,30 +155,35 @@ func (s *ImportTestSuite) Test_Ok() {
 // assertions.
 func validateDB(t *testing.T, db *database.DbInstance) {
 
-	numberOfRuns := 5
-	numberOfMetrics := 20
-	numberOfLatestMetrics := 10
-	numberOfTags := 5
+	numberOfExperiements := 3
+	numberOfRuns := 10
+	numberOfMetrics := 40
+	numberOfLatestMetrics := 20
+	numberOfTags := 10
 	numberOfParams := 0
 
 	var countVal int64
-	tx := db.DB.Model(&database.Run{}).Count(&countVal)
+	tx := db.DB.Model(&database.Experiment{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, numberOfRuns, int(countVal))
+	assert.Equal(t, numberOfExperiements, int(countVal), "Experiments count incorrect")
+
+	tx = db.DB.Model(&database.Run{}).Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, numberOfRuns, int(countVal), "Runs count incorrect")
 
 	tx = db.DB.Model(&database.Metric{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, numberOfMetrics, int(countVal))
+	assert.Equal(t, numberOfMetrics, int(countVal), "Metrics count incorrect")
 
 	tx = db.DB.Model(&database.LatestMetric{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, numberOfLatestMetrics, int(countVal))
+	assert.Equal(t, numberOfLatestMetrics, int(countVal), "Latest metrics count incorrect")
 
 	tx = db.DB.Model(&database.Tag{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, numberOfTags, int(countVal))
+	assert.Equal(t, numberOfTags, int(countVal), "Run tags count incorrect")
 
 	tx = db.DB.Model(&database.Param{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, numberOfParams, int(countVal))
+	assert.Equal(t, numberOfParams, int(countVal), "Run params count incorrect")
 }

@@ -127,6 +127,7 @@ func saveExperimentInfo(source, dest Experiment) {
 }
 
 func translateFields(item map[string]any) map[string]any {
+	// boolean is numeric when coming from sqlite
 	if isNaN, ok := item["is_nan"]; ok {
 		switch v := isNaN.(type) {
 		case bool:
@@ -135,7 +136,7 @@ func translateFields(item map[string]any) map[string]any {
 			item["is_nan"] = (v != 0)
 		}	
 	}
-
+	// items with experiment_id fk need to reference the new ID
 	if expID, ok := item["experiment_id"]; ok {
 		id, _ := expID.(int32)
 		for _, expInfo := range experimentInfos {

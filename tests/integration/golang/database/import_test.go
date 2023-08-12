@@ -112,7 +112,6 @@ func (s *ImportTestSuite) SetupTest() {
 
 	s.inputDB = input
 	s.outputDB = output
-
 }
 
 func (s *ImportTestSuite) Test_Ok() {
@@ -154,7 +153,6 @@ func (s *ImportTestSuite) Test_Ok() {
 // a db imported from the test setup db should also pass these
 // assertions.
 func validateDB(t *testing.T, db *database.DbInstance) {
-
 	numberOfExperiements := 3
 	numberOfRuns := 10
 	numberOfMetrics := 40

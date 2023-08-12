@@ -9,7 +9,7 @@ import (
 
 type experimentInfo struct {
 	sourceID int32
-	destID int32
+	destID   int32
 }
 
 var experimentInfos = []experimentInfo{}
@@ -41,7 +41,6 @@ func Import(input, output *DbInstance) error {
 	return nil
 }
 
-
 // importExperiments will copy the contents of one table (model) from sourceDB to destDB.
 func importExperiments(sourceDB, destDB *gorm.DB) error {
 	// Start transaction in the destDB
@@ -60,11 +59,11 @@ func importExperiments(sourceDB, destDB *gorm.DB) error {
 				return err
 			}
 			newItem = Experiment{
-				Name: scannedItem.Name,
+				Name:             scannedItem.Name,
 				ArtifactLocation: scannedItem.ArtifactLocation,
-				LifecycleStage: scannedItem.LifecycleStage,
-				CreationTime: scannedItem.CreationTime,
-				LastUpdateTime: scannedItem.LastUpdateTime,
+				LifecycleStage:   scannedItem.LifecycleStage,
+				CreationTime:     scannedItem.CreationTime,
+				LastUpdateTime:   scannedItem.LastUpdateTime,
 			}
 			if err := destTX.
 				Where(Experiment{Name: scannedItem.Name}).
@@ -122,7 +121,7 @@ func importTable(sourceDB, destDB *gorm.DB, table string) error {
 func saveExperimentInfo(source, dest Experiment) {
 	experimentInfos = append(experimentInfos, experimentInfo{
 		sourceID: *source.ID,
-		destID: *dest.ID,
+		destID:   *dest.ID,
 	})
 }
 
@@ -134,7 +133,7 @@ func translateFields(item map[string]any) map[string]any {
 			break
 		default:
 			item["is_nan"] = (v != 0)
-		}	
+		}
 	}
 	// items with experiment_id fk need to reference the new ID
 	if expID, ok := item["experiment_id"]; ok {

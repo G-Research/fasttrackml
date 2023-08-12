@@ -65,7 +65,6 @@ func (f RunFixtures) CreateExampleRun(
 	return runs[0], err
 }
 
-
 // CreateExampleRuns creates some example runs belonging to the experiment, with tags and metrics.
 func (f RunFixtures) CreateExampleRuns(
 	ctx context.Context, exp *models.Experiment, num int,

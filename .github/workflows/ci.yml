@@ -207,7 +207,7 @@ jobs:
           - os: linux
             runner: ubuntu-latest
           - os: windows
-            runner: windows-latest
+            runner: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Get binaries
@@ -215,12 +215,12 @@ jobs:
         with:
           name: fasttrackml-archives
           path: dist/
-
+      
       - name: Configure linux build environment
         if: matrix.os == 'linux'
         run: |
-          mkdir -p bin
-          tar -xf dist/fasttrackml_linux_${{ matrix.arch }}.tar.gz
+         mkdir -p bin
+         tar -xf dist/fasttrackml_linux_${{ matrix.arch }}.tar.gz
           mv fml bin/fml
           chmod +x bin/fml
       - name: Configure macOS build environment
@@ -233,22 +233,21 @@ jobs:
       - name: Configure windows build environment
         if: matrix.os == 'windows'
         run: |
-          mkdir bin
-          unzip dist/fasttrackml_windows_${{ matrix.arch }}.zip -d bin
-    
+         sudo apt-get install unzip
+         mkdir -p bin
+         unzip dist/fasttrackml_windows_${{ matrix.arch }}.zip -d bin
+         
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.14.1
+        run: make python-dist
         env:
-          CIBW_ARCHS_MACOS: arm64, x86_64
-          CIBW_ARCHS_LINUX: auto64
-          CIBW_ARCHS_WINDOWS: AMD64
-          CIBW_SKIP: pp*
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
 
       - uses: actions/upload-artifact@v3
         with:
           name: fasttrackml-wheels
           path: ./wheelhouse/*.whl
-          
+
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
     name: Build container image
@@ -306,6 +305,7 @@ jobs:
   # Virtual job that can be configured as a required check before a PR can be merged.
   all-required-checks-done:
     name: All required checks done
+    if: ${{ always() }}
     needs:
       - lint
       - golang-unit-tests
@@ -316,7 +316,15 @@ jobs:
       - build-wheels
     runs-on: ubuntu-latest
     steps:
-      - run: echo "All required checks done"
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const results = ${{ toJSON(needs.*.result) }};
+            if (results.every(res => res === 'success')) {
+              core.info('All required checks succeeded');
+            } else {
+              core.setFailed('Some required checks failed');
+            }
 
   # Publish any push to a branch or tag to ghcr.io as a convenience
   # Actual release to Docker Hub happens in a different workflow

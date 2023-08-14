@@ -84,6 +84,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			data, err := s.client.DoStreamRequest(
 				http.MethodGet,
 				"/runs/active",
+				nil,
 			)
 			assert.Nil(s.T(), err)
 

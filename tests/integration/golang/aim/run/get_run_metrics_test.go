@@ -83,7 +83,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			run, err := s.runFixtures.GetTestRun(context.Background(), tt.runID)
+			run, err := s.runFixtures.GetRun(context.Background(), tt.runID)
 			assert.Nil(T, err)
 			var resp response.GetRunMetrics
 			err = s.client.DoPostRequest(

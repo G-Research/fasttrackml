@@ -82,7 +82,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			run, err := s.runFixtures.GetTestRun(context.Background(), s.run.ID)
+			run, err := s.runFixtures.GetRun(context.Background(), s.run.ID)
 			assert.Nil(s.T(), err)
 			// TODO the PUT endpoint only updates LifecycleStage
 			// assert.Equal(t, newName, run.Name)

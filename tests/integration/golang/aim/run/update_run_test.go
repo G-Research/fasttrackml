@@ -60,8 +60,8 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	newStatus := string(models.StatusFinished)
 	archived := true
 	tests := []struct {
-		name     string
-		request  request.UpdateRunRequest
+		name    string
+		request request.UpdateRunRequest
 	}{
 		{
 			name: "UpdateOneRun",

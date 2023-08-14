@@ -96,6 +96,7 @@ go-dist: go-build ## archive app binary.
 .PHONY: python-dist
 python-dist: ## build python wheels.
 	@echo '>>> Building Python Wheels.'
+	@echo $(VERSION)
 	@python3 -m pip wheel . --wheel-dir=tmp-wheels --no-deps
 	@mkdir -p wheelhouse
 	@for file in tmp-wheels/*.whl; do \

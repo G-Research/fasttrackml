@@ -36,18 +36,4 @@ jobs:
       checks: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: 'All required checks succeeded',
-              head_sha: context.sha,
-              status: 'completed',
-              conclusion: 'success',
-              output: {
-                title: 'All required checks done',
-                summary: 'All required checks succeeded'
-              }
-            });
+      - run: echo "All required checks done"

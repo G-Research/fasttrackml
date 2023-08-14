@@ -8,8 +8,8 @@ import (
 )
 
 type experimentInfo struct {
-	sourceID int32
-	destID   int32
+	sourceID int64
+	destID   int64
 }
 
 var experimentInfos = []experimentInfo{}
@@ -25,8 +25,8 @@ func Import(input, output *DbInstance) error {
 		"params",
 		"metrics",
 		"latest_metrics",
-		// "apps",
-		// "dashboards",
+		"apps",
+		"dashboards",
 	}
 	// experiments needs special handling
 	if err := importExperiments(in, out); err != nil {
@@ -120,8 +120,8 @@ func importTable(sourceDB, destDB *gorm.DB, table string) error {
 
 func saveExperimentInfo(source, dest Experiment) {
 	experimentInfos = append(experimentInfos, experimentInfo{
-		sourceID: *source.ID,
-		destID:   *dest.ID,
+		sourceID: int64(*source.ID),
+		destID:   int64(*dest.ID),
 	})
 }
 
@@ -137,7 +137,7 @@ func translateFields(item map[string]any) map[string]any {
 	}
 	// items with experiment_id fk need to reference the new ID
 	if expID, ok := item["experiment_id"]; ok {
-		id, _ := expID.(int32)
+		id, _ := expID.(int64)
 		for _, expInfo := range experimentInfos {
 			if expInfo.sourceID == id {
 				item["experiment_id"] = expInfo.destID

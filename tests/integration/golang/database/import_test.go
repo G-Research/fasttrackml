@@ -159,6 +159,7 @@ func validateDB(t *testing.T, db *database.DbInstance) {
 	numberOfLatestMetrics := 20
 	numberOfTags := 10
 	numberOfParams := 0
+	distinctRunExperimentIDs := 2
 
 	var countVal int64
 	tx := db.DB.Model(&database.Experiment{}).Count(&countVal)
@@ -184,4 +185,9 @@ func validateDB(t *testing.T, db *database.DbInstance) {
 	tx = db.DB.Model(&database.Param{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, numberOfParams, int(countVal), "Run params count incorrect")
+
+	tx = db.DB.Model(&database.Run{}).Distinct("experiment_id").Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
+
 }

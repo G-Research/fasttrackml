@@ -211,5 +211,4 @@ func validateDB(t *testing.T, db *database.DbInstance, counts rowCounts) {
 	tx = db.DB.Model(&database.Dashboard{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.dashboards, int(countVal), "Dashboard count incorrect")
-
 }

@@ -62,9 +62,10 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
-		name    string
-		runID   string
-		request request.GetRunMetrics
+		name             string
+		runID            string
+		request          request.GetRunMetrics
+		expectedResponse response.GetRunMetrics
 	}{
 		{
 			name:  "GetOneRun",
@@ -79,26 +80,33 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					Name:    "key2",
 				},
 			},
+			expectedResponse: response.GetRunMetrics{
+				response.RunMetrics{
+					Name:    "key1",
+					Context: map[string]interface{}{},
+					Values:  []float64{124.1, 125.1},
+					Iters:   []int64{1, 2},
+				},
+				response.RunMetrics{
+					Name:    "key2",
+					Context: map[string]interface{}{},
+					Values:  []float64{124.1, 125.1},
+					Iters:   []int64{1, 2},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			run, err := s.runFixtures.GetRun(context.Background(), tt.runID)
-			assert.Nil(T, err)
 			var resp response.GetRunMetrics
-			err = s.client.DoPostRequest(
+			err := s.client.DoPostRequest(
 				fmt.Sprintf("/runs/%s/metric/get-batch", tt.runID),
 				tt.request,
 				&resp,
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), len(tt.request), len(resp))
-			// this is a test-side conversion of models to response to verify
-			// the response given by the endpoint
-			runMetricMap := convertModelToResponse(run.Metrics)
-			for _, respElement := range resp {
-				assert.Equal(s.T(), runMetricMap[respElement.Name], respElement)
-			}
+			assert.Equal(s.T(), tt.expectedResponse, resp)
 		})
 	}
 }
@@ -129,21 +137,4 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 			assert.Equal(s.T(), tt.error, resp.Message)
 		})
 	}
-}
-
-// convertModelToResponse will convert []models.Metric to response struct like the endpoint response.
-func convertModelToResponse(metrics []models.Metric) map[string]response.RunMetrics {
-	responseMap := map[string]response.RunMetrics{}
-	for _, metric := range metrics {
-		v, ok := responseMap[metric.Key]
-		if !ok {
-			v = response.RunMetrics{Name: metric.Key}
-			responseMap[metric.Key] = v
-		}
-		v.Values = append(v.Values, metric.Value)
-		v.Iters = append(v.Iters, metric.Iter)
-		v.Context = map[string]any{}
-		responseMap[metric.Key] = v
-	}
-	return responseMap
 }

@@ -2,6 +2,7 @@ package config
 
 import (
 	"net/url"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -54,9 +55,7 @@ func (c *ServiceConfig) Validate() error {
 	return nil
 }
 
-// validateConfiguration validates service configuration:
-// - `artifact-root` configuration parameter. for s3 storage it has to be: s3://bucket_name.
-// by default, it should be a local storage path.
+// validateConfiguration validates service configuration for correctness.
 func (c *ServiceConfig) validateConfiguration() error {
 	// 1. validate ArtifactRoot configuration parameter for correctness and valid values.
 	parsed, err := url.Parse(c.ArtifactRoot)
@@ -75,9 +74,7 @@ func (c *ServiceConfig) validateConfiguration() error {
 	return nil
 }
 
-// normaliseConfiguration normalizes service configuration:
-// - `artifact-root` configuration parameter. if provided schema is empty,
-// it means that storage is a local storage, we have to transform it to be absolute.
+// normaliseConfiguration normalizes service configuration parameters.
 func (c *ServiceConfig) normaliseConfiguration() error {
 	parsed, err := url.Parse(c.ArtifactRoot)
 	if err != nil {
@@ -87,7 +84,7 @@ func (c *ServiceConfig) normaliseConfiguration() error {
 	case "s3":
 		return nil
 	case "", "file":
-		absoluteArtifactRoot, err := filepath.Abs(c.ArtifactRoot)
+		absoluteArtifactRoot, err := filepath.Abs(path.Join(parsed.Host, parsed.Path))
 		if err != nil {
 			return eris.Wrapf(err, "error getting absolute path for `artifact-root`: %s", c.ArtifactRoot)
 		}

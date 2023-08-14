@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 )
@@ -26,10 +28,8 @@ func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {
 	if filepath.IsAbs(parsedUrl.Path) {
 		return api.NewInvalidParameterValueError("provided 'path' parameter is invalid")
 	}
-	for _, path := range strings.Split(parsedUrl.Path, "/") {
-		if path == ".." {
-			return api.NewInvalidParameterValueError("provided 'path' parameter is invalid")
-		}
+	if slices.Contains(strings.Split(parsedUrl.Path, "/"), "..") {
+		return api.NewInvalidParameterValueError("provided 'path' parameter is invalid")
 	}
 	return nil
 }

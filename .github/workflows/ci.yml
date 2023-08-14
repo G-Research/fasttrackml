@@ -219,8 +219,8 @@ jobs:
       - name: Configure linux build environment
         if: matrix.os == 'linux'
         run: |
-         mkdir -p bin
-         tar -xf dist/fasttrackml_linux_${{ matrix.arch }}.tar.gz
+          mkdir -p bin
+          tar -xf dist/fasttrackml_linux_${{ matrix.arch }}.tar.gz
           mv fml bin/fml
           chmod +x bin/fml
       - name: Configure macOS build environment

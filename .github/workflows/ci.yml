@@ -54,7 +54,7 @@ jobs:
                   title: 'All required checks done',
                   summary: 'All required checks succeeded',
                 },
-              }');
+              });
             } else {
               core.setFailed('Some required checks failed');
             }

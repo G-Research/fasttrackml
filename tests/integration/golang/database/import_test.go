@@ -18,14 +18,27 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
+type rowCounts struct {
+	experiments              int
+	runs                     int
+	distinctRunExperimentIDs int
+	metrics                  int
+	latestMetrics            int
+	tags                     int
+	params                   int
+	dashboards               int
+	apps                     int
+}
+
 type ImportTestSuite struct {
 	suite.Suite
-	runs              []*models.Run
-	client            *helpers.HttpClient
-	inputRunFixtures  *fixtures.RunFixtures
-	outputRunFixtures *fixtures.RunFixtures
-	inputDB           *database.DbInstance
-	outputDB          *database.DbInstance
+	runs               []*models.Run
+	client             *helpers.HttpClient
+	inputRunFixtures   *fixtures.RunFixtures
+	outputRunFixtures  *fixtures.RunFixtures
+	inputDB            *database.DbInstance
+	outputDB           *database.DbInstance
+	populatedRowCounts rowCounts
 }
 
 func TestImportTestSuite(t *testing.T) {
@@ -112,6 +125,18 @@ func (s *ImportTestSuite) SetupTest() {
 
 	s.inputDB = input
 	s.outputDB = output
+
+	s.populatedRowCounts = rowCounts{
+		experiments:              3,
+		runs:                     10,
+		distinctRunExperimentIDs: 2,
+		metrics:                  40,
+		latestMetrics:            20,
+		tags:                     10,
+		params:                   20,
+		dashboards:               1,
+		apps:                     1,
+	}
 }
 
 func (s *ImportTestSuite) Test_Ok() {
@@ -121,22 +146,19 @@ func (s *ImportTestSuite) Test_Ok() {
 	}()
 
 	// source DB should have expected
-	validateDB(s.T(), s.inputDB)
+	validateDB(s.T(), s.inputDB, s.populatedRowCounts)
 
 	// initially, dest DB is empty
-	outputRuns, err := s.outputRunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
-	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), 0, len(outputRuns))
-
+	validateDB(s.T(), s.outputDB, rowCounts{experiments: 1})
 	// invoke the Import method
-	err = database.Import(s.inputDB, s.outputDB)
+	err := database.Import(s.inputDB, s.outputDB)
 	if err != nil {
 		eris.Wrap(err, "import returned error")
 	}
 	assert.Nil(s.T(), err)
 
 	// dest DB should now have the expected
-	validateDB(s.T(), s.outputDB)
+	validateDB(s.T(), s.outputDB, s.populatedRowCounts)
 
 	// invoke the Import method a 2nd time
 	err = database.Import(s.inputDB, s.outputDB)
@@ -146,48 +168,48 @@ func (s *ImportTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	// dest DB should still only have the expected
-	validateDB(s.T(), s.outputDB)
+	validateDB(s.T(), s.outputDB, s.populatedRowCounts)
 }
 
 // validateDB will make assertions about the db based on the test setup.
 // a db imported from the test setup db should also pass these
 // assertions.
-func validateDB(t *testing.T, db *database.DbInstance) {
-	numberOfExperiements := 3
-	numberOfRuns := 10
-	numberOfMetrics := 40
-	numberOfLatestMetrics := 20
-	numberOfTags := 10
-	numberOfParams := 0
-	distinctRunExperimentIDs := 2
-
+func validateDB(t *testing.T, db *database.DbInstance, counts rowCounts) {
 	var countVal int64
 	tx := db.DB.Model(&database.Experiment{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, numberOfExperiements, int(countVal), "Experiments count incorrect")
+	assert.Equal(t, counts.experiments, int(countVal), "Experiments count incorrect")
 
 	tx = db.DB.Model(&database.Run{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, numberOfRuns, int(countVal), "Runs count incorrect")
+	assert.Equal(t, counts.runs, int(countVal), "Runs count incorrect")
 
 	tx = db.DB.Model(&database.Metric{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, numberOfMetrics, int(countVal), "Metrics count incorrect")
+	assert.Equal(t, counts.metrics, int(countVal), "Metrics count incorrect")
 
 	tx = db.DB.Model(&database.LatestMetric{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, numberOfLatestMetrics, int(countVal), "Latest metrics count incorrect")
+	assert.Equal(t, counts.latestMetrics, int(countVal), "Latest metrics count incorrect")
 
 	tx = db.DB.Model(&database.Tag{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, numberOfTags, int(countVal), "Run tags count incorrect")
+	assert.Equal(t, counts.tags, int(countVal), "Run tags count incorrect")
 
 	tx = db.DB.Model(&database.Param{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, numberOfParams, int(countVal), "Run params count incorrect")
+	assert.Equal(t, counts.params, int(countVal), "Run params count incorrect")
 
 	tx = db.DB.Model(&database.Run{}).Distinct("experiment_id").Count(&countVal)
 	assert.Nil(t, tx.Error)
-	assert.Equal(t, distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
+	assert.Equal(t, counts.distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
+
+	tx = db.DB.Model(&database.App{}).Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, counts.apps, int(countVal), "Apps count incorrect")
+
+	tx = db.DB.Model(&database.Dashboard{}).Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, counts.dashboards, int(countVal), "Dashboard count incorrect")
 
 }

@@ -18,6 +18,7 @@ type RunFixtures struct {
 	runRepository    repositories.RunRepositoryProvider
 	tagRepository    repositories.TagRepositoryProvider
 	metricRepository repositories.MetricRepositoryProvider
+	paramRepository  repositories.ParamRepository
 }
 
 // NewRunFixtures creates new instance of RunFixtures.
@@ -31,6 +32,7 @@ func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
 		runRepository:    repositories.NewRunRepository(db.DB),
 		tagRepository:    repositories.NewTagRepository(db.DB),
 		metricRepository: repositories.NewMetricRepository(db.DB),
+		paramRepository:  *repositories.NewParamRepository(db.DB),
 	}, nil
 }
 
@@ -97,6 +99,11 @@ func (f RunFixtures) CreateExampleRuns(
 		run.Tags = []models.Tag{tag}
 
 		err = f.CreateMetrics(ctx, run, 2)
+		if err != nil {
+			return nil, err
+		}
+
+		err = f.CreateParams(ctx, run, 2)
 		if err != nil {
 			return nil, err
 		}
@@ -191,6 +198,23 @@ func (f RunFixtures) CreateMetrics(
 			IsNan:     false,
 			RunID:     run.ID,
 			LastIter:  int64(count),
+		}).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// CreateParams creats some example params for a Run, up to count.
+func (f RunFixtures) CreateParams(
+	ctx context.Context, run *models.Run, count int,
+) error {
+	for i := 1; i <= count; i++ {
+		err := f.baseFixtures.db.WithContext(ctx).Create(&models.Param{
+			Key:   fmt.Sprintf("key%d", i),
+			Value: fmt.Sprintf("val%d", i),
+			RunID: run.ID,
 		}).Error
 		if err != nil {
 			return err

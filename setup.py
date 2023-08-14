@@ -17,7 +17,7 @@ def get_version():
     bin.extractall(path)
     bin.close()
     version_string = subprocess.check_output(
-        [path, "--version"], universal_newlines=True
+        [f"{path}/bin", "--version"], universal_newlines=True
     ).strip()
     matches = re.findall(r'\d+\.\d+\.\d+', version_string)
     return matches[0]

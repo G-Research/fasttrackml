@@ -20,7 +20,7 @@ jobs:
       - run: exit 0
 
   golang-unit-tests:
-    if: ${{ false }}
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
     name: Golang Unit Tests
     runs-on: ubuntu-latest
     steps:

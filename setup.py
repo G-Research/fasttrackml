@@ -20,8 +20,7 @@ def get_version():
         [path, "--version"], universal_newlines=True
     ).strip()
     matches = re.findall(r'\d+\.\d+\.\d+', version_string)
-    for match in matches:
-        return match
+    return matches[0]
 
 def get_fml_executable():
      for file_name in os.listdir("bin"):

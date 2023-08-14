@@ -47,10 +47,10 @@ func NewServiceConfig() *ServiceConfig {
 // Validate validates service configuration.
 func (c *ServiceConfig) Validate() error {
 	if err := c.validateConfiguration(); err != nil {
-		return eris.Wrap(err, "error validating service configuration")
+		return eris.Wrap(err, `error validating service configuration`)
 	}
 	if err := c.normaliseConfiguration(); err != nil {
-		return eris.Wrap(err, "error normalising service configuration")
+		return eris.Wrap(err, `error normalising service configuration`)
 	}
 	return nil
 }
@@ -60,15 +60,15 @@ func (c *ServiceConfig) validateConfiguration() error {
 	// 1. validate ArtifactRoot configuration parameter for correctness and valid values.
 	parsed, err := url.Parse(c.ArtifactRoot)
 	if err != nil {
-		return eris.Wrap(err, "error parsing `artifact-root` flag")
+		return eris.Wrap(err, `error parsing "artifact-root" flag`)
 	}
 
 	if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
-		return eris.New("incorrect format of `artifact-root` flag")
+		return eris.New(`incorrect format of "artifact-root" flag`)
 	}
 
 	if !slices.Contains([]string{"", "file", "s3"}, parsed.Scheme) {
-		return eris.New("unsupportable schema of `artifact-root` flag")
+		return eris.New(`unsupportable schema of "artifact-root" flag`)
 	}
 
 	return nil
@@ -78,7 +78,7 @@ func (c *ServiceConfig) validateConfiguration() error {
 func (c *ServiceConfig) normaliseConfiguration() error {
 	parsed, err := url.Parse(c.ArtifactRoot)
 	if err != nil {
-		return eris.Wrap(err, "error parsing `artifact-root` flag")
+		return eris.Wrap(err, `error parsing "artifact-root" flag`)
 	}
 	switch parsed.Scheme {
 	case "s3":
@@ -86,7 +86,7 @@ func (c *ServiceConfig) normaliseConfiguration() error {
 	case "", "file":
 		absoluteArtifactRoot, err := filepath.Abs(path.Join(parsed.Host, parsed.Path))
 		if err != nil {
-			return eris.Wrapf(err, "error getting absolute path for `artifact-root`: %s", c.ArtifactRoot)
+			return eris.Wrapf(err, `error getting absolute path for "artifact-root": %s`, c.ArtifactRoot)
 		}
 		c.ArtifactRoot = absoluteArtifactRoot
 	}

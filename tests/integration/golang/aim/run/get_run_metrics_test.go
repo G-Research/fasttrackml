@@ -110,10 +110,12 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 	tests := []struct {
 		name  string
 		runID string
+		error string
 	}{
 		{
 			name:  "GetNonexistentRun",
 			runID: uuid.NewString(),
+			error: "Not Found",
 		},
 	}
 	for _, tt := range tests {
@@ -124,7 +126,7 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "Not Found", resp.Message)
+			assert.Equal(s.T(), tt.error, resp.Message)
 		})
 	}
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -56,9 +57,6 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
-	newName := fmt.Sprintf("%v%v", s.run.Name, "-new")
-	newStatus := string(models.StatusFinished)
-	archived := true
 	tests := []struct {
 		name    string
 		request request.UpdateRunRequest
@@ -67,9 +65,9 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 			name: "UpdateOneRun",
 			request: request.UpdateRunRequest{
 				RunID:    &(s.run.ID),
-				Name:     &newName,
-				Status:   &newStatus,
-				Archived: &archived,
+				Name:     common.GetPointer(fmt.Sprintf("%v%v", s.run.Name, "-new")),
+				Status:   common.GetPointer(string(models.StatusFinished)),
+				Archived: common.GetPointer(true),
 			},
 		},
 	}

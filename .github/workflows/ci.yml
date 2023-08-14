@@ -41,20 +41,22 @@ jobs:
         with:
           script: |
             const results = ${{ toJSON(needs.*.result) }};
+            var conclusion = 'success';
             if (results.every(res => res === 'success')) {
               core.info('All required checks succeeded');
-              github.rest.checks.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                name: 'All required checks done - required for PR merge',
-                head_sha: context.sha,
-                status: 'completed',
-                conclusion: 'success',
-                output: {
-                  title: 'All required checks done',
-                  summary: 'All required checks succeeded'
-                }
-              });
             } else {
-              core.setFailed('Some required checks failed');
+              core.error('Some required checks did not succeed');
+              conclusion = 'failure';
             }
+            github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'All required checks succeeded',
+              head_sha: context.sha,
+              status: 'completed',
+              conclusion: conclusion,
+              output: {
+                title: 'All required checks done',
+                summary: 'All required checks succeeded'
+              }
+            });

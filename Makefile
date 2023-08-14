@@ -39,6 +39,18 @@ endif
 ARCHIVE_NAME=dist/fasttrackml_$(shell go env GOOS | sed s/darwin/macos/)_$(shell go env GOARCH | sed s/amd64/x86_64/).$(ARCHIVE_EXT)
 ARCHIVE_FILES=$(APP) LICENSE README.md
 
+# Create the platform name 
+ifeq ($(shell go env GOOS)_$(shell go env GOARCH),darwin_x86_64)
+    PLATFORM_NAME := macosx_10_13_x86_64
+else ifeq ($(shell go env GOOS)_$(shell go env GOARCH),darwin_arm64)
+    PLATFORM_NAME := macosx_11_0_arm64
+else ifeq ($(shell go env GOOS)_$(shell go env GOARCH),linux_x86_64)
+    PLATFORM_NAME := manylinux1_x86_64
+else ifeq ($(shell go env GOOS)_$(shell go env GOARCH),linux_arm64)
+    PLATFORM_NAME := manylinux1_aarch64
+else ifeq ($(shell go env GOOS)_$(shell go env GOARCH),windows_x86_64)
+    PLATFORM_NAME := win_amd64
+endif
 #
 # Default target (help)
 #
@@ -81,6 +93,17 @@ go-dist: go-build ## archive app binary.
 	@if [ -f $(ARCHIVE_NAME) ]; then rm -f $(ARCHIVE_NAME); fi
 	@$(ARCHIVE_CMD) $(ARCHIVE_NAME) $(ARCHIVE_FILES)
 
+.PHONY: python-dist
+python-dist: ## build python wheels.
+	@echo '>>> Building Python Wheels.'
+	@python3 -m pip wheel . --wheel-dir=tmp-wheels --no-deps
+	@mkdir -p wheelhouse
+	@for file in tmp-wheels/*.whl; do \
+		base_name="$$(basename $$file)"; \
+		new_name="$$(echo $$base_name | rev | cut -d- -f2- | rev)-$(PLATFORM_NAME).whl"; \
+		cp "$$file" "wheelhouse/$$new_name"; \
+	done
+
 #
 # Tests targets.
 #
@@ -119,7 +142,7 @@ service-start-dependencies: ## start service dependencies in docker.
 	@echo ">>> Start all Service dependencies."
 	@docker-compose up \
 	-d \
-	postgres
+	minio postgres
 
 .PHONY: service-start
 service-start: service-build service-start-dependencies ## start service in docker.

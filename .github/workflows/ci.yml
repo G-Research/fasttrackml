@@ -33,6 +33,8 @@ jobs:
     needs:
       - lint
       - golang-unit-tests
+    permissions:
+      checks: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v6
@@ -41,6 +43,16 @@ jobs:
             const results = ${{ toJSON(needs.*.result) }};
             if (results.every(res => res === 'success')) {
               core.info('All required checks succeeded');
+              github.checks.create({
+                name: 'All required checks done - required for PR merge',
+                head_sha: github.context.sha,
+                status: 'completed',
+                conclusion: 'success',
+                output: {
+                  title: 'All required checks done',
+                  summary: 'All required checks succeeded',
+                },
+              });
             } else {
               core.setFailed('Some required checks failed');
             }

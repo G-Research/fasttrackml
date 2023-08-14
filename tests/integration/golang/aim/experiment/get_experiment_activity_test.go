@@ -52,7 +52,7 @@ func (s *GetExperimentActivityTestSuite) Test_Ok() {
 	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	runs, err := s.runFixtures.CreateRuns(context.Background(), exp, 10)
+	runs, err := s.runFixtures.CreateExampleRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
 
 	archivedRunsIds := []string{runs[0].ID, runs[1].ID}

@@ -89,10 +89,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		query string
 	}{
 		{
-			name:  "TestContainsFunction",
-			query: `q=(metric.name=='key1' and run.name.contains("chill"))&p=500&report_progress=false`,
-		},
-		{
 			name:  "TestStartWithFunction",
 			query: `q=(metric.name=='key1' and run.name.startswith("chill"))&p=500&report_progress=false`,
 		},
@@ -108,12 +104,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			name:  "TestRegexpSearchFunction",
 			query: `q=(metric.name=='key1' and re.search("run", run.name))&p=500&report_progress=false`,
 		},
+		{
+			name:  "TestInFunction",
+			query: `q=(metric.name=='key1' and 'chill' in run.name)&p=500&report_progress=false`,
+		},
+		{
+			name:  "TestNotInFunction",
+			query: `q=(metric.name=='key1' and 'grill' not in run.name)&p=500&report_progress=false`,
+		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			data, err := s.client.DoStreamRequest(
 				http.MethodGet,
 				fmt.Sprintf("/runs/search/metric?%s", tt.query),
+				nil,
 			)
 			decodedData, err := encoding.Decode(bytes.NewBuffer(data))
 			assert.Nil(s.T(), err)

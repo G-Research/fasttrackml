@@ -21,7 +21,6 @@ var ImportCmd = &cobra.Command{
 }
 
 func importCmd(cmd *cobra.Command, args []string) error {
-	// 1. init database connections.
 	inputDB, outputDB, err := initDBs()
 	if err != nil {
 		return err
@@ -38,7 +37,6 @@ func importCmd(cmd *cobra.Command, args []string) error {
 
 // initDBs inits the input and output DB connections.
 func initDBs() (input, output *database.DbInstance, err error) {
-	// TODO set dry-run as attribute in db configs
 	databaseSlowThreshold := time.Second * 1
 	databasePoolMax := 20
 	databaseReset := false
@@ -76,7 +74,6 @@ func init() {
 
 	ImportCmd.Flags().StringP("input-database-uri", "i", "", "Input Database URI (eg., sqlite://fasttrackml.db)")
 	ImportCmd.Flags().StringP("output-database-uri", "o", "", "Output Database URI (eg., postgres://user:psw@postgres:5432)")
-	ImportCmd.Flags().BoolP("dry-run", "n", false, "Perform a dry run (will not write anything)")
 	ImportCmd.MarkFlagRequired("input-database-uri")
 	ImportCmd.MarkFlagRequired("output-database-uri")
 }

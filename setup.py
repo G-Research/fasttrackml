@@ -12,21 +12,13 @@ with open("README.md", "r") as f:
     readme = f.read()
 
 def get_version():
-    version_string=""
-    if platform.system() == "Linux":
-        my_tar = tarfile.open('./dist/fasttrackml_linux_x86_64.tar.gz')
-        my_tar.extractall('./dist/fasttrackml_linux_x86_64') # specify which folder to extract to
-        my_tar.close()
-        version_string = subprocess.check_output(
-            [f"./dist/fasttrackml_linux_x86_64/fml", "--version"], universal_newlines=True
-        ).strip()
-    else:
-        my_tar = tarfile.open('./dist/fasttrackml_macos_x86_64.tar.gz')
-        my_tar.extractall('./dist/fasttrackml_macos_x86_64') # specify which folder to extract to
-        my_tar.close()
-        version_string = subprocess.check_output(
-            [f"./dist/fasttrackml_macos_x86_64/fml", "--version"], universal_newlines=True
-        ).strip()
+    path = './dist/fasttrackml_linux_x86_64' if platform.system() == "Linux" else './dist/fasttrackml_macos_x86_64'
+    bin = tarfile.open(f'{path}.tar.gz')
+    bin.extractall(path)
+    bin.close()
+    version_string = subprocess.check_output(
+        [path, "--version"], universal_newlines=True
+    ).strip()
     matches = re.findall(r'\d+\.\d+\.\d+', version_string)
     for match in matches:
         return match

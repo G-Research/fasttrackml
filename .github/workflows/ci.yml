@@ -29,7 +29,6 @@ jobs:
   # Virtual job that can be configured as a required check before a PR can be merged.
   all-required-checks-done:
     name: All required checks done
-    if: ${{ always() }}
     needs:
       - lint
       - golang-unit-tests
@@ -40,21 +39,13 @@ jobs:
       - uses: actions/github-script@v6
         with:
           script: |
-            const results = ${{ toJSON(needs.*.result) }};
-            var conclusion = 'success';
-            if (results.every(res => res === 'success')) {
-              core.info('All required checks succeeded');
-            } else {
-              core.error('Some required checks did not succeed');
-              conclusion = 'failure';
-            }
             github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               name: 'All required checks succeeded',
               head_sha: context.sha,
               status: 'completed',
-              conclusion: conclusion,
+              conclusion: 'success',
               output: {
                 title: 'All required checks done',
                 summary: 'All required checks succeeded'

@@ -25,8 +25,8 @@ func Import(input, output *DbInstance) error {
 		"params",
 		"metrics",
 		"latest_metrics",
-		"apps",
-		"dashboards",
+		// "apps",
+		// "dashboards",
 	}
 	// experiments needs special handling
 	if err := importExperiments(in, out); err != nil {

@@ -204,11 +204,11 @@ func validateDB(t *testing.T, db *database.DbInstance, counts rowCounts) {
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
 
-	tx = db.DB.Model(&database.App{}).Count(&countVal)
-	assert.Nil(t, tx.Error)
-	assert.Equal(t, counts.apps, int(countVal), "Apps count incorrect")
+	// tx = db.DB.Model(&database.App{}).Count(&countVal)
+	// assert.Nil(t, tx.Error)
+	// assert.Equal(t, counts.apps, int(countVal), "Apps count incorrect")
 
-	tx = db.DB.Model(&database.Dashboard{}).Count(&countVal)
-	assert.Nil(t, tx.Error)
-	assert.Equal(t, counts.dashboards, int(countVal), "Dashboard count incorrect")
+	// tx = db.DB.Model(&database.Dashboard{}).Count(&countVal)
+	// assert.Nil(t, tx.Error)
+	// assert.Equal(t, counts.dashboards, int(countVal), "Dashboard count incorrect")
 }

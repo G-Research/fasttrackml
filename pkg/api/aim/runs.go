@@ -344,7 +344,8 @@ func SearchRuns(c *fiber.Ctx) error {
 			"runs":        "runs",
 			"experiments": "Experiment",
 		},
-		TzOffset: tzOffset,
+		TzOffset:  tzOffset,
+		Dialector: database.DB.Dialector.Name(),
 	}
 	qp, err := pq.Parse(q.Query)
 	if err != nil {
@@ -538,7 +539,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 			"experiments": "experiments",
 			"metrics":     "latest_metrics",
 		},
-		TzOffset: tzOffset,
+		TzOffset:  tzOffset,
+		Dialector: database.DB.Dialector.Name(),
 	}
 	qp, err := pq.Parse(q.Query)
 	if err != nil {

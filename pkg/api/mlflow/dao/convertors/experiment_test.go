@@ -18,12 +18,13 @@ func TestConvertCreateExperimentToDBModel_Ok(t *testing.T) {
 				Value: "value",
 			},
 		},
-		ArtifactLocation: "location",
+		ArtifactLocation: "s3://location",
 	}
-	result := ConvertCreateExperimentToDBModel(&req)
+	result, err := ConvertCreateExperimentToDBModel(&req)
+	assert.Nil(t, err)
 	assert.Equal(t, "name", result.Name)
 	assert.Equal(t, models.LifecycleStageActive, result.LifecycleStage)
-	assert.Equal(t, "location", result.ArtifactLocation)
+	assert.Equal(t, "s3://location", result.ArtifactLocation)
 	assert.Equal(t, []models.ExperimentTag{
 		{
 			Key:   "key",

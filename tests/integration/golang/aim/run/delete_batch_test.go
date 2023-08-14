@@ -85,7 +85,7 @@ func (s *DeleteBatchTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
 
-			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+			runs, err := s.runFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 
@@ -130,7 +130,7 @@ func (s *DeleteBatchTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), resp.Error(), "count of deleted runs does not match length of ids input")
 
-			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+			runs, err := s.runFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 

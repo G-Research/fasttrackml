@@ -94,7 +94,7 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), map[string]interface{}{"status": "OK"}, resp)
 
-			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+			runs, err := s.runFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), 10, len(runs))
 			archiveCount := 0
@@ -146,7 +146,7 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
 
-			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+			runs, err := s.runFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 

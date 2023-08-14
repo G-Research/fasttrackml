@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
@@ -64,7 +65,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 	experiments, err := s.fixtures.GetTestExperiments(context.Background())
 	length := len(experiments)
 
-	var resp any
+	var resp response.DeleteExperiment
 	err = s.client.DoDeleteRequest(
 		fmt.Sprintf("/experiments/%d", *experiment.ID),
 		&resp,

@@ -2,7 +2,9 @@ package convertors
 
 import (
 	"database/sql"
-	"fmt"
+	"net/url"
+
+	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -18,23 +20,28 @@ const (
 )
 
 // ConvertCreateRunRequestToDBModel converts request.CreateRunRequest into actual models.Run model.
-func ConvertCreateRunRequestToDBModel(experiment *models.Experiment, req *request.CreateRunRequest) *models.Run {
+func ConvertCreateRunRequestToDBModel(
+	experiment *models.Experiment, req *request.CreateRunRequest,
+) (*models.Run, error) {
+	runID := database.NewUUID()
+	artifactURI, err := url.JoinPath(experiment.ArtifactLocation, runID, "artifacts")
+	if err != nil {
+		return nil, eris.Wrap(err, "error constructing artifact_uri")
+	}
 	run := models.Run{
-		// TODO:Dsuhinin why sometimes we create ID like that and sometimes created it using DB?
-		ID:           database.NewUUID(),
-		Name:         req.Name,
-		ExperimentID: *experiment.ID,
-		UserID:       req.UserID,
-		Status:       models.StatusRunning,
+		ID:     runID,
+		Name:   req.Name,
+		Tags:   make([]models.Tag, len(req.Tags)),
+		UserID: req.UserID,
+		Status: models.StatusRunning,
 		StartTime: sql.NullInt64{
 			Int64: req.StartTime,
 			Valid: true,
 		},
+		ArtifactURI:    artifactURI,
+		ExperimentID:   *experiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
-		Tags:           make([]models.Tag, len(req.Tags)),
 	}
-
-	run.ArtifactURI = fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, run.ID)
 
 	for n, tag := range req.Tags {
 		switch tag.Key {
@@ -68,7 +75,7 @@ func ConvertCreateRunRequestToDBModel(experiment *models.Experiment, req *reques
 	if run.SourceType == "" {
 		run.SourceType = "UNKNOWN"
 	}
-	return &run
+	return &run, nil
 }
 
 // ConvertUpdateRunRequestToDBModel converts request.UpdateRunRequest into actual models.Run model.

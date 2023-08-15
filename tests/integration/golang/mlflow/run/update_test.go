@@ -122,7 +122,7 @@ func (s *UpdateRunTestSuite) Test_Error() {
 				RunID: "1",
 			},
 			error: api.NewResourceDoesNotExistError(
-				"unable to find run '1': error getting `run` entity by id: 1: record not found",
+				"unable to find run '1': error getting 'run' entity by id: 1: record not found",
 			),
 		},
 	}

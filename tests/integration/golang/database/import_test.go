@@ -154,9 +154,6 @@ func (s *ImportTestSuite) Test_Ok() {
 	// invoke the Importer.Import() method
 	importer := database.NewImporter(s.inputDB, s.outputDB)
 	err := importer.Import()
-	if err != nil {
-		eris.Wrap(err, "import returned error")
-	}
 	assert.Nil(s.T(), err)
 
 	// dest DB should now have the expected
@@ -164,9 +161,6 @@ func (s *ImportTestSuite) Test_Ok() {
 
 	// invoke the Importer.Import method a 2nd time
 	err = importer.Import()
-	if err != nil {
-		eris.Wrap(err, "import returned error")
-	}
 	assert.Nil(s.T(), err)
 
 	// dest DB should still only have the expected

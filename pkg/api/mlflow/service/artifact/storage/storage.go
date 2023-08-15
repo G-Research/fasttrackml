@@ -46,6 +46,10 @@ func NewArtifactStorage(config *config.ServiceConfig) (Provider, error) {
 		switch u.Scheme {
 		case "s3":
 			return NewS3(config)
+		case "", "file":
+			return NewLocal(config)
+		default:
+			return nil, eris.Errorf("unsupported schema has been provided: %s", u.Scheme)
 		}
 	}
 	return NewNoop(), nil

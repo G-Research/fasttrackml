@@ -140,7 +140,7 @@ func (s *RestoreRunTestSuite) Test_Error() {
 				RunID: "id",
 			},
 			error: api.NewResourceDoesNotExistError(
-				"unable to find run 'id': error getting `run` entity by id: id: record not found",
+				"unable to find run 'id': error getting 'run' entity by id: id: record not found",
 			),
 		},
 	}

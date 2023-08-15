@@ -64,11 +64,11 @@ func (c *ServiceConfig) validateConfiguration() error {
 	}
 
 	if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
-		return eris.New(`incorrect format of 'artifact-root' flag`)
+		return eris.New("incorrect format of 'artifact-root' flag")
 	}
 
 	if !slices.Contains([]string{"", "file", "s3"}, parsed.Scheme) {
-		return eris.New(`unsupported schema of 'artifact-root' flag`)
+		return eris.New("unsupported schema of 'artifact-root' flag")
 	}
 
 	return nil

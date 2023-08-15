@@ -82,7 +82,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 	}{
 		{
 			name:    "EmptyOrIncorrectRunID",
-			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.ListArtifactsRequest{},
 			service: func() *Service {
 				return NewService(
@@ -107,7 +107,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundDatabaseError",
-			error: api.NewInternalError(`unable to get artifact URI for run 'id'`),
+			error: api.NewInternalError("unable to get artifact URI for run 'id'"),
 			request: &request.ListArtifactsRequest{
 				RunID: "id",
 			},
@@ -126,7 +126,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 		},
 		{
 			name:  "StorageError",
-			error: api.NewInternalError(`error getting artifact list from storage`),
+			error: api.NewInternalError("error getting artifact list from storage"),
 			request: &request.ListArtifactsRequest{
 				RunID: "id",
 			},

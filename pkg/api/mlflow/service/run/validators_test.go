@@ -316,7 +316,7 @@ func TestValidateSearchRunsRequest_Error(t *testing.T) {
 			name:  "NotAllowedViewTypeProperty",
 			error: api.NewInvalidParameterValueError("Invalid run_view_type 'not-allowed-view-type'"),
 			request: &request.SearchRunsRequest{
-				ViewType: request.ViewType(`not-allowed-view-type`),
+				ViewType: request.ViewType("not-allowed-view-type"),
 			},
 		},
 		{

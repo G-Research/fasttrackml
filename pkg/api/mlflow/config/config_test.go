@@ -94,7 +94,7 @@ func TestServiceConfig_Validate_Error(t *testing.T) {
 		},
 		{
 			name:  "ArtifactRootHasUnsupportedSchema",
-			error: eris.New(`error validating service configuration: unsupported schema of 'artifact-root' flag`),
+			error: eris.New("error validating service configuration: unsupported schema of 'artifact-root' flag"),
 			config: &ServiceConfig{
 				ArtifactRoot: "unsupported://something",
 			},

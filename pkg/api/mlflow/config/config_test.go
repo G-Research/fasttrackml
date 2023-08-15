@@ -43,11 +43,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 				ArtifactRoot: "file:///path1/path2/path3",
 			},
 			expectedConfig: &ServiceConfig{
-				ArtifactRoot: (func() string {
-					path, err := helpers.GetAbsolutePath("/path1/path2/path3")
-					assert.Nil(t, err)
-					return path
-				})(),
+				ArtifactRoot: "/path1/path2/path3",
 			},
 		},
 		{

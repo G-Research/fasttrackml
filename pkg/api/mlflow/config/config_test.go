@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/rotisserie/eris"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 func TestServiceConfig_Validate_Ok(t *testing.T) {
@@ -24,12 +25,29 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 			},
 		},
 		{
-			name: "ArtifactRootHasFilePrefix",
+			name: "ArtifactRootHasFilePrefixAndIsRelative",
 			providedConfig: &ServiceConfig{
 				ArtifactRoot: "file://path1/path2/path3",
 			},
 			expectedConfig: &ServiceConfig{
-				ArtifactRoot: "/path1/path2/path3",
+				ArtifactRoot: (func() string {
+					path, err := helpers.GetAbsolutePath("path1/path2/path3")
+					assert.Nil(t, err)
+					return path
+				})(),
+			},
+		},
+		{
+			name: "ArtifactRootHasFilePrefixAndIsAbsolute",
+			providedConfig: &ServiceConfig{
+				ArtifactRoot: "file:///path1/path2/path3",
+			},
+			expectedConfig: &ServiceConfig{
+				ArtifactRoot: (func() string {
+					path, err := helpers.GetAbsolutePath("/path1/path2/path3")
+					assert.Nil(t, err)
+					return path
+				})(),
 			},
 		},
 		{
@@ -38,7 +56,11 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 				ArtifactRoot: "/path1/path2/path3",
 			},
 			expectedConfig: &ServiceConfig{
-				ArtifactRoot: "/path1/path2/path3",
+				ArtifactRoot: (func() string {
+					path, err := helpers.GetAbsolutePath("/path1/path2/path3")
+					assert.Nil(t, err)
+					return path
+				})(),
 			},
 		},
 	}
@@ -46,7 +68,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Nil(t, tt.providedConfig.Validate())
-			assert.Contains(t, tt.providedConfig.ArtifactRoot, tt.expectedConfig.ArtifactRoot)
+			assert.Equal(t, tt.providedConfig.ArtifactRoot, tt.expectedConfig.ArtifactRoot)
 		})
 	}
 }

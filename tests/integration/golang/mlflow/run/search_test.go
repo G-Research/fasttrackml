@@ -2884,7 +2884,33 @@ func (s *SearchTestSuite) Test_Ok() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			helpers.CompareExpectedSearchRunsResponseWithActualSearchRunsResponse(s.T(), tt.response, resp)
+			assert.Equal(s.T(), len(tt.response.Runs), len(resp.Runs))
+			assert.Equal(s.T(), len(tt.response.NextPageToken), len(resp.NextPageToken))
+
+			mappedExpectedResult := make(map[string]*response.RunPartialResponse, len(tt.response.Runs))
+			for _, run := range tt.response.Runs {
+				mappedExpectedResult[run.Info.ID] = run
+			}
+
+			if tt.response.Runs != nil && resp.Runs != nil {
+				for _, actualRun := range resp.Runs {
+					expectedRun, ok := mappedExpectedResult[actualRun.Info.ID]
+					assert.True(s.T(), ok)
+					assert.NotEmpty(s.T(), actualRun.Info.ID)
+					assert.Equal(s.T(), expectedRun.Info.Name, actualRun.Info.Name)
+					assert.Equal(s.T(), expectedRun.Info.Name, actualRun.Info.Name)
+					assert.Equal(s.T(), expectedRun.Info.UserID, actualRun.Info.UserID)
+					assert.Equal(s.T(), expectedRun.Info.Status, actualRun.Info.Status)
+					assert.Equal(s.T(), expectedRun.Info.EndTime, actualRun.Info.EndTime)
+					assert.Equal(s.T(), expectedRun.Info.StartTime, actualRun.Info.StartTime)
+					assert.Equal(s.T(), expectedRun.Info.ArtifactURI, actualRun.Info.ArtifactURI)
+					assert.Equal(s.T(), expectedRun.Info.ExperimentID, actualRun.Info.ExperimentID)
+					assert.Equal(s.T(), expectedRun.Info.LifecycleStage, actualRun.Info.LifecycleStage)
+					assert.Equal(s.T(), expectedRun.Data.Tags, actualRun.Data.Tags)
+					assert.Equal(s.T(), expectedRun.Data.Params, actualRun.Data.Params)
+					assert.Equal(s.T(), expectedRun.Data.Metrics, actualRun.Data.Metrics)
+				}
+			}
 		})
 	}
 }

@@ -105,13 +105,22 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 				endTimeKey := fmt.Sprintf("%v.props.end_time", run.ID)
 				activeKey := fmt.Sprintf("%v.props.active", run.ID)
 				archivedKey := fmt.Sprintf("%v.props.archived", run.ID)
-				if run.Status == models.StatusRunning && run.LifecycleStage == models.LifecycleStageActive {
+				if run.Status == models.StatusRunning && run.LifecycleStage ==
+					models.LifecycleStageActive {
 					assert.Equal(s.T(), run.Name, decodedData[respNameKey])
-					assert.Equal(s.T(), fmt.Sprintf("%v", run.ExperimentID), decodedData[expIdKey])
-					assert.Equal(s.T(), run.Status == models.StatusRunning, decodedData[activeKey])
+					assert.Equal(s.T(),
+						fmt.Sprintf("%v", run.ExperimentID),
+						decodedData[expIdKey])
+					assert.Equal(s.T(),
+						run.Status == models.StatusRunning,
+						decodedData[activeKey])
 					assert.Equal(s.T(), false, decodedData[archivedKey])
-					assert.Equal(s.T(), run.StartTime.Int64, int64(decodedData[startTimeKey].(float64)))
-					assert.Equal(s.T(), run.EndTime.Int64, int64(decodedData[endTimeKey].(float64)))
+					assert.Equal(s.T(),
+						run.StartTime.Int64,
+						int64(decodedData[startTimeKey].(float64)))
+					assert.Equal(s.T(),
+						run.EndTime.Int64,
+						int64(decodedData[endTimeKey].(float64)))
 					responseCount++
 				} else {
 					assert.Nil(s.T(), decodedData[respNameKey])

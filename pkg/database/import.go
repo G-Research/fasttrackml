@@ -67,11 +67,11 @@ func (s *Importer) importExperiments() error {
 
 		count := 0
 		for rows.Next() {
-			var scannedItem, newItem Experiment
+			var scannedItem Experiment
 			if err := s.sourceDB.ScanRows(rows, &scannedItem); err != nil {
 				return eris.Wrap(err, "error creating Rows instance from source")
 			}
-			newItem = Experiment{
+			newItem := Experiment{
 				Name:             scannedItem.Name,
 				ArtifactLocation: scannedItem.ArtifactLocation,
 				LifecycleStage:   scannedItem.LifecycleStage,

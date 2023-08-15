@@ -150,8 +150,10 @@ func (s *ImportTestSuite) Test_Ok() {
 
 	// initially, dest DB is empty
 	validateDB(s.T(), s.outputDB, rowCounts{experiments: 1})
-	// invoke the Import method
-	err := database.Import(s.inputDB, s.outputDB)
+
+	// invoke the Importer.Import() method
+	importer := database.NewImporter(s.inputDB, s.outputDB)
+	err := importer.Import()
 	if err != nil {
 		eris.Wrap(err, "import returned error")
 	}
@@ -160,8 +162,8 @@ func (s *ImportTestSuite) Test_Ok() {
 	// dest DB should now have the expected
 	validateDB(s.T(), s.outputDB, s.populatedRowCounts)
 
-	// invoke the Import method a 2nd time
-	err = database.Import(s.inputDB, s.outputDB)
+	// invoke the Importer.Import method a 2nd time
+	err = importer.Import()
 	if err != nil {
 		eris.Wrap(err, "import returned error")
 	}

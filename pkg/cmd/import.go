@@ -28,10 +28,10 @@ func importCmd(cmd *cobra.Command, args []string) error {
 	defer inputDB.Close()
 	defer outputDB.Close()
 
-	if err := database.Import(inputDB, outputDB); err != nil {
+	importer := database.NewImporter(inputDB, outputDB)
+	if err := importer.Import(); err != nil {
 		return err
 	}
-
 	return nil
 }
 

@@ -29,7 +29,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 				ArtifactRoot: "file://path1/path2/path3",
 			},
 			expectedConfig: &ServiceConfig{
-				ArtifactRoot: "/pkg/api/mlflow/config/path1/path2/path3",
+				ArtifactRoot: "/path1/path2/path3",
 			},
 		},
 		{
@@ -60,7 +60,7 @@ func TestServiceConfig_Validate_Error(t *testing.T) {
 		{
 			name: "ArtifactRootHasIncorrectFormat",
 			error: eris.New(
-				`error validating service configuration: error parsing "artifact-root" flag: parse "incorrect_format_of_schema://something": first path segment in URL cannot contain colon`,
+				`error validating service configuration: error parsing 'artifact-root' flag: parse "incorrect_format_of_schema://something": first path segment in URL cannot contain colon`,
 			),
 			config: &ServiceConfig{
 				ArtifactRoot: "incorrect_format_of_schema://something",
@@ -68,7 +68,7 @@ func TestServiceConfig_Validate_Error(t *testing.T) {
 		},
 		{
 			name:  "ArtifactRootHasUnsupportedSchema",
-			error: eris.New(`error validating service configuration: unsupportable schema of "artifact-root" flag`),
+			error: eris.New(`error validating service configuration: unsupported schema of 'artifact-root' flag`),
 			config: &ServiceConfig{
 				ArtifactRoot: "unsupportable://something",
 			},

@@ -56,10 +56,10 @@ func NewS3(config *config.ServiceConfig) (*S3, error) {
 }
 
 // List implements Provider interface.
-func (s S3) List(artifactURI, path, nextPageToken string) (string, string, []ArtifactObject, error) {
+func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 	bucket, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {
-		return "", "", nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
+		return "", nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
 	}
 	input := s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
@@ -69,33 +69,32 @@ func (s S3) List(artifactURI, path, nextPageToken string) (string, string, []Art
 	// 1. process search `prefix` parameter.
 	path, err = url.JoinPath(*input.Prefix, path)
 	if err != nil {
-		return "", "", nil, eris.Wrap(err, "error constructing s3 prefix")
+		return "", nil, eris.Wrap(err, "error constructing s3 prefix")
 	}
 	input.Prefix = aws.String(path)
 
-	// 2. process search `nextPageToken` parameter.
-	if nextPageToken != "" {
-		input.ContinuationToken = aws.String(nextPageToken)
-	}
+	var artifactList []ArtifactObject
+	for {
+		output, err := s.client.ListObjectsV2(context.TODO(), &input)
+		if err != nil {
+			return "", nil, eris.Wrap(err, "error getting s3 objects")
+		}
+		log.Debugf("got %d objects from S3 storage for path: %s", len(output.Contents), path)
+		for _, object := range output.Contents {
+			artifactList = append(artifactList, ArtifactObject{
+				Path:  *object.Key,
+				Size:  object.Size,
+				IsDir: false,
+			})
+		}
 
-	output, err := s.client.ListObjectsV2(context.TODO(), &input)
-	if err != nil {
-		return "", "", nil, eris.Wrap(err, "error getting s3 objects")
-	}
-
-	log.Debugf("got %d objects from S3 storage for path: %s", len(output.Contents), path)
-	artifactList := make([]ArtifactObject, len(output.Contents))
-	for i, object := range output.Contents {
-		artifactList[i] = ArtifactObject{
-			Path:  *object.Key,
-			Size:  object.Size,
-			IsDir: false,
+		// if NextContinuationToken exists, then iterate over other pages until we process all the results.
+		if output.NextContinuationToken != nil {
+			input.ContinuationToken = output.NextContinuationToken
+		} else {
+			break
 		}
 	}
 
-	if output.NextContinuationToken != nil {
-		return *output.NextContinuationToken, s.config.ArtifactRoot, artifactList, nil
-	}
-
-	return "", fmt.Sprintf("s3://%s", bucket), artifactList, nil
+	return fmt.Sprintf("s3://%s", bucket), artifactList, nil
 }

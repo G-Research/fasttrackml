@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/rotisserie/eris"
+	"golang.org/x/exp/slices"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/mattn/go-sqlite3"
@@ -101,14 +102,7 @@ func MakeDBInstance(
 			}
 		}
 
-		needToRegister := true
-		for _, driver := range sql.Drivers() {
-			if driver == SQLiteCustomDriverName {
-				needToRegister = false
-			}
-		}
-
-		if needToRegister {
+		if !slices.Contains(sql.Drivers(), SQLiteCustomDriverName) {
 			sql.Register(SQLiteCustomDriverName, &sqlite3.SQLiteDriver{
 				ConnectHook: func(conn *sqlite3.SQLiteConn) error {
 					// create LRU cache to cache regexp statements and results.

@@ -60,7 +60,7 @@ func (c *ServiceConfig) validateConfiguration() error {
 	// 1. validate ArtifactRoot configuration parameter for correctness and valid values.
 	parsed, err := url.Parse(c.ArtifactRoot)
 	if err != nil {
-		return eris.Wrap(err, `error parsing 'artifact-root' flag`)
+		return eris.Wrap(err, "error parsing 'artifact-root' flag")
 	}
 
 	if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
@@ -78,7 +78,7 @@ func (c *ServiceConfig) validateConfiguration() error {
 func (c *ServiceConfig) normalizeConfiguration() error {
 	parsed, err := url.Parse(c.ArtifactRoot)
 	if err != nil {
-		return eris.Wrap(err, `error parsing 'artifact-root' flag`)
+		return eris.Wrap(err, "error parsing 'artifact-root' flag")
 	}
 	switch parsed.Scheme {
 	case "s3":
@@ -86,7 +86,7 @@ func (c *ServiceConfig) normalizeConfiguration() error {
 	case "", "file":
 		absoluteArtifactRoot, err := filepath.Abs(path.Join(parsed.Host, parsed.Path))
 		if err != nil {
-			return eris.Wrapf(err, `error getting absolute path for 'artifact-root': %s`, c.ArtifactRoot)
+			return eris.Wrapf(err, "error getting absolute path for 'artifact-root': %s", c.ArtifactRoot)
 		}
 		c.ArtifactRoot = absoluteArtifactRoot
 	}

@@ -58,7 +58,7 @@ func (s Service) CreateExperiment(
 
 	experiment, err := s.experimentRepository.GetByName(ctx, req.Name)
 	if err != nil {
-		return nil, api.NewInternalError(`error getting experiment with name: '%s', error: %s`, req.Name, err)
+		return nil, api.NewInternalError("error getting experiment with name: '%s', error: %s", req.Name, err)
 	}
 	if experiment != nil {
 		return nil, api.NewResourceAlreadyExistsError("experiment(name=%s) already exists", req.Name)

@@ -92,7 +92,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase1",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "..",
@@ -100,7 +100,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase2",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "./..",
@@ -108,7 +108,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase3",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "./../",
@@ -116,10 +116,18 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase4",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo/../bar",
+			},
+		},
+		{
+			name:  "IncorrectPathProvidedCase5",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			request: &request.ListArtifactsRequest{
+				RunID: "run_id",
+				Path:  "/foo/../bar",
 			},
 		},
 	}

@@ -60,7 +60,7 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 	}{
 		{
 			name:    "EmptyOrIncorrectRunID",
-			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.GetMetricHistoryRequest{},
 			service: func() *Service {
 				metricRepository := repositories.MockMetricRepositoryProvider{}
@@ -69,7 +69,7 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 		},
 		{
 			name:  "EmptyOrIncorrectMetricKey",
-			error: api.NewInvalidParameterValueError(`Missing value for required parameter 'metric_key'`),
+			error: api.NewInvalidParameterValueError("Missing value for required parameter 'metric_key'"),
 			request: &request.GetMetricHistoryRequest{
 				RunID: "1",
 			},
@@ -80,7 +80,7 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 		},
 		{
 			name:  "GetMetricHistoryDatabaseError",
-			error: api.NewInternalError(`unable to get metric history for metric "key" of run "1"`),
+			error: api.NewInternalError("unable to get metric history for metric 'key' of run '1'"),
 			request: &request.GetMetricHistoryRequest{
 				RunID:     "1",
 				MetricKey: "key",
@@ -275,7 +275,7 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 		},
 		{
 			name:  "UnsupportedViewType",
-			error: api.NewInvalidParameterValueError(`Invalid run_view_type 'unsupported'`),
+			error: api.NewInvalidParameterValueError("Invalid run_view_type 'unsupported'"),
 			request: &request.GetMetricHistoriesRequest{
 				RunIDs:   []string{"1"},
 				ViewType: "unsupported",

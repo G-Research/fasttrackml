@@ -64,22 +64,37 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 	tests := []struct {
 		name         string
 		wantRunCount int
+		beforeRunFn  func()
 	}{
 		{
-			name:         "GetActiveRunsWhenPresent",
-			wantRunCount: 2,
+			name:         "GetActiveRuns",
+			wantRunCount: 3,
 		},
 		{
-			name:         "GetActiveRunsWhenNotPresent",
+			name:         "GetActiveRunsSkipsFinished",
+			wantRunCount: 2,
+			beforeRunFn: func() {
+				// set 3rd run to status = StatusFinished
+				s.runs[2].Status = models.StatusFinished
+				assert.Nil(s.T(), s.runFixtures.UpdateRun(context.Background(), s.runs[2]))
+			},
+		},
+		{
+			name:         "GetActiveRunsWhenEmpty",
 			wantRunCount: 0,
+			beforeRunFn: func() {
+				runIDs := make([]string, len(s.runs))
+				for idx, run := range s.runs {
+					runIDs[idx] = run.ID
+				}
+				assert.Nil(s.T(), s.runFixtures.ArchiveRun(context.Background(), runIDs))
+			},
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			// for empty table test (indicated by wantRunCount: 0) we clear the
-			// records created by the setup method
-			if tt.wantRunCount == 0 {
-				assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+			if tt.beforeRunFn != nil {
+				tt.beforeRunFn()
 			}
 			data, err := s.client.DoStreamRequest(
 				http.MethodGet,

@@ -105,8 +105,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), len(tt.request), len(resp))
-			assert.Equal(s.T(), tt.expectedResponse, resp)
+			assert.ElementsMatch(s.T(), tt.expectedResponse, resp)
 		})
 	}
 }

@@ -73,26 +73,24 @@ func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 	}
 	input.Prefix = aws.String(path)
 
+	paginator := s3.NewListObjectsV2Paginator(s.client, &input)
+	if err != nil {
+		return "", nil, eris.Wrap(err, "error creating s3 paginated request")
+	}
+
 	var artifactList []ArtifactObject
-	for {
-		output, err := s.client.ListObjectsV2(context.TODO(), &input)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
 		if err != nil {
-			return "", nil, eris.Wrap(err, "error getting s3 objects")
+			return "", nil, eris.Wrap(err, "error getting s3 page objects")
 		}
-		log.Debugf("got %d objects from S3 storage for path: %s", len(output.Contents), path)
-		for _, object := range output.Contents {
+		log.Debugf("got %d objects from S3 storage for path: %s", len(page.Contents), path)
+		for _, object := range page.Contents {
 			artifactList = append(artifactList, ArtifactObject{
 				Path:  *object.Key,
 				Size:  object.Size,
 				IsDir: false,
 			})
-		}
-
-		// if NextContinuationToken exists, then iterate over other pages until we process all the results.
-		if output.NextContinuationToken != nil {
-			input.ContinuationToken = output.NextContinuationToken
-		} else {
-			break
 		}
 	}
 

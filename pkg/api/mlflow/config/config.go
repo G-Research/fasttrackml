@@ -49,8 +49,8 @@ func (c *ServiceConfig) Validate() error {
 	if err := c.validateConfiguration(); err != nil {
 		return eris.Wrap(err, "error validating service configuration")
 	}
-	if err := c.normaliseConfiguration(); err != nil {
-		return eris.Wrap(err, "error normalising service configuration")
+	if err := c.normalizeConfiguration(); err != nil {
+		return eris.Wrap(err, "error normalizing service configuration")
 	}
 	return nil
 }
@@ -74,8 +74,8 @@ func (c *ServiceConfig) validateConfiguration() error {
 	return nil
 }
 
-// normaliseConfiguration normalizes service configuration parameters.
-func (c *ServiceConfig) normaliseConfiguration() error {
+// normalizeConfiguration normalizes service configuration parameters.
+func (c *ServiceConfig) normalizeConfiguration() error {
 	parsed, err := url.Parse(c.ArtifactRoot)
 	if err != nil {
 		return eris.Wrap(err, `error parsing 'artifact-root' flag`)

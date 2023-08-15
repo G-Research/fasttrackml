@@ -2,10 +2,13 @@ package config
 
 import (
 	"net/url"
+	"path"
+	"path/filepath"
 	"time"
 
-	"github.com/rotisserie/eris"
+	"golang.org/x/exp/slices"
 
+	"github.com/rotisserie/eris"
 	"github.com/spf13/viper"
 )
 
@@ -42,25 +45,50 @@ func NewServiceConfig() *ServiceConfig {
 }
 
 // Validate validates service configuration.
-func (c ServiceConfig) Validate() error {
-	if err := c.validateArtifactRoot(); err != nil {
+func (c *ServiceConfig) Validate() error {
+	if err := c.validateConfiguration(); err != nil {
 		return eris.Wrap(err, "error validating service configuration")
+	}
+	if err := c.normalizeConfiguration(); err != nil {
+		return eris.Wrap(err, "error normalizing service configuration")
 	}
 	return nil
 }
 
-// validateArtifactRoot validates `artifact-root` configuration parameter.
-// for s3 storage it has to be: s3://bucket_name.
-func (c ServiceConfig) validateArtifactRoot() error {
+// validateConfiguration validates service configuration for correctness.
+func (c *ServiceConfig) validateConfiguration() error {
+	// 1. validate ArtifactRoot configuration parameter for correctness and valid values.
 	parsed, err := url.Parse(c.ArtifactRoot)
 	if err != nil {
-		return eris.Wrap(err, "error parsing `artifact-root` flag")
+		return eris.Wrap(err, "error parsing 'artifact-root' flag")
+	}
+
+	if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
+		return eris.New("incorrect format of 'artifact-root' flag")
+	}
+
+	if !slices.Contains([]string{"", "file", "s3"}, parsed.Scheme) {
+		return eris.New("unsupported schema of 'artifact-root' flag")
+	}
+
+	return nil
+}
+
+// normalizeConfiguration normalizes service configuration parameters.
+func (c *ServiceConfig) normalizeConfiguration() error {
+	parsed, err := url.Parse(c.ArtifactRoot)
+	if err != nil {
+		return eris.Wrap(err, "error parsing 'artifact-root' flag")
 	}
 	switch parsed.Scheme {
 	case "s3":
-		if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
-			return eris.New("incorrect format of `artifact-root` flag. has to be s3://bucket_name")
+		return nil
+	case "", "file":
+		absoluteArtifactRoot, err := filepath.Abs(path.Join(parsed.Host, parsed.Path))
+		if err != nil {
+			return eris.Wrapf(err, "error getting absolute path for 'artifact-root': %s", c.ArtifactRoot)
 		}
+		c.ArtifactRoot = absoluteArtifactRoot
 	}
 	return nil
 }

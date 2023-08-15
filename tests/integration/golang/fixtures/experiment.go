@@ -88,7 +88,7 @@ func (f ExperimentFixtures) GetTestExperiments(
 	var experiments []models.Experiment
 	if err := f.db.WithContext(ctx).
 		Find(&experiments).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting `experiment` entities")
+		return nil, eris.Wrapf(err, "error getting 'experiment' entities")
 	}
 	return experiments, nil
 }

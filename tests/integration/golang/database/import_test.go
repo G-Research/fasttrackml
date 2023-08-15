@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -146,10 +145,10 @@ func (s *ImportTestSuite) Test_Ok() {
 	}()
 
 	// source DB should have expected
-	validateDB(s.T(), s.inputDB, s.populatedRowCounts)
+	validateRowCounts(s.T(), s.inputDB, s.populatedRowCounts)
 
-	// initially, dest DB is empty
-	validateDB(s.T(), s.outputDB, rowCounts{experiments: 1})
+	// initially, dest DB is (mostly) empty
+	validateRowCounts(s.T(), s.outputDB, rowCounts{experiments: 1})
 
 	// invoke the Importer.Import() method
 	importer := database.NewImporter(s.inputDB, s.outputDB)
@@ -157,20 +156,34 @@ func (s *ImportTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	// dest DB should now have the expected
-	validateDB(s.T(), s.outputDB, s.populatedRowCounts)
+	validateRowCounts(s.T(), s.outputDB, s.populatedRowCounts)
 
 	// invoke the Importer.Import method a 2nd time
 	err = importer.Import()
 	assert.Nil(s.T(), err)
 
 	// dest DB should still only have the expected
-	validateDB(s.T(), s.outputDB, s.populatedRowCounts)
+	validateRowCounts(s.T(), s.outputDB, s.populatedRowCounts)
+
+	// confirm row-for-row equality
+	for _, table := range []string{
+		"experiment_tags",
+		"runs",
+		"tags",
+		"params",
+		"metrics",
+		"latest_metrics",
+		// "apps",
+		// "dashboards",
+	} {
+		validateTable(s.T(), s.inputDB, s.outputDB, table)
+	}
 }
 
-// validateDB will make assertions about the db based on the test setup.
+// validateRowCounts will make assertions about the db based on the test setup.
 // a db imported from the test setup db should also pass these
 // assertions.
-func validateDB(t *testing.T, db *database.DbInstance, counts rowCounts) {
+func validateRowCounts(t *testing.T, db *database.DbInstance, counts rowCounts) {
 	var countVal int64
 	tx := db.DB.Model(&database.Experiment{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
@@ -207,4 +220,27 @@ func validateDB(t *testing.T, db *database.DbInstance, counts rowCounts) {
 	// tx = db.DB.Model(&database.Dashboard{}).Count(&countVal)
 	// assert.Nil(t, tx.Error)
 	// assert.Equal(t, counts.dashboards, int(countVal), "Dashboard count incorrect")
+}
+
+// validateTable will scan source and dest table and confirm they are identical
+func validateTable(t *testing.T, source, dest *database.DbInstance, table string) {
+	sourceRows, err := source.DB.Table(table).Rows()
+	assert.Nil(t, err)
+	destRows, err := dest.DB.Table(table).Rows()
+	assert.Nil(t, err)
+	defer sourceRows.Close()
+	defer destRows.Close()
+
+	for sourceRows.Next() {
+		var sourceItem, destItem map[string]any
+
+		err := source.DB.ScanRows(sourceRows, &sourceItem)
+		assert.Nil(t, err)
+
+		destRows.Next()
+		err = dest.DB.ScanRows(destRows, &destItem)
+		assert.Nil(t, err)
+
+		assert.Equal(t, sourceItem, destItem)
+	}
 }

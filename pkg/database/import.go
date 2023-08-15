@@ -150,7 +150,7 @@ func (s *Importer) translateFields(item map[string]any) (map[string]any, error) 
 		case bool:
 			break
 		default:
-			item["is_nan"] = (v != 0)
+			item["is_nan"] = (v != 0.0)
 		}
 	}
 	// items with experiment_id fk need to reference the new ID

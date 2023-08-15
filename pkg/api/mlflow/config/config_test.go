@@ -1,12 +1,11 @@
 package config
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/rotisserie/eris"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 func TestServiceConfig_Validate_Ok(t *testing.T) {
@@ -31,7 +30,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 			},
 			expectedConfig: &ServiceConfig{
 				ArtifactRoot: (func() string {
-					path, err := helpers.GetAbsolutePath("path1/path2/path3")
+					path, err := filepath.Abs("path1/path2/path3")
 					assert.Nil(t, err)
 					return path
 				})(),
@@ -62,7 +61,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 			},
 			expectedConfig: &ServiceConfig{
 				ArtifactRoot: (func() string {
-					path, err := helpers.GetAbsolutePath("path1/path2/path3")
+					path, err := filepath.Abs("path1/path2/path3")
 					assert.Nil(t, err)
 					return path
 				})(),

@@ -30,8 +30,8 @@ require (
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/driver/sqlite v1.4.3
-	gorm.io/gorm v1.25.2
-	gorm.io/plugin/dbresolver v1.4.2
+	gorm.io/gorm v1.25.3
+	gorm.io/plugin/dbresolver v1.4.5
 )
 
 require (

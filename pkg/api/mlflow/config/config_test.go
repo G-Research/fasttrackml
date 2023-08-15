@@ -47,12 +47,25 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 			},
 		},
 		{
-			name: "ArtifactRootHasEmptyPrefix",
+			name: "ArtifactRootHasEmptyPrefixAndIsAbsolute",
 			providedConfig: &ServiceConfig{
 				ArtifactRoot: "/path1/path2/path3",
 			},
 			expectedConfig: &ServiceConfig{
 				ArtifactRoot: "/path1/path2/path3",
+			},
+		},
+		{
+			name: "ArtifactRootHasEmptyPrefixAndIsRelative",
+			providedConfig: &ServiceConfig{
+				ArtifactRoot: "path1/path2/path3",
+			},
+			expectedConfig: &ServiceConfig{
+				ArtifactRoot: (func() string {
+					path, err := helpers.GetAbsolutePath("path1/path2/path3")
+					assert.Nil(t, err)
+					return path
+				})(),
 			},
 		},
 	}

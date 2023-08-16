@@ -72,7 +72,7 @@ func NewSearchExperimentsResponse(
 		).Encode(request.PageToken{
 			Offset: int32(offset + limit),
 		}); err != nil {
-			return nil, eris.Wrap(err, "error encoding `nextPageToken` value")
+			return nil, eris.Wrap(err, "error encoding 'nextPageToken' value")
 		}
 	}
 

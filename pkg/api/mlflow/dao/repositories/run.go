@@ -71,7 +71,7 @@ func (r RunRepository) GetByID(ctx context.Context, id string) (*models.Run, err
 	).Preload(
 		"Tags",
 	).First(&run).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting `run` entity by id: %s", id)
+		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", id)
 	}
 	return &run, nil
 }
@@ -95,7 +95,7 @@ func (r RunRepository) GetByIDAndLifecycleStage(
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, eris.Wrapf(err, "error getting `run` entity by id: %s", id)
+		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", id)
 	}
 	return &run, nil
 }
@@ -111,7 +111,7 @@ func (r RunRepository) Create(ctx context.Context, run *models.Run) error {
 		}
 		return tx.Create(&run).Error
 	}); err != nil {
-		return eris.Wrap(err, "error creating new `run` entity")
+		return eris.Wrap(err, "error creating new 'run' entity")
 	}
 	return nil
 }
@@ -230,12 +230,12 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 			case "mlflow.user":
 				run.UserID = tag.Value
 				if err := r.UpdateWithTransaction(ctx, tx, run); err != nil {
-					return eris.Wrap(err, "error updating run `user_id` field")
+					return eris.Wrap(err, "error updating run 'user_id' field")
 				}
 			case "mlflow.runName":
 				run.Name = tag.Value
 				if err := r.UpdateWithTransaction(ctx, tx, run); err != nil {
-					return eris.Wrap(err, "error updating run `name` field")
+					return eris.Wrap(err, "error updating run 'name' field")
 				}
 			}
 		}

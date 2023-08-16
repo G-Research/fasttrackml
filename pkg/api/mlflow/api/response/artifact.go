@@ -11,19 +11,17 @@ type FilePartialResponse struct {
 
 // ListArtifactsResponse is a response object for `GET mlflow/artifacts/list` endpoint.
 type ListArtifactsResponse struct {
-	Files         []FilePartialResponse `json:"files"`
-	RootURI       string                `json:"root_uri"`
-	NextPageToken string                `json:"next_page_token,omitempty"`
+	Files   []FilePartialResponse `json:"files"`
+	RootURI string                `json:"root_uri"`
 }
 
 // NewListArtifactsResponse creates new instance of ListArtifactsResponse.
 func NewListArtifactsResponse(
-	nextPageToken, rootURI string, artifacts []storage.ArtifactObject,
+	rootURI string, artifacts []storage.ArtifactObject,
 ) *ListArtifactsResponse {
 	response := ListArtifactsResponse{
-		Files:         make([]FilePartialResponse, len(artifacts)),
-		RootURI:       rootURI,
-		NextPageToken: nextPageToken,
+		Files:   make([]FilePartialResponse, len(artifacts)),
+		RootURI: rootURI,
 	}
 
 	for i, artifact := range artifacts {

@@ -18,9 +18,8 @@ import (
 func TestService_ListArtifacts_Ok(t *testing.T) {
 	artifactStorage := storage.MockProvider{}
 	artifactStorage.On(
-		"List", "/artifact/uri", "", "",
+		"List", "/artifact/uri", "",
 	).Return(
-		"nextPageToken",
 		"/root/uri/",
 		[]storage.ArtifactObject{
 			{
@@ -49,7 +48,7 @@ func TestService_ListArtifacts_Ok(t *testing.T) {
 
 	// call service under testing.
 	service := NewService(&artifactStorage, &runRepository)
-	nextPageToken, rootURI, artifacts, err := service.ListArtifacts(
+	rootURI, artifacts, err := service.ListArtifacts(
 		context.TODO(),
 		&request.ListArtifactsRequest{
 			RunID: "id",
@@ -57,7 +56,6 @@ func TestService_ListArtifacts_Ok(t *testing.T) {
 	)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "nextPageToken", nextPageToken)
 	assert.Equal(t, "/root/uri/", rootURI)
 	assert.Equal(t, []storage.ArtifactObject{
 		{
@@ -133,9 +131,9 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 			service: func() *Service {
 				artifactStorage := storage.MockProvider{}
 				artifactStorage.On(
-					"List", "/artifact/uri", "", "",
+					"List", "/artifact/uri", "",
 				).Return(
-					"", "", nil, errors.New("storage error"),
+					"", nil, errors.New("storage error"),
 				)
 
 				runRepository := repositories.MockRunRepositoryProvider{}
@@ -158,7 +156,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, _, _, err := tt.service().ListArtifacts(context.TODO(), tt.request)
+			_, _, err := tt.service().ListArtifacts(context.TODO(), tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}

@@ -17,12 +17,12 @@ func (c Controller) ListArtifacts(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("listArtifacts request: %#v", req)
 
-	nextPageToken, rootURI, artifacts, err := c.artifactService.ListArtifacts(ctx.Context(), &req)
+	rootURI, artifacts, err := c.artifactService.ListArtifacts(ctx.Context(), &req)
 	if err != nil {
 		return err
 	}
 
-	resp := response.NewListArtifactsResponse(nextPageToken, rootURI, artifacts)
+	resp := response.NewListArtifactsResponse(rootURI, artifacts)
 	log.Debugf("artifactList response: %#v", resp)
 	return ctx.JSON(resp)
 }

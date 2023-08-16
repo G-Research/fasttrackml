@@ -9,6 +9,6 @@ func NewNoop() *Noop {
 }
 
 // List implements Provider interface.
-func (s Noop) List(artifactURI, path, nextPageToken string) (string, string, []ArtifactObject, error) {
-	return "", "", make([]ArtifactObject, 0), nil
+func (s Noop) List(_, _ string) (string, []ArtifactObject, error) {
+	return "", make([]ArtifactObject, 0), nil
 }

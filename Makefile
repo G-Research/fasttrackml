@@ -83,7 +83,7 @@ go-dist: go-build ## archive app binary.
 .PHONY: python-dist
 python-dist: go-build ## build python wheels.
 	@echo '>>> Building Python Wheels.'
-	@@export VERSION=$(VERSION); python3 -m pip wheel . --wheel-dir=wheelhouse --no-deps
+	@@export VERSION=$(VERSION); python3 -m pip wheel ./python --wheel-dir=wheelhouse --no-deps
 #
 # Tests targets.
 #

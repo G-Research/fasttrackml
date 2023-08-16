@@ -26,22 +26,22 @@ func NewService(artifactStorage storage.Provider, runRepository repositories.Run
 // ListArtifacts handles business logic of `GET /artifacts/list` endpoint.
 func (s Service) ListArtifacts(
 	ctx context.Context, req *request.ListArtifactsRequest,
-) (string, string, []storage.ArtifactObject, error) {
+) (string, []storage.ArtifactObject, error) {
 	if err := ValidateListArtifactsRequest(req); err != nil {
-		return "", "", nil, err
+		return "", nil, err
 	}
 
 	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
 	if err != nil {
-		return "", "", nil, api.NewInternalError("unable to get artifact URI for run '%s'", req.GetRunID())
+		return "", nil, api.NewInternalError("unable to get artifact URI for run '%s'", req.GetRunID())
 	}
 
-	nextPageToken, rootURI, artifacts, err := s.artifactStorage.List(
-		run.ArtifactURI, req.Path, req.Token,
+	rootURI, artifacts, err := s.artifactStorage.List(
+		run.ArtifactURI, req.Path,
 	)
 	if err != nil {
-		return "", "", nil, api.NewInternalError("error getting artifact list from storage")
+		return "", nil, api.NewInternalError("error getting artifact list from storage")
 	}
 
-	return nextPageToken, rootURI, artifacts, nil
+	return rootURI, artifacts, nil
 }

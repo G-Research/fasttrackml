@@ -45,11 +45,14 @@ func (s *DeleteBatchTestSuite) SetupTest() {
 	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	s.runs, err = s.runFixtures.CreateRuns(context.Background(), exp, 10)
+	s.runs, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
 }
 
 func (s *DeleteBatchTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+	}()
 	tests := []struct {
 		name             string
 		runIDs           []string
@@ -99,7 +102,6 @@ func (s *DeleteBatchTestSuite) Test_Ok() {
 func (s *DeleteBatchTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string

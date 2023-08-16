@@ -208,7 +208,7 @@ func TestService_UpdateRun_Error(t *testing.T) {
 	}{
 		{
 			name:    "EmptyOrIncorrectRunID",
-			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.UpdateRunRequest{},
 			service: func() *Service {
 				return NewService(
@@ -222,7 +222,7 @@ func TestService_UpdateRun_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundOrDatabaseError",
-			error: api.NewResourceDoesNotExistError(`unable to find run '1': database error`),
+			error: api.NewResourceDoesNotExistError("unable to find run '1': database error"),
 			request: &request.UpdateRunRequest{
 				RunID: "1",
 			},
@@ -294,7 +294,7 @@ func TestService_RestoreRun_Error(t *testing.T) {
 	}{
 		{
 			name:    "EmptyOrIncorrectRunID",
-			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.RestoreRunRequest{},
 			service: func() *Service {
 				return NewService(
@@ -308,7 +308,7 @@ func TestService_RestoreRun_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundDatabaseError",
-			error: api.NewResourceDoesNotExistError(`unable to find run '1': database error`),
+			error: api.NewResourceDoesNotExistError("unable to find run '1': database error"),
 			request: &request.RestoreRunRequest{
 				RunID: "1",
 			},
@@ -330,7 +330,7 @@ func TestService_RestoreRun_Error(t *testing.T) {
 		},
 		{
 			name:  "RestoreRunDatabaseError",
-			error: api.NewInternalError(`unable to restore run '1': database error`),
+			error: api.NewInternalError("unable to restore run '1': database error"),
 			request: &request.RestoreRunRequest{
 				RunID: "1",
 			},
@@ -448,7 +448,7 @@ func TestService_DeleteRun_Error(t *testing.T) {
 	}{
 		{
 			name:    "EmptyOrIncorrectRunID",
-			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.DeleteRunRequest{},
 			service: func() *Service {
 				return NewService(
@@ -462,7 +462,7 @@ func TestService_DeleteRun_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundOrDatabaseError",
-			error: api.NewResourceDoesNotExistError(`unable to find run '1': database error`),
+			error: api.NewResourceDoesNotExistError("unable to find run '1': database error"),
 			request: &request.DeleteRunRequest{
 				RunID: "1",
 			},
@@ -484,7 +484,7 @@ func TestService_DeleteRun_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundOrDatabaseError",
-			error: api.NewResourceDoesNotExistError(`unable to find run '1': database error`),
+			error: api.NewResourceDoesNotExistError("unable to find run '1': database error"),
 			request: &request.DeleteRunRequest{
 				RunID: "1",
 			},
@@ -506,7 +506,7 @@ func TestService_DeleteRun_Error(t *testing.T) {
 		},
 		{
 			name:  "DeleteRunDatabaseError",
-			error: api.NewInternalError(`unable to delete run '1': database error`),
+			error: api.NewInternalError("unable to delete run '1': database error"),
 			request: &request.DeleteRunRequest{
 				RunID: "1",
 			},
@@ -557,7 +557,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 	}{
 		{
 			name:    "EmptyOrIncorrectRunID",
-			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.DeleteRunTagRequest{},
 			service: func() *Service {
 				return NewService(
@@ -571,7 +571,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundOrDatabaseError",
-			error: api.NewInternalError(`Unable to find run '1': database error`),
+			error: api.NewInternalError("Unable to find run '1': database error"),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 			},
@@ -594,7 +594,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "ActiveRunNotFound",
-			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError("Unable to find active run '1'"),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 			},
@@ -617,7 +617,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "NotFoundTag",
-			error: api.NewResourceDoesNotExistError(`Unable to find tag 'key' for run '1': database error`),
+			error: api.NewResourceDoesNotExistError("Unable to find tag 'key' for run '1': database error"),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 				Key:   "key",
@@ -651,7 +651,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "DeleteRunTagDatabaseError",
-			error: api.NewInternalError(`unable to delete tag 'key' for run '1': database error`),
+			error: api.NewInternalError("unable to delete tag 'key' for run '1': database error"),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 				Key:   "key",

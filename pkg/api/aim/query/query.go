@@ -409,7 +409,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 		case "run":
 			table, ok := pq.qp.Tables["runs"]
 			if !ok {
-				return nil, errors.New(`unsupported name identifier "run"`)
+				return nil, errors.New("unsupported name identifier 'run'")
 			}
 			return attributeGetter(
 				func(attr string) (any, error) {
@@ -437,7 +437,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 					case "experiment":
 						e, ok := pq.qp.Tables["experiments"]
 						if !ok {
-							return nil, errors.New(`unsupported attribute "experiment"`)
+							return nil, errors.New("unsupported attribute 'experiment'")
 						}
 						return clause.Column{
 							Table: e,
@@ -560,7 +560,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 		case "metric":
 			table, ok := pq.qp.Tables["metrics"]
 			if !ok {
-				return nil, errors.New(`unsupported name identifier "metric"`)
+				return nil, errors.New("unsupported name identifier 'metric'")
 			}
 			return attributeGetter(
 				func(attr string) (any, error) {

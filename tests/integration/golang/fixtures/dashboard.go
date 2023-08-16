@@ -78,7 +78,7 @@ func (f DashboardFixtures) GetDashboards(
 	if err := f.db.WithContext(ctx).
 		Where("NOT is_archived").
 		Find(&dashboards).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting `dashboard` entities")
+		return nil, eris.Wrapf(err, "error getting 'dashboard' entities")
 	}
 	return dashboards, nil
 }

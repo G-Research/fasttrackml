@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewListArtifactsResponse_Ok(t *testing.T) {
-	response := NewListArtifactsResponse("pageToken", "rootUri", []storage.ArtifactObject{
+	response := NewListArtifactsResponse("rootUri", []storage.ArtifactObject{
 		{
 			Path:  "path1",
 			Size:  1234567890,
@@ -35,7 +35,6 @@ func TestNewListArtifactsResponse_Ok(t *testing.T) {
 				FileSize: 0,
 			},
 		},
-		RootURI:       "rootUri",
-		NextPageToken: "pageToken",
+		RootURI: "rootUri",
 	}, response)
 }

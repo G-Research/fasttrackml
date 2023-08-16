@@ -194,7 +194,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: fasttrackml-wheels
-          path: ./wheelhouse/*.whl
+          path: wheelhouse/*.whl
 
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

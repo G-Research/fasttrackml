@@ -26,3 +26,8 @@ mock_*
 # Optional workspace
 go.work
 *.code-workspace
+
+#Python wheels
+python/build/
+python/*.egg-info/
+wheelhouse/

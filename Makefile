@@ -38,6 +38,7 @@ else
 endif
 ARCHIVE_NAME=dist/fasttrackml_$(shell go env GOOS | sed s/darwin/macos/)_$(shell go env GOARCH | sed s/amd64/x86_64/).$(ARCHIVE_EXT)
 ARCHIVE_FILES=$(APP) LICENSE README.md
+
 #
 # Default target (help)
 #
@@ -80,10 +81,14 @@ go-dist: go-build ## archive app binary.
 	@if [ -f $(ARCHIVE_NAME) ]; then rm -f $(ARCHIVE_NAME); fi
 	@$(ARCHIVE_CMD) $(ARCHIVE_NAME) $(ARCHIVE_FILES)
 
+#
+# Python targets.
+#
 .PHONY: python-dist
 python-dist: go-build ## build python wheels.
 	@echo '>>> Building Python Wheels.'
 	@@export VERSION=$(VERSION); python3 -m pip wheel ./python --wheel-dir=wheelhouse --no-deps
+
 #
 # Tests targets.
 #
@@ -174,7 +179,7 @@ PHONY: build
 build: go-build ## build the go components
 
 PHONY: dist
-dist: go-dist python-dist
+dist: go-dist python-dist ## build the software archives
 
 PHONY: run
 run: build ## run the FastTrackML server

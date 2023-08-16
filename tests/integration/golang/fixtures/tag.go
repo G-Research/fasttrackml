@@ -40,3 +40,14 @@ func (f TagFixtures) CreateTag(ctx context.Context, tag *models.Tag) (*models.Ta
 	}
 	return tag, nil
 }
+
+// GetByRunID returns tag list by requested Run ID.
+func (f TagFixtures) GetByRunID(ctx context.Context, runID string) ([]models.Tag, error) {
+	var tags []models.Tag
+	if err := f.db.WithContext(ctx).Where(
+		models.Tag{RunID: runID},
+	).Find(&tags).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting tags by run id: %s", runID)
+	}
+	return tags, nil
+}

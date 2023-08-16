@@ -49,14 +49,13 @@ func (s *DeleteRunTestSuite) SetupTest() {
 	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	s.runs, err = s.runFixtures.CreateRuns(context.Background(), exp, 10)
+	s.runs, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
 }
 
 func (s *DeleteRunTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string
@@ -94,7 +93,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			)
 			assert.Nil(s.T(), err)
 
-			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+			runs, err := s.runFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 
@@ -111,7 +110,6 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 func (s *DeleteRunTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name    string

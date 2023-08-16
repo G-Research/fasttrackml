@@ -4,6 +4,7 @@
 # Binaries
 fml
 fasttrackml
+*.exe
 
 # Local database
 fasttrackml.db*

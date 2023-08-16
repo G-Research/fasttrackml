@@ -17,15 +17,12 @@ func (c Controller) ListArtifacts(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("listArtifacts request: %#v", req)
 
-	if err := c.artifactService.ListArtifacts(ctx.Context(), &req); err != nil {
+	rootURI, artifacts, err := c.artifactService.ListArtifacts(ctx.Context(), &req)
+	if err != nil {
 		return err
 	}
 
-	// TODO grab list of artifacts from S3
-	resp := &response.ListArtifactsResponse{
-		Files: make([]response.FilePartialResponse, 0),
-	}
-
+	resp := response.NewListArtifactsResponse(rootURI, artifacts)
 	log.Debugf("artifactList response: %#v", resp)
 	return ctx.JSON(resp)
 }

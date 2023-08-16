@@ -6,16 +6,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/spf13/viper"
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/convertors"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -30,16 +31,19 @@ var (
 
 // Service provides service layer to work with `metric` business logic.
 type Service struct {
+	config               *config.ServiceConfig
 	tagRepository        repositories.TagRepositoryProvider
 	experimentRepository repositories.ExperimentRepositoryProvider
 }
 
 // NewService creates new Service instance.
 func NewService(
+	config *config.ServiceConfig,
 	tagRepository repositories.TagRepositoryProvider,
 	experimentRepository repositories.ExperimentRepositoryProvider,
 ) *Service {
 	return &Service{
+		config:               config,
 		tagRepository:        tagRepository,
 		experimentRepository: experimentRepository,
 	}
@@ -54,22 +58,29 @@ func (s Service) CreateExperiment(
 
 	experiment, err := s.experimentRepository.GetByName(ctx, req.Name)
 	if err != nil {
-		return nil, api.NewInternalError(`error getting experiment with name: '%s', error: %s`, req.Name, err)
+		return nil, api.NewInternalError("error getting experiment with name: '%s', error: %s", req.Name, err)
 	}
 	if experiment != nil {
 		return nil, api.NewResourceAlreadyExistsError("experiment(name=%s) already exists", req.Name)
 	}
 
-	experiment = convertors.ConvertCreateExperimentToDBModel(req)
+	experiment, err = convertors.ConvertCreateExperimentToDBModel(req)
+	if err != nil {
+		return nil, api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
+	}
+
 	if err := s.experimentRepository.Create(ctx, experiment); err != nil {
 		return nil, api.NewInternalError("error inserting experiment '%s': %s", req.Name, err)
 	}
 
 	if experiment.ArtifactLocation == "" {
-		// TODO:DSuhinin move configuration out from here.
-		experiment.ArtifactLocation = fmt.Sprintf(
-			"%s/%d", strings.TrimRight(viper.GetString("artifact-root"), "/"), *experiment.ID,
-		)
+		path, err := url.JoinPath(s.config.ArtifactRoot, fmt.Sprintf("%d", *experiment.ID))
+		if err != nil {
+			return nil, api.NewInternalError(
+				"error creating artifact_location for experiment'%s': %s", experiment.Name, err,
+			)
+		}
+		experiment.ArtifactLocation = path
 		if err := s.experimentRepository.Update(ctx, experiment); err != nil {
 			return nil, api.NewInternalError(
 				"error updating artifact_location for experiment '%s': %s", experiment.Name, err,

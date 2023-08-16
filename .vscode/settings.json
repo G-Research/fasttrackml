@@ -4,5 +4,9 @@
     "gopls": {
         "formatting.local": "github.com/G-Research/fasttrackml",
         "formatting.gofumpt": true
-    }
+    },
+    "go.lintTool": "golangci-lint",
+    "go.lintFlags": [
+        "--fast"
+    ]
 }

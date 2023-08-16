@@ -5,6 +5,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -24,7 +25,6 @@ type DeleteRunTestSuite struct {
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
-	run                *models.Run
 }
 
 func TestDeleteRunTestSuite(t *testing.T) {
@@ -39,33 +39,38 @@ func (s *DeleteRunTestSuite) SetupTest() {
 	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
-
-	// create experiment
-	exp := &models.Experiment{
-		Name:           uuid.New().String(),
-		LifecycleStage: models.LifecycleStageActive,
-	}
-	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
-	assert.Nil(s.T(), err)
-
-	// create run for the experiment
-	runs, err := s.runFixtures.CreateRuns(context.Background(), exp, 1)
-	assert.Nil(s.T(), err)
-	s.run = runs[0]
 }
 
 func (s *DeleteRunTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
+
+	// create experiment
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	assert.Nil(s.T(), err)
+
+	// create run for the experiment
+	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
+		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
+		Name:           "TestRun",
+		Status:         models.StatusRunning,
+		SourceType:     "JOB",
+		ExperimentID:   *experiment.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name    string
 		request request.DeleteRunRequest
 	}{
 		{
 			name:    "DeleteRunSucceedsWithExistingRunID",
-			request: request.DeleteRunRequest{RunID: s.run.ID},
+			request: request.DeleteRunRequest{RunID: run.ID},
 		},
 	}
 	for _, tt := range tests {
@@ -79,20 +84,17 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 			assert.Empty(s.T(), resp)
 
-			archivedRuns, err := s.runFixtures.GetTestRuns(context.Background(), s.run.ExperimentID)
+			archivedRuns, err := s.runFixtures.GetRuns(context.Background(), run.ExperimentID)
 
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), s.run.ID, archivedRuns[0].ID)
+			assert.Equal(T, 1, len(archivedRuns))
+			assert.Equal(s.T(), run.ID, archivedRuns[0].ID)
 			assert.Equal(s.T(), models.LifecycleStageDeleted, archivedRuns[0].LifecycleStage)
 		})
 	}
 }
 
 func (s *DeleteRunTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name    string
 		request request.DeleteRunRequest
@@ -111,7 +113,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "RESOURCE_DOES_NOT_EXIST: unable to find run 'not-an-id': error getting `run` entity by id: not-an-id: record not found", resp.Error())
+			assert.Equal(s.T(), "RESOURCE_DOES_NOT_EXIST: unable to find run 'not-an-id': error getting 'run' entity by id: not-an-id: record not found", resp.Error())
 		})
 	}
 }

@@ -6,13 +6,13 @@ from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
 
-with open("README.md", "r", encoding="utf-8") as f:
+with open("../README.md", "r", encoding="utf-8") as f:
     readme = f.read()
 
 
 def get_fml_executable():
     os = subprocess.check_output(["go", "env", "GOOS"]).strip().decode("utf-8")
-    return "fml.exe" if os == "windows" else "fml"
+    return "../fml.exe" if os == "windows" else "../fml"
 
 def get_version():
     version = os.environ.get("VERSION")

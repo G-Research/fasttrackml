@@ -478,7 +478,7 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 				log.Info("Migrating database to FastTrackML schema e0d125c68d9a")
 				// We need to run this migration without foreign key constraints to avoid
 				// the cascading delete to kick in and delete all the runs.
-				if err := runWithoutForeignKeyIfPossible(func() error {
+				if err := runWithoutForeignKeyIfNeeded(func() error {
 					if err := db.Transaction(func(tx *gorm.DB) error {
 						if err := tx.AutoMigrate(&Namespace{}); err != nil {
 							return err

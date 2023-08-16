@@ -138,9 +138,9 @@ jobs:
       - name: Run ${{ matrix.api }} integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
 
-  golang-build:
+  build:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Build Go binary for ${{ matrix.os }}/${{ matrix.arch }}
+    name: Build software distribution for ${{ matrix.os }}/${{ matrix.arch }}
     strategy:
       matrix:
         os: [darwin, linux, windows]
@@ -178,72 +178,21 @@ jobs:
           sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64-win32
           echo CC=x86_64-w64-mingw32-gcc >> $GITHUB_ENV
 
-      - name: Build and archive Go binary
-        run: make go-dist
+      - name: Build software distribution
+        run: |
+          make dist
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
-
-      - name: Upload artifact
+          
+      - name: Upload binary artifact
         uses: actions/upload-artifact@v3
         with:
           name: fasttrackml-archives
           path: dist/*
 
-  build-wheels:
-    needs: golang-build
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 20
-    strategy:
-       matrix:
-        os: [darwin, linux, windows]
-        arch: [x86_64, arm64]
-        exclude:
-          - os: windows
-            arch: arm64
-        include:
-          - os: darwin
-            runner: macos-latest
-          - os: linux
-            runner: ubuntu-latest
-          - os: windows
-            runner: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Get binaries
-        uses: actions/download-artifact@v3
-        with:
-          name: fasttrackml-archives
-          path: dist/
-      
-      - name: Configure linux build environment
-        if: matrix.os == 'linux'
-        run: |
-          mkdir -p bin
-          tar -xf dist/fasttrackml_linux_${{ matrix.arch }}.tar.gz
-          mv fml bin/fml
-          chmod +x bin/fml
-      - name: Configure macOS build environment
-        if: matrix.os == 'darwin'
-        run: |
-          mkdir -p bin
-          tar -xf dist/fasttrackml_macos_${{ matrix.arch }}.tar.gz
-          mv fml bin/fml
-          chmod +x bin/fml
-      - name: Configure windows build environment
-        if: matrix.os == 'windows'
-        run: |
-         sudo apt-get install unzip
-         mkdir -p bin
-         unzip dist/fasttrackml_windows_${{ matrix.arch }}.zip -d bin
-         
-      - name: Build wheels
-        run: make python-dist
-        env:
-          GOOS: ${{ matrix.os }}
-          GOARCH: ${{ matrix.arch }}
-
-      - uses: actions/upload-artifact@v3
+      - name: Upload wheels artifact
+        uses: actions/upload-artifact@v3
         with:
           name: fasttrackml-wheels
           path: ./wheelhouse/*.whl
@@ -311,9 +260,8 @@ jobs:
       - golang-unit-tests
       - golang-integration-tests
       - python-integration-tests
-      - golang-build
+      - build
       - build-image
-      - build-wheels
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v6

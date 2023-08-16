@@ -152,11 +152,43 @@ func (s *ListArtifactTestSuite) Test_Error() {
 			request: &request.ListArtifactsRequest{},
 		},
 		{
-			name:  "PathIsRelativeAndContains2Dots",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute"),
+			name:  "IncorrectPathProvidedCase1",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
-				Path:  "../",
+				Path:  "..",
+			},
+		},
+		{
+			name:  "IncorrectPathProvidedCase2",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			request: &request.ListArtifactsRequest{
+				RunID: "run_id",
+				Path:  "./..",
+			},
+		},
+		{
+			name:  "IncorrectPathProvidedCase3",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			request: &request.ListArtifactsRequest{
+				RunID: "run_id",
+				Path:  "./../",
+			},
+		},
+		{
+			name:  "IncorrectPathProvidedCase4",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			request: &request.ListArtifactsRequest{
+				RunID: "run_id",
+				Path:  "foo/../bar",
+			},
+		},
+		{
+			name:  "IncorrectPathProvidedCase5",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			request: &request.ListArtifactsRequest{
+				RunID: "run_id",
+				Path:  "/foo/../bar",
 			},
 		},
 	}

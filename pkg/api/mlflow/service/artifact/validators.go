@@ -2,7 +2,10 @@ package artifact
 
 import (
 	"net/url"
+	"path/filepath"
 	"strings"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -20,13 +23,13 @@ func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {
 	}
 	if parsedUrl.Scheme != "" || parsedUrl.Host != "" || parsedUrl.RawQuery != "" ||
 		parsedUrl.RawFragment != "" || parsedUrl.User != nil {
-		return api.NewInvalidParameterValueError("incorrect 'path' parameter has been provided")
+		return api.NewInvalidParameterValueError("provided 'path' parameter is invalid")
 	}
-
-	for _, path := range strings.Split(parsedUrl.Path, "/") {
-		if path == ".." {
-			return api.NewInvalidParameterValueError("provided 'path' parameter has to be absolute")
-		}
+	if filepath.IsAbs(parsedUrl.Path) {
+		return api.NewInvalidParameterValueError("provided 'path' parameter is invalid")
+	}
+	if slices.Contains(strings.Split(parsedUrl.Path, "/"), "..") {
+		return api.NewInvalidParameterValueError("provided 'path' parameter is invalid")
 	}
 	return nil
 }

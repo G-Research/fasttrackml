@@ -70,7 +70,7 @@ func (f AppFixtures) GetApps(
 	if err := f.db.WithContext(ctx).
 		Where("NOT is_archived").
 		Find(&apps).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting `app` entities")
+		return nil, eris.Wrapf(err, "error getting 'app' entities")
 	}
 	return apps, nil
 }

@@ -64,11 +64,10 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 	return DB, nil
 }
 
-// MakeDbInstance will create a DbInstance from the parameters.
+// MakeDbInstance will create a DbInstance from the parameters, without affecting the global var database.DB.
 func MakeDBInstance(
 	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string,
 ) (*DbInstance, error) {
-
 	dbFactory, err := NewFactory(dsn, slowThreshold, poolMax, reset)
 	if err != nil {
 		return nil, err
@@ -95,7 +94,6 @@ func MakeDBInstance(
 func NewFactory(
 	dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 ) (DbFactory, error) {
-
 	dsnURL, err := url.Parse(dsn)
 	if err != nil {
 		return nil, fmt.Errorf("invalid database URL: %w", err)
@@ -123,13 +121,13 @@ func NewFactory(
 	return nil, eris.New("unsupported database type")
 }
 
-// MakeDbInsance will construct a Postgres MakeDbInstance
+// MakeDbInsance will construct a Postgres DbInstance.
 func (f PostgresDbFactory) MakeDbInstance() (*DbInstance, error) {
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
 
 	db := DbInstance{dsn: f.dsnURL.String()}
-        sourceConn = postgres.Open(f.dsnURL.String())
+	sourceConn = postgres.Open(f.dsnURL.String())
 
 	logURL := f.dsnURL
 	q := logURL.Query()

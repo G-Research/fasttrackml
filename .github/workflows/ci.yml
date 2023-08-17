@@ -193,6 +193,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install pipenv
+        run: pip install pipenv==2022.12.19
+
       - name: Install arm64 cross-compilation toolchain on Linux
         if: matrix.os == 'linux' && matrix.arch == 'arm64'
         run: |

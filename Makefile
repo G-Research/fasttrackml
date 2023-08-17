@@ -82,6 +82,14 @@ go-dist: go-build ## archive app binary.
 	@$(ARCHIVE_CMD) $(ARCHIVE_NAME) $(ARCHIVE_FILES)
 
 #
+# Python targets.
+#
+.PHONY: python-dist
+python-dist: go-build ## build python wheels.
+	@echo '>>> Building Python Wheels.'
+	@VERSION=$(VERSION) python3 -m pip wheel ./python --wheel-dir=wheelhouse --no-deps
+
+#
 # Tests targets.
 #
 .PHONY: test-go-unit
@@ -171,7 +179,7 @@ PHONY: build
 build: go-build ## build the go components
 
 PHONY: dist
-dist: go-dist ## archive the go components
+dist: go-dist python-dist ## build the software archives
 
 PHONY: run
 run: build ## run the FastTrackML server

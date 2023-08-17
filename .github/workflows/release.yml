@@ -49,6 +49,23 @@ jobs:
             exit 1
           fi
 
+  pypi-publish:
+    name: upload release to PyPI
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - name: Download artifact
+        run: gh run download ${{ github.event.workflow_run.id }} --repo ${{ github.event.workflow_run.repository.full_name }} --name fasttrackml-wheels --dir wheelhouse
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: wheelhouse/
+    
   github-release:
     name: Publish GitHub release
     needs: validate

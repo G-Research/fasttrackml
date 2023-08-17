@@ -10,9 +10,9 @@ def get_long_description():
         return f.read()
 
 
-def get_fml_executable():
+def get_data_files():
     os = subprocess.check_output(["go", "env", "GOOS"]).strip().decode("utf-8")
-    return "../fml.exe" if os == "windows" else "../fml"
+    return [("Scripts", ["../fml.exe"])] if os == "windows" else [("bin", ["../fml"])]
 
 
 def get_version():
@@ -55,7 +55,7 @@ setup(
     long_description=get_long_description(),
     packages=find_packages(),
     include_package_data=True,
-    data_files=[("bin", [get_fml_executable()])],
+    data_files=get_data_files(),
     python_requires=">=3.6",
     zip_safe=False,
     ext_modules=[],

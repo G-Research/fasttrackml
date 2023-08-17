@@ -17,8 +17,7 @@ def get_fml_executable():
 
 def get_version():
     version = os.environ.get("VERSION")
-    matches = re.findall(r'\d+\.\d+\.\d+', version)
-    return matches[0]
+    return version.replace("-", "+", 1)
 
 def get_platform():
     os = subprocess.check_output(["go", "env", "GOOS"]).strip().decode("utf-8")
@@ -29,9 +28,9 @@ def get_platform():
     elif plat == "darwin_arm64":
         return "macosx_11_0_arm64"
     elif plat == "linux_amd64":
-        return "manylinux1_x86_64"
+        return "manylinux_2_17_x86_64.manylinux2014_x86_64.musllinux_1_1_x86.64"
     elif plat == "linux_arm64":
-        return "manylinux1_aarch64"
+        return "manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64"
     elif plat == "windows_amd64":
         return "win_amd64"
     else:

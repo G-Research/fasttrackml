@@ -179,11 +179,11 @@ jobs:
           echo CC=x86_64-w64-mingw32-gcc >> $GITHUB_ENV
 
       - name: Build software distribution
-        run: |
-          make dist
+        run: make dist
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
+
       - name: Upload binary artifact
         uses: actions/upload-artifact@v3
         with:

@@ -10,7 +10,7 @@ replace (
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/G-Research/fasttrackml-ui-aim v0.31602.7
-	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.1
+	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.3
 	github.com/apache/arrow/go/v12 v12.0.1
 	github.com/aws/aws-sdk-go-v2 v1.20.1
 	github.com/aws/aws-sdk-go-v2/config v1.18.33

@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -34,12 +33,12 @@ func NewProjectFixtures(databaseDSN string) (*ProjectFixtures, error) {
 	}, nil
 }
 
-func (f *ProjectFixtures) GetProject(ctx context.Context) *fiber.Map {
-	return &fiber.Map{
-		"name":              "FastTrackML",
-		"path":              database.DB.DSN(),
-		"description":       "",
-		"telemetry_enabled": float64(0),
+func (f *ProjectFixtures) GetProject(ctx context.Context) *response.GetProject {
+	return &response.GetProject{
+		Name:             "FastTrackML",
+		Path:             database.DB.DSN(),
+		Description:      "",
+		TelemetryEnabled: float64(0),
 	}
 }
 

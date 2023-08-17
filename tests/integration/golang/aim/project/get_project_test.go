@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -19,7 +20,7 @@ type GetProjectTestSuite struct {
 	suite.Suite
 	client          *helpers.HttpClient
 	projectFixtures *fixtures.ProjectFixtures
-	project         *fiber.Map
+	project         *response.GetProject
 }
 
 func TestGetProjectTestSuite(t *testing.T) {
@@ -47,8 +48,8 @@ func (s *GetProjectTestSuite) Test_Ok() {
 		&resp,
 	)
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), (*s.project)["name"], resp["name"])
-	assert.Equal(s.T(), (*s.project)["path"], resp["path"])
-	assert.Equal(s.T(), (*s.project)["description"], resp["description"])
-	assert.Equal(s.T(), (*s.project)["telemetry_enabled"], resp["telemetry_enabled"])
+	assert.Equal(s.T(), (*s.project).Name, resp["name"])
+	assert.Equal(s.T(), (*s.project).Path, resp["path"])
+	assert.Equal(s.T(), (*s.project).Description, resp["description"])
+	assert.Equal(s.T(), (*s.project).TelemetryEnabled, resp["telemetry_enabled"])
 }

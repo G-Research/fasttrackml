@@ -152,7 +152,7 @@ jobs:
           - os: darwin
             runner: macos-latest
           - os: linux
-            runner: ubuntu-20.04
+            runner: ubuntu-latest
           - os: windows
             runner: ubuntu-latest
       fail-fast: true

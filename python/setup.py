@@ -28,7 +28,7 @@ def get_platform():
     elif plat == "darwin_arm64":
         return "macosx_11_0_arm64"
     elif plat == "linux_amd64":
-        return "manylinux_2_17_x86_64.manylinux2014_x86_64.musllinux_1_1_x86.64"
+        return "manylinux_2_17_x86_64.manylinux2014_x86_64.musllinux_1_1_x86_64"
     elif plat == "linux_arm64":
         return "manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64"
     elif plat == "windows_amd64":

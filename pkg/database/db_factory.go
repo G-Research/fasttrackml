@@ -17,6 +17,7 @@ import (
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -128,6 +129,7 @@ func (f PostgresDbFactory) MakeDbInstance() (*DbInstance, error) {
 	var replicaConn gorm.Dialector
 
 	db := DbInstance{dsn: f.dsnURL.String()}
+        sourceConn = postgres.Open(f.dsnURL.String())
 
 	logURL := f.dsnURL
 	q := logURL.Query()

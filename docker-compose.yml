@@ -28,10 +28,7 @@ services:
 
   integration-tests:
     image: golang:1.21
-    command: >-
-      sh -c
-      "FML_DATABASE_URI=postgres://postgres:postgres@postgres/postgres make test-go-integration &&
-      FML_DATABASE_URI=sqlite://fasttrackml-test.db make test-go-integration"
+    command: make test-go-integration
     volumes:
       - .:/go/src
       - go-cache:/go/pkg
@@ -42,6 +39,7 @@ services:
       - service
     environment:
       FML_SERVICE_URI: http://service:5000
+      FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
       FML_S3_ENDPOINT_URI: http://minio:9000
       AWS_ACCESS_KEY_ID: "user"
       AWS_SECRET_ACCESS_KEY: "password"

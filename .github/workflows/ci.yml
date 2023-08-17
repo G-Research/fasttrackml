@@ -118,10 +118,17 @@ jobs:
         with:
           go-version: "1.21"
 
-      - name: Run Integration Tests
+      - name: Run Integration Tests (Sqlite)
         run: make service-test
         env:
           DOCKER_BUILDKIT: 1
+          FML_DATABASE_URI: sqlite://fasttrack-test.db
+
+      - name: Run Integration Tests (Postgres)
+        run: make service-test
+        env:
+          DOCKER_BUILDKIT: 1
+          FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

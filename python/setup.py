@@ -1,10 +1,9 @@
 import os
 import subprocess
-import re
-from setuptools.command.sdist import sdist
-from setuptools import setup, Extension, find_packages
-from setuptools.command.build_ext import build_ext
-from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+
+from setuptools import find_packages, setup
+from wheel.bdist_wheel import bdist_wheel
+
 
 def get_long_description():
     with open("../README.md", "r", encoding="utf-8") as f:
@@ -15,9 +14,11 @@ def get_fml_executable():
     os = subprocess.check_output(["go", "env", "GOOS"]).strip().decode("utf-8")
     return "../fml.exe" if os == "windows" else "../fml"
 
+
 def get_version():
     version = os.environ.get("VERSION")
     return version.replace("-", "+", 1)
+
 
 def get_platform():
     os = subprocess.check_output(["go", "env", "GOOS"]).strip().decode("utf-8")
@@ -36,15 +37,15 @@ def get_platform():
     else:
         raise ValueError("not supported platform.")
 
-class custom_bdist_wheel(_bdist_wheel):
 
+class custom_bdist_wheel(bdist_wheel):
     def finalize_options(self):
-        _bdist_wheel.finalize_options(self)
+        bdist_wheel.finalize_options(self)
         # Mark us as not a pure python package
         self.root_is_pure = False
 
     def get_tag(self):
-        return 'py3', 'none', get_platform()
+        return "py3", "none", get_platform()
 
 
 setup(
@@ -59,7 +60,6 @@ setup(
     zip_safe=False,
     ext_modules=[],
     cmdclass=dict(
-        sdist=sdist,
         bdist_wheel=custom_bdist_wheel,
     ),
 )

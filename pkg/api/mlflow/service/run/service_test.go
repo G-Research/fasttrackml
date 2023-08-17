@@ -22,7 +22,7 @@ func TestService_CreateRun_Ok(t *testing.T) {
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
 		"Create",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		mock.MatchedBy(func(run *models.Run) bool {
 			assert.NotEmpty(t, run.ID)
 			assert.Equal(t, "name", run.Name)
@@ -45,7 +45,7 @@ func TestService_CreateRun_Ok(t *testing.T) {
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 	experimentRepository.On(
 		"GetByID",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		int32(1),
 	).Return(&models.Experiment{
 		ID:               common.GetPointer(int32(1)),
@@ -121,7 +121,7 @@ func TestService_CreateRun_Error(t *testing.T) {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					int32(1),
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -151,13 +151,13 @@ func TestService_CreateRun_Error(t *testing.T) {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					int32(1),
 				).Return(&models.Experiment{ID: common.GetPointer(int32(1))}, nil)
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"Create",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					mock.MatchedBy(func(run *models.Run) bool {
 						assert.NotEmpty(t, run.ID)
 						assert.Equal(t, "name", run.Name)
@@ -230,7 +230,7 @@ func TestService_UpdateRun_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -258,12 +258,12 @@ func TestService_RestoreRun_Ok(t *testing.T) {
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
 		"GetByID",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		"1",
 	).Return(&models.Run{ID: "1"}, nil)
 	runRepository.On(
 		"Update",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		&models.Run{
 			ID:             "1",
 			DeletedTime:    sql.NullInt64{Valid: false},
@@ -316,7 +316,7 @@ func TestService_RestoreRun_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -338,14 +338,14 @@ func TestService_RestoreRun_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 				).Return(&models.Run{
 					ID: "1",
 				}, nil)
 				runRepository.On(
 					"Update",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					mock.MatchedBy(func(run *models.Run) bool {
 						assert.Equal(t, "1", run.ID)
 						assert.Equal(t, sql.NullInt64{}, run.DeletedTime)
@@ -378,7 +378,7 @@ func TestService_SetRunTag_Ok(t *testing.T) {
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
 		"GetByIDAndLifecycleStage",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		"1",
 		models.LifecycleStageActive,
 	).Return(
@@ -386,7 +386,7 @@ func TestService_SetRunTag_Ok(t *testing.T) {
 	)
 	runRepository.On(
 		"SetRunTagsBatch",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		&models.Run{ID: "1", LifecycleStage: models.LifecycleStageActive},
 		1,
 		[]models.Tag{{RunID: "1", Key: "key", Value: "value"}},
@@ -416,12 +416,12 @@ func TestService_DeleteRun_Ok(t *testing.T) {
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
 		"GetByID",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		"1",
 	).Return(&models.Run{ID: "1"}, nil)
 	runRepository.On(
 		"Archive",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		&models.Run{ID: "1"},
 	).Return(nil)
 
@@ -470,7 +470,7 @@ func TestService_DeleteRun_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -492,7 +492,7 @@ func TestService_DeleteRun_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -514,14 +514,14 @@ func TestService_DeleteRun_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 				).Return(&models.Run{
 					ID: "1",
 				}, nil)
 				runRepository.On(
 					"Archive",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					mock.MatchedBy(func(run *models.Run) bool {
 						assert.Equal(t, "1", run.ID)
 						return true
@@ -579,7 +579,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, errors.New("database error"))
@@ -602,7 +602,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, nil)
@@ -626,7 +626,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -636,7 +636,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 				tagRepository := repositories.MockTagRepositoryProvider{}
 				tagRepository.On(
 					"GetByRunIDAndKey",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					"key",
 				).Return(nil, errors.New("database error"))
@@ -660,7 +660,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -670,7 +670,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 				tagRepository := repositories.MockTagRepositoryProvider{}
 				tagRepository.On(
 					"GetByRunIDAndKey",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					"key",
 				).Return(&models.Tag{
@@ -680,7 +680,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 				}, nil)
 				tagRepository.On(
 					"Delete",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					mock.MatchedBy(func(tag *models.Tag) bool {
 						assert.Equal(t, "1", tag.RunID)
 						assert.Equal(t, "key", tag.Key)
@@ -713,7 +713,7 @@ func TestService_GetRun_Ok(t *testing.T) {
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
 		"GetByID",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		"1",
 	).Return(&models.Run{
 		ID:             "1",
@@ -831,7 +831,7 @@ func TestService_GetRun_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -859,7 +859,7 @@ func TestService_LogBatch_Ok(t *testing.T) {
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
 		"GetByIDAndLifecycleStage",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		"1",
 		models.LifecycleStageActive,
 	).Return(&models.Run{
@@ -868,7 +868,7 @@ func TestService_LogBatch_Ok(t *testing.T) {
 	}, nil)
 	runRepository.On(
 		"SetRunTagsBatch",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		&models.Run{ID: "1", LifecycleStage: models.LifecycleStageActive},
 		100,
 		mock.MatchedBy(func(tags []models.Tag) bool {
@@ -881,7 +881,7 @@ func TestService_LogBatch_Ok(t *testing.T) {
 	paramRepository := repositories.MockParamRepositoryProvider{}
 	paramRepository.On(
 		"CreateBatch",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		100,
 		mock.MatchedBy(func(params []models.Param) bool {
 			assert.Equal(t, "1", params[0].RunID)
@@ -893,7 +893,7 @@ func TestService_LogBatch_Ok(t *testing.T) {
 	metricRepository := repositories.MockMetricRepositoryProvider{}
 	metricRepository.On(
 		"CreateBatch",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		&models.Run{ID: "1", LifecycleStage: models.LifecycleStageActive},
 		100,
 		mock.MatchedBy(func(metrics []models.Metric) bool {
@@ -973,7 +973,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, errors.New("database error"))
@@ -996,7 +996,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, nil)
@@ -1019,7 +1019,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, nil)
@@ -1048,7 +1048,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -1079,7 +1079,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -1088,7 +1088,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				paramRepository := repositories.MockParamRepositoryProvider{}
 				paramRepository.On(
 					"CreateBatch",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					100,
 					[]models.Param{
 						{
@@ -1131,7 +1131,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -1141,7 +1141,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				paramRepository := repositories.MockParamRepositoryProvider{}
 				paramRepository.On(
 					"CreateBatch",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					100,
 					[]models.Param{
 						{
@@ -1154,7 +1154,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"CreateBatch",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					&models.Run{
 						ID:             "1",
 						LifecycleStage: models.LifecycleStageActive,
@@ -1209,7 +1209,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -1218,7 +1218,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				}, nil)
 				runRepository.On(
 					"SetRunTagsBatch",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					&models.Run{
 						ID:             "1",
 						LifecycleStage: models.LifecycleStageActive,
@@ -1235,7 +1235,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				paramRepository := repositories.MockParamRepositoryProvider{}
 				paramRepository.On(
 					"CreateBatch",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					100,
 					[]models.Param{
 						{
@@ -1248,7 +1248,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"CreateBatch",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					&models.Run{
 						ID:             "1",
 						LifecycleStage: models.LifecycleStageActive,
@@ -1289,7 +1289,7 @@ func TestService_LogMetric_Ok(t *testing.T) {
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
 		"GetByID",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		"1",
 	).Return(&models.Run{
 		ID:             "1",
@@ -1298,7 +1298,7 @@ func TestService_LogMetric_Ok(t *testing.T) {
 	metricRepository := repositories.MockMetricRepositoryProvider{}
 	metricRepository.On(
 		"CreateBatch",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		&models.Run{ID: "1", LifecycleStage: models.LifecycleStageActive},
 		1,
 		mock.MatchedBy(func(metrics []models.Metric) bool {
@@ -1398,7 +1398,7 @@ func TestService_LogMetric_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -1423,7 +1423,7 @@ func TestService_LogMetric_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 				).Return(&models.Run{
 					ID: "1",
@@ -1451,7 +1451,7 @@ func TestService_LogMetric_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 				).Return(&models.Run{
 					ID: "1",
@@ -1459,7 +1459,7 @@ func TestService_LogMetric_Error(t *testing.T) {
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"CreateBatch",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					mock.MatchedBy(func(run *models.Run) bool {
 						assert.Equal(t, "1", run.ID)
 						return true
@@ -1500,7 +1500,7 @@ func TestService_LogParam_Ok(t *testing.T) {
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
 		"GetByIDAndLifecycleStage",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		"1",
 		models.LifecycleStageActive,
 	).Return(&models.Run{
@@ -1510,7 +1510,7 @@ func TestService_LogParam_Ok(t *testing.T) {
 	paramRepository := repositories.MockParamRepositoryProvider{}
 	paramRepository.On(
 		"CreateBatch",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		1,
 		mock.MatchedBy(func(params []models.Param) bool {
 			assert.Equal(t, "1", params[0].RunID)
@@ -1587,7 +1587,7 @@ func TestService_LogParam_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, errors.New("database error"))
@@ -1612,7 +1612,7 @@ func TestService_LogParam_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, nil)
@@ -1637,7 +1637,7 @@ func TestService_LogParam_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByIDAndLifecycleStage",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -1647,7 +1647,7 @@ func TestService_LogParam_Error(t *testing.T) {
 				paramRepository := repositories.MockParamRepositoryProvider{}
 				paramRepository.On(
 					"CreateBatch",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					1,
 					mock.MatchedBy(func(params []models.Param) bool {
 						assert.Equal(t, 1, len(params))

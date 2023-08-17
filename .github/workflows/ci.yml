@@ -23,7 +23,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: "1.21"
 
       - name: Read build tags
         id: tags
@@ -48,7 +48,7 @@ jobs:
           fi
 
       - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.30.16
+        run: go install github.com/vektra/mockery/v2@v2.32.4
 
       - name: Generate mocks
         run: make mocks-generate
@@ -72,10 +72,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: "1.21"
 
       - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.30.16
+        run: go install github.com/vektra/mockery/v2@v2.32.4
 
       - name: Generate mocks
         run: make mocks-generate
@@ -97,7 +97,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: "1.21"
 
       - name: Run Integration Tests
         run: make service-test
@@ -133,7 +133,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: "1.21"
 
       - name: Run ${{ matrix.api }} integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
@@ -167,7 +167,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: "1.21"
 
       - name: Setup Python
         uses: actions/setup-python@v4

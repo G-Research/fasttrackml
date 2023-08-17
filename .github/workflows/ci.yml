@@ -138,9 +138,9 @@ jobs:
       - name: Run ${{ matrix.api }} integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
 
-  golang-build:
+  build:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Build Go binary for ${{ matrix.os }}/${{ matrix.arch }}
+    name: Build software distribution for ${{ matrix.os }}/${{ matrix.arch }}
     strategy:
       matrix:
         os: [darwin, linux, windows]
@@ -164,6 +164,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
       - name: Install arm64 cross-compilation toolchain on Linux
         if: matrix.os == 'linux' && matrix.arch == 'arm64'
         run: |
@@ -178,17 +188,23 @@ jobs:
           sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64-win32
           echo CC=x86_64-w64-mingw32-gcc >> $GITHUB_ENV
 
-      - name: Build and archive Go binary
-        run: make go-dist
+      - name: Build software distribution
+        run: make dist
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
 
-      - name: Upload artifact
+      - name: Upload binary artifact
         uses: actions/upload-artifact@v3
         with:
           name: fasttrackml-archives
           path: dist/*
+
+      - name: Upload wheels artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: fasttrackml-wheels
+          path: wheelhouse/*.whl
 
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
@@ -245,27 +261,20 @@ jobs:
           path: fasttrackml-oci.tar
 
   # Virtual job that can be configured as a required check before a PR can be merged.
+  # As GitHub considers a check as successful if it is skipped, we need to check its status in
+  # another workflow (check-required.yml) and create a check there.
   all-required-checks-done:
     name: All required checks done
-    if: ${{ always() }}
     needs:
       - lint
       - golang-unit-tests
       - golang-integration-tests
       - python-integration-tests
-      - golang-build
+      - build
       - build-image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v6
-        with:
-          script: |
-            const results = ${{ toJSON(needs.*.result) }};
-            if (results.every(res => res === 'success')) {
-              core.info('All required checks succeeded');
-            } else {
-              core.setFailed('Some required checks failed');
-            }
+      - run: echo "All required checks done"
 
   # Publish any push to a branch or tag to ghcr.io as a convenience
   # Actual release to Docker Hub happens in a different workflow

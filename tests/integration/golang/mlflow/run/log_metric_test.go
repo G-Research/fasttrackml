@@ -127,7 +127,7 @@ func (s *LogMetricTestSuite) Test_Error() {
 				Timestamp: 123456789,
 			},
 			error: api.NewResourceDoesNotExistError(
-				"unable to find run 'id': error getting `run` entity by id: id: record not found",
+				"unable to find run 'id': error getting 'run' entity by id: id: record not found",
 			),
 		},
 		{

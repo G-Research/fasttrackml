@@ -52,7 +52,7 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	runs, err := s.runFixtures.CreateRuns(context.Background(), exp, 10)
+	runs, err := s.runFixtures.CreateExampleRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperimentRuns

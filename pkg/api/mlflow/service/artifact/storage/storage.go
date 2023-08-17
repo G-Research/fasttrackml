@@ -32,7 +32,7 @@ func (o ArtifactObject) IsDirectory() bool {
 
 // Provider provides and interface to work with artifact storage.
 type Provider interface {
-	List(artifactURI, path, nextPageToken string) (string, string, []ArtifactObject, error)
+	List(artifactURI, path string) (string, []ArtifactObject, error)
 }
 
 // NewArtifactStorage creates new Artifact storage.
@@ -46,6 +46,10 @@ func NewArtifactStorage(config *config.ServiceConfig) (Provider, error) {
 		switch u.Scheme {
 		case "s3":
 			return NewS3(config)
+		case "", "file":
+			return NewLocal(config)
+		default:
+			return nil, eris.Errorf("unsupported schema has been provided: %s", u.Scheme)
 		}
 	}
 	return NewNoop(), nil

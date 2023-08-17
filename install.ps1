@@ -2,7 +2,7 @@
 
 $ProgressPreference = 'SilentlyContinue'
 $release = Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/jgiannuzzi/fasttrackml/releases/latest"
-$asset = $release.assets | Where-Object name -like *x86_64-pc-windows*.zip
+$asset = $release.assets | Where-Object name -like *windows_x86_64.zip
 $destdir = "$home\bin"
 $zipfile = "$env:TEMP\$( $asset.name )"
 $zipfilename = [System.IO.Path]::GetFileNameWithoutExtension("$zipfile")

@@ -84,10 +84,27 @@ go-dist: go-build ## archive app binary.
 #
 # Python targets.
 #
+.PHONY: python-env
+python-env: ## create python virtual environment.
+	@echo '>>> Creating python virtual environment.'
+	@pipenv sync
+
 .PHONY: python-dist
-python-dist: go-build ## build python wheels.
+python-dist: go-build python-env ## build python wheels.
 	@echo '>>> Building Python Wheels.'
-	@VERSION=$(VERSION) python3 -m pip wheel ./python --wheel-dir=wheelhouse --no-deps
+	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python --wheel-dir=wheelhouse --no-deps
+
+.PHONY: python-format
+python-format: python-env ## format python code.
+	@echo '>>> Formatting python code.'
+	@pipenv run black --line-length 120 .
+	@pipenv run isort --profile black .
+
+.PHONY: python-lint
+python-lint: python-env ## check python code formatting.
+	@echo '>>> Checking python code formatting.'
+	@pipenv run black --check --line-length 120 .
+	@pipenv run isort --check-only --profile black .
 
 #
 # Tests targets.
@@ -180,6 +197,9 @@ build: go-build ## build the go components
 
 PHONY: dist
 dist: go-dist python-dist ## build the software archives
+
+PHONY: format
+format: go-format python-format ## format the code
 
 PHONY: run
 run: build ## run the FastTrackML server

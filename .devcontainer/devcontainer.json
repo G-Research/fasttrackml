@@ -22,7 +22,9 @@
 				"golang.Go",
 				"ms-python.python",
 				"pbkit.vscode-pbkit",
-				"redhat.vscode-yaml"
+				"redhat.vscode-yaml",
+				"ms-python.black-formatter",
+				"ms-python.isort"
 			]
 		}
 	},

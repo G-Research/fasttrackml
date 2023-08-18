@@ -17,6 +17,14 @@ curl -fsSL https://fasttrackml.io/install.sh | sh
 ```bash
 iwr -useb https://fasttrackml.io/install.ps1 | iex
 ```
+### With a native executable
+
+Download the executable for your platform from the [latest release](https://github.com/G-Research/fasttrackml/releases/latest) assets.
+Extract it and then run FastTrackML with the following command:
+
+```bash
+./fml server
+```
 ## Run FastTrackML
 
 ```bash
@@ -27,15 +35,6 @@ fml server
 
 ```bash
 docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
-```
-
-### With a native executable
-
-Download the executable for your platform from the [latest release](https://github.com/G-Research/fasttrackml/releases/latest) assets.
-Extract it and then run FastTrackML with the following command:
-
-```bash
-./fml
 ```
 
 ### Verification

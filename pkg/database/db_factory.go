@@ -245,7 +245,7 @@ func (f SqliteDbFactory) MakeDbInstance() (*DbInstance, error) {
 		Conn: r,
 	}
 
-	logURL := *&f.dsnURL
+	logURL := f.dsnURL
 	q = logURL.Query()
 	if q.Has("_key") {
 		q.Set("_key", "xxxxx")
@@ -276,15 +276,13 @@ func (f SqliteDbFactory) MakeDbInstance() (*DbInstance, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	if replicaConn != nil {
-		db.Use(
-			dbresolver.Register(dbresolver.Config{
-				Replicas: []gorm.Dialector{
-					replicaConn,
-				},
-			}),
-		)
-	}
+	db.Use(
+		dbresolver.Register(dbresolver.Config{
+			Replicas: []gorm.Dialector{
+				replicaConn,
+			},
+		}),
+	)
 
 	sqlDB, _ := db.DB.DB()
 	sqlDB.SetConnMaxIdleTime(time.Minute)

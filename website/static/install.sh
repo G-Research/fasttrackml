@@ -29,7 +29,7 @@ fetch() {
 echo "Detected target: $target"
 
 url=$(
-    fetch https://api.github.com/repos/jgiannuzzi/fasttrackml/releases/latest |
+    fetch https://api.github.com/repos/G-Research/fasttrackml/releases/latest |
         tac | tac | grep -wo -m1 "https://.*$target.tar.gz" || true
 )
 if ! test "$url"; then

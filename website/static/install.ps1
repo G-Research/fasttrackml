@@ -1,7 +1,7 @@
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $ProgressPreference = 'SilentlyContinue'
-$release = Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/jgiannuzzi/fasttrackml/releases/latest"
+$release = Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/G-Research/fasttrackml/releases/latest"
 $asset = $release.assets | Where-Object name -like *windows_x86_64.zip
 $destdir = "$home\bin"
 $zipfile = "$env:TEMP\$( $asset.name )"

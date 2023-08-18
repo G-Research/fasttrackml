@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+
 	"github.com/rotisserie/eris"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )

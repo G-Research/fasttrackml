@@ -19,12 +19,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/G-Research/fasttrackml/pkg/api/admin"
+	adminController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
+	adminRepositories "github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
-	"github.com/G-Research/fasttrackml/pkg/api/middleware/namespace"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
+	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
@@ -32,6 +35,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
+	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
@@ -60,7 +64,8 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	defer db.Close()
 
 	// 3. init main HTTP server.
-	server := initServer(mlflowConfig)
+	namespaceRepository := adminRepositories.NewNamespaceRepository(db.DB)
+	server := initServer(mlflowConfig, namespaceRepository)
 
 	// 4. init `aim` api and ui routes.
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
@@ -74,32 +79,39 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	// 5. init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
-		controller.NewController(
+		mlflowController.NewController(
 			run.NewService(
-				repositories.NewTagRepository(db.DB),
-				repositories.NewRunRepository(db.DB),
-				repositories.NewParamRepository(db.DB),
-				repositories.NewMetricRepository(db.DB),
-				repositories.NewExperimentRepository(db.DB),
+				mlflowRepositories.NewTagRepository(db.DB),
+				mlflowRepositories.NewRunRepository(db.DB),
+				mlflowRepositories.NewParamRepository(db.DB),
+				mlflowRepositories.NewMetricRepository(db.DB),
+				mlflowRepositories.NewExperimentRepository(db.DB),
 			),
 			model.NewService(),
 			metric.NewService(
-				repositories.NewMetricRepository(db.DB),
+				mlflowRepositories.NewMetricRepository(db.DB),
 			),
 			artifact.NewService(
 				storage,
-				repositories.NewRunRepository(db.DB),
+				mlflowRepositories.NewRunRepository(db.DB),
 			),
 			experiment.NewService(
 				mlflowConfig,
-				repositories.NewTagRepository(db.DB),
-				repositories.NewExperimentRepository(db.DB),
+				mlflowRepositories.NewTagRepository(db.DB),
+				mlflowRepositories.NewExperimentRepository(db.DB),
 			),
 		),
 	).Init(server)
 	mlflowUI.AddRoutes(server)
 
-	// 5. init `chooser` ui routes.
+	// 6. init `admin` api routes.
+	admin.NewRouter(
+		adminController.NewController(
+			namespace.NewService(namespaceRepository),
+		),
+	).Init(server)
+
+	// 7. init `chooser` ui routes.
 	chooser.AddRoutes(server)
 
 	isRunning := make(chan struct{})
@@ -142,7 +154,10 @@ func initDB(config *mlflowConfig.ServiceConfig) (*database.DbInstance, error) {
 }
 
 // initServer init HTTP server with base configuration.
-func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
+func initServer(
+	config *mlflowConfig.ServiceConfig,
+	namespaceRepository adminRepositories.NamespaceRepositoryProvider,
+) *fiber.App {
 	server := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
 		ReadBufferSize:        16384,
@@ -192,7 +207,7 @@ func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
-	server.Use(namespace.New())
+	server.Use(namespaceMiddleware.New(namespaceRepository))
 
 	server.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")

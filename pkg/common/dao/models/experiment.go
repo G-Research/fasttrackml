@@ -1,6 +1,8 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 // Experiment represents model to work with `experiments` table.
 type Experiment struct {

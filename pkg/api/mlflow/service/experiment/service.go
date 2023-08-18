@@ -14,13 +14,13 @@ import (
 
 	"gorm.io/gorm/clause"
 
-	"github.com/G-Research/fasttrackml/pkg/api/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/convertors"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -50,11 +50,17 @@ func NewService(
 	}
 }
 
+// CreateExperiment creates new Experiment entity.
 func (s Service) CreateExperiment(
 	ctx context.Context, req *request.CreateExperimentRequest,
 ) (*models.Experiment, error) {
 	if err := ValidateCreateExperimentRequest(req); err != nil {
 		return nil, err
+	}
+
+	namespace, err := namespace.GetNamespaceFromContext(ctx)
+	if err != nil {
+		return nil, api.NewInternalError("error getting namespace from context")
 	}
 
 	experiment, err := s.experimentRepository.GetByName(ctx, req.Name)
@@ -69,6 +75,7 @@ func (s Service) CreateExperiment(
 	if err != nil {
 		return nil, api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
 	}
+	experiment.NamespaceID = namespace.ID
 
 	if err := s.experimentRepository.Create(ctx, experiment); err != nil {
 		return nil, api.NewInternalError("error inserting experiment '%s': %s", req.Name, err)
@@ -92,6 +99,7 @@ func (s Service) CreateExperiment(
 	return experiment, nil
 }
 
+// UpdateExperiment updates existing Experiment entity.
 func (s Service) UpdateExperiment(ctx context.Context, req *request.UpdateExperimentRequest) error {
 	if err := ValidateUpdateExperimentRequest(req); err != nil {
 		return err
@@ -115,6 +123,7 @@ func (s Service) UpdateExperiment(ctx context.Context, req *request.UpdateExperi
 	return nil
 }
 
+// GetExperiment returns existing Experiment entity by ID.
 func (s Service) GetExperiment(ctx context.Context, req *request.GetExperimentRequest) (*models.Experiment, error) {
 	if err := ValidateGetExperimentByIDRequest(req); err != nil {
 		return nil, err
@@ -134,6 +143,7 @@ func (s Service) GetExperiment(ctx context.Context, req *request.GetExperimentRe
 	return experiment, nil
 }
 
+// GetExperimentByName returns existing Experiment entity by Name.
 func (s Service) GetExperimentByName(
 	ctx context.Context, req *request.GetExperimentRequest,
 ) (*models.Experiment, error) {
@@ -152,6 +162,7 @@ func (s Service) GetExperimentByName(
 	return experiment, nil
 }
 
+// DeleteExperiment deletes existing Experiment entity.
 func (s Service) DeleteExperiment(ctx context.Context, req *request.DeleteExperimentRequest) error {
 	if err := ValidateDeleteExperimentRequest(req); err != nil {
 		return err
@@ -180,6 +191,7 @@ func (s Service) DeleteExperiment(ctx context.Context, req *request.DeleteExperi
 	return nil
 }
 
+// RestoreExperiment restores deleted Experiment entity.
 func (s Service) RestoreExperiment(ctx context.Context, req *request.RestoreExperimentRequest) error {
 	if err := ValidateRestoreExperimentRequest(req); err != nil {
 		return err
@@ -238,9 +250,13 @@ func (s Service) SearchExperiments(
 		return nil, 0, 0, err
 	}
 
-	tx := database.DB.Joins(
-		"RIGHT JOIN namespaces ON namespaces.id = experiments.namespace_id AND namespaces.code = ?",
-		namespace.GetCodeFromContext(ctx),
+	namespace, err := namespace.GetNamespaceFromContext(ctx)
+	if err != nil {
+		return nil, 0, 0, api.NewInternalError("error getting namespace from context")
+	}
+
+	query := database.DB.Joins(
+		"RIGHT JOIN namespaces ON namespaces.id = experiments.namespace_id AND namespaces.code = ?", namespace.ID,
 	)
 
 	// ViewType
@@ -260,14 +276,14 @@ func (s Service) SearchExperiments(
 			database.LifecycleStageDeleted,
 		}
 	}
-	tx.Where("lifecycle_stage IN ?", lifecyleStages)
+	query.Where("lifecycle_stage IN ?", lifecyleStages)
 
 	// MaxResults
 	limit := int(req.MaxResults)
 	if limit == 0 {
 		limit = 1000
 	}
-	tx.Limit(limit + 1)
+	query.Limit(limit + 1)
 
 	// PageToken
 	var offset int
@@ -283,7 +299,7 @@ func (s Service) SearchExperiments(
 		}
 		offset = int(token.Offset)
 	}
-	tx.Offset(offset)
+	query.Offset(offset)
 
 	// Filter
 	if req.Filter != "" {
@@ -330,7 +346,7 @@ func (s Service) SearchExperiments(
 				default:
 					return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['name', 'creation_time', 'last_update_time']", key)
 				}
-				tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
+				query.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
 			case "tag", "tags":
 				switch strings.ToUpper(comparison) {
 				case "!=", "=", "LIKE", "ILIKE":
@@ -347,7 +363,7 @@ func (s Service) SearchExperiments(
 					where = "LOWER(value) LIKE ?"
 					value = strings.ToLower(value.(string))
 				}
-				tx.Joins(
+				query.Joins(
 					fmt.Sprintf("JOIN (?) AS %s ON experiments.experiment_id = %s.experiment_id", table, table),
 					database.DB.Select("experiment_id", "value").Where("key = ?", key).Where(where, value).Model(&database.ExperimentTag{}),
 				)
@@ -374,23 +390,23 @@ func (s Service) SearchExperiments(
 		default:
 			return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']", column)
 		}
-		tx.Order(clause.OrderByColumn{
+		query.Order(clause.OrderByColumn{
 			Column: clause.Column{Name: column},
 			Desc:   len(components) == 3 && strings.ToUpper(components[2]) == "DESC",
 		})
 
 	}
 	if len(req.OrderBy) == 0 {
-		tx.Order("experiments.creation_time DESC")
+		query.Order("experiments.creation_time DESC")
 	}
 	if !expOrder {
-		tx.Order("experiments.experiment_id ASC")
+		query.Order("experiments.experiment_id ASC")
 	}
 
 	// Actual query
 	var exps []models.Experiment
-	if tx.Preload("Tags").Find(&exps).Error != nil {
-		return nil, 0, 0, api.NewInternalError("unable to search runs: %s", tx.Error)
+	if err := query.Preload("Tags").Find(&exps).Error; err != nil {
+		return nil, 0, 0, api.NewInternalError("unable to search runs: %s", err)
 	}
 
 	return exps, limit, offset, nil

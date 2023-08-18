@@ -9,8 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/G-Research/fasttrackml/pkg/api/middleware/namespace"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -44,11 +43,6 @@ func NewExperimentRepository(db *gorm.DB) *ExperimentRepository {
 
 // Create creates new models.Experiment entity.
 func (r ExperimentRepository) Create(ctx context.Context, experiment *models.Experiment) error {
-	var err error
-	experiment.NamespaceID, err = namespace.GetIDFromContext(r.db, ctx)
-	if err != nil {
-		return eris.Wrap(err, "error getting namespace id")
-	}
 	if err := r.db.Create(&experiment).Error; err != nil {
 		return eris.Wrap(err, "error creating experiment entity")
 	}
@@ -66,22 +60,9 @@ func (r ExperimentRepository) Create(ctx context.Context, experiment *models.Exp
 
 // GetByID returns experiment by its ID.
 func (r ExperimentRepository) GetByID(ctx context.Context, experimentID int32) (*models.Experiment, error) {
-	nsCode := namespace.GetCodeFromContext(ctx)
-	if experimentID == 0 {
-		if err := r.db.WithContext(ctx).
-			Model(&models.Namespace{}).
-			Where("code = ?", nsCode).
-			Pluck("DefaultExperimentID", &experimentID).
-			Error; err != nil {
-			return nil, eris.Wrapf(err, "error getting default experiment for namespace code %q", nsCode)
-		}
-	}
 	var experiment models.Experiment
 	if err := r.db.WithContext(ctx).Preload(
 		"Tags",
-	).Joins(
-		"RIGHT JOIN namespaces ON namespaces.id = experiments.namespace_id AND namespaces.code = ?",
-		namespace.GetCodeFromContext(ctx),
 	).Where(
 		models.Experiment{ID: &experimentID},
 	).First(&experiment).Error; err != nil {
@@ -95,9 +76,6 @@ func (r ExperimentRepository) GetByName(ctx context.Context, name string) (*mode
 	var experiment models.Experiment
 	if err := r.db.WithContext(ctx).Preload(
 		"Tags",
-	).Joins(
-		"RIGHT JOIN namespaces ON namespaces.id = experiments.namespace_id AND namespaces.code = ?",
-		namespace.GetCodeFromContext(ctx),
 	).Where(
 		models.Experiment{Name: name},
 	).First(&experiment).Error; err != nil {
@@ -123,7 +101,13 @@ func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Exp
 				DeletedTime:    experiment.LastUpdateTime,
 			}
 
-			if err := tx.WithContext(ctx).Model(&run).Where("experiment_id = ?", experiment.ID).Updates(&run).Error; err != nil {
+			if err := tx.WithContext(
+				ctx,
+			).Model(
+				&run,
+			).Where(
+				"experiment_id = ?", experiment.ID,
+			).Updates(&run).Error; err != nil {
 				return eris.Wrapf(err, "error updating existing runs with experiment id: %d", *experiment.ID)
 			}
 		}
@@ -145,15 +129,20 @@ func (r ExperimentRepository) DeleteBatch(ctx context.Context, ids []*int32) err
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		// finding all the runs
 		var minRowNum sql.NullInt64
-
-		if err := tx.Model(&models.Run{}).Where("experiment_id IN (?)", ids).Pluck("MIN(row_num)", &minRowNum).Error; err != nil {
+		if err := tx.Model(
+			&models.Run{},
+		).Where(
+			"experiment_id IN (?)", ids,
+		).Pluck("MIN(row_num)", &minRowNum).Error; err != nil {
 			return err
 		}
 
 		experiments := make([]models.Experiment, 0, len(ids))
-		if err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "experiment_id"}}}).
-			Where("experiment_id IN ?", ids).
-			Delete(&experiments).Error; err != nil {
+		if err := tx.Clauses(
+			clause.Returning{Columns: []clause.Column{{Name: "experiment_id"}}},
+		).Where(
+			"experiment_id IN ?", ids,
+		).Delete(&experiments).Error; err != nil {
 			return eris.Wrapf(err, "error deleting existing experiments with ids: %d", ids)
 		}
 

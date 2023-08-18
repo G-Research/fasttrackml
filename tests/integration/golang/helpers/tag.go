@@ -1,7 +1,7 @@
 package helpers
 
 import (
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // CheckTagExists makes check that Tag exists in provided Tag list.

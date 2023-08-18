@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -18,7 +20,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )

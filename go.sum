@@ -42,8 +42,8 @@ github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20O
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/G-Research/fasttrackml-ui-aim v0.31602.7 h1:usVgK6Aa7rYjXsIViG5IpvjeECwDEe0/0aeOcjPacD0=
 github.com/G-Research/fasttrackml-ui-aim v0.31602.7/go.mod h1:R8eNxWoWxiQ4vXOwkfkOgUXxxesyOTLWgtGi2dDuQOY=
-github.com/G-Research/fasttrackml-ui-mlflow v0.20301.1 h1:yDVHbMx0Y8GFZq0D0STnlmIYDIk4phGKCvVIKrlNn00=
-github.com/G-Research/fasttrackml-ui-mlflow v0.20301.1/go.mod h1:0NZjizx6aygBaV8uQ81oCTMVekOFTh6ZDTqTAE6NYdc=
+github.com/G-Research/fasttrackml-ui-mlflow v0.20301.4 h1:0vd7z6e32P/1MBN2CrxpC7+U3flnn+L1bYrAhwQ1mbw=
+github.com/G-Research/fasttrackml-ui-mlflow v0.20301.4/go.mod h1:0NZjizx6aygBaV8uQ81oCTMVekOFTh6ZDTqTAE6NYdc=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c h1:RGWPOewvKIROun94nF7v2cua9qP+thov/7M50KEoeSU=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c/go.mod h1:X0CRv0ky0k6m906ixxpzmDRLvX58TFUKS2eePweuyxk=
 github.com/andybalholm/brotli v1.0.5 h1:8uQZIdzKmjc/iuPu7O2ioW48L81FgatrcpfFmiq/cCs=

@@ -4,12 +4,12 @@ set -e
 
 if [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "x86_64" ]; then
     target="macos_x86_64"
+elif [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "arm64" ]; then
+    target="macos_arm64"
 elif [ "$(uname -s)" = "Linux" ] && [ "$(uname -m)" = "x86_64" ]; then
     target="linux_x86_64"
 elif [ "$(uname -s)" = "Linux" ] && [ "$(uname -m)" = "arm64" ]; then
     target="linux_arm64"
-elif [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "arm64" ]; then
-    target="macos_arm64"
 else
     echo "Unsupported OS or architecture"
     exit 1
@@ -39,7 +39,7 @@ fi
 
 echo "Downloading fml..."
 
-temp_dir=$(mktemp -dt fml.XXXXXX)
+temp_dir=$(mktemp -dt fml.tmp)
 trap 'rm -rf "$temp_dir"' EXIT INT TERM
 cd "$temp_dir"
 

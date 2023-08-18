@@ -34,7 +34,7 @@ Remove-Item -Path $zipfile
 $fmlVersion = & "$destdir\fml.exe" --version
 
 # Inform user where the executables have been put
-Write-Output "xh v$( $fmlVersion ) has been installed to:`n - $fmlPath`n"
+Write-Output "fml v$( $fmlVersion ) has been installed to:`n - $fmlPath`n"
 
 # Make sure destdir is in the path
 $userPath = [System.Environment]::GetEnvironmentVariable('Path', [System.EnvironmentVariableTarget]::User)

@@ -15,11 +15,10 @@ else
     exit 1
 fi
 
-fetch()
-{
-    if which curl > /dev/null; then
+fetch() {
+    if which curl >/dev/null; then
         if [ "$#" -eq 2 ]; then curl -L -o "$1" "$2"; else curl -sSL "$1"; fi
-    elif which wget > /dev/null; then
+    elif which wget >/dev/null; then
         if [ "$#" -eq 2 ]; then wget -O "$1" "$2"; else wget -nv -O - "$1"; fi
     else
         echo "Can't find curl or wget, can't download package"
@@ -31,7 +30,7 @@ echo "Detected target: $target"
 
 url=$(
     fetch https://api.github.com/repos/jgiannuzzi/fasttrackml/releases/latest |
-    tac | tac | grep -wo -m1 "https://.*$target.tar.gz" || true
+        tac | tac | grep -wo -m1 "https://.*$target.tar.gz" || true
 )
 if ! test "$url"; then
     echo "Could not find release info"
@@ -51,17 +50,17 @@ fi
 
 user_bin="$HOME/.local/bin"
 case $PATH in
-    *:"$user_bin":* | "$user_bin":* | *:"$user_bin")
-        default_bin=$user_bin
-        ;;
-    *)
-        default_bin='/usr/local/bin'
-        ;;
+*:"$user_bin":* | "$user_bin":* | *:"$user_bin")
+    default_bin=$user_bin
+    ;;
+*)
+    default_bin='/usr/local/bin'
+    ;;
 esac
 
 _read_installdir() {
     printf "Install location [default: %s]: " "$default_bin"
-    read -r fml_installdir < /dev/tty
+    read -r fml_installdir </dev/tty
     fml_installdir=${fml_installdir:-$default_bin}
 }
 

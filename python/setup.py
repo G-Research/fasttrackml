@@ -53,6 +53,7 @@ setup(
     version=get_version(),
     description="Rewrite of the MLFlow tracking server with a focus on scalability.",
     long_description=get_long_description(),
+    long_description_content_type="text/markdown",
     packages=find_packages(),
     include_package_data=True,
     data_files=get_data_files(),

@@ -56,5 +56,4 @@ if (!($userPath.ToLower().Contains($destdir.ToLower())) -and !($machinePath.ToLo
 
     # Instruct how to modify PATH for other open terminals
     Write-Output "`nFor other terminals, restart them (or the entire IDE if they're within one).`n"
-
 }

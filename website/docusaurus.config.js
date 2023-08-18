@@ -23,10 +23,6 @@ const config = {
         locales: ['en'],
     },
 
-    customRoutes: {
-        '/install.sh': 'static/install.sh',
-    },
-
     customFields: {
         email: 'fasttrackml@gr-oss.io',
         newIssueUrl: 'https://github.com/G-Research/fasttrackml/issues/new',

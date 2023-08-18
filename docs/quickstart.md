@@ -29,7 +29,7 @@ fml server
 docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
 ```
 
-### With a native executable
+## With a native executable
 
 Download the executable for your platform from the [latest release](https://github.com/G-Research/fasttrackml/releases/latest) assets.
 Extract it and then run FastTrackML with the following command:

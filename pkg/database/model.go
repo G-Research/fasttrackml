@@ -30,13 +30,26 @@ const (
 	LifecycleStageDeleted LifecycleStage = "deleted"
 )
 
+type Namespace struct {
+	ID                  uint   `gorm:"primaryKey;autoIncrement"`
+	Code                string `gorm:"unique;index;not null"`
+	Description         string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	DeletedAt           gorm.DeletedAt `gorm:"index"`
+	DefaultExperimentID *int32         `gorm:"not null"`
+	Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE"`
+}
+
 type Experiment struct {
-	ID               *int32          `gorm:"column:experiment_id;not null;primaryKey"`
-	Name             string          `gorm:"type:varchar(256);not null;unique"`
-	ArtifactLocation string          `gorm:"type:varchar(256)"`
-	LifecycleStage   LifecycleStage  `gorm:"type:varchar(32);check:lifecycle_stage IN ('active', 'deleted')"`
-	CreationTime     sql.NullInt64   `gorm:"type:bigint"`
-	LastUpdateTime   sql.NullInt64   `gorm:"type:bigint"`
+	ID               *int32         `gorm:"column:experiment_id;not null;primaryKey"`
+	Name             string         `gorm:"type:varchar(256);not null;index:idx_namespace_name,unique"`
+	ArtifactLocation string         `gorm:"type:varchar(256)"`
+	LifecycleStage   LifecycleStage `gorm:"type:varchar(32);check:lifecycle_stage IN ('active', 'deleted')"`
+	CreationTime     sql.NullInt64  `gorm:"type:bigint"`
+	LastUpdateTime   sql.NullInt64  `gorm:"type:bigint"`
+	NamespaceID      uint           `gorm:"index:idx_namespace_name,unique"`
+	Namespace        Namespace
 	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
 	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
 }

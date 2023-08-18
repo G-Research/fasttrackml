@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/viper"
 
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
+	"github.com/G-Research/fasttrackml/pkg/api/middleware/namespace"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
@@ -63,7 +64,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 	// 4. init `aim` api and ui routes.
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
-	aimUI.AddRoutes(server.Group("/aim/"))
+	aimUI.AddRoutes(server)
 
 	storage, err := storage.NewArtifactStorage(mlflowConfig)
 	if err != nil {
@@ -96,9 +97,10 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 			),
 		),
 	).Init(server)
-	mlflowUI.AddRoutes(server.Group("/mlflow/"))
-	// TODO:DSuhinin we have to move it.
-	chooser.AddRoutes(server.Group("/"))
+	mlflowUI.AddRoutes(server)
+
+	// 5. init `chooser` ui routes.
+	chooser.AddRoutes(server)
 
 	isRunning := make(chan struct{})
 	go func() {
@@ -155,8 +157,7 @@ func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 			case strings.HasPrefix(p, "/aim/api/"):
 				return aimAPI.ErrorHandler(c, err)
 			case strings.HasPrefix(p, "/api/2.0/mlflow/") ||
-				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/") ||
-				strings.HasPrefix(p, "/mlflow/ajax-api/2.0/mlflow/"):
+				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/"):
 				return mlflowService.ErrorHandler(c, err)
 
 			default:
@@ -191,6 +192,7 @@ func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
+	server.Use(namespace.New())
 
 	server.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")

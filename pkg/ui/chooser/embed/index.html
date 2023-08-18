@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FastTrackML</title>
-    <link rel="stylesheet" href="simple.min.css">
+    <link rel="stylesheet" href="/static/chooser/simple.min.css">
     <style>
         main {
             text-align: center;
@@ -31,11 +31,13 @@
         <p>Which UI do you want to use?</p>
         <div class="ui">
             <article>
-                <a href="#" onclick="window.location = window.location.origin + '/mlflow/'"><button>Classic</button></a>
+                <a href="#"
+                    onclick="window.location = window.location.origin + window.location.pathname + 'mlflow/'"><button>Classic</button></a>
                 <p>This is the classic MLFlow UI, albeit fast and responsive.</p>
             </article>
             <article>
-                <a href="#" onclick="window.location = window.location.origin + '/aim/'"><button>Modern</button></a>
+                <a href="#"
+                    onclick="window.location = window.location.origin + window.location.pathname + 'aim/'"><button>Modern</button></a>
                 <p>This is the modern Aim UI, much faster than MLFlow.</p>
             </article>
         </div>

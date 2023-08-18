@@ -39,6 +39,9 @@ endif
 ARCHIVE_NAME=dist/fasttrackml_$(shell go env GOOS | sed s/darwin/macos/)_$(shell go env GOARCH | sed s/amd64/x86_64/).$(ARCHIVE_EXT)
 ARCHIVE_FILES=$(APP) LICENSE README.md
 
+ifeq ($(FML_DATABASE_URI),)
+  FML_DATABASE_URI := "sqlite://fasttrackml.db"
+endif
 #
 # Default target (help)
 #
@@ -80,6 +83,31 @@ go-dist: go-build ## archive app binary.
 	@dir=$$(dirname $(ARCHIVE_NAME)); if [ ! -d $$dir ]; then mkdir -p $$dir; fi
 	@if [ -f $(ARCHIVE_NAME) ]; then rm -f $(ARCHIVE_NAME); fi
 	@$(ARCHIVE_CMD) $(ARCHIVE_NAME) $(ARCHIVE_FILES)
+
+#
+# Python targets.
+#
+.PHONY: python-env
+python-env: ## create python virtual environment.
+	@echo '>>> Creating python virtual environment.'
+	@pipenv sync
+
+.PHONY: python-dist
+python-dist: go-build python-env ## build python wheels.
+	@echo '>>> Building Python Wheels.'
+	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python --wheel-dir=wheelhouse --no-deps
+
+.PHONY: python-format
+python-format: python-env ## format python code.
+	@echo '>>> Formatting python code.'
+	@pipenv run black --line-length 120 .
+	@pipenv run isort --profile black .
+
+.PHONY: python-lint
+python-lint: python-env ## check python code formatting.
+	@echo '>>> Checking python code formatting.'
+	@pipenv run black --check --line-length 120 .
+	@pipenv run isort --check-only --profile black .
 
 #
 # Tests targets.
@@ -127,7 +155,7 @@ service-start: service-build service-start-dependencies ## start service in dock
 	@sleep 5
 	@echo ">>> Starting service."
 	@echo ">>> Starting up service container."
-	@docker-compose up -d service
+	@docker-compose up -e FML_DATABASE_URI -d service
 
 .PHONY: service-stop
 service-stop: ## stop service in docker.
@@ -141,7 +169,7 @@ service-restart: service-stop service-start ## restart service in docker
 service-test: service-stop service-start ## run tests over the service in docker.
 	@echo ">>> Running tests over service."
 	@docker-compose \
-		run integration-tests
+		run -e FML_DATABASE_URI integration-tests
 
 .PHONY: service-clean
 service-clean: ## clean service in docker.
@@ -171,7 +199,10 @@ PHONY: build
 build: go-build ## build the go components
 
 PHONY: dist
-dist: go-dist ## archive the go components
+dist: go-dist python-dist ## build the software archives
+
+PHONY: format
+format: go-format python-format ## format the code
 
 PHONY: run
 run: build ## run the FastTrackML server

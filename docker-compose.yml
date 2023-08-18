@@ -27,7 +27,7 @@ services:
       MINIO_CONSOLE_ADDRESS: ":9001"
 
   integration-tests:
-    image: golang:1.20
+    image: golang:1.21
     command: make test-go-integration
     volumes:
       - .:/go/src

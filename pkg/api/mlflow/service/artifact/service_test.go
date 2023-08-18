@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -39,7 +38,7 @@ func TestService_ListArtifacts_Ok(t *testing.T) {
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
 		"GetByID",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		"id",
 	).Return(&models.Run{
 		ID:          "id",
@@ -113,7 +112,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"id",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -139,7 +138,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
 					"GetByID",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"id",
 				).Return(&models.Run{
 					ID:          "id",

@@ -1,5 +1,5 @@
 # Build fml binary
-FROM --platform=$BUILDPLATFORM golang:1.20 AS go-build
+FROM --platform=$BUILDPLATFORM golang:1.21 AS go-build
 
 ARG TARGETARCH
 RUN bash -c "\

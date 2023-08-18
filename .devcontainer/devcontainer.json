@@ -22,7 +22,9 @@
 				"golang.Go",
 				"ms-python.python",
 				"pbkit.vscode-pbkit",
-				"redhat.vscode-yaml"
+				"redhat.vscode-yaml",
+				"ms-python.black-formatter",
+				"ms-python.isort"
 			]
 		}
 	},
@@ -38,10 +40,13 @@
 	"remoteUser": "vscode",
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {
-			"dockerDashComposeVersion": "v2"
+			"dockerDashComposeVersion": "none"
 		},
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "16"
+		},
 		"ghcr.io/dhoeric/features/k6:1": {},
 		"ghcr.io/christophermacgown/devcontainer-features/minio-client:1": {}
 	},

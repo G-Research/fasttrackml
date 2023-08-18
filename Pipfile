@@ -1,0 +1,14 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+mlflow-skinny = "==2.6.0"
+black = "*"
+isort = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"

@@ -20,7 +20,7 @@ func TestService_GetMetricHistory_Ok(t *testing.T) {
 	metricRepository := repositories.MockMetricRepositoryProvider{}
 	metricRepository.On(
 		"GetMetricHistoryByRunIDAndKey",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		"1",
 		"key",
 	).Return([]models.Metric{
@@ -89,7 +89,7 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"GetMetricHistoryByRunIDAndKey",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					"key",
 				).Return(nil, errors.New("database error"))
@@ -112,7 +112,7 @@ func TestService_GetMetricHistoryBulk_Ok(t *testing.T) {
 	metricRepository := repositories.MockMetricRepositoryProvider{}
 	metricRepository.On(
 		"GetMetricHistoryBulk",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		[]string{"1", "2"},
 		"key",
 		10,
@@ -201,7 +201,7 @@ func TestService_GetMetricHistoryBulk_Error(t *testing.T) {
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"GetMetricHistoryBulk",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					[]string{"1"},
 					"key",
 					10,
@@ -225,7 +225,7 @@ func TestNewService_GetMetricHistories_Ok(t *testing.T) {
 	metricRepository := repositories.MockMetricRepositoryProvider{}
 	metricRepository.On(
 		"GetMetricHistories",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		[]string{"1", "2"},
 		mock.Anything,
 		[]string{"key1", "key2"},
@@ -311,7 +311,7 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"GetMetricHistories",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					mock.Anything,
 					[]string{"1"},
 					[]string{"key1", "key2"},

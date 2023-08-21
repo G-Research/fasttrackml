@@ -1,8 +1,7 @@
+import mlflow
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-
-import mlflow
 
 ALL_FILES = ["data/0.csv", "data/1.csv", "data/2.csv", "data/3.csv"]
 
@@ -28,9 +27,7 @@ def read_data():
     X = data_df.iloc[:, :-1].values
     Y = data_df.iloc[:, -1].values
     # Random State is set to 42 for reproducibility
-    Xtrain, Xtest, Ytrain, Ytest = train_test_split(
-        X, Y, test_size=0.50, random_state=42
-    )
+    Xtrain, Xtest, Ytrain, Ytest = train_test_split(X, Y, test_size=0.50, random_state=42)
 
     print("Completed Data Read")
     return data_df, Xtrain, Xtest, Ytrain, Ytest

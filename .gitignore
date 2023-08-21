@@ -2,6 +2,7 @@
 .idea
 
 # Binaries
+dist/
 fml
 fasttrackml
 *.exe
@@ -26,3 +27,8 @@ mock_*
 # Optional workspace
 go.work
 *.code-workspace
+
+# Python wheels
+python/build/
+python/*.egg-info/
+wheelhouse/

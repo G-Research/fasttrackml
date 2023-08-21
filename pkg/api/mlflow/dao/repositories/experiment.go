@@ -17,16 +17,18 @@ import (
 type ExperimentRepositoryProvider interface {
 	// Create creates new models.Experiment entity.
 	Create(ctx context.Context, experiment *models.Experiment) error
-	// GetByID returns experiment by its ID.
-	GetByID(ctx context.Context, experimentID int32) (*models.Experiment, error)
-	// GetByName returns experiment by its name.
-	GetByName(ctx context.Context, name string) (*models.Experiment, error)
 	// Update updates existing models.Experiment entity.
 	Update(ctx context.Context, experiment *models.Experiment) error
 	// Delete removes the existing models.Experiment from the db.
 	Delete(ctx context.Context, experiment *models.Experiment) error
 	// DeleteBatch removes existing []models.Experiment in batch from the db.
 	DeleteBatch(ctx context.Context, ids []*int32) error
+	// GetByNamespaceIDAndName returns experiment by Namespace ID and Experiment name.
+	GetByNamespaceIDAndName(ctx context.Context, namespaceID uint, name string) (*models.Experiment, error)
+	// GetByNamespaceIDAndExperimentID returns experiment by Namespace ID and Experiment ID.
+	GetByNamespaceIDAndExperimentID(
+		ctx context.Context, namespaceID uint, experimentID int32,
+	) (*models.Experiment, error)
 }
 
 // ExperimentRepository repository to work with `experiment` entity.
@@ -43,7 +45,7 @@ func NewExperimentRepository(db *gorm.DB) *ExperimentRepository {
 
 // Create creates new models.Experiment entity.
 func (r ExperimentRepository) Create(ctx context.Context, experiment *models.Experiment) error {
-	if err := r.db.Create(&experiment).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(&experiment).Error; err != nil {
 		return eris.Wrap(err, "error creating experiment entity")
 	}
 	if experiment.ArtifactLocation == "" {
@@ -58,26 +60,34 @@ func (r ExperimentRepository) Create(ctx context.Context, experiment *models.Exp
 	return nil
 }
 
-// GetByID returns experiment by its ID.
-func (r ExperimentRepository) GetByID(ctx context.Context, experimentID int32) (*models.Experiment, error) {
+// GetByNamespaceIDAndExperimentID returns experiment by Namespace ID and Experiment ID.
+func (r ExperimentRepository) GetByNamespaceIDAndExperimentID(
+	ctx context.Context, namespaceID uint, experimentID int32,
+) (*models.Experiment, error) {
 	var experiment models.Experiment
 	if err := r.db.WithContext(ctx).Preload(
 		"Tags",
 	).Where(
 		models.Experiment{ID: &experimentID},
+	).Where(
+		"experiments.namespace_id = ?", namespaceID,
 	).First(&experiment).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting experiment by id: %d", experimentID)
 	}
 	return &experiment, nil
 }
 
-// GetByName returns experiment by its name.
-func (r ExperimentRepository) GetByName(ctx context.Context, name string) (*models.Experiment, error) {
+// GetByNamespaceIDAndName returns experiment by Namespace ID and Experiment name.
+func (r ExperimentRepository) GetByNamespaceIDAndName(
+	ctx context.Context, namespaceID uint, name string,
+) (*models.Experiment, error) {
 	var experiment models.Experiment
 	if err := r.db.WithContext(ctx).Preload(
 		"Tags",
 	).Where(
 		models.Experiment{Name: name},
+	).Where(
+		"experiments.namespace_id = ?", namespaceID,
 	).First(&experiment).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

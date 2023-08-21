@@ -17,6 +17,12 @@ import (
 )
 
 func TestService_CreateRun_Ok(t *testing.T) {
+	// initialise namespace to which experiment under the test belongs to.
+	ns := models.Namespace{
+		ID:   1,
+		Code: "code",
+	}
+
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
@@ -43,8 +49,9 @@ func TestService_CreateRun_Ok(t *testing.T) {
 
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 	experimentRepository.On(
-		"GetByID",
+		"GetByNamespaceIDAndExperimentID",
 		context.TODO(),
+		ns.ID,
 		int32(1),
 	).Return(&models.Experiment{
 		ID:               common.GetPointer(int32(1)),
@@ -59,7 +66,7 @@ func TestService_CreateRun_Ok(t *testing.T) {
 		&repositories.MockMetricRepositoryProvider{},
 		&experimentRepository,
 	)
-	run, err := service.CreateRun(context.TODO(), &request.CreateRunRequest{
+	run, err := service.CreateRun(context.TODO(), &ns, &request.CreateRunRequest{
 		ExperimentID: "1",
 		UserID:       "1",
 		Name:         "name",
@@ -90,6 +97,12 @@ func TestService_CreateRun_Ok(t *testing.T) {
 }
 
 func TestService_CreateRun_Error(t *testing.T) {
+	// initialise namespace to which experiment under the test belongs to.
+	ns := models.Namespace{
+		ID:   1,
+		Code: "code",
+	}
+
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -119,8 +132,9 @@ func TestService_CreateRun_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndExperimentID",
 					context.TODO(),
+					ns.ID,
 					int32(1),
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -149,8 +163,9 @@ func TestService_CreateRun_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndExperimentID",
 					context.TODO(),
+					ns.ID,
 					int32(1),
 				).Return(&models.Experiment{ID: common.GetPointer(int32(1))}, nil)
 				runRepository := repositories.MockRunRepositoryProvider{}
@@ -188,7 +203,7 @@ func TestService_CreateRun_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, err := tt.service().CreateRun(context.TODO(), tt.request)
+			_, err := tt.service().CreateRun(context.TODO(), &ns, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}

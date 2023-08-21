@@ -188,21 +188,6 @@ func ConnectDB(
 		}
 	}
 
-	if err := checkAndMigrateDB(DB, migrate); err != nil {
-		DB.Close()
-		return nil, err
-	}
-
-	if err := createDefaultNamespace(DB); err != nil {
-		DB.Close()
-		return nil, err
-	}
-
-	if err := createDefaultExperiment(DB, artifactRoot); err != nil {
-		DB.Close()
-		return nil, err
-	}
-
 	return DB, nil
 }
 
@@ -218,7 +203,7 @@ func resetDB(db *DbInstance) error {
 	return nil
 }
 
-func checkAndMigrateDB(db *DbInstance, migrate bool) error {
+func CheckAndMigrateDB(db *DbInstance, migrate bool) error {
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion
 	{
@@ -551,8 +536,8 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 	return nil
 }
 
-// createDefaultNamespace creates the default namespace if it doesn't exist.
-func createDefaultNamespace(db *DbInstance) error {
+// CreateDefaultNamespace creates the default namespace if it doesn't exist.
+func CreateDefaultNamespace(db *DbInstance) error {
 	if tx := db.First(&Namespace{
 		Code: "default",
 	}); tx.Error != nil {
@@ -585,8 +570,8 @@ func createDefaultNamespace(db *DbInstance) error {
 	return nil
 }
 
-// createDefaultExperiment creates the default experiment if it doesn't exist.
-func createDefaultExperiment(db *DbInstance, artifactRoot string) error {
+// CreateDefaultExperiment creates the default experiment if it doesn't exist.
+func CreateDefaultExperiment(db *DbInstance, artifactRoot string) error {
 	if err := db.First(&Experiment{}, 0).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Creating default experiment")

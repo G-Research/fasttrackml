@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/rotisserie/eris"
+	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // ExperimentFixtures represents data fixtures object.
@@ -19,21 +19,10 @@ type ExperimentFixtures struct {
 }
 
 // NewExperimentFixtures creates new instance of ExperimentFixtures.
-func NewExperimentFixtures(databaseDSN string) (*ExperimentFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
-	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
-	}
+func NewExperimentFixtures(db *gorm.DB) (*ExperimentFixtures, error) {
 	return &ExperimentFixtures{
-		baseFixtures:         baseFixtures{db: db.DB},
-		experimentRepository: repositories.NewExperimentRepository(db.DB),
+		baseFixtures:         baseFixtures{db: db},
+		experimentRepository: repositories.NewExperimentRepository(db),
 	}, nil
 }
 
@@ -93,9 +82,11 @@ func (f ExperimentFixtures) GetTestExperiments(
 	return experiments, nil
 }
 
-// GetExperimentByID returns the experiment by the given id.
-func (f ExperimentFixtures) GetExperimentByID(ctx context.Context, experimentID int32) (*models.Experiment, error) {
-	experiment, err := f.experimentRepository.GetByID(ctx, experimentID)
+// GetByNamespaceIDAndExperimentID returns the experiment by Namespace ID and the given Experiment id.
+func (f ExperimentFixtures) GetByNamespaceIDAndExperimentID(
+	ctx context.Context, namespaceID uint, experimentID int32,
+) (*models.Experiment, error) {
+	experiment, err := f.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, namespaceID, experimentID)
 	if err != nil {
 		return nil, eris.Wrapf(err, "error getting experiment with ID %d", experimentID)
 	}

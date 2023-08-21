@@ -15,16 +15,14 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type CreateRunTestSuite struct {
 	suite.Suite
-	client             *helpers.HttpClient
-	runFixtures        *fixtures.RunFixtures
-	experimentFixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
 }
 
 func TestCreateRunTestSuite(t *testing.T) {
@@ -32,29 +30,31 @@ func TestCreateRunTestSuite(t *testing.T) {
 }
 
 func (s *CreateRunTestSuite) SetupTest() {
-	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
-	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = experimentFixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *CreateRunTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create test experiment.
-	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
 
 	resp := response.CreateRunResponse{}
-	err = s.client.DoPostRequest(
+	err = s.MlflowClient.DoPostRequest(
 		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
 		request.CreateRunRequest{
 			Name: "TestRun",
@@ -96,6 +96,13 @@ func (s *CreateRunTestSuite) Test_Ok() {
 }
 
 func (s *CreateRunTestSuite) Test_Error() {
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -123,7 +130,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.client.DoPostRequest(
+			err := s.MlflowClient.DoPostRequest(
 				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
 				tt.request,
 				&resp,

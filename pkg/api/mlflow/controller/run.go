@@ -3,6 +3,8 @@ package controller
 import (
 	"encoding/json"
 
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 
@@ -18,8 +20,13 @@ func (c Controller) CreateRun(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
-	log.Debugf("create request: %#v", &req)
-	run, err := c.runService.CreateRun(ctx.Context(), &req)
+	log.Debugf("createRun request: %#v", &req)
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("createRun namespace: %s", ns.Code)
+	run, err := c.runService.CreateRun(ctx.Context(), ns, &req)
 	if err != nil {
 		return err
 	}

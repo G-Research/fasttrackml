@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
+
+	"gorm.io/gorm"
 
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // RunFixtures represents data fixtures object.
@@ -23,23 +23,12 @@ type RunFixtures struct {
 }
 
 // NewRunFixtures creates new instance of RunFixtures.
-func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
-	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
-	}
+func NewRunFixtures(db *gorm.DB) (*RunFixtures, error) {
 	return &RunFixtures{
-		baseFixtures:     baseFixtures{db: db.DB},
-		runRepository:    repositories.NewRunRepository(db.DB),
-		tagRepository:    repositories.NewTagRepository(db.DB),
-		metricRepository: repositories.NewMetricRepository(db.DB),
+		baseFixtures:     baseFixtures{db: db},
+		runRepository:    repositories.NewRunRepository(db),
+		tagRepository:    repositories.NewTagRepository(db),
+		metricRepository: repositories.NewMetricRepository(db),
 	}, nil
 }
 

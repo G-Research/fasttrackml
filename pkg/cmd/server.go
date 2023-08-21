@@ -150,6 +150,18 @@ func initDB(config *mlflowConfig.ServiceConfig) (*database.DbInstance, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to DB: %w", err)
 	}
+
+	if err := database.CheckAndMigrateDB(db, config.DatabaseMigrate); err != nil {
+		return nil, eris.Wrap(err, "error running database migration")
+	}
+
+	if err := database.CreateDefaultNamespace(db); err != nil {
+		return nil, eris.Wrap(err, "error creating default namespace")
+	}
+
+	if err := database.CreateDefaultExperiment(db, config.ArtifactRoot); err != nil {
+		return nil, eris.Wrap(err, "error creating default experiment")
+	}
 	return db, nil
 }
 

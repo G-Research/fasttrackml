@@ -55,13 +55,15 @@ func NewService(
 	}
 }
 
-func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (*models.Run, error) {
+func (s Service) CreateRun(
+	ctx context.Context, ns *models.Namespace, req *request.CreateRunRequest,
+) (*models.Run, error) {
 	experimentID, err := strconv.ParseInt(req.ExperimentID, 10, 32)
 	if err != nil {
 		return nil, api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ExperimentID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByID(ctx, int32(experimentID))
+	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(experimentID))
 	if err != nil {
 		return nil, api.NewResourceDoesNotExistError("unable to find experiment with id '%s': %s", req.ExperimentID, err)
 	}

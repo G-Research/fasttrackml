@@ -2,13 +2,11 @@ package fixtures
 
 import (
 	"context"
-	"time"
-
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 
 	"github.com/rotisserie/eris"
+	"gorm.io/gorm"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // ParamFixtures represents data fixtures object.
@@ -17,20 +15,9 @@ type ParamFixtures struct {
 }
 
 // NewParamFixtures creates new instance of ParamFixtures.
-func NewParamFixtures(databaseDSN string) (*ParamFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
-	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
-	}
+func NewParamFixtures(db *gorm.DB) (*ParamFixtures, error) {
 	return &ParamFixtures{
-		baseFixtures: baseFixtures{db: db.DB},
+		baseFixtures: baseFixtures{db: db},
 	}, nil
 }
 

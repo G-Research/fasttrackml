@@ -12,6 +12,8 @@ import (
 
 // NamespaceRepositoryProvider provides an interface to work with `namespace` entity.
 type NamespaceRepositoryProvider interface {
+	// Create creates new models.Namespace entity.
+	Create(ctx context.Context, namespace *models.Namespace) error
 	// GetByCode returns namespace by its Code.
 	GetByCode(ctx context.Context, code string) (*models.Namespace, error)
 }
@@ -26,6 +28,14 @@ func NewNamespaceRepository(db *gorm.DB) *NamespaceRepository {
 	return &NamespaceRepository{
 		db: db,
 	}
+}
+
+// Create creates new models.Namespace entity.
+func (r NamespaceRepository) Create(ctx context.Context, namespace *models.Namespace) error {
+	if err := r.db.WithContext(ctx).Create(&namespace).Error; err != nil {
+		return eris.Wrap(err, "error creating namespace entity")
+	}
+	return nil
 }
 
 // GetByCode returns namespace by its Code.

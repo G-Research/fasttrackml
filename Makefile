@@ -39,6 +39,9 @@ endif
 ARCHIVE_NAME=dist/fasttrackml_$(shell go env GOOS | sed s/darwin/macos/)_$(shell go env GOARCH | sed s/amd64/x86_64/).$(ARCHIVE_EXT)
 ARCHIVE_FILES=$(APP) LICENSE README.md
 
+ifeq ($(FML_DATABASE_URI),)
+  FML_DATABASE_URI := "sqlite://fasttrackml.db"
+endif
 #
 # Default target (help)
 #

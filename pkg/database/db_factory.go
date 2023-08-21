@@ -41,13 +41,13 @@ type baseDbFactory struct {
 	reset         bool
 }
 
-// PostgresDbFactory will make Postgres DbInstance.
-type PostgresDbFactory struct {
+// postgresDbFactory will make Postgres DbInstance.
+type postgresDbFactory struct {
 	baseDbFactory
 }
 
-// SqliteDbFactory will make Sqlite DbInstance.
-type SqliteDbFactory struct {
+// sqliteDbFactory will make Sqlite DbInstance.
+type sqliteDbFactory struct {
 	baseDbFactory
 }
 
@@ -100,7 +100,7 @@ func newDbInstanceFactory(
 	}
 	switch dsnURL.Scheme {
 	case "sqlite":
-		return SqliteDbFactory{
+		return sqliteDbFactory{
 			baseDbFactory: baseDbFactory{
 				dsnURL:        *dsnURL,
 				slowThreshold: slowThreshold,
@@ -109,7 +109,7 @@ func newDbInstanceFactory(
 			},
 		}, nil
 	case "postgres", "postgresql":
-		return PostgresDbFactory{
+		return postgresDbFactory{
 			baseDbFactory: baseDbFactory{
 				dsnURL:        *dsnURL,
 				slowThreshold: slowThreshold,
@@ -122,7 +122,7 @@ func newDbInstanceFactory(
 }
 
 // makeDbInstance will construct a Postgres DbInstance.
-func (f PostgresDbFactory) makeDbInstance() (*DbInstance, error) {
+func (f postgresDbFactory) makeDbInstance() (*DbInstance, error) {
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
 
@@ -174,7 +174,7 @@ func (f PostgresDbFactory) makeDbInstance() (*DbInstance, error) {
 }
 
 // makeDbInstance will create a Sqlite DbInstance
-func (f SqliteDbFactory) makeDbInstance() (*DbInstance, error) {
+func (f sqliteDbFactory) makeDbInstance() (*DbInstance, error) {
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
 	db := DbInstance{dsn: f.dsnURL.String()}

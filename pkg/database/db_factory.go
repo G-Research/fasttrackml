@@ -28,13 +28,13 @@ const (
 	SQLiteCustomDriverName = "sqlite3_custom_driver"
 )
 
-// DbFactory is the interface for all datasource creation.
-type DbFactory interface {
-	MakeDbInstance() (*DbInstance, error)
+// dbFactory is the interface for all datasource creation.
+type dbFactory interface {
+	makeDbInstance() (*DbInstance, error)
 }
 
-// BaseDbFactory are the common attributes for all datasources.
-type BaseDbFactory struct {
+// baseDbFactory are the common attributes for all datasources.
+type baseDbFactory struct {
 	dsnURL        url.URL
 	slowThreshold time.Duration
 	poolMax       int
@@ -43,12 +43,12 @@ type BaseDbFactory struct {
 
 // PostgresDbFactory will make Postgres DbInstance.
 type PostgresDbFactory struct {
-	BaseDbFactory
+	baseDbFactory
 }
 
 // SqliteDbFactory will make Sqlite DbInstance.
 type SqliteDbFactory struct {
-	BaseDbFactory
+	baseDbFactory
 }
 
 // ConnectDB will establish and return a DbInstance while also caching it in the global
@@ -68,11 +68,11 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 func MakeDBInstance(
 	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string,
 ) (*DbInstance, error) {
-	dbFactory, err := NewFactory(dsn, slowThreshold, poolMax, reset)
+	dbFactory, err := newDbInstanceFactory(dsn, slowThreshold, poolMax, reset)
 	if err != nil {
 		return nil, err
 	}
-	db, err := dbFactory.MakeDbInstance()
+	db, err := dbFactory.makeDbInstance()
 	if err != nil {
 		return nil, err
 	}
@@ -90,10 +90,10 @@ func MakeDBInstance(
 	return db, nil
 }
 
-// NewFactory will return the correct factory type for the datasource URI.
-func NewFactory(
+// newDbInstanceFactory will return the correct factory type for the datasource URI.
+func newDbInstanceFactory(
 	dsn string, slowThreshold time.Duration, poolMax int, reset bool,
-) (DbFactory, error) {
+) (dbFactory, error) {
 	dsnURL, err := url.Parse(dsn)
 	if err != nil {
 		return nil, fmt.Errorf("invalid database URL: %w", err)
@@ -101,7 +101,7 @@ func NewFactory(
 	switch dsnURL.Scheme {
 	case "sqlite":
 		return SqliteDbFactory{
-			BaseDbFactory: BaseDbFactory{
+			baseDbFactory: baseDbFactory{
 				dsnURL:        *dsnURL,
 				slowThreshold: slowThreshold,
 				poolMax:       poolMax,
@@ -110,7 +110,7 @@ func NewFactory(
 		}, nil
 	case "postgres", "postgresql":
 		return PostgresDbFactory{
-			BaseDbFactory: BaseDbFactory{
+			baseDbFactory: baseDbFactory{
 				dsnURL:        *dsnURL,
 				slowThreshold: slowThreshold,
 				poolMax:       poolMax,
@@ -121,8 +121,8 @@ func NewFactory(
 	return nil, eris.New("unsupported database type")
 }
 
-// MakeDbInsance will construct a Postgres DbInstance.
-func (f PostgresDbFactory) MakeDbInstance() (*DbInstance, error) {
+// makeDbInstance will construct a Postgres DbInstance.
+func (f PostgresDbFactory) makeDbInstance() (*DbInstance, error) {
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
 
@@ -173,8 +173,8 @@ func (f PostgresDbFactory) MakeDbInstance() (*DbInstance, error) {
 	return &db, nil
 }
 
-// MakeDbInstance will create a Sqlite DbInstance
-func (f SqliteDbFactory) MakeDbInstance() (*DbInstance, error) {
+// makeDbInstance will create a Sqlite DbInstance
+func (f SqliteDbFactory) makeDbInstance() (*DbInstance, error) {
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
 	db := DbInstance{dsn: f.dsnURL.String()}

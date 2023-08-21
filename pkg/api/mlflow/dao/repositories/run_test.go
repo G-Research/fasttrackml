@@ -3,8 +3,8 @@ package repositories
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"	
-	"gopkg.in/DATA-DOG/go-sqlmock.v1"	
+	"github.com/stretchr/testify/assert"
+	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -20,7 +20,7 @@ func TestRenumberRowsForNegativeRowNumber(t *testing.T) {
 	dialector := postgres.New(postgres.Config{
 		Conn:       mockDb,
 		DriverName: "postgres",
-	   })
+	})
 	db, _ := gorm.Open(dialector, &gorm.Config{})
 
 	startWith := models.RowNum(-1)

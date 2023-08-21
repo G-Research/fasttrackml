@@ -50,13 +50,15 @@ func Test_renumberRows(t *testing.T) {
 	repo := NewRunRepository(db)
 
 	for _, tc := range testData {
-		if tc.startWith < 0 {
-			err = repo.renumberRows(db, tc.startWith)
-			assert.EqualError(t, err, "attempting to renumber with less than 0 row number value")
-		} else {
-			lockExpect()
-			err = repo.renumberRows(db, tc.startWith)
-			assert.NoError(t, err)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.startWith < 0 {
+				err := repo.renumberRows(db, tc.startWith)
+				assert.EqualError(t, err, "attempting to renumber with less than 0 row number value")
+			} else {
+				lockExpect()
+				err := repo.renumberRows(db, tc.startWith)
+				assert.NoError(t, err)
+			}
+		})
 	}
 }

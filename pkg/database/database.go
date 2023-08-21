@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/rotisserie/eris"
+	"golang.org/x/exp/slices"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/mattn/go-sqlite3"
@@ -84,26 +85,28 @@ func ConnectDB(
 			}
 		}
 
-		sql.Register(SQLiteCustomDriverName, &sqlite3.SQLiteDriver{
-			ConnectHook: func(conn *sqlite3.SQLiteConn) error {
-				// create LRU cache to cache regexp statements and results.
-				cache, err := lru.New[string, *regexp.Regexp](1000)
-				if err != nil {
-					return eris.Wrap(err, "error creating lru cache to cache regexp statements")
-				}
-				return conn.RegisterFunc("regexp", func(re, s string) bool {
-					result, ok := cache.Get(re)
-					if !ok {
-						result, err = regexp.Compile(re)
-						if err != nil {
-							return false
-						}
-						cache.Add(re, result)
+		if !slices.Contains(sql.Drivers(), SQLiteCustomDriverName) {
+			sql.Register(SQLiteCustomDriverName, &sqlite3.SQLiteDriver{
+				ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+					// create LRU cache to cache regexp statements and results.
+					cache, err := lru.New[string, *regexp.Regexp](1000)
+					if err != nil {
+						return eris.Wrap(err, "error creating lru cache to cache regexp statements")
 					}
-					return result.MatchString(s)
-				}, true)
-			},
-		})
+					return conn.RegisterFunc("regexp", func(re, s string) bool {
+						result, ok := cache.Get(re)
+						if !ok {
+							result, err = regexp.Compile(re)
+							if err != nil {
+								return false
+							}
+							cache.Add(re, result)
+						}
+						return result.MatchString(s)
+					}, true)
+				},
+			})
+		}
 
 		s, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
 		if err != nil {

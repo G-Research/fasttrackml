@@ -155,7 +155,7 @@ service-start: service-build service-start-dependencies ## start service in dock
 	@sleep 5
 	@echo ">>> Starting service."
 	@echo ">>> Starting up service container."
-	@docker-compose up -e FML_DATABASE_URI -d service
+	@docker-compose up -d service
 
 .PHONY: service-stop
 service-stop: ## stop service in docker.
@@ -169,7 +169,7 @@ service-restart: service-stop service-start ## restart service in docker
 service-test: service-stop service-start ## run tests over the service in docker.
 	@echo ">>> Running tests over service."
 	@docker-compose \
-		run -e FML_DATABASE_URI integration-tests
+		run integration-tests
 
 .PHONY: service-clean
 service-clean: ## clean service in docker.

@@ -33,10 +33,11 @@ make build
 FasttrackML incorporates the existing Aim and MLFlow web UIs, albeit
 with a few modifications. This is accomplished at build time by
 importing the `fasttrackml-ui-aim` and `fasttrackml-ui-mlflow`
-modules. These repos contain patched and compiled ui assets of the upstream
-repos. To make a UI change, a PR is merged to the appropriate
-release branch and new tag is pushed. At that point, the `fasttrackml`
-reference can be updated (in go.mod) to the new tag.
+modules. These repos contain the patched and compiled UI assets of the
+upstream repos at specific tagged revisions. To make a UI change, a PR
+is merged to the appropriate release branch and new tag is pushed. At
+that point, the `fasttrackml` reference can be updated (in go.mod) to
+pull in the new tag.
 
 For UI development, you'll need a tighter change/view loop,
 so we recommend the following approach.
@@ -70,3 +71,8 @@ your UI working copy.
 cd ../fasttrackml
 go run main.go server --listen-address ":5000"
 ```
+7. You should now be able to see your local working copy of the UI at
+`localhost:5000`. As you make changes in the UI's `/src` folder,
+re-run the compile step.
+8. When ready, make a PR of your changes for the UI repo, with the
+merge target set as the release branch

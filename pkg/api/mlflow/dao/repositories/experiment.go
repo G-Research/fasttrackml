@@ -135,7 +135,7 @@ func (r ExperimentRepository) DeleteBatch(ctx context.Context, ids []*int32) err
 
 		// verify deletion
 		if len(experiments) != len(ids) {
-			return eris.Errorf("count of deleted experiments does not match length of ids input (invalid experiment ID?)")
+			return eris.New("count of deleted experiments does not match length of ids input (invalid experiment ID?)")
 		}
 
 		// renumbering the remainder runs

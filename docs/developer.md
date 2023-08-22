@@ -66,13 +66,16 @@ cd builder
 go run main.go
 ```
 6. On success, you can now start the `fasttrackml` server using the assets of 
-your UI working copy.
+your UI working copy. Do this in the devcontainer.
 ```bash
-cd ../fasttrackml
-go run main.go server --listen-address ":5000"
+cd .devcontainer
+docker up -d app
+docker exec app bash
+root ➜ /go $ cd /workspaces/fasttrackml
+root ➜ /go $ go run main.go server --listen-address ":5000"
 ```
 7. You should now be able to see your local working copy of the UI at
-`localhost:5000`. As you make changes in the UI's `/src` folder,
-re-run the compile step.
+`localhost:5000/mlflow`. As you make changes in the UI's `/src` folder,
+just re-run the compile step and refresh your browser.
 8. When ready, make a PR of your changes for the UI repo, with the
 merge target set as the release branch

@@ -39,5 +39,4 @@ func (r Router) Init(server fiber.Router) {
 	mainGroup.Use(func(c *fiber.Ctx) error {
 		return api.NewEndpointNotFound("Not found")
 	})
-
 }

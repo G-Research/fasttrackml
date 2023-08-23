@@ -1,8 +1,6 @@
 package fixtures
 
 import (
-	"time"
-
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
@@ -34,17 +32,4 @@ func (f baseFixtures) UnloadFixtures() error {
 		}
 	}
 	return nil
-}
-
-// CreateDB will convert the a DSN input into a database connection
-func CreateDB(databaseDSN string) (db *database.DbInstance, err error) {
-	db, err = database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
-	return
 }

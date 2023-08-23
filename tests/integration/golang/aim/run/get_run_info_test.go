@@ -13,16 +13,13 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetRunInfoTestSuite struct {
 	suite.Suite
-	client             *helpers.HttpClient
-	runFixtures        *fixtures.RunFixtures
-	experimentFixtures *fixtures.ExperimentFixtures
-	run                *models.Run
+	helpers.BaseTestSuite
+	run *models.Run
 }
 
 func TestGetRunInfoTestSuite(t *testing.T) {
@@ -30,30 +27,20 @@ func TestGetRunInfoTestSuite(t *testing.T) {
 }
 
 func (s *GetRunInfoTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
-
-	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = expFixtures
-
-	exp := &models.Experiment{
+	s.BaseTestSuite.SetupTest(s.T())
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
-	}
-	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
+	})
 	assert.Nil(s.T(), err)
 
-	s.run, err = s.runFixtures.CreateExampleRun(context.Background(), exp)
+	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), experiment)
 	assert.Nil(s.T(), err)
 }
 
 func (s *GetRunInfoTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.RunFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name  string
@@ -67,7 +54,7 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.GetRunInfo
-			err := s.client.DoGetRequest(
+			err := s.AIMClient.DoGetRequest(
 				fmt.Sprintf("/runs/%s/info", tt.runID),
 				&resp,
 			)
@@ -88,7 +75,7 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 
 func (s *GetRunInfoTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.RunFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name  string
@@ -102,7 +89,7 @@ func (s *GetRunInfoTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.client.DoGetRequest(
+			err := s.AIMClient.DoGetRequest(
 				fmt.Sprintf("/runs/%s/info", tt.runID),
 				&resp,
 			)

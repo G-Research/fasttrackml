@@ -166,7 +166,17 @@ func (f RunFixtures) CreateTag(
 	return nil
 }
 
-// CreateMetrics creats some example metrics for a Run, up to count.
+// ArchiveRuns soft-deletes existing Runs.
+func (f RunFixtures) ArchiveRuns(
+	ctx context.Context, runIDs []string,
+) error {
+	if err := f.runRepository.ArchiveBatch(ctx, runIDs); err != nil {
+		return eris.Wrap(err, "error archiving runs")
+	}
+	return nil
+}
+
+// CreateMetrics creates some example metrics for a Run, up to count.
 func (f RunFixtures) CreateMetrics(
 	ctx context.Context, run *models.Run, count int,
 ) error {

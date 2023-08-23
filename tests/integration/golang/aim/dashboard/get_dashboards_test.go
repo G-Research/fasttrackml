@@ -11,16 +11,13 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/database"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetDashboardsTestSuite struct {
 	suite.Suite
-	client            *helpers.HttpClient
-	appFixtures       *fixtures.AppFixtures
-	dashboardFixtures *fixtures.DashboardFixtures
-	app               *database.App
+	helpers.BaseTestSuite
+	app *database.App
 }
 
 func TestGetDashboardsTestSuite(t *testing.T) {
@@ -28,19 +25,11 @@ func TestGetDashboardsTestSuite(t *testing.T) {
 }
 
 func (s *GetDashboardsTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
+	s.BaseTestSuite.SetupTest(s.T())
 
-	appFixtures, err := fixtures.NewAppFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.appFixtures = appFixtures
-
-	apps, err := s.appFixtures.CreateApps(context.Background(), 1)
+	apps, err := s.AppFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
 	s.app = apps[0]
-
-	dashboardFixtures, err := fixtures.NewDashboardFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.dashboardFixtures = dashboardFixtures
 }
 
 func (s *GetDashboardsTestSuite) Test_Ok() {
@@ -60,14 +49,14 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			defer func() {
-				assert.Nil(s.T(), s.dashboardFixtures.UnloadFixtures())
+				assert.Nil(s.T(), s.DashboardFixtures.UnloadFixtures())
 			}()
 
-			dashboards, err := s.dashboardFixtures.CreateDashboards(context.Background(), tt.expectedDashboardCount, &s.app.ID)
+			dashboards, err := s.DashboardFixtures.CreateDashboards(context.Background(), tt.expectedDashboardCount, &s.app.ID)
 			assert.Nil(s.T(), err)
 
 			var resp []response.Dashboard
-			err = s.client.DoGetRequest(
+			err = s.AIMClient.DoGetRequest(
 				"/dashboards",
 				&resp,
 			)

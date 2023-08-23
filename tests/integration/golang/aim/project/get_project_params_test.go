@@ -12,18 +12,12 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetProjectParamsTestSuite struct {
 	suite.Suite
-	client             *helpers.HttpClient
-	runFixtures        *fixtures.RunFixtures
-	tagFixtures        *fixtures.TagFixtures
-	paramFixtures      *fixtures.ParamFixtures
-	metricFixtures     *fixtures.MetricFixtures
-	experimentFixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
 }
 
 func TestGetProjectParamsTestSuite(t *testing.T) {
@@ -31,42 +25,22 @@ func TestGetProjectParamsTestSuite(t *testing.T) {
 }
 
 func (s *GetProjectParamsTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
-
-	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = experimentFixtures
-
-	tagFixtures, err := fixtures.NewTagFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.tagFixtures = tagFixtures
-
-	paramFixtures, err := fixtures.NewParamFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.paramFixtures = paramFixtures
-
-	metricFixtures, err := fixtures.NewMetricFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.metricFixtures = metricFixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetProjectParamsTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.ExperimentFixtures.UnloadFixtures())
 	}()
 
 	// 1. create test `experiment` and connect test `run`.
-	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
 
-	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
+	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "id",
 		Name:           "chill-run",
 		Status:         models.StatusScheduled,
@@ -77,7 +51,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	// 2. create latest metric.
-	metric, err := s.metricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+	metric, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "key",
 		Value:     123.1,
 		Timestamp: 1234567890,
@@ -89,14 +63,14 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	// 3. create test param and tag.
-	tag, err := s.tagFixtures.CreateTag(context.Background(), &models.Tag{
+	tag, err := s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "tag1",
 		Value: "value1",
 		RunID: run.ID,
 	})
 	assert.Nil(s.T(), err)
 
-	param, err := s.paramFixtures.CreateParam(context.Background(), &models.Param{
+	param, err := s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param1",
 		Value: "value1",
 		RunID: run.ID,
@@ -105,7 +79,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 
 	// 3. check that response contains metric from previous step.
 	resp := response.ProjectParamsResponse{}
-	err = s.client.DoGetRequest(
+	err = s.AIMClient.DoGetRequest(
 		"/projects/params?sequence=metric",
 		&resp,
 	)
@@ -126,11 +100,11 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 
 	// 4. mark run as `deleted`.
 	run.LifecycleStage = models.LifecycleStageDeleted
-	assert.Nil(s.T(), s.runFixtures.UpdateRun(context.Background(), run))
+	assert.Nil(s.T(), s.RunFixtures.UpdateRun(context.Background(), run))
 
 	// 5. check that endpoint returns an empty response.
 	resp = response.ProjectParamsResponse{}
-	err = s.client.DoGetRequest(
+	err = s.AIMClient.DoGetRequest(
 		"/projects/params?sequence=metric",
 		&resp,
 	)

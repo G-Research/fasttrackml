@@ -13,14 +13,12 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetExperimentsTestSuite struct {
 	suite.Suite
-	client   *helpers.HttpClient
-	fixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
 }
 
 func TestGetExperimentsTestSuite(t *testing.T) {
@@ -28,22 +26,18 @@ func TestGetExperimentsTestSuite(t *testing.T) {
 }
 
 func (s *GetExperimentsTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.fixtures = fixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetExperimentsTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.ExperimentFixtures.UnloadFixtures())
 	}()
-	experiments, err := s.fixtures.CreateExperiments(context.Background(), 5)
+	experiments, err := s.ExperimentFixtures.CreateExperiments(context.Background(), 5)
 	assert.Nil(s.T(), err)
 	var resp response.Experiments
 
-	err = s.client.DoGetRequest(
+	err = s.AIMClient.DoGetRequest(
 		fmt.Sprintf(
 			"/experiments/",
 		),

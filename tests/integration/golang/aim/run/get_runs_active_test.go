@@ -15,16 +15,13 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetRunsActiveTestSuite struct {
 	suite.Suite
-	client             *helpers.HttpClient
-	runFixtures        *fixtures.RunFixtures
-	experimentFixtures *fixtures.ExperimentFixtures
-	runs               []*models.Run
+	helpers.BaseTestSuite
+	runs []*models.Run
 }
 
 func TestGetRunsActiveTestSuite(t *testing.T) {
@@ -32,20 +29,12 @@ func TestGetRunsActiveTestSuite(t *testing.T) {
 }
 
 func (s *GetRunsActiveTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
-
-	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = expFixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetRunsActiveTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.RunFixtures.UnloadFixtures())
 	}()
 
 	tests := []struct {
@@ -65,10 +54,10 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 					Name:           uuid.New().String(),
 					LifecycleStage: models.LifecycleStageActive,
 				}
-				_, err := s.experimentFixtures.CreateExperiment(context.Background(), exp)
+				_, err := s.ExperimentFixtures.CreateExperiment(context.Background(), exp)
 				assert.Nil(s.T(), err)
 
-				s.runs, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 3)
+				s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), exp, 3)
 				assert.Nil(s.T(), err)
 			},
 		},
@@ -78,7 +67,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			beforeRunFn: func() {
 				// set 3rd run to status = StatusFinished
 				s.runs[2].Status = models.StatusFinished
-				assert.Nil(s.T(), s.runFixtures.UpdateRun(context.Background(), s.runs[2]))
+				assert.Nil(s.T(), s.RunFixtures.UpdateRun(context.Background(), s.runs[2]))
 			},
 		},
 	}
@@ -87,7 +76,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			if tt.beforeRunFn != nil {
 				tt.beforeRunFn()
 			}
-			data, err := s.client.DoStreamRequest(
+			data, err := s.AIMClient.DoStreamRequest(
 				http.MethodGet,
 				"/runs/active",
 				nil,

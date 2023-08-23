@@ -14,16 +14,20 @@ import (
 var db *gorm.DB
 
 type BaseTestSuite struct {
+	AIMClient          *HttpClient
 	MlflowClient       *HttpClient
+	AppFixtures        *fixtures.AppFixtures
 	TagFixtures        *fixtures.TagFixtures
 	RunFixtures        *fixtures.RunFixtures
 	ParamFixtures      *fixtures.ParamFixtures
 	MetricFixtures     *fixtures.MetricFixtures
 	NamespaceFixtures  *fixtures.NamespaceFixtures
+	DashboardFixtures  *fixtures.DashboardFixtures
 	ExperimentFixtures *fixtures.ExperimentFixtures
 }
 
 func (s *BaseTestSuite) SetupTest(t *testing.T) {
+	s.AIMClient = NewAimApiClient(GetServiceUri())
 	s.MlflowClient = NewMlflowApiClient(GetServiceUri())
 
 	if db == nil {
@@ -38,6 +42,10 @@ func (s *BaseTestSuite) SetupTest(t *testing.T) {
 		db = instance.DB
 		assert.Nil(t, err)
 	}
+
+	appFixtures, err := fixtures.NewAppFixtures(db)
+	assert.Nil(t, err)
+	s.AppFixtures = appFixtures
 
 	tagFixtures, err := fixtures.NewTagFixtures(db)
 	assert.Nil(t, err)
@@ -58,6 +66,10 @@ func (s *BaseTestSuite) SetupTest(t *testing.T) {
 	expFixtures, err := fixtures.NewExperimentFixtures(db)
 	assert.Nil(t, err)
 	s.ExperimentFixtures = expFixtures
+
+	dashboardFixtures, err := fixtures.NewDashboardFixtures(db)
+	assert.Nil(t, err)
+	s.DashboardFixtures = dashboardFixtures
 
 	namespaceFixtures, err := fixtures.NewNamespaceFixtures(db)
 	assert.Nil(t, err)

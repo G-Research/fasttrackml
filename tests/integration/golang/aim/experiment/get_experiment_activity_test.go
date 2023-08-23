@@ -14,15 +14,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetExperimentActivityTestSuite struct {
 	suite.Suite
-	client             *helpers.HttpClient
-	runFixtures        *fixtures.RunFixtures
-	experimentFixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
 }
 
 func TestGetExperimentActivityTestSuite(t *testing.T) {
@@ -30,37 +27,29 @@ func TestGetExperimentActivityTestSuite(t *testing.T) {
 }
 
 func (s *GetExperimentActivityTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
-
-	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = expFixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetExperimentActivityTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.RunFixtures.UnloadFixtures())
 	}()
 	exp := &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 	}
-	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), exp)
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	runs, err := s.runFixtures.CreateExampleRuns(context.Background(), exp, 10)
+	runs, err := s.RunFixtures.CreateExampleRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
 
 	archivedRunsIds := []string{runs[0].ID, runs[1].ID}
-	err = s.runFixtures.ArchiveRuns(context.Background(), archivedRunsIds)
+	err = s.RunFixtures.ArchiveRuns(context.Background(), archivedRunsIds)
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperimentActivity
-	err = s.client.DoGetRequest(
+	err = s.AIMClient.DoGetRequest(
 		fmt.Sprintf(
 			"/experiments/%d/activity", *experiment.ID,
 		),
@@ -87,7 +76,7 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp api.ErrorResponse
-			err := s.client.DoGetRequest(
+			err := s.AIMClient.DoGetRequest(
 				fmt.Sprintf(
 					"/experiments/%s/runs?limit=4", tt.ID,
 				),

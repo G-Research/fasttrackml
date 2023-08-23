@@ -13,16 +13,13 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/database"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type CreateDashboardTestSuite struct {
 	suite.Suite
-	client            *helpers.HttpClient
-	app               *database.App
-	appFixtures       *fixtures.AppFixtures
-	dashboardFixtures *fixtures.DashboardFixtures
+	helpers.BaseTestSuite
+	app *database.App
 }
 
 func TestCreateDashboardTestSuite(t *testing.T) {
@@ -30,23 +27,14 @@ func TestCreateDashboardTestSuite(t *testing.T) {
 }
 
 func (s *CreateDashboardTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	appFixtures, err := fixtures.NewAppFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.appFixtures = appFixtures
-
-	apps, err := s.appFixtures.CreateApps(context.Background(), 1)
+	s.BaseTestSuite.SetupTest(s.T())
+	apps, err := s.AppFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
 	s.app = apps[0]
-
-	dashboardFixtures, err := fixtures.NewDashboardFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.dashboardFixtures = dashboardFixtures
 }
 
 func (s *CreateDashboardTestSuite) Test_Ok() {
-	defer func() { assert.Nil(s.T(), s.dashboardFixtures.UnloadFixtures()) }()
+	defer func() { assert.Nil(s.T(), s.DashboardFixtures.UnloadFixtures()) }()
 	tests := []struct {
 		name        string
 		requestBody request.CreateDashboard
@@ -63,14 +51,14 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Dashboard
-			err := s.client.DoPostRequest(
+			err := s.AIMClient.DoPostRequest(
 				"/dashboards",
 				tt.requestBody,
 				&resp,
 			)
 			assert.Nil(s.T(), err)
 
-			dashboards, err := s.dashboardFixtures.GetDashboards(context.Background())
+			dashboards, err := s.DashboardFixtures.GetDashboards(context.Background())
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.requestBody.Name, resp.Name)
 			assert.Equal(s.T(), tt.requestBody.Description, resp.Description)
@@ -100,7 +88,7 @@ func (s *CreateDashboardTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.client.DoPostRequest(
+			err := s.AIMClient.DoPostRequest(
 				"/dashboards",
 				tt.requestBody,
 				&resp,

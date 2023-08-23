@@ -15,14 +15,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetExperimentTestSuite struct {
 	suite.Suite
-	client   *helpers.HttpClient
-	fixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
 }
 
 func TestGetExperimentTestSuite(t *testing.T) {
@@ -30,18 +28,14 @@ func TestGetExperimentTestSuite(t *testing.T) {
 }
 
 func (s *GetExperimentTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.fixtures = fixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetExperimentTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.ExperimentFixtures.UnloadFixtures())
 	}()
-	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
@@ -63,7 +57,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperiment
-	err = s.client.DoGetRequest(
+	err = s.AIMClient.DoGetRequest(
 		fmt.Sprintf(
 			"/experiments/%d", *experiment.ID,
 		),
@@ -100,7 +94,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			var resp api.ErrorResponse
-			err := s.client.DoGetRequest(
+			err := s.AIMClient.DoGetRequest(
 				fmt.Sprintf(
 					"/experiments/%s", tt.ID,
 				),

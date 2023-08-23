@@ -49,7 +49,6 @@ func (db *DbInstance) DSN() string {
 	return db.dsn
 }
 
-// DB is a global db instance.
 var DB *DbInstance = &DbInstance{}
 
 // ConnectDB will establish and return a DbInstance while also caching it in the global
@@ -65,7 +64,7 @@ func ConnectDB(dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 	return DB, nil
 }
 
-// MakeDbInstance will create a DbInstance from the parameters.
+// MakeDBInstance creates a DbInstance from the parameters.
 func MakeDBInstance(
 	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string,
 ) (*DbInstance, error) {
@@ -208,15 +207,6 @@ func MakeDBInstance(
 		}
 	}
 
-	if err := checkAndMigrateDB(&db, migrate); err != nil {
-		db.Close()
-		return nil, err
-	}
-
-	if err := createDefaultExperiment(&db, artifactRoot); err != nil {
-		db.Close()
-		return nil, err
-	}
 	return &db, nil
 }
 
@@ -232,7 +222,7 @@ func resetDB(db *DbInstance) error {
 	return nil
 }
 
-func checkAndMigrateDB(db *DbInstance, migrate bool) error {
+func CheckAndMigrateDB(db *DbInstance, migrate bool) error {
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion
 	{
@@ -486,6 +476,38 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 				}); err != nil {
 					return err
 				}
+			case "5d042539be4f":
+				log.Info("Migrating database to FastTrackML schema e0d125c68d9a")
+				// We need to run this migration without foreign key constraints to avoid
+				// the cascading delete to kick in and delete all the runs.
+				if err := runWithoutForeignKeyIfNeeded(func() error {
+					if err := db.Transaction(func(tx *gorm.DB) error {
+						if err := tx.AutoMigrate(&Namespace{}); err != nil {
+							return err
+						}
+						if err := tx.Migrator().AddColumn(&Experiment{}, "NamespaceID"); err != nil {
+							return err
+						}
+						if err := tx.Migrator().CreateConstraint(&Namespace{}, "Experiments"); err != nil {
+							return err
+						}
+						if err := tx.Migrator().AlterColumn(&Experiment{}, "Name"); err != nil {
+							return err
+						}
+						if err := tx.Migrator().CreateIndex(&Experiment{}, "idx_namespace_name"); err != nil {
+							return err
+						}
+						return tx.Model(&SchemaVersion{}).
+							Where("1 = 1").
+							Update("Version", "e0d125c68d9a").
+							Error
+					}); err != nil {
+						return fmt.Errorf("error migrating database to FastTrackML schema e0d125c68d9a: %w", err)
+					}
+					return nil
+				}); err != nil {
+					return err
+				}
 
 			default:
 				return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
@@ -526,13 +548,47 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 			return fmt.Errorf("unsupported database alembic schema version %s", alembicVersion.Version)
 		}
 	}
-
 	return nil
 }
 
-func createDefaultExperiment(db *DbInstance, artifactRoot string) error {
-	if tx := db.First(&Experiment{}, 0); tx.Error != nil {
+// CreateDefaultNamespace creates the default namespace if it doesn't exist.
+func CreateDefaultNamespace(db *DbInstance) error {
+	if tx := db.First(&Namespace{
+		Code: "default",
+	}); tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			log.Info("Creating default namespace")
+			var exp int32 = 0
+			ns := Namespace{
+				Code:                "default",
+				Description:         "Default",
+				DefaultExperimentID: &exp,
+			}
+			if err := db.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Create(&ns).Error; err != nil {
+					return err
+				}
+				if err := tx.Model(&Experiment{}).
+					Where("namespace_id IS NULL").
+					Update("namespace_id", ns.ID).
+					Error; err != nil {
+					return fmt.Errorf("error updating experiments: %s", err)
+				}
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error creating default namespace: %s", err)
+			}
+		} else {
+			return fmt.Errorf("unable to find default namespace: %s", tx.Error)
+		}
+	}
+	return nil
+}
+
+// CreateDefaultExperiment creates the default experiment if it doesn't exist.
+func CreateDefaultExperiment(db *DbInstance, artifactRoot string) error {
+	if err := db.First(&Experiment{}, 0).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Creating default experiment")
 			var id int32 = 0
 			ts := time.Now().UTC().UnixMilli()
@@ -549,16 +605,27 @@ func createDefaultExperiment(db *DbInstance, artifactRoot string) error {
 					Valid: true,
 				},
 			}
-			if tx := db.Create(&exp); tx.Error != nil {
-				return fmt.Errorf("error creating default experiment: %s", tx.Error)
+			ns := Namespace{Code: "default"}
+			if err := db.Find(&ns).Error; err != nil {
+				return fmt.Errorf("error finding default namespace: %s", err)
 			}
+			exp.NamespaceID = ns.ID
+			if err := db.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Create(&exp).Error; err != nil {
+					return err
+				}
 
-			exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(artifactRoot, "/"), *exp.ID)
-			if tx := db.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
-				return fmt.Errorf("error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)
+				exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(artifactRoot, "/"), *exp.ID)
+				if err := tx.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation).Error; err != nil {
+					return fmt.Errorf("error updating artifact_location for experiment '%s': %s", exp.Name, err)
+				}
+
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error creating default experiment: %s", err)
 			}
 		} else {
-			return fmt.Errorf("unable to find default experiment: %s", tx.Error)
+			return fmt.Errorf("unable to find default experiment: %s", err)
 		}
 	}
 	return nil

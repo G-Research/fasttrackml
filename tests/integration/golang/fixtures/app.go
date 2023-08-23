@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 
@@ -13,18 +15,12 @@ import (
 // AppFixtures represents data fixtures object.
 type AppFixtures struct {
 	baseFixtures
-	*database.DbInstance
 }
 
 // NewAppFixtures creates new instance of AppFixtures.
-func NewAppFixtures(databaseDSN string) (*AppFixtures, error) {
-	db, err := CreateDB(databaseDSN)
-	if err != nil {
-		return nil, err
-	}
+func NewAppFixtures(db *gorm.DB) (*AppFixtures, error) {
 	return &AppFixtures{
-		baseFixtures: baseFixtures{db: db.DB},
-		DbInstance:   db,
+		baseFixtures: baseFixtures{db: db},
 	}, nil
 }
 

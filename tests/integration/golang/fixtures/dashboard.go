@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 
@@ -13,25 +15,12 @@ import (
 // DashboardFixtures represents data fixtures object.
 type DashboardFixtures struct {
 	baseFixtures
-	*database.DbInstance
 }
 
 // NewDashboardFixtures creates new instance of DashboardFixtures.
-func NewDashboardFixtures(databaseDSN string) (*DashboardFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
-	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
-	}
+func NewDashboardFixtures(db *gorm.DB) (*DashboardFixtures, error) {
 	return &DashboardFixtures{
-		baseFixtures: baseFixtures{db: db.DB},
-		DbInstance:   db,
+		baseFixtures: baseFixtures{db: db},
 	}, nil
 }
 

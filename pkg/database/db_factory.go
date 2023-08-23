@@ -77,6 +77,13 @@ func MakeDBInstance(
 		return nil, err
 	}
 
+	if reset {
+		if err := db.reset(); err != nil {
+			db.Close()
+			return nil, err
+		}
+	}
+
 	if err := db.checkAndMigrate(migrate); err != nil {
 		db.Close()
 		return nil, err
@@ -288,13 +295,6 @@ func (f sqliteDbFactory) makeDbInstance() (*DbInstance, error) {
 	sqlDB.SetConnMaxIdleTime(time.Minute)
 	sqlDB.SetMaxIdleConns(f.poolMax)
 	sqlDB.SetMaxOpenConns(f.poolMax)
-
-	if f.reset {
-		if err := db.reset(); err != nil {
-			db.Close()
-			return nil, err
-		}
-	}
 
 	return &db, nil
 }

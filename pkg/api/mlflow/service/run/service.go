@@ -281,11 +281,13 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 
 			if kind == nil {
 				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
-					key = fmt.Sprintf("LOWER(%s)", key)
+					key = fmt.Sprintf("LOWER(runs.%s)", key)
 					comparison = "LIKE"
 					value = strings.ToLower(value.(string))
+					tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
+				} else {
+					tx.Where(fmt.Sprintf("runs.%s %s ?", key, comparison), value)
 				}
-				tx.Where(fmt.Sprintf("runs.%s %s ?", key, comparison), value)
 			} else {
 				table := fmt.Sprintf("filter_%d", n)
 				where := fmt.Sprintf("value %s ?", comparison)

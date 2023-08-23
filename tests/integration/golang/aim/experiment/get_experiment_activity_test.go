@@ -56,7 +56,7 @@ func (s *GetExperimentActivityTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	archivedRunsIds := []string{runs[0].ID, runs[1].ID}
-	err = s.runFixtures.ArchiveRun(context.Background(), archivedRunsIds)
+	err = s.runFixtures.ArchiveRuns(context.Background(), archivedRunsIds)
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperimentActivity

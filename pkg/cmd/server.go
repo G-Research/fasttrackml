@@ -136,7 +136,7 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DbProvider, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to DB: %w", err)
 	}
-	// cache a global reference to the gorm.DB 
+	// cache a global reference to the gorm.DB
 	database.DB = db.Db()
 	return db, nil
 }

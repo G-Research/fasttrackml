@@ -13,11 +13,12 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
+// PostgresDbInstance is the Postgres-specific DbInstance variant
 type PostgresDbInstance struct {
 	DbInstance
 }
 
-// Reset will provide type-specific reset
+// Reset implementation for this type
 func (pgdb PostgresDbInstance) Reset() error {
 	log.Info("Resetting database schema")
 	pgdb.Db().Exec("drop schema public cascade")

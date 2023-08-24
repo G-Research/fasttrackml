@@ -27,11 +27,12 @@ const (
 	SQLiteCustomDriverName = "sqlite3_custom_driver"
 )
 
+// SqliteDbInstance is the sqlite specific variant of DbInstance
 type SqliteDbInstance struct {
 	DbInstance
 }
 
-// Reset will provide type-specific reset, if possible.
+// Reset behavior for this instance
 func (f SqliteDbInstance) Reset() error {
 	return eris.New("unable to reset sqlite database")
 }

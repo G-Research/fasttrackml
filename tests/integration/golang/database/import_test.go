@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -31,8 +31,8 @@ type rowCounts struct {
 
 type ImportTestSuite struct {
 	suite.Suite
+	helpers.BaseTestSuite
 	runs               []*models.Run
-	client             *helpers.HttpClient
 	inputRunFixtures   *fixtures.RunFixtures
 	outputRunFixtures  *fixtures.RunFixtures
 	inputDB            *database.DbInstance
@@ -45,14 +45,35 @@ func TestImportTestSuite(t *testing.T) {
 }
 
 func (s *ImportTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-	inputRunFixtures, err := fixtures.NewRunFixtures(helpers.GetInputDatabaseUri())
+	s.BaseTestSuite.SetupTest(s.T())
+
+	inputDBInstance, err := database.ConnectDB(
+		helpers.GetInputDatabaseUri(),
+		1*time.Second,
+		20,
+		false,
+		false,
+		"",
+	)
 	assert.Nil(s.T(), err)
-	inputExperimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetInputDatabaseUri())
+
+	inputRunFixtures, err := fixtures.NewRunFixtures(inputDBInstance.DB)
+	assert.Nil(s.T(), err)
+	inputExperimentFixtures, err := fixtures.NewExperimentFixtures(inputDBInstance.DB)
 	assert.Nil(s.T(), err)
 	s.inputRunFixtures = inputRunFixtures
 
-	outputRunFixtures, err := fixtures.NewRunFixtures(helpers.GetOutputDatabaseUri())
+	outputDBInstance, err := database.ConnectDB(
+		helpers.GetOutputDatabaseUri(),
+		1*time.Second,
+		20,
+		false,
+		false,
+		"",
+	)
+	assert.Nil(s.T(), err)
+
+	outputRunFixtures, err := fixtures.NewRunFixtures(outputDBInstance.DB)
 	assert.Nil(s.T(), err)
 	s.outputRunFixtures = outputRunFixtures
 
@@ -78,7 +99,7 @@ func (s *ImportTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.runs = runs
 
-	appFixtures, err := fixtures.NewAppFixtures(helpers.GetInputDatabaseUri())
+	appFixtures, err := fixtures.NewAppFixtures(inputDBInstance.DB)
 	app, err := appFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
 			ID:        uuid.New(),
@@ -88,7 +109,7 @@ func (s *ImportTestSuite) SetupTest() {
 		State: database.AppState{},
 	})
 
-	dashboardFixtures, err := fixtures.NewDashboardFixtures(helpers.GetInputDatabaseUri())
+	dashboardFixtures, err := fixtures.NewDashboardFixtures(inputDBInstance.DB)
 	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
 		Base: database.Base{
 			ID:        uuid.New(),

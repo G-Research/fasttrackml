@@ -2,7 +2,6 @@
 
 package experiment
 
-/*
 import (
 	"context"
 	"database/sql"
@@ -96,4 +95,3 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 		})
 	}
 }
-*/

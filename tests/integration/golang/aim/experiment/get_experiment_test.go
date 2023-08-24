@@ -2,7 +2,6 @@
 
 package experiment
 
-/*
 import (
 	"context"
 	"database/sql"
@@ -106,4 +105,3 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		})
 	}
 }
-*/

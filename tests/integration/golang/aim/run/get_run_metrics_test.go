@@ -2,7 +2,6 @@
 
 package run
 
-/*
 import (
 	"context"
 	"fmt"
@@ -120,4 +119,3 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 		})
 	}
 }
-*/

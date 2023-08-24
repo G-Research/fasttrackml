@@ -2,7 +2,6 @@
 
 package experiment
 
-/*
 import (
 	"context"
 	"fmt"
@@ -55,4 +54,3 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 		assert.Equal(s.T(), len(experiments[idx].Runs), resp[idx].RunCount)
 	}
 }
-*/

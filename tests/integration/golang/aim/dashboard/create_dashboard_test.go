@@ -2,7 +2,6 @@
 
 package run
 
-/*
 import (
 	"context"
 	"testing"
@@ -99,4 +98,3 @@ func (s *CreateDashboardTestSuite) Test_Error() {
 		})
 	}
 }
-*/

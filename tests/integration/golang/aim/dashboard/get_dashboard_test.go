@@ -2,7 +2,6 @@
 
 package run
 
-/*
 import (
 	"context"
 	"fmt"
@@ -81,4 +80,3 @@ func (s *GetDashboardTestSuite) Test_Error() {
 		})
 	}
 }
-*/

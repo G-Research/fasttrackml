@@ -2,7 +2,6 @@
 
 package run
 
-/*
 import (
 	"context"
 	"fmt"
@@ -14,15 +13,13 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/database"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type UpdateAppTestSuite struct {
 	suite.Suite
-	client      *helpers.HttpClient
-	appFixtures *fixtures.AppFixtures
-	app         *database.App
+	helpers.BaseTestSuite
+	app *database.App
 }
 
 func TestUpdateAppTestSuite(t *testing.T) {
@@ -30,20 +27,16 @@ func TestUpdateAppTestSuite(t *testing.T) {
 }
 
 func (s *UpdateAppTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
+	s.BaseTestSuite.SetupTest(s.T())
 
-	appFixtures, err := fixtures.NewAppFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.appFixtures = appFixtures
-
-	apps, err := s.appFixtures.CreateApps(context.Background(), 1)
+	apps, err := s.AppFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
 	s.app = apps[0]
 }
 
 func (s *UpdateAppTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name        string
@@ -62,7 +55,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.App
-			err := s.client.DoPutRequest(
+			err := s.AIMClient.DoPutRequest(
 				fmt.Sprintf("/apps/%s", s.app.ID),
 				tt.requestBody,
 				&resp,
@@ -76,7 +69,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 
 func (s *UpdateAppTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name        string
@@ -92,7 +85,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.client.DoPutRequest(
+			err := s.AIMClient.DoPutRequest(
 				fmt.Sprintf("/apps/%s", s.app.ID),
 				tt.requestBody,
 				&resp,
@@ -102,4 +95,3 @@ func (s *UpdateAppTestSuite) Test_Error() {
 		})
 	}
 }
-*/

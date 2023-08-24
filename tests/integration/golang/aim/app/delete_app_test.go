@@ -2,7 +2,6 @@
 
 package run
 
-/*
 import (
 	"context"
 	"fmt"
@@ -14,15 +13,13 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/database"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type DeleteAppTestSuite struct {
 	suite.Suite
-	client      *helpers.HttpClient
-	appFixtures *fixtures.AppFixtures
-	app         *database.App
+	helpers.BaseTestSuite
+	app *database.App
 }
 
 func TestDeleteAppTestSuite(t *testing.T) {
@@ -30,20 +27,16 @@ func TestDeleteAppTestSuite(t *testing.T) {
 }
 
 func (s *DeleteAppTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
+	s.BaseTestSuite.SetupTest(s.T())
 
-	appFixtures, err := fixtures.NewAppFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.appFixtures = appFixtures
-
-	apps, err := s.appFixtures.CreateApps(context.Background(), 1)
+	apps, err := s.AppFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
 	s.app = apps[0]
 }
 
 func (s *DeleteAppTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string
@@ -57,12 +50,12 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var deleteResponse response.Error
-			err := s.client.DoDeleteRequest(
+			err := s.AIMClient.DoDeleteRequest(
 				fmt.Sprintf("/apps/%s", s.app.ID),
 				&deleteResponse,
 			)
 			assert.Nil(s.T(), err)
-			apps, err := s.appFixtures.GetApps(context.Background())
+			apps, err := s.AppFixtures.GetApps(context.Background())
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedAppCount, len(apps))
 		})
@@ -71,7 +64,7 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 
 func (s *DeleteAppTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string
@@ -87,17 +80,16 @@ func (s *DeleteAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var deleteResponse response.Error
-			err := s.client.DoDeleteRequest(
+			err := s.AIMClient.DoDeleteRequest(
 				fmt.Sprintf("/apps/%s", tt.idParam),
 				&deleteResponse,
 			)
 			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), deleteResponse.Message, "Not Found")
 
-			apps, err := s.appFixtures.GetApps(context.Background())
+			apps, err := s.AppFixtures.GetApps(context.Background())
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedAppCount, len(apps))
 		})
 	}
 }
-*/

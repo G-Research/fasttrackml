@@ -2,15 +2,6 @@
 
 package run
 
-/*
-import (
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/database"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
-	"github.com/stretchr/testify/suite"
-)
-
 import (
 	"context"
 	"testing"
@@ -20,14 +11,12 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/database"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetAppsTestSuite struct {
 	suite.Suite
-	client      *helpers.HttpClient
-	appFixtures *fixtures.AppFixtures
+	helpers.BaseTestSuite
 }
 
 func TestGetAppsTestSuite(t *testing.T) {
@@ -35,11 +24,7 @@ func TestGetAppsTestSuite(t *testing.T) {
 }
 
 func (s *GetAppsTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	appFixtures, err := fixtures.NewAppFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.appFixtures = appFixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetAppsTestSuite) Test_Ok() {
@@ -59,14 +44,14 @@ func (s *GetAppsTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			defer func() {
-				assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
+				assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
 			}()
 
-			apps, err := s.appFixtures.CreateApps(context.Background(), tt.expectedAppCount)
+			apps, err := s.AppFixtures.CreateApps(context.Background(), tt.expectedAppCount)
 			assert.Nil(s.T(), err)
 
 			var resp []response.App
-			err = s.client.DoGetRequest(
+			err = s.AIMClient.DoGetRequest(
 				"/apps",
 				&resp,
 			)
@@ -83,4 +68,3 @@ func (s *GetAppsTestSuite) Test_Ok() {
 		})
 	}
 }
-*/

@@ -2,7 +2,6 @@
 
 package run
 
-/*
 import (
 	"bytes"
 	"context"
@@ -126,4 +125,3 @@ func (s *SearchMetricsTestSuite) Test_Error() {
 		assert.Nil(s.T(), s.ExperimentFixtures.UnloadFixtures())
 	}()
 }
-*/

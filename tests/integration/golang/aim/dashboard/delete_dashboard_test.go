@@ -2,7 +2,6 @@
 
 package run
 
-/*
 import (
 	"context"
 	"fmt"
@@ -99,4 +98,3 @@ func (s *DeleteDashboardTestSuite) Test_Error() {
 		})
 	}
 }
-*/

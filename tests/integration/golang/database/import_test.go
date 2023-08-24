@@ -35,8 +35,8 @@ type ImportTestSuite struct {
 	client             *helpers.HttpClient
 	inputRunFixtures   *fixtures.RunFixtures
 	outputRunFixtures  *fixtures.RunFixtures
-	inputDB            *database.DbInstance
-	outputDB           *database.DbInstance
+	inputDB            database.DbProvider
+	outputDB           database.DbProvider
 	populatedRowCounts rowCounts
 }
 
@@ -183,50 +183,50 @@ func (s *ImportTestSuite) Test_Ok() {
 // validateRowCounts will make assertions about the db based on the test setup.
 // a db imported from the test setup db should also pass these
 // assertions.
-func validateRowCounts(t *testing.T, db *database.DbInstance, counts rowCounts) {
+func validateRowCounts(t *testing.T, db database.DbProvider, counts rowCounts) {
 	var countVal int64
-	tx := db.DB.Model(&database.Experiment{}).Count(&countVal)
+	tx := db.Db().Model(&database.Experiment{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.experiments, int(countVal), "Experiments count incorrect")
 
-	tx = db.DB.Model(&database.Run{}).Count(&countVal)
+	tx = db.Db().Model(&database.Run{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.runs, int(countVal), "Runs count incorrect")
 
-	tx = db.DB.Model(&database.Metric{}).Count(&countVal)
+	tx = db.Db().Model(&database.Metric{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.metrics, int(countVal), "Metrics count incorrect")
 
-	tx = db.DB.Model(&database.LatestMetric{}).Count(&countVal)
+	tx = db.Db().Model(&database.LatestMetric{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.latestMetrics, int(countVal), "Latest metrics count incorrect")
 
-	tx = db.DB.Model(&database.Tag{}).Count(&countVal)
+	tx = db.Db().Model(&database.Tag{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.tags, int(countVal), "Run tags count incorrect")
 
-	tx = db.DB.Model(&database.Param{}).Count(&countVal)
+	tx = db.Db().Model(&database.Param{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.params, int(countVal), "Run params count incorrect")
 
-	tx = db.DB.Model(&database.Run{}).Distinct("experiment_id").Count(&countVal)
+	tx = db.Db().Model(&database.Run{}).Distinct("experiment_id").Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
 
-	// tx = db.DB.Model(&database.App{}).Count(&countVal)
+	// tx = db.Db().Model(&database.App{}).Count(&countVal)
 	// assert.Nil(t, tx.Error)
 	// assert.Equal(t, counts.apps, int(countVal), "Apps count incorrect")
 
-	// tx = db.DB.Model(&database.Dashboard{}).Count(&countVal)
+	// tx = db.Db().Model(&database.Dashboard{}).Count(&countVal)
 	// assert.Nil(t, tx.Error)
 	// assert.Equal(t, counts.dashboards, int(countVal), "Dashboard count incorrect")
 }
 
 // validateTable will scan source and dest table and confirm they are identical
-func validateTable(t *testing.T, source, dest *database.DbInstance, table string) {
-	sourceRows, err := source.DB.Table(table).Rows()
+func validateTable(t *testing.T, source, dest database.DbProvider, table string) {
+	sourceRows, err := source.Db().Table(table).Rows()
 	assert.Nil(t, err)
-	destRows, err := dest.DB.Table(table).Rows()
+	destRows, err := dest.Db().Table(table).Rows()
 	assert.Nil(t, err)
 	defer sourceRows.Close()
 	defer destRows.Close()
@@ -234,11 +234,11 @@ func validateTable(t *testing.T, source, dest *database.DbInstance, table string
 	for sourceRows.Next() {
 		var sourceItem, destItem map[string]any
 
-		err := source.DB.ScanRows(sourceRows, &sourceItem)
+		err := source.Db().ScanRows(sourceRows, &sourceItem)
 		assert.Nil(t, err)
 
 		destRows.Next()
-		err = dest.DB.ScanRows(destRows, &destItem)
+		err = dest.Db().ScanRows(destRows, &destItem)
 		assert.Nil(t, err)
 
 		assert.Equal(t, sourceItem, destItem)

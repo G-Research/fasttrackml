@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// DbProvider is the interface to access the DB.
 type DbProvider interface {
 	Db() *gorm.DB
 	Dsn() string
@@ -19,8 +20,8 @@ type DbProvider interface {
 	Reset() error
 }
 
-// DB is a global db provider.
-var DB DbProvider
+// DB is a global gorm.DB reference
+var DB *gorm.DB
 
 // DbInstance is the base concrete type for DbProvider.
 type DbInstance struct {

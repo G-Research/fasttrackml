@@ -18,20 +18,13 @@ type DashboardFixtures struct {
 
 // NewDashboardFixtures creates new instance of DashboardFixtures.
 func NewDashboardFixtures(databaseDSN string) (*DashboardFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
+	db, err := CreateDB(databaseDSN)
 	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
+		return nil, err
 	}
 	return &DashboardFixtures{
-		baseFixtures: baseFixtures{db: db.DB},
-		DbInstance:   db,
+		baseFixtures: baseFixtures{db: db.Db()},
+		DbInstance:   nil,
 	}, nil
 }
 

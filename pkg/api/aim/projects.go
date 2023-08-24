@@ -13,7 +13,7 @@ import (
 func GetProject(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"name":              "FastTrackML",
-		"path":              database.DB.DSN(),
+		"path":              database.DB.Dialector.Name(),
 		"description":       "",
 		"telemetry_enabled": 0,
 	})

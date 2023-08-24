@@ -23,8 +23,8 @@ func NewAppFixtures(databaseDSN string) (*AppFixtures, error) {
 		return nil, err
 	}
 	return &AppFixtures{
-		baseFixtures: baseFixtures{db: db.DB},
-		DbInstance:   db,
+		baseFixtures: baseFixtures{db: db.Db()},
+		DbInstance:   nil,
 	}, nil
 }
 

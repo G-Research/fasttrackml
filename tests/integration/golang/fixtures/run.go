@@ -28,11 +28,11 @@ func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
 		return nil, err
 	}
 	return &RunFixtures{
-		baseFixtures:     baseFixtures{db: db.DB},
-		runRepository:    repositories.NewRunRepository(db.DB),
-		tagRepository:    repositories.NewTagRepository(db.DB),
-		metricRepository: repositories.NewMetricRepository(db.DB),
-		paramRepository:  *repositories.NewParamRepository(db.DB),
+		baseFixtures:     baseFixtures{db: db.Db()},
+		runRepository:    repositories.NewRunRepository(db.Db()),
+		tagRepository:    repositories.NewTagRepository(db.Db()),
+		metricRepository: repositories.NewMetricRepository(db.Db()),
+		paramRepository:  *repositories.NewParamRepository(db.Db()),
 	}, nil
 }
 

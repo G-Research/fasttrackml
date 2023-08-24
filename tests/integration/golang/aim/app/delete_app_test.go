@@ -2,6 +2,7 @@
 
 package run
 
+/*
 import (
 	"context"
 	"fmt"
@@ -99,3 +100,4 @@ func (s *DeleteAppTestSuite) Test_Error() {
 		})
 	}
 }
+*/

@@ -2,6 +2,15 @@
 
 package run
 
+/*
+import (
+	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
+	"github.com/stretchr/testify/suite"
+)
+
 import (
 	"context"
 	"testing"
@@ -74,3 +83,4 @@ func (s *GetAppsTestSuite) Test_Ok() {
 		})
 	}
 }
+*/

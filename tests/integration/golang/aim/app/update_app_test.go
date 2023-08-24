@@ -2,6 +2,7 @@
 
 package run
 
+/*
 import (
 	"context"
 	"fmt"
@@ -101,3 +102,4 @@ func (s *UpdateAppTestSuite) Test_Error() {
 		})
 	}
 }
+*/

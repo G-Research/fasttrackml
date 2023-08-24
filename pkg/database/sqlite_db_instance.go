@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	glog "log"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -22,28 +23,41 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
-// sqliteDbFactory will make Sqlite DbInstance.
-type sqliteDbFactory struct {
-	baseDbFactory
+const (
+	SQLiteCustomDriverName = "sqlite3_custom_driver"
+)
+
+type SqliteDbInstance struct {
+	DbInstance
 }
 
-// makeDbInstance will create a Sqlite DbInstance
-func (f sqliteDbFactory) makeDbInstance() (*DbInstance, error) {
+// Reset will provide type-specific reset, if possible.
+func (f SqliteDbInstance) Reset() error {
+	return eris.New("unable to reset sqlite database")
+}
+
+// NewSqliteDbInstance will create a Sqlite DbProvider
+func NewSqliteDbInstance(
+	dsnURL url.URL, slowThreshold time.Duration, poolMax int, reset bool,
+) (*SqliteDbInstance, error) {
+	db := SqliteDbInstance{
+		DbInstance: DbInstance{dsn: dsnURL.String()},
+	}
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
-	db := DbInstance{dsn: f.dsnURL.String()}
-	q := f.dsnURL.Query()
+
+	q := dsnURL.Query()
 	q.Set("_case_sensitive_like", "true")
 	q.Set("_mutex", "no")
 	if q.Get("mode") != "memory" && !(q.Has("_journal") || q.Has("_journal_mode")) {
 		q.Set("_journal", "WAL")
 	}
-	f.dsnURL.RawQuery = q.Encode()
+	dsnURL.RawQuery = q.Encode()
 
-	if f.reset && q.Get("mode") != "memory" {
-		file := f.dsnURL.Host
+	if reset && q.Get("mode") != "memory" {
+		file := dsnURL.Host
 		if file == "" {
-			file = f.dsnURL.Path
+			file = dsnURL.Path
 		}
 		log.Infof("Removing database file %s", file)
 		if err := os.Remove(file); err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -74,7 +88,7 @@ func (f sqliteDbFactory) makeDbInstance() (*DbInstance, error) {
 		})
 	}
 
-	s, err := sql.Open(SQLiteCustomDriverName, strings.Replace(f.dsnURL.String(), "sqlite://", "file:", 1))
+	s, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dsnURL.String(), "sqlite://", "file:", 1))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -88,8 +102,8 @@ func (f sqliteDbFactory) makeDbInstance() (*DbInstance, error) {
 	}
 
 	q.Set("_query_only", "true")
-	f.dsnURL.RawQuery = q.Encode()
-	r, err := sql.Open(SQLiteCustomDriverName, strings.Replace(f.dsnURL.String(), "sqlite://", "file:", 1))
+	dsnURL.RawQuery = q.Encode()
+	r, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dsnURL.String(), "sqlite://", "file:", 1))
 	if err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
@@ -99,7 +113,7 @@ func (f sqliteDbFactory) makeDbInstance() (*DbInstance, error) {
 		Conn: r,
 	}
 
-	logURL := f.dsnURL
+	logURL := dsnURL
 	q = logURL.Query()
 	if q.Has("_key") {
 		q.Set("_key", "xxxxx")
@@ -119,7 +133,7 @@ func (f sqliteDbFactory) makeDbInstance() (*DbInstance, error) {
 				0,
 			),
 			logger.Config{
-				SlowThreshold:             f.slowThreshold,
+				SlowThreshold:             slowThreshold,
 				LogLevel:                  dbLogLevel,
 				IgnoreRecordNotFoundError: true,
 			},
@@ -140,8 +154,8 @@ func (f sqliteDbFactory) makeDbInstance() (*DbInstance, error) {
 
 	sqlDB, _ := db.DB.DB()
 	sqlDB.SetConnMaxIdleTime(time.Minute)
-	sqlDB.SetMaxIdleConns(f.poolMax)
-	sqlDB.SetMaxOpenConns(f.poolMax)
+	sqlDB.SetMaxIdleConns(poolMax)
+	sqlDB.SetMaxOpenConns(poolMax)
 
 	return &db, nil
 }

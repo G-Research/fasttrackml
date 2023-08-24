@@ -75,7 +75,7 @@ func (r TagRepository) GetByRunIDAndKey(ctx context.Context, runID, key string) 
 
 // Delete deletes existing models.Tag entity.
 func (r TagRepository) Delete(ctx context.Context, tag *models.Tag) error {
-	if err := database.DB.Delete(tag).Error; err != nil {
+	if err := database.DB.Db().Delete(tag).Error; err != nil {
 		return eris.Wrapf(err, "error deleting tag by run id: %s and key: %s", tag.RunID, tag.Key)
 	}
 	return nil

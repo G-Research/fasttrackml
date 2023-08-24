@@ -3,6 +3,8 @@ package database
 import (
 	"fmt"
 	glog "log"
+	"net/url"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
@@ -11,20 +13,31 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
-// postgresDbFactory will make Postgres DbInstance.
-type postgresDbFactory struct {
-	baseDbFactory
+type PostgresDbInstance struct {
+	DbInstance
+}
+
+// Reset will provide type-specific reset
+func (pgdb PostgresDbInstance) Reset() error {
+	log.Info("Resetting database schema")
+	pgdb.Db().Exec("drop schema public cascade")
+	pgdb.Db().Exec("create schema public")
+	return nil
 }
 
 // makeDbInstance will construct a Postgres DbInstance.
-func (f postgresDbFactory) makeDbInstance() (*DbInstance, error) {
+func NewPostgresDbInstance(
+	dsnURL url.URL, slowThreshold time.Duration, poolMax int, reset bool,
+) (*PostgresDbInstance, error) {
+	pgdb := PostgresDbInstance{
+		DbInstance: DbInstance{dsn: dsnURL.String()},
+	}
+
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
+	sourceConn = postgres.Open(dsnURL.String())
 
-	db := DbInstance{dsn: f.dsnURL.String()}
-	sourceConn = postgres.Open(f.dsnURL.String())
-
-	logURL := f.dsnURL
+	logURL := dsnURL
 	q := logURL.Query()
 	if q.Has("_key") {
 		q.Set("_key", "xxxxx")
@@ -44,20 +57,20 @@ func (f postgresDbFactory) makeDbInstance() (*DbInstance, error) {
 				0,
 			),
 			logger.Config{
-				SlowThreshold:             f.slowThreshold,
+				SlowThreshold:             slowThreshold,
 				LogLevel:                  dbLogLevel,
 				IgnoreRecordNotFoundError: true,
 			},
 		),
 	})
 	if err != nil {
-		db.Close()
+		pgdb.Close()
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
-	db.DB = gormDB
+	pgdb.DB = gormDB
 
 	if replicaConn != nil {
-		db.Use(
+		pgdb.Use(
 			dbresolver.Register(dbresolver.Config{
 				Replicas: []gorm.Dialector{
 					replicaConn,
@@ -65,5 +78,5 @@ func (f postgresDbFactory) makeDbInstance() (*DbInstance, error) {
 			}),
 		)
 	}
-	return &db, nil
+	return &pgdb, nil
 }

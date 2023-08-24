@@ -36,13 +36,13 @@ func importCmd(cmd *cobra.Command, args []string) error {
 }
 
 // initDBs inits the input and output DB connections.
-func initDBs() (input, output *database.DbInstance, err error) {
+func initDBs() (input, output database.DbProvider, err error) {
 	databaseSlowThreshold := time.Second * 1
 	databasePoolMax := 20
 	databaseReset := false
 	databaseMigrate := false
 	artifactRoot := "s3://fasttrackml"
-	input, err = database.MakeDBInstance(
+	input, err = database.MakeDbProvider(
 		viper.GetString("input-database-uri"),
 		databaseSlowThreshold,
 		databasePoolMax,
@@ -55,7 +55,7 @@ func initDBs() (input, output *database.DbInstance, err error) {
 	}
 
 	databaseMigrate = true
-	output, err = database.MakeDBInstance(
+	output, err = database.MakeDbProvider(
 		viper.GetString("output-database-uri"),
 		databaseSlowThreshold,
 		databasePoolMax,

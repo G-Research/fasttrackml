@@ -103,7 +103,7 @@ func (s *ImportTestSuite) SetupTest() {
 	databaseReset := false
 	databaseMigrate := false
 	artifactRoot := "s3://fasttrackml"
-	input, err := database.MakeDBInstance(
+	input, err := database.MakeDbProvider(
 		helpers.GetInputDatabaseUri(),
 		databaseSlowThreshold,
 		databasePoolMax,
@@ -112,7 +112,7 @@ func (s *ImportTestSuite) SetupTest() {
 		artifactRoot,
 	)
 	assert.Nil(s.T(), err)
-	output, err := database.MakeDBInstance(
+	output, err := database.MakeDbProvider(
 		helpers.GetOutputDatabaseUri(),
 		databaseSlowThreshold,
 		databasePoolMax,

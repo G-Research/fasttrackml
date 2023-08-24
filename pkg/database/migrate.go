@@ -9,7 +9,8 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func (db *DbInstance) checkAndMigrate(migrate bool) error {
+func checkAndMigrate(migrate bool, dbProvider DbProvider) error {
+	db := dbProvider.Db()
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion
 	{

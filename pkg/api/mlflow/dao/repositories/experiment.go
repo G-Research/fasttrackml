@@ -47,7 +47,7 @@ func (r ExperimentRepository) Create(ctx context.Context, experiment *models.Exp
 		return eris.Wrap(err, "error creating experiment entity")
 	}
 	if experiment.ArtifactLocation == "" {
-		if err := database.DB.Model(
+		if err := database.DB.Db().Model(
 			&experiment,
 		).Update(
 			"ArtifactLocation", experiment.ArtifactLocation,

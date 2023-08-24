@@ -9,7 +9,6 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // ExperimentFixtures represents data fixtures object.
@@ -20,16 +19,9 @@ type ExperimentFixtures struct {
 
 // NewExperimentFixtures creates new instance of ExperimentFixtures.
 func NewExperimentFixtures(databaseDSN string) (*ExperimentFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
+	db, err := CreateDB(databaseDSN)
 	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
+		return nil, err
 	}
 	return &ExperimentFixtures{
 		baseFixtures:         baseFixtures{db: db.DB},

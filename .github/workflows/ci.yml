@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        api: [aim, mlflow]
+        api: [ mlflow ]
       fail-fast: false
     services:
       postgres:

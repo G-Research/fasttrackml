@@ -45,6 +45,6 @@ func CreateDB(databaseDSN string) (db database.DBProvider, err error) {
 		false,
 		"",
 	)
-	database.DB = db.Db()
+	database.DB = db.GormDB()
 	return
 }

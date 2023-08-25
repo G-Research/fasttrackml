@@ -23,7 +23,7 @@ func NewDashboardFixtures(databaseDSN string) (*DashboardFixtures, error) {
 		return nil, err
 	}
 	return &DashboardFixtures{
-		baseFixtures: baseFixtures{db: db.Db()},
+		baseFixtures: baseFixtures{db: db.GormDB()},
 		DBInstance:   nil,
 	}, nil
 }

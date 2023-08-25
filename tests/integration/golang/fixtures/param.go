@@ -20,7 +20,7 @@ func NewParamFixtures(databaseDSN string) (*ParamFixtures, error) {
 		return nil, err
 	}
 	return &ParamFixtures{
-		baseFixtures: baseFixtures{db: db.Db()},
+		baseFixtures: baseFixtures{db: db.GormDB()},
 	}, nil
 }
 

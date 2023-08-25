@@ -22,8 +22,8 @@ func NewMetricFixtures(databaseDSN string) (*MetricFixtures, error) {
 		return nil, err
 	}
 	return &MetricFixtures{
-		baseFixtures:     baseFixtures{db: db.Db()},
-		metricRepository: repositories.NewMetricRepository(db.Db()),
+		baseFixtures:     baseFixtures{db: db.GormDB()},
+		metricRepository: repositories.NewMetricRepository(db.GormDB()),
 	}, nil
 }
 

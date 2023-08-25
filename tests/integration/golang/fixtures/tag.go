@@ -20,7 +20,7 @@ func NewTagFixtures(databaseDSN string) (*TagFixtures, error) {
 		return nil, err
 	}
 	return &TagFixtures{
-		baseFixtures: baseFixtures{db: db.Db()},
+		baseFixtures: baseFixtures{db: db.GormDB()},
 	}, nil
 }
 

@@ -24,8 +24,8 @@ func NewExperimentFixtures(databaseDSN string) (*ExperimentFixtures, error) {
 		return nil, err
 	}
 	return &ExperimentFixtures{
-		baseFixtures:         baseFixtures{db: db.Db()},
-		experimentRepository: repositories.NewExperimentRepository(db.Db()),
+		baseFixtures:         baseFixtures{db: db.GormDB()},
+		experimentRepository: repositories.NewExperimentRepository(db.GormDB()),
 	}, nil
 }
 

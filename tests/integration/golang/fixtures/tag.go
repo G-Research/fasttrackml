@@ -2,12 +2,10 @@ package fixtures
 
 import (
 	"context"
-	"time"
 
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // TagFixtures represents data fixtures object.
@@ -17,16 +15,9 @@ type TagFixtures struct {
 
 // NewTagFixtures creates new instance of TagFixtures.
 func NewTagFixtures(databaseDSN string) (*TagFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
+	db, err := CreateDB(databaseDSN)
 	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
+		return nil, err
 	}
 	return &TagFixtures{
 		baseFixtures: baseFixtures{db: db.DB},

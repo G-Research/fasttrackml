@@ -10,7 +10,7 @@ import (
 )
 
 func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
-	db := dbProvider.Db()
+	db := dbProvider.GormDB()
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion
 	{

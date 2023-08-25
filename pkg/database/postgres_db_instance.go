@@ -21,8 +21,8 @@ type PostgresDBInstance struct {
 // Reset implementation for this type.
 func (pgdb PostgresDBInstance) Reset() error {
 	log.Info("Resetting database schema")
-	pgdb.Db().Exec("drop schema public cascade")
-	pgdb.Db().Exec("create schema public")
+	pgdb.GormDB().Exec("drop schema public cascade")
+	pgdb.GormDB().Exec("create schema public")
 	return nil
 }
 

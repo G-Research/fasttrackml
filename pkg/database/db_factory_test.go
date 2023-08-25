@@ -32,7 +32,7 @@ func TestMakeDBProvider(t *testing.T) {
 			)
 			assert.Nil(t, err)
 			assert.NotNil(t, db)
-			assert.Equal(t, tt.expectedDialector, db.Db().Dialector.Name())
+			assert.Equal(t, tt.expectedDialector, db.GormDB().Dialector.Name())
 
 			// expecting the global 'DB' not to be set
 			assert.Nil(t, DB)

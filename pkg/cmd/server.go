@@ -75,24 +75,24 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	mlflowAPI.NewRouter(
 		controller.NewController(
 			run.NewService(
-				repositories.NewTagRepository(db.Db()),
-				repositories.NewRunRepository(db.Db()),
-				repositories.NewParamRepository(db.Db()),
-				repositories.NewMetricRepository(db.Db()),
-				repositories.NewExperimentRepository(db.Db()),
+				repositories.NewTagRepository(db.GormDB()),
+				repositories.NewRunRepository(db.GormDB()),
+				repositories.NewParamRepository(db.GormDB()),
+				repositories.NewMetricRepository(db.GormDB()),
+				repositories.NewExperimentRepository(db.GormDB()),
 			),
 			model.NewService(),
 			metric.NewService(
-				repositories.NewMetricRepository(db.Db()),
+				repositories.NewMetricRepository(db.GormDB()),
 			),
 			artifact.NewService(
 				storage,
-				repositories.NewRunRepository(db.Db()),
+				repositories.NewRunRepository(db.GormDB()),
 			),
 			experiment.NewService(
 				mlflowConfig,
-				repositories.NewTagRepository(db.Db()),
-				repositories.NewExperimentRepository(db.Db()),
+				repositories.NewTagRepository(db.GormDB()),
+				repositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
 	).Init(server)
@@ -137,7 +137,7 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 		return nil, fmt.Errorf("error connecting to DB: %w", err)
 	}
 	// cache a global reference to the gorm.DB
-	database.DB = db.Db()
+	database.DB = db.GormDB()
 	return db, nil
 }
 

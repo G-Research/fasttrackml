@@ -22,8 +22,8 @@ type Importer struct {
 // NewImporter initializes an Importer.
 func NewImporter(input, output DBProvider) *Importer {
 	return &Importer{
-		sourceDB:        input.Db(),
-		destDB:          output.Db(),
+		sourceDB:        input.GormDB(),
+		destDB:          output.GormDB(),
 		experimentInfos: []experimentInfo{},
 	}
 }

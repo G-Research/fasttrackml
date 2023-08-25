@@ -251,7 +251,7 @@ func validateTable(t *testing.T, source, dest *database.DbInstance, table string
 		err = dest.DB.ScanRows(destRows, &destItem)
 		assert.Nil(t, err)
 
-		//TODO:DSuhinin delete this fields right now, because they
+		// TODO:DSuhinin delete this fields right now, because they
 		// cause comparison error when we compare `namespace` entities. Let's find smarter way to do that.
 		delete(destItem, "updated_at")
 		delete(destItem, "created_at")

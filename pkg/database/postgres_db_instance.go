@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -21,8 +22,12 @@ type PostgresDBInstance struct {
 // Reset implementation for this type.
 func (pgdb PostgresDBInstance) Reset() error {
 	log.Info("Resetting database schema")
-	pgdb.GormDB().Exec("drop schema public cascade")
-	pgdb.GormDB().Exec("create schema public")
+	if err := pgdb.GormDB().Exec("drop schema public cascade").Error; err != nil {
+		return eris.Wrap(err, "error attempting to drop schema")
+	}
+	if err := pgdb.GormDB().Exec("create schema public").Error; err != nil {
+		return eris.Wrap(err, "error attempting to create schema")
+	}
 	return nil
 }
 

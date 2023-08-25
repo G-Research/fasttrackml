@@ -34,7 +34,7 @@ type SqliteDBInstance struct {
 
 // Reset implementation for this type.
 func (f SqliteDBInstance) Reset() error {
-	return eris.New("unable to reset sqlite database")
+	return eris.New("reset for sqlite database not supported")
 }
 
 // NewSqliteDBInstance will create a Sqlite DbInstance.

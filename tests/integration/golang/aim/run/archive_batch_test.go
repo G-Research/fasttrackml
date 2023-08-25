@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -18,8 +20,8 @@ import (
 
 type ArchiveBatchTestSuite struct {
 	suite.Suite
-	runs []*models.Run
 	helpers.BaseTestSuite
+	runs []*models.Run
 }
 
 func TestArchiveBatchTestSuite(t *testing.T) {
@@ -29,8 +31,16 @@ func TestArchiveBatchTestSuite(t *testing.T) {
 func (s *ArchiveBatchTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
 
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
@@ -41,8 +51,9 @@ func (s *ArchiveBatchTestSuite) SetupTest() {
 
 func (s *ArchiveBatchTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.RunFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
 	tests := []struct {
 		name                 string
 		runIDs               []string
@@ -107,7 +118,7 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 
 func (s *ArchiveBatchTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.RunFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string

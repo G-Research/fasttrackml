@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -30,12 +31,21 @@ func (s *GetProjectParamsTestSuite) SetupTest() {
 
 func (s *GetProjectParamsTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.ExperimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	// 1. create test `experiment` and connect test `run`.
+	// 1. create test `namespace` and connect test `run`.
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	// 2. create test `experiment` and connect test `run`.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
@@ -50,7 +60,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	// 2. create latest metric.
+	// 3. create latest metric.
 	metric, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "key",
 		Value:     123.1,
@@ -62,7 +72,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	// 3. create test param and tag.
+	// 4. create test param and tag.
 	tag, err := s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "tag1",
 		Value: "value1",
@@ -77,7 +87,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	// 3. check that response contains metric from previous step.
+	// 5. check that response contains metric from previous step.
 	resp := response.ProjectParamsResponse{}
 	err = s.AIMClient.DoGetRequest(
 		"/projects/params?sequence=metric",
@@ -98,11 +108,11 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		},
 	}, resp.Params)
 
-	// 4. mark run as `deleted`.
+	// 6. mark run as `deleted`.
 	run.LifecycleStage = models.LifecycleStageDeleted
 	assert.Nil(s.T(), s.RunFixtures.UpdateRun(context.Background(), run))
 
-	// 5. check that endpoint returns an empty response.
+	// 7. check that endpoint returns an empty response.
 	resp = response.ProjectParamsResponse{}
 	err = s.AIMClient.DoGetRequest(
 		"/projects/params?sequence=metric",
@@ -115,4 +125,8 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	assert.Equal(s.T(), map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
 }
 
-func (s *GetProjectParamsTestSuite) Test_Error() {}
+func (s *GetProjectParamsTestSuite) Test_Error() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+}

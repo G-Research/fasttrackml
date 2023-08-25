@@ -38,7 +38,7 @@ func (f ExperimentFixtures) CreateExperiment(
 
 // CreateExperiments creates some num new test experiments.
 func (f ExperimentFixtures) CreateExperiments(
-	ctx context.Context, num int,
+	ctx context.Context, namespace *models.Namespace, num int,
 ) ([]*models.Experiment, error) {
 	var experiments []*models.Experiment
 	for i := 0; i < num; i++ {
@@ -50,6 +50,7 @@ func (f ExperimentFixtures) CreateExperiments(
 					Value: "value1",
 				},
 			},
+			NamespaceID: namespace.ID,
 			CreationTime: sql.NullInt64{
 				Int64: time.Now().UTC().UnixMilli(),
 				Valid: true,

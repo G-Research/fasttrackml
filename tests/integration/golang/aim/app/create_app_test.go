@@ -3,6 +3,7 @@
 package run
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,8 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -24,10 +27,20 @@ func TestCreateAppTestSuite(t *testing.T) {
 
 func (s *CreateAppTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
 }
 
 func (s *CreateAppTestSuite) Test_Ok() {
-	defer func() { assert.Nil(s.T(), s.AppFixtures.UnloadFixtures()) }()
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
 	tests := []struct {
 		name        string
 		requestBody request.CreateApp
@@ -62,6 +75,10 @@ func (s *CreateAppTestSuite) Test_Ok() {
 }
 
 func (s *CreateAppTestSuite) Test_Error() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
 	tests := []struct {
 		name        string
 		requestBody any

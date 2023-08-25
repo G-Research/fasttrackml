@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -29,6 +31,13 @@ func TestGetAppTestSuite(t *testing.T) {
 func (s *GetAppTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
 
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	apps, err := s.AppFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
 	s.app = apps[0]
@@ -36,8 +45,9 @@ func (s *GetAppTestSuite) SetupTest() {
 
 func (s *GetAppTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
 	var resp database.App
 	err := s.AIMClient.DoGetRequest(
 		fmt.Sprintf("/apps/%v", s.app.ID),
@@ -52,7 +62,10 @@ func (s *GetAppTestSuite) Test_Ok() {
 }
 
 func (s *GetAppTestSuite) Test_Error() {
-	assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
 	tests := []struct {
 		name    string
 		idParam uuid.UUID

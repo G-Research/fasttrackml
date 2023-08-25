@@ -30,8 +30,16 @@ func TestUpdateRunTestSuite(t *testing.T) {
 
 func (s *UpdateRunTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
@@ -42,7 +50,7 @@ func (s *UpdateRunTestSuite) SetupTest() {
 
 func (s *UpdateRunTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.RunFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name    string
@@ -79,7 +87,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 
 func (s *UpdateRunTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.RunFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name        string

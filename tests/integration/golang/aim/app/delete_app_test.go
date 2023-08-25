@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -29,6 +32,13 @@ func TestDeleteAppTestSuite(t *testing.T) {
 func (s *DeleteAppTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
 
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	apps, err := s.AppFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
 	s.app = apps[0]
@@ -36,7 +46,7 @@ func (s *DeleteAppTestSuite) SetupTest() {
 
 func (s *DeleteAppTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string
@@ -64,7 +74,7 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 
 func (s *DeleteAppTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string

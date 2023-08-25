@@ -14,6 +14,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -33,8 +34,16 @@ func (s *GetExperimentTestSuite) SetupTest() {
 
 func (s *GetExperimentTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.ExperimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
@@ -47,6 +56,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
 		},
+		NamespaceID: namespace.ID,
 		LastUpdateTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
@@ -74,7 +84,18 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 }
 
 func (s *GetExperimentTestSuite) Test_Error() {
-	testData := []struct {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	tests := []struct {
 		name  string
 		error string
 		ID    string
@@ -91,7 +112,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			var resp api.ErrorResponse
 			err := s.AIMClient.DoGetRequest(

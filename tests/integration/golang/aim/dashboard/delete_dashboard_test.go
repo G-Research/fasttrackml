@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -30,6 +32,13 @@ func TestDeleteDashboardTestSuite(t *testing.T) {
 func (s *DeleteDashboardTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
 
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	apps, err := s.AppFixtures.CreateApps(context.Background(), 1)
 	assert.Nil(s.T(), err)
 	s.app = apps[0]
@@ -41,7 +50,7 @@ func (s *DeleteDashboardTestSuite) SetupTest() {
 
 func (s *DeleteDashboardTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.DashboardFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name                   string
@@ -69,7 +78,7 @@ func (s *DeleteDashboardTestSuite) Test_Ok() {
 
 func (s *DeleteDashboardTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.DashboardFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name                   string

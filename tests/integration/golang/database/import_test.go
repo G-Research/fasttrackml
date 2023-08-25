@@ -2,7 +2,6 @@
 
 package database
 
-/*
 import (
 	"context"
 	"testing"
@@ -266,4 +265,3 @@ func validateTable(t *testing.T, source, dest *database.DbInstance, table string
 		assert.Equal(t, sourceItem, destItem)
 	}
 }
-*/

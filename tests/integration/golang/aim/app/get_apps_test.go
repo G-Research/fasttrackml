@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -46,6 +48,13 @@ func (s *GetAppsTestSuite) Test_Ok() {
 			defer func() {
 				assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
 			}()
+
+			_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+				ID:                  0,
+				Code:                "default",
+				DefaultExperimentID: common.GetPointer(int32(0)),
+			})
+			assert.Nil(s.T(), err)
 
 			apps, err := s.AppFixtures.CreateApps(context.Background(), tt.expectedAppCount)
 			assert.Nil(s.T(), err)

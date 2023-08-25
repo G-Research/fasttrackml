@@ -35,8 +35,8 @@ type ImportTestSuite struct {
 	client             *helpers.HttpClient
 	inputRunFixtures   *fixtures.RunFixtures
 	outputRunFixtures  *fixtures.RunFixtures
-	inputDB            database.DbProvider
-	outputDB           database.DbProvider
+	inputDB            database.DBProvider
+	outputDB           database.DBProvider
 	populatedRowCounts rowCounts
 }
 
@@ -103,7 +103,7 @@ func (s *ImportTestSuite) SetupTest() {
 	databaseReset := false
 	databaseMigrate := false
 	artifactRoot := "s3://fasttrackml"
-	input, err := database.MakeDbProvider(
+	input, err := database.MakeDBProvider(
 		helpers.GetInputDatabaseUri(),
 		databaseSlowThreshold,
 		databasePoolMax,
@@ -112,7 +112,7 @@ func (s *ImportTestSuite) SetupTest() {
 		artifactRoot,
 	)
 	assert.Nil(s.T(), err)
-	output, err := database.MakeDbProvider(
+	output, err := database.MakeDBProvider(
 		helpers.GetOutputDatabaseUri(),
 		databaseSlowThreshold,
 		databasePoolMax,
@@ -183,7 +183,7 @@ func (s *ImportTestSuite) Test_Ok() {
 // validateRowCounts will make assertions about the db based on the test setup.
 // a db imported from the test setup db should also pass these
 // assertions.
-func validateRowCounts(t *testing.T, db database.DbProvider, counts rowCounts) {
+func validateRowCounts(t *testing.T, db database.DBProvider, counts rowCounts) {
 	var countVal int64
 	tx := db.Db().Model(&database.Experiment{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
@@ -223,7 +223,7 @@ func validateRowCounts(t *testing.T, db database.DbProvider, counts rowCounts) {
 }
 
 // validateTable will scan source and dest table and confirm they are identical
-func validateTable(t *testing.T, source, dest database.DbProvider, table string) {
+func validateTable(t *testing.T, source, dest database.DBProvider, table string) {
 	sourceRows, err := source.Db().Table(table).Rows()
 	assert.Nil(t, err)
 	destRows, err := dest.Db().Table(table).Rows()

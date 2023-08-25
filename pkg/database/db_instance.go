@@ -12,8 +12,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// DbProvider is the interface to access the DB.
-type DbProvider interface {
+// DBProvider is the interface to access the DB.
+type DBProvider interface {
 	Db() *gorm.DB
 	Dsn() string
 	Close() error
@@ -23,15 +23,15 @@ type DbProvider interface {
 // DB is a global gorm.DB reference
 var DB *gorm.DB
 
-// DbInstance is the base concrete type for DbProvider.
-type DbInstance struct {
+// DBInstance is the base concrete type for DbProvider.
+type DBInstance struct {
 	*gorm.DB
 	dsn     string
 	closers []io.Closer
 }
 
 // Close will invoke the closers.
-func (db *DbInstance) Close() error {
+func (db *DBInstance) Close() error {
 	for _, c := range db.closers {
 		err := c.Close()
 		if err != nil {
@@ -42,17 +42,17 @@ func (db *DbInstance) Close() error {
 }
 
 // Dsn will return the dsn string.
-func (db *DbInstance) Dsn() string {
+func (db *DBInstance) Dsn() string {
 	return db.dsn
 }
 
 // Db will return the gorm DB.
-func (db *DbInstance) Db() *gorm.DB {
+func (db *DBInstance) Db() *gorm.DB {
 	return db.DB
 }
 
 // createDefaultExperiment will create the default experiment if needed.
-func createDefaultExperiment(artifactRoot string, db DbProvider) error {
+func createDefaultExperiment(artifactRoot string, db DBProvider) error {
 	if tx := db.Db().First(&Experiment{}, 0); tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			log.Info("Creating default experiment")

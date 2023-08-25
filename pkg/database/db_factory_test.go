@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMakeDBInstance(t *testing.T) {
+func TestMakeDBProvider(t *testing.T) {
 	tests := []struct {
 		name              string
 		dsn               string
@@ -22,7 +22,7 @@ func TestMakeDBInstance(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			DB = nil
-			db, err := MakeDbProvider(
+			db, err := MakeDBProvider(
 				tt.dsn,
 				time.Second*2,
 				2,

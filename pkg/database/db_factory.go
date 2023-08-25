@@ -8,17 +8,17 @@ import (
 	"github.com/rotisserie/eris"
 )
 
-// MakeDbProvider will create a DbInstance from the parameters
-func MakeDbProvider(
+// MakeDBProvider will create a DbProvider of the correct type from the parameters.
+func MakeDBProvider(
 	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string,
-) (db DbProvider, err error) {
+) (db DBProvider, err error) {
 	dsnURL, err := url.Parse(dsn)
 	if err != nil {
 		return nil, fmt.Errorf("invalid database URL: %w", err)
 	}
 	switch dsnURL.Scheme {
 	case "sqlite":
-		db, err = NewSqliteDbInstance(
+		db, err = NewSqliteDBInstance(
 			*dsnURL,
 			slowThreshold,
 			poolMax,
@@ -28,7 +28,7 @@ func MakeDbProvider(
 			return nil, eris.Wrap(err, "error creating sqlite provider")
 		}
 	case "postgres", "postgresql":
-		db, err = NewPostgresDbInstance(
+		db, err = NewPostgresDBInstance(
 			*dsnURL,
 			slowThreshold,
 			poolMax,

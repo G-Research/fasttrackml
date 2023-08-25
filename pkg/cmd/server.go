@@ -124,8 +124,8 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 }
 
 // initDB init DB connection.
-func initDB(config *mlflowConfig.ServiceConfig) (database.DbProvider, error) {
-	db, err := database.MakeDbProvider(
+func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
+	db, err := database.MakeDBProvider(
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
 		config.DatabasePoolMax,

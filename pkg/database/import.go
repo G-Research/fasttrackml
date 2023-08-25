@@ -20,7 +20,7 @@ type Importer struct {
 }
 
 // NewImporter initializes an Importer.
-func NewImporter(input, output DbProvider) *Importer {
+func NewImporter(input, output DBProvider) *Importer {
 	return &Importer{
 		sourceDB:        input.Db(),
 		destDB:          output.Db(),

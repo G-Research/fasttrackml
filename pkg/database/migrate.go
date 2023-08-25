@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func checkAndMigrate(migrate bool, dbProvider DbProvider) error {
+func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
 	db := dbProvider.Db()
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion

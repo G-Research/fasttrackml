@@ -13,25 +13,25 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
-// PostgresDbInstance is the Postgres-specific DbInstance variant
-type PostgresDbInstance struct {
-	DbInstance
+// PostgresDBInstance is the Postgres-specific DbInstance variant.
+type PostgresDBInstance struct {
+	DBInstance
 }
 
-// Reset implementation for this type
-func (pgdb PostgresDbInstance) Reset() error {
+// Reset implementation for this type.
+func (pgdb PostgresDBInstance) Reset() error {
 	log.Info("Resetting database schema")
 	pgdb.Db().Exec("drop schema public cascade")
 	pgdb.Db().Exec("create schema public")
 	return nil
 }
 
-// makeDbInstance will construct a Postgres DbInstance.
-func NewPostgresDbInstance(
+// NewPostgresDBInstance will construct a Postgres DbInstance.
+func NewPostgresDBInstance(
 	dsnURL url.URL, slowThreshold time.Duration, poolMax int, reset bool,
-) (*PostgresDbInstance, error) {
-	pgdb := PostgresDbInstance{
-		DbInstance: DbInstance{dsn: dsnURL.String()},
+) (*PostgresDBInstance, error) {
+	pgdb := PostgresDBInstance{
+		DBInstance: DBInstance{dsn: dsnURL.String()},
 	}
 
 	var sourceConn gorm.Dialector

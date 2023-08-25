@@ -36,8 +36,8 @@ func (f baseFixtures) UnloadFixtures() error {
 }
 
 // CreateDB will convert the a DSN input into a database connection
-func CreateDB(databaseDSN string) (db database.DbProvider, err error) {
-	db, err = database.MakeDbProvider(
+func CreateDB(databaseDSN string) (db database.DBProvider, err error) {
+	db, err = database.MakeDBProvider(
 		databaseDSN,
 		1*time.Second,
 		20,

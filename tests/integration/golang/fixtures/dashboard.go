@@ -13,7 +13,7 @@ import (
 // DashboardFixtures represents data fixtures object.
 type DashboardFixtures struct {
 	baseFixtures
-	*database.DbInstance
+	*database.DBInstance
 }
 
 // NewDashboardFixtures creates new instance of DashboardFixtures.
@@ -24,7 +24,7 @@ func NewDashboardFixtures(databaseDSN string) (*DashboardFixtures, error) {
 	}
 	return &DashboardFixtures{
 		baseFixtures: baseFixtures{db: db.Db()},
-		DbInstance:   nil,
+		DBInstance:   nil,
 	}, nil
 }
 

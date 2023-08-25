@@ -27,22 +27,22 @@ const (
 	SQLiteCustomDriverName = "sqlite3_custom_driver"
 )
 
-// SqliteDbInstance is the sqlite specific variant of DbInstance
-type SqliteDbInstance struct {
-	DbInstance
+// SqliteDBInstance is the sqlite specific variant of DbInstance.
+type SqliteDBInstance struct {
+	DBInstance
 }
 
-// Reset behavior for this instance
-func (f SqliteDbInstance) Reset() error {
+// Reset implementation for this type.
+func (f SqliteDBInstance) Reset() error {
 	return eris.New("unable to reset sqlite database")
 }
 
-// NewSqliteDbInstance will create a Sqlite DbProvider
-func NewSqliteDbInstance(
+// NewSqliteDBInstance will create a Sqlite DbInstance.
+func NewSqliteDBInstance(
 	dsnURL url.URL, slowThreshold time.Duration, poolMax int, reset bool,
-) (*SqliteDbInstance, error) {
-	db := SqliteDbInstance{
-		DbInstance: DbInstance{dsn: dsnURL.String()},
+) (*SqliteDBInstance, error) {
+	db := SqliteDBInstance{
+		DBInstance: DBInstance{dsn: dsnURL.String()},
 	}
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector

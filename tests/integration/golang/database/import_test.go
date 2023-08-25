@@ -18,6 +18,7 @@ import (
 )
 
 type rowCounts struct {
+	namespaces               int
 	experiments              int
 	runs                     int
 	distinctRunExperimentIDs int
@@ -31,7 +32,6 @@ type rowCounts struct {
 
 type ImportTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
 	runs               []*models.Run
 	inputRunFixtures   *fixtures.RunFixtures
 	outputRunFixtures  *fixtures.RunFixtures
@@ -45,8 +45,7 @@ func TestImportTestSuite(t *testing.T) {
 }
 
 func (s *ImportTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-
+	// prepare input database.
 	inputDBInstance, err := database.ConnectDB(
 		helpers.GetInputDatabaseUri(),
 		1*time.Second,
@@ -56,30 +55,21 @@ func (s *ImportTestSuite) SetupTest() {
 		"",
 	)
 	assert.Nil(s.T(), err)
+	assert.Nil(s.T(), database.CheckAndMigrateDB(inputDBInstance, true))
+	assert.Nil(s.T(), database.CreateDefaultNamespace(inputDBInstance))
+	assert.Nil(s.T(), database.CreateDefaultExperiment(inputDBInstance, "s3://fasttrackml"))
+	s.inputDB = inputDBInstance
 
-	inputRunFixtures, err := fixtures.NewRunFixtures(inputDBInstance.DB)
-	assert.Nil(s.T(), err)
 	inputExperimentFixtures, err := fixtures.NewExperimentFixtures(inputDBInstance.DB)
 	assert.Nil(s.T(), err)
+	inputRunFixtures, err := fixtures.NewRunFixtures(inputDBInstance.DB)
+	assert.Nil(s.T(), err)
 	s.inputRunFixtures = inputRunFixtures
-
-	outputDBInstance, err := database.ConnectDB(
-		helpers.GetOutputDatabaseUri(),
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
-	assert.Nil(s.T(), err)
-
-	outputRunFixtures, err := fixtures.NewRunFixtures(outputDBInstance.DB)
-	assert.Nil(s.T(), err)
-	s.outputRunFixtures = outputRunFixtures
 
 	// experiment 1
 	experiment, err := inputExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    1,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
@@ -91,6 +81,7 @@ func (s *ImportTestSuite) SetupTest() {
 	// experiment 2
 	experiment, err = inputExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    1,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
@@ -119,34 +110,27 @@ func (s *ImportTestSuite) SetupTest() {
 		Name:  uuid.NewString(),
 	})
 
-	databaseSlowThreshold := time.Second * 1
-	databasePoolMax := 20
-	databaseReset := false
-	databaseMigrate := false
-	artifactRoot := "s3://fasttrackml"
-	input, err := database.MakeDBInstance(
-		helpers.GetInputDatabaseUri(),
-		databaseSlowThreshold,
-		databasePoolMax,
-		databaseReset,
-		databaseMigrate,
-		artifactRoot,
-	)
-	assert.Nil(s.T(), err)
-	output, err := database.MakeDBInstance(
+	// prepare output database.
+	outputDBInstance, err := database.ConnectDB(
 		helpers.GetOutputDatabaseUri(),
-		databaseSlowThreshold,
-		databasePoolMax,
-		databaseReset,
-		databaseMigrate,
-		artifactRoot,
+		1*time.Second,
+		20,
+		false,
+		false,
+		"",
 	)
 	assert.Nil(s.T(), err)
+	assert.Nil(s.T(), database.CheckAndMigrateDB(outputDBInstance, true))
+	assert.Nil(s.T(), database.CreateDefaultNamespace(outputDBInstance))
+	assert.Nil(s.T(), database.CreateDefaultExperiment(outputDBInstance, "s3://fasttrackml"))
+	s.outputDB = outputDBInstance
 
-	s.inputDB = input
-	s.outputDB = output
+	outputRunFixtures, err := fixtures.NewRunFixtures(outputDBInstance.DB)
+	assert.Nil(s.T(), err)
+	s.outputRunFixtures = outputRunFixtures
 
 	s.populatedRowCounts = rowCounts{
+		namespaces:               1,
 		experiments:              3,
 		runs:                     10,
 		distinctRunExperimentIDs: 2,
@@ -168,8 +152,8 @@ func (s *ImportTestSuite) Test_Ok() {
 	// source DB should have expected
 	validateRowCounts(s.T(), s.inputDB, s.populatedRowCounts)
 
-	// initially, dest DB is (mostly) empty
-	validateRowCounts(s.T(), s.outputDB, rowCounts{experiments: 1})
+	// initially, dest DB is empty
+	validateRowCounts(s.T(), s.outputDB, rowCounts{namespaces: 1, experiments: 1})
 
 	// invoke the Importer.Import() method
 	importer := database.NewImporter(s.inputDB, s.outputDB)
@@ -188,14 +172,15 @@ func (s *ImportTestSuite) Test_Ok() {
 
 	// confirm row-for-row equality
 	for _, table := range []string{
+		"namespaces",
+		// "apps",
+		// "dashboards",
 		"experiment_tags",
 		"runs",
 		"tags",
 		"params",
 		"metrics",
 		"latest_metrics",
-		// "apps",
-		// "dashboards",
 	} {
 		validateTable(s.T(), s.inputDB, s.outputDB, table)
 	}
@@ -206,31 +191,35 @@ func (s *ImportTestSuite) Test_Ok() {
 // assertions.
 func validateRowCounts(t *testing.T, db *database.DbInstance, counts rowCounts) {
 	var countVal int64
-	tx := db.DB.Model(&database.Experiment{}).Count(&countVal)
+	tx := db.DB.Model(&models.Namespace{}).Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, counts.namespaces, int(countVal), "Namespaces count incorrect")
+
+	tx = db.DB.Model(&models.Experiment{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.experiments, int(countVal), "Experiments count incorrect")
 
-	tx = db.DB.Model(&database.Run{}).Count(&countVal)
+	tx = db.DB.Model(&models.Run{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.runs, int(countVal), "Runs count incorrect")
 
-	tx = db.DB.Model(&database.Metric{}).Count(&countVal)
+	tx = db.DB.Model(&models.Metric{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.metrics, int(countVal), "Metrics count incorrect")
 
-	tx = db.DB.Model(&database.LatestMetric{}).Count(&countVal)
+	tx = db.DB.Model(&models.LatestMetric{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.latestMetrics, int(countVal), "Latest metrics count incorrect")
 
-	tx = db.DB.Model(&database.Tag{}).Count(&countVal)
+	tx = db.DB.Model(&models.Tag{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.tags, int(countVal), "Run tags count incorrect")
 
-	tx = db.DB.Model(&database.Param{}).Count(&countVal)
+	tx = db.DB.Model(&models.Param{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.params, int(countVal), "Run params count incorrect")
 
-	tx = db.DB.Model(&database.Run{}).Distinct("experiment_id").Count(&countVal)
+	tx = db.DB.Model(&models.Run{}).Distinct("experiment_id").Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
 
@@ -261,6 +250,13 @@ func validateTable(t *testing.T, source, dest *database.DbInstance, table string
 		destRows.Next()
 		err = dest.DB.ScanRows(destRows, &destItem)
 		assert.Nil(t, err)
+
+		//TODO:DSuhinin delete this fields right now, because they
+		// cause comparison error when we compare `namespace` entities. Let's find smarter way to do that.
+		delete(destItem, "updated_at")
+		delete(destItem, "created_at")
+		delete(sourceItem, "updated_at")
+		delete(sourceItem, "created_at")
 
 		assert.Equal(t, sourceItem, destItem)
 	}

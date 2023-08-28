@@ -58,6 +58,16 @@ func (f RunFixtures) UpdateRun(
 	return nil
 }
 
+// ArchiveRuns soft-deletes existing Runs.
+func (f RunFixtures) ArchiveRuns(
+	ctx context.Context, runIDs []string,
+) error {
+	if err := f.runRepository.ArchiveBatch(ctx, runIDs); err != nil {
+		return eris.Wrap(err, "error archiving runs")
+	}
+	return nil
+}
+
 // CreateExampleRun creates one example run belonging to the experiment, with tags and metrics.
 func (f RunFixtures) CreateExampleRun(
 	ctx context.Context, exp *models.Experiment,

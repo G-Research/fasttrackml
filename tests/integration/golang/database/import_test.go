@@ -35,8 +35,8 @@ type ImportTestSuite struct {
 	runs               []*models.Run
 	inputRunFixtures   *fixtures.RunFixtures
 	outputRunFixtures  *fixtures.RunFixtures
-	inputDB            *database.DbInstance
-	outputDB           *database.DbInstance
+	inputDB            database.DBProvider
+	outputDB           database.DBProvider
 	populatedRowCounts rowCounts
 }
 
@@ -189,7 +189,7 @@ func (s *ImportTestSuite) Test_Ok() {
 // validateRowCounts will make assertions about the db based on the test setup.
 // a db imported from the test setup db should also pass these
 // assertions.
-func validateRowCounts(t *testing.T, db *database.DbInstance, counts rowCounts) {
+func validateRowCounts(t *testing.T, db database.DBProvider, counts rowCounts) {
 	var countVal int64
 	tx := db.DB.Model(&models.Namespace{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
@@ -233,10 +233,10 @@ func validateRowCounts(t *testing.T, db *database.DbInstance, counts rowCounts) 
 }
 
 // validateTable will scan source and dest table and confirm they are identical
-func validateTable(t *testing.T, source, dest *database.DbInstance, table string) {
-	sourceRows, err := source.DB.Table(table).Rows()
+func validateTable(t *testing.T, source, dest database.DBProvider, table string) {
+	sourceRows, err := source.GormDB().Table(table).Rows()
 	assert.Nil(t, err)
-	destRows, err := dest.DB.Table(table).Rows()
+	destRows, err := dest.GormDB().Table(table).Rows()
 	assert.Nil(t, err)
 	defer sourceRows.Close()
 	defer destRows.Close()
@@ -244,11 +244,11 @@ func validateTable(t *testing.T, source, dest *database.DbInstance, table string
 	for sourceRows.Next() {
 		var sourceItem, destItem map[string]any
 
-		err := source.DB.ScanRows(sourceRows, &sourceItem)
+		err := source.GormDB().ScanRows(sourceRows, &sourceItem)
 		assert.Nil(t, err)
 
 		destRows.Next()
-		err = dest.DB.ScanRows(destRows, &destItem)
+		err = dest.GormDB().ScanRows(destRows, &destItem)
 		assert.Nil(t, err)
 
 		// TODO:DSuhinin delete this fields right now, because they

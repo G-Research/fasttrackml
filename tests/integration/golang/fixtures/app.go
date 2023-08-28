@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"gorm.io/gorm"
-
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 

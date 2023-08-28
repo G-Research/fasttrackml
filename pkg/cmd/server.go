@@ -69,7 +69,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 	// 4. init `aim` api and ui routes.
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
-	aimUI.AddRoutes(server)
+	aimUI.AddRoutes(server.Group("/aim/"))
 
 	storage, err := storage.NewArtifactStorage(mlflowConfig)
 	if err != nil {
@@ -138,8 +138,8 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 }
 
 // initDB init DB connection.
-func initDB(config *mlflowConfig.ServiceConfig) (*database.DbInstance, error) {
-	db, err := database.ConnectDB(
+func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
+	db, err := database.MakeDBProvider(
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
 		config.DatabasePoolMax,
@@ -162,6 +162,8 @@ func initDB(config *mlflowConfig.ServiceConfig) (*database.DbInstance, error) {
 	if err := database.CreateDefaultExperiment(db, config.ArtifactRoot); err != nil {
 		return nil, eris.Wrap(err, "error creating default experiment")
 	}
+	// cache a global reference to the gorm.DB
+	database.DB = db.GormDB()
 	return db, nil
 }
 
@@ -184,7 +186,8 @@ func initServer(
 			case strings.HasPrefix(p, "/aim/api/"):
 				return aimAPI.ErrorHandler(c, err)
 			case strings.HasPrefix(p, "/api/2.0/mlflow/") ||
-				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/"):
+				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/") ||
+				strings.HasPrefix(p, "/mlflow/ajax-api/2.0/mlflow/"):
 				return mlflowService.ErrorHandler(c, err)
 
 			default:

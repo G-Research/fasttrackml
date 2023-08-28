@@ -7,9 +7,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -17,6 +14,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 

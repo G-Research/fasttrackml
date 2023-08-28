@@ -31,15 +31,13 @@ func (s *BaseTestSuite) SetupTest(t *testing.T) {
 	s.MlflowClient = NewMlflowApiClient(GetServiceUri())
 
 	if db == nil {
-		instance, err := database.ConnectDB(
+		instance, err := database.MakeDBProvider(
 			GetDatabaseUri(),
 			1*time.Second,
 			20,
 			false,
-			false,
-			"",
 		)
-		db = instance.DB
+		db = instance.GormDB()
 		assert.Nil(t, err)
 	}
 

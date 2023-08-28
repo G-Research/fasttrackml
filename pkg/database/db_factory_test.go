@@ -27,8 +27,6 @@ func TestMakeDBProvider(t *testing.T) {
 				time.Second*2,
 				2,
 				false,
-				false,
-				"s3://somewhere",
 			)
 			assert.Nil(t, err)
 			assert.NotNil(t, db)

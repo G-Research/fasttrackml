@@ -64,12 +64,12 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	defer db.Close()
 
 	// 3. init main HTTP server.
-	namespaceRepository := adminRepositories.NewNamespaceRepository(db.DB)
+	namespaceRepository := adminRepositories.NewNamespaceRepository(db.GormDB())
 	server := initServer(mlflowConfig, namespaceRepository)
 
 	// 4. init `aim` api and ui routes.
-	aimAPI.AddRoutes(server.Group("/aim/api/"))
 	aimUI.AddRoutes(server.Group("/aim/"))
+	aimAPI.AddRoutes(server.Group("/aim/api/"))
 
 	storage, err := storage.NewArtifactStorage(mlflowConfig)
 	if err != nil {
@@ -81,24 +81,24 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	mlflowAPI.NewRouter(
 		mlflowController.NewController(
 			run.NewService(
-				mlflowRepositories.NewTagRepository(db.DB),
-				mlflowRepositories.NewRunRepository(db.DB),
-				mlflowRepositories.NewParamRepository(db.DB),
-				mlflowRepositories.NewMetricRepository(db.DB),
-				mlflowRepositories.NewExperimentRepository(db.DB),
+				mlflowRepositories.NewTagRepository(db.GormDB()),
+				mlflowRepositories.NewRunRepository(db.GormDB()),
+				mlflowRepositories.NewParamRepository(db.GormDB()),
+				mlflowRepositories.NewMetricRepository(db.GormDB()),
+				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 			model.NewService(),
 			metric.NewService(
-				mlflowRepositories.NewMetricRepository(db.DB),
+				mlflowRepositories.NewMetricRepository(db.GormDB()),
 			),
 			artifact.NewService(
 				storage,
-				mlflowRepositories.NewRunRepository(db.DB),
+				mlflowRepositories.NewRunRepository(db.GormDB()),
 			),
 			experiment.NewService(
 				mlflowConfig,
-				mlflowRepositories.NewTagRepository(db.DB),
-				mlflowRepositories.NewExperimentRepository(db.DB),
+				mlflowRepositories.NewTagRepository(db.GormDB()),
+				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
 	).Init(server)
@@ -144,22 +144,20 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 		config.DatabaseSlowThreshold,
 		config.DatabasePoolMax,
 		config.DatabaseReset,
-		config.DatabaseMigrate,
-		config.ArtifactRoot,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to DB: %w", err)
 	}
 
-	if err := database.CheckAndMigrateDB(db, config.DatabaseMigrate); err != nil {
+	if err := database.CheckAndMigrateDB(config.DatabaseMigrate, db.GormDB()); err != nil {
 		return nil, eris.Wrap(err, "error running database migration")
 	}
 
-	if err := database.CreateDefaultNamespace(db); err != nil {
+	if err := database.CreateDefaultNamespace(db.GormDB()); err != nil {
 		return nil, eris.Wrap(err, "error creating default namespace")
 	}
 
-	if err := database.CreateDefaultExperiment(db, config.ArtifactRoot); err != nil {
+	if err := database.CreateDefaultExperiment(db.GormDB(), config.ArtifactRoot); err != nil {
 		return nil, eris.Wrap(err, "error creating default experiment")
 	}
 	// cache a global reference to the gorm.DB

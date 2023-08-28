@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
@@ -35,8 +36,8 @@ type ImportTestSuite struct {
 	runs               []*models.Run
 	inputRunFixtures   *fixtures.RunFixtures
 	outputRunFixtures  *fixtures.RunFixtures
-	inputDB            database.DBProvider
-	outputDB           database.DBProvider
+	inputDB            *gorm.DB
+	outputDB           *gorm.DB
 	populatedRowCounts rowCounts
 }
 
@@ -46,23 +47,21 @@ func TestImportTestSuite(t *testing.T) {
 
 func (s *ImportTestSuite) SetupTest() {
 	// prepare input database.
-	inputDBInstance, err := database.ConnectDB(
+	db, err := database.MakeDBProvider(
 		helpers.GetInputDatabaseUri(),
 		1*time.Second,
 		20,
 		false,
-		false,
-		"",
 	)
 	assert.Nil(s.T(), err)
-	assert.Nil(s.T(), database.CheckAndMigrateDB(inputDBInstance, true))
-	assert.Nil(s.T(), database.CreateDefaultNamespace(inputDBInstance))
-	assert.Nil(s.T(), database.CreateDefaultExperiment(inputDBInstance, "s3://fasttrackml"))
-	s.inputDB = inputDBInstance
+	assert.Nil(s.T(), database.CheckAndMigrateDB(true, db.GormDB()))
+	assert.Nil(s.T(), database.CreateDefaultNamespace(db.GormDB()))
+	assert.Nil(s.T(), database.CreateDefaultExperiment(db.GormDB(), "s3://fasttrackml"))
+	s.inputDB = db.GormDB()
 
-	inputExperimentFixtures, err := fixtures.NewExperimentFixtures(inputDBInstance.DB)
+	inputExperimentFixtures, err := fixtures.NewExperimentFixtures(db.GormDB())
 	assert.Nil(s.T(), err)
-	inputRunFixtures, err := fixtures.NewRunFixtures(inputDBInstance.DB)
+	inputRunFixtures, err := fixtures.NewRunFixtures(db.GormDB())
 	assert.Nil(s.T(), err)
 	s.inputRunFixtures = inputRunFixtures
 
@@ -90,7 +89,7 @@ func (s *ImportTestSuite) SetupTest() {
 	assert.Nil(s.T(), err)
 	s.runs = runs
 
-	appFixtures, err := fixtures.NewAppFixtures(inputDBInstance.DB)
+	appFixtures, err := fixtures.NewAppFixtures(db.GormDB())
 	app, err := appFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
 			ID:        uuid.New(),
@@ -100,7 +99,7 @@ func (s *ImportTestSuite) SetupTest() {
 		State: database.AppState{},
 	})
 
-	dashboardFixtures, err := fixtures.NewDashboardFixtures(inputDBInstance.DB)
+	dashboardFixtures, err := fixtures.NewDashboardFixtures(db.GormDB())
 	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
 		Base: database.Base{
 			ID:        uuid.New(),
@@ -111,21 +110,19 @@ func (s *ImportTestSuite) SetupTest() {
 	})
 
 	// prepare output database.
-	outputDBInstance, err := database.ConnectDB(
-		helpers.GetOutputDatabaseUri(),
+	db, err = database.MakeDBProvider(
+		helpers.GetInputDatabaseUri(),
 		1*time.Second,
 		20,
 		false,
-		false,
-		"",
 	)
 	assert.Nil(s.T(), err)
-	assert.Nil(s.T(), database.CheckAndMigrateDB(outputDBInstance, true))
-	assert.Nil(s.T(), database.CreateDefaultNamespace(outputDBInstance))
-	assert.Nil(s.T(), database.CreateDefaultExperiment(outputDBInstance, "s3://fasttrackml"))
-	s.outputDB = outputDBInstance
+	assert.Nil(s.T(), database.CheckAndMigrateDB(true, db.GormDB()))
+	assert.Nil(s.T(), database.CreateDefaultNamespace(db.GormDB()))
+	assert.Nil(s.T(), database.CreateDefaultExperiment(db.GormDB(), "s3://fasttrackml"))
+	s.outputDB = db.GormDB()
 
-	outputRunFixtures, err := fixtures.NewRunFixtures(outputDBInstance.DB)
+	outputRunFixtures, err := fixtures.NewRunFixtures(db.GormDB())
 	assert.Nil(s.T(), err)
 	s.outputRunFixtures = outputRunFixtures
 
@@ -189,37 +186,37 @@ func (s *ImportTestSuite) Test_Ok() {
 // validateRowCounts will make assertions about the db based on the test setup.
 // a db imported from the test setup db should also pass these
 // assertions.
-func validateRowCounts(t *testing.T, db database.DBProvider, counts rowCounts) {
+func validateRowCounts(t *testing.T, db *gorm.DB, counts rowCounts) {
 	var countVal int64
-	tx := db.DB.Model(&models.Namespace{}).Count(&countVal)
+	tx := db.Model(&models.Namespace{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.namespaces, int(countVal), "Namespaces count incorrect")
 
-	tx = db.DB.Model(&models.Experiment{}).Count(&countVal)
+	tx = db.Model(&models.Experiment{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.experiments, int(countVal), "Experiments count incorrect")
 
-	tx = db.DB.Model(&models.Run{}).Count(&countVal)
+	tx = db.Model(&models.Run{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.runs, int(countVal), "Runs count incorrect")
 
-	tx = db.DB.Model(&models.Metric{}).Count(&countVal)
+	tx = db.Model(&models.Metric{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.metrics, int(countVal), "Metrics count incorrect")
 
-	tx = db.DB.Model(&models.LatestMetric{}).Count(&countVal)
+	tx = db.Model(&models.LatestMetric{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.latestMetrics, int(countVal), "Latest metrics count incorrect")
 
-	tx = db.DB.Model(&models.Tag{}).Count(&countVal)
+	tx = db.Model(&models.Tag{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.tags, int(countVal), "Run tags count incorrect")
 
-	tx = db.DB.Model(&models.Param{}).Count(&countVal)
+	tx = db.Model(&models.Param{}).Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.params, int(countVal), "Run params count incorrect")
 
-	tx = db.DB.Model(&models.Run{}).Distinct("experiment_id").Count(&countVal)
+	tx = db.Model(&models.Run{}).Distinct("experiment_id").Count(&countVal)
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
 
@@ -233,10 +230,10 @@ func validateRowCounts(t *testing.T, db database.DBProvider, counts rowCounts) {
 }
 
 // validateTable will scan source and dest table and confirm they are identical
-func validateTable(t *testing.T, source, dest database.DBProvider, table string) {
-	sourceRows, err := source.GormDB().Table(table).Rows()
+func validateTable(t *testing.T, source, dest *gorm.DB, table string) {
+	sourceRows, err := source.Table(table).Rows()
 	assert.Nil(t, err)
-	destRows, err := dest.GormDB().Table(table).Rows()
+	destRows, err := dest.Table(table).Rows()
 	assert.Nil(t, err)
 	defer sourceRows.Close()
 	defer destRows.Close()
@@ -244,11 +241,11 @@ func validateTable(t *testing.T, source, dest database.DBProvider, table string)
 	for sourceRows.Next() {
 		var sourceItem, destItem map[string]any
 
-		err := source.GormDB().ScanRows(sourceRows, &sourceItem)
+		err := source.ScanRows(sourceRows, &sourceItem)
 		assert.Nil(t, err)
 
 		destRows.Next()
-		err = dest.GormDB().ScanRows(destRows, &destItem)
+		err = dest.ScanRows(destRows, &destItem)
 		assert.Nil(t, err)
 
 		// TODO:DSuhinin delete this fields right now, because they

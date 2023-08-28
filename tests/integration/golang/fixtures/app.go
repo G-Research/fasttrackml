@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"gorm.io/gorm"
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
+	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/database"
 )

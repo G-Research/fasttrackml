@@ -20,10 +20,10 @@ type Importer struct {
 }
 
 // NewImporter initializes an Importer.
-func NewImporter(input, output DBProvider) *Importer {
+func NewImporter(input, output *gorm.DB) *Importer {
 	return &Importer{
-		destDB:          output.DB,
-		sourceDB:        input.DB,
+		destDB:          output,
+		sourceDB:        input,
 		experimentInfos: []experimentInfo{},
 	}
 }

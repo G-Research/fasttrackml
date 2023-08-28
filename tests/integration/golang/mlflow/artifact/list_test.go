@@ -37,11 +37,12 @@ func TestListArtifactTestSuite(t *testing.T) {
 }
 
 func (s *ListArtifactTestSuite) SetupTest() {
+	s.BaseTestSuite.SetupTest(s.T())
+
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	assert.Nil(s.T(), err)
 
 	s.s3Client = s3Client
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *ListArtifactTestSuite) Test_Ok() {

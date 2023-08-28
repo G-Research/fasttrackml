@@ -1,7 +1,11 @@
 package database
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
@@ -9,8 +13,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
-	db := dbProvider.GormDB()
+func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion
 	{
@@ -340,7 +343,7 @@ func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
 }
 
 // CreateDefaultNamespace creates the default namespace if it doesn't exist.
-func CreateDefaultNamespace(db *DbInstance) error {
+func CreateDefaultNamespace(db *gorm.DB) error {
 	if tx := db.First(&Namespace{
 		Code: "default",
 	}); tx.Error != nil {
@@ -374,7 +377,7 @@ func CreateDefaultNamespace(db *DbInstance) error {
 }
 
 // CreateDefaultExperiment creates the default experiment if it doesn't exist.
-func CreateDefaultExperiment(db *DbInstance, artifactRoot string) error {
+func CreateDefaultExperiment(db *gorm.DB, artifactRoot string) error {
 	if err := db.First(&Experiment{}, 0).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Creating default experiment")

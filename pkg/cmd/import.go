@@ -28,7 +28,7 @@ func importCmd(cmd *cobra.Command, args []string) error {
 	defer inputDB.Close()
 	defer outputDB.Close()
 
-	importer := database.NewImporter(inputDB, outputDB)
+	importer := database.NewImporter(inputDB.GormDB(), outputDB.GormDB())
 	if err := importer.Import(); err != nil {
 		return err
 	}
@@ -40,28 +40,21 @@ func initDBs() (input, output database.DBProvider, err error) {
 	databaseSlowThreshold := time.Second * 1
 	databasePoolMax := 20
 	databaseReset := false
-	databaseMigrate := false
-	artifactRoot := "s3://fasttrackml"
 	input, err = database.MakeDBProvider(
 		viper.GetString("input-database-uri"),
 		databaseSlowThreshold,
 		databasePoolMax,
 		databaseReset,
-		databaseMigrate,
-		artifactRoot,
 	)
 	if err != nil {
 		return input, output, fmt.Errorf("error connecting to input DB: %w", err)
 	}
 
-	databaseMigrate = true
 	output, err = database.MakeDBProvider(
 		viper.GetString("output-database-uri"),
 		databaseSlowThreshold,
 		databasePoolMax,
 		databaseReset,
-		databaseMigrate,
-		artifactRoot,
 	)
 	if err != nil {
 		return input, output, fmt.Errorf("error connecting to output DB: %w", err)

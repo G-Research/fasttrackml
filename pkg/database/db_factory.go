@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/rotisserie/eris"
+	log "github.com/sirupsen/logrus"
 )
 
 // NewDBProvider creates a DBProvider of the correct type from the parameters.
@@ -42,8 +43,9 @@ func NewDBProvider(
 		}
 	}
 
-	//TODO:DSuhinin - it shouldn't be there. NewDBProvider has to only create an instance without any hidden logic.
+	// TODO:DSuhinin - it shouldn't be there. NewDBProvider has to only create an instance without any hidden logic.
 	if reset {
+		log.Infof("reseting database")
 		if err := db.Reset(); err != nil {
 			db.Close()
 			return nil, eris.Wrap(err, "error resetting database")

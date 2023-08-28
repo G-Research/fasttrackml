@@ -125,7 +125,7 @@ func (r MetricRepository) CreateBatch(
 	}
 
 	if len(updatedLatestMetrics) > 0 {
-		if err := database.DB.Clauses(clause.OnConflict{
+		if err := r.db.Clauses(clause.OnConflict{
 			UpdateAll: true,
 		}).Create(&updatedLatestMetrics).Error; err != nil {
 			return eris.Wrapf(err, "error updating latest metrics for run: %s", run.ID)

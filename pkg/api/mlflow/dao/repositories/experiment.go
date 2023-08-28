@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // ExperimentRepositoryProvider provides an interface to work with `experiment` entity.
@@ -49,7 +48,7 @@ func (r ExperimentRepository) Create(ctx context.Context, experiment *models.Exp
 		return eris.Wrap(err, "error creating experiment entity")
 	}
 	if experiment.ArtifactLocation == "" {
-		if err := database.DB.Model(
+		if err := r.db.Model(
 			&experiment,
 		).Update(
 			"ArtifactLocation", experiment.ArtifactLocation,

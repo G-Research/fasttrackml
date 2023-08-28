@@ -111,7 +111,7 @@ func (s *ImportTestSuite) SetupTest() {
 
 	// prepare output database.
 	db, err = database.NewDBProvider(
-		helpers.GetInputDatabaseUri(),
+		helpers.GetOutputDatabaseUri(),
 		1*time.Second,
 		20,
 		false,

@@ -160,6 +160,7 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 	if err := database.CreateDefaultExperiment(db.GormDB(), config.ArtifactRoot); err != nil {
 		return nil, eris.Wrap(err, "error creating default experiment")
 	}
+
 	// cache a global reference to the gorm.DB
 	database.DB = db.GormDB()
 	return db, nil

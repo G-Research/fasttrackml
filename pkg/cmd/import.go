@@ -40,7 +40,7 @@ func initDBs() (input, output database.DBProvider, err error) {
 	databaseSlowThreshold := time.Second * 1
 	databasePoolMax := 20
 	databaseReset := false
-	input, err = database.MakeDBProvider(
+	input, err = database.NewDBProvider(
 		viper.GetString("input-database-uri"),
 		databaseSlowThreshold,
 		databasePoolMax,
@@ -50,7 +50,7 @@ func initDBs() (input, output database.DBProvider, err error) {
 		return input, output, fmt.Errorf("error connecting to input DB: %w", err)
 	}
 
-	output, err = database.MakeDBProvider(
+	output, err = database.NewDBProvider(
 		viper.GetString("output-database-uri"),
 		databaseSlowThreshold,
 		databasePoolMax,

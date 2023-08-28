@@ -7,8 +7,8 @@ import (
 	"github.com/rotisserie/eris"
 )
 
-// MakeDBProvider will create a DbProvider of the correct type from the parameters.
-func MakeDBProvider(
+// NewDBProvider creates a DBProvider of the correct type from the parameters.
+func NewDBProvider(
 	dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 ) (db DBProvider, err error) {
 	dsnURL, err := url.Parse(dsn)
@@ -42,7 +42,7 @@ func MakeDBProvider(
 		}
 	}
 
-	//TODO:DSuhinin - it shouldn't be there. MakeDBProvider has to only create an instance without any hidden logic.
+	//TODO:DSuhinin - it shouldn't be there. NewDBProvider has to only create an instance without any hidden logic.
 	if reset {
 		if err := db.Reset(); err != nil {
 			db.Close()

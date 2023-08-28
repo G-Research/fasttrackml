@@ -47,7 +47,7 @@ func TestImportTestSuite(t *testing.T) {
 
 func (s *ImportTestSuite) SetupTest() {
 	// prepare input database.
-	db, err := database.MakeDBProvider(
+	db, err := database.NewDBProvider(
 		helpers.GetInputDatabaseUri(),
 		1*time.Second,
 		20,
@@ -110,7 +110,7 @@ func (s *ImportTestSuite) SetupTest() {
 	})
 
 	// prepare output database.
-	db, err = database.MakeDBProvider(
+	db, err = database.NewDBProvider(
 		helpers.GetInputDatabaseUri(),
 		1*time.Second,
 		20,

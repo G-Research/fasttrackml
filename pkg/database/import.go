@@ -28,7 +28,7 @@ func NewImporter(input, output *gorm.DB) *Importer {
 	}
 }
 
-// Import will copy the contents of input db to output db.
+// Import copies the contents of input db to output db.
 func (s *Importer) Import() error {
 	tables := []string{
 		"namespaces",
@@ -141,7 +141,7 @@ func (s *Importer) importTable(table string) error {
 	return nil
 }
 
-// saveExperimentInfo will relate the source and destination experiment for later id mapping.
+// saveExperimentInfo maps source and destination experiment for later id mapping.
 func (s *Importer) saveExperimentInfo(source, dest Experiment) {
 	s.experimentInfos = append(s.experimentInfos, experimentInfo{
 		destID:   int64(*dest.ID),
@@ -149,7 +149,7 @@ func (s *Importer) saveExperimentInfo(source, dest Experiment) {
 	})
 }
 
-// translateFields will alter row before creation as needed (especially, replacing old experiment_id with new).
+// translateFields alters row before creation as needed (especially, replacing old experiment_id with new).
 func (s *Importer) translateFields(item map[string]any) (map[string]any, error) {
 	// boolean is numeric when coming from sqlite
 	if isNaN, ok := item["is_nan"]; ok {

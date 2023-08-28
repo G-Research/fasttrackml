@@ -27,18 +27,15 @@ type BaseTestSuite struct {
 }
 
 func (s *BaseTestSuite) SetupTest(t *testing.T) {
-	s.AIMClient = NewAimApiClient(GetServiceUri())
-	s.MlflowClient = NewMlflowApiClient(GetServiceUri())
-
 	if db == nil {
-		instance, err := database.MakeDBProvider(
+		instance, err := database.NewDBProvider(
 			GetDatabaseUri(),
 			1*time.Second,
 			20,
 			false,
 		)
-		db = instance.GormDB()
 		assert.Nil(t, err)
+		db = instance.GormDB()
 	}
 
 	appFixtures, err := fixtures.NewAppFixtures(db)
@@ -61,9 +58,9 @@ func (s *BaseTestSuite) SetupTest(t *testing.T) {
 	assert.Nil(t, err)
 	s.MetricFixtures = metricFixtures
 
-	expFixtures, err := fixtures.NewExperimentFixtures(db)
+	experimentFixtures, err := fixtures.NewExperimentFixtures(db)
 	assert.Nil(t, err)
-	s.ExperimentFixtures = expFixtures
+	s.ExperimentFixtures = experimentFixtures
 
 	dashboardFixtures, err := fixtures.NewDashboardFixtures(db)
 	assert.Nil(t, err)
@@ -72,6 +69,9 @@ func (s *BaseTestSuite) SetupTest(t *testing.T) {
 	namespaceFixtures, err := fixtures.NewNamespaceFixtures(db)
 	assert.Nil(t, err)
 	s.NamespaceFixtures = namespaceFixtures
+
+	s.AIMClient = NewAimApiClient(GetServiceUri())
+	s.MlflowClient = NewMlflowApiClient(GetServiceUri())
 
 	// by default, unload everything.
 	assert.Nil(t, s.NamespaceFixtures.UnloadFixtures())

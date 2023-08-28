@@ -139,7 +139,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 // initDB init DB connection.
 func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
-	db, err := database.MakeDBProvider(
+	db, err := database.NewDBProvider(
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
 		config.DatabasePoolMax,

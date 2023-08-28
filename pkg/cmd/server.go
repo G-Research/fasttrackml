@@ -68,8 +68,8 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	server := initServer(mlflowConfig, namespaceRepository)
 
 	// 4. init `aim` api and ui routes.
-	aimUI.AddRoutes(server.Group("/aim/"))
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
+	aimUI.AddRoutes(server.Group("/aim/"))
 
 	storage, err := storage.NewArtifactStorage(mlflowConfig)
 	if err != nil {

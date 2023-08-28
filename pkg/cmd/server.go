@@ -97,7 +97,6 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		),
 	).Init(server)
 	mlflowUI.AddRoutes(server.Group("/mlflow/"))
-	// TODO:DSuhinin we have to move it.
 	chooser.AddRoutes(server.Group("/"))
 
 	isRunning := make(chan struct{})

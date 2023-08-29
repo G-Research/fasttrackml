@@ -55,7 +55,6 @@ func (s *GetProjectActivityTestSuite) SetupTest() {
 
 	s.runs, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 5)
 	assert.Nil(s.T(), err)
-
 }
 
 func (s *GetProjectActivityTestSuite) Test_Ok() {

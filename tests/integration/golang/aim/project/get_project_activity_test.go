@@ -53,7 +53,7 @@ func (s *GetProjectActivityTestSuite) SetupTest() {
 	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	s.runs, err = s.runFixtures.CreateRuns(context.Background(), exp, 5)
+	s.runs, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 5)
 	assert.Nil(s.T(), err)
 
 }

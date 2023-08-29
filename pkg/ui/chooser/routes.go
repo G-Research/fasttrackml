@@ -25,11 +25,15 @@ func AddRoutes(r fiber.Router) {
 	})
 	r.Mount("/", app)
 
-	// add specific routes
+	// specific routes
 	admin := app.Group("admin")
-	admin.Get("ns", controller.AdminNSIndex)
+	admin.Get("ns", controller.GetNamespaces)
+	admin.Get("ns/:param:", controller.GetNamespace)
+	admin.Put("ns/:param:", controller.PutNamespace)
+	admin.Delete("ns/:param:", controller.DeleteNamespace)
+	admin.Post("ns", controller.PostNamespace)
 
-	// default static
+	// default route
 	app.Use("/", etag.New(), filesystem.New(filesystem.Config{
 		Root: http.FS(sub),
 	}))

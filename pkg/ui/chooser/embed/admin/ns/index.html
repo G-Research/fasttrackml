@@ -1,10 +1,32 @@
 <html>
 <head>
-    <title>{{.Title }}</title>
+    <title>Namespaces</title>
 </head>
 <body>
-<h1>{{.Title }}</h1>
-Welcome to admin/ns
+<h1>Namespaces</h1>
+{{ if gt (len .ErrorMessage) 0 }}
+<p style="color: darkred">{{ .ErrorMessage}}</p>
+{{ end }}
+{{ if gt (len .SuccessMessage) 0 }}
+<p style="color: darkgreen">{{ .SuccessMessage }}</p>
+{{ end }}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Code</th>
+        </tr>
+    </thead>
+    <tbody>
+    {{ range .Data }}
+    <tr>
+        <td>{{ .id }}</td>
+        <td>{{ .code }}</td>
+    </tr>
+    {{ end }}
+    </tbody>
+</table>
+
 </body>
 </html>
 

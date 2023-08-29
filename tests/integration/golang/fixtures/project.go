@@ -17,7 +17,7 @@ type ProjectFixtures struct {
 
 // NewProjectFixtures creates new instance of ProjectFixtures.
 func NewProjectFixtures(databaseDSN string) (*ProjectFixtures, error) {
-	db, err := database.ConnectDB(
+	db, err := database.MakeDBProvider(
 		databaseDSN,
 		1*time.Second,
 		20,
@@ -29,14 +29,14 @@ func NewProjectFixtures(databaseDSN string) (*ProjectFixtures, error) {
 		return nil, eris.Wrap(err, "error connection to database")
 	}
 	return &ProjectFixtures{
-		baseFixtures: baseFixtures{db: db.DB},
+		baseFixtures: baseFixtures{db: db.GormDB()},
 	}, nil
 }
 
 func (f *ProjectFixtures) GetProject(ctx context.Context) *response.GetProject {
 	return &response.GetProject{
 		Name:             "FastTrackML",
-		Path:             database.DB.DSN(),
+		Path:             f.db.Dialector.Name(),
 		Description:      "",
 		TelemetryEnabled: float64(0),
 	}

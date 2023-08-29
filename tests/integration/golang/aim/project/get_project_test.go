@@ -4,10 +4,8 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -19,8 +17,8 @@ import (
 type GetProjectTestSuite struct {
 	suite.Suite
 	client          *helpers.HttpClient
-	projectFixtures *fixtures.ProjectFixtures
-	project         *response.GetProject
+	projectFixtures fixtures.ProjectFixtures
+	project         response.GetProject
 }
 
 func TestGetProjectTestSuite(t *testing.T) {
@@ -32,24 +30,24 @@ func (s *GetProjectTestSuite) SetupTest() {
 
 	projectFixtures, err := fixtures.NewProjectFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
-	s.projectFixtures = projectFixtures
+	s.projectFixtures = *projectFixtures
 
 	project := projectFixtures.GetProject(context.Background())
-	s.project = project
+	s.project = *project
 }
 
 func (s *GetProjectTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.projectFixtures.UnloadFixtures())
 	}()
-	var resp fiber.Map
+	var resp response.GetProject
 	err := s.client.DoGetRequest(
-		fmt.Sprintf("/projects"),
+		"/projects",
 		&resp,
 	)
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), (*s.project).Name, resp["name"])
-	assert.Equal(s.T(), (*s.project).Path, resp["path"])
-	assert.Equal(s.T(), (*s.project).Description, resp["description"])
-	assert.Equal(s.T(), (*s.project).TelemetryEnabled, resp["telemetry_enabled"])
+	assert.Equal(s.T(), s.project.Name, resp.Name)
+	assert.Equal(s.T(), s.project.Path, resp.Path)
+	assert.Equal(s.T(), s.project.Description, resp.Description)
+	assert.Equal(s.T(), s.project.TelemetryEnabled, resp.TelemetryEnabled)
 }

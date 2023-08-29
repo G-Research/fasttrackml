@@ -40,8 +40,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
-github.com/G-Research/fasttrackml-ui-aim v0.31602.7 h1:usVgK6Aa7rYjXsIViG5IpvjeECwDEe0/0aeOcjPacD0=
-github.com/G-Research/fasttrackml-ui-aim v0.31602.7/go.mod h1:R8eNxWoWxiQ4vXOwkfkOgUXxxesyOTLWgtGi2dDuQOY=
+github.com/G-Research/fasttrackml-ui-aim v0.31602.10 h1:Rm03vbTXgdpu0rK7wQtiIdF+q9USLqRFwJXI1MbeXJ8=
+github.com/G-Research/fasttrackml-ui-aim v0.31602.10/go.mod h1:R8eNxWoWxiQ4vXOwkfkOgUXxxesyOTLWgtGi2dDuQOY=
 github.com/G-Research/fasttrackml-ui-mlflow v0.20301.4 h1:0vd7z6e32P/1MBN2CrxpC7+U3flnn+L1bYrAhwQ1mbw=
 github.com/G-Research/fasttrackml-ui-mlflow v0.20301.4/go.mod h1:0NZjizx6aygBaV8uQ81oCTMVekOFTh6ZDTqTAE6NYdc=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c h1:RGWPOewvKIROun94nF7v2cua9qP+thov/7M50KEoeSU=
@@ -616,8 +616,6 @@ google.golang.org/protobuf v1.23.0/go.mod h1:EGpADcykh3NcUnDUJcl1+ZksZNG86OlYog2
 google.golang.org/protobuf v1.23.1-0.20200526195155-81db48ad09cc/go.mod h1:EGpADcykh3NcUnDUJcl1+ZksZNG86OlYog2l/sGQquU=
 google.golang.org/protobuf v1.24.0/go.mod h1:r/3tXBNzIEhYS9I1OUVjXDlt8tc493IdKGjtUeSXeh4=
 google.golang.org/protobuf v1.25.0/go.mod h1:9JNX74DMeImyA3h4bdi1ymwjUzf21/xIlbajtzgsN7c=
-gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 h1:FVCohIoYO7IJoDDVpV2pdq7SgrMH6wHnuTyrdrxJNoY=
-gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0/go.mod h1:OdE7CF6DbADk7lN8LIKRzRJTTZXIjtWgA5THM5lhBAw=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=

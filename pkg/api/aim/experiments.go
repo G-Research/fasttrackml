@@ -256,7 +256,7 @@ func DeleteExperiment(c *fiber.Ctx) error {
 	id32 := int32(id)
 
 	// TODO this code should move to service with injected repository
-	experimentRepo := repositories.NewExperimentRepository(database.DB.DB)
+	experimentRepo := repositories.NewExperimentRepository(database.DB)
 	experiment := models.Experiment{ID: &id32}
 	err = experimentRepo.Delete(c.Context(), &experiment)
 	if err != nil {

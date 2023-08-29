@@ -1,6 +1,6 @@
 module github.com/G-Research/fasttrackml
 
-go 1.21
+go 1.21.0
 
 replace (
 	github.com/mattn/go-sqlite3 v1.14.16 => github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20230327164124-765f25ea5431

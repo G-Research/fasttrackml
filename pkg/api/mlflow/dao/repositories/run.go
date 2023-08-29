@@ -172,7 +172,7 @@ func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
 		// verify deletion
 		// NOTE: tx.RowsAffected does not provide correct number of deleted, using the returning slice instead
 		if len(runs) != len(ids) {
-			return eris.Errorf("count of deleted runs does not match length of ids input (invalid run ID?)")
+			return eris.New("count of deleted runs does not match length of ids input (invalid run ID?)")
 		}
 
 		// renumber the remainder
@@ -266,8 +266,8 @@ func getMinRowNum(runs []models.Run) models.RowNum {
 
 // renumberRows will update the runs.row_num field with the correct ordinal
 func (r RunRepository) renumberRows(tx *gorm.DB, startWith models.RowNum) error {
-	if startWith <= models.RowNum(0) {
-		return eris.Errorf("attempting to renumber with 0 or less row number value")
+	if startWith < models.RowNum(0) {
+		return eris.New("attempting to renumber with less than 0 row number value")
 	}
 
 	if tx.Dialector.Name() == "postgres" {

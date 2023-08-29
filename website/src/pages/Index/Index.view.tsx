@@ -11,7 +11,7 @@ export default function Home(): React.JSX.Element {
     const {siteConfig} = useDocusaurusContext();
     return (
         <Layout
-            title="Experiment tracking server focused scalability"
+            title="Experiment tracking server focused on scalability"
             description={`${siteConfig.tagline}`}>
             <HeroSection/>
             <main>

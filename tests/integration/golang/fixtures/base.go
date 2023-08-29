@@ -1,6 +1,8 @@
 package fixtures
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
@@ -8,7 +10,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-// BaseFixtures represents base fixtures object.
+// baseFixtures represents base fixtures object.
 type baseFixtures struct {
 	db *gorm.DB
 }
@@ -16,7 +18,8 @@ type baseFixtures struct {
 // UnloadFixtures cleans database from the old data.
 func (f baseFixtures) UnloadFixtures() error {
 	for _, table := range []interface{}{
-		database.App{}, // TODO update to models when available
+		database.Dashboard{}, // TODO update to models when available
+		database.App{},       // TODO update to models when available
 		models.Tag{},
 		models.Param{},
 		models.LatestMetric{},
@@ -30,4 +33,18 @@ func (f baseFixtures) UnloadFixtures() error {
 		}
 	}
 	return nil
+}
+
+// CreateDB will convert the a DSN input into a database connection
+func CreateDB(databaseDSN string) (db database.DBProvider, err error) {
+	db, err = database.MakeDBProvider(
+		databaseDSN,
+		1*time.Second,
+		20,
+		false,
+		false,
+		"",
+	)
+	database.DB = db.GormDB()
+	return
 }

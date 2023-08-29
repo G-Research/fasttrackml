@@ -2,32 +2,51 @@ services:
   service:
     build:
       context: .
-      args:
-        tags: netgo osusergo sqlite_foreign_keys sqlite_math_functions sqlite_omit_load_extension sqlite_unlock_notify sqlite_vacuum_incr
+    volumes:
+      - tmp:/tmp
     depends_on:
+      - minio
       - postgres
     environment:
-      FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
       FML_LOG_LEVEL: debug
+      FML_DATABASE_URI: ${FML_DATABASE_URI}
+      FML_S3_ENDPOINT_URI: http://minio:9000
+      AWS_ACCESS_KEY_ID: "user"
+      AWS_SECRET_ACCESS_KEY: "password"
 
   postgres:
     image: postgres:latest
     environment:
       - POSTGRES_PASSWORD=postgres
 
+  minio:
+    image: minio/minio:latest
+    entrypoint: sh
+    command: -c 'mkdir -p /data/{bucket1,bucket2,bucket3} && minio server /data'
+    environment:
+      MINIO_ROOT_USER: "user"
+      MINIO_ROOT_PASSWORD: "password"
+      MINIO_CONSOLE_ADDRESS: ":9001"
+
   integration-tests:
-    image: golang:1.20
+    image: golang:1.21
     command: make test-go-integration
     volumes:
       - .:/go/src
       - go-cache:/go/pkg
+      - tmp:/tmp
     working_dir: /go/src
     depends_on:
-      - service
+      - minio
       - postgres
+      - service
     environment:
-      FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
       FML_SERVICE_URI: http://service:5000
+      FML_DATABASE_URI: ${FML_DATABASE_URI}
+      FML_S3_ENDPOINT_URI: http://minio:9000
+      AWS_ACCESS_KEY_ID: "user"
+      AWS_SECRET_ACCESS_KEY: "password"
 
 volumes:
   go-cache:
+  tmp:

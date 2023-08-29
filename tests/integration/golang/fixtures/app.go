@@ -13,25 +13,18 @@ import (
 // AppFixtures represents data fixtures object.
 type AppFixtures struct {
 	baseFixtures
-	*database.DbInstance
+	*database.DBInstance
 }
 
 // NewAppFixtures creates new instance of AppFixtures.
 func NewAppFixtures(databaseDSN string) (*AppFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
+	db, err := CreateDB(databaseDSN)
 	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
+		return nil, err
 	}
 	return &AppFixtures{
-		baseFixtures: baseFixtures{db: db.DB},
-		DbInstance:   db,
+		baseFixtures: baseFixtures{db: db.GormDB()},
+		DBInstance:   nil,
 	}, nil
 }
 
@@ -45,7 +38,7 @@ func (f AppFixtures) CreateApp(
 	return app, nil
 }
 
-// CreateApps creates some num apps belonging to the experiment
+// CreateApps creates some num apps belonging to the experiment.
 func (f AppFixtures) CreateApps(
 	ctx context.Context, num int,
 ) ([]*database.App, error) {
@@ -69,7 +62,7 @@ func (f AppFixtures) CreateApps(
 	return apps, nil
 }
 
-// GetApps fetches all apps which are not archived
+// GetApps fetches all apps which are not archived.
 func (f AppFixtures) GetApps(
 	ctx context.Context,
 ) ([]database.App, error) {
@@ -77,7 +70,7 @@ func (f AppFixtures) GetApps(
 	if err := f.db.WithContext(ctx).
 		Where("NOT is_archived").
 		Find(&apps).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting `app` entities")
+		return nil, eris.Wrapf(err, "error getting 'app' entities")
 	}
 	return apps, nil
 }

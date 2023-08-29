@@ -71,7 +71,7 @@ func (r RunRepository) GetByID(ctx context.Context, id string) (*models.Run, err
 	).Preload(
 		"Tags",
 	).First(&run).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting `run` entity by id: %s", id)
+		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", id)
 	}
 	return &run, nil
 }
@@ -95,7 +95,7 @@ func (r RunRepository) GetByIDAndLifecycleStage(
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, eris.Wrapf(err, "error getting `run` entity by id: %s", id)
+		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", id)
 	}
 	return &run, nil
 }
@@ -111,7 +111,7 @@ func (r RunRepository) Create(ctx context.Context, run *models.Run) error {
 		}
 		return tx.Create(&run).Error
 	}); err != nil {
-		return eris.Wrap(err, "error creating new `run` entity")
+		return eris.Wrap(err, "error creating new 'run' entity")
 	}
 	return nil
 }
@@ -172,7 +172,7 @@ func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
 		// verify deletion
 		// NOTE: tx.RowsAffected does not provide correct number of deleted, using the returning slice instead
 		if len(runs) != len(ids) {
-			return eris.Errorf("count of deleted runs does not match length of ids input (invalid run ID?)")
+			return eris.New("count of deleted runs does not match length of ids input (invalid run ID?)")
 		}
 
 		// renumber the remainder
@@ -230,12 +230,12 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 			case "mlflow.user":
 				run.UserID = tag.Value
 				if err := r.UpdateWithTransaction(ctx, tx, run); err != nil {
-					return eris.Wrap(err, "error updating run `user_id` field")
+					return eris.Wrap(err, "error updating run 'user_id' field")
 				}
 			case "mlflow.runName":
 				run.Name = tag.Value
 				if err := r.UpdateWithTransaction(ctx, tx, run); err != nil {
-					return eris.Wrap(err, "error updating run `name` field")
+					return eris.Wrap(err, "error updating run 'name' field")
 				}
 			}
 		}
@@ -266,8 +266,8 @@ func getMinRowNum(runs []models.Run) models.RowNum {
 
 // renumberRows will update the runs.row_num field with the correct ordinal
 func (r RunRepository) renumberRows(tx *gorm.DB, startWith models.RowNum) error {
-	if startWith <= models.RowNum(0) {
-		return eris.Errorf("attempting to renumber with 0 or less row number value")
+	if startWith < models.RowNum(0) {
+		return eris.New("attempting to renumber with less than 0 row number value")
 	}
 
 	if tx.Dialector.Name() == "postgres" {

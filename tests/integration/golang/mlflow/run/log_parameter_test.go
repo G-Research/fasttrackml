@@ -25,7 +25,6 @@ type LogParamTestSuite struct {
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
-	run                *models.Run
 }
 
 func TestLogParamTestSuite(t *testing.T) {
@@ -40,38 +39,37 @@ func (s *LogParamTestSuite) SetupTest() {
 	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
+}
 
-	exp := &models.Experiment{
+func (s *LogParamTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+	}()
+
+	experiment := &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 	}
-	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
+	_, err := s.experimentFixtures.CreateExperiment(context.Background(), experiment)
 	assert.Nil(s.T(), err)
 
 	run := &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
-		ExperimentID:   *exp.ID,
+		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
 	}
 	run, err = s.runFixtures.CreateRun(context.Background(), run)
 	assert.Nil(s.T(), err)
-	s.run = run
-}
-
-func (s *LogParamTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-	}()
 
 	req := request.LogParamRequest{
-		RunID: s.run.ID,
+		RunID: run.ID,
 		Key:   "key1",
 		Value: "value1",
 	}
 	resp := map[string]any{}
-	err := s.client.DoPostRequest(
+	err = s.client.DoPostRequest(
 		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
 		req,
 		&resp,
@@ -81,10 +79,6 @@ func (s *LogParamTestSuite) Test_Ok() {
 }
 
 func (s *LogParamTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-	}()
-
 	// missing run_id
 	req := request.LogParamRequest{
 		Key:   "key1",

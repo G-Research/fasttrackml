@@ -66,7 +66,10 @@ func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (
 		return nil, api.NewResourceDoesNotExistError("unable to find experiment with id '%s': %s", req.ExperimentID, err)
 	}
 
-	run := convertors.ConvertCreateRunRequestToDBModel(experiment, req)
+	run, err := convertors.ConvertCreateRunRequestToDBModel(experiment, req)
+	if err != nil {
+		return nil, api.NewInternalError("error converting request to actual run model: %s", err)
+	}
 	if err := s.runRepository.Create(ctx, run); err != nil {
 		return nil, api.NewInternalError("error inserting run: %s", err)
 	}
@@ -276,11 +279,13 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 
 			if kind == nil {
 				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
-					key = fmt.Sprintf("LOWER(%s)", key)
+					key = fmt.Sprintf("LOWER(runs.%s)", key)
 					comparison = "LIKE"
 					value = strings.ToLower(value.(string))
+					tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
+				} else {
+					tx.Where(fmt.Sprintf("runs.%s %s ?", key, comparison), value)
 				}
-				tx.Where(fmt.Sprintf("runs.%s %s ?", key, comparison), value)
 			} else {
 				table := fmt.Sprintf("filter_%d", n)
 				where := fmt.Sprintf("value %s ?", comparison)

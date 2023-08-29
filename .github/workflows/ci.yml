@@ -12,9 +12,9 @@ permissions:
   contents: read
 
 jobs:
-  lint:
+  go-lint:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Lint
+    name: Go Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,11 +23,11 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: "1.21"
 
       - name: Read build tags
         id: tags
-        run: echo tags=$(jq -r '."go.buildTags"' .vscode/settings.json) >> $GITHUB_OUTPUT
+        run: echo tags=$(cat .go-build-tags) >> $GITHUB_OUTPUT
 
       - name: Download formatters
         run: |
@@ -48,7 +48,7 @@ jobs:
           fi
 
       - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.30.16
+        run: go install github.com/vektra/mockery/v2@v2.32.4
 
       - name: Generate mocks
         run: make mocks-generate
@@ -58,12 +58,32 @@ jobs:
 
       - uses: dominikh/staticcheck-action@v1.3.0
         with:
-          version: "2022.1.3"
+          version: "2023.1.5"
+          install-go: false
           build-tags: ${{ steps.tags.outputs.tags }}
 
-  golang-unit-tests:
+  python-lint:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Golang Unit Tests
+    name: Python Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install pipenv
+        run: pip install pipenv==2022.12.19
+
+      - name: Run Python linters
+        run: make python-lint
+
+  go-unit-tests:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Go Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -72,20 +92,20 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: "1.21"
 
       - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.30.16
+        run: go install github.com/vektra/mockery/v2@v2.32.4
 
       - name: Generate mocks
         run: make mocks-generate
 
-      - name: Run Golang Unit Tests
+      - name: Run Go Unit Tests
         run: make test-go-unit
 
-  golang-integration-tests:
+  go-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Golang Integration Tests
+    name: Go Integration Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -97,12 +117,19 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: "1.21"
 
-      - name: Run Integration Tests
+      - name: Run Integration Tests (Sqlite)
         run: make service-test
         env:
           DOCKER_BUILDKIT: 1
+          FML_DATABASE_URI: sqlite:///tmp/fasttrack-test.db
+
+      - name: Run Integration Tests (Postgres)
+        run: make service-test
+        env:
+          DOCKER_BUILDKIT: 1
+          FML_DATABASE_URI: postgres://postgres:postgres@postgres/postgres
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
@@ -133,10 +160,81 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: "1.21"
 
       - name: Run ${{ matrix.api }} integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
+
+  build:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Build software distribution for ${{ matrix.os }}/${{ matrix.arch }}
+    strategy:
+      matrix:
+        os: [darwin, linux, windows]
+        arch: [amd64, arm64]
+        exclude:
+          - os: windows
+            arch: arm64
+        include:
+          - os: darwin
+            runner: macos-latest
+          - os: linux
+            runner: ubuntu-latest
+          - os: windows
+            runner: ubuntu-latest
+      fail-fast: true
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install pipenv
+        run: pip install pipenv==2022.12.19
+
+      - name: Install arm64 cross-compilation toolchain on Linux
+        if: matrix.os == 'linux' && matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+          echo CC=aarch64-linux-gnu-gcc >> $GITHUB_ENV
+
+      - name: Install Windows cross-compilation toolchain on Linux
+        if: matrix.os == 'windows'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64-win32
+          echo CC=x86_64-w64-mingw32-gcc >> $GITHUB_ENV
+
+      - name: Build software distribution
+        run: make dist
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: fasttrackml-archives
+          path: dist/*
+
+      - name: Upload wheels artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: fasttrackml-wheels
+          path: wheelhouse/*.whl
 
   build-image:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
@@ -152,8 +250,7 @@ jobs:
       - name: Compute build args
         id: build-args
         run: |
-          echo tags=$(jq -r '."go.buildTags"' .vscode/settings.json) >> $GITHUB_OUTPUT
-          echo version=$(git describe --tags | sed 's/^v//') >> $GITHUB_OUTPUT
+          echo version=$(git describe --tags --always --match='v*' | sed 's/^v//') >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -177,7 +274,6 @@ jobs:
         with:
           context: .
           build-args: |
-            tags=${{ steps.build-args.outputs.tags }}
             version=${{ steps.build-args.outputs.version }}
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
@@ -195,13 +291,17 @@ jobs:
           path: fasttrackml-oci.tar
 
   # Virtual job that can be configured as a required check before a PR can be merged.
+  # As GitHub considers a check as successful if it is skipped, we need to check its status in
+  # another workflow (check-required.yml) and create a check there.
   all-required-checks-done:
     name: All required checks done
     needs:
-      - lint
-      - golang-unit-tests
-      - golang-integration-tests
+      - go-lint
+      - python-lint
+      - go-unit-tests
+      - go-integration-tests
       - python-integration-tests
+      - build
       - build-image
     runs-on: ubuntu-latest
     steps:

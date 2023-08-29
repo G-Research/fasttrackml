@@ -1,189 +1,16 @@
 package database
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
-	"io"
-	glog "log"
-	"net/url"
-	"os"
-	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
-	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"gorm.io/plugin/dbresolver"
 )
 
-type DbInstance struct {
-	*gorm.DB
-	dsn     string
-	closers []io.Closer
-}
-
-func (db *DbInstance) Close() error {
-	for _, c := range db.closers {
-		err := c.Close()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (db *DbInstance) DSN() string {
-	return db.dsn
-}
-
-var DB *DbInstance = &DbInstance{}
-
-func ConnectDB(
-	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string,
-) (*DbInstance, error) {
-	DB.dsn = dsn
-	var sourceConn gorm.Dialector
-	var replicaConn gorm.Dialector
-	u, err := url.Parse(dsn)
-	if err != nil {
-		return nil, fmt.Errorf("invalid database URL: %w", err)
-	}
-	switch u.Scheme {
-	case "postgres", "postgresql":
-		sourceConn = postgres.Open(u.String())
-	case "sqlite":
-		dbURL := *u
-		q := u.Query()
-		q.Set("_case_sensitive_like", "true")
-		q.Set("_mutex", "no")
-		if q.Get("mode") != "memory" && !(q.Has("_journal") || q.Has("_journal_mode")) {
-			q.Set("_journal", "WAL")
-		}
-		dbURL.RawQuery = q.Encode()
-
-		if reset && q.Get("mode") != "memory" {
-			file := dbURL.Host
-			if file == "" {
-				file = dbURL.Path
-			}
-			log.Infof("Removing database file %s", file)
-			if err := os.Remove(file); err != nil && !errors.Is(err, os.ErrNotExist) {
-				return nil, fmt.Errorf("failed to remove database file: %w", err)
-			}
-		}
-
-		s, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
-		if err != nil {
-			return nil, fmt.Errorf("failed to connect to database: %w", err)
-		}
-		DB.closers = append(DB.closers, s)
-		s.SetMaxIdleConns(1)
-		s.SetMaxOpenConns(4)
-		s.SetConnMaxIdleTime(0)
-		s.SetConnMaxLifetime(0)
-		sourceConn = sqlite.Dialector{
-			Conn: s,
-		}
-
-		q.Set("_query_only", "true")
-		dbURL.RawQuery = q.Encode()
-		r, err := sql.Open(sqlite.DriverName, strings.Replace(dbURL.String(), "sqlite://", "file:", 1))
-		if err != nil {
-			DB.Close()
-			return nil, fmt.Errorf("failed to connect to database: %w", err)
-		}
-		DB.closers = append(DB.closers, r)
-		replicaConn = sqlite.Dialector{
-			Conn: r,
-		}
-	default:
-		return nil, fmt.Errorf("unsupported database scheme %s", u.Scheme)
-	}
-
-	logURL := *u
-	q := logURL.Query()
-	if q.Has("_key") {
-		q.Set("_key", "xxxxx")
-	}
-	logURL.RawQuery = q.Encode()
-	log.Infof("Using database %s", logURL.Redacted())
-
-	dbLogLevel := logger.Warn
-	if log.GetLevel() == log.DebugLevel {
-		dbLogLevel = logger.Info
-	}
-	DB.DB, err = gorm.Open(sourceConn, &gorm.Config{
-		Logger: logger.New(
-			glog.New(
-				log.StandardLogger().WriterLevel(log.WarnLevel),
-				"",
-				0,
-			),
-			logger.Config{
-				SlowThreshold:             slowThreshold,
-				LogLevel:                  dbLogLevel,
-				IgnoreRecordNotFoundError: true,
-			},
-		),
-	})
-	if err != nil {
-		DB.Close()
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
-	}
-
-	if replicaConn != nil {
-		DB.Use(
-			dbresolver.Register(dbresolver.Config{
-				Replicas: []gorm.Dialector{
-					replicaConn,
-				},
-			}),
-		)
-	}
-
-	if u.Scheme != "sqlite" {
-		sqlDB, _ := DB.DB.DB()
-		sqlDB.SetConnMaxIdleTime(time.Minute)
-		sqlDB.SetMaxIdleConns(poolMax)
-		sqlDB.SetMaxOpenConns(poolMax)
-
-		if reset {
-			if err := resetDB(DB); err != nil {
-				DB.Close()
-				return nil, err
-			}
-		}
-	}
-
-	if err := checkAndMigrateDB(DB, migrate); err != nil {
-		DB.Close()
-		return nil, err
-	}
-
-	if err := createDefaultExperiment(DB, artifactRoot); err != nil {
-		DB.Close()
-		return nil, err
-	}
-
-	return DB, nil
-}
-
-func resetDB(db *DbInstance) error {
-	switch db.Dialector.Name() {
-	case "postgres":
-		log.Info("Resetting database schema")
-		db.Exec("drop schema public cascade")
-		db.Exec("create schema public")
-	default:
-		return fmt.Errorf("unable to reset database with backend \"%s\"", db.Dialector.Name())
-	}
-	return nil
-}
-
-func checkAndMigrateDB(db *DbInstance, migrate bool) error {
+func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
+	db := dbProvider.GormDB()
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion
 	{
@@ -197,6 +24,13 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "5d042539be4f" {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
+		}
+
+		runWithoutForeignKeyIfNeeded := func(fn func() error) error { return fn() }
+		switch db.Dialector.Name() {
+		case "sqlite":
+			migrator := db.Migrator().(sqlite.Migrator)
+			runWithoutForeignKeyIfNeeded = migrator.RunWithoutForeignKey
 		}
 
 		switch alembicVersion.Version {
@@ -380,8 +214,12 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 				if err := db.Transaction(func(tx *gorm.DB) error {
 					constraints := []string{"Params", "Tags", "Metrics", "LatestMetrics"}
 					for _, constraint := range constraints {
-						if err := tx.Migrator().DropConstraint(&Run{}, constraint); err != nil {
-							return err
+						// SQLite tables need to be recreated to add or remove constraints.
+						// By not dropping the constraint, we can avoid having to recreate the table twice.
+						if db.Dialector.Name() != "sqlite" {
+							if err := tx.Migrator().DropConstraint(&Run{}, constraint); err != nil {
+								return err
+							}
 						}
 						if err := tx.Migrator().CreateConstraint(&Run{}, constraint); err != nil {
 							return err
@@ -398,22 +236,33 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 
 			case "1ce8669664d2":
 				log.Info("Migrating database to FastTrackML schema 5d042539be4f")
-				if err := db.Transaction(func(tx *gorm.DB) error {
-					constraints := []string{"Tags", "Runs"}
-					for _, constraint := range constraints {
-						if err := tx.Migrator().DropConstraint(&Experiment{}, constraint); err != nil {
-							return err
+				// We need to run this migration without foreign key constraints to avoid
+				// the cascading delete to kick in and delete all the run data.
+				if err := runWithoutForeignKeyIfNeeded(func() error {
+					if err := db.Transaction(func(tx *gorm.DB) error {
+						constraints := []string{"Tags", "Runs"}
+						for _, constraint := range constraints {
+							// SQLite tables need to be recreated to add or remove constraints.
+							// By not dropping the constraint, we can avoid having to recreate the table twice.
+							if db.Dialector.Name() != "sqlite" {
+								if err := tx.Migrator().DropConstraint(&Experiment{}, constraint); err != nil {
+									return err
+								}
+							}
+							if err := tx.Migrator().CreateConstraint(&Experiment{}, constraint); err != nil {
+								return err
+							}
 						}
-						if err := tx.Migrator().CreateConstraint(&Experiment{}, constraint); err != nil {
-							return err
-						}
+						return tx.Model(&SchemaVersion{}).
+							Where("1 = 1").
+							Update("Version", "5d042539be4f").
+							Error
+					}); err != nil {
+						return fmt.Errorf("error migrating database to FastTrackML schema 5d042539be4f: %w", err)
 					}
-					return tx.Model(&SchemaVersion{}).
-						Where("1 = 1").
-						Update("Version", "5d042539be4f").
-						Error
+					return nil
 				}); err != nil {
-					return fmt.Errorf("error migrating database to FastTrackML schema 5d042539be4f: %w", err)
+					return err
 				}
 
 			default:
@@ -456,39 +305,5 @@ func checkAndMigrateDB(db *DbInstance, migrate bool) error {
 		}
 	}
 
-	return nil
-}
-
-func createDefaultExperiment(db *DbInstance, artifactRoot string) error {
-	if tx := db.First(&Experiment{}, 0); tx.Error != nil {
-		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			log.Info("Creating default experiment")
-			var id int32 = 0
-			ts := time.Now().UTC().UnixMilli()
-			exp := Experiment{
-				ID:             &id,
-				Name:           "Default",
-				LifecycleStage: LifecycleStageActive,
-				CreationTime: sql.NullInt64{
-					Int64: ts,
-					Valid: true,
-				},
-				LastUpdateTime: sql.NullInt64{
-					Int64: ts,
-					Valid: true,
-				},
-			}
-			if tx := db.Create(&exp); tx.Error != nil {
-				return fmt.Errorf("error creating default experiment: %s", tx.Error)
-			}
-
-			exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(artifactRoot, "/"), *exp.ID)
-			if tx := db.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
-				return fmt.Errorf("error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)
-			}
-		} else {
-			return fmt.Errorf("unable to find default experiment: %s", tx.Error)
-		}
-	}
 	return nil
 }

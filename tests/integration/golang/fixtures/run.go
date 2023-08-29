@@ -4,38 +4,35 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // RunFixtures represents data fixtures object.
 type RunFixtures struct {
 	baseFixtures
-	runRepository repositories.RunRepositoryProvider
+	runRepository    repositories.RunRepositoryProvider
+	tagRepository    repositories.TagRepositoryProvider
+	metricRepository repositories.MetricRepositoryProvider
+	paramRepository  repositories.ParamRepository
 }
 
 // NewRunFixtures creates new instance of RunFixtures.
 func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
+	db, err := CreateDB(databaseDSN)
 	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
+		return nil, err
 	}
 	return &RunFixtures{
-		baseFixtures:  baseFixtures{db: db.DB},
-		runRepository: repositories.NewRunRepository(db.DB),
+		baseFixtures:     baseFixtures{db: db.GormDB()},
+		runRepository:    repositories.NewRunRepository(db.GormDB()),
+		tagRepository:    repositories.NewTagRepository(db.GormDB()),
+		metricRepository: repositories.NewMetricRepository(db.GormDB()),
+		paramRepository:  *repositories.NewParamRepository(db.GormDB()),
 	}, nil
 }
 
@@ -59,8 +56,29 @@ func (f RunFixtures) UpdateRun(
 	return nil
 }
 
-// CreateRuns creates some num runs belonging to the experiment
-func (f RunFixtures) CreateRuns(
+// ArchiveRuns soft-deletes existing Runs.
+func (f RunFixtures) ArchiveRuns(
+	ctx context.Context, runIDs []string,
+) error {
+	if err := f.runRepository.ArchiveBatch(ctx, runIDs); err != nil {
+		return eris.Wrap(err, "error archiving runs")
+	}
+	return nil
+}
+
+// CreateExampleRun creates one example run belonging to the experiment, with tags and metrics.
+func (f RunFixtures) CreateExampleRun(
+	ctx context.Context, exp *models.Experiment,
+) (*models.Run, error) {
+	runs, err := f.CreateExampleRuns(ctx, exp, 1)
+	if err != nil {
+		return nil, err
+	}
+	return runs[0], err
+}
+
+// CreateExampleRuns creates some example runs belonging to the experiment, with tags and metrics.
+func (f RunFixtures) CreateExampleRuns(
 	ctx context.Context, exp *models.Experiment, num int,
 ) ([]*models.Run, error) {
 	var runs []*models.Run
@@ -72,19 +90,50 @@ func (f RunFixtures) CreateRuns(
 			Status:         models.StatusRunning,
 			SourceType:     "JOB",
 			ExperimentID:   *exp.ID,
+			ArtifactURI:    "artifact_uri",
 			LifecycleStage: models.LifecycleStageActive,
 		}
 		run, err := f.CreateRun(ctx, run)
 		if err != nil {
 			return nil, err
 		}
+		tag := models.Tag{
+			Key:   "my tag key",
+			Value: "my tag value",
+			RunID: run.ID,
+		}
+		err = f.CreateTag(ctx, tag)
+		if err != nil {
+			return nil, err
+		}
+		run.Tags = []models.Tag{tag}
+
+		err = f.CreateMetrics(ctx, run, 2)
+		if err != nil {
+			return nil, err
+		}
+
+		err = f.CreateParams(ctx, run, 2)
+		if err != nil {
+			return nil, err
+		}
+
 		runs = append(runs, run)
 	}
 	return runs, nil
 }
 
-// GetTestRuns fetches all runs for an experiment
-func (f RunFixtures) GetTestRuns(
+// GetRun returns run by requested run id.
+func (f RunFixtures) GetRun(ctx context.Context, runID string) (*models.Run, error) {
+	run, err := f.runRepository.GetByID(ctx, runID)
+	if err != nil {
+		return nil, eris.Wrap(err, "error getting test run")
+	}
+	return run, nil
+}
+
+// GetRuns fetches all runs for an experiment.
+func (f RunFixtures) GetRuns(
 	ctx context.Context, experimentID int32,
 ) ([]models.Run, error) {
 	var runs []models.Run
@@ -100,11 +149,11 @@ func (f RunFixtures) GetTestRuns(
 	return runs, nil
 }
 
-// FindMinMaxRowNums finds min and max rownum for an experiment's runs
+// FindMinMaxRowNums finds min and max rownum for an experiment's runs.
 func (f RunFixtures) FindMinMaxRowNums(
 	ctx context.Context, experimentID int32,
 ) (int64, int64, error) {
-	runs, err := f.GetTestRuns(ctx, experimentID)
+	runs, err := f.GetRuns(ctx, experimentID)
 	if err != nil {
 		return 0, 0, eris.Wrap(err, "error fetching test runs")
 	}
@@ -118,4 +167,68 @@ func (f RunFixtures) FindMinMaxRowNums(
 		}
 	}
 	return int64(min), int64(max), nil
+}
+
+// CreateTag creates a new Tag for a run.
+func (f RunFixtures) CreateTag(
+	ctx context.Context, tag models.Tag,
+) error {
+	if err := f.tagRepository.CreateRunTagWithTransaction(ctx, f.db, tag.RunID, tag.Key, tag.Value); err != nil {
+		return eris.Wrap(err, "error creating run tag")
+	}
+	return nil
+}
+
+// CreateMetrics creats some example metrics for a Run, up to count.
+func (f RunFixtures) CreateMetrics(
+	ctx context.Context, run *models.Run, count int,
+) error {
+	for i := 1; i <= count; i++ {
+		// create test `metric` and test `latest metric` and connect to run.
+
+		for iter := 1; iter <= count; iter++ {
+			err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
+				Key:       fmt.Sprintf("key%d", i),
+				Value:     123.1 + float64(iter),
+				Timestamp: 1234567890 + int64(iter),
+				RunID:     run.ID,
+				Step:      int64(iter),
+				IsNan:     false,
+				Iter:      int64(iter),
+			}).Error
+			if err != nil {
+				return err
+			}
+		}
+		err := f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
+			Key:       fmt.Sprintf("key%d", i),
+			Value:     123.1 + float64(count),
+			Timestamp: 1234567890 + int64(count),
+			Step:      int64(count),
+			IsNan:     false,
+			RunID:     run.ID,
+			LastIter:  int64(count),
+		}).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// CreateParams creats some example params for a Run, up to count.
+func (f RunFixtures) CreateParams(
+	ctx context.Context, run *models.Run, count int,
+) error {
+	for i := 1; i <= count; i++ {
+		err := f.baseFixtures.db.WithContext(ctx).Create(&models.Param{
+			Key:   fmt.Sprintf("key%d", i),
+			Value: fmt.Sprintf("val%d", i),
+			RunID: run.ID,
+		}).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

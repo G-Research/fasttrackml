@@ -16,3 +16,9 @@ type GetProject struct {
 	Description      string  `json:"description"`
 	TelemetryEnabled float64 `json:"telementry_enabled"`
 }
+
+// ProjectParamsResponse is a response object for `GET aim/projects/params` endpoint.
+type ProjectParamsResponse struct {
+	Metric map[string][]struct{}  `json:"metric"`
+	Params map[string]interface{} `json:"params"`
+}

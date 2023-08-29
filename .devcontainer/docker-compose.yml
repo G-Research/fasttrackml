@@ -2,7 +2,8 @@ version: '3.8'
 
 volumes:
   home:
-  workspaces:
+  app-data:
+  minio-data:
   postgres-data:
 
 services:
@@ -14,9 +15,7 @@ services:
         # [Choice] Go version 1, 1.18, 1.17
         # Append -bullseye or -buster to pin to an OS version.
         # Use -bullseye variants on local arm64/Apple Silicon.
-        VARIANT: 1.20-bullseye
-        # Options
-        NODE_VERSION: "16"
+        VARIANT: 1.21-bookworm
     env_file:
       # Ensure that the variables in .env match the same variables in devcontainer.json
       - .env
@@ -30,9 +29,14 @@ services:
 
     volumes:
       - home:/home/vscode
-      - workspaces:/workspaces
+      # mount the parent to include this and all sibling projects
+      # - ../..:/workspaces
+
+      # or mount specific project paths
+      - app-data:/workspaces
+      # - ../../fasttrackml-ui-mlflow:/workspaces/fasttrackml-ui-mlflow
       - ..:/workspaces/fasttrackml:cached
-      
+
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
 
@@ -58,8 +62,22 @@ services:
       # - -c
       # - log_statement=all
     ports:
-      - 5000:5000
+      - "5432:5432"
+      - "9000:9000"
+      - "9001:9001"
+      - "5000:5000"
 
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.). Ports
     # section will work when running the compose file standalone.
+
+  minio:
+    image: minio/minio
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: user
+      MINIO_ROOT_PASSWORD: password
+      MINIO_CONSOLE_ADDRESS: ":9001"
+    command: server /data
+    network_mode: service:db

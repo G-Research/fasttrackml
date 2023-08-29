@@ -15,9 +15,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
@@ -344,7 +344,8 @@ func SearchRuns(c *fiber.Ctx) error {
 			"runs":        "runs",
 			"experiments": "Experiment",
 		},
-		TzOffset: tzOffset,
+		TzOffset:  tzOffset,
+		Dialector: database.DB.Dialector.Name(),
 	}
 	qp, err := pq.Parse(q.Query)
 	if err != nil {
@@ -538,7 +539,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 			"experiments": "experiments",
 			"metrics":     "latest_metrics",
 		},
-		TzOffset: tzOffset,
+		TzOffset:  tzOffset,
+		Dialector: database.DB.Dialector.Name(),
 	}
 	qp, err := pq.Parse(q.Query)
 	if err != nil {
@@ -929,7 +931,7 @@ func DeleteRun(c *fiber.Ctx) error {
 	}
 
 	// TODO this code should move to service with injected repository
-	runRepo := repositories.NewRunRepository(database.DB.DB)
+	runRepo := repositories.NewRunRepository(database.DB)
 	run := models.Run{ID: params.ID}
 	err := runRepo.Delete(c.Context(), &run)
 	if err != nil {
@@ -959,7 +961,7 @@ func UpdateRun(c *fiber.Ctx) error {
 
 	// TODO this code should move to service
 	run := models.Run{ID: params.ID}
-	runRepo := repositories.NewRunRepository(database.DB.DB)
+	runRepo := repositories.NewRunRepository(database.DB)
 	var err error
 	if update.Archived != nil {
 		if *update.Archived {
@@ -975,7 +977,7 @@ func UpdateRun(c *fiber.Ctx) error {
 
 	if update.Name != nil {
 		run.Name = *update.Name
-		err = database.DB.DB.Transaction(func(tx *gorm.DB) error {
+		err = database.DB.Transaction(func(tx *gorm.DB) error {
 			if err := runRepo.UpdateWithTransaction(c.Context(), tx, &run); err != nil {
 				return err
 			}
@@ -1000,7 +1002,7 @@ func ArchiveBatch(c *fiber.Ctx) error {
 	}
 
 	// TODO this code should move to service
-	runRepo := repositories.NewRunRepository(database.DB.DB)
+	runRepo := repositories.NewRunRepository(database.DB)
 	var err error
 	if c.Query("archive") == "true" {
 		err = runRepo.ArchiveBatch(c.Context(), ids)
@@ -1022,7 +1024,7 @@ func DeleteBatch(c *fiber.Ctx) error {
 	}
 
 	// TODO this code should move to service
-	runRepo := repositories.NewRunRepository(database.DB.DB)
+	runRepo := repositories.NewRunRepository(database.DB)
 	if err := runRepo.DeleteBatch(c.Context(), ids); err != nil {
 		return err
 	}

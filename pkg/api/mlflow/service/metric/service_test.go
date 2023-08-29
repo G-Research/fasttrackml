@@ -20,7 +20,7 @@ func TestService_GetMetricHistory_Ok(t *testing.T) {
 	metricRepository := repositories.MockMetricRepositoryProvider{}
 	metricRepository.On(
 		"GetMetricHistoryByRunIDAndKey",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		"1",
 		"key",
 	).Return([]models.Metric{
@@ -60,7 +60,7 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 	}{
 		{
 			name:    "EmptyOrIncorrectRunID",
-			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.GetMetricHistoryRequest{},
 			service: func() *Service {
 				metricRepository := repositories.MockMetricRepositoryProvider{}
@@ -69,7 +69,7 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 		},
 		{
 			name:  "EmptyOrIncorrectMetricKey",
-			error: api.NewInvalidParameterValueError(`Missing value for required parameter 'metric_key'`),
+			error: api.NewInvalidParameterValueError("Missing value for required parameter 'metric_key'"),
 			request: &request.GetMetricHistoryRequest{
 				RunID: "1",
 			},
@@ -80,7 +80,7 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 		},
 		{
 			name:  "GetMetricHistoryDatabaseError",
-			error: api.NewInternalError(`unable to get metric history for metric "key" of run "1"`),
+			error: api.NewInternalError("unable to get metric history for metric 'key' of run '1'"),
 			request: &request.GetMetricHistoryRequest{
 				RunID:     "1",
 				MetricKey: "key",
@@ -89,7 +89,7 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"GetMetricHistoryByRunIDAndKey",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					"1",
 					"key",
 				).Return(nil, errors.New("database error"))
@@ -112,7 +112,7 @@ func TestService_GetMetricHistoryBulk_Ok(t *testing.T) {
 	metricRepository := repositories.MockMetricRepositoryProvider{}
 	metricRepository.On(
 		"GetMetricHistoryBulk",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		[]string{"1", "2"},
 		"key",
 		10,
@@ -201,7 +201,7 @@ func TestService_GetMetricHistoryBulk_Error(t *testing.T) {
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"GetMetricHistoryBulk",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					[]string{"1"},
 					"key",
 					10,
@@ -225,7 +225,7 @@ func TestNewService_GetMetricHistories_Ok(t *testing.T) {
 	metricRepository := repositories.MockMetricRepositoryProvider{}
 	metricRepository.On(
 		"GetMetricHistories",
-		mock.AnythingOfType("*context.emptyCtx"),
+		context.TODO(),
 		[]string{"1", "2"},
 		mock.Anything,
 		[]string{"key1", "key2"},
@@ -275,7 +275,7 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 		},
 		{
 			name:  "UnsupportedViewType",
-			error: api.NewInvalidParameterValueError(`Invalid run_view_type 'unsupported'`),
+			error: api.NewInvalidParameterValueError("Invalid run_view_type 'unsupported'"),
 			request: &request.GetMetricHistoriesRequest{
 				RunIDs:   []string{"1"},
 				ViewType: "unsupported",
@@ -311,7 +311,7 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"GetMetricHistories",
-					mock.AnythingOfType("*context.emptyCtx"),
+					context.TODO(),
 					mock.Anything,
 					[]string{"1"},
 					[]string{"key1", "key2"},

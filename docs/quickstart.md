@@ -2,12 +2,14 @@
 
 ## Install Dependencies
 
-FastTrackML requires the following dependencies to be installed on your system:
+FastTrackML requires the following _optional_ dependencies to be installed on your system:
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Python 3](https://www.python.org/downloads/)
+- [Docker](https://docs.docker.com/get-docker/) — enables you to download and run FastTrackML with just one command
+- [Python 3](https://www.python.org/downloads/) — enables you to run the test scripts
 
 ## Run FastTrackML
+
+### With Docker
 
 FastTrackML can be run using the following command:
 
@@ -15,9 +17,20 @@ FastTrackML can be run using the following command:
 docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
 ```
 
+### With a native executable
+
+Download the executable for your platform from the [latest release](https://github.com/G-Research/fasttrackml/releases/latest) assets.
+Extract it and then run FastTrackML with the following command:
+
+```bash
+./fml
+```
+
+### Verification
+
 Verify that you can see the UI by navigating to http://localhost:5000/.
 
-![FastTrackML UI](images/main_ui.jpg)
+![FastTrackML UI](images/main_ui.png)
 
 ## Run a quick test script
 
@@ -33,7 +46,7 @@ python3 minimal.py
 
 After running this script, you should see the following output from http://localhost:5000/aim/:
 
-![FastTrackML UI](images/runs_ui.jpg)
+![FastTrackML UI](images/runs_ui.png)
 
 From here you can check out the metrics and run information to see more details about the run.
 

@@ -45,11 +45,14 @@ func (s *DeleteBatchTestSuite) SetupTest() {
 	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	s.runs, err = s.runFixtures.CreateRuns(context.Background(), exp, 10)
+	s.runs, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 10)
 	assert.Nil(s.T(), err)
 }
 
 func (s *DeleteBatchTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+	}()
 	tests := []struct {
 		name             string
 		runIDs           []string
@@ -82,7 +85,7 @@ func (s *DeleteBatchTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
 
-			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+			runs, err := s.runFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 
@@ -99,7 +102,6 @@ func (s *DeleteBatchTestSuite) Test_Ok() {
 func (s *DeleteBatchTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string
@@ -128,7 +130,7 @@ func (s *DeleteBatchTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), resp.Error(), "count of deleted runs does not match length of ids input")
 
-			runs, err := s.runFixtures.GetTestRuns(context.Background(), s.runs[0].ExperimentID)
+			runs, err := s.runFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 

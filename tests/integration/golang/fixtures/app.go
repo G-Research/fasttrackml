@@ -13,7 +13,7 @@ import (
 // AppFixtures represents data fixtures object.
 type AppFixtures struct {
 	baseFixtures
-	*database.DbInstance
+	*database.DBInstance
 }
 
 // NewAppFixtures creates new instance of AppFixtures.
@@ -23,8 +23,8 @@ func NewAppFixtures(databaseDSN string) (*AppFixtures, error) {
 		return nil, err
 	}
 	return &AppFixtures{
-		baseFixtures: baseFixtures{db: db.DB},
-		DbInstance:   db,
+		baseFixtures: baseFixtures{db: db.GormDB()},
+		DBInstance:   nil,
 	}, nil
 }
 

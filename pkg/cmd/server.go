@@ -75,24 +75,24 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	mlflowAPI.NewRouter(
 		controller.NewController(
 			run.NewService(
-				repositories.NewTagRepository(db.DB),
-				repositories.NewRunRepository(db.DB),
-				repositories.NewParamRepository(db.DB),
-				repositories.NewMetricRepository(db.DB),
-				repositories.NewExperimentRepository(db.DB),
+				repositories.NewTagRepository(db.GormDB()),
+				repositories.NewRunRepository(db.GormDB()),
+				repositories.NewParamRepository(db.GormDB()),
+				repositories.NewMetricRepository(db.GormDB()),
+				repositories.NewExperimentRepository(db.GormDB()),
 			),
 			model.NewService(),
 			metric.NewService(
-				repositories.NewMetricRepository(db.DB),
+				repositories.NewMetricRepository(db.GormDB()),
 			),
 			artifact.NewService(
 				storage,
-				repositories.NewRunRepository(db.DB),
+				repositories.NewRunRepository(db.GormDB()),
 			),
 			experiment.NewService(
 				mlflowConfig,
-				repositories.NewTagRepository(db.DB),
-				repositories.NewExperimentRepository(db.DB),
+				repositories.NewTagRepository(db.GormDB()),
+				repositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
 	).Init(server)
@@ -123,8 +123,8 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 }
 
 // initDB init DB connection.
-func initDB(config *mlflowConfig.ServiceConfig) (*database.DbInstance, error) {
-	db, err := database.ConnectDB(
+func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
+	db, err := database.MakeDBProvider(
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
 		config.DatabasePoolMax,
@@ -135,6 +135,8 @@ func initDB(config *mlflowConfig.ServiceConfig) (*database.DbInstance, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to DB: %w", err)
 	}
+	// cache a global reference to the gorm.DB
+	database.DB = db.GormDB()
 	return db, nil
 }
 

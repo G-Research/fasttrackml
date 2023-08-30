@@ -1,9 +1,14 @@
 <html>
   <head>
     <title>Namespaces</title>
-    <link rel="stylesheet" href="">
-    
-    
+    <link rel="stylesheet" href="/static/css/jquery.dataTables.min.css">
+    <script type="text/javascript" language="javascript" src="/static/js/jquery-3.7.0.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/js/jquery.dataTables.min.js"></script>
+    <script>
+      $( document ).ready(function() {
+         new DataTable('#namespaces');        
+      });
+    </script>
   </head>
   <body>
     <h1>Namespaces</h1>
@@ -13,7 +18,7 @@
     {{ if gt (len .SuccessMessage) 0 }}
     <p style="color: darkgreen">{{ .SuccessMessage }}</p>
     {{ end }}
-    <table>
+    <table id="namespaces" class="display">
       <thead>
         <tr>
           <th>ID</th>

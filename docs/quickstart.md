@@ -7,23 +7,34 @@ FastTrackML requires the following _optional_ dependencies to be installed on yo
 - [Docker](https://docs.docker.com/get-docker/) — enables you to download and run FastTrackML with just one command
 - [Python 3](https://www.python.org/downloads/) — enables you to run the test scripts
 
-## Run FastTrackML
+## Install FastTrackML
 
-### With Docker
-
-FastTrackML can be run using the following command:
-
+### On Linux and macOS
 ```bash
-docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
+curl -fsSL https://fasttrackml.io/install.sh | sh
 ```
-
+### On Windows
+```bash
+iwr -useb https://fasttrackml.io/install.ps1 | iex
+```
 ### With a native executable
 
 Download the executable for your platform from the [latest release](https://github.com/G-Research/fasttrackml/releases/latest) assets.
 Extract it and then run FastTrackML with the following command:
 
 ```bash
-./fml
+./fml server
+```
+## Run FastTrackML
+
+```bash
+fml server
+```
+
+## Run FastTrackML via Docker
+
+```bash
+docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
 ```
 
 ### Verification

@@ -8,6 +8,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/template/html/v2"
+
+	"github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
 )
 
 //go:embed embed
@@ -16,7 +19,18 @@ var content embed.FS
 func AddRoutes(r fiber.Router) {
 	sub, _ := fs.Sub(content, "embed")
 
-	r.Use("/", etag.New(), filesystem.New(filesystem.Config{
+	// engine and app for template rendering
+	engine := html.NewFileSystem(http.FS(sub), ".html")
+	app := fiber.New(fiber.Config{
+		Views: engine,
+	})
+	r.Mount("/", app)
+
+	// specific routes
+	app.Get("ns", controller.GetNamespaces)
+
+	// default route
+	app.Use("/", etag.New(), filesystem.New(filesystem.Config{
 		Root: http.FS(sub),
 	}))
 }

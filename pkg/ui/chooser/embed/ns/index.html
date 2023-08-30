@@ -1,0 +1,32 @@
+<html>
+<head>
+    <title>Namespaces</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"   integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="   crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+</head>
+<body>
+    <h1>Namespaces</h1>
+    <table class="display">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Code</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .Data }}
+            <tr>
+                <td>{{ .ID }}</td>
+                <td><a href="#">{{ .code }}</a></td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+    <script>
+    $(document).ready(function(){
+        $('.display').DataTable();
+    });
+    </script>
+</body>
+</html>

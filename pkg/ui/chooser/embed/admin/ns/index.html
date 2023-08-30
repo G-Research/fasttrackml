@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="/static/css/jquery.dataTables.min.css">
     <script type="text/javascript" language="javascript" src="/static/js/jquery-3.7.0.js"></script>
     <script type="text/javascript" language="javascript" src="/static/js/jquery.dataTables.min.js"></script>
-    <script>
+    <script type="text/javascript" language="javascript">
       $( document ).ready(function() {
          new DataTable('#namespaces');        
       });
@@ -30,14 +30,16 @@
       <tbody>
 	{{ range .Data }}
 	<tr>
-          <td>{{ .id }}</td>
-          <td>{{ .code }}</td>
-          <td>{{ .description }}</td>
-          <td>{{ .created_at }}</td>
+          <td>{{ .ID }}</td>
+          <td>{{ .Code }}</td>
+          <td>{{ .Description }}</td>
+          <td>{{ .CreatedAt }}</td>
 	</tr>
 	{{ end }}
       </tbody>
     </table>
+
+    <p><a href="#" onclick="window.location = window.location.origin + '/admin/ns/create.html'">Create new namespace</a></p>
 
   </body>
 </html>

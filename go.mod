@@ -17,6 +17,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.38.2
 	github.com/go-python/gpython v0.2.0
 	github.com/gofiber/fiber/v2 v2.48.0
+	github.com/gofiber/template/html/v2 v2.0.5
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/golang-lru/v2 v2.0.6
 	github.com/hetiansu5/urlquery v1.2.7
@@ -55,7 +56,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
-	github.com/gofiber/template/html/v2 v2.0.5
 	github.com/gofiber/template v1.8.2 // indirect
  	github.com/gofiber/utils v1.1.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect

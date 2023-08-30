@@ -12,7 +12,7 @@ require (
 	github.com/G-Research/fasttrackml-ui-aim v0.31602.10
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.4
 	github.com/apache/arrow/go/v12 v12.0.1
-	github.com/aws/aws-sdk-go-v2 v1.20.1
+	github.com/aws/aws-sdk-go-v2 v1.21.0
 	github.com/aws/aws-sdk-go-v2/config v1.18.33
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.38.2
 	github.com/go-python/gpython v0.2.0
@@ -51,7 +51,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.13.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.15.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.21.2 // indirect
-	github.com/aws/smithy-go v1.14.1 // indirect
+	github.com/aws/smithy-go v1.14.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect

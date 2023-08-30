@@ -2,13 +2,11 @@ package fixtures
 
 import (
 	"context"
-	"time"
 
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // MetricFixtures represents data fixtures object.
@@ -19,20 +17,13 @@ type MetricFixtures struct {
 
 // NewMetricFixtures creates new instance of MetricFixtures.
 func NewMetricFixtures(databaseDSN string) (*MetricFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
+	db, err := CreateDB(databaseDSN)
 	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
+		return nil, err
 	}
 	return &MetricFixtures{
-		baseFixtures:     baseFixtures{db: db.DB},
-		metricRepository: repositories.NewMetricRepository(db.DB),
+		baseFixtures:     baseFixtures{db: db.GormDB()},
+		metricRepository: repositories.NewMetricRepository(db.GormDB()),
 	}, nil
 }
 

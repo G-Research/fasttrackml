@@ -1,6 +1,6 @@
 module github.com/G-Research/fasttrackml
 
-go 1.21
+go 1.21.0
 
 replace (
 	github.com/mattn/go-sqlite3 v1.14.16 => github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20230327164124-765f25ea5431
@@ -9,7 +9,7 @@ replace (
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/G-Research/fasttrackml-ui-aim v0.31602.7
+	github.com/G-Research/fasttrackml-ui-aim v0.31602.10
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.4
 	github.com/apache/arrow/go/v12 v12.0.1
 	github.com/aws/aws-sdk-go-v2 v1.20.1
@@ -18,7 +18,7 @@ require (
 	github.com/go-python/gpython v0.2.0
 	github.com/gofiber/fiber/v2 v2.48.0
 	github.com/google/uuid v1.3.0
-	github.com/hashicorp/golang-lru/v2 v2.0.5
+	github.com/hashicorp/golang-lru/v2 v2.0.6
 	github.com/hetiansu5/urlquery v1.2.7
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/pkg/errors v0.9.1

@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // RunFixtures represents data fixtures object.
@@ -20,26 +18,21 @@ type RunFixtures struct {
 	runRepository    repositories.RunRepositoryProvider
 	tagRepository    repositories.TagRepositoryProvider
 	metricRepository repositories.MetricRepositoryProvider
+	paramRepository  repositories.ParamRepository
 }
 
 // NewRunFixtures creates new instance of RunFixtures.
 func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
-	db, err := database.ConnectDB(
-		databaseDSN,
-		1*time.Second,
-		20,
-		false,
-		false,
-		"",
-	)
+	db, err := CreateDB(databaseDSN)
 	if err != nil {
-		return nil, eris.Wrap(err, "error connection to database")
+		return nil, err
 	}
 	return &RunFixtures{
-		baseFixtures:     baseFixtures{db: db.DB},
-		runRepository:    repositories.NewRunRepository(db.DB),
-		tagRepository:    repositories.NewTagRepository(db.DB),
-		metricRepository: repositories.NewMetricRepository(db.DB),
+		baseFixtures:     baseFixtures{db: db.GormDB()},
+		runRepository:    repositories.NewRunRepository(db.GormDB()),
+		tagRepository:    repositories.NewTagRepository(db.GormDB()),
+		metricRepository: repositories.NewMetricRepository(db.GormDB()),
+		paramRepository:  *repositories.NewParamRepository(db.GormDB()),
 	}, nil
 }
 
@@ -53,18 +46,22 @@ func (f RunFixtures) CreateRun(
 	return run, nil
 }
 
-// ArchiveRun archive existing runs by their ids.
-func (f RunFixtures) ArchiveRun(ctx context.Context, ids []string) error {
-	err := f.runRepository.ArchiveBatch(ctx, ids)
-	return err
-}
-
 // UpdateRun updates existing Run.
 func (f RunFixtures) UpdateRun(
 	ctx context.Context, run *models.Run,
 ) error {
 	if err := f.runRepository.Update(ctx, run); err != nil {
 		return eris.Wrap(err, "error updating test run")
+	}
+	return nil
+}
+
+// ArchiveRuns soft-deletes existing Runs.
+func (f RunFixtures) ArchiveRuns(
+	ctx context.Context, runIDs []string,
+) error {
+	if err := f.runRepository.ArchiveBatch(ctx, runIDs); err != nil {
+		return eris.Wrap(err, "error archiving runs")
 	}
 	return nil
 }
@@ -112,6 +109,11 @@ func (f RunFixtures) CreateExampleRuns(
 		run.Tags = []models.Tag{tag}
 
 		err = f.CreateMetrics(ctx, run, 2)
+		if err != nil {
+			return nil, err
+		}
+
+		err = f.CreateParams(ctx, run, 2)
 		if err != nil {
 			return nil, err
 		}
@@ -206,6 +208,23 @@ func (f RunFixtures) CreateMetrics(
 			IsNan:     false,
 			RunID:     run.ID,
 			LastIter:  int64(count),
+		}).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// CreateParams creats some example params for a Run, up to count.
+func (f RunFixtures) CreateParams(
+	ctx context.Context, run *models.Run, count int,
+) error {
+	for i := 1; i <= count; i++ {
+		err := f.baseFixtures.db.WithContext(ctx).Create(&models.Param{
+			Key:   fmt.Sprintf("key%d", i),
+			Value: fmt.Sprintf("val%d", i),
+			RunID: run.ID,
 		}).Error
 		if err != nil {
 			return err

@@ -41,7 +41,7 @@ docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
 
 Verify that you can see the UI by navigating to http://localhost:5000/.
 
-![FastTrackML UI](images/main_ui.jpg)
+![FastTrackML UI](images/main_ui.png)
 
 ## Run a quick test script
 
@@ -57,7 +57,7 @@ python3 minimal.py
 
 After running this script, you should see the following output from http://localhost:5000/aim/:
 
-![FastTrackML UI](images/runs_ui.jpg)
+![FastTrackML UI](images/runs_ui.png)
 
 From here you can check out the metrics and run information to see more details about the run.
 

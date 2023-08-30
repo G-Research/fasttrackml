@@ -1,6 +1,8 @@
 package fixtures
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
@@ -8,7 +10,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-// BaseFixtures represents base fixtures object.
+// baseFixtures represents base fixtures object.
 type baseFixtures struct {
 	db *gorm.DB
 }
@@ -31,4 +33,18 @@ func (f baseFixtures) UnloadFixtures() error {
 		}
 	}
 	return nil
+}
+
+// CreateDB will convert the a DSN input into a database connection
+func CreateDB(databaseDSN string) (db database.DBProvider, err error) {
+	db, err = database.MakeDBProvider(
+		databaseDSN,
+		1*time.Second,
+		20,
+		false,
+		false,
+		"",
+	)
+	database.DB = db.GormDB()
+	return
 }

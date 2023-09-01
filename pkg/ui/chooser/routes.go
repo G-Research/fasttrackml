@@ -27,7 +27,7 @@ func AddRoutes(r fiber.Router) {
 	r.Mount("/", app)
 
 	// specific routes
-	app.Get("ns", controller.GetNamespaces)
+	app.Get("/", controller.GetNamespaces)
 
 	// default route
 	app.Use("/", etag.New(), filesystem.New(filesystem.Config{

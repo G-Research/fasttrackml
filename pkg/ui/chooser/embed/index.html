@@ -27,6 +27,12 @@
             margin-top: -25px;
             margin-bottom: -50px;
         }
+
+        .namespaces {
+            width: 100%;   
+            background-image: none !important;
+            padding-right: .5rem !important;
+        }
     </style>
 </head>
 
@@ -41,24 +47,44 @@
 
     <!-- We load the UI with JS to avoid issues when an URL with embedded credentials is used -->
     <main>
+        <p id="selectedNamespaceText"></p>
         <p>Which UI do you want to use?</p>
         <div class="ui">
             <article>
-                <a href="#" onclick="window.location = window.location.origin + '/mlflow/'"><button>Classic</button></a>
+                <a href="#" onclick="redirectToSelectedNamespace('mlflow')"><button>Classic</button></a>
                 <p>This is the classic MLFlow UI, albeit fast and responsive.</p>
             </article>
             <article>
-                <a href="#" onclick="window.location = window.location.origin + '/aim/'"><button>Modern</button></a>
+                <a href="#" onclick="redirectToSelectedNamespace('aim')"><button>Modern</button></a>
                 <p>This is the modern Aim UI, much faster than MLFlow.</p>
             </article>
         </div>
-        <p><a href="#" onclick="window.location = window.location.origin + '/ns/'">Manage namespaces</a></p>
+        <select class="namespaces" size="5" id="namespaceSelect"  onchange="updateSelectedNamespace()">
+            {{ range .Data }}
+            <option value="{{ .code }}" {{ if eq .ID 1 }}selected{{ end }}>{{ .code }}</option>
+            {{ end }}
+        </select>
     </main>
-
     <footer>
         <p>Brought to you by <a href="https://opensource.gresearch.co.uk" target="_blank">G-Research Open-Source</a>.
         </p>
     </footer>
+    <script>
+        function redirectToSelectedNamespace(ui) {
+            var namespaceSelect = document.getElementById("namespaceSelect");
+            var selectedNamespace = namespaceSelect.options[namespaceSelect.selectedIndex].value;
+            var newUrl = window.location.origin + '/ns/' + selectedNamespace + '/' + ui;
+            window.location.href = newUrl;
+        }
+
+        function updateSelectedNamespace() {
+            var namespaceSelect = document.getElementById("namespaceSelect");
+            var selectedNamespace = namespaceSelect.options[namespaceSelect.selectedIndex].text;
+            var selectedNamespaceText = document.getElementById("selectedNamespaceText");
+            selectedNamespaceText.textContent = "Selected Namespace: " + selectedNamespace;
+        }
+        window.onload = updateSelectedNamespace;
+    </script>
 </body>
 
 </html>

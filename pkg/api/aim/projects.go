@@ -47,9 +47,9 @@ func GetProjectActivity(c *fiber.Ctx) error {
 
 	var runs []database.Run
 	if tx := database.DB.Select(
-		"experiments.status",
-		"experiments.start_time",
-		"experiments.lifecycle_stage",
+		"runs.status",
+		"runs.start_time",
+		"runs.lifecycle_stage",
 	).Joins(
 		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 	).Where(

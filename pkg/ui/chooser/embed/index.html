@@ -5,8 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FastTrackML</title>
-    <link rel="stylesheet" href="/static/chooser/simple.min.css">
+    <link rel="stylesheet" href="static/css/simple.min.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <style>
+        :root {
+            --accent: #00a4e0;
+        }
+
         main {
             text-align: center;
         }
@@ -16,15 +21,23 @@
             grid-template-columns: 1fr 1fr;
             column-gap: 2rem;
         }
+
+        .logo {
+            height: 150px;
+            margin-top: -25px;
+            margin-bottom: -50px;
+        }
     </style>
 </head>
 
 <body>
     <header>
-        <h1><i>FastTrackML</i></h1>
+        <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="static/media/logo-dark.svg">
+            <img class="logo" src="static/media/logo-light.svg" alt="FastTrackML logo">
+        </picture>
         <p>A <i>very fast</i> experiment tracker</p>
     </header>
-    </div>
 
     <!-- We load the UI with JS to avoid issues when an URL with embedded credentials is used -->
     <main>

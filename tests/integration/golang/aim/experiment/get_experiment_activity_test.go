@@ -58,14 +58,8 @@ func (s *GetExperimentActivityTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperimentActivity
-	err = s.AIMClient.DoGetRequest(
-		fmt.Sprintf(
-			"/experiments/%d/activity", *experiment.ID,
-		),
-		&resp,
-	)
+	err = s.AIMClient.DoGetRequest(fmt.Sprintf("/experiments/%d/activity", *experiment.ID), &resp)
 	assert.Nil(s.T(), err)
-
 	assert.Equal(s.T(), resp.NumRuns, len(runs))
 	assert.Equal(s.T(), resp.NumArchivedRuns, len(archivedRunsIds))
 	assert.Equal(s.T(), resp.NumActiveRuns, len(runs)-len(archivedRunsIds))

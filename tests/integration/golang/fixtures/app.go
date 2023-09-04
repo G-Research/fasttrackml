@@ -8,6 +8,7 @@ import (
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -34,9 +35,7 @@ func (f AppFixtures) CreateApp(
 }
 
 // CreateApps creates some num apps belonging to the experiment.
-func (f AppFixtures) CreateApps(
-	ctx context.Context, num int,
-) ([]*database.App, error) {
+func (f AppFixtures) CreateApps(ctx context.Context, namespace *models.Namespace, num int) ([]*database.App, error) {
 	var apps []*database.App
 	// create apps for the experiment
 	for i := 0; i < num; i++ {
@@ -45,8 +44,9 @@ func (f AppFixtures) CreateApps(
 				ID:        uuid.New(),
 				CreatedAt: time.Now(),
 			},
-			Type:  "mpi",
-			State: database.AppState{},
+			Type:        "mpi",
+			State:       database.AppState{},
+			NamespaceID: namespace.ID,
 		}
 		app, err := f.CreateApp(ctx, app)
 		if err != nil {

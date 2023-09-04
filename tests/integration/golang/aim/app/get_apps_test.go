@@ -49,21 +49,18 @@ func (s *GetAppsTestSuite) Test_Ok() {
 				assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
 			}()
 
-			_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+			namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 				ID:                  0,
 				Code:                "default",
 				DefaultExperimentID: common.GetPointer(int32(0)),
 			})
 			assert.Nil(s.T(), err)
 
-			apps, err := s.AppFixtures.CreateApps(context.Background(), tt.expectedAppCount)
+			apps, err := s.AppFixtures.CreateApps(context.Background(), namespace, tt.expectedAppCount)
 			assert.Nil(s.T(), err)
 
 			var resp []response.App
-			err = s.AIMClient.DoGetRequest(
-				"/apps",
-				&resp,
-			)
+			err = s.AIMClient.DoGetRequest("/apps", &resp)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedAppCount, len(resp))
 			for idx := 0; idx < tt.expectedAppCount; idx++ {

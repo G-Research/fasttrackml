@@ -5,6 +5,7 @@ package run
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,6 @@ import (
 type CreateDashboardTestSuite struct {
 	suite.Suite
 	helpers.BaseTestSuite
-	app *database.App
 }
 
 func TestCreateDashboardTestSuite(t *testing.T) {
@@ -30,9 +30,6 @@ func TestCreateDashboardTestSuite(t *testing.T) {
 
 func (s *CreateDashboardTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
-	apps, err := s.AppFixtures.CreateApps(context.Background(), 1)
-	assert.Nil(s.T(), err)
-	s.app = apps[0]
 }
 
 func (s *CreateDashboardTestSuite) Test_Ok() {
@@ -40,10 +37,21 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  0,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
+		Base: database.Base{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+		},
+		Type:        "mpi",
+		State:       database.AppState{},
+		NamespaceID: namespace.ID,
 	})
 	assert.Nil(s.T(), err)
 
@@ -54,7 +62,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 		{
 			name: "CreateValidDashboard",
 			requestBody: request.CreateDashboard{
-				AppID:       s.app.ID,
+				AppID:       app.ID,
 				Name:        "dashboard-name",
 				Description: "dashboard-description",
 			},
@@ -63,11 +71,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Dashboard
-			err := s.AIMClient.DoPostRequest(
-				"/dashboards",
-				tt.requestBody,
-				&resp,
-			)
+			err := s.AIMClient.DoPostRequest("/dashboards", tt.requestBody, &resp)
 			assert.Nil(s.T(), err)
 
 			dashboards, err := s.DashboardFixtures.GetDashboards(context.Background())

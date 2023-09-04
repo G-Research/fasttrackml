@@ -41,9 +41,7 @@ func (r NamespaceRepository) Create(ctx context.Context, namespace *models.Names
 // GetByCode returns namespace by its Code.
 func (r NamespaceRepository) GetByCode(ctx context.Context, code string) (*models.Namespace, error) {
 	var namespace models.Namespace
-	if err := r.db.WithContext(ctx).Select(
-		"ID",
-	).Where(
+	if err := r.db.WithContext(ctx).Where(
 		"code = ?", code,
 	).First(&namespace).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

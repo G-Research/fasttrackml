@@ -32,6 +32,7 @@ const (
 
 type Namespace struct {
 	ID                  uint   `gorm:"primaryKey;autoIncrement"`
+	Apps                []App  `gorm:"constraint:OnDelete:CASCADE"`
 	Code                string `gorm:"unique;index;not null"`
 	Description         string
 	CreatedAt           time.Time
@@ -197,8 +198,10 @@ func (d Dashboard) MarshalJSON() ([]byte, error) {
 
 type App struct {
 	Base
-	Type  string   `gorm:"not null" json:"type"`
-	State AppState `json:"state"`
+	Type        string   `gorm:"not null" json:"type"`
+	State       AppState `json:"state"`
+	Namespace   Namespace
+	NamespaceID uint `gorm:"column:namespace_id;not null"`
 }
 
 type AppState map[string]any

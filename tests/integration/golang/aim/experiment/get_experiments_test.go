@@ -4,7 +4,6 @@ package experiment
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
@@ -47,12 +46,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 	var resp response.Experiments
 
-	err = s.AIMClient.DoGetRequest(
-		fmt.Sprintf(
-			"/experiments/",
-		),
-		&resp,
-	)
+	err = s.AIMClient.DoGetRequest("/experiments/", &resp)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), len(experiments), len(resp))
 	for idx := 0; idx < len(experiments); idx++ {

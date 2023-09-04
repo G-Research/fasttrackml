@@ -26,10 +26,15 @@ type MetricRepositoryProvider interface {
 	// GetMetricHistories returns metric histories by request parameters.
 	GetMetricHistories(
 		ctx context.Context,
-		experimentIDs []string, runIDs []string, metricKeys []string, viewType request.ViewType, limit int32,
+		namespaceID uint,
+		experimentIDs []string, runIDs []string, metricKeys []string,
+		viewType request.ViewType,
+		limit int32,
 	) (*sql.Rows, func(*sql.Rows, interface{}) error, error)
 	// GetMetricHistoryBulk returns metrics history bulk.
-	GetMetricHistoryBulk(ctx context.Context, runIDs []string, key string, limit int) ([]models.Metric, error)
+	GetMetricHistoryBulk(
+		ctx context.Context, namespaceID uint, runIDs []string, key string, limit int,
+	) ([]models.Metric, error)
 	// GetMetricHistoryByRunIDAndKey returns metrics history by RunID and Key.
 	GetMetricHistoryByRunIDAndKey(ctx context.Context, runID, key string) ([]models.Metric, error)
 }
@@ -139,25 +144,34 @@ func (r MetricRepository) CreateBatch(
 // TODO think about to use interface instead of underlying type for -> func(*sql.Rows, interface{})
 func (r MetricRepository) GetMetricHistories(
 	ctx context.Context,
-	experimentIDs []string, runIDs []string, metricKeys []string, viewType request.ViewType, limit int32,
+	namespaceID uint,
+	experimentIDs []string, runIDs []string, metricKeys []string,
+	viewType request.ViewType,
+	limit int32,
 ) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
 	// if experimentIDs has been provided then firstly get the runs by provided experimentIDs.
 	if len(experimentIDs) > 0 {
 		query := r.db.WithContext(ctx).Model(
 			&database.Run{},
-		).Where("experiment_id IN ?", experimentIDs)
+		).Joins(
+			"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+		).Where(
+			"experiments.namespace_id = ?", namespaceID,
+		).Where(
+			"runs.experiment_id IN ?", experimentIDs,
+		)
 
 		switch viewType {
 		case request.ViewTypeActiveOnly, "":
-			query.Where("lifecycle_stage IN ?", []models.LifecycleStage{
+			query.Where("runs.lifecycle_stage IN ?", []models.LifecycleStage{
 				models.LifecycleStageActive,
 			})
 		case request.ViewTypeDeletedOnly:
-			query.Where("lifecycle_stage IN ?", []models.LifecycleStage{
+			query.Where("runs.lifecycle_stage IN ?", []models.LifecycleStage{
 				models.LifecycleStageDeleted,
 			})
 		case request.ViewTypeAll:
-			query.Where("lifecycle_stage IN ?", []models.LifecycleStage{
+			query.Where("runs.lifecycle_stage IN ?", []models.LifecycleStage{
 				models.LifecycleStageActive,
 				models.LifecycleStageDeleted,
 			})
@@ -177,6 +191,10 @@ func (r MetricRepository) GetMetricHistories(
 		"metrics.run_uuid IN ?", runIDs,
 	).Joins(
 		"JOIN runs on runs.run_uuid = metrics.run_uuid",
+	).Joins(
+		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+	).Where(
+		"experiments.namespace_id = ?", namespaceID,
 	).Order(
 		"runs.start_time DESC",
 	).Order(
@@ -245,13 +263,19 @@ func (r MetricRepository) GetMetricHistoryByRunIDAndKey(
 
 // GetMetricHistoryBulk returns metrics history bulk.
 func (r MetricRepository) GetMetricHistoryBulk(
-	ctx context.Context, runIDs []string, key string, limit int,
+	ctx context.Context, namespaceID uint, runIDs []string, key string, limit int,
 ) ([]models.Metric, error) {
 	var metrics []models.Metric
 	query := r.db.WithContext(ctx).Where(
-		"run_uuid IN ?", runIDs,
+		"runs.run_uuid IN ?", runIDs,
+	).Joins(
+		"LEFT JOIN runs ON runs.run_uuid = metrics.run_uuid",
+	).Joins(
+		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 	).Where(
 		"key = ?", key,
+	).Where(
+		"experiments.namespace_id = ?", namespaceID,
 	).Order(
 		"run_uuid",
 	).Order(
@@ -265,7 +289,7 @@ func (r MetricRepository) GetMetricHistoryBulk(
 	if limit == 0 {
 		limit = MetricHistoryBulkDefaultLimit
 	}
-	query.Limit(int(limit))
+	query.Limit(limit)
 
 	if err := query.Find(
 		&metrics,

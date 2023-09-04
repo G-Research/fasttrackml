@@ -89,6 +89,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 			),
 			model.NewService(),
 			metric.NewService(
+				mlflowRepositories.NewRunRepository(db.GormDB()),
 				mlflowRepositories.NewMetricRepository(db.GormDB()),
 			),
 			artifact.NewService(

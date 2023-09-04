@@ -67,6 +67,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	experiments, err := s.ExperimentFixtures.GetTestExperiments(context.Background())
+	assert.Nil(s.T(), err)
 	length := len(experiments)
 
 	var resp response.DeleteExperiment
@@ -98,19 +99,16 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 		ID   string
 	}{
 		{
-			name: "DeleteWithUnknownIDFails",
 			ID:   "123",
+			name: "DeleteWithUnknownIDFails",
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp api.ErrorResponse
-			err := s.AIMClient.DoDeleteRequest(
-				fmt.Sprintf("/experiments/%s", tt.ID),
-				&resp,
-			)
+			err := s.AIMClient.DoDeleteRequest(fmt.Sprintf("/experiments/%s", tt.ID), &resp)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp.Error(), "count of deleted experiments does not match length of ids input")
+			assert.Contains(s.T(), resp.Error(), "Not Found")
 
 			assert.NoError(s.T(), err)
 		})

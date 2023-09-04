@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,6 @@ import (
 type GetAppTestSuite struct {
 	suite.Suite
 	helpers.BaseTestSuite
-	app *database.App
 }
 
 func TestGetAppTestSuite(t *testing.T) {
@@ -30,17 +30,6 @@ func TestGetAppTestSuite(t *testing.T) {
 
 func (s *GetAppTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  0,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
-	apps, err := s.AppFixtures.CreateApps(context.Background(), 1)
-	assert.Nil(s.T(), err)
-	s.app = apps[0]
 }
 
 func (s *GetAppTestSuite) Test_Ok() {
@@ -48,15 +37,30 @@ func (s *GetAppTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	var resp database.App
-	err := s.AIMClient.DoGetRequest(
-		fmt.Sprintf("/apps/%v", s.app.ID),
-		&resp,
-	)
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), s.app.ID, resp.ID)
-	assert.Equal(s.T(), s.app.Type, resp.Type)
-	assert.Equal(s.T(), s.app.State, resp.State)
+
+	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
+		Base: database.Base{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+		},
+		Type:        "mpi",
+		State:       database.AppState{},
+		NamespaceID: namespace.ID,
+	})
+	assert.Nil(s.T(), err)
+
+	var resp database.App
+	err = s.AIMClient.DoGetRequest(fmt.Sprintf("/apps/%v", app.ID), &resp)
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), app.ID, resp.ID)
+	assert.Equal(s.T(), app.Type, resp.Type)
+	assert.Equal(s.T(), app.State, resp.State)
 	assert.NotEmpty(s.T(), resp.CreatedAt)
 	assert.NotEmpty(s.T(), resp.UpdatedAt)
 }
@@ -65,6 +69,13 @@ func (s *GetAppTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -78,10 +89,7 @@ func (s *GetAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoGetRequest(
-				fmt.Sprintf("/apps/%v", tt.idParam),
-				&resp,
-			)
+			err := s.AIMClient.DoGetRequest(fmt.Sprintf("/apps/%v", tt.idParam), &resp)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "Not Found", resp.Message)
 		})

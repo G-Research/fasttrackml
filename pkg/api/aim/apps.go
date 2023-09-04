@@ -2,18 +2,29 @@ package aim
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetApps(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("getApps namespace: %s", ns.Code)
+
 	var apps []database.App
 	if err := database.DB.
 		Where("NOT is_archived").
+		Where("namespace_id = ?", ns.ID).
 		Find(&apps).
 		Error; err != nil {
 		return fmt.Errorf("error fetching apps: %w", err)
@@ -23,6 +34,12 @@ func GetApps(c *fiber.Ctx) error {
 }
 
 func CreateApp(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("createApp namespace: %s", ns.Code)
+
 	var a struct {
 		Type  string
 		State database.AppState
@@ -33,8 +50,9 @@ func CreateApp(c *fiber.Ctx) error {
 	}
 
 	app := database.App{
-		Type:  a.Type,
-		State: a.State,
+		Type:        a.Type,
+		State:       a.State,
+		NamespaceID: ns.ID,
 	}
 
 	if err := database.DB.
@@ -47,6 +65,12 @@ func CreateApp(c *fiber.Ctx) error {
 }
 
 func GetApp(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("getApp namespace: %s", ns.Code)
+
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}
@@ -62,6 +86,7 @@ func GetApp(c *fiber.Ctx) error {
 	}
 	if err := database.DB.
 		Where("NOT is_archived").
+		Where("namespace_id = ?", ns.ID).
 		First(&app).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -74,6 +99,12 @@ func GetApp(c *fiber.Ctx) error {
 }
 
 func UpdateApp(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("updateApp namespace: %s", ns.Code)
+
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}
@@ -98,6 +129,7 @@ func UpdateApp(c *fiber.Ctx) error {
 	}
 	if err := database.DB.
 		Where("NOT is_archived").
+		Where("namespace_id = ?", ns.ID).
 		First(&app).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -120,6 +152,12 @@ func UpdateApp(c *fiber.Ctx) error {
 }
 
 func DeleteApp(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("deleteApp namespace: %s", ns.Code)
+
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}
@@ -136,6 +174,7 @@ func DeleteApp(c *fiber.Ctx) error {
 	if err := database.DB.
 		Select("ID").
 		Where("NOT is_archived").
+		Where("namespace_id = ?", ns.ID).
 		First(&app).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -151,5 +190,5 @@ func DeleteApp(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to delete app %q: %s", p.ID, err))
 	}
 
-	return c.Status(200).JSON(nil)
+	return c.Status(http.StatusOK).JSON(nil)
 }

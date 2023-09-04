@@ -137,6 +137,7 @@ func (s *GetHistoryTestSuite) Test_Error() {
 				),
 				&resp,
 			)
+			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

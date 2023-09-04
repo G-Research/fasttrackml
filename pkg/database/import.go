@@ -115,7 +115,7 @@ func (s *Importer) importTable(table string) error {
 			count := 0
 			for rows.Next() {
 				var item map[string]any
-				if err := s.sourceDB.ScanRows(rows, &item); err != nil {
+				if err = s.sourceDB.ScanRows(rows, &item); err != nil {
 					return eris.Wrap(err, "error scanning source row")
 				}
 				item, err = s.translateFields(item)

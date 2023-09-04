@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	key          = "namespace"
-	defaultValue = "default"
+	key         = "namespace"
+	defaultCode = "default"
 )
 
 var nsUrl = regexp.MustCompile(`^/ns/([^/]+)/`)
@@ -36,25 +36,24 @@ func New(namespaceRepository repositories.NamespaceRepositoryProvider) fiber.Han
 				return c.JSON(api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespaceCode))
 			}
 
-			c.Locals("namespace", namespace)
+			c.Locals(key, namespace)
 			c.Path(strings.TrimPrefix(c.Path(), fmt.Sprintf("/ns/%s", namespaceCode)))
-			log.Debugf("namespace: %s", c.Locals("namespace"))
 		} else {
-			namespace, err := namespaceRepository.GetByCode(c.Context(), defaultValue)
+			namespace, err := namespaceRepository.GetByCode(c.Context(), defaultCode)
 			if err != nil {
-				return c.JSON(api.NewInternalError("error getting namespace with code: %s", defaultValue))
+				return c.JSON(api.NewInternalError("error getting namespace with code: %s", defaultCode))
 			}
 			if namespace == nil {
-				return c.JSON(api.NewResourceDoesNotExistError("unable to find namespace with code: %s", defaultValue))
+				return c.JSON(api.NewResourceDoesNotExistError("unable to find namespace with code: %s", defaultCode))
 			}
-
-			c.Locals("namespace", namespace)
+			c.Locals(key, namespace)
 		}
 
 		return c.Next()
 	}
 }
 
+// GetNamespaceFromContext returns models.Namespace object from the context.
 func GetNamespaceFromContext(ctx context.Context) (*models.Namespace, error) {
 	namespace, ok := ctx.Value(key).(*models.Namespace)
 	if !ok {

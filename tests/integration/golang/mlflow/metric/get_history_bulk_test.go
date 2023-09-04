@@ -150,9 +150,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Error() {
 		{
 			name: "LengthOfRunIDsMoreThenAllowed",
 			request: request.GetMetricHistoryBulkRequest{
-				RunIDs: make(
-					[]string, metric.MaxRunIDsForMetricHistoryBulkRequest+1, metric.MaxRunIDsForMetricHistoryBulkRequest+1,
-				),
+				RunIDs: make([]string, metric.MaxRunIDsForMetricHistoryBulkRequest+1),
 			},
 			error: api.NewInvalidParameterValueError(
 				"GetMetricHistoryBulk request cannot specify more than 200 run_ids. Received 201 run_ids.",

@@ -84,10 +84,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			var resp fiber.Map
-			err = s.AIMClient.DoDeleteRequest(
-				fmt.Sprintf("/runs/%s", tt.request.RunID),
-				&resp,
-			)
+			err = s.AIMClient.DoDeleteRequest(fmt.Sprintf("/runs/%s", tt.request.RunID), &resp)
 			assert.Nil(s.T(), err)
 
 			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
@@ -125,12 +122,9 @@ func (s *DeleteRunTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 
 			var resp api.ErrorResponse
-			err = s.AIMClient.DoDeleteRequest(
-				fmt.Sprintf("/runs/%s", tt.request.RunID),
-				&resp,
-			)
+			err = s.AIMClient.DoDeleteRequest(fmt.Sprintf("/runs/%s", tt.request.RunID), &resp)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp.Error(), "count of deleted runs does not match length of ids input")
+			assert.Contains(s.T(), resp.Error(), "unable to find run 'some-other-id'")
 
 			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,

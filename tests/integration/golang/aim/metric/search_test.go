@@ -9,20 +9,18 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type SearchMetricsTestSuite struct {
 	suite.Suite
-	runs []*models.Run
 	helpers.BaseTestSuite
 }
 
@@ -32,6 +30,12 @@ func TestSearchMetricsTestSuite(t *testing.T) {
 
 func (s *SearchMetricsTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
+}
+
+func (s *SearchMetricsTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
 
 	// 1. create test `namespace` and connect test `run`.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -80,12 +84,7 @@ func (s *SearchMetricsTestSuite) SetupTest() {
 		LastIter:  1,
 	})
 	assert.Nil(s.T(), err)
-}
 
-func (s *SearchMetricsTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name  string
 		query string
@@ -122,6 +121,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				fmt.Sprintf("/runs/search/metric?%s", tt.query),
 				nil,
 			)
+			assert.Nil(s.T(), err)
 			decodedData, err := encoding.Decode(bytes.NewBuffer(data))
 			assert.Nil(s.T(), err)
 			value, ok := decodedData["id.props.name"]

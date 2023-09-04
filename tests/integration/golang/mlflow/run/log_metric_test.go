@@ -144,9 +144,7 @@ func (s *LogMetricTestSuite) Test_Error() {
 				RunID:     "id",
 				Timestamp: 123456789,
 			},
-			error: api.NewResourceDoesNotExistError(
-				"unable to find run 'id': error getting 'run' entity by id: id: record not found",
-			),
+			error: api.NewResourceDoesNotExistError("unable to find run 'id'"),
 			setupDatabase: func() string {
 				_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 					ID:                  0,

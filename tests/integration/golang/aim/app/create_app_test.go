@@ -27,6 +27,12 @@ func TestCreateAppTestSuite(t *testing.T) {
 
 func (s *CreateAppTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
+}
+
+func (s *CreateAppTestSuite) Test_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  0,
@@ -34,12 +40,6 @@ func (s *CreateAppTestSuite) SetupTest() {
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
 	assert.Nil(s.T(), err)
-}
-
-func (s *CreateAppTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
 
 	tests := []struct {
 		name        string
@@ -58,11 +58,7 @@ func (s *CreateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.App
-			err := s.AIMClient.DoPostRequest(
-				"/apps",
-				tt.requestBody,
-				&resp,
-			)
+			err := s.AIMClient.DoPostRequest("/apps", tt.requestBody, &resp)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.requestBody.Type, resp.Type)
 			assert.Equal(s.T(), tt.requestBody.State["app-state-key"], resp.State["app-state-key"])
@@ -79,6 +75,13 @@ func (s *CreateAppTestSuite) Test_Error() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name        string
 		requestBody any
@@ -93,11 +96,7 @@ func (s *CreateAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoPostRequest(
-				"/apps",
-				tt.requestBody,
-				&resp,
-			)
+			err := s.AIMClient.DoPostRequest("/apps", tt.requestBody, &resp)
 			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
 		})

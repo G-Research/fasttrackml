@@ -4,10 +4,9 @@ import (
 	"context"
 	"time"
 
-	"gorm.io/gorm"
-
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
+	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
@@ -58,17 +57,32 @@ func (f DashboardFixtures) CreateDashboards(
 	return dashboards, nil
 }
 
+// GetDashboardByID returns database.Dashboard entity by its ID.
+func (f DashboardFixtures) GetDashboardByID(ctx context.Context, dashboardID string) (*database.Dashboard, error) {
+	var dashboard database.Dashboard
+	if err := f.db.WithContext(ctx).Where(
+		"id = ?", dashboardID,
+	).Where(
+		"NOT is_archived",
+	).Find(
+		&dashboard,
+	).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting 'dashboard' entity by id: %s", dashboardID)
+	}
+	return &dashboard, nil
+}
+
 // GetDashboards fetches all dashboards which are not archived
 func (f DashboardFixtures) GetDashboards(
 	ctx context.Context,
 ) ([]database.Dashboard, error) {
-	dashboards := []database.Dashboard{}
+	var dashboards []database.Dashboard
 	if err := f.db.WithContext(ctx).Where(
 		"NOT is_archived",
 	).Find(
 		&dashboards,
 	).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting 'dashboard' entities")
+		return nil, eris.Wrap(err, "error getting 'dashboard' entities")
 	}
 	return dashboards, nil
 }

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -21,8 +22,6 @@ import (
 type GetDashboardTestSuite struct {
 	suite.Suite
 	helpers.BaseTestSuite
-	app       *database.App
-	dashboard *database.Dashboard
 }
 
 func TestGetDashboardTestSuite(t *testing.T) {
@@ -31,37 +30,49 @@ func TestGetDashboardTestSuite(t *testing.T) {
 
 func (s *GetDashboardTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  0,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
-	apps, err := s.AppFixtures.CreateApps(context.Background(), 1)
-	assert.Nil(s.T(), err)
-	s.app = apps[0]
-
-	dashboards, err := s.DashboardFixtures.CreateDashboards(context.Background(), 1, &s.app.ID)
-	assert.Nil(s.T(), err)
-	s.dashboard = dashboards[0]
 }
 
 func (s *GetDashboardTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
-	var resp database.Dashboard
-	err := s.AIMClient.DoGetRequest(
-		fmt.Sprintf("/dashboards/%v", s.dashboard.ID),
-		&resp,
-	)
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), s.dashboard.ID, resp.ID)
-	assert.Equal(s.T(), &s.app.ID, resp.AppID)
-	assert.Equal(s.T(), s.dashboard.Name, resp.Name)
-	assert.Equal(s.T(), s.dashboard.Description, resp.Description)
+
+	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
+		Base: database.Base{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+		},
+		Type:        "mpi",
+		State:       database.AppState{},
+		NamespaceID: namespace.ID,
+	})
+	assert.Nil(s.T(), err)
+
+	dashboard, err := s.DashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
+		Base: database.Base{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+		},
+		Name:        "dashboard-exp",
+		AppID:       &app.ID,
+		Description: "dashboard for experiment",
+	})
+	assert.Nil(s.T(), err)
+
+	var resp database.Dashboard
+	err = s.AIMClient.DoGetRequest(fmt.Sprintf("/dashboards/%v", dashboard.ID), &resp)
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), dashboard.ID, resp.ID)
+	assert.Equal(s.T(), &app.ID, resp.AppID)
+	assert.Equal(s.T(), dashboard.Name, resp.Name)
+	assert.Equal(s.T(), dashboard.Description, resp.Description)
 	assert.NotEmpty(s.T(), resp.CreatedAt)
 	assert.NotEmpty(s.T(), resp.UpdatedAt)
 }
@@ -70,6 +81,14 @@ func (s *GetDashboardTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name    string
 		idParam uuid.UUID
@@ -82,10 +101,7 @@ func (s *GetDashboardTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoGetRequest(
-				fmt.Sprintf("/dashboards/%v", tt.idParam),
-				&resp,
-			)
+			err := s.AIMClient.DoGetRequest(fmt.Sprintf("/dashboards/%v", tt.idParam), &resp)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "Not Found", resp.Message)
 		})

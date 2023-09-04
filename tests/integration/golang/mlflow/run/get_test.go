@@ -168,9 +168,7 @@ func (s *GetRunTestSuite) Test_Error() {
 			request: request.GetRunRequest{
 				RunID: "id",
 			},
-			error: api.NewResourceDoesNotExistError(
-				"unable to find run 'id': error getting 'run' entity by id: id: record not found",
-			),
+			error: api.NewResourceDoesNotExistError("unable to find run 'id'"),
 		},
 	}
 	for _, tt := range tests {

@@ -277,13 +277,13 @@ func (r MetricRepository) GetMetricHistoryBulk(
 	).Where(
 		"experiments.namespace_id = ?", namespaceID,
 	).Order(
-		"run_uuid",
+		"metrics.run_uuid",
 	).Order(
-		"timestamp",
+		"metrics.timestamp",
 	).Order(
-		"step",
+		"metrics.step",
 	).Order(
-		"value",
+		"metrics.value",
 	)
 
 	if limit == 0 {

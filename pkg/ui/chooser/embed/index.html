@@ -51,17 +51,17 @@
         <p>Which UI do you want to use?</p>
         <div class="ui">
             <article>
-                <a href="#" onclick="redirectToSelectedNamespace('mlflow')"><button>Classic</button></a>
+                <a href="#" onclick="window.location = window.location.origin + '/mlflow/'"><button>Classic</button></a>
                 <p>This is the classic MLFlow UI, albeit fast and responsive.</p>
             </article>
             <article>
-                <a href="#" onclick="redirectToSelectedNamespace('aim')"><button>Modern</button></a>
+                <a href="#" onclick="window.location = window.location.origin + '/aim/'"><button>Modern</button></a>
                 <p>This is the modern Aim UI, much faster than MLFlow.</p>
             </article>
         </div>
-        <select class="namespaces" size="5" id="namespaceSelect"  onchange="updateSelectedNamespace()">
+        <select class="namespaces" size="5" id="namespaceSelect"  onchange="selectNamespace()">
             {{ range .Data }}
-            <option value="{{ .code }}" {{ if eq .ID 1 }}selected{{ end }}>{{ .code }}</option>
+            <option value="{{ .code }}" {{ if eq .code "default" }}selected{{ end }}>{{ .code }}</option>
             {{ end }}
         </select>
     </main>
@@ -70,20 +70,27 @@
         </p>
     </footer>
     <script>
-        function redirectToSelectedNamespace(ui) {
-            var namespaceSelect = document.getElementById("namespaceSelect");
-            var selectedNamespace = namespaceSelect.options[namespaceSelect.selectedIndex].value;
-            var newUrl = window.location.origin + '/ns/' + selectedNamespace + '/' + ui;
-            window.location.href = newUrl;
+        function setCurrentNamespace() {
+            var currentUrl = window.location.href;
+            var namespaceIndex = currentUrl.indexOf('/ns/');
+            if (namespaceIndex !== -1) {
+                document.getElementById('selectedNamespaceText').innerText = "Selected Namespace: " + currentUrl.substring(namespaceIndex + 4);
+            } else {
+                document.getElementById('selectedNamespaceText').innerText = "Selected Namespace: default"
+            }
         }
 
-        function updateSelectedNamespace() {
-            var namespaceSelect = document.getElementById("namespaceSelect");
-            var selectedNamespace = namespaceSelect.options[namespaceSelect.selectedIndex].text;
-            var selectedNamespaceText = document.getElementById("selectedNamespaceText");
-            selectedNamespaceText.textContent = "Selected Namespace: " + selectedNamespace;
+        function selectNamespace() {
+            var selectedNamespace = namespaceSelect.options[namespaceSelect.selectedIndex].value;
+            if (selectedNamespace == "default") {
+                window.location.href = window.location.origin + '/';
+            } else {
+                var newUrl = window.location.origin + '/ns/' + selectedNamespace;
+                window.location.href = newUrl;
+            }
         }
-        window.onload = updateSelectedNamespace;
+
+        window.onload = setCurrentNamespace;
     </script>
 </body>
 

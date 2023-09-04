@@ -31,7 +31,7 @@ func exampleData() []map[string]any {
 			{"ID": 5, "code": "Namespace5"},
 			{"ID": 6, "code": "Namespace6"},
 			{"ID": 7, "code": "Namespace7"},
-			{"ID": 8, "code": "Namespace8"},
+			{"ID": 8, "code": "default"},
 			{"ID": 9, "code": "Namespace9"},
 			{"ID": 10, "code": "Namespace10"},
 		}

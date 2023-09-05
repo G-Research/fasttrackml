@@ -4,7 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zeebo/assert"
+	"github.com/stretchr/testify/assert"
+
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/database"

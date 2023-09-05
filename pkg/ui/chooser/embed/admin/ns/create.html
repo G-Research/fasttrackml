@@ -1,19 +1,12 @@
-<html>
-  <head>
-    <title>Create Namespace</title>
-  </head>
-  <body>
-    <h1>Create Namespace</h1>
-    <form action="/admin/ns" method="post">
-        <label for="code">Code:</label>
-        <input type="text" id="code" name="code" required><br><br>
-        
-        <label for="description">Description:</label>
-        <input type="text" id="description" name="description"><br><br>
-        
-        <input type="submit" value="Create">
-    </form>
-    
-  </body>
-</html>
+<h1>Create Namespace</h1>
+{{ template "partials/messages" . }}
+<form action="/admin/ns" method="post">
+    <label for="code">Code:</label>
+    <input type="text" id="code" name="code" required><br><br>
+
+    <label for="description">Description:</label>
+    <input type="text" id="description" name="description"><br><br>
+
+    <input type="submit" value="Create">
+</form>
 

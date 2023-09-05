@@ -1,51 +1,33 @@
-<html>
-  <head>
-    <title>Namespaces</title>
-    <link rel="stylesheet" href="/static/css/jquery.dataTables.min.css">
-    <script type="text/javascript" language="javascript" src="/static/js/jquery-3.7.0.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/js/namespaces.js"></script>
-    <script type="text/javascript" language="javascript">
-      $( document ).ready(function() {
-         new DataTable('#namespaces');        
-      });
-    </script>
-  </head>
-  <body>
-    <h1>Namespaces</h1>
-    {{ if gt (len .ErrorMessage) 0 }}
-    <p style="color: darkred">{{ .ErrorMessage}}</p>
+<script type="text/javascript" language="javascript">
+  $( document ).ready(function() {
+     new DataTable('#namespaces');        
+  });
+</script>
+<h1>Namespaces</h1>
+{{ template "partials/messages" . }}
+<table id="namespaces" class="display">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Code</th>
+      <th>Description</th>
+      <th>Created At</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Data }}
+    <tr>
+      <td>{{ .ID }}</td>
+      <td>{{ .Code }}</td>
+      <td>{{ .Description }}</td>
+      <td>{{ .CreatedAt }}</td>
+      <td>
+	<a href="#" onclick="editNamespace('{{ .ID }}')">Edit</a>
+	<a href="#" onclick="deleteNamespace('{{ .ID }}')">Delete</a> 
+    </tr>
     {{ end }}
-    {{ if gt (len .SuccessMessage) 0 }}
-    <p style="color: darkgreen">{{ .SuccessMessage }}</p>
-    {{ end }}
-    <table id="namespaces" class="display">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Code</th>
-          <th>Description</th>
-          <th>Created At</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-	{{ range .Data }}
-	<tr>
-          <td>{{ .ID }}</td>
-          <td>{{ .Code }}</td>
-          <td>{{ .Description }}</td>
-          <td>{{ .CreatedAt }}</td>
-	  <td>
-	    <a href="#" onclick="editNamespace('{{ .ID }}')">Edit</a>
-	    <a href="#" onclick="deleteNamespace('{{ .ID }}')">Delete</a> 
-	</tr>
-	{{ end }}
-      </tbody>
-    </table>
+  </tbody>
+</table>
 
-    <p><a href="#" onclick="createNamespace()">Create new namespace</a></p>
-
-  </body>
-</html>
-
+<p><a href="#" onclick="createNamespace()">Create new namespace</a></p>

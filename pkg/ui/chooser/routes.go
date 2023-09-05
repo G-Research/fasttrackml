@@ -22,6 +22,7 @@ func AddRoutes(r fiber.Router) {
 	engine := html.NewFileSystem(http.FS(sub), ".html")
 	app := fiber.New(fiber.Config{
 		Views: engine,
+		ViewsLayout: "layouts/main",
 	})
 	r.Mount("/", app)
 
@@ -30,10 +31,9 @@ func AddRoutes(r fiber.Router) {
 	admin.Get("ns/new", controller.NewNamespace)
 	admin.Get("ns/", controller.GetNamespaces)
 	admin.Get("ns/:id/", controller.GetNamespace)
-	admin.Put("ns/:id/", controller.PutNamespace)
+	admin.Put("ns/:id/", controller.UpdateNamespace)
 	admin.Delete("ns/:id/", controller.DeleteNamespace)
-	admin.Post("ns/", controller.PostNamespace)
-
+	admin.Post("ns/", controller.CreateNamespace)
 
 	// default route
 	app.Use("/", etag.New(), filesystem.New(filesystem.Config{

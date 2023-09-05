@@ -55,8 +55,8 @@ func NewNamespace(ctx *fiber.Ctx) error {
 	})
 }
 
-// PostNamespace creates a new namespace record.
-func PostNamespace(ctx *fiber.Ctx) error {
+// CreateNamespace creates a new namespace record.
+func CreateNamespace(ctx *fiber.Ctx) error {
 	var req request.CreateNamespace
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "unable to parse request body")
@@ -72,8 +72,8 @@ func PostNamespace(ctx *fiber.Ctx) error {
 	})
 }
 
-// PutNamespace creates a new namespace record.
-func PutNamespace(ctx *fiber.Ctx) error {
+// UpdateNamespace creates a new namespace record.
+func UpdateNamespace(ctx *fiber.Ctx) error {
 	p := struct {
 		ID uint `params:"id"`
 	}{}
@@ -114,7 +114,7 @@ func DeleteNamespace(ctx *fiber.Ctx) error {
 	return ctx.Render("admin/ns/index", fiber.Map{
 		"Data": exampleData(), //TODO use service for real data
 		"ErrorMessage": "",
-		"SuccessMessage": "Deleted namespace if exists",
+		"SuccessMessage": "Successfully deleted if present",
 	})
 }
 // exampleData TODO remove this, used for UI dev 

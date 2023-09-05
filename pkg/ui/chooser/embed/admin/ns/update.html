@@ -1,29 +1,20 @@
-<html>
-  <head>
-    <title>Update Namespace</title>
-    <script type="text/javascript" language="javascript" src="/static/js/jquery-3.7.0.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/js/namespaces.js"></script>
-    <script type="text/javascript" language="javascript">
-      $( document ).ready(function() {
-        handleUpdateNamespace();
-      });
-    </script>
-  </head>
-  <body>
-    <h1>Update Namespace</h1>
-    <form action="/admin/ns/{{ .ID }}" method="post" id="updateForm">
-        <label for="id">ID:</label>
-        <input type="text" id="id" name="id" readonly value="{{ .ID }}" edi><br><br>
-      
-        <label for="code">Code:</label>
-        <input type="text" id="code" name="code" required value="{{ .Code }}"><br><br>
-        
-        <label for="description">Description:</label>
-        <input type="text" id="description" name="description" value="{{ .Description }}"><br><br>
-        
-        <input type="submit" value="Save">
-    </form>
-    
-  </body>
-</html>
+<script type="text/javascript" language="javascript">
+  $( document ).ready(function() {
+    handleUpdateNamespace();
+  });
+</script>
+<h1>Update Namespace</h1>
+{{ template "partials/messages" . }}
+<form action="/admin/ns/{{ .ID }}" method="post" id="updateForm">
+    <label for="id">ID:</label>
+    <input type="text" id="id" name="id" readonly value="{{ .ID }}" edi><br><br>
+
+    <label for="code">Code:</label>
+    <input type="text" id="code" name="code" required value="{{ .Code }}"><br><br>
+
+    <label for="description">Description:</label>
+    <input type="text" id="description" name="description" value="{{ .Description }}"><br><br>
+
+    <input type="submit" value="Save">
+</form>
 

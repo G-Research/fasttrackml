@@ -28,10 +28,10 @@
             margin-bottom: -50px;
         }
 
-        .namespaces {
-            width: 100%;   
-            background-image: none !important;
-            padding-right: .5rem !important;
+        #namespaces-list { 
+            overflow:auto;
+            height:20%;
+            list-style-type: none;
         }
     </style>
 </head>
@@ -47,7 +47,7 @@
 
     <!-- We load the UI with JS to avoid issues when an URL with embedded credentials is used -->
     <main>
-        <p id="selectedNamespaceText"></p>
+        <p id="selected-namespace"></p>
         <p>Which UI do you want to use?</p>
         <div class="ui">
             <article>
@@ -59,34 +59,29 @@
                 <p>This is the modern Aim UI, much faster than MLFlow.</p>
             </article>
         </div>
-        <select class="namespaces" size="5" id="namespaceSelect"  onchange="selectNamespace()">
+        <ul id="namespaces-list">
             {{ range .Data }}
-            <option value="{{ .code }}" {{ if eq .code "default" }}selected{{ end }}>{{ .code }}</option>
+            <li>
+                <a href="#" onclick="window.location = (window.location.origin + {{if eq .code "default"}}'/'{{else}}'/ns/{{.code}}'{{end}});">{{.code}}</a>    
+            </li>
             {{ end }}
-        </select>
+        </ul>
     </main>
+
     <footer>
         <p>Brought to you by <a href="https://opensource.gresearch.co.uk" target="_blank">G-Research Open-Source</a>.
         </p>
     </footer>
+
     <script>
         function setCurrentNamespace() {
             var currentUrl = window.location.href;
             var namespaceIndex = currentUrl.indexOf('/ns/');
+            var namespaceText = document.getElementById('selected-namespace')
             if (namespaceIndex !== -1) {
-                document.getElementById('selectedNamespaceText').innerText = "Selected Namespace: " + currentUrl.substring(namespaceIndex + 4);
+                namespaceText.innerText = "Selected Namespace: " + currentUrl.substring(namespaceIndex + 4);
             } else {
-                document.getElementById('selectedNamespaceText').innerText = "Selected Namespace: default"
-            }
-        }
-
-        function selectNamespace() {
-            var selectedNamespace = namespaceSelect.options[namespaceSelect.selectedIndex].value;
-            if (selectedNamespace == "default") {
-                window.location.href = window.location.origin + '/';
-            } else {
-                var newUrl = window.location.origin + '/ns/' + selectedNamespace;
-                window.location.href = newUrl;
+                namespaceText.innerText = "Selected Namespace: default"
             }
         }
 

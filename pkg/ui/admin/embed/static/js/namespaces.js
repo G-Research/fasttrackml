@@ -32,6 +32,9 @@ function editNamespace(id) {
 }
 
 function deleteNamespace(id) {
+  if !window.confirm("Are you sure?"){
+    return
+  }
   // Perform a DELETE request using jQuery's $.ajax
   $.ajax({
     url: "/admin/ns/" + id,

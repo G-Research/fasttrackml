@@ -12,7 +12,7 @@ var namespaces []*response.Namespace
 
 // GetNamespaces renders the data for list view.
 func GetNamespaces(ctx *fiber.Ctx) error {
-	return ctx.Render("admin/ns/index", fiber.Map{
+	return ctx.Render("ns/index", fiber.Map{
 		"Data": exampleData(), //TODO use service for real data
 		"ErrorMessage": "",
 		"SuccessMessage": "",
@@ -34,7 +34,7 @@ func GetNamespace(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, "Namespace not found")
 	}
 	
-	return ctx.Render("admin/ns/update", fiber.Map{
+	return ctx.Render("ns/update", fiber.Map{
 		"ID": ns.ID,
 		"Code": ns.Code,
 		"Description": ns.Description,
@@ -46,7 +46,7 @@ func GetNamespace(ctx *fiber.Ctx) error {
 // NewNamespace renders the data for view/edit one namespace
 func NewNamespace(ctx *fiber.Ctx) error {
 	ns := response.Namespace{}
-	return ctx.Render("admin/ns/create", fiber.Map{
+	return ctx.Render("ns/create", fiber.Map{
 		"ID": ns.ID,
 		"Code": ns.Code,
 		"Description": ns.Description,
@@ -65,7 +65,7 @@ func CreateNamespace(ctx *fiber.Ctx) error {
 		Code: req.Code,
 		Description: req.Description,
 	})
-	return ctx.Render("admin/ns/index", fiber.Map{
+	return ctx.Render("ns/index", fiber.Map{
 		"Data": exampleData(), //TODO use service for real data
 		"ErrorMessage": "",
 		"SuccessMessage": "Successfully added new namespace",
@@ -94,7 +94,7 @@ func UpdateNamespace(ctx *fiber.Ctx) error {
 	ns.Code = req.Code
 	ns.Description = req.Description
 	
-	return ctx.Render("admin/ns/index", fiber.Map{
+	return ctx.Render("ns/index", fiber.Map{
 		"Data": exampleData(), //TODO use service for real data
 		"ErrorMessage": "",
 		"SuccessMessage": "Successfully updated namespace",
@@ -111,7 +111,7 @@ func DeleteNamespace(ctx *fiber.Ctx) error {
 	}
 
 	deleteNamespace(p.ID)
-	return ctx.Render("admin/ns/index", fiber.Map{
+	return ctx.Render("ns/index", fiber.Map{
 		"Data": exampleData(), //TODO use service for real data
 		"ErrorMessage": "",
 		"SuccessMessage": "Successfully deleted if present",

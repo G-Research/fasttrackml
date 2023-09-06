@@ -33,6 +33,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
+	"github.com/G-Research/fasttrackml/pkg/ui/admin"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
 	mlflowUI "github.com/G-Research/fasttrackml/pkg/ui/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/version"
@@ -97,6 +98,9 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		),
 	).Init(server)
 	mlflowUI.AddRoutes(server.Group("/mlflow/"))
+
+	// 6. init chooser and admin
+	admin.AddRoutes(server.Group("/admin/"))
 	chooser.AddRoutes(server.Group("/"))
 
 	isRunning := make(chan struct{})

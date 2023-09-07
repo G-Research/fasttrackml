@@ -13,7 +13,7 @@ var namespaces []*response.Namespace
 // GetNamespaces renders the data for list view.
 func GetNamespaces(ctx *fiber.Ctx) error {
 	return ctx.Render("ns/index", fiber.Map{
-		"Data": exampleData(), //TODO use service for real data
+		"Data": exampleData(), // TODO use service for real data
 	})
 }
 
@@ -31,10 +31,10 @@ func GetNamespace(ctx *fiber.Ctx) error {
 	if ns == nil {
 		return fiber.NewError(fiber.StatusNotFound, "Namespace not found")
 	}
-	
+
 	return ctx.Render("ns/update", fiber.Map{
-		"ID": ns.ID,
-		"Code": ns.Code,
+		"ID":          ns.ID,
+		"Code":        ns.Code,
 		"Description": ns.Description,
 	})
 }
@@ -43,8 +43,8 @@ func GetNamespace(ctx *fiber.Ctx) error {
 func NewNamespace(ctx *fiber.Ctx) error {
 	ns := response.Namespace{}
 	return ctx.Render("ns/create", fiber.Map{
-		"ID": ns.ID,
-		"Code": ns.Code,
+		"ID":          ns.ID,
+		"Code":        ns.Code,
 		"Description": ns.Description,
 	})
 }
@@ -56,12 +56,12 @@ func CreateNamespace(ctx *fiber.Ctx) error {
 		return fiber.NewError(400, "unable to parse request body")
 	}
 	addNamespace(&response.Namespace{
-		Code: req.Code,
+		Code:        req.Code,
 		Description: req.Description,
 	})
 	return ctx.Render("ns/index", fiber.Map{
-		"Data": exampleData(), //TODO use service for real data
-		"ErrorMessage": "",
+		"Data":           exampleData(), // TODO use service for real data
+		"ErrorMessage":   "",
 		"SuccessMessage": "Successfully added new namespace",
 	})
 }
@@ -80,7 +80,7 @@ func UpdateNamespace(ctx *fiber.Ctx) error {
 	if ns == nil {
 		return fiber.NewError(fiber.StatusNotFound, "Namespace not found")
 	}
-	
+
 	var req request.CreateNamespace
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "unable to parse request body")
@@ -89,7 +89,7 @@ func UpdateNamespace(ctx *fiber.Ctx) error {
 	ns.Description = req.Description
 
 	return ctx.JSON(fiber.Map{
-		"status": "success",
+		"status":  "success",
 		"message": "Successfully updated namespace.",
 	})
 }
@@ -105,18 +105,19 @@ func DeleteNamespace(ctx *fiber.Ctx) error {
 
 	deleteNamespace(p.ID)
 	return ctx.JSON(fiber.Map{
-		"status": "success",
+		"status":  "success",
 		"message": "Successfully deleted namespace.",
 	})
 }
-// exampleData TODO remove this, used for UI dev 
+
+// exampleData TODO remove this, used for UI dev
 func exampleData() []*response.Namespace {
 	if namespaces == nil {
 		namespaces = []*response.Namespace{
-			{ ID: 1, Code: "ns1", Description: "This is namespace 1", CreatedAt: time.Now()},
-			{ ID: 2, Code: "ns2", Description: "This is namespace 2", CreatedAt: time.Now()},
-			{ ID: 3, Code: "ns3", Description: "This is namespace 3", CreatedAt: time.Now()},
-			{ ID: 4, Code: "ns4", Description: "This is namespace 4", CreatedAt: time.Now()},
+			{ID: 1, Code: "ns1", Description: "This is namespace 1", CreatedAt: time.Now()},
+			{ID: 2, Code: "ns2", Description: "This is namespace 2", CreatedAt: time.Now()},
+			{ID: 3, Code: "ns3", Description: "This is namespace 3", CreatedAt: time.Now()},
+			{ID: 4, Code: "ns4", Description: "This is namespace 4", CreatedAt: time.Now()},
 		}
 	}
 	visibleNamspaces := []*response.Namespace{}
@@ -128,7 +129,7 @@ func exampleData() []*response.Namespace {
 	return visibleNamspaces
 }
 
-// findNamespace TODO remove this, used for UI dev 
+// findNamespace TODO remove this, used for UI dev
 func findNamespace(id uint) *response.Namespace {
 	for _, ns := range namespaces {
 		if ns.ID == id {
@@ -138,14 +139,14 @@ func findNamespace(id uint) *response.Namespace {
 	return nil
 }
 
-// addNamespace TODO remove this, used for UI dev 
+// addNamespace TODO remove this, used for UI dev
 func addNamespace(newNS *response.Namespace) {
 	newNS.ID = uint(len(namespaces))
 	newNS.CreatedAt = time.Now()
 	namespaces = append(namespaces, newNS)
 }
 
-// deleteNamespace TODO remove this, used for UI dev 
+// deleteNamespace TODO remove this, used for UI dev
 func deleteNamespace(id uint) {
 	ns := findNamespace(id)
 	if ns != nil {
@@ -154,4 +155,3 @@ func deleteNamespace(id uint) {
 	}
 	return
 }
-

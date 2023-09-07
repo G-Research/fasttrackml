@@ -2,11 +2,12 @@ package admin
 
 import (
 	"embed"
+	"io/fs"
+	"net/http"
+
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/template/html/v2"
-	"io/fs"
-	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"
@@ -21,7 +22,7 @@ func AddRoutes(r fiber.Router) {
 	// engine and app for template rendering
 	engine := html.NewFileSystem(http.FS(sub), ".html")
 	app := fiber.New(fiber.Config{
-		Views: engine,
+		Views:       engine,
 		ViewsLayout: "layouts/main",
 	})
 	r.Mount("/", app)

@@ -14,8 +14,6 @@ var namespaces []*response.Namespace
 func GetNamespaces(ctx *fiber.Ctx) error {
 	return ctx.Render("ns/index", fiber.Map{
 		"Data": exampleData(), //TODO use service for real data
-		"ErrorMessage": "",
-		"SuccessMessage": "",
 	})
 }
 
@@ -38,8 +36,6 @@ func GetNamespace(ctx *fiber.Ctx) error {
 		"ID": ns.ID,
 		"Code": ns.Code,
 		"Description": ns.Description,
-		"ErrorMessage": "",
-		"SuccessMessage": "",
 	})
 }
 
@@ -50,8 +46,6 @@ func NewNamespace(ctx *fiber.Ctx) error {
 		"ID": ns.ID,
 		"Code": ns.Code,
 		"Description": ns.Description,
-		"ErrorMessage": "",
-		"SuccessMessage": "",
 	})
 }
 
@@ -93,11 +87,10 @@ func UpdateNamespace(ctx *fiber.Ctx) error {
 	}
 	ns.Code = req.Code
 	ns.Description = req.Description
-	
-	return ctx.Render("ns/index", fiber.Map{
-		"Data": exampleData(), //TODO use service for real data
-		"ErrorMessage": "",
-		"SuccessMessage": "Successfully updated namespace",
+
+	return ctx.JSON(fiber.Map{
+		"status": "success",
+		"message": "Successfully updated namespace.",
 	})
 }
 
@@ -111,10 +104,9 @@ func DeleteNamespace(ctx *fiber.Ctx) error {
 	}
 
 	deleteNamespace(p.ID)
-	return ctx.Render("ns/index", fiber.Map{
-		"Data": exampleData(), //TODO use service for real data
-		"ErrorMessage": "",
-		"SuccessMessage": "Successfully deleted if present",
+	return ctx.JSON(fiber.Map{
+		"status": "success",
+		"message": "Successfully deleted namespace.",
 	})
 }
 // exampleData TODO remove this, used for UI dev 

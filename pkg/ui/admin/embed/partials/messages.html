@@ -1,6 +1,22 @@
+<script type="text/javascript" language="javascript">
+  $( document ).ready(function() {
+    urlParams = new URLSearchParams(window.location.search);
+    message = urlParams.get('message');
+    status = urlParams.get('status');
+    if (message != null) {
+      $('#message').html(message + '<br/><br/>')
+      $('#message').css('color', 'darkgreen');
+    }
+    if (status == "error") {
+      $('#message').css('color', 'darkred');
+    }
+  });
+</script>
+<div id="message"></div>
 {{ if .ErrorMessage }}
 <p style="color: darkred">{{ .ErrorMessage}}</p>
 {{ end }}
 {{ if .SuccessMessage }}
 <p style="color: darkgreen">{{ .SuccessMessage }}</p>
 {{ end }}
+

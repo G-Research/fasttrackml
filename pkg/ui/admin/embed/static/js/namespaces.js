@@ -17,22 +17,28 @@ function handleUpdateNamespace() {
       type: "PUT",
       contentType: "application/json",
       data: JSON.stringify(formDataObject), // Convert to JSON format
-      success: namespaceIndex,
-      error: namespaceIndex
-    });
+    }).done(handleResponse);
   });
 }
 
 function createNamespace() {
-  window.location = window.location.origin + '/admin/ns/new'
+  redirectTo('/admin/ns/new');
 }
 
 function editNamespace(id) {
-  window.location = window.location.origin + '/admin/ns/' + id
+  redirectTo('/admin/ns/' + id);
+}
+
+function namespaceIndex() {
+  redirectTo('/admin/ns/');
+}
+
+function redirectTo(path) {
+  window.location = window.location.origin + path;
 }
 
 function deleteNamespace(id) {
-  if !window.confirm("Are you sure?"){
+  if (confirm("Are you sure?") != true ){
     return
   }
   // Perform a DELETE request using jQuery's $.ajax
@@ -40,11 +46,11 @@ function deleteNamespace(id) {
     url: "/admin/ns/" + id,
     type: "DELETE",
     contentType: "application/json",
-    success: namespaceIndex,
-    error: namespaceIndex
-  });
+  }).done(handleResponse);
 }
 
-function namespaceIndex() {
-  window.location = window.location.origin + '/admin/ns/'
+function handleResponse(data, jqxhr, status) {
+  redirectTo('/admin/ns/'
+	     + "?message=" + encodeURIComponent(data["message"])
+	     + "&status=" + data["status"]);
 }

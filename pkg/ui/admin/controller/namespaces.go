@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// TODO remove this is placeholder data
 var namespaces []*response.Namespace
 
 // GetNamespaces renders the data for list view.
@@ -51,7 +52,7 @@ func NewNamespace(ctx *fiber.Ctx) error {
 
 // CreateNamespace creates a new namespace record.
 func CreateNamespace(ctx *fiber.Ctx) error {
-	var req request.CreateNamespace
+	var req request.Namespace
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "unable to parse request body")
 	}
@@ -61,7 +62,7 @@ func CreateNamespace(ctx *fiber.Ctx) error {
 	})
 	return ctx.Render("ns/index", fiber.Map{
 		"Data":           exampleData(), // TODO use service for real data
-		"ErrorMessage":   "",
+		"ErrorMessage":   "", // Put error here if needed
 		"SuccessMessage": "Successfully added new namespace",
 	})
 }
@@ -81,7 +82,7 @@ func UpdateNamespace(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, "Namespace not found")
 	}
 
-	var req request.CreateNamespace
+	var req request.Namespace
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "unable to parse request body")
 	}

@@ -19,8 +19,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/G-Research/fasttrackml/pkg/api/admin"
-	adminController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
+	adminAPI "github.com/G-Research/fasttrackml/pkg/api/admin"
+	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
+	adminAPIController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
+	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
 	adminRepositories "github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
@@ -37,7 +39,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
 	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
-	"github.com/G-Research/fasttrackml/pkg/ui/admin"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
 	mlflowUI "github.com/G-Research/fasttrackml/pkg/ui/mlflow"
@@ -106,14 +107,21 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	).Init(server)
 	mlflowUI.AddRoutes(server)
 
-	// 6. init `admin` api routes.
-	admin.NewRouter(
-		adminController.NewController(
+	// 6. init `admin` UI routes. 
+	adminUI.NewRouter(
+		adminUIController.NewController(
 			namespace.NewService(namespaceRepository),
 		),
 	).Init(server)
 
-	// 7. init `chooser` ui routes.
+	// 7. init `admin` api routes.
+	adminAPI.NewRouter(
+		adminAPIController.NewController(
+			namespace.NewService(namespaceRepository),
+		),
+	).Init(server)
+
+	// 8. init `chooser` ui routes.
 	chooser.AddRoutes(server)
 
 	isRunning := make(chan struct{})

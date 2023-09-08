@@ -29,9 +29,9 @@ func NewRouter(controller *controller.Controller) *Router {
 	}
 }
 
-// Init makes initialization of all `mlflow` routes.
+// Init makes initialization of all `admin/api` routes.
 func (r Router) Init(server fiber.Router) {
-	mainGroup := server.Group("/admin")
+	mainGroup := server.Group("/admin/api")
 
 	namespaces := mainGroup.Group(NamespacesRoutePrefix)
 	namespaces.Get(NamespacesListRoute, r.controller.ListNamespaces)

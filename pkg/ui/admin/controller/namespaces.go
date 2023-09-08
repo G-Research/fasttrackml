@@ -3,8 +3,8 @@ package controller
 import (
 	"time"
 
-	"github.com/G-Research/fasttrackml/pkg/api/chooser/request"
-	"github.com/G-Research/fasttrackml/pkg/api/chooser/response"
+	"github.com/G-Research/fasttrackml/pkg/ui/admin/request"
+	"github.com/G-Research/fasttrackml/pkg/ui/admin/response"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -12,14 +12,14 @@ import (
 var namespaces []*response.Namespace
 
 // GetNamespaces renders the data for list view.
-func GetNamespaces(ctx *fiber.Ctx) error {
+func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
 	return ctx.Render("ns/index", fiber.Map{
 		"Data": exampleData(), // TODO use service for real data
 	})
 }
 
 // GetNamespace renders the data for view/edit one namespace
-func GetNamespace(ctx *fiber.Ctx) error {
+func (c Controller) GetNamespace(ctx *fiber.Ctx) error {
 	p := struct {
 		ID uint `params:"id"`
 	}{}
@@ -41,7 +41,7 @@ func GetNamespace(ctx *fiber.Ctx) error {
 }
 
 // NewNamespace renders the data for view/edit one namespace
-func NewNamespace(ctx *fiber.Ctx) error {
+func (c Controller) NewNamespace(ctx *fiber.Ctx) error {
 	ns := response.Namespace{}
 	return ctx.Render("ns/create", fiber.Map{
 		"ID":          ns.ID,
@@ -51,7 +51,7 @@ func NewNamespace(ctx *fiber.Ctx) error {
 }
 
 // CreateNamespace creates a new namespace record.
-func CreateNamespace(ctx *fiber.Ctx) error {
+func (c Controller) CreateNamespace(ctx *fiber.Ctx) error {
 	var req request.Namespace
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "unable to parse request body")
@@ -68,7 +68,7 @@ func CreateNamespace(ctx *fiber.Ctx) error {
 }
 
 // UpdateNamespace creates a new namespace record.
-func UpdateNamespace(ctx *fiber.Ctx) error {
+func (c Controller) UpdateNamespace(ctx *fiber.Ctx) error {
 	p := struct {
 		ID uint `params:"id"`
 	}{}
@@ -95,7 +95,7 @@ func UpdateNamespace(ctx *fiber.Ctx) error {
 	})
 }
 
-func DeleteNamespace(ctx *fiber.Ctx) error {
+func (c Controller) DeleteNamespace(ctx *fiber.Ctx) error {
 	p := struct {
 		ID uint `params:"id"`
 	}{}

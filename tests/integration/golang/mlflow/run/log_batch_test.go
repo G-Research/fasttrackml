@@ -15,17 +15,14 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type LogBatchTestSuite struct {
 	suite.Suite
-	client             *helpers.HttpClient
-	runFixtures        *fixtures.RunFixtures
-	metricFixtures     *fixtures.MetricFixtures
-	experimentFixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
 }
 
 func TestLogBatchTestSuite(t *testing.T) {
@@ -33,30 +30,29 @@ func TestLogBatchTestSuite(t *testing.T) {
 }
 
 func (s *LogBatchTestSuite) SetupTest() {
-	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
-	metricFixtures, err := fixtures.NewMetricFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.metricFixtures = metricFixtures
-	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = expFixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *LogBatchTestSuite) TestTags_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
 
-	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
+	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
@@ -85,7 +81,7 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := map[string]any{}
-			err := s.client.DoPostRequest(
+			err := s.MlflowClient.DoPostRequest(
 				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
 				tt.request,
 				&resp,
@@ -98,16 +94,24 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 
 func (s *LogBatchTestSuite) TestParams_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
 
-	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
+	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
@@ -152,7 +156,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := map[string]any{}
-			err := s.client.DoPostRequest(
+			err := s.MlflowClient.DoPostRequest(
 				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
 				tt.request,
 				&resp,
@@ -165,16 +169,24 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 
 func (s *LogBatchTestSuite) TestMetrics_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
 
-	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
+	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
@@ -310,7 +322,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 		s.T().Run(tt.name, func(T *testing.T) {
 			// do actual call to API.
 			resp := map[string]any{}
-			err := s.client.DoPostRequest(
+			err := s.MlflowClient.DoPostRequest(
 				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
 				tt.request,
 				&resp,
@@ -320,7 +332,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 
 			// make sure that `iter` and `last_iter` for each metric has been updated correctly.
 			for key, iteration := range tt.latestMetricIteration {
-				lastMetric, err := s.metricFixtures.GetLatestMetricByKey(context.Background(), key)
+				lastMetric, err := s.MetricFixtures.GetLatestMetricByKey(context.Background(), key)
 				assert.Nil(s.T(), err)
 				assert.Equal(s.T(), iteration, lastMetric.LastIter)
 			}
@@ -330,16 +342,24 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 
 func (s *LogBatchTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
 
-	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
+	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
@@ -380,7 +400,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.client.DoPostRequest(
+			err := s.MlflowClient.DoPostRequest(
 				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
 				tt.request,
 				&resp,

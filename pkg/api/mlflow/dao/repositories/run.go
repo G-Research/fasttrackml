@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -19,9 +19,13 @@ type RunRepositoryProvider interface {
 	BaseRepositoryProvider
 	// GetByID returns models.Run entity by its ID.
 	GetByID(ctx context.Context, id string) (*models.Run, error)
-	// GetByIDAndLifecycleStage returns models.Run entity by its ID and Lifecycle Stage
-	GetByIDAndLifecycleStage(
-		ctx context.Context, id string, lifecycleStage models.LifecycleStage,
+	// GetByNamespaceIDRunIDAndLifecycleStage returns models.Run entity by Namespace ID, its ID and Lifecycle Stage.
+	GetByNamespaceIDRunIDAndLifecycleStage(
+		ctx context.Context, namespaceID uint, runID string, lifecycleStage models.LifecycleStage,
+	) (*models.Run, error)
+	// GetByNamespaceIDAndRunID returns models.Run entity by Namespace ID and its ID.
+	GetByNamespaceIDAndRunID(
+		ctx context.Context, namespaceID uint, runID string,
 	) (*models.Run, error)
 	// Create creates new models.Run entity.
 	Create(ctx context.Context, run *models.Run) error
@@ -76,11 +80,11 @@ func (r RunRepository) GetByID(ctx context.Context, id string) (*models.Run, err
 	return &run, nil
 }
 
-// GetByIDAndLifecycleStage returns models.Run entity by its ID and Lifecycle Stage
-func (r RunRepository) GetByIDAndLifecycleStage(
-	ctx context.Context, id string, lifecycleStage models.LifecycleStage,
+// GetByNamespaceIDRunIDAndLifecycleStage returns models.Run entity by Namespace ID, its ID and Lifecycle Stage..
+func (r RunRepository) GetByNamespaceIDRunIDAndLifecycleStage(
+	ctx context.Context, namespaceID uint, runID string, lifecycleStage models.LifecycleStage,
 ) (*models.Run, error) {
-	run := models.Run{ID: id}
+	run := models.Run{ID: runID}
 	if err := r.db.WithContext(
 		ctx,
 	).Preload(
@@ -89,13 +93,43 @@ func (r RunRepository) GetByIDAndLifecycleStage(
 		"Params",
 	).Preload(
 		"Tags",
+	).Joins(
+		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 	).Where(
-		`lifecycle_stage = ?`, lifecycleStage,
+		"experiments.namespace_id = ?", namespaceID,
+	).Where(
+		`runs.lifecycle_stage = ?`, lifecycleStage,
 	).First(&run).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", id)
+		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", runID)
+	}
+	return &run, nil
+}
+
+// GetByNamespaceIDAndRunID returns models.Run entity by Namespace ID and its ID.
+func (r RunRepository) GetByNamespaceIDAndRunID(
+	ctx context.Context, namespaceID uint, runID string,
+) (*models.Run, error) {
+	run := models.Run{ID: runID}
+	if err := r.db.WithContext(
+		ctx,
+	).Preload(
+		"LatestMetrics",
+	).Preload(
+		"Params",
+	).Preload(
+		"Tags",
+	).Joins(
+		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+	).Where(
+		"experiments.namespace_id = ?", namespaceID,
+	).First(&run).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", runID)
 	}
 	return &run, nil
 }

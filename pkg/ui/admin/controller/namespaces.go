@@ -1,21 +1,14 @@
 package controller
 
 import (
-	"time"
-
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/request"
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/response"
 	"github.com/gofiber/fiber/v2"
 )
 
-// TODO remove this is placeholder data
-var namespaces []*response.Namespace
-
 // GetNamespaces renders the data for list view.
 func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
-	return ctx.Render("ns/index", fiber.Map{
-		"Data": exampleData(), // TODO use service for real data
-	})
+	return c.renderIndex(ctx, "")
 }
 
 // GetNamespace renders the data for view/edit one namespace
@@ -28,9 +21,12 @@ func (c Controller) GetNamespace(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	ns := findNamespace(p.ID)
+	ns, err := c.namespaceService.GetNamespace(ctx.Context(), p.ID)
+	if err != nil {
+		return fiber.NewError(fiber.ErrInternalServerError.Code, "unable to find namespace")
+	}
 	if ns == nil {
-		return fiber.NewError(fiber.StatusNotFound, "Namespace not found")
+		return fiber.NewError(fiber.StatusNotFound, "namespace not found")
 	}
 
 	return ctx.Render("ns/update", fiber.Map{
@@ -56,15 +52,17 @@ func (c Controller) CreateNamespace(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "unable to parse request body")
 	}
-	addNamespace(&response.Namespace{
-		Code:        req.Code,
-		Description: req.Description,
-	})
-	return ctx.Render("ns/index", fiber.Map{
-		"Data":           exampleData(), // TODO use service for real data
-		"ErrorMessage":   "", // Put error here if needed
-		"SuccessMessage": "Successfully added new namespace",
-	})
+	ns, err := c.namespaceService.CreateNamespace(ctx.Context(), req.Code, req.Description)
+	if err != nil {
+		return ctx.Render("ns/create", fiber.Map{
+			"ID":           ns.ID,
+			"Code":         req.Code,
+			"Description":  req.Description,
+			"ErrorMessage": err.Error(),
+		})
+	}
+
+	return c.renderIndex(ctx, "Successfully added new namespace")
 }
 
 // UpdateNamespace creates a new namespace record.
@@ -77,17 +75,18 @@ func (c Controller) UpdateNamespace(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	ns := findNamespace(p.ID)
-	if ns == nil {
-		return fiber.NewError(fiber.StatusNotFound, "Namespace not found")
-	}
-
 	var req request.Namespace
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "unable to parse request body")
 	}
-	ns.Code = req.Code
-	ns.Description = req.Description
+
+	_, err := c.namespaceService.UpdateNamespace(ctx.Context(), p.ID, req.Code, req.Description)
+	if err != nil {
+		return ctx.JSON(fiber.Map{
+			"status":  "error",
+			"message": err.Error(),
+		})
+	}
 
 	return ctx.JSON(fiber.Map{
 		"status":  "success",
@@ -104,55 +103,29 @@ func (c Controller) DeleteNamespace(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	deleteNamespace(p.ID)
+	err := c.namespaceService.DeleteNamespace(ctx.Context(), p.ID)
+	if err != nil {
+		return ctx.JSON(fiber.Map{
+			"status":  "error",
+			"message": err.Error(),
+		})
+	}
 	return ctx.JSON(fiber.Map{
 		"status":  "success",
 		"message": "Successfully deleted namespace.",
 	})
 }
 
-// exampleData TODO remove this, used for UI dev
-func exampleData() []*response.Namespace {
-	if namespaces == nil {
-		namespaces = []*response.Namespace{
-			{ID: 1, Code: "ns1", Description: "This is namespace 1", CreatedAt: time.Now()},
-			{ID: 2, Code: "ns2", Description: "This is namespace 2", CreatedAt: time.Now()},
-			{ID: 3, Code: "ns3", Description: "This is namespace 3", CreatedAt: time.Now()},
-			{ID: 4, Code: "ns4", Description: "This is namespace 4", CreatedAt: time.Now()},
-		}
+func (c Controller) renderIndex(ctx *fiber.Ctx, msg string) error {
+	namespaces, err := c.namespaceService.ListNamespaces(ctx.Context())
+	if err != nil {
+		return ctx.Render("ns/index", fiber.Map{
+			"Data":         namespaces,
+			"ErrorMessage": err.Error(),
+		})
 	}
-	visibleNamspaces := []*response.Namespace{}
-	for _, ns := range namespaces {
-		if ns.DeletedAt == nil {
-			visibleNamspaces = append(visibleNamspaces, ns)
-		}
-	}
-	return visibleNamspaces
-}
-
-// findNamespace TODO remove this, used for UI dev
-func findNamespace(id uint) *response.Namespace {
-	for _, ns := range namespaces {
-		if ns.ID == id {
-			return ns
-		}
-	}
-	return nil
-}
-
-// addNamespace TODO remove this, used for UI dev
-func addNamespace(newNS *response.Namespace) {
-	newNS.ID = uint(len(namespaces))
-	newNS.CreatedAt = time.Now()
-	namespaces = append(namespaces, newNS)
-}
-
-// deleteNamespace TODO remove this, used for UI dev
-func deleteNamespace(id uint) {
-	ns := findNamespace(id)
-	if ns != nil {
-		deletedAt := time.Now()
-		ns.DeletedAt = &deletedAt
-	}
-	return
+	return ctx.Render("ns/index", fiber.Map{
+		"Data":           namespaces,
+		"SuccessMessage": msg,
+	})
 }

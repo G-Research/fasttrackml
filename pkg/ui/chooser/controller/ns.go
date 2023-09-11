@@ -3,14 +3,17 @@ package controller
 import (
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/namespace"
+	repositories "github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
+
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 var namespaces []map[string]any
 
 // GetNamespaces renders the index view
 func GetNamespaces(ctx *fiber.Ctx) error {
-	var namespaceService namespace.Service
+	namespaceService := namespace.NewService(repositories.NewNamespaceRepository(database.DB))
 	namespaces, err := namespaceService.ListNamespaces(ctx.Context())
 	if err != nil {
 		return err

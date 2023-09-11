@@ -22,5 +22,9 @@ func NewService(
 }
 
 func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, error) {
-	return nil, nil
+	namespaces, err := s.namespaceRepository.ListNamespaces(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return namespaces, nil
 }

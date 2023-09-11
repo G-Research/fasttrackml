@@ -9,6 +9,7 @@ services:
       - postgres
     environment:
       FML_LOG_LEVEL: debug
+      FML_ARTIFACT_ROOT: ${FML_ARTIFACT_ROOT}
       FML_DATABASE_URI: ${FML_DATABASE_URI}
       FML_S3_ENDPOINT_URI: http://minio:9000
       AWS_ACCESS_KEY_ID: "user"
@@ -42,6 +43,7 @@ services:
       - service
     environment:
       FML_SERVICE_URI: http://service:5000
+      FML_ARTIFACT_ROOT: ${FML_ARTIFACT_ROOT}
       FML_DATABASE_URI: ${FML_DATABASE_URI}
       FML_S3_ENDPOINT_URI: http://minio:9000
       AWS_ACCESS_KEY_ID: "user"

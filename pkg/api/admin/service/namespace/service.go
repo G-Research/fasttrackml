@@ -21,6 +21,33 @@ func NewService(
 	}
 }
 
-func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, error) {
-	return nil, nil
+func (s Service) ListNamespaces(ctx context.Context) ([]*models.Namespace, error) {
+	return s.namespaceRepository.List(ctx)
+}
+
+func (s Service) GetNamespace(ctx context.Context, id uint) (*models.Namespace, error) {
+	return s.namespaceRepository.GetByID(ctx, id)
+}
+
+func (s Service) CreateNamespace(ctx context.Context, code, description string) (models.Namespace, error) {
+	namespace := &models.Namespace{
+		Code:        code,
+		Description: description,
+	}
+	err :=  s.namespaceRepository.Create(ctx, namespace)
+	return *namespace, err
+}
+
+func (s Service) UpdateNamespace(ctx context.Context, id uint, code, description string) (models.Namespace, error) {
+	namespace := &models.Namespace{
+		ID: id,
+		Code:        code,
+		Description: description,
+	}
+	err := s.namespaceRepository.Update(ctx, namespace)
+	return *namespace, err
+}
+
+func (s Service) DeleteNamespace(ctx context.Context, id uint) error {
+	return s.namespaceRepository.Delete(ctx, id)
 }

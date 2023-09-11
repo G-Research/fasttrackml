@@ -12,17 +12,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type ArchiveBatchTestSuite struct {
 	suite.Suite
-	runs               []*models.Run
-	client             *helpers.HttpClient
-	runFixtures        *fixtures.RunFixtures
-	experimentFixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
+	runs []*models.Run
 }
 
 func TestArchiveBatchTestSuite(t *testing.T) {
@@ -30,29 +28,31 @@ func TestArchiveBatchTestSuite(t *testing.T) {
 }
 
 func (s *ArchiveBatchTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
-	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = expFixtures
+	s.BaseTestSuite.SetupTest(s.T())
 
-	exp := &models.Experiment{
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  0,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
-	}
-	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
+	})
 	assert.Nil(s.T(), err)
 
-	s.runs, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 10)
+	s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 10)
 	assert.Nil(s.T(), err)
 }
 
 func (s *ArchiveBatchTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
 	tests := []struct {
 		name                 string
 		runIDs               []string
@@ -80,13 +80,13 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+			originalMinRowNum, originalMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
 			assert.Nil(s.T(), err)
 
 			resp := map[string]any{}
-			err = s.client.DoPostRequest(
+			err = s.AIMClient.DoPostRequest(
 				fmt.Sprintf("/runs/archive-batch?archive=%s", tt.archiveParam),
 				tt.runIDs,
 				&resp,
@@ -94,7 +94,7 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), map[string]interface{}{"status": "OK"}, resp)
 
-			runs, err := s.runFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
+			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), 10, len(runs))
 			archiveCount := 0
@@ -105,7 +105,7 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 			}
 			assert.Equal(s.T(), tt.expectedArchiveCount, archiveCount)
 
-			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
 			assert.Nil(s.T(), err)
@@ -117,7 +117,7 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 
 func (s *ArchiveBatchTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string
@@ -132,13 +132,13 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			originalMinRowNum, originalMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+			originalMinRowNum, originalMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
 			assert.Nil(s.T(), err)
 
 			var resp fiber.Map
-			err = s.client.DoPostRequest(
+			err = s.AIMClient.DoPostRequest(
 				"/runs/archive-batch?archive=true",
 				tt.request,
 				&resp,
@@ -146,11 +146,11 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
 
-			runs, err := s.runFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
+			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
 
-			newMinRowNum, newMaxRowNum, err := s.runFixtures.FindMinMaxRowNums(
+			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
 			assert.Nil(s.T(), err)

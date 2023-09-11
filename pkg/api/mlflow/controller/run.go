@@ -3,6 +3,8 @@ package controller
 import (
 	"encoding/json"
 
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 
@@ -18,8 +20,13 @@ func (c Controller) CreateRun(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 
-	log.Debugf("create request: %#v", &req)
-	run, err := c.runService.CreateRun(ctx.Context(), &req)
+	log.Debugf("createRun request: %#v", &req)
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("createRun namespace: %s", ns.Code)
+	run, err := c.runService.CreateRun(ctx.Context(), ns, &req)
 	if err != nil {
 		return err
 	}
@@ -35,12 +42,18 @@ func (c Controller) UpdateRun(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
+	log.Debugf("updateRun request: %#v", &req)
 
-	run, err := c.runService.UpdateRun(ctx.Context(), &req)
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("updateRun namespace: %s", ns.Code)
+
+	run, err := c.runService.UpdateRun(ctx.Context(), ns, &req)
 	if err != nil {
 		return err
 	}
-	log.Debugf("updateRun request: %#v", req)
 	resp := response.NewUpdateRunResponse(run)
 	log.Debugf("updateRun response: %#v", resp)
 
@@ -55,7 +68,14 @@ func (c Controller) GetRun(ctx *fiber.Ctx) error {
 	}
 
 	log.Debugf("getRun request: %#v", req)
-	run, err := c.runService.GetRun(ctx.Context(), &req)
+
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("getRun namespace: %s", ns.Code)
+
+	run, err := c.runService.GetRun(ctx.Context(), ns, &req)
 	if err != nil {
 		return err
 	}
@@ -74,7 +94,13 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("searchRuns request: %#v", req)
 
-	runs, limit, offset, err := c.runService.SearchRuns(ctx.Context(), &req)
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("searchRuns namespace: %s", ns.Code)
+
+	runs, limit, offset, err := c.runService.SearchRuns(ctx.Context(), ns, &req)
 	if err != nil {
 		return err
 	}
@@ -96,7 +122,13 @@ func (c Controller) DeleteRun(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("deleteRun request: %#v", req)
 
-	if err := c.runService.DeleteRun(ctx.Context(), &req); err != nil {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("deleteRun namespace: %s", ns.Code)
+
+	if err := c.runService.DeleteRun(ctx.Context(), ns, &req); err != nil {
 		return err
 	}
 
@@ -111,7 +143,13 @@ func (c Controller) RestoreRun(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("restoreRun request: %#v", req)
 
-	if err := c.runService.RestoreRun(ctx.Context(), &req); err != nil {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("restoreRun namespace: %s", ns.Code)
+
+	if err := c.runService.RestoreRun(ctx.Context(), ns, &req); err != nil {
 		return err
 	}
 
@@ -129,7 +167,13 @@ func (c Controller) LogMetric(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("logMetric request: %#v", req)
 
-	if err := c.runService.LogMetric(ctx.Context(), &req); err != nil {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("logMetric namespace: %s", ns.Code)
+
+	if err := c.runService.LogMetric(ctx.Context(), ns, &req); err != nil {
 		return err
 	}
 
@@ -147,7 +191,13 @@ func (c Controller) LogParam(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("logParam request: %#v", req)
 
-	if err := c.runService.LogParam(ctx.Context(), &req); err != nil {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("logParam namespace: %s", ns.Code)
+
+	if err := c.runService.LogParam(ctx.Context(), ns, &req); err != nil {
 		return err
 	}
 
@@ -165,7 +215,13 @@ func (c Controller) SetRunTag(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("setRunTag request: %#v", req)
 
-	if err := c.runService.SetRunTag(ctx.Context(), &req); err != nil {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("setRunTag namespace: %s", ns.Code)
+
+	if err := c.runService.SetRunTag(ctx.Context(), ns, &req); err != nil {
 		return err
 	}
 
@@ -180,7 +236,13 @@ func (c Controller) DeleteRunTag(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("deleteRunTag request: %#v", req)
 
-	if err := c.runService.DeleteRunTag(ctx.Context(), &req); err != nil {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("deleteRunTag namespace: %s", ns.Code)
+
+	if err := c.runService.DeleteRunTag(ctx.Context(), ns, &req); err != nil {
 		return err
 	}
 	return ctx.JSON(fiber.Map{})
@@ -197,7 +259,13 @@ func (c Controller) LogBatch(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("logBatch request: %#v", req)
 
-	if err := c.runService.LogBatch(ctx.Context(), &req); err != nil {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("logBatch namespace: %s", ns.Code)
+
+	if err := c.runService.LogBatch(ctx.Context(), ns, &req); err != nil {
 		return err
 	}
 

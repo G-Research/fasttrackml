@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
+	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
@@ -13,18 +14,12 @@ import (
 // DashboardFixtures represents data fixtures object.
 type DashboardFixtures struct {
 	baseFixtures
-	*database.DBInstance
 }
 
 // NewDashboardFixtures creates new instance of DashboardFixtures.
-func NewDashboardFixtures(databaseDSN string) (*DashboardFixtures, error) {
-	db, err := CreateDB(databaseDSN)
-	if err != nil {
-		return nil, err
-	}
+func NewDashboardFixtures(db *gorm.DB) (*DashboardFixtures, error) {
 	return &DashboardFixtures{
-		baseFixtures: baseFixtures{db: db.GormDB()},
-		DBInstance:   nil,
+		baseFixtures: baseFixtures{db: db},
 	}, nil
 }
 
@@ -45,7 +40,7 @@ func (f DashboardFixtures) CreateDashboards(
 	var dashboards []*database.Dashboard
 	// create dashboards for the experiment
 	for i := 0; i < num; i++ {
-		dashboard := &database.Dashboard{
+		dashboard, err := f.CreateDashboard(ctx, &database.Dashboard{
 			Base: database.Base{
 				ID:        uuid.New(),
 				CreatedAt: time.Now(),
@@ -53,8 +48,7 @@ func (f DashboardFixtures) CreateDashboards(
 			Name:        "dashboard-exp",
 			Description: "dashboard for experiment",
 			AppID:       appId,
-		}
-		dashboard, err := f.CreateDashboard(ctx, dashboard)
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -63,15 +57,32 @@ func (f DashboardFixtures) CreateDashboards(
 	return dashboards, nil
 }
 
+// GetDashboardByID returns database.Dashboard entity by its ID.
+func (f DashboardFixtures) GetDashboardByID(ctx context.Context, dashboardID string) (*database.Dashboard, error) {
+	var dashboard database.Dashboard
+	if err := f.db.WithContext(ctx).Where(
+		"id = ?", dashboardID,
+	).Where(
+		"NOT is_archived",
+	).Find(
+		&dashboard,
+	).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting 'dashboard' entity by id: %s", dashboardID)
+	}
+	return &dashboard, nil
+}
+
 // GetDashboards fetches all dashboards which are not archived
 func (f DashboardFixtures) GetDashboards(
 	ctx context.Context,
 ) ([]database.Dashboard, error) {
-	dashboards := []database.Dashboard{}
-	if err := f.db.WithContext(ctx).
-		Where("NOT is_archived").
-		Find(&dashboards).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting 'dashboard' entities")
+	var dashboards []database.Dashboard
+	if err := f.db.WithContext(ctx).Where(
+		"NOT is_archived",
+	).Find(
+		&dashboards,
+	).Error; err != nil {
+		return nil, eris.Wrap(err, "error getting 'dashboard' entities")
 	}
 	return dashboards, nil
 }

@@ -8,7 +8,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 func Test_renumberRows(t *testing.T) {
@@ -45,7 +45,8 @@ func Test_renumberRows(t *testing.T) {
 		Conn:       mockDb,
 		DriverName: "postgres",
 	})
-	db, _ := gorm.Open(dialector, &gorm.Config{})
+	db, err := gorm.Open(dialector, &gorm.Config{})
+	assert.Nil(t, err)
 
 	repo := NewRunRepository(db)
 

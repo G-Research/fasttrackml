@@ -7,8 +7,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // TagRepositoryProvider provides an interface to work with models.Tag entity.
@@ -75,7 +74,7 @@ func (r TagRepository) GetByRunIDAndKey(ctx context.Context, runID, key string) 
 
 // Delete deletes existing models.Tag entity.
 func (r TagRepository) Delete(ctx context.Context, tag *models.Tag) error {
-	if err := database.DB.Delete(tag).Error; err != nil {
+	if err := r.db.Delete(tag).Error; err != nil {
 		return eris.Wrapf(err, "error deleting tag by run id: %s and key: %s", tag.RunID, tag.Key)
 	}
 	return nil

@@ -3,7 +3,7 @@ package helpers
 import (
 	"time"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // TransformRunsToActivityMap transform a slice of runs into a map of experiments activity to match the GetExperimentsActivity endpoint response.

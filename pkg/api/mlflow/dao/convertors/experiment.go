@@ -10,11 +10,12 @@ import (
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // ConvertCreateExperimentToDBModel converts request.CreateExperimentRequest into actual models.Experiment model.
 func ConvertCreateExperimentToDBModel(req *request.CreateExperimentRequest) (*models.Experiment, error) {
+	// 2. fill the entire Experiment model.
 	ts := time.Now().UTC().UnixMilli()
 	experiment := models.Experiment{
 		Name:           req.Name,

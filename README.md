@@ -1,7 +1,8 @@
 [![FastTrackML banner](./website/static/images/github-banner.svg)](https://fasttrackml.io/)
 
 # _FastTrackML_
-Rewrite of the MLFlow tracking server with a focus on scalability
+
+An experiment tracking server focused on speed and scalability, fully compatible with MLFlow.
 
 ### Quickstart
 

@@ -41,7 +41,7 @@ func initDBs() (input, output database.DBProvider, err error) {
 	databasePoolMax := 20
 	databaseReset := false
 	databaseMigrate := false
-	artifactRoot := "s3://fasttrackml"
+	artifactRoot := viper.GetString("artifact-root")
 	input, err = database.MakeDBProvider(
 		viper.GetString("input-database-uri"),
 		databaseSlowThreshold,
@@ -74,6 +74,7 @@ func init() {
 
 	ImportCmd.Flags().StringP("input-database-uri", "i", "", "Input Database URI (eg., sqlite://fasttrackml.db)")
 	ImportCmd.Flags().StringP("output-database-uri", "o", "", "Output Database URI (eg., postgres://user:psw@postgres:5432)")
+	ImportCmd.Flags().StringP("artifact-root", "a", "./artifacts", "Artifact Root")
 	ImportCmd.MarkFlagRequired("input-database-uri")
 	ImportCmd.MarkFlagRequired("output-database-uri")
 }

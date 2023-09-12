@@ -4,10 +4,17 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+var supportedAlembicVersions = []string{
+	"97727af70f4d",
+	"3500859a5d39",
+	"7f2a7d5fae7d",
+}
 
 func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
 	db := dbProvider.GormDB()
@@ -21,7 +28,7 @@ func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
 		tx.First(&schemaVersion)
 	}
 
-	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "5d042539be4f" {
+	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != "5d042539be4f" {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
 		}
@@ -106,7 +113,7 @@ func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
 			}
 			fallthrough
 
-		case "97727af70f4d":
+		case "97727af70f4d", "3500859a5d39", "7f2a7d5fae7d":
 			switch schemaVersion.Version {
 			case "":
 				log.Info("Migrating database to FastTrackML schema ac0b8b7c0014")

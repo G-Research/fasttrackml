@@ -8,7 +8,6 @@
 <table id="namespaces" class="display">
   <thead>
     <tr>
-      <th>ID</th>
       <th>Code</th>
       <th>Description</th>
       <th>Created At</th>
@@ -18,10 +17,9 @@
   <tbody>
     {{ range .Data }}
     <tr>
-      <td>{{ .ID }}</td>
       <td>{{ .Code }}</td>
       <td>{{ .Description }}</td>
-      <td>{{ .CreatedAt }}</td>
+      <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
       <td>
 	<a href="#" onclick="editNamespace('{{ .ID }}')">Edit</a>
 	<a href="#" onclick="deleteNamespace('{{ .ID }}')">Delete</a> 

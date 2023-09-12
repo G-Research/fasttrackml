@@ -11,7 +11,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"gorm.io/plugin/dbresolver"
 )
 
 // PostgresDBInstance is the Postgres-specific DbInstance variant.
@@ -39,23 +38,15 @@ func NewPostgresDBInstance(
 		DBInstance: DBInstance{dsn: dsnURL.String()},
 	}
 
-	var sourceConn gorm.Dialector
-	var replicaConn gorm.Dialector
-	sourceConn = postgres.Open(dsnURL.String())
+	conn := postgres.Open(dsnURL.String())
 
-	logURL := dsnURL
-	q := logURL.Query()
-	if q.Has("_key") {
-		q.Set("_key", "xxxxx")
-	}
-	logURL.RawQuery = q.Encode()
-	log.Infof("Using database %s", logURL.Redacted())
+	log.Infof("Using database %s", dsnURL.Redacted())
 
 	dbLogLevel := logger.Warn
 	if log.GetLevel() == log.DebugLevel {
 		dbLogLevel = logger.Info
 	}
-	gormDB, err := gorm.Open(sourceConn, &gorm.Config{
+	gormDB, err := gorm.Open(conn, &gorm.Config{
 		Logger: logger.New(
 			glog.New(
 				log.StandardLogger().WriterLevel(log.WarnLevel),
@@ -75,14 +66,5 @@ func NewPostgresDBInstance(
 	}
 	pgdb.DB = gormDB
 
-	if replicaConn != nil {
-		pgdb.Use(
-			dbresolver.Register(dbresolver.Config{
-				Replicas: []gorm.Dialector{
-					replicaConn,
-				},
-			}),
-		)
-	}
 	return &pgdb, nil
 }

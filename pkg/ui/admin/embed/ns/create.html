@@ -6,13 +6,13 @@
       <label for="code">Code:</label>
     </div>
     <div>
-      <input type="text" id="code" name="code" required>
+      <input type="text" id="code" name="code" required value="{{ .Code }}">
     </div>
     <div>
       <label for="description">Description:</label>
     </div>
     <div>
-      <input type="text" id="description" name="description">
+      <input type="text" id="description" name="description" value="{{ .Description }}">
     </div>
     <div>	 
       <input type="submit" value="Save">

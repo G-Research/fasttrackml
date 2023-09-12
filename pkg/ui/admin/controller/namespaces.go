@@ -52,10 +52,9 @@ func (c Controller) CreateNamespace(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "unable to parse request body")
 	}
-	ns, err := c.namespaceService.CreateNamespace(ctx.Context(), req.Code, req.Description)
+	_, err := c.namespaceService.CreateNamespace(ctx.Context(), req.Code, req.Description)
 	if err != nil {
 		return ctx.Render("ns/create", fiber.Map{
-			"ID":           ns.ID,
 			"Code":         req.Code,
 			"Description":  req.Description,
 			"ErrorMessage": err.Error(),

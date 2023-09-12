@@ -20,10 +20,7 @@ import (
 	"github.com/spf13/viper"
 
 	adminAPI "github.com/G-Research/fasttrackml/pkg/api/admin"
-	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminAPIController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
-	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
-	adminRepositories "github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -39,6 +36,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
 	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
+	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
+	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
 	mlflowUI "github.com/G-Research/fasttrackml/pkg/ui/mlflow"
@@ -65,8 +64,9 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
+	namespaceRepository := mlflowRepositories.NewNamespaceRepository(db.GormDB())
+
 	// 3. init main HTTP server.
-	namespaceRepository := adminRepositories.NewNamespaceRepository(db.GormDB())
 	server := initServer(mlflowConfig, namespaceRepository)
 
 	// 4. init `aim` api and ui routes.
@@ -110,14 +110,14 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	// 6. init `admin` UI routes. 
 	adminUI.NewRouter(
 		adminUIController.NewController(
-			namespace.NewService(namespaceRepository),
+			namespace.NewService(*namespaceRepository),
 		),
 	).Init(server)
 
 	// 7. init `admin` api routes.
 	adminAPI.NewRouter(
 		adminAPIController.NewController(
-			namespace.NewService(namespaceRepository),
+			namespace.NewService(*namespaceRepository),
 		),
 	).Init(server)
 
@@ -179,7 +179,7 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 // initServer init HTTP server with base configuration.
 func initServer(
 	config *mlflowConfig.ServiceConfig,
-	namespaceRepository adminRepositories.NamespaceRepositoryProvider,
+	namespaceRepository mlflowRepositories.NamespaceRepositoryProvider,
 ) *fiber.App {
 	server := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,

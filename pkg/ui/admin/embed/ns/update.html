@@ -7,12 +7,7 @@
 {{ template "partials/messages" . }}
 <form action="#" method="post" id="updateForm">
   <div id="form-grid">
-    <div>
-      <label for="id">ID:</label>
-    </div>
-    <div>
-      <input type="text" id="id" name="id" readonly value="{{ .ID }}">
-    </div>
+    <input type="hidden" id="id" name="id" readonly value="{{ .ID }}">
     <div>
       <label for="code">Code:</label>
     </div>

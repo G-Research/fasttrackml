@@ -362,7 +362,7 @@ func CreateDefaultNamespace(db *gorm.DB) error {
 		Code: "default",
 	}); tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			log.Info("Creating default namespace")
+			log.Info("creating default namespace")
 			var exp int32 = 0
 			ns := Namespace{
 				Code:                "default",
@@ -394,7 +394,7 @@ func CreateDefaultNamespace(db *gorm.DB) error {
 func CreateDefaultExperiment(db *gorm.DB, artifactRoot string) error {
 	if err := db.First(&Experiment{}, 0).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Info("Creating default experiment")
+			log.Info("creating default experiment")
 			var id int32 = 0
 			ts := time.Now().UTC().UnixMilli()
 			exp := Experiment{

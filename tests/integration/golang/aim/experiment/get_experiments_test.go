@@ -6,8 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 
 	"github.com/stretchr/testify/assert"
@@ -35,11 +33,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
+	namespace, err := s.NamespaceFixtures.GetDefaultNamespace(context.Background())
 	assert.Nil(s.T(), err)
 
 	experiments, err := s.ExperimentFixtures.CreateExperiments(context.Background(), namespace, 5)

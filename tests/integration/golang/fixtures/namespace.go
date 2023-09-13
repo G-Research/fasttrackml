@@ -3,12 +3,11 @@ package fixtures
 import (
 	"context"
 
-	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
-
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 )
 
 // NamespaceFixtures represents data fixtures object.
@@ -25,12 +24,11 @@ func NewNamespaceFixtures(db *gorm.DB) (*NamespaceFixtures, error) {
 	}, nil
 }
 
-// CreateNamespace creates a new test Namespace.
-func (f NamespaceFixtures) CreateNamespace(
-	ctx context.Context, namespace *models.Namespace,
-) (*models.Namespace, error) {
-	if err := f.namespaceRepository.Create(ctx, namespace); err != nil {
-		return nil, eris.Wrap(err, "error creating test namespace")
+// GetDefaultNamespace returns default namespace.
+func (f NamespaceFixtures) GetDefaultNamespace(ctx context.Context) (*models.Namespace, error) {
+	namespace, err := f.namespaceRepository.GetByCode(ctx, "default")
+	if err != nil {
+		return nil, eris.Wrap(err, "error getting default namespace")
 	}
 	return namespace, nil
 }

@@ -13,7 +13,6 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -31,11 +30,7 @@ func TestGetRunMetricsTestSuite(t *testing.T) {
 func (s *GetRunMetricsTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
 
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
+	namespace, err := s.NamespaceFixtures.GetDefaultNamespace(context.Background())
 	assert.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{

@@ -15,7 +15,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -38,11 +37,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	// 1. prepare database with test data.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
+	namespace, err := s.NamespaceFixtures.GetDefaultNamespace(context.Background())
 	assert.Nil(s.T(), err)
 
 	experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -165,11 +160,7 @@ func (s *SetExperimentTagTestSuite) Test_Error() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
+	_, err := s.NamespaceFixtures.GetDefaultNamespace(context.Background())
 	assert.Nil(s.T(), err)
 
 	testData := []struct {

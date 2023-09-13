@@ -13,8 +13,6 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -37,11 +35,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
+	namespace, err := s.NamespaceFixtures.GetDefaultNamespace(context.Background())
 	assert.Nil(s.T(), err)
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
@@ -92,11 +86,7 @@ func (s *CreateDashboardTestSuite) Test_Error() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
+	_, err := s.NamespaceFixtures.GetDefaultNamespace(context.Background())
 	assert.Nil(s.T(), err)
 
 	tests := []struct {

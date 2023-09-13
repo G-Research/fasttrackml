@@ -30,11 +30,8 @@ func TestUpdateRunTestSuite(t *testing.T) {
 
 func (s *UpdateRunTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
+
+	namespace, err := s.NamespaceFixtures.GetDefaultNamespace(context.Background())
 	assert.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{

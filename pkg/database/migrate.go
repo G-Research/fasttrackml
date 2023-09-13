@@ -14,6 +14,7 @@ import (
 )
 
 func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
+
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion
 	{
@@ -26,7 +27,10 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 
 	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "5d042539be4f" {
 		if !migrate && alembicVersion.Version != "" {
-			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
+			return fmt.Errorf(
+				"unsupported database schema versions alembic %s, FastTrackML %s",
+				alembicVersion.Version, schemaVersion.Version,
+			)
 		}
 
 		runWithoutForeignKeyIfNeeded := func(fn func() error) error { return fn() }
@@ -267,42 +271,6 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				}); err != nil {
 					return err
 				}
-			case "5d042539be4f":
-				log.Info("Migrating database to FastTrackML schema e0d125c68d9a")
-				if err := runWithoutForeignKeyIfNeeded(func() error {
-					if err := db.Transaction(func(tx *gorm.DB) error {
-						if err := tx.AutoMigrate(&Namespace{}); err != nil {
-							return err
-						}
-						if err := tx.Migrator().AddColumn(&App{}, "NamespaceID"); err != nil {
-							return err
-						}
-						if err := tx.Migrator().CreateConstraint(&Namespace{}, "Apps"); err != nil {
-							return err
-						}
-						if err := tx.Migrator().AddColumn(&Experiment{}, "NamespaceID"); err != nil {
-							return err
-						}
-						if err := tx.Migrator().CreateConstraint(&Namespace{}, "Experiments"); err != nil {
-							return err
-						}
-						if err := tx.Migrator().AlterColumn(&Experiment{}, "Name"); err != nil {
-							return err
-						}
-						if err := tx.Migrator().CreateIndex(&Experiment{}, "idx_namespace_name"); err != nil {
-							return err
-						}
-						return tx.Model(&SchemaVersion{}).
-							Where("1 = 1").
-							Update("Version", "e0d125c68d9a").
-							Error
-					}); err != nil {
-						return fmt.Errorf("error migrating database to FastTrackML schema e0d125c68d9a: %w", err)
-					}
-					return nil
-				}); err != nil {
-					return err
-				}
 
 			default:
 				return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
@@ -343,6 +311,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 			return fmt.Errorf("unsupported database alembic schema version %s", alembicVersion.Version)
 		}
 	}
+
 	return nil
 }
 

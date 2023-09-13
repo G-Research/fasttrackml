@@ -39,7 +39,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 
 	// 1. create test `namespace` and connect test `run`.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  0,
+		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})

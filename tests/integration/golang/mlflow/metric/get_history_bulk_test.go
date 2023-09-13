@@ -39,7 +39,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  0,
+		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
@@ -131,7 +131,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 
 func (s *GetHistoriesBulkTestSuite) Test_Error() {
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  0,
+		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})

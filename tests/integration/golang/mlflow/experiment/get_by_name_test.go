@@ -41,7 +41,7 @@ func (s *GetExperimentByNameTestSuite) Test_Ok() {
 	}()
 	// 1. prepare database with test data.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  0,
+		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
@@ -103,7 +103,7 @@ func (s *GetExperimentByNameTestSuite) Test_Error() {
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  0,
+		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})

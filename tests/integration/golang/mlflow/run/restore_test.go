@@ -43,7 +43,7 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 
 	// create test experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  0,
+		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
@@ -113,7 +113,7 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 
 func (s *RestoreRunTestSuite) Test_Error() {
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  0,
+		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})

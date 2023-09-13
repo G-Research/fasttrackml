@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/rotisserie/eris"
+
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -22,19 +23,19 @@ type PostgresDBInstance struct {
 func NewPostgresDBInstance(
 	dsnURL url.URL, slowThreshold time.Duration, poolMax int, reset bool,
 ) (*PostgresDBInstance, error) {
-	logURL := dsnURL
-	q := logURL.Query()
-	if q.Has("_key") {
-		q.Set("_key", "xxxxx")
+	pgdb := PostgresDBInstance{
+		DBInstance: DBInstance{dsn: dsnURL.String()},
 	}
-	logURL.RawQuery = q.Encode()
-	log.Infof("using database %s", logURL.Redacted())
+
+	conn := postgres.Open(dsnURL.String())
+
+	log.Infof("Using database %s", dsnURL.Redacted())
 
 	dbLogLevel := logger.Warn
 	if log.GetLevel() == log.DebugLevel {
 		dbLogLevel = logger.Info
 	}
-	gormDB, err := gorm.Open(postgres.Open(dsnURL.String()), &gorm.Config{
+	gormDB, err := gorm.Open(conn, &gorm.Config{
 		Logger: logger.New(
 			glog.New(
 				log.StandardLogger().WriterLevel(log.WarnLevel),
@@ -42,22 +43,19 @@ func NewPostgresDBInstance(
 				0,
 			),
 			logger.Config{
-				LogLevel:                  dbLogLevel,
 				SlowThreshold:             slowThreshold,
+				LogLevel:                  dbLogLevel,
 				IgnoreRecordNotFoundError: true,
 			},
 		),
 	})
 	if err != nil {
+		pgdb.Close()
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
+	pgdb.DB = gormDB
 
-	return &PostgresDBInstance{
-		DBInstance: DBInstance{
-			db:  gormDB,
-			dsn: dsnURL.String(),
-		},
-	}, nil
+	return &pgdb, nil
 }
 
 // Reset resets database.

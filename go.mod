@@ -9,7 +9,7 @@ replace (
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/G-Research/fasttrackml-ui-aim v0.31602.10
+	github.com/G-Research/fasttrackml-ui-aim v0.31602.11
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.4
 	github.com/apache/arrow/go/v12 v12.0.1
 	github.com/aws/aws-sdk-go-v2 v1.21.0
@@ -69,7 +69,6 @@ require (
 	github.com/klauspost/asmfmt v1.3.2 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect

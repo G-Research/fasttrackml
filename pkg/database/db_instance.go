@@ -8,10 +8,10 @@ import (
 
 // DBProvider is the interface to access the DB.
 type DBProvider interface {
-	DSN() string
+	GormDB() *gorm.DB
+	Dsn() string
 	Close() error
 	Reset() error
-	GormDB() *gorm.DB
 }
 
 // DB is a global gorm.DB reference
@@ -19,7 +19,7 @@ var DB *gorm.DB
 
 // DBInstance is the base concrete type for DbProvider.
 type DBInstance struct {
-	db      *gorm.DB
+	*gorm.DB
 	dsn     string
 	closers []io.Closer
 }
@@ -36,11 +36,11 @@ func (db *DBInstance) Close() error {
 }
 
 // Dsn returns the dsn string.
-func (db *DBInstance) DSN() string {
+func (db *DBInstance) Dsn() string {
 	return db.dsn
 }
 
 // GormDB returns the gorm DB.
 func (db *DBInstance) GormDB() *gorm.DB {
-	return db.db
+	return db.DB
 }

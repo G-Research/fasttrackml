@@ -6,6 +6,5 @@ import (
 
 // ListNamespaces handles `GET /ns/list` endpoint.
 func (c Controller) ListNamespaces(ctx *fiber.Ctx) error {
-	c.namespaceService.ListNamespaces(ctx.Context())
 	return nil
 }

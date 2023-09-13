@@ -3,11 +3,10 @@ package fixtures
 import (
 	"context"
 
-	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
-
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 
+	"github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 

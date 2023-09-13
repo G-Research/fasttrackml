@@ -1,37 +1,39 @@
 # FastTrackML Quickstart
 
-## Install Dependencies
-
-FastTrackML requires the following _optional_ dependencies to be installed on your system:
-
-- [Docker](https://docs.docker.com/get-docker/) — enables you to download and run FastTrackML with just one command
-- [Python 3](https://www.python.org/downloads/) — enables you to run the test scripts
-
 ## Install FastTrackML
 
 ### On Linux and macOS
+
 ```bash
 curl -fsSL https://fasttrackml.io/install.sh | sh
 ```
+
 ### On Windows
+
 ```bash
 iwr -useb https://fasttrackml.io/install.ps1 | iex
 ```
-### With a native executable
+
+### Manually
 
 Download the executable for your platform from the [latest release](https://github.com/G-Research/fasttrackml/releases/latest) assets.
-Extract it and then run FastTrackML with the following command:
+Extract it and then validate your installation with the following command:
 
 ```bash
-./fml server
+./fml --version
 ```
+
 ## Run FastTrackML
+
+### Natively
 
 ```bash
 fml server
 ```
 
-## Run FastTrackML via Docker
+### Via Docker
+
+You can also run FastTrackML in a container via [Docker](https://docs.docker.com/get-docker/):
 
 ```bash
 docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
@@ -45,14 +47,13 @@ Verify that you can see the UI by navigating to http://localhost:5000/.
 
 ## Run a quick test script
 
+To run the test scripts, you need a working [Python](https://www.python.org/downloads/) installation and the [Poetry](https://python-poetry.org/docs/#installation) package manager.
+
 ```bash
 # Install mflow and poetry
 cd docs/example
 poetry install
-# MLFlow will not be installed by poetry, so we need to install it manually
-poetry run pip install mlflow boto3
-
-python3 minimal.py
+poetry run python3 minimal.py
 ```
 
 After running this script, you should see the following output from http://localhost:5000/aim/:
@@ -71,14 +72,9 @@ From Kaggle, download https://www.kaggle.com/datasets/kyr7plus/emg-4?resource=do
 
 Extract the zip file and move the files to `docs/example/data`.
 
-```bash
-# Install mflow and poetry
-cd docs/example
-poetry install
-# MLFlow will not be installed by poetry, so we need to install it manually
-poetry run pip install mlflow boto3
+### Run the script
 
-# Run the script
+```bash
 poetry run python3 random_forest.py
 ```
 

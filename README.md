@@ -1,7 +1,8 @@
 [![FastTrackML banner](./website/static/images/github-banner.svg)](https://fasttrackml.io/)
 
 # _FastTrackML_
-Rewrite of the MLFlow tracking server with a focus on scalability
+
+An experiment tracking server focused on speed and scalability, fully compatible with MLFlow.
 
 ### Quickstart
 
@@ -17,46 +18,38 @@ docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
 
 Verify that you can see the UI by navigating to http://localhost:5000/.
 
-![FastTrackML UI](docs/images/main_ui.jpg)
+![FastTrackML UI](docs/images/main_ui.png)
 
 For more info, `--help` is your friend!
 
 #### Track your experiments
 
-Here's an elementary example using the server:
+Install the MLFlow Python package:
 
 ```bash
-pip install tensorflow mlflow
-
-cat << EOF > /tmp/fasttrackml-example.py
-import tensorflow as tf
-import mlflow
-data = tf.keras.datasets.fashion_mnist
-
-mlflow.set_tracking_uri("http://localhost:5000")
-mlflow.tensorflow.autolog()
-
-(training_images, training_labels), (test_images, test_labels) = data.load_data()
-
-training_images  = training_images / 255.0
-test_images = test_images / 255.0
-
-model = tf.keras.models.Sequential([
-            tf.keras.layers.Flatten(input_shape=(28, 28)),
-            tf.keras.layers.Dense(128, activation=tf.nn.relu),
-            tf.keras.layers.Dense(10, activation=tf.nn.softmax)
-        ])
-
-model.compile(optimizer='adam',
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
-model.fit(training_images, training_labels, epochs=10)
-model.evaluate(test_images, test_labels)
-EOF
-
-python /tmp/fasttrackml-example.py
+pip install mlflow-skinny
 ```
 
+Here is an elementary example Python script:
+
+```python
+import mlflow
+import random
+
+# Set the tracking URI to the FastTrackML server
+mlflow.set_tracking_uri("http://localhost:5000")
+# Set the experiment name
+mlflow.set_experiment("my-first-experiment")
+
+# Log a parameter
+mlflow.log_param("param1", random.randint(0, 100))
+
+# Log a metric
+mlflow.log_metric("foo", random.random())
+# metrics can be updated throughout the run
+mlflow.log_metric("foo", random.random() + 1)
+mlflow.log_metric("foo", random.random() + 2)
+```
 
 #### Encryption at rest
 

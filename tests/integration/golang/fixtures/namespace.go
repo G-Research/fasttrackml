@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // NamespaceFixtures represents data fixtures object.

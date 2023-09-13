@@ -1,7 +1,7 @@
 package response
 
-// ProjectActivity represents the response json for the `GET aim/projects/activity` endpoint.
-type ProjectActivity struct {
+// ProjectActivityResponse represents the response json for the `GET aim/projects/activity` endpoint.
+type ProjectActivityResponse struct {
 	NumExperiments  float64        `json:"num_experiments"`
 	NumRuns         float64        `json:"num_runs"`
 	NumActiveRuns   float64        `json:"num_active_runs"`
@@ -9,8 +9,8 @@ type ProjectActivity struct {
 	ActivityMap     map[string]int `json:"activity_map"`
 }
 
-// GetProject represents the response json for the `GET aim/projects` endpoint.
-type GetProject struct {
+// GetProjectResponse represents the response json for the `GET aim/projects` endpoint.
+type GetProjectResponse struct {
 	Name             string  `json:"name"`
 	Path             string  `json:"path"`
 	Description      string  `json:"description"`

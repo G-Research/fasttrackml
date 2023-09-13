@@ -33,8 +33,9 @@ func NewProjectFixtures(databaseDSN string) (*ProjectFixtures, error) {
 	}, nil
 }
 
-func (f *ProjectFixtures) GetProject(ctx context.Context) *response.GetProject {
-	return &response.GetProject{
+// GetProject returns a GetProjectResponse.
+func (f *ProjectFixtures) GetProject(ctx context.Context) *response.GetProjectResponse {
+	return &response.GetProjectResponse{
 		Name:             "FastTrackML",
 		Path:             f.db.Dialector.Name(),
 		Description:      "",
@@ -42,9 +43,10 @@ func (f *ProjectFixtures) GetProject(ctx context.Context) *response.GetProject {
 	}
 }
 
+// GetProjectActivity returns a summary of ProjectActivityResponse summary.
 func (f *ProjectFixtures) GetProjectActivity(
 	ctx context.Context,
-) (*response.ProjectActivity, error) {
+) (*response.ProjectActivityResponse, error) {
 	var numExperiments int64
 	if err := f.db.WithContext(ctx).
 		Table("experiments").
@@ -75,11 +77,9 @@ func (f *ProjectFixtures) GetProjectActivity(
 		return nil, eris.Wrapf(err, "error counting archived runs")
 	}
 
-	activity := map[string]int{}
-	key := time.Now().Format("2006-01-02T15:00:00")
-	activity[key] = int(numRuns)
+	activity := map[string]int{time.Now().Format("2006-01-02T15:00:00"): int(numRuns)}
 
-	return &response.ProjectActivity{
+	return &response.ProjectActivityResponse{
 		NumExperiments:  float64(numExperiments),
 		NumRuns:         float64(numRuns),
 		NumArchivedRuns: float64(numArchivedRuns),

@@ -23,8 +23,6 @@ type GetProjectActivityTestSuite struct {
 	projectFixtures    *fixtures.ProjectFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
 	runFixtures        *fixtures.RunFixtures
-	runs               []*models.Run
-	activity           response.ProjectActivity
 }
 
 func TestGetProjectActivityTestSuite(t *testing.T) {
@@ -53,7 +51,7 @@ func (s *GetProjectActivityTestSuite) SetupTest() {
 	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	s.runs, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 5)
+	_, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 5)
 	assert.Nil(s.T(), err)
 }
 
@@ -61,7 +59,7 @@ func (s *GetProjectActivityTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.projectFixtures.UnloadFixtures())
 	}()
-	var resp response.ProjectActivity
+	var resp response.ProjectActivityResponse
 	err := s.client.DoGetRequest(
 		fmt.Sprintf("/projects/activity"),
 		&resp,
@@ -69,10 +67,9 @@ func (s *GetProjectActivityTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	activity, err := s.projectFixtures.GetProjectActivity(context.Background())
-	s.activity = *activity
 
-	assert.Equal(s.T(), s.activity.NumActiveRuns, resp.NumActiveRuns)
-	assert.Equal(s.T(), s.activity.NumArchivedRuns, resp.NumArchivedRuns)
-	assert.Equal(s.T(), s.activity.NumExperiments, resp.NumExperiments)
-	assert.Equal(s.T(), s.activity.NumRuns, resp.NumRuns)
+	assert.Equal(s.T(), activity.NumActiveRuns, resp.NumActiveRuns)
+	assert.Equal(s.T(), activity.NumArchivedRuns, resp.NumArchivedRuns)
+	assert.Equal(s.T(), activity.NumExperiments, resp.NumExperiments)
+	assert.Equal(s.T(), activity.NumRuns, resp.NumRuns)
 }

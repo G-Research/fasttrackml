@@ -17,8 +17,8 @@ import (
 type GetProjectTestSuite struct {
 	suite.Suite
 	client          *helpers.HttpClient
-	projectFixtures fixtures.ProjectFixtures
-	project         response.GetProject
+	projectFixtures *fixtures.ProjectFixtures
+	project         *response.GetProjectResponse
 }
 
 func TestGetProjectTestSuite(t *testing.T) {
@@ -30,17 +30,17 @@ func (s *GetProjectTestSuite) SetupTest() {
 
 	projectFixtures, err := fixtures.NewProjectFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
-	s.projectFixtures = *projectFixtures
+	s.projectFixtures = projectFixtures
 
 	project := projectFixtures.GetProject(context.Background())
-	s.project = *project
+	s.project = project
 }
 
 func (s *GetProjectTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.projectFixtures.UnloadFixtures())
 	}()
-	var resp response.GetProject
+	var resp response.GetProjectResponse
 	err := s.client.DoGetRequest(
 		"/projects",
 		&resp,

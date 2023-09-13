@@ -1,7 +1,11 @@
 package database
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
@@ -16,8 +20,7 @@ var supportedAlembicVersions = []string{
 	"7f2a7d5fae7d",
 }
 
-func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
-	db := dbProvider.GormDB()
+func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion
 	{
@@ -347,5 +350,85 @@ func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
 		}
 	}
 
+	return nil
+}
+
+// CreateDefaultNamespace creates the default namespace if it doesn't exist.
+func CreateDefaultNamespace(db *gorm.DB) error {
+	if tx := db.First(&Namespace{
+		Code: "default",
+	}); tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			log.Info("Creating default namespace")
+			var exp int32 = 0
+			ns := Namespace{
+				Code:                "default",
+				Description:         "Default",
+				DefaultExperimentID: &exp,
+			}
+			if err := db.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Create(&ns).Error; err != nil {
+					return err
+				}
+				if err := tx.Model(&Experiment{}).
+					Where("namespace_id IS NULL").
+					Update("namespace_id", ns.ID).
+					Error; err != nil {
+					return fmt.Errorf("error updating experiments: %s", err)
+				}
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error creating default namespace: %s", err)
+			}
+		} else {
+			return fmt.Errorf("unable to find default namespace: %s", tx.Error)
+		}
+	}
+	return nil
+}
+
+// CreateDefaultExperiment creates the default experiment if it doesn't exist.
+func CreateDefaultExperiment(db *gorm.DB, artifactRoot string) error {
+	if err := db.First(&Experiment{}, 0).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Info("Creating default experiment")
+			var id int32 = 0
+			ts := time.Now().UTC().UnixMilli()
+			exp := Experiment{
+				ID:             &id,
+				Name:           "Default",
+				LifecycleStage: LifecycleStageActive,
+				CreationTime: sql.NullInt64{
+					Int64: ts,
+					Valid: true,
+				},
+				LastUpdateTime: sql.NullInt64{
+					Int64: ts,
+					Valid: true,
+				},
+			}
+			ns := Namespace{Code: "default"}
+			if err = db.Find(&ns).Error; err != nil {
+				return fmt.Errorf("error finding default namespace: %s", err)
+			}
+			exp.NamespaceID = ns.ID
+			if err = db.Transaction(func(tx *gorm.DB) error {
+				if err = tx.Create(&exp).Error; err != nil {
+					return err
+				}
+
+				exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(artifactRoot, "/"), *exp.ID)
+				if err := tx.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation).Error; err != nil {
+					return fmt.Errorf("error updating artifact_location for experiment '%s': %s", exp.Name, err)
+				}
+
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error creating default experiment: %s", err)
+			}
+		} else {
+			return fmt.Errorf("unable to find default experiment: %s", err)
+		}
+	}
 	return nil
 }

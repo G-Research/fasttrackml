@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -22,9 +21,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
-
-// validation rule for SearchMetrics
-var metricNameRegExp = regexp.MustCompile(`in\s*metric\.name|metric\.name(?:\.|\s*==)`)
 
 func GetRunInfo(c *fiber.Ctx) error {
 	q := struct {
@@ -335,7 +331,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
 
-	pq := query.QueryParser{
+	qp := query.QueryParser{
 		Default: query.DefaultExpression{
 			Contains:   "run.archived",
 			Expression: "not run.archived",
@@ -347,7 +343,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		TzOffset:  tzOffset,
 		Dialector: database.DB.Dialector.Name(),
 	}
-	qp, err := pq.Parse(q.Query)
+	pq, err := qp.Parse(q.Query)
 	if err != nil {
 		return err
 	}
@@ -390,7 +386,7 @@ func SearchRuns(c *fiber.Ctx) error {
 	}
 
 	var runs []database.Run
-	qp.Filter(tx).Find(&runs)
+	pq.Filter(tx).Find(&runs)
 	if tx.Error != nil {
 		return fmt.Errorf("error searching runs: %w", tx.Error)
 	}
@@ -519,17 +515,12 @@ func SearchMetrics(c *fiber.Ctx) error {
 		q.Steps = 50
 	}
 
-	// require a metric.name
-	if !validateMetricNamePresent(q.Query) {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, "No metrics are selected")
-	}
-
 	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
 
-	pq := query.QueryParser{
+	qp := query.QueryParser{
 		Default: query.DefaultExpression{
 			Contains:   "run.archived",
 			Expression: "not run.archived",
@@ -542,9 +533,13 @@ func SearchMetrics(c *fiber.Ctx) error {
 		TzOffset:  tzOffset,
 		Dialector: database.DB.Dialector.Name(),
 	}
-	qp, err := pq.Parse(q.Query)
+	pq, err := qp.Parse(q.Query)
 	if err != nil {
 		return err
+	}
+
+	if !pq.IsMetricSelected() {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "No metrics are selected")
 	}
 
 	var totalRuns int64
@@ -557,7 +552,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 		Joins("Experiment", database.DB.Select("ID", "Name")).
 		Preload("Params").
 		Preload("Tags").
-		Where("run_uuid IN (?)", qp.Filter(database.DB.
+		Where("run_uuid IN (?)", pq.Filter(database.DB.
 			Select("runs.run_uuid").
 			Table("runs").
 			Joins("LEFT JOIN experiments USING(experiment_id)").
@@ -610,7 +605,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 		Table("metrics").
 		Joins(
 			"INNER JOIN (?) runmetrics USING(run_uuid, key)",
-			qp.Filter(database.DB.
+			pq.Filter(database.DB.
 				Select("runs.run_uuid", "runs.row_num", "latest_metrics.key", fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps))).
 				Table("runs").
 				Joins("LEFT JOIN experiments USING(experiment_id)").
@@ -1044,9 +1039,4 @@ func toNumpy(values []float64) fiber.Map {
 		"shape": len(values),
 		"blob":  buf.Bytes(),
 	}
-}
-
-// validateMetricNamePresent scans the query for metric.name condition
-func validateMetricNamePresent(query string) bool {
-	return metricNameRegExp.Match([]byte(query))
 }

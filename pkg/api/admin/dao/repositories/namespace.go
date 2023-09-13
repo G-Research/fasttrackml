@@ -14,12 +14,8 @@ import (
 type NamespaceRepositoryProvider interface {
 	// Create creates new models.Namespace entity.
 	Create(ctx context.Context, namespace *models.Namespace) error
-	// Update updates existing models.Namespace entity.
-	Update(ctx context.Context, namespace *models.Namespace) error
 	// GetByCode returns namespace by its Code.
 	GetByCode(ctx context.Context, code string) (*models.Namespace, error)
-	// Delete deletes existing models.Namespace entity.
-	Delete(ctx context.Context, namespace *models.Namespace) error
 }
 
 // NamespaceRepository repository to work with `namespace` entity.
@@ -42,14 +38,6 @@ func (r NamespaceRepository) Create(ctx context.Context, namespace *models.Names
 	return nil
 }
 
-// Update updates existing models.Namespace entity.
-func (r NamespaceRepository) Update(ctx context.Context, namespace *models.Namespace) error {
-	if err := r.db.WithContext(ctx).Model(&namespace).Updates(namespace).Error; err != nil {
-		return eris.Wrapf(err, "error updating namespace with id: %d", namespace.ID)
-	}
-	return nil
-}
-
 // GetByCode returns namespace by its Code.
 func (r NamespaceRepository) GetByCode(ctx context.Context, code string) (*models.Namespace, error) {
 	var namespace models.Namespace
@@ -62,12 +50,4 @@ func (r NamespaceRepository) GetByCode(ctx context.Context, code string) (*model
 		return nil, eris.Wrapf(err, "error getting namespace by code: %s", code)
 	}
 	return &namespace, nil
-}
-
-// Delete deletes existing models.Namespace entity.
-func (r NamespaceRepository) Delete(ctx context.Context, namespace *models.Namespace) error {
-	if err := r.db.WithContext(ctx).Delete(namespace).Error; err != nil {
-		return eris.Wrapf(err, "error deleting namespace by id: %d", namespace.ID)
-	}
-	return nil
 }

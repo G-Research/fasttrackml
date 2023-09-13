@@ -50,7 +50,7 @@ func (c Controller) UpdateExperiment(ctx *fiber.Ctx) error {
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
-	log.Debugf("createExperiment namespace: %s", ns.Code)
+	log.Debugf("updateExperiment namespace: %s", ns.Code)
 	if err := c.experimentService.UpdateExperiment(ctx.Context(), ns, &req); err != nil {
 		return err
 	}

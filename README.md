@@ -1,4 +1,4 @@
-[![FastTrackML banner](./website/static/images/github-banner.svg)](https://fasttrackml.io/)
+[![FastTrackML banner](https://fasttrackml.io/images/github-banner.svg)](https://fasttrackml.io/)
 
 # _FastTrackML_
 
@@ -18,7 +18,7 @@ docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
 
 Verify that you can see the UI by navigating to http://localhost:5000/.
 
-![FastTrackML UI](docs/images/main_ui.png)
+![FastTrackML UI](https://raw.githubusercontent.com/G-Research/fasttrackml/main/docs/images/main_ui.png)
 
 For more info, `--help` is your friend!
 

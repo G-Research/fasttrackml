@@ -41,7 +41,7 @@ func NewEventListener(ctx context.Context, channel, dsn string) (*EventListener,
 			time.Minute,
 			func(ev pq.ListenerEventType, err error) {
 				if err != nil {
-					log.Errorf(`error happened: %s`, err.Error())
+					log.Errorf(`error occurred while listening for the event: %s`, err.Error())
 				}
 			},
 		)
@@ -64,7 +64,7 @@ func NewNamespaceListener(ctx context.Context, dsn string) (*EventListener, erro
 // Listen listens for incoming database events.
 func (l EventListener) Listen() <-chan string {
 	ch := make(chan string)
-	// if listener not nil, the listen for incoming events from database.
+	// if listener not nil, then listen for incoming events from database.
 	// if listener is nil, then just return closed channel to do not do anything further.
 	if l.listener != nil {
 		go func() {

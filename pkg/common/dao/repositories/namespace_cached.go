@@ -65,14 +65,9 @@ func NewNamespaceCachedRepository(
 	}
 
 	go func() {
-		for {
-			select {
-			case data, ok := <-listener.Listen():
-				if ok {
-					if err := repository.processEvent(data); err != nil {
-						log.Errorf(`error processing incoming event: %s, error: %+v`, data, err)
-					}
-				}
+		for data := range listener.Listen() {
+			if err := repository.processEvent(data); err != nil {
+				log.Errorf(`error processing incoming event: %s, error: %+v`, data, err)
 			}
 		}
 	}()

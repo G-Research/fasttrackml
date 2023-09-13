@@ -6,11 +6,12 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )

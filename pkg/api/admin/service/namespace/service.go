@@ -3,7 +3,8 @@ package namespace
 import (
 	"context"
 
-	"github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
+
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 

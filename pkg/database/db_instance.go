@@ -8,10 +8,10 @@ import (
 
 // DBProvider is the interface to access the DB.
 type DBProvider interface {
-	GormDB() *gorm.DB
-	Dsn() string
+	DSN() string
 	Close() error
 	Reset() error
+	GormDB() *gorm.DB
 }
 
 // DB is a global gorm.DB reference
@@ -35,8 +35,8 @@ func (db *DBInstance) Close() error {
 	return nil
 }
 
-// Dsn returns the dsn string.
-func (db *DBInstance) Dsn() string {
+// DSN returns the dsn string.
+func (db *DBInstance) DSN() string {
 	return db.dsn
 }
 

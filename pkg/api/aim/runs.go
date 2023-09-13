@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -22,9 +21,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
-
-// validation rule for SearchMetrics
-var metricNameRegExp = regexp.MustCompile(`in\s*metric\.name|metric\.name(?:\.|\s*==)`)
 
 func GetRunInfo(c *fiber.Ctx) error {
 	q := struct {
@@ -519,11 +515,6 @@ func SearchMetrics(c *fiber.Ctx) error {
 		q.Steps = 50
 	}
 
-	// require a metric.name
-	if !validateMetricNamePresent(q.Query) {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, "No metrics are selected")
-	}
-
 	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
@@ -545,6 +536,10 @@ func SearchMetrics(c *fiber.Ctx) error {
 	pq, err := qp.Parse(q.Query)
 	if err != nil {
 		return err
+	}
+
+	if !pq.IsMetricSelected() {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "No metrics are selected")
 	}
 
 	var totalRuns int64
@@ -1044,9 +1039,4 @@ func toNumpy(values []float64) fiber.Map {
 		"shape": len(values),
 		"blob":  buf.Bytes(),
 	}
-}
-
-// validateMetricNamePresent scans the query for metric.name condition
-func validateMetricNamePresent(query string) bool {
-	return metricNameRegExp.Match([]byte(query))
 }

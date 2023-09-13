@@ -11,12 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rotisserie/eris"
-	"golang.org/x/exp/slices"
-
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/mattn/go-sqlite3"
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -121,7 +120,7 @@ func NewSqliteDBInstance(
 	if log.GetLevel() == log.DebugLevel {
 		dbLogLevel = logger.Info
 	}
-	db.DB, err = gorm.Open(sourceConn, &gorm.Config{
+	db.db, err = gorm.Open(sourceConn, &gorm.Config{
 		Logger: logger.New(
 			glog.New(
 				log.StandardLogger().WriterLevel(log.WarnLevel),
@@ -140,7 +139,7 @@ func NewSqliteDBInstance(
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	db.Use(
+	db.db.Use(
 		dbresolver.Register(dbresolver.Config{
 			Replicas: []gorm.Dialector{
 				replicaConn,
@@ -148,7 +147,7 @@ func NewSqliteDBInstance(
 		}),
 	)
 
-	sqlDB, _ := db.DB.DB()
+	sqlDB, _ := db.db.DB()
 	sqlDB.SetConnMaxIdleTime(time.Minute)
 	sqlDB.SetMaxIdleConns(poolMax)
 	sqlDB.SetMaxOpenConns(poolMax)

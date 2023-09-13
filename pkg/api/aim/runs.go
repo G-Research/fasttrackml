@@ -335,7 +335,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
 
-	pq := query.QueryParser{
+	qp := query.QueryParser{
 		Default: query.DefaultExpression{
 			Contains:   "run.archived",
 			Expression: "not run.archived",
@@ -347,7 +347,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		TzOffset:  tzOffset,
 		Dialector: database.DB.Dialector.Name(),
 	}
-	qp, err := pq.Parse(q.Query)
+	pq, err := qp.Parse(q.Query)
 	if err != nil {
 		return err
 	}
@@ -390,7 +390,7 @@ func SearchRuns(c *fiber.Ctx) error {
 	}
 
 	var runs []database.Run
-	qp.Filter(tx).Find(&runs)
+	pq.Filter(tx).Find(&runs)
 	if tx.Error != nil {
 		return fmt.Errorf("error searching runs: %w", tx.Error)
 	}
@@ -529,7 +529,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
 
-	pq := query.QueryParser{
+	qp := query.QueryParser{
 		Default: query.DefaultExpression{
 			Contains:   "run.archived",
 			Expression: "not run.archived",
@@ -542,7 +542,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 		TzOffset:  tzOffset,
 		Dialector: database.DB.Dialector.Name(),
 	}
-	qp, err := pq.Parse(q.Query)
+	pq, err := qp.Parse(q.Query)
 	if err != nil {
 		return err
 	}
@@ -557,7 +557,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 		Joins("Experiment", database.DB.Select("ID", "Name")).
 		Preload("Params").
 		Preload("Tags").
-		Where("run_uuid IN (?)", qp.Filter(database.DB.
+		Where("run_uuid IN (?)", pq.Filter(database.DB.
 			Select("runs.run_uuid").
 			Table("runs").
 			Joins("LEFT JOIN experiments USING(experiment_id)").
@@ -610,7 +610,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 		Table("metrics").
 		Joins(
 			"INNER JOIN (?) runmetrics USING(run_uuid, key)",
-			qp.Filter(database.DB.
+			pq.Filter(database.DB.
 				Select("runs.run_uuid", "runs.row_num", "latest_metrics.key", fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps))).
 				Table("runs").
 				Joins("LEFT JOIN experiments USING(experiment_id)").

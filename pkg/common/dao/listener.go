@@ -29,7 +29,7 @@ type EventListener struct {
 func NewEventListener(ctx context.Context, channel, dsn string) (*EventListener, error) {
 	dsnURL, err := url.Parse(dsn)
 	if err != nil {
-		return nil, eris.Wrap(err, "invalid database URL")
+		return nil, eris.Wrap(err, "error parsing database URL")
 	}
 
 	var listener *pq.Listener

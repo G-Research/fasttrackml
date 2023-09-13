@@ -21,7 +21,6 @@ var supportedAlembicVersions = []string{
 }
 
 func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
-
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion
 	{

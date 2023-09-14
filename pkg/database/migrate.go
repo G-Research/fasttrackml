@@ -351,6 +351,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 			log.Info("Initializing database")
 			tx := db.Begin()
 			if err := tx.AutoMigrate(
+				&Namespace{},
 				&Experiment{},
 				&ExperimentTag{},
 				&Run{},
@@ -369,7 +370,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				Version: "97727af70f4d",
 			})
 			tx.Create(&SchemaVersion{
-				Version: "5d042539be4f",
+				Version: "e0d125c68d9a",
 			})
 			tx.Commit()
 			if tx.Error != nil {

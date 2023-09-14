@@ -10,12 +10,12 @@ import (
 
 // Service provides service layer to work with `namespace` business logic.
 type Service struct {
-	namespaceRepository  repositories.NamespaceRepository
+	namespaceRepository  repositories.NamespaceRepositoryProvider
 }
 
 // NewService creates new Service instance.
 func NewService(
-	namespaceRepository repositories.NamespaceRepository,
+	namespaceRepository repositories.NamespaceRepositoryProvider,
 ) *Service {
 	return &Service{
 		namespaceRepository:  namespaceRepository,

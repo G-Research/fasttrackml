@@ -309,7 +309,38 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				}); err != nil {
 					return err
 				}
-
+			case "5d042539be4f":
+				log.Info("Migrating database to FastTrackML schema e0d125c68d9a")
+				// We need to run this migration without foreign key constraints to avoid
+				// the cascading delete to kick in and delete all the runs.
+				if err := runWithoutForeignKeyIfNeeded(func() error {
+					if err := db.Transaction(func(tx *gorm.DB) error {
+						if err := tx.AutoMigrate(&Namespace{}); err != nil {
+							return err
+						}
+						if err := tx.Migrator().AddColumn(&Experiment{}, "NamespaceID"); err != nil {
+							return err
+						}
+						if err := tx.Migrator().CreateConstraint(&Namespace{}, "Experiments"); err != nil {
+							return err
+						}
+						if err := tx.Migrator().AlterColumn(&Experiment{}, "Name"); err != nil {
+							return err
+						}
+						if err := tx.Migrator().CreateIndex(&Experiment{}, "idx_namespace_name"); err != nil {
+							return err
+						}
+						return tx.Model(&SchemaVersion{}).
+							Where("1 = 1").
+							Update("Version", "e0d125c68d9a").
+							Error
+					}); err != nil {
+						return fmt.Errorf("error migrating database to FastTrackML schema e0d125c68d9a: %w", err)
+					}
+					return nil
+				}); err != nil {
+					return err
+				}
 			default:
 				return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
 			}

@@ -31,7 +31,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 		tx.First(&schemaVersion)
 	}
 
-	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != "5d042539be4f" {
+	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != "e0d125c68d9a" {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
 		}

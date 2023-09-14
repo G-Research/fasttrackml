@@ -71,7 +71,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 	// 4. init `aim` api and ui routes.
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
-	aimUI.AddRoutes(server.Group("/aim/"))
+	aimUI.AddRoutes(server)
 
 	storage, err := storage.NewArtifactStorage(mlflowConfig)
 	if err != nil {
@@ -247,7 +247,7 @@ func init() {
 	RootCmd.AddCommand(ServerCmd)
 
 	ServerCmd.Flags().StringP("listen-address", "a", "localhost:5000", "Address (host:post) to listen to")
-	ServerCmd.Flags().String("artifact-root", "s3://fasttrackml", "Artifact root")
+	ServerCmd.Flags().String("artifact-root", "./artifacts", "Artifact root")
 	ServerCmd.Flags().String("s3-endpoint-uri", "", "S3 compatible storage base endpoint url")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")

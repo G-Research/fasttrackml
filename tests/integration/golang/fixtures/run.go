@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // RunFixtures represents data fixtures object.

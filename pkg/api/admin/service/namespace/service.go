@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // Service provides service layer to work with `namespace` business logic.

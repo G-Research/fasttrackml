@@ -88,7 +88,7 @@ func (r NamespaceRepository) GetByID(ctx context.Context, id uint) (*models.Name
 	return &namespace, nil
 }
 
-//List returns all namespaces.
+// List returns all namespaces.
 func (r NamespaceRepository) List(ctx context.Context) ([]*models.Namespace, error) {
 	var namespaces []*models.Namespace
 	if err := r.db.WithContext(ctx).Find(&namespaces).Error; err != nil {

@@ -15,7 +15,6 @@ import (
 
 // TestService_CreateNamespace_Ok tests successful calls to the repository.
 func TestService_CreateNamespace_Ok(t *testing.T) {
-
 	defaultExpID := int32(0)
 	expID := int32(21)
 	experiment := models.Experiment{
@@ -61,7 +60,6 @@ func TestService_CreateNamespace_Ok(t *testing.T) {
 
 // TestService_CreateNamespace_Error tests unsuccessful calls to the repository.
 func TestService_CreateNamespace_Error(t *testing.T) {
-
 	ns := models.Namespace{}
 	err := errors.New("repository error")
 

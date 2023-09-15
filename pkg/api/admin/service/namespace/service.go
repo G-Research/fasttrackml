@@ -11,7 +11,7 @@ import (
 
 // Service provides service layer to work with `namespace` business logic.
 type Service struct {
-	namespaceRepository  repositories.NamespaceRepositoryProvider
+	namespaceRepository repositories.NamespaceRepositoryProvider
 }
 
 // NewService creates new Service instance.
@@ -19,7 +19,7 @@ func NewService(
 	namespaceRepository repositories.NamespaceRepositoryProvider,
 ) *Service {
 	return &Service{
-		namespaceRepository:  namespaceRepository,
+		namespaceRepository: namespaceRepository,
 	}
 }
 
@@ -39,7 +39,7 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 		return nil, eris.Wrap(err, "validation error")
 	}
 	exp := &models.Experiment{
-		Name: fmt.Sprintf("%s-exp", code),
+		Name:           fmt.Sprintf("%s-exp", code),
 		LifecycleStage: models.LifecycleStageActive,
 	}
 	// placeholder DefaultExperimentID

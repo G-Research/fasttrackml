@@ -14,15 +14,14 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetExperimentTestSuite struct {
 	suite.Suite
-	client   *helpers.HttpClient
-	fixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
 }
 
 func TestGetExperimentTestSuite(t *testing.T) {
@@ -30,18 +29,22 @@ func TestGetExperimentTestSuite(t *testing.T) {
 }
 
 func (s *GetExperimentTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	fixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.fixtures = fixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetExperimentTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.fixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
-	experiment, err := s.fixtures.CreateExperiment(context.Background(), &models.Experiment{
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
@@ -53,6 +56,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
 		},
+		NamespaceID: namespace.ID,
 		LastUpdateTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
@@ -63,7 +67,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperiment
-	err = s.client.DoGetRequest(
+	err = s.AIMClient.DoGetRequest(
 		fmt.Sprintf(
 			"/experiments/%d", *experiment.ID,
 		),
@@ -80,7 +84,18 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 }
 
 func (s *GetExperimentTestSuite) Test_Error() {
-	testData := []struct {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	tests := []struct {
 		name  string
 		error string
 		ID    string
@@ -97,10 +112,10 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			var resp api.ErrorResponse
-			err := s.client.DoGetRequest(
+			err := s.AIMClient.DoGetRequest(
 				fmt.Sprintf(
 					"/experiments/%s", tt.ID,
 				),

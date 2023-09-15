@@ -26,7 +26,7 @@ func GetDashboards(c *fiber.Ctx) error {
 		Preload("App").
 		Joins("LEFT JOIN apps ON apps.id = dashboards.app_id").
 		Where("NOT dashboards.is_archived").
-		Where("apps.namespace_id = ? AND NOT apps.is_archived", ns.ID).
+		Where("apps.namespace_id = ?", ns.ID).
 		Order("dashboards.updated_at").
 		Find(&dashboards).
 		Error; err != nil {
@@ -110,7 +110,7 @@ func GetDashboard(c *fiber.Ctx) error {
 		Where("NOT dashboards.is_archived").
 		Preload("App").
 		Joins("LEFT JOIN apps ON apps.id = dashboards.app_id").
-		Where("apps.namespace_id = ? AND NOT apps.is_archived", ns.ID).
+		Where("apps.namespace_id = ?", ns.ID).
 		First(&dashboard).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -154,7 +154,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 	if err := database.DB.
 		Joins("LEFT JOIN apps ON dashboards.app_id = apps.id").
 		Where("NOT dashboards.is_archived").
-		Where("apps.namespace_id = ? AND NOT apps.is_archived", ns.ID).
+		Where("apps.namespace_id = ?", ns.ID).
 		First(&dash).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -201,7 +201,7 @@ func DeleteDashboard(c *fiber.Ctx) error {
 		Select("dashboards.id").
 		Joins("LEFT JOIN apps ON dashboards.app_id = apps.id").
 		Where("NOT dashboards.is_archived").
-		Where("apps.namespace_id = ? AND NOT apps.is_archived", ns.ID).
+		Where("apps.namespace_id = ?", ns.ID).
 		First(&dash).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {

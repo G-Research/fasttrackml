@@ -28,7 +28,7 @@ func GetDashboards(c *fiber.Ctx) error {
 			database.DB.Select(
 				"ID", "Type",
 			).Where(
-				`App.namespace_id = ? AND NOT App.is_archived`, ns.ID,
+				`"App".namespace_id = ? AND NOT "App".is_archived`, ns.ID,
 			),
 		).
 		Where("NOT dashboards.is_archived").

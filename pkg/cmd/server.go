@@ -19,9 +19,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/G-Research/fasttrackml/pkg/api/admin"
-	adminController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
-	adminRepositories "github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
+	adminAPI "github.com/G-Research/fasttrackml/pkg/api/admin"
+	adminAPIController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -68,7 +67,6 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	namespaceRepository := mlflowRepositories.NewNamespaceRepository(db.GormDB())
 
 	// 3. init main HTTP server.
-	namespaceRepository := adminRepositories.NewNamespaceRepository(db.GormDB())
 	server := initServer(mlflowConfig, namespaceRepository)
 
 	// 4. init `aim` api and ui routes.
@@ -109,16 +107,10 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	).Init(server)
 	mlflowUI.AddRoutes(server)
 
-	// 6. init `admin` UI routes. 
+	// 6. init `admin` UI routes.
 	adminUI.NewRouter(
 		adminUIController.NewController(
 			namespace.NewService(*namespaceRepository),
->>>>>>> variant B
-	// 6. init `admin` api routes.
-	admin.NewRouter(
-		adminController.NewController(
-			namespace.NewService(namespaceRepository),
-======= end
 		),
 	).Init(server)
 
@@ -187,11 +179,7 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 // initServer init HTTP server with base configuration.
 func initServer(
 	config *mlflowConfig.ServiceConfig,
-<<<<<<< variant A
 	namespaceRepository mlflowRepositories.NamespaceRepositoryProvider,
->>>>>>> variant B
-	namespaceRepository adminRepositories.NamespaceRepositoryProvider,
-======= end
 ) *fiber.App {
 	server := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,

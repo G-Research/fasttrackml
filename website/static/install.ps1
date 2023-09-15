@@ -10,11 +10,11 @@ $zipfilename = [System.IO.Path]::GetFileNameWithoutExtension("$zipfile")
 Write-Output "Downloading: $( $asset.name )"
 Invoke-RestMethod -Method Get -Uri $asset.browser_download_url -OutFile $zipfile
 
-# Check if an older version of xh.exe exists in '$destdir', if yes, then delete it, if not then download latest zip to extract from
+# Check if an older version of fml.exe exists in '$destdir', if yes, then delete it, if not then download latest zip to extract from
 $fmlPath = "${destdir}\fml.exe"
 if (Test-Path -Path $fmlPath -PathType Leaf)
 {
-    Write-Output "Removing previous installation of fml from $destdir"
+    Write-Output "Removing previous installation of FastTrackML from $destdir"
     Remove-Item -r -fo $fmlPath
 }
 
@@ -31,10 +31,8 @@ $entries | ForEach-Object { [IO.Compression.ZipFileExtensions]::ExtractToFile($_
 $zip.Dispose()
 Remove-Item -Path $zipfile
 
-$fmlVersion = & "$destdir\fml.exe" --version
-
-# Inform user where the executables have been put
-Write-Output "$( $fmlVersion ) has been installed to:`n - $fmlPath`n"
+# Inform user where the executable has been put
+Write-Output "$( & "$fmlPath" --version ) has been installed to $fmlPath"
 
 # Make sure destdir is in the path
 $userPath = [System.Environment]::GetEnvironmentVariable('Path', [System.EnvironmentVariableTarget]::User)

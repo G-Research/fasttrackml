@@ -173,8 +173,8 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 		run := &database.Run{
 			ID: q.Offset,
 		}
-		if err = database.DB.Select("row_num").First(&run).Error; err != nil && tx.Error != gorm.ErrRecordNotFound {
-			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, tx.Error)
+		if err = database.DB.Select("row_num").First(&run).Error; err != nil && err != gorm.ErrRecordNotFound {
+			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, err)
 		}
 
 		tx.Where("row_num < ?", run.RowNum)
@@ -237,6 +237,7 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 		"experiments.namespace_id = ?", ns.ID,
 	).First(&database.Experiment{
 		ID: common.GetPointer(int32(id)),
+		NamespaceID: ns.ID,
 	}); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
 			return fiber.ErrNotFound

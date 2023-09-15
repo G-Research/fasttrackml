@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-
 	"github.com/rotisserie/eris"
 
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 )
 

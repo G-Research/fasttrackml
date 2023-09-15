@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 func TestNewRunPartialResponse(t *testing.T) {

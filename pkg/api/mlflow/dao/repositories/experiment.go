@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // ExperimentRepositoryProvider provides an interface to work with `experiment` entity.

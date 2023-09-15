@@ -6,13 +6,14 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 func TestService_GetMetricHistory_Ok(t *testing.T) {

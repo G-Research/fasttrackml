@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // Service provides service layer to work with `metric` business logic.

@@ -8,7 +8,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // Service provides service layer to work with `artifact` business logic.

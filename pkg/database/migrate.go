@@ -310,6 +310,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 					return err
 				}
 				fallthrough
+
 			case "5d042539be4f":
 				log.Info("Migrating database to FastTrackML schema e0d125c68d9a")
 				// We need to run this migration without foreign key constraints to avoid
@@ -342,6 +343,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				}); err != nil {
 					return err
 				}
+
 			default:
 				return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
 			}

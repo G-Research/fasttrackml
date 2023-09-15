@@ -3,6 +3,7 @@ package namespace
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,18 +13,42 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 )
 
-// TestService_CreateNamespace_Ok tests successful calls to the repository. 
+// TestService_CreateNamespace_Ok tests successful calls to the repository.
 func TestService_CreateNamespace_Ok(t *testing.T) {
 
-        ns := models.Namespace{}	
-	
+	defaultExpID := int32(0)
+	expID := int32(21)
+	experiment := models.Experiment{
+		ID:             &expID,
+		Name:           fmt.Sprintf("%s-exp", "code"),
+		LifecycleStage: models.LifecycleStageActive,
+	}
+
+	ns := models.Namespace{
+		Code:                "code",
+		Description:         "description",
+		DefaultExperimentID: &defaultExpID,
+		Experiments:         []models.Experiment{experiment},
+	}
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
 	namespaceRepository.On(
-		"Create", context.TODO(), mock.Anything,
-	).Return(ns, nil).On(
-		"Update", context.TODO(), mock.Anything,
-	).Return(ns, nil)
+		"Create",
+		context.TODO(),
+		mock.MatchedBy(func(ns *models.Namespace) bool {
+			assert.Equal(t, "code", ns.Code)
+			assert.Equal(t, "description", ns.Description)
+			return true
+		}),
+	).Return(&ns, nil).On(
+		"Update",
+		context.TODO(),
+		mock.MatchedBy(func(ns *models.Namespace) bool {
+			assert.Equal(t, "code", ns.Code)
+			assert.Equal(t, "description", ns.Description)
+			return true
+		}),
+	).Return(&ns, nil)
 
 	// call service under testing.
 	service := NewService(&namespaceRepository)
@@ -37,15 +62,15 @@ func TestService_CreateNamespace_Ok(t *testing.T) {
 // TestService_CreateNamespace_Error tests unsuccessful calls to the repository.
 func TestService_CreateNamespace_Error(t *testing.T) {
 
-        ns := models.Namespace{}	
+	ns := models.Namespace{}
 	err := errors.New("repository error")
-	
+
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
 	namespaceRepository.On(
-		"Create", context.TODO(), mock.Anything,
+		"Create", context.TODO(), mock.Anything, mock.Anything,
 	).Return(nil, err).On(
-		"Update", context.TODO(), mock.Anything,
+		"Update", context.TODO(), mock.Anything, mock.Anything,
 	).Return(ns, nil)
 
 	// call service under testing.

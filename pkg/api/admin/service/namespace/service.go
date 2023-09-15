@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/rotisserie/eris"
 )
 
 // Service provides service layer to work with `namespace` business logic.
@@ -33,7 +34,10 @@ func (s Service) GetNamespace(ctx context.Context, id uint) (*models.Namespace, 
 }
 
 // CreateNamespace creates a new namespace with default experiment.
-func (s Service) CreateNamespace(ctx context.Context, code, description string) (models.Namespace, error) {
+func (s Service) CreateNamespace(ctx context.Context, code, description string) (*models.Namespace, error) {
+	if err := ValidateNamespace(code); err != nil {
+		return nil, eris.Wrap(err, "validation error")
+	}
 	exp := &models.Experiment{
 		Name: fmt.Sprintf("%s-exp", code),
 		LifecycleStage: models.LifecycleStageActive,
@@ -47,23 +51,26 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 		DefaultExperimentID: &initialDefaultExpID,
 	}
 	if err := s.namespaceRepository.Create(ctx, namespace); err != nil {
-		return *namespace, err
+		return nil, err
 	}
 	// update with true DefaultExperimentID
 	namespace.DefaultExperimentID = namespace.Experiments[0].ID
 	err := s.namespaceRepository.Update(ctx, namespace)
-	return *namespace, err
+	return namespace, err
 }
 
 // UpdateNamespace updates the code and description fields.
-func (s Service) UpdateNamespace(ctx context.Context, id uint, code, description string) (models.Namespace, error) {
+func (s Service) UpdateNamespace(ctx context.Context, id uint, code, description string) (*models.Namespace, error) {
+	if err := ValidateNamespace(code); err != nil {
+		return nil, eris.Wrap(err, "validation error")
+	}
 	namespace := &models.Namespace{
 		ID:          id,
 		Code:        code,
 		Description: description,
 	}
 	err := s.namespaceRepository.Update(ctx, namespace)
-	return *namespace, err
+	return namespace, err
 }
 
 // DeleteNamespace will delete the namespace.

@@ -46,8 +46,9 @@ func (s *DeleteDashboardTestSuite) Test_Ok() {
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+			ID:         uuid.New(),
+			IsArchived: false,
+			CreatedAt:  time.Now(),
 		},
 		Type:        "mpi",
 		State:       database.AppState{},
@@ -57,8 +58,9 @@ func (s *DeleteDashboardTestSuite) Test_Ok() {
 
 	dashboard, err := s.DashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
 		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+			ID:         uuid.New(),
+			IsArchived: false,
+			CreatedAt:  time.Now(),
 		},
 		Name:        "dashboard-exp",
 		AppID:       &app.ID,
@@ -101,8 +103,9 @@ func (s *DeleteDashboardTestSuite) Test_Error() {
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+			ID:         uuid.New(),
+			IsArchived: false,
+			CreatedAt:  time.Now(),
 		},
 		Type:        "mpi",
 		State:       database.AppState{},
@@ -112,8 +115,9 @@ func (s *DeleteDashboardTestSuite) Test_Error() {
 
 	_, err = s.DashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
 		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+			ID:         uuid.New(),
+			IsArchived: false,
+			CreatedAt:  time.Now(),
 		},
 		Name:        "dashboard-exp",
 		AppID:       &app.ID,

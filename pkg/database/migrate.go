@@ -309,6 +309,8 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				}); err != nil {
 					return err
 				}
+				fallthrough
+
 			case "5d042539be4f":
 				log.Info("Migrating database to FastTrackML schema e0d125c68d9a")
 				// We need to run this migration without foreign key constraints to avoid
@@ -316,6 +318,12 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				if err := runWithoutForeignKeyIfNeeded(func() error {
 					if err := db.Transaction(func(tx *gorm.DB) error {
 						if err := tx.AutoMigrate(&Namespace{}); err != nil {
+							return err
+						}
+						if err := tx.Migrator().AddColumn(&App{}, "NamespaceID"); err != nil {
+							return err
+						}
+						if err := tx.Migrator().CreateConstraint(&Namespace{}, "Apps"); err != nil {
 							return err
 						}
 						if err := tx.Migrator().AddColumn(&Experiment{}, "NamespaceID"); err != nil {
@@ -341,6 +349,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				}); err != nil {
 					return err
 				}
+
 			default:
 				return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
 			}

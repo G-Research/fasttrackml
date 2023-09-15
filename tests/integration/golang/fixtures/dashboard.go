@@ -42,8 +42,9 @@ func (f DashboardFixtures) CreateDashboards(
 	for i := 0; i < num; i++ {
 		dashboard, err := f.CreateDashboard(ctx, &database.Dashboard{
 			Base: database.Base{
-				ID:        uuid.New(),
-				CreatedAt: time.Now(),
+				ID:         uuid.New(),
+				IsArchived: false,
+				CreatedAt:  time.Now(),
 			},
 			Name:        "dashboard-exp",
 			Description: "dashboard for experiment",

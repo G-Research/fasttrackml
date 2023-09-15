@@ -42,7 +42,7 @@ func encodeTree(w io.Writer, v any, p []any) error {
 			return err
 		}
 		for i := 0; i < rv.Len(); i++ {
-			v = rv.Index(i).Interface()
+			v := rv.Index(i).Interface()
 			if err := encodeTree(w, v, append(p, i)); err != nil {
 				return err
 			}

@@ -4,10 +4,17 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+var supportedAlembicVersions = []string{
+	"97727af70f4d",
+	"3500859a5d39",
+	"7f2a7d5fae7d",
+}
 
 func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
 	db := dbProvider.GormDB()
@@ -21,7 +28,7 @@ func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
 		tx.First(&schemaVersion)
 	}
 
-	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "5d042539be4f" {
+	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != "5d042539be4f" {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
 		}
@@ -106,7 +113,7 @@ func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
 			}
 			fallthrough
 
-		case "97727af70f4d":
+		case "97727af70f4d", "3500859a5d39", "7f2a7d5fae7d":
 			switch schemaVersion.Version {
 			case "":
 				log.Info("Migrating database to FastTrackML schema ac0b8b7c0014")
@@ -214,13 +221,28 @@ func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
 				if err := db.Transaction(func(tx *gorm.DB) error {
 					constraints := []string{"Params", "Tags", "Metrics", "LatestMetrics"}
 					for _, constraint := range constraints {
-						// SQLite tables need to be recreated to add or remove constraints.
-						// By not dropping the constraint, we can avoid having to recreate the table twice.
-						if db.Dialector.Name() != "sqlite" {
-							if err := tx.Migrator().DropConstraint(&Run{}, constraint); err != nil {
-								return err
+						switch tx.Dialector.Name() {
+						case "sqlite":
+							// SQLite tables need to be recreated to add or remove constraints.
+							// By not dropping the constraint, we can avoid having to recreate the table twice.
+						case "postgres":
+							// Existing MLFlow Postgres databases have foreign key constraints
+							// with their own names. We need to drop them before we can add our own.
+							table := tx.NamingStrategy.TableName(constraint)
+							fk := fmt.Sprintf("%s_run_uuid_fkey", table)
+							if tx.Migrator().HasConstraint(table, fk) {
+								if err := tx.Migrator().DropConstraint(table, fk); err != nil {
+									return err
+								}
+							} else {
+								if err := tx.Migrator().DropConstraint(&Run{}, constraint); err != nil {
+									return err
+								}
 							}
+						default:
+							return fmt.Errorf("unsupported database dialect %s", tx.Dialector.Name())
 						}
+
 						if err := tx.Migrator().CreateConstraint(&Run{}, constraint); err != nil {
 							return err
 						}
@@ -240,16 +262,36 @@ func checkAndMigrate(migrate bool, dbProvider DBProvider) error {
 				// the cascading delete to kick in and delete all the run data.
 				if err := runWithoutForeignKeyIfNeeded(func() error {
 					if err := db.Transaction(func(tx *gorm.DB) error {
-						constraints := []string{"Tags", "Runs"}
-						for _, constraint := range constraints {
-							// SQLite tables need to be recreated to add or remove constraints.
-							// By not dropping the constraint, we can avoid having to recreate the table twice.
-							if db.Dialector.Name() != "sqlite" {
-								if err := tx.Migrator().DropConstraint(&Experiment{}, constraint); err != nil {
-									return err
+						elems := []struct {
+							Table      string
+							Constraint string
+						}{
+							{"experiment_tags", "Tags"},
+							{"runs", "Runs"},
+						}
+						for _, e := range elems {
+							switch tx.Dialector.Name() {
+							case "sqlite":
+								// SQLite tables need to be recreated to add or remove constraints.
+								// By not dropping the constraint, we can avoid having to recreate the table twice.
+							case "postgres":
+								// Existing MLFlow Postgres databases have foreign key constraints with their own names.
+								// We need to drop them before we can add our own.
+								fk := fmt.Sprintf("%s_experiment_id_fkey", e.Table)
+								if tx.Migrator().HasConstraint(e.Table, fk) {
+									if err := tx.Migrator().DropConstraint(e.Table, fk); err != nil {
+										return err
+									}
+								} else {
+									if err := tx.Migrator().DropConstraint(&Experiment{}, e.Constraint); err != nil {
+										return err
+									}
 								}
+							default:
+								return fmt.Errorf("unsupported database dialect %s", tx.Dialector.Name())
 							}
-							if err := tx.Migrator().CreateConstraint(&Experiment{}, constraint); err != nil {
+
+							if err := tx.Migrator().CreateConstraint(&Experiment{}, e.Constraint); err != nil {
 								return err
 							}
 						}

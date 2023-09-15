@@ -30,12 +30,14 @@ type QueryParser struct {
 
 type ParsedQuery interface {
 	Filter(*gorm.DB) *gorm.DB
+	IsMetricSelected() bool
 }
 
 type parsedQuery struct {
-	qp         *QueryParser
-	joins      map[string]join
-	conditions []clause.Expression
+	qp             *QueryParser
+	joins          map[string]join
+	conditions     []clause.Expression
+	metricSelected bool
 }
 
 type callable func(args []ast.Expr) (any, error)
@@ -160,6 +162,10 @@ func (pq *parsedQuery) Filter(tx *gorm.DB) *gorm.DB {
 		tx.Where(clause.And(pq.conditions...))
 	}
 	return tx
+}
+
+func (pq *parsedQuery) IsMetricSelected() bool {
+	return pq.metricSelected
 }
 
 func (pq *parsedQuery) parseNode(node ast.Expr) (any, error) {
@@ -566,6 +572,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 				func(attr string) (any, error) {
 					switch attr {
 					case "name":
+						pq.metricSelected = true
 						return clause.Column{
 							Table: table,
 							Name:  "key",

@@ -23,15 +23,10 @@ func GetDashboards(c *fiber.Ctx) error {
 
 	var dashboards []database.Dashboard
 	if err := database.DB.
-		InnerJoins(
-			"App",
-			database.DB.Select(
-				"ID", "Type",
-			).Where(
-				`"App".namespace_id = ? AND NOT "App".is_archived`, ns.ID,
-			),
-		).
+		Preload("App").
+		Joins("LEFT JOIN apps ON apps.id = dashboards.app_id").
 		Where("NOT dashboards.is_archived").
+		Where("apps.namespace_id = ? AND NOT apps.is_archived", ns.ID).
 		Order("dashboards.updated_at").
 		Find(&dashboards).
 		Error; err != nil {
@@ -113,14 +108,10 @@ func GetDashboard(c *fiber.Ctx) error {
 	}
 	if err := database.DB.
 		Where("NOT dashboards.is_archived").
-		InnerJoins(
-			"App",
-			database.DB.Select(
-				"ID", "Type", "IsArchived",
-			).Where(
-				`"App".namespace_id = ? AND NOT "App".is_archived`, ns.ID,
-			),
-		).First(&dashboard).
+		Preload("App").
+		Joins("LEFT JOIN apps ON apps.id = dashboards.app_id").
+		Where("apps.namespace_id = ? AND NOT apps.is_archived", ns.ID).
+		First(&dashboard).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return fiber.ErrNotFound
@@ -161,15 +152,9 @@ func UpdateDashboard(c *fiber.Ctx) error {
 		},
 	}
 	if err := database.DB.
-		InnerJoins(
-			"App",
-			database.DB.Select(
-				"ID", "Type", "IsArchived",
-			).Where(
-				`"App".namespace_id = ? AND NOT "App".is_archived`, ns.ID,
-			),
-		).
+		Joins("LEFT JOIN apps ON dashboards.app_id = apps.id").
 		Where("NOT dashboards.is_archived").
+		Where("apps.namespace_id = ? AND NOT apps.is_archived", ns.ID).
 		First(&dash).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -214,12 +199,9 @@ func DeleteDashboard(c *fiber.Ctx) error {
 	}
 	if err := database.DB.
 		Select("dashboards.id").
-		InnerJoins(
-			"App",
-			database.DB.Where(
-				`"App".namespace_id = ? AND NOT "App".is_archived`, ns.ID,
-			),
-		).Where("NOT dashboards.is_archived").
+		Joins("LEFT JOIN apps ON dashboards.app_id = apps.id").
+		Where("NOT dashboards.is_archived").
+		Where("apps.namespace_id = ? AND NOT apps.is_archived", ns.ID).
 		First(&dash).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {

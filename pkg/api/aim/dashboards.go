@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
@@ -27,7 +28,7 @@ func GetDashboards(c *fiber.Ctx) error {
 			database.DB.Select(
 				"ID", "Type",
 			).Where(
-				`"App".namespace_id = ? AND NOT "App".is_archived`, ns.ID,
+				`App.namespace_id = ? AND NOT App.is_archived`, ns.ID,
 			),
 		).
 		Where("NOT dashboards.is_archived").
@@ -227,6 +228,7 @@ func DeleteDashboard(c *fiber.Ctx) error {
 	}
 
 	if err := database.DB.
+		Omit(clause.Associations).
 		Model(&dash).
 		Update("IsArchived", true).
 		Error; err != nil {

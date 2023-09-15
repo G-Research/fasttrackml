@@ -3,13 +3,14 @@ package aim
 import (
 	"fmt"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
-	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetDashboards(c *fiber.Ctx) error {

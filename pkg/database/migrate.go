@@ -323,6 +323,9 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 						if err := tx.Migrator().AddColumn(&App{}, "NamespaceID"); err != nil {
 							return err
 						}
+						if err := tx.Migrator().CreateConstraint(&Namespace{}, "Apps"); err != nil {
+							return err
+						}
 						if err := tx.Migrator().AddColumn(&Experiment{}, "NamespaceID"); err != nil {
 							return err
 						}

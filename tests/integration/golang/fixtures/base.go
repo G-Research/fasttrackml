@@ -25,7 +25,6 @@ func (f baseFixtures) UnloadFixtures() error {
 		models.Run{},
 		models.ExperimentTag{},
 		models.Experiment{},
-		models.Namespace{},
 	} {
 		if err := f.db.Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(table).Error; err != nil {
 			return errors.Wrap(err, "error deleting data")

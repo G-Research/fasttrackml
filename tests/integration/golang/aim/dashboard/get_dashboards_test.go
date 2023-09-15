@@ -60,8 +60,9 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 
 			app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 				Base: database.Base{
-					ID:        uuid.New(),
-					CreatedAt: time.Now(),
+					ID:         uuid.New(),
+					IsArchived: false,
+					CreatedAt:  time.Now(),
 				},
 				Type:        "mpi",
 				State:       database.AppState{},

@@ -179,6 +179,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 	}
 
 	if err := database.DB.
+		Omit(clause.Associations).
 		Model(&dash).
 		Updates(database.Dashboard{
 			Name:        d.Name,

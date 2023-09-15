@@ -17,6 +17,16 @@ import (
 
 func TestService_GetMetricHistory_Ok(t *testing.T) {
 	// init repository mocks.
+	runRepository := repositories.MockRunRepositoryProvider{}
+	runRepository.On(
+		"GetByNamespaceIDAndRunID",
+		context.TODO(),
+		uint(1),
+		"1",
+	).Return(&models.Run{
+		ID: "1",
+	}, nil)
+
 	metricRepository := repositories.MockMetricRepositoryProvider{}
 	metricRepository.On(
 		"GetMetricHistoryByRunIDAndKey",
@@ -33,11 +43,17 @@ func TestService_GetMetricHistory_Ok(t *testing.T) {
 	}, nil)
 
 	// call service under testing.
-	service := NewService(&metricRepository)
-	metrics, err := service.GetMetricHistory(context.TODO(), &request.GetMetricHistoryRequest{
-		RunID:     "1",
-		MetricKey: "key",
-	})
+	service := NewService(&runRepository, &metricRepository)
+	metrics, err := service.GetMetricHistory(
+		context.TODO(),
+		&models.Namespace{
+			ID: 1,
+		},
+		&request.GetMetricHistoryRequest{
+			RunID:     "1",
+			MetricKey: "key",
+		},
+	)
 
 	// compare results.
 	assert.Nil(t, err)
@@ -63,8 +79,19 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.GetMetricHistoryRequest{},
 			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByNamespaceIDRunIDAndLifecycleStage",
+					context.TODO(),
+					uint(1),
+					"1",
+					models.LifecycleStageActive,
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
 				metricRepository := repositories.MockMetricRepositoryProvider{}
-				return NewService(&metricRepository)
+				return NewService(&runRepository, &metricRepository)
 			},
 		},
 		{
@@ -74,18 +101,26 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 				RunID: "1",
 			},
 			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
 				metricRepository := repositories.MockMetricRepositoryProvider{}
-				return NewService(&metricRepository)
+				return NewService(&runRepository, &metricRepository)
 			},
 		},
 		{
 			name:  "GetMetricHistoryDatabaseError",
-			error: api.NewInternalError("unable to get metric history for metric 'key' of run '1'"),
+			error: api.NewInternalError("unable to find run '1': database error"),
 			request: &request.GetMetricHistoryRequest{
 				RunID:     "1",
 				MetricKey: "key",
 			},
 			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByNamespaceIDAndRunID",
+					context.TODO(),
+					uint(1),
+					"1",
+				).Return(nil, errors.New("database error"))
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"GetMetricHistoryByRunIDAndKey",
@@ -93,7 +128,7 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 					"1",
 					"key",
 				).Return(nil, errors.New("database error"))
-				return NewService(&metricRepository)
+				return NewService(&runRepository, &metricRepository)
 			},
 		},
 	}
@@ -101,7 +136,7 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, err := tt.service().GetMetricHistory(context.TODO(), tt.request)
+			_, err := tt.service().GetMetricHistory(context.TODO(), &models.Namespace{ID: 1}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
@@ -109,10 +144,13 @@ func TestService_GetMetricHistory_Error(t *testing.T) {
 
 func TestService_GetMetricHistoryBulk_Ok(t *testing.T) {
 	// init repository mocks.
+	runRepository := repositories.MockRunRepositoryProvider{}
+
 	metricRepository := repositories.MockMetricRepositoryProvider{}
 	metricRepository.On(
 		"GetMetricHistoryBulk",
 		context.TODO(),
+		uint(1),
 		[]string{"1", "2"},
 		"key",
 		10,
@@ -126,8 +164,10 @@ func TestService_GetMetricHistoryBulk_Ok(t *testing.T) {
 	}, nil)
 
 	// call service under testing.
-	service := NewService(&metricRepository)
-	metrics, err := service.GetMetricHistoryBulk(context.TODO(), &request.GetMetricHistoryBulkRequest{
+	service := NewService(&runRepository, &metricRepository)
+	metrics, err := service.GetMetricHistoryBulk(context.TODO(), &models.Namespace{
+		ID: 1,
+	}, &request.GetMetricHistoryBulkRequest{
 		RunIDs:     []string{"1", "2"},
 		MetricKey:  "key",
 		MaxResults: 10,
@@ -159,8 +199,9 @@ func TestService_GetMetricHistoryBulk_Error(t *testing.T) {
 			),
 			request: &request.GetMetricHistoryBulkRequest{},
 			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
 				metricRepository := repositories.MockMetricRepositoryProvider{}
-				return NewService(&metricRepository)
+				return NewService(&runRepository, &metricRepository)
 			},
 		},
 		{
@@ -172,8 +213,9 @@ func TestService_GetMetricHistoryBulk_Error(t *testing.T) {
 				RunIDs: make([]string, MaxRunIDsForMetricHistoryBulkRequest+1),
 			},
 			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
 				metricRepository := repositories.MockMetricRepositoryProvider{}
-				return NewService(&metricRepository)
+				return NewService(&runRepository, &metricRepository)
 			},
 		},
 		{
@@ -185,8 +227,9 @@ func TestService_GetMetricHistoryBulk_Error(t *testing.T) {
 				RunIDs: []string{"1"},
 			},
 			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
 				metricRepository := repositories.MockMetricRepositoryProvider{}
-				return NewService(&metricRepository)
+				return NewService(&runRepository, &metricRepository)
 			},
 		},
 		{
@@ -198,15 +241,17 @@ func TestService_GetMetricHistoryBulk_Error(t *testing.T) {
 				MaxResults: 10,
 			},
 			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"GetMetricHistoryBulk",
 					context.TODO(),
+					uint(1),
 					[]string{"1"},
 					"key",
 					10,
 				).Return(nil, errors.New("database error"))
-				return NewService(&metricRepository)
+				return NewService(&runRepository, &metricRepository)
 			},
 		},
 	}
@@ -214,7 +259,7 @@ func TestService_GetMetricHistoryBulk_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, err := tt.service().GetMetricHistoryBulk(context.TODO(), tt.request)
+			_, err := tt.service().GetMetricHistoryBulk(context.TODO(), &models.Namespace{ID: 1}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
@@ -222,10 +267,19 @@ func TestService_GetMetricHistoryBulk_Error(t *testing.T) {
 
 func TestNewService_GetMetricHistories_Ok(t *testing.T) {
 	// init repository mocks.
+	runRepository := repositories.MockRunRepositoryProvider{}
+	runRepository.On(
+		"GetByNamespaceIDAndRunID",
+		context.TODO(),
+		uint(1),
+		"id",
+	).Return(nil, &models.Run{ID: "1"})
+
 	metricRepository := repositories.MockMetricRepositoryProvider{}
 	metricRepository.On(
 		"GetMetricHistories",
 		context.TODO(),
+		uint(1),
 		[]string{"1", "2"},
 		mock.Anything,
 		[]string{"key1", "key2"},
@@ -240,8 +294,10 @@ func TestNewService_GetMetricHistories_Ok(t *testing.T) {
 	)
 
 	// call service under testing.
-	service := NewService(&metricRepository)
-	rows, iterator, err := service.GetMetricHistories(context.TODO(), &request.GetMetricHistoriesRequest{
+	service := NewService(&runRepository, &metricRepository)
+	rows, iterator, err := service.GetMetricHistories(context.TODO(), &models.Namespace{
+		ID: 1,
+	}, &request.GetMetricHistoriesRequest{
 		ExperimentIDs: []string{"1", "2"},
 		MetricKeys:    []string{"key1", "key2"},
 		ViewType:      request.ViewTypeActiveOnly,
@@ -269,8 +325,9 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 				ExperimentIDs: []string{"2"},
 			},
 			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
 				metricRepository := repositories.MockMetricRepositoryProvider{}
-				return NewService(&metricRepository)
+				return NewService(&runRepository, &metricRepository)
 			},
 		},
 		{
@@ -281,8 +338,9 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 				ViewType: "unsupported",
 			},
 			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
 				metricRepository := repositories.MockMetricRepositoryProvider{}
-				return NewService(&metricRepository)
+				return NewService(&runRepository, &metricRepository)
 			},
 		},
 		{
@@ -294,8 +352,9 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 				MaxResults: MaxResultsForMetricHistoriesRequest + 1,
 			},
 			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
 				metricRepository := repositories.MockMetricRepositoryProvider{}
-				return NewService(&metricRepository)
+				return NewService(&runRepository, &metricRepository)
 			},
 		},
 		{
@@ -308,10 +367,12 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 				MaxResults: 1,
 			},
 			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
 				metricRepository := repositories.MockMetricRepositoryProvider{}
 				metricRepository.On(
 					"GetMetricHistories",
 					context.TODO(),
+					uint(1),
 					mock.Anything,
 					[]string{"1"},
 					[]string{"key1", "key2"},
@@ -322,7 +383,7 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 					nil,
 					errors.New("database error"),
 				)
-				return NewService(&metricRepository)
+				return NewService(&runRepository, &metricRepository)
 			},
 		},
 	}
@@ -330,7 +391,7 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, _, err := tt.service().GetMetricHistories(context.TODO(), tt.request)
+			_, _, err := tt.service().GetMetricHistories(context.TODO(), &models.Namespace{ID: 1}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}

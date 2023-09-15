@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 
@@ -18,21 +20,15 @@ type RunFixtures struct {
 	runRepository    repositories.RunRepositoryProvider
 	tagRepository    repositories.TagRepositoryProvider
 	metricRepository repositories.MetricRepositoryProvider
-	paramRepository  repositories.ParamRepository
 }
 
 // NewRunFixtures creates new instance of RunFixtures.
-func NewRunFixtures(databaseDSN string) (*RunFixtures, error) {
-	db, err := CreateDB(databaseDSN)
-	if err != nil {
-		return nil, err
-	}
+func NewRunFixtures(db *gorm.DB) (*RunFixtures, error) {
 	return &RunFixtures{
-		baseFixtures:     baseFixtures{db: db.GormDB()},
-		runRepository:    repositories.NewRunRepository(db.GormDB()),
-		tagRepository:    repositories.NewTagRepository(db.GormDB()),
-		metricRepository: repositories.NewMetricRepository(db.GormDB()),
-		paramRepository:  *repositories.NewParamRepository(db.GormDB()),
+		baseFixtures:     baseFixtures{db: db},
+		runRepository:    repositories.NewRunRepository(db),
+		tagRepository:    repositories.NewTagRepository(db),
+		metricRepository: repositories.NewMetricRepository(db),
 	}, nil
 }
 
@@ -44,6 +40,12 @@ func (f RunFixtures) CreateRun(
 		return nil, eris.Wrap(err, "error creating test run")
 	}
 	return run, nil
+}
+
+// ArchiveRun archive existing runs by their ids.
+func (f RunFixtures) ArchiveRun(ctx context.Context, ids []string) error {
+	err := f.runRepository.ArchiveBatch(ctx, ids)
+	return err
 }
 
 // UpdateRun updates existing Run.
@@ -179,7 +181,7 @@ func (f RunFixtures) CreateTag(
 	return nil
 }
 
-// CreateMetrics creats some example metrics for a Run, up to count.
+// CreateMetrics creates some example metrics for a Run, up to count.
 func (f RunFixtures) CreateMetrics(
 	ctx context.Context, run *models.Run, count int,
 ) error {
@@ -216,7 +218,7 @@ func (f RunFixtures) CreateMetrics(
 	return nil
 }
 
-// CreateParams creats some example params for a Run, up to count.
+// CreateParams creates some example params for a Run, up to count.
 func (f RunFixtures) CreateParams(
 	ctx context.Context, run *models.Run, count int,
 ) error {

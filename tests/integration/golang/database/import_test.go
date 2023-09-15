@@ -102,7 +102,7 @@ func (s *ImportTestSuite) SetupTest() {
 	databasePoolMax := 20
 	databaseReset := false
 	databaseMigrate := false
-	artifactRoot := "s3://fasttrackml"
+	artifactRoot := "./artifacts"
 	input, err := database.MakeDBProvider(
 		helpers.GetInputDatabaseUri(),
 		databaseSlowThreshold,

@@ -1,7 +1,6 @@
 package aim
 
 import (
-	"io/fs"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,26 +8,16 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 
 	aim "github.com/G-Research/fasttrackml-ui-aim"
+	"github.com/G-Research/fasttrackml/pkg/ui/common"
 )
 
-type singleFileFS struct {
-	fs.FS
-	Path string
-}
-
-func (f singleFileFS) Open(name string) (fs.File, error) {
-	return f.FS.Open(f.Path)
-}
-
 func AddRoutes(r fiber.Router) {
-	r.Use("/static-files/", etag.New(), filesystem.New(filesystem.Config{
+	r.Use("/static/aim/", etag.New(), filesystem.New(filesystem.Config{
 		Root: http.FS(aim.FS),
 	}))
 
-	r.Use("/", etag.New(), filesystem.New(filesystem.Config{
-		Root: http.FS(singleFileFS{
-			aim.FS,
-			"index.html",
-		}),
+	r.Use("/aim", etag.New(), filesystem.New(filesystem.Config{
+		Root: http.FS(
+			common.NewSingleFileFS(aim.FS, "index.html")),
 	}))
 }

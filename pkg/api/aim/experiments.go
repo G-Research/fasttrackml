@@ -296,8 +296,6 @@ func DeleteExperiment(c *fiber.Ctx) error {
 	// validate that requested experiment exists.
 	if tx := database.DB.Select(
 		"ID",
-	).Where(
-		"experiments.namespace_id = ?", ns.ID,
 	).First(&database.Experiment{
 		ID:          common.GetPointer(int32(id)),
 		NamespaceID: ns.ID,

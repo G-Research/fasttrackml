@@ -40,7 +40,7 @@ func NewNamespaceRepository(db *gorm.DB) *NamespaceRepository {
 
 // Create creates new models.Namespace entity.
 func (r NamespaceRepository) Create(ctx context.Context, namespace *models.Namespace) error {
-	if err := r.db.WithContext(ctx).Create(&namespace).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(namespace).Error; err != nil {
 		return eris.Wrap(err, "error creating namespace entity")
 	}
 	return nil
@@ -48,7 +48,7 @@ func (r NamespaceRepository) Create(ctx context.Context, namespace *models.Names
 
 // Update persists modifications to models.Namespace entity.
 func (r NamespaceRepository) Update(ctx context.Context, namespace *models.Namespace) error {
-	if err := r.db.WithContext(ctx).Updates(&namespace).Error; err != nil {
+	if err := r.db.WithContext(ctx).Updates(namespace).Error; err != nil {
 		return eris.Wrap(err, "error updating namespace entity")
 	}
 	return nil

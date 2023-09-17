@@ -233,8 +233,6 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 
 	if tx := database.DB.Select(
 		"ID",
-	).Where(
-		"experiments.namespace_id = ?", ns.ID,
 	).First(&database.Experiment{
 		ID:          common.GetPointer(int32(id)),
 		NamespaceID: ns.ID,
@@ -301,7 +299,8 @@ func DeleteExperiment(c *fiber.Ctx) error {
 	).Where(
 		"experiments.namespace_id = ?", ns.ID,
 	).First(&database.Experiment{
-		ID: common.GetPointer(int32(id)),
+		ID:          common.GetPointer(int32(id)),
+		NamespaceID: ns.ID,
 	}); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
 			return fiber.ErrNotFound

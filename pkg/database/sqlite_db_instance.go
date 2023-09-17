@@ -11,12 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rotisserie/eris"
-	"golang.org/x/exp/slices"
-
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/mattn/go-sqlite3"
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

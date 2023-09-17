@@ -49,7 +49,7 @@ func Decode(data io.Reader) (map[string]interface{}, error) {
 	for {
 		key, err := d.readField()
 		if err != nil {
-			if err = eris.Unwrap(err); err == io.EOF {
+			if err := eris.Unwrap(err); err == io.EOF {
 				return result, nil
 			}
 			return result, eris.Wrap(err, "error reading data line")

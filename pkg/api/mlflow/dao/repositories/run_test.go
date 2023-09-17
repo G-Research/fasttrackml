@@ -3,12 +3,12 @@ package repositories
 import (
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 func Test_renumberRows(t *testing.T) {

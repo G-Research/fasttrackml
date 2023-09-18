@@ -466,6 +466,26 @@ func (s *SearchTestSuite) Test_Ok() {
 				run3,
 			},
 		},
+		{
+			name: "SearchRunNameOperationRegexpMatchFunction",
+			request: request.SearchRunsRequest{
+				Query: `re.match('TestRun1', run.name)`,
+			},
+
+			runs: []*models.Run{
+				run1,
+			},
+		},
+		{
+			name: "SearchRunNameOperationRegexpSearchFunction",
+			request: request.SearchRunsRequest{
+				Query: `re.search('TestRun3', run.name)`,
+			},
+
+			runs: []*models.Run{
+				run3,
+			},
+		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {

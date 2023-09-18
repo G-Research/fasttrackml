@@ -284,7 +284,7 @@ jobs:
             type=edge
 
       - name: Build container image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           build-args: |

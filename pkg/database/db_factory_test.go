@@ -22,11 +22,13 @@ func TestMakeDBProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			DB = nil
-			db, err := NewDBProvider(
+			db, err := MakeDBProvider(
 				tt.dsn,
 				time.Second*2,
 				2,
 				false,
+				false,
+				"s3://somewhere",
 			)
 			assert.Nil(t, err)
 			assert.NotNil(t, db)

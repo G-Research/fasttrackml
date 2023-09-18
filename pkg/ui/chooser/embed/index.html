@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FastTrackML</title>
-    <link rel="stylesheet" href="/static/chooser/css/simple.min.css">
-    <link rel="icon" type="image/x-icon" href="/static/chooser/favicon.ico">
+    <link rel="stylesheet" href="static/css/simple.min.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <style>
         :root {
             --accent: #00a4e0;
@@ -33,8 +33,8 @@
 <body>
     <header>
         <picture>
-            <source media="(prefers-color-scheme: dark)" srcset="/static/chooser/media/logo-dark.svg">
-            <img class="logo" src="/static/chooser/media/logo-light.svg" alt="FastTrackML logo">
+            <source media="(prefers-color-scheme: dark)" srcset="static/media/logo-dark.svg">
+            <img class="logo" src="static/media/logo-light.svg" alt="FastTrackML logo">
         </picture>
         <p>A <i>very fast</i> experiment tracker</p>
     </header>
@@ -44,15 +44,11 @@
         <p>Which UI do you want to use?</p>
         <div class="ui">
             <article>
-                <a href="#" onclick="window.location = window.location.origin + window.location.pathname + 'mlflow/'">
-                    <button>Classic</button>
-                </a>
+                <a href="#" onclick="window.location = window.location.origin + '/mlflow/'"><button>Classic</button></a>
                 <p>This is the classic MLFlow UI, albeit fast and responsive.</p>
             </article>
             <article>
-                <a href="#" onclick="window.location = window.location.origin + window.location.pathname + 'aim/'">
-                    <button>Modern</button>
-                </a>
+                <a href="#" onclick="window.location = window.location.origin + '/aim/'"><button>Modern</button></a>
                 <p>This is the modern Aim UI, much faster than MLFlow.</p>
             </article>
         </div>

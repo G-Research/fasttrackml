@@ -17,14 +17,15 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetExperimentTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
+	client             *helpers.HttpClient
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestGetExperimentTestSuite(t *testing.T) {
@@ -32,23 +33,19 @@ func TestGetExperimentTestSuite(t *testing.T) {
 }
 
 func (s *GetExperimentTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = experimentFixtures
 }
 
 func (s *GetExperimentTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
 	// 1. prepare database with test data.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
@@ -56,7 +53,6 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 				Value: "value1",
 			},
 		},
-		NamespaceID: namespace.ID,
 		CreationTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
@@ -77,7 +73,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	resp := response.GetExperimentResponse{}
-	err = s.MlflowClient.DoGetRequest(
+	err = s.client.DoGetRequest(
 		fmt.Sprintf(
 			"%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute, query,
 		),
@@ -99,17 +95,6 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 }
 
 func (s *GetExperimentTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -140,7 +125,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 			query, err := urlquery.Marshal(tt.request)
 			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
-			err = s.MlflowClient.DoGetRequest(
+			err = s.client.DoGetRequest(
 				fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute, query),
 				&resp,
 			)

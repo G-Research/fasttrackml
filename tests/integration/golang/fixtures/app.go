@@ -6,21 +6,25 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
-	"gorm.io/gorm"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // AppFixtures represents data fixtures object.
 type AppFixtures struct {
 	baseFixtures
+	*database.DBInstance
 }
 
 // NewAppFixtures creates new instance of AppFixtures.
-func NewAppFixtures(db *gorm.DB) (*AppFixtures, error) {
+func NewAppFixtures(databaseDSN string) (*AppFixtures, error) {
+	db, err := CreateDB(databaseDSN)
+	if err != nil {
+		return nil, err
+	}
 	return &AppFixtures{
-		baseFixtures: baseFixtures{db: db},
+		baseFixtures: baseFixtures{db: db.GormDB()},
+		DBInstance:   nil,
 	}, nil
 }
 
@@ -35,7 +39,9 @@ func (f AppFixtures) CreateApp(
 }
 
 // CreateApps creates some num apps belonging to the experiment.
-func (f AppFixtures) CreateApps(ctx context.Context, namespace *models.Namespace, num int) ([]*database.App, error) {
+func (f AppFixtures) CreateApps(
+	ctx context.Context, num int,
+) ([]*database.App, error) {
 	var apps []*database.App
 	// create apps for the experiment
 	for i := 0; i < num; i++ {
@@ -44,9 +50,8 @@ func (f AppFixtures) CreateApps(ctx context.Context, namespace *models.Namespace
 				ID:        uuid.New(),
 				CreatedAt: time.Now(),
 			},
-			Type:        "mpi",
-			State:       database.AppState{},
-			NamespaceID: namespace.ID,
+			Type:  "mpi",
+			State: database.AppState{},
 		}
 		app, err := f.CreateApp(ctx, app)
 		if err != nil {

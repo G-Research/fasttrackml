@@ -5,7 +5,6 @@ package run
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -13,15 +12,17 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type CreateDashboardTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
+	client            *helpers.HttpClient
+	app               *database.App
+	appFixtures       *fixtures.AppFixtures
+	dashboardFixtures *fixtures.DashboardFixtures
 }
 
 func TestCreateDashboardTestSuite(t *testing.T) {
@@ -29,33 +30,23 @@ func TestCreateDashboardTestSuite(t *testing.T) {
 }
 
 func (s *CreateDashboardTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
+
+	appFixtures, err := fixtures.NewAppFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.appFixtures = appFixtures
+
+	apps, err := s.appFixtures.CreateApps(context.Background(), 1)
+	assert.Nil(s.T(), err)
+	s.app = apps[0]
+
+	dashboardFixtures, err := fixtures.NewDashboardFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.dashboardFixtures = dashboardFixtures
 }
 
 func (s *CreateDashboardTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
-	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
-		Base: database.Base{
-			ID:         uuid.New(),
-			IsArchived: false,
-			CreatedAt:  time.Now(),
-		},
-		Type:        "mpi",
-		State:       database.AppState{},
-		NamespaceID: namespace.ID,
-	})
-	assert.Nil(s.T(), err)
-
+	defer func() { assert.Nil(s.T(), s.dashboardFixtures.UnloadFixtures()) }()
 	tests := []struct {
 		name        string
 		requestBody request.CreateDashboard
@@ -63,7 +54,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 		{
 			name: "CreateValidDashboard",
 			requestBody: request.CreateDashboard{
-				AppID:       app.ID,
+				AppID:       s.app.ID,
 				Name:        "dashboard-name",
 				Description: "dashboard-description",
 			},
@@ -72,10 +63,14 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Dashboard
-			err := s.AIMClient.DoPostRequest("/dashboards", tt.requestBody, &resp)
+			err := s.client.DoPostRequest(
+				"/dashboards",
+				tt.requestBody,
+				&resp,
+			)
 			assert.Nil(s.T(), err)
 
-			dashboards, err := s.DashboardFixtures.GetDashboards(context.Background())
+			dashboards, err := s.dashboardFixtures.GetDashboards(context.Background())
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.requestBody.Name, resp.Name)
 			assert.Equal(s.T(), tt.requestBody.Description, resp.Description)
@@ -89,17 +84,6 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 }
 
 func (s *CreateDashboardTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	tests := []struct {
 		name        string
 		requestBody request.CreateDashboard
@@ -116,7 +100,7 @@ func (s *CreateDashboardTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoPostRequest(
+			err := s.client.DoPostRequest(
 				"/dashboards",
 				tt.requestBody,
 				&resp,

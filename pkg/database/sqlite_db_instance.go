@@ -148,11 +148,6 @@ func NewSqliteDBInstance(
 		}),
 	)
 
-	sqlDB, _ := db.DB.DB()
-	sqlDB.SetConnMaxIdleTime(time.Minute)
-	sqlDB.SetMaxIdleConns(poolMax)
-	sqlDB.SetMaxOpenConns(poolMax)
-
 	return &db, nil
 }
 

@@ -36,6 +36,9 @@ func initCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(`invalid log level "%s"`, viper.GetString("log-level"))
 	}
 	log.SetLevel(level)
+	if log.IsLevelEnabled(log.DebugLevel) {
+		log.SetReportCaller(true)
+	}
 	return nil
 }
 

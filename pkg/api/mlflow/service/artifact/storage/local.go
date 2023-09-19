@@ -4,7 +4,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
@@ -17,21 +19,34 @@ type Local struct {
 }
 
 // NewLocal creates new Local storage instance.
-func NewLocal(config *config.ServiceConfig) (*Local, error) {
+func NewLocal(config *config.ServiceConfig, server *fiber.App) (*Local, error) {
+	server.Static("/artifacts", config.ArtifactRoot, fiber.Static{
+		Compress:      true,
+		ByteRange:     true,
+		Browse:        true,
+		CacheDuration: 180 * time.Second,
+		MaxAge:        3600,
+	})
 	return &Local{
 		config: config,
 	}, nil
 }
 
 // List implements Provider interface.
-func (s Local) List(artifactURI, path string) (string, []ArtifactObject, error) {
-	// 1. process search `prefix` parameter.
-	path, err := url.JoinPath(artifactURI, path)
+func (s Local) List(runArtifactPath, additionalPath string) (string, []ArtifactObject, error) {
+	path, err := url.JoinPath(s.config.ArtifactRoot, runArtifactPath, additionalPath)
 	if err != nil {
 		return "", nil, eris.Wrap(err, "error constructing full path")
 	}
 
-	// 2. read data from local storage.
+	// test local storage existence
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		// path does not (yet) exist -- returning no artifacts
+		log.Infof("artifact dir does not exist: %s", path)
+		return path, []ArtifactObject{}, nil
+	}
+
+	// read objects
 	objects, err := os.ReadDir(path)
 	if err != nil {
 		return "", nil, eris.Wrapf(err, "error reading object from local storage")
@@ -45,10 +60,10 @@ func (s Local) List(artifactURI, path string) (string, []ArtifactObject, error) 
 			return "", nil, eris.Wrapf(err, "error getting info for object: %s", object.Name())
 		}
 		artifactList[i] = ArtifactObject{
-			Path:  filepath.Join(path, info.Name()),
+			Path:  filepath.Join(runArtifactPath, info.Name()),
 			Size:  info.Size(),
 			IsDir: object.IsDir(),
 		}
 	}
-	return s.config.ArtifactRoot, artifactList, nil
+	return "/artifacts" + runArtifactPath, artifactList, nil
 }

@@ -55,13 +55,15 @@ func NewService(
 	}
 }
 
-func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (*models.Run, error) {
+func (s Service) CreateRun(
+	ctx context.Context, ns *models.Namespace, req *request.CreateRunRequest,
+) (*models.Run, error) {
 	experimentID, err := strconv.ParseInt(req.ExperimentID, 10, 32)
 	if err != nil {
 		return nil, api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ExperimentID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByID(ctx, int32(experimentID))
+	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(experimentID))
 	if err != nil {
 		return nil, api.NewResourceDoesNotExistError("unable to find experiment with id '%s': %s", req.ExperimentID, err)
 	}
@@ -77,14 +79,19 @@ func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (
 	return run, nil
 }
 
-func (s Service) UpdateRun(ctx context.Context, req *request.UpdateRunRequest) (*models.Run, error) {
+func (s Service) UpdateRun(
+	ctx context.Context, namespace *models.Namespace, req *request.UpdateRunRequest,
+) (*models.Run, error) {
 	if err := ValidateUpdateRunRequest(req); err != nil {
 		return nil, err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.GetRunID())
 	if err != nil {
 		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.GetRunID())
 	}
 
 	run = convertors.ConvertUpdateRunRequestToDBModel(run, req)
@@ -109,20 +116,29 @@ func (s Service) UpdateRun(ctx context.Context, req *request.UpdateRunRequest) (
 	return run, nil
 }
 
-func (s Service) GetRun(ctx context.Context, req *request.GetRunRequest) (*models.Run, error) {
+func (s Service) GetRun(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.GetRunRequest,
+) (*models.Run, error) {
 	if err := ValidateGetRunRequest(req); err != nil {
 		return nil, err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.GetRunID())
 	if err != nil {
 		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.GetRunID(), err)
+	}
+	if run == nil {
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.GetRunID())
 	}
 
 	return run, nil
 }
 
-func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest) ([]models.Run, int, int, error) {
+func (s Service) SearchRuns(
+	ctx context.Context, namespace *models.Namespace, req *request.SearchRunsRequest,
+) ([]models.Run, int, int, error) {
 	if err := ValidateSearchRunsRequest(req); err != nil {
 		return nil, 0, 0, err
 	}
@@ -144,10 +160,14 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 			database.LifecycleStageDeleted,
 		}
 	}
-	tx := database.DB.Where(
-		"experiment_id IN ?", req.ExperimentIDs,
+	tx := database.DB.Joins(
+		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 	).Where(
-		"lifecycle_stage IN ?", lifecyleStages,
+		"experiments.namespace_id = ?", namespace.ID,
+	).Where(
+		"runs.experiment_id IN ?", req.ExperimentIDs,
+	).Where(
+		"runs.lifecycle_stage IN ?", lifecyleStages,
 	)
 
 	// MaxResults
@@ -363,14 +383,19 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 }
 
 // DeleteRun handles delete models.Run entity business logic.
-func (s Service) DeleteRun(ctx context.Context, req *request.DeleteRunRequest) error {
+func (s Service) DeleteRun(
+	ctx context.Context, namespace *models.Namespace, req *request.DeleteRunRequest,
+) error {
 	if err := ValidateDeleteRunRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.RunID)
 	if err != nil {
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
 	if err := s.runRepository.Archive(ctx, run); err != nil {
@@ -380,14 +405,21 @@ func (s Service) DeleteRun(ctx context.Context, req *request.DeleteRunRequest) e
 	return nil
 }
 
-func (s Service) RestoreRun(ctx context.Context, req *request.RestoreRunRequest) error {
+func (s Service) RestoreRun(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.RestoreRunRequest,
+) error {
 	if err := ValidateRestoreRunRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.RunID)
 	if err != nil {
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
 	run.DeletedTime = sql.NullInt64{Valid: false}
@@ -399,14 +431,21 @@ func (s Service) RestoreRun(ctx context.Context, req *request.RestoreRunRequest)
 	return nil
 }
 
-func (s Service) LogMetric(ctx context.Context, req *request.LogMetricRequest) error {
+func (s Service) LogMetric(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.LogMetricRequest,
+) error {
 	if err := ValidateLogMetricRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.RunID)
 	if err != nil {
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
 	metric, err := convertors.ConvertMetricParamRequestToDBModel(run.ID, req)
@@ -420,12 +459,18 @@ func (s Service) LogMetric(ctx context.Context, req *request.LogMetricRequest) e
 	return nil
 }
 
-func (s Service) LogParam(ctx context.Context, req *request.LogParamRequest) error {
+func (s Service) LogParam(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.LogParamRequest,
+) error {
 	if err := ValidateLogParamRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	run, err := s.runRepository.GetByNamespaceIDRunIDAndLifecycleStage(
+		ctx, namespace.ID, req.RunID, models.LifecycleStageActive,
+	)
 	if err != nil {
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
@@ -441,12 +486,18 @@ func (s Service) LogParam(ctx context.Context, req *request.LogParamRequest) err
 	return nil
 }
 
-func (s Service) SetRunTag(ctx context.Context, req *request.SetRunTagRequest) error {
+func (s Service) SetRunTag(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.SetRunTagRequest,
+) error {
 	if err := ValidateSetRunTagRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	run, err := s.runRepository.GetByNamespaceIDRunIDAndLifecycleStage(
+		ctx, namespace.ID, req.RunID, models.LifecycleStageActive,
+	)
 	if err != nil {
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
@@ -461,12 +512,18 @@ func (s Service) SetRunTag(ctx context.Context, req *request.SetRunTagRequest) e
 	return nil
 }
 
-func (s Service) DeleteRunTag(ctx context.Context, req *request.DeleteRunTagRequest) error {
+func (s Service) DeleteRunTag(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.DeleteRunTagRequest,
+) error {
 	if err := ValidateDeleteRunTagRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	run, err := s.runRepository.GetByNamespaceIDRunIDAndLifecycleStage(
+		ctx, namespace.ID, req.RunID, models.LifecycleStageActive,
+	)
 	if err != nil {
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
@@ -486,12 +543,18 @@ func (s Service) DeleteRunTag(ctx context.Context, req *request.DeleteRunTagRequ
 	return nil
 }
 
-func (s Service) LogBatch(ctx context.Context, req *request.LogBatchRequest) error {
+func (s Service) LogBatch(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.LogBatchRequest,
+) error {
 	if err := ValidateLogBatchRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	run, err := s.runRepository.GetByNamespaceIDRunIDAndLifecycleStage(
+		ctx, namespace.ID, req.RunID, models.LifecycleStageActive,
+	)
 	if err != nil {
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}

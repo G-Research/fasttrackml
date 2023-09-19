@@ -37,12 +37,16 @@ const config = {
                 theme: {
                     customCss: [require.resolve('./src/css/theming.css'), require.resolve('./src/css/announcement-bar.css'), require.resolve('./src/css/global.css')],
                 },
+                gtag: {
+                    trackingID: 'G-2YZLJEB3PY',
+                    anonymizeIP: true,
+                },
             }),
         ],
     ],
 
     themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+        /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
             image: 'images/project-social-preview.png', // project's social card
             navbar: {

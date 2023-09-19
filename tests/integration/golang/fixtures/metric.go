@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/rotisserie/eris"
-	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -17,10 +16,14 @@ type MetricFixtures struct {
 }
 
 // NewMetricFixtures creates new instance of MetricFixtures.
-func NewMetricFixtures(db *gorm.DB) (*MetricFixtures, error) {
+func NewMetricFixtures(databaseDSN string) (*MetricFixtures, error) {
+	db, err := CreateDB(databaseDSN)
+	if err != nil {
+		return nil, err
+	}
 	return &MetricFixtures{
-		baseFixtures:     baseFixtures{db: db},
-		metricRepository: repositories.NewMetricRepository(db),
+		baseFixtures:     baseFixtures{db: db.GormDB()},
+		metricRepository: repositories.NewMetricRepository(db.GormDB()),
 	}, nil
 }
 

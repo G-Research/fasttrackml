@@ -15,14 +15,17 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetHistoryTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
+	client             *helpers.HttpClient
+	runFixtures        *fixtures.RunFixtures
+	metricFixtures     *fixtures.MetricFixtures
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestGetHistoryTestSuite(t *testing.T) {
@@ -30,29 +33,30 @@ func TestGetHistoryTestSuite(t *testing.T) {
 }
 
 func (s *GetHistoryTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.runFixtures = runFixtures
+	metricFixtures, err := fixtures.NewMetricFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.metricFixtures = metricFixtures
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = experimentFixtures
 }
 
 func (s *GetHistoryTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:             "Test Experiment",
-		NamespaceID:      namespace.ID,
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "/artifact/location",
 	})
 	assert.Nil(s.T(), err)
 
-	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "id",
 		Name:           "chill-run",
 		Status:         models.StatusScheduled,
@@ -62,7 +66,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+	_, err = s.metricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key1",
 		Value:     1.1,
 		Timestamp: 1234567890,
@@ -80,7 +84,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	resp := response.GetMetricHistoryResponse{}
-	err = s.MlflowClient.DoGetRequest(
+	err = s.client.DoGetRequest(
 		fmt.Sprintf(
 			"%s%s?%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute, query,
 		),
@@ -100,13 +104,6 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 }
 
 func (s *GetHistoryTestSuite) Test_Error() {
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -131,13 +128,12 @@ func (s *GetHistoryTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 
 			resp := api.ErrorResponse{}
-			err = s.MlflowClient.DoGetRequest(
+			err = s.client.DoGetRequest(
 				fmt.Sprintf(
 					"%s%s?%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute, query,
 				),
 				&resp,
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

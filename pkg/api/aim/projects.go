@@ -6,10 +6,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	log "github.com/sirupsen/logrus"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -23,40 +20,18 @@ func GetProject(c *fiber.Ctx) error {
 }
 
 func GetProjectActivity(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("getProjectActivity namespace: %s", ns.Code)
-
 	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
 
 	var numExperiments int64
-	if tx := database.DB.Model(
-		&database.Experiment{},
-	).Where(
-		"lifecycle_stage = ?", database.LifecycleStageActive,
-	).Where(
-		"namespace_id = ?", ns.ID,
-	).Count(&numExperiments); tx.Error != nil {
+	if tx := database.DB.Model(&database.Experiment{}).Where("lifecycle_stage = ?", database.LifecycleStageActive).Count(&numExperiments); tx.Error != nil {
 		return fmt.Errorf("error counting experiments: %w", tx.Error)
 	}
 
 	var runs []database.Run
-	if tx := database.DB.Select(
-		"runs.status",
-		"runs.start_time",
-		"runs.lifecycle_stage",
-	).Joins(
-		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-	).Where(
-		"experiments.namespace_id = ?", ns.ID,
-	).Find(
-		&runs,
-	); tx.Error != nil {
+	if tx := database.DB.Select("StartTime", "LifecycleStage", "Status").Find(&runs); tx.Error != nil {
 		return fmt.Errorf("error retrieving runs: %w", tx.Error)
 	}
 
@@ -75,11 +50,11 @@ func GetProjectActivity(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"num_runs":          len(runs),
-		"activity_map":      activity,
-		"num_active_runs":   numActiveRuns,
 		"num_experiments":   numExperiments,
+		"num_runs":          len(runs),
 		"num_archived_runs": numArchivedRuns,
+		"num_active_runs":   numActiveRuns,
+		"activity_map":      activity,
 	})
 }
 
@@ -98,12 +73,6 @@ func UpdateProjectPinnedSequences(c *fiber.Ctx) error {
 }
 
 func GetProjectParams(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("getProjectParams namespace: %s", ns.Code)
-
 	q := struct {
 		ExcludeParams bool     `query:"exclude_params"`
 		Sequences     []string `query:"sequence"`
@@ -121,10 +90,6 @@ func GetProjectParams(c *fiber.Ctx) error {
 			&database.Param{},
 		).Joins(
 			"JOIN runs USING(run_uuid)",
-		).Joins(
-			"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-		).Where(
-			"experiments.namespace_id = ?", ns.ID,
 		).Where(
 			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
 		).Pluck(
@@ -145,10 +110,6 @@ func GetProjectParams(c *fiber.Ctx) error {
 			&database.Tag{},
 		).Joins(
 			"JOIN runs USING(run_uuid)",
-		).Joins(
-			"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-		).Where(
-			"experiments.namespace_id = ?", ns.ID,
 		).Where(
 			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
 		).Pluck(
@@ -190,10 +151,6 @@ func GetProjectParams(c *fiber.Ctx) error {
 				&database.LatestMetric{},
 			).Joins(
 				"JOIN runs USING(run_uuid)",
-			).Joins(
-				"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-			).Where(
-				"experiments.namespace_id = ?", ns.ID,
 			).Where(
 				"runs.lifecycle_stage = ?", database.LifecycleStageActive,
 			).Pluck(

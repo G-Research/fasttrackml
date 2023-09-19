@@ -45,8 +45,7 @@ func Test_renumberRows(t *testing.T) {
 		Conn:       mockDb,
 		DriverName: "postgres",
 	})
-	db, err := gorm.Open(dialector, &gorm.Config{})
-	assert.Nil(t, err)
+	db, _ := gorm.Open(dialector, &gorm.Config{})
 
 	repo := NewRunRepository(db)
 

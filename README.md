@@ -53,13 +53,8 @@ with mlflow.start_run():
     mlflow.log_metric("foo", random.random() + 2)
 ```
 
-#### Encryption at rest
 
-To use an encrypted SQLite database, use the query parameter `_key` in the DSN:
 
-```
-docker run --rm -p 5000:5000 -ti gresearch/fasttrackml server --database-uri 'sqlite:///data/fasttrackml.db?_key=passphrase'
-```
 
 ### Developer
 

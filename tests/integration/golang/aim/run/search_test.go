@@ -641,6 +641,119 @@ func (s *SearchTestSuite) Test_Ok() {
 				run3,
 			},
 		},
+		{
+			name: "SearchMetricLastStepOperationEqual",
+			request: request.SearchRunsRequest{
+				Query: `run.metrics['TestMetric'].last_step == 1`,
+			},
+
+			runs: []*models.Run{
+				run1,
+			},
+		},
+		{
+			name: "SearchMetricLastStepOperationNotEqual",
+			request: request.SearchRunsRequest{
+				Query: `run.metrics['TestMetric'].last_step != 1`,
+			},
+
+			runs: []*models.Run{
+				run3,
+			},
+		},
+		{
+			name: "SearchMetricLastStepOperationGrater",
+			request: request.SearchRunsRequest{
+				Query: `run.metrics['TestMetric'].last_step > 1`,
+			},
+
+			runs: []*models.Run{
+				run3,
+			},
+		},
+		{
+			name: "SearchMetricLastStepOperationGraterOrEqual",
+			request: request.SearchRunsRequest{
+				Query: `run.metrics['TestMetric'].last_step >= 1`,
+			},
+
+			runs: []*models.Run{
+				run1,
+				run3,
+			},
+		},
+		{
+			name: "SearchMetricLastStepOperationLess",
+			request: request.SearchRunsRequest{
+				Query: `run.metrics['TestMetric'].last_step < 3`,
+			},
+
+			runs: []*models.Run{
+				run1,
+			},
+		},
+		{
+			name: "SearchMetricLastStepOperationLessOrEqual",
+			request: request.SearchRunsRequest{
+				Query: `run.metrics['TestMetric'].last_step <= 3`,
+			},
+
+			runs: []*models.Run{
+				run1,
+				run3,
+			},
+		},
+		{
+			name: "SearchTagOperationEqual",
+			request: request.SearchRunsRequest{
+				Query: `run.tags['mlflow.runName'] == "TestRunTag1"`,
+			},
+
+			runs: []*models.Run{
+				run1,
+			},
+		},
+		{
+			name: "SearchTagOperationNotEqual",
+			request: request.SearchRunsRequest{
+				Query: `run.tags['mlflow.runName'] != "TestRunTag1"`,
+			},
+
+			runs: []*models.Run{
+				run3,
+			},
+		},
+		// node: re
+		{
+			name: "SearchRunNameOperationRegexpMatchFunction",
+			request: request.SearchRunsRequest{
+				Query: `re.match('TestRun1', run.name)`,
+			},
+
+			runs: []*models.Run{
+				run1,
+			},
+		},
+		{
+			name: "SearchRunNameOperationRegexpSearchFunction",
+			request: request.SearchRunsRequest{
+				Query: `re.search('TestRun3', run.name)`,
+			},
+
+			runs: []*models.Run{
+				run3,
+			},
+		},
+		{
+			name: "SearchComplexQuery",
+			request: request.SearchRunsRequest{
+				Query: `(run.archived == True or run.archived == False) and run.duration > 0 and run.metrics['TestMetric'].last > 2.5 and not run.name.endswith('4')`,
+			},
+
+			runs: []*models.Run{
+				run3,
+			},
+		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {

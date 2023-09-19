@@ -29,31 +29,33 @@ type LoggerAdaptorConfig struct {
 	ParameterizedQueries      bool
 }
 
+// NewLoggerAdaptor creates a new logger adaptor.
 func NewLoggerAdaptor(l *logrus.Logger, cfg LoggerAdaptorConfig) logger.Interface {
 	return &loggerAdaptor{l, cfg}
 }
 
-// Needed to conform to the gorm logger.Interface interface
+// LogMode implements the gorm.io/gorm/logger.Interface interface and is a no-op.
 func (l *loggerAdaptor) LogMode(level logger.LogLevel) logger.Interface {
 	return l
 }
 
-// Needed to conform to the gorm logger.Interface interface
+// Info logs message at info level and implements the gorm.io/gorm/logger.Interface interface.
 func (l *loggerAdaptor) Info(ctx context.Context, format string, args ...interface{}) {
 	l.getLoggerEntry(ctx).Infof(format, args...)
 }
 
-// Needed to conform to the gorm logger.Interface interface
+// Warn logs message at warn level and implements the gorm.io/gorm/logger.Interface interface.
 func (l *loggerAdaptor) Warn(ctx context.Context, format string, args ...interface{}) {
 	l.getLoggerEntry(ctx).Warnf(format, args...)
 }
 
-// Needed to conform to the gorm logger.Interface interface
+// Error logs message at error level and implements the gorm.io/gorm/logger.Interface interface.
 func (l *loggerAdaptor) Error(ctx context.Context, format string, args ...interface{}) {
 	l.getLoggerEntry(ctx).Errorf(format, args...)
 }
 
-// Needed to conform to the gorm logger.Interface interface
+// Trace logs SQL statement, amount of affected rows, and elapsed time.
+// It implements the gorm.io/gorm/logger.Interface interface.
 func (l *loggerAdaptor) Trace(
 	ctx context.Context,
 	begin time.Time,
@@ -64,7 +66,7 @@ func (l *loggerAdaptor) Trace(
 		return
 	}
 
-	// This logic is similar to the default logger in gorm.io/gorm/logger.go
+	// This logic is similar to the default logger in gorm.io/gorm/logger.
 	elapsed := time.Since(begin)
 	switch {
 	case err != nil &&
@@ -80,7 +82,7 @@ func (l *loggerAdaptor) Trace(
 	}
 }
 
-// Get a logger entry with context and caller information added
+// getLoggerEntry gets a logger entry with context and caller information added.
 func (l *loggerAdaptor) getLoggerEntry(ctx context.Context) *logrus.Entry {
 	e := l.Logger.WithContext(ctx)
 	// We want to report the caller of the function that called gorm's logger,
@@ -102,7 +104,7 @@ func (l *loggerAdaptor) getLoggerEntry(ctx context.Context) *logrus.Entry {
 	return e
 }
 
-// Get a logger entry with context, caller information and SQL information added
+// getLoggerEntryWithSql gets a logger entry with context, caller information and SQL information added.
 func (l *loggerAdaptor) getLoggerEntryWithSql(
 	ctx context.Context,
 	elapsed time.Duration,
@@ -124,7 +126,8 @@ func (l *loggerAdaptor) getLoggerEntryWithSql(
 	return e
 }
 
-// Needed to conform to the gorm ParamsFilter interface
+// ParamsFilter returns the query parameters if `ParametrizedQueries` is set in the config.
+// It implements the gorm.io/gorm.ParamsFilter interface.
 func (l *loggerAdaptor) ParamsFilter(ctx context.Context, sql string, params ...interface{}) (string, []interface{}) {
 	if l.Config.ParameterizedQueries {
 		return sql, nil

@@ -35,7 +35,6 @@ func NewLoggerAdaptor(l *logrus.Logger, cfg LoggerAdaptorConfig) logger.Interfac
 
 // Needed to conform to the gorm logger.Interface interface
 func (l *loggerAdaptor) LogMode(level logger.LogLevel) logger.Interface {
-	l.Logger.Warn("LogMode does not do anything")
 	return l
 }
 

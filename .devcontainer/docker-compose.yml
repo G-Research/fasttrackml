@@ -2,7 +2,7 @@ version: '3.8'
 
 volumes:
   home:
-  app-data:
+  workspaces:
   minio-data:
   postgres-data:
 
@@ -29,12 +29,7 @@ services:
 
     volumes:
       - home:/home/vscode
-      # mount the parent to include this and all sibling projects
-      # - ../..:/workspaces
-
-      # or mount specific project paths
-      - app-data:/workspaces
-      # - ../../fasttrackml-ui-mlflow:/workspaces/fasttrackml-ui-mlflow
+      - workspaces:/workspaces
       - ..:/workspaces/fasttrackml:cached
 
     # Overrides default command so things don't shut down after the process ends.
@@ -61,11 +56,13 @@ services:
       - postgres
       # - -c
       # - log_statement=all
-    ports:
-      - "5432:5432"
-      - "9000:9000"
-      - "9001:9001"
-      - "5000:5000"
+
+    # Uncomment the next line when to expose ports running the compose file standalone.
+    # ports:
+    #   - "5432:5432"
+    #   - "9000:9000"
+    #   - "9001:9001"
+    #   - "5000:5000"
 
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.). Ports

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	glog "log"
 	"net/url"
 	"os"
 	"regexp"
@@ -19,7 +18,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"gorm.io/plugin/dbresolver"
 )
 
@@ -122,23 +120,11 @@ func NewSqliteDBInstance(
 	logURL.RawQuery = q.Encode()
 	log.Infof("Using database %s", logURL.Redacted())
 
-	dbLogLevel := logger.Warn
-	if log.GetLevel() == log.DebugLevel {
-		dbLogLevel = logger.Info
-	}
 	db.DB, err = gorm.Open(sourceConn, &gorm.Config{
-		Logger: logger.New(
-			glog.New(
-				log.StandardLogger().WriterLevel(log.WarnLevel),
-				"",
-				0,
-			),
-			logger.Config{
-				SlowThreshold:             slowThreshold,
-				LogLevel:                  dbLogLevel,
-				IgnoreRecordNotFoundError: true,
-			},
-		),
+		Logger: NewLoggerAdaptor(log.StandardLogger(), LoggerAdaptorConfig{
+			SlowThreshold:             slowThreshold,
+			IgnoreRecordNotFoundError: true,
+		}),
 	})
 	if err != nil {
 		db.Close()

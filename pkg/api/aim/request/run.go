@@ -19,3 +19,13 @@ type GetRunMetric struct {
 	Context map[string]string `json:"context"`
 	Name    string            `json:"name"`
 }
+
+type SearchRunsRequest struct {
+	Query          string `query:"q"`
+	Limit          int    `query:"limit"`
+	Offset         string `query:"offset"`
+	SkipSystem     bool   `query:"skip_system"`
+	ReportProgress bool   `query:"report_progress"`
+	ExcludeParams  bool   `query:"exclude_params"`
+	ExcludeTraces  bool   `query:"exclude_traces"`
+}

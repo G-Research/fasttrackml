@@ -3,7 +3,6 @@ package storage
 import (
 	"net/url"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -60,7 +59,7 @@ func (s Local) List(runArtifactPath, additionalPath string) (string, []ArtifactO
 			return "", nil, eris.Wrapf(err, "error getting info for object: %s", object.Name())
 		}
 		artifactList[i] = ArtifactObject{
-			Path:  filepath.Join(runArtifactPath, info.Name()),
+			Path:  info.Name(),
 			Size:  info.Size(),
 			IsDir: object.IsDir(),
 		}

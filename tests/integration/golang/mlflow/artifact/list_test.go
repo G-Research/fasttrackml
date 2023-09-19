@@ -21,15 +21,17 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type ListArtifactTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
-	s3Client *s3.Client
+	s3Client           *s3.Client
+	runFixtures        *fixtures.RunFixtures
+	serviceClient      *helpers.HttpClient
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestListArtifactTestSuite(t *testing.T) {
@@ -37,25 +39,25 @@ func TestListArtifactTestSuite(t *testing.T) {
 }
 
 func (s *ListArtifactTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	assert.Nil(s.T(), err)
 
 	s.s3Client = s3Client
+	s.serviceClient = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = experimentFixtures
+
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.runFixtures = runFixtures
 }
 
 func (s *ListArtifactTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
 
 	testData := []struct {
 		name   string
@@ -74,7 +76,7 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// 1. create test experiment.
-			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+			experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name: fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
 				Tags: []models.ExperimentTag{
 					{
@@ -82,7 +84,6 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 						Value: "value1",
 					},
 				},
-				NamespaceID: namespace.ID,
 				CreationTime: sql.NullInt64{
 					Int64: time.Now().UTC().UnixMilli(),
 					Valid: true,
@@ -98,7 +99,7 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 
 			// 2. create test run.
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
-			run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+			run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             runID,
 				Status:         models.StatusRunning,
 				SourceType:     "JOB",
@@ -122,7 +123,7 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			resp := response.ListArtifactsResponse{}
-			err = s.MlflowClient.DoGetRequest(
+			err = s.serviceClient.DoGetRequest(
 				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, query),
 				&resp,
 			)
@@ -140,17 +141,6 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 }
 
 func (s *ListArtifactTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -208,7 +198,7 @@ func (s *ListArtifactTestSuite) Test_Error() {
 			query, err := urlquery.Marshal(tt.request)
 			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
-			err = s.MlflowClient.DoGetRequest(
+			err = s.serviceClient.DoGetRequest(
 				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, query),
 				&resp,
 			)

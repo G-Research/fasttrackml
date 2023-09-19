@@ -49,15 +49,14 @@ func NewService(
 	}
 }
 
-// CreateExperiment creates new Experiment entity.
 func (s Service) CreateExperiment(
-	ctx context.Context, ns *models.Namespace, req *request.CreateExperimentRequest,
+	ctx context.Context, req *request.CreateExperimentRequest,
 ) (*models.Experiment, error) {
 	if err := ValidateCreateExperimentRequest(req); err != nil {
 		return nil, err
 	}
 
-	experiment, err := s.experimentRepository.GetByNamespaceIDAndName(ctx, ns.ID, req.Name)
+	experiment, err := s.experimentRepository.GetByName(ctx, req.Name)
 	if err != nil {
 		return nil, api.NewInternalError("error getting experiment with name: '%s', error: %s", req.Name, err)
 	}
@@ -69,7 +68,6 @@ func (s Service) CreateExperiment(
 	if err != nil {
 		return nil, api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
 	}
-	experiment.NamespaceID = ns.ID
 
 	if err := s.experimentRepository.Create(ctx, experiment); err != nil {
 		return nil, api.NewInternalError("error inserting experiment '%s': %s", req.Name, err)
@@ -93,10 +91,7 @@ func (s Service) CreateExperiment(
 	return experiment, nil
 }
 
-// UpdateExperiment updates existing Experiment entity.
-func (s Service) UpdateExperiment(
-	ctx context.Context, ns *models.Namespace, req *request.UpdateExperimentRequest,
-) error {
+func (s Service) UpdateExperiment(ctx context.Context, req *request.UpdateExperimentRequest) error {
 	if err := ValidateUpdateExperimentRequest(req); err != nil {
 		return err
 	}
@@ -106,7 +101,7 @@ func (s Service) UpdateExperiment(
 		return api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(parsedID))
+	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
 	if err != nil {
 		return api.NewResourceDoesNotExistError("unable to find experiment '%d': %s", parsedID, err)
 	}
@@ -119,10 +114,7 @@ func (s Service) UpdateExperiment(
 	return nil
 }
 
-// GetExperiment returns existing Experiment entity by ID.
-func (s Service) GetExperiment(
-	ctx context.Context, ns *models.Namespace, req *request.GetExperimentRequest,
-) (*models.Experiment, error) {
+func (s Service) GetExperiment(ctx context.Context, req *request.GetExperimentRequest) (*models.Experiment, error) {
 	if err := ValidateGetExperimentByIDRequest(req); err != nil {
 		return nil, err
 	}
@@ -133,7 +125,7 @@ func (s Service) GetExperiment(
 		return nil, api.NewBadRequestError(`unable to parse experiment id '%s': %s`, req.ID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(parsedID))
+	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
 	if err != nil {
 		return nil, api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
@@ -141,15 +133,14 @@ func (s Service) GetExperiment(
 	return experiment, nil
 }
 
-// GetExperimentByName returns existing Experiment entity by Name.
 func (s Service) GetExperimentByName(
-	ctx context.Context, ns *models.Namespace, req *request.GetExperimentRequest,
+	ctx context.Context, req *request.GetExperimentRequest,
 ) (*models.Experiment, error) {
 	if err := ValidateGetExperimentByNameRequest(req); err != nil {
 		return nil, err
 	}
 
-	experiment, err := s.experimentRepository.GetByNamespaceIDAndName(ctx, ns.ID, req.Name)
+	experiment, err := s.experimentRepository.GetByName(ctx, req.Name)
 	if err != nil {
 		return nil, api.NewInternalError("unable to get experiment by name '%s': %v", req.Name, err)
 	}
@@ -160,10 +151,7 @@ func (s Service) GetExperimentByName(
 	return experiment, nil
 }
 
-// DeleteExperiment deletes existing Experiment entity.
-func (s Service) DeleteExperiment(
-	ctx context.Context, ns *models.Namespace, req *request.DeleteExperimentRequest,
-) error {
+func (s Service) DeleteExperiment(ctx context.Context, req *request.DeleteExperimentRequest) error {
 	if err := ValidateDeleteExperimentRequest(req); err != nil {
 		return err
 	}
@@ -173,7 +161,7 @@ func (s Service) DeleteExperiment(
 		return api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(parsedID))
+	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
 	if err != nil {
 		return api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
@@ -191,10 +179,7 @@ func (s Service) DeleteExperiment(
 	return nil
 }
 
-// RestoreExperiment restores deleted Experiment entity.
-func (s Service) RestoreExperiment(
-	ctx context.Context, ns *models.Namespace, req *request.RestoreExperimentRequest,
-) error {
+func (s Service) RestoreExperiment(ctx context.Context, req *request.RestoreExperimentRequest) error {
 	if err := ValidateRestoreExperimentRequest(req); err != nil {
 		return err
 	}
@@ -204,7 +189,7 @@ func (s Service) RestoreExperiment(
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(parsedID))
+	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
 	if err != nil {
 		return api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
@@ -222,9 +207,7 @@ func (s Service) RestoreExperiment(
 	return nil
 }
 
-func (s Service) SetExperimentTag(
-	ctx context.Context, ns *models.Namespace, req *request.SetExperimentTagRequest,
-) error {
+func (s Service) SetExperimentTag(ctx context.Context, req *request.SetExperimentTagRequest) error {
 	if err := ValidateSetExperimentTagRequest(req); err != nil {
 		return err
 	}
@@ -234,7 +217,7 @@ func (s Service) SetExperimentTag(
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(parsedID))
+	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
 	if err != nil {
 		return api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
@@ -248,15 +231,11 @@ func (s Service) SetExperimentTag(
 }
 
 func (s Service) SearchExperiments(
-	ctx context.Context, ns *models.Namespace, req *request.SearchExperimentsRequest,
+	ctx context.Context, req *request.SearchExperimentsRequest,
 ) ([]models.Experiment, int, int, error) {
 	if err := ValidateSearchExperimentsRequest(req); err != nil {
 		return nil, 0, 0, err
 	}
-
-	query := database.DB.Where(
-		"experiments.namespace_id = ?", ns.ID,
-	)
 
 	// ViewType
 	var lifecyleStages []database.LifecycleStage
@@ -275,14 +254,14 @@ func (s Service) SearchExperiments(
 			database.LifecycleStageDeleted,
 		}
 	}
-	query.Where("lifecycle_stage IN ?", lifecyleStages)
+	tx := database.DB.Where("lifecycle_stage IN ?", lifecyleStages)
 
 	// MaxResults
 	limit := int(req.MaxResults)
 	if limit == 0 {
 		limit = 1000
 	}
-	query.Limit(limit + 1)
+	tx.Limit(limit + 1)
 
 	// PageToken
 	var offset int
@@ -298,7 +277,7 @@ func (s Service) SearchExperiments(
 		}
 		offset = int(token.Offset)
 	}
-	query.Offset(offset)
+	tx.Offset(offset)
 
 	// Filter
 	if req.Filter != "" {
@@ -345,7 +324,7 @@ func (s Service) SearchExperiments(
 				default:
 					return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['name', 'creation_time', 'last_update_time']", key)
 				}
-				query.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
+				tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
 			case "tag", "tags":
 				switch strings.ToUpper(comparison) {
 				case "!=", "=", "LIKE", "ILIKE":
@@ -362,7 +341,7 @@ func (s Service) SearchExperiments(
 					where = "LOWER(value) LIKE ?"
 					value = strings.ToLower(value.(string))
 				}
-				query.Joins(
+				tx.Joins(
 					fmt.Sprintf("JOIN (?) AS %s ON experiments.experiment_id = %s.experiment_id", table, table),
 					database.DB.Select("experiment_id", "value").Where("key = ?", key).Where(where, value).Model(&database.ExperimentTag{}),
 				)
@@ -389,23 +368,23 @@ func (s Service) SearchExperiments(
 		default:
 			return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']", column)
 		}
-		query.Order(clause.OrderByColumn{
+		tx.Order(clause.OrderByColumn{
 			Column: clause.Column{Name: column},
 			Desc:   len(components) == 3 && strings.ToUpper(components[2]) == "DESC",
 		})
 
 	}
 	if len(req.OrderBy) == 0 {
-		query.Order("experiments.creation_time DESC")
+		tx.Order("experiments.creation_time DESC")
 	}
 	if !expOrder {
-		query.Order("experiments.experiment_id ASC")
+		tx.Order("experiments.experiment_id ASC")
 	}
 
 	// Actual query
 	var exps []models.Experiment
-	if err := query.Preload("Tags").Find(&exps).Error; err != nil {
-		return nil, 0, 0, api.NewInternalError("unable to search runs: %s", err)
+	if tx.Preload("Tags").Find(&exps).Error != nil {
+		return nil, 0, 0, api.NewInternalError("unable to search runs: %s", tx.Error)
 	}
 
 	return exps, limit, offset, nil

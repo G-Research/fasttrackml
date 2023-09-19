@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/rotisserie/eris"
-	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -19,10 +18,14 @@ type ExperimentFixtures struct {
 }
 
 // NewExperimentFixtures creates new instance of ExperimentFixtures.
-func NewExperimentFixtures(db *gorm.DB) (*ExperimentFixtures, error) {
+func NewExperimentFixtures(databaseDSN string) (*ExperimentFixtures, error) {
+	db, err := CreateDB(databaseDSN)
+	if err != nil {
+		return nil, err
+	}
 	return &ExperimentFixtures{
-		baseFixtures:         baseFixtures{db: db},
-		experimentRepository: repositories.NewExperimentRepository(db),
+		baseFixtures:         baseFixtures{db: db.GormDB()},
+		experimentRepository: repositories.NewExperimentRepository(db.GormDB()),
 	}, nil
 }
 
@@ -38,7 +41,7 @@ func (f ExperimentFixtures) CreateExperiment(
 
 // CreateExperiments creates some num new test experiments.
 func (f ExperimentFixtures) CreateExperiments(
-	ctx context.Context, namespace *models.Namespace, num int,
+	ctx context.Context, num int,
 ) ([]*models.Experiment, error) {
 	var experiments []*models.Experiment
 	for i := 0; i < num; i++ {
@@ -50,7 +53,6 @@ func (f ExperimentFixtures) CreateExperiments(
 					Value: "value1",
 				},
 			},
-			NamespaceID: namespace.ID,
 			CreationTime: sql.NullInt64{
 				Int64: time.Now().UTC().UnixMilli(),
 				Valid: true,
@@ -83,11 +85,9 @@ func (f ExperimentFixtures) GetTestExperiments(
 	return experiments, nil
 }
 
-// GetByNamespaceIDAndExperimentID returns the experiment by Namespace ID and the given Experiment id.
-func (f ExperimentFixtures) GetByNamespaceIDAndExperimentID(
-	ctx context.Context, namespaceID uint, experimentID int32,
-) (*models.Experiment, error) {
-	experiment, err := f.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, namespaceID, experimentID)
+// GetExperimentByID returns the experiment by the given id.
+func (f ExperimentFixtures) GetExperimentByID(ctx context.Context, experimentID int32) (*models.Experiment, error) {
+	experiment, err := f.experimentRepository.GetByID(ctx, experimentID)
 	if err != nil {
 		return nil, eris.Wrapf(err, "error getting experiment with ID %d", experimentID)
 	}

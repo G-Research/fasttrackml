@@ -18,14 +18,17 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type DeleteRunTagTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
+	client             *helpers.HttpClient
+	runFixtures        *fixtures.RunFixtures
+	tagFixtures        *fixtures.TagFixtures
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestDeleteRunTagTestSuite(t *testing.T) {
@@ -33,31 +36,32 @@ func TestDeleteRunTagTestSuite(t *testing.T) {
 }
 
 func (s *DeleteRunTagTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.runFixtures = runFixtures
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = experimentFixtures
+	tagFixtures, err := fixtures.NewTagFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.tagFixtures = tagFixtures
 }
 
 func (s *DeleteRunTagTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
 	// create test experiment.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
 
 	// create test run for the experiment
-	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 		ID:     strings.ReplaceAll(uuid.New().String(), "-", ""),
 		Name:   "TestRun",
 		Status: models.StatusRunning,
@@ -77,13 +81,13 @@ func (s *DeleteRunTagTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	// create few tags,.
-	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
+	_, err = s.tagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "tag1",
 		Value: "value1",
 		RunID: run.ID,
 	})
 	assert.Nil(s.T(), err)
-	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
+	_, err = s.tagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "tag2",
 		Value: "value2",
 		RunID: run.ID,
@@ -97,7 +101,7 @@ func (s *DeleteRunTagTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	resp := fiber.Map{}
-	err = s.MlflowClient.DoPostRequest(
+	err = s.client.DoPostRequest(
 		fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute, query),
 		&request.DeleteRunTagRequest{
 			RunID: run.ID,
@@ -109,7 +113,7 @@ func (s *DeleteRunTagTestSuite) Test_Ok() {
 	assert.Equal(s.T(), fiber.Map{}, resp)
 
 	// make sure that we still have one tag connected to Run.
-	tags, err := s.TagFixtures.GetByRunID(context.Background(), run.ID)
+	tags, err := s.tagFixtures.GetByRunID(context.Background(), run.ID)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), 1, len(tags))
 	assert.Equal(s.T(), []models.Tag{
@@ -123,26 +127,18 @@ func (s *DeleteRunTagTestSuite) Test_Ok() {
 
 func (s *DeleteRunTagTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	// create test experiment.
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
 
 	// create test run for the experiment
-	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 		ID:     strings.ReplaceAll(uuid.New().String(), "-", ""),
 		Name:   "TestRun",
 		Status: models.StatusRunning,
@@ -193,7 +189,7 @@ func (s *DeleteRunTagTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
+			err := s.client.DoPostRequest(
 				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute),
 				tt.request,
 				&resp,

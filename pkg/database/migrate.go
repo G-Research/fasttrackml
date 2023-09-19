@@ -8,10 +8,17 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+var supportedAlembicVersions = []string{
+	"97727af70f4d",
+	"3500859a5d39",
+	"7f2a7d5fae7d",
+}
 
 func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 	var alembicVersion AlembicVersion
@@ -24,7 +31,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 		tx.First(&schemaVersion)
 	}
 
-	if alembicVersion.Version != "97727af70f4d" || schemaVersion.Version != "5d042539be4f" {
+	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != "e0d125c68d9a" {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
 		}
@@ -109,7 +116,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 			}
 			fallthrough
 
-		case "97727af70f4d":
+		case "97727af70f4d", "3500859a5d39", "7f2a7d5fae7d":
 			switch schemaVersion.Version {
 			case "":
 				log.Info("Migrating database to FastTrackML schema ac0b8b7c0014")
@@ -217,13 +224,28 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				if err := db.Transaction(func(tx *gorm.DB) error {
 					constraints := []string{"Params", "Tags", "Metrics", "LatestMetrics"}
 					for _, constraint := range constraints {
-						// SQLite tables need to be recreated to add or remove constraints.
-						// By not dropping the constraint, we can avoid having to recreate the table twice.
-						if db.Dialector.Name() != "sqlite" {
-							if err := tx.Migrator().DropConstraint(&Run{}, constraint); err != nil {
-								return err
+						switch tx.Dialector.Name() {
+						case "sqlite":
+							// SQLite tables need to be recreated to add or remove constraints.
+							// By not dropping the constraint, we can avoid having to recreate the table twice.
+						case "postgres":
+							// Existing MLFlow Postgres databases have foreign key constraints
+							// with their own names. We need to drop them before we can add our own.
+							table := tx.NamingStrategy.TableName(constraint)
+							fk := fmt.Sprintf("%s_run_uuid_fkey", table)
+							if tx.Migrator().HasConstraint(table, fk) {
+								if err := tx.Migrator().DropConstraint(table, fk); err != nil {
+									return err
+								}
+							} else {
+								if err := tx.Migrator().DropConstraint(&Run{}, constraint); err != nil {
+									return err
+								}
 							}
+						default:
+							return fmt.Errorf("unsupported database dialect %s", tx.Dialector.Name())
 						}
+
 						if err := tx.Migrator().CreateConstraint(&Run{}, constraint); err != nil {
 							return err
 						}
@@ -243,16 +265,36 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				// the cascading delete to kick in and delete all the run data.
 				if err := runWithoutForeignKeyIfNeeded(func() error {
 					if err := db.Transaction(func(tx *gorm.DB) error {
-						constraints := []string{"Tags", "Runs"}
-						for _, constraint := range constraints {
-							// SQLite tables need to be recreated to add or remove constraints.
-							// By not dropping the constraint, we can avoid having to recreate the table twice.
-							if db.Dialector.Name() != "sqlite" {
-								if err := tx.Migrator().DropConstraint(&Experiment{}, constraint); err != nil {
-									return err
+						elems := []struct {
+							Table      string
+							Constraint string
+						}{
+							{"experiment_tags", "Tags"},
+							{"runs", "Runs"},
+						}
+						for _, e := range elems {
+							switch tx.Dialector.Name() {
+							case "sqlite":
+								// SQLite tables need to be recreated to add or remove constraints.
+								// By not dropping the constraint, we can avoid having to recreate the table twice.
+							case "postgres":
+								// Existing MLFlow Postgres databases have foreign key constraints with their own names.
+								// We need to drop them before we can add our own.
+								fk := fmt.Sprintf("%s_experiment_id_fkey", e.Table)
+								if tx.Migrator().HasConstraint(e.Table, fk) {
+									if err := tx.Migrator().DropConstraint(e.Table, fk); err != nil {
+										return err
+									}
+								} else {
+									if err := tx.Migrator().DropConstraint(&Experiment{}, e.Constraint); err != nil {
+										return err
+									}
 								}
+							default:
+								return fmt.Errorf("unsupported database dialect %s", tx.Dialector.Name())
 							}
-							if err := tx.Migrator().CreateConstraint(&Experiment{}, constraint); err != nil {
+
+							if err := tx.Migrator().CreateConstraint(&Experiment{}, e.Constraint); err != nil {
 								return err
 							}
 						}
@@ -267,8 +309,12 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				}); err != nil {
 					return err
 				}
+				fallthrough
+
 			case "5d042539be4f":
 				log.Info("Migrating database to FastTrackML schema e0d125c68d9a")
+				// We need to run this migration without foreign key constraints to avoid
+				// the cascading delete to kick in and delete all the runs.
 				if err := runWithoutForeignKeyIfNeeded(func() error {
 					if err := db.Transaction(func(tx *gorm.DB) error {
 						if err := tx.AutoMigrate(&Namespace{}); err != nil {
@@ -314,6 +360,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 			log.Info("Initializing database")
 			tx := db.Begin()
 			if err := tx.AutoMigrate(
+				&Namespace{},
 				&Experiment{},
 				&ExperimentTag{},
 				&Run{},
@@ -332,7 +379,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				Version: "97727af70f4d",
 			})
 			tx.Create(&SchemaVersion{
-				Version: "5d042539be4f",
+				Version: "e0d125c68d9a",
 			})
 			tx.Commit()
 			if tx.Error != nil {
@@ -341,6 +388,86 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 
 		default:
 			return fmt.Errorf("unsupported database alembic schema version %s", alembicVersion.Version)
+		}
+	}
+	return nil
+}
+
+// CreateDefaultNamespace creates the default namespace if it doesn't exist.
+func CreateDefaultNamespace(db *gorm.DB) error {
+	if tx := db.First(&Namespace{
+		Code: "default",
+	}); tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			log.Info("Creating default namespace")
+			var exp int32 = 0
+			ns := Namespace{
+				Code:                "default",
+				Description:         "Default",
+				DefaultExperimentID: &exp,
+			}
+			if err := db.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Create(&ns).Error; err != nil {
+					return err
+				}
+				if err := tx.Model(&Experiment{}).
+					Where("namespace_id IS NULL").
+					Update("namespace_id", ns.ID).
+					Error; err != nil {
+					return fmt.Errorf("error updating experiments: %s", err)
+				}
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error creating default namespace: %s", err)
+			}
+		} else {
+			return fmt.Errorf("unable to find default namespace: %s", tx.Error)
+		}
+	}
+	return nil
+}
+
+// CreateDefaultExperiment creates the default experiment if it doesn't exist.
+func CreateDefaultExperiment(db *gorm.DB, artifactRoot string) error {
+	if err := db.First(&Experiment{}, 0).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Info("Creating default experiment")
+			var id int32 = 0
+			ts := time.Now().UTC().UnixMilli()
+			exp := Experiment{
+				ID:             &id,
+				Name:           "Default",
+				LifecycleStage: LifecycleStageActive,
+				CreationTime: sql.NullInt64{
+					Int64: ts,
+					Valid: true,
+				},
+				LastUpdateTime: sql.NullInt64{
+					Int64: ts,
+					Valid: true,
+				},
+			}
+			ns := Namespace{Code: "default"}
+			if err = db.Find(&ns).Error; err != nil {
+				return fmt.Errorf("error finding default namespace: %s", err)
+			}
+			exp.NamespaceID = ns.ID
+			if err = db.Transaction(func(tx *gorm.DB) error {
+				if err = tx.Create(&exp).Error; err != nil {
+					return err
+				}
+
+				exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(artifactRoot, "/"), *exp.ID)
+				if err := tx.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation).Error; err != nil {
+					return fmt.Errorf("error updating artifact_location for experiment '%s': %s", exp.Name, err)
+				}
+
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error creating default experiment: %s", err)
+			}
+		} else {
+			return fmt.Errorf("unable to find default experiment: %s", err)
 		}
 	}
 	return nil

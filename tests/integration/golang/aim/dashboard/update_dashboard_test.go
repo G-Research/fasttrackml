@@ -15,7 +15,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -39,7 +39,7 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  0,
+		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
@@ -47,8 +47,9 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+			ID:         uuid.New(),
+			IsArchived: false,
+			CreatedAt:  time.Now(),
 		},
 		Type:        "mpi",
 		State:       database.AppState{},
@@ -58,8 +59,9 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 
 	dashboard, err := s.DashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
 		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+			ID:         uuid.New(),
+			IsArchived: false,
+			CreatedAt:  time.Now(),
 		},
 		Name:        "dashboard-exp",
 		AppID:       &app.ID,
@@ -103,7 +105,7 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  0,
+		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
@@ -111,8 +113,9 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+			ID:         uuid.New(),
+			IsArchived: false,
+			CreatedAt:  time.Now(),
 		},
 		Type:        "mpi",
 		State:       database.AppState{},
@@ -122,8 +125,9 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
 
 	dashboard, err := s.DashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
 		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+			ID:         uuid.New(),
+			IsArchived: false,
+			CreatedAt:  time.Now(),
 		},
 		Name:        "dashboard-exp",
 		AppID:       &app.ID,

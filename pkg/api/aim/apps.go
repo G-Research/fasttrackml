@@ -83,6 +83,7 @@ func GetApp(c *fiber.Ctx) error {
 		Base: database.Base{
 			ID: p.ID,
 		},
+		NamespaceID: ns.ID,
 	}
 	if err := database.DB.
 		Where("NOT is_archived").
@@ -126,6 +127,7 @@ func UpdateApp(c *fiber.Ctx) error {
 		Base: database.Base{
 			ID: p.ID,
 		},
+		NamespaceID: ns.ID,
 	}
 	if err := database.DB.
 		Where("NOT is_archived").
@@ -170,6 +172,7 @@ func DeleteApp(c *fiber.Ctx) error {
 		Base: database.Base{
 			ID: p.ID,
 		},
+		NamespaceID: ns.ID,
 	}
 	if err := database.DB.
 		Select("ID").

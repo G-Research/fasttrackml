@@ -28,7 +28,7 @@ jobs:
       has_pages: ${{ steps.has-pages.outputs.has_pages }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set has Pages
         id: has-pages
         run: echo "has_pages=$(gh api repos/${{ github.repository }} --jq .has_pages)" >> $GITHUB_OUTPUT

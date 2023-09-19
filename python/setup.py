@@ -5,11 +5,6 @@ from setuptools import find_packages, setup
 from wheel.bdist_wheel import bdist_wheel
 
 
-def get_long_description():
-    with open("../README.md", "r", encoding="utf-8") as f:
-        return f.read()
-
-
 def get_data_files():
     os = subprocess.check_output(["go", "env", "GOOS"]).strip().decode("utf-8")
     return [("Scripts", ["../fml.exe"])] if os == "windows" else [("bin", ["../fml"])]
@@ -51,13 +46,9 @@ class custom_bdist_wheel(bdist_wheel):
 setup(
     name="fasttrackml",
     version=get_version(),
-    description="Rewrite of the MLFlow tracking server with a focus on scalability.",
-    long_description=get_long_description(),
-    long_description_content_type="text/markdown",
     packages=find_packages(),
     include_package_data=True,
     data_files=get_data_files(),
-    python_requires=">=3.6",
     zip_safe=False,
     ext_modules=[],
     cmdclass=dict(

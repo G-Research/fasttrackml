@@ -13,7 +13,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -52,7 +52,7 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 			}()
 
 			namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-				ID:                  0,
+				ID:                  1,
 				Code:                "default",
 				DefaultExperimentID: common.GetPointer(int32(0)),
 			})
@@ -60,8 +60,9 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 
 			app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 				Base: database.Base{
-					ID:        uuid.New(),
-					CreatedAt: time.Now(),
+					ID:         uuid.New(),
+					IsArchived: false,
+					CreatedAt:  time.Now(),
 				},
 				Type:        "mpi",
 				State:       database.AppState{},

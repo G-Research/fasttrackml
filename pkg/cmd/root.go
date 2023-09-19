@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -16,12 +18,11 @@ const (
 )
 
 var RootCmd = &cobra.Command{
-	Use:   "fml",
-	Short: "A fast experiment tracking server compatible with MLFlow",
-	Long: `FastTrackML is a rewrite of the MLFlow tracking server with a focus on scalability.
+	Use:   filepath.Base(os.Args[0]),
+	Short: "Experiment tracking server focused on speed and scalability",
+	Long: `FastTrackML is an experiment tracking server focused on speed and scalability.
 It aims at being 100% compatible with the MLFlow client library and should be a
-drop-in replacement. It can even use existing SQLite/SQLCipher/PostgreSQL
-databases created by MLFlow 1.21+.`,
+drop-in replacement.`,
 	Version:           version.Version,
 	PersistentPreRunE: initCmd,
 	SilenceUsage:      true,
@@ -29,7 +30,9 @@ databases created by MLFlow 1.21+.`,
 }
 
 func initCmd(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
 
 	level, err := log.ParseLevel(viper.GetString("log-level"))
 	if err != nil {
@@ -44,6 +47,7 @@ func initCmd(cmd *cobra.Command, args []string) error {
 
 func init() {
 	RootCmd.PersistentFlags().StringP("log-level", "l", "info", "Log level")
+	RootCmd.SetVersionTemplate("FastTrackML version {{.Version}}\n")
 
 	viper.SetEnvPrefix(envPrefix)
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))

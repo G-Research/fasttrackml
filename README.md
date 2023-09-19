@@ -8,9 +8,18 @@ An experiment tracking server focused on speed and scalability, fully compatible
 
 #### Run the tracking server
 
-For the full guide, see [docs/quickstart.md](docs/quickstart.md).
+> [!NOTE]
+> For the full guide, see [docs/quickstart.md](docs/quickstart.md).
 
-FastTrackML can be run using the following command:
+FastTrackML can be installed and run with `pip`:
+
+```bash
+pip install fasttrackml
+fml server
+```
+
+Alternatively, you can run it within a container with
+[Docker](https://docs.docker.com/get-docker/):
 
 ```bash
 docker run --rm -p 5000:5000 -ti gresearch/fasttrackml

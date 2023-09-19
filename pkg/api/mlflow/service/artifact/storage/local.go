@@ -32,8 +32,8 @@ func NewLocal(config *config.ServiceConfig, server *fiber.App) (*Local, error) {
 }
 
 // List implements Provider interface.
-func (s Local) List(runArtifactPath, additionalPath string) (string, []ArtifactObject, error) {
-	path, err := url.JoinPath(s.config.ArtifactRoot, runArtifactPath, additionalPath)
+func (s Local) List(runArtifactPath, itemPath string) (string, []ArtifactObject, error) {
+	path, err := url.JoinPath(s.config.ArtifactRoot, runArtifactPath, itemPath)
 	if err != nil {
 		return "", nil, eris.Wrap(err, "error constructing full path")
 	}
@@ -65,4 +65,13 @@ func (s Local) List(runArtifactPath, additionalPath string) (string, []ArtifactO
 		}
 	}
 	return "/artifacts" + runArtifactPath, artifactList, nil
+}
+
+// GetItemURI will return actual item URI in the storage location
+func (s Local) GetItemURI(runArtifactPath, itemPath string) (*url.URL, error) {
+	path, err := url.JoinPath(runArtifactPath, itemPath)
+	if err != nil {
+		return nil, eris.Wrap(err, "error constructing full path")
+	}
+	return url.Parse("/artifacts" + path)
 }

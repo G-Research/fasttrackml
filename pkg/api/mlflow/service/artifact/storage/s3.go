@@ -96,3 +96,9 @@ func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 
 	return fmt.Sprintf("s3://%s", bucket), artifactList, nil
 }
+
+
+// GetItemURI will return actual item URI in the storage location
+func (s S3) GetItemURI(runArtifactPath, itemPath string) (*url.URL, error) {
+	return nil, eris.New("GetItemURI not yet supported for s3 storage")
+}

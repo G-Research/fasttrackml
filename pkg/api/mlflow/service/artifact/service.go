@@ -2,6 +2,7 @@ package artifact
 
 import (
 	"context"
+	"net/url"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -48,4 +49,31 @@ func (s Service) ListArtifacts(
 	}
 
 	return rootURI, artifacts, nil
+}
+
+
+// GetArtifact handles business logic of `GET /get-artifact` endpoint.
+func (s Service) GetArtifact(
+	ctx context.Context, namespace *models.Namespace, req *request.GetArtifactRequest,
+) (*url.URL, error) {
+	if err := ValidateGetArtifactRequest(req); err != nil {
+		return nil, err
+	}
+
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.GetRunID())
+	if err != nil {
+		return nil, api.NewInternalError("unable to find run '%s': %s", req.GetRunID(), err)
+	}
+	if run == nil {
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.GetRunID())
+	}
+
+	artifactURI, err := s.artifactStorage.GetItemURI(
+		run.ArtifactURI, req.Path,
+	)
+	if err != nil {
+		return nil, api.NewInternalError("error getting artifact URI from storage")
+	}
+
+	return artifactURI, nil
 }

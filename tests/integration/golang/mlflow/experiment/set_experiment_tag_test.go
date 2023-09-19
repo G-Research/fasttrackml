@@ -15,14 +15,15 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type SetExperimentTagTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
+	client             *helpers.HttpClient
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestSetExperimentTagTestSuite(t *testing.T) {
@@ -30,24 +31,35 @@ func TestSetExperimentTagTestSuite(t *testing.T) {
 }
 
 func (s *SetExperimentTagTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = experimentFixtures
+}
+
+func SetExperimentTag(s *SetExperimentTagTestSuite, experiment *models.Experiment, key, value string) {
+	req := request.SetExperimentTagRequest{
+		ID:    fmt.Sprintf("%d", *experiment.ID),
+		Key:   key,
+		Value: value,
+	}
+	err := s.client.DoPostRequest(
+		fmt.Sprintf(
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
+		),
+		req,
+		&struct{}{},
+	)
+	assert.Nil(s.T(), err)
 }
 
 func (s *SetExperimentTagTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 	// 1. prepare database with test data.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
-	experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:        "Test Experiment",
-		NamespaceID: namespace.ID,
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name: "Test Experiment",
 		CreationTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
@@ -60,9 +72,8 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		ArtifactLocation: "/artifact/location",
 	})
 	assert.Nil(s.T(), err)
-	experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:        "Test Experiment2",
-		NamespaceID: namespace.ID,
+	experiment1, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name: "Test Experiment2",
 		CreationTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
@@ -76,102 +87,49 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	// Set tag on experiment1
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf(
-			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
-		),
-		request.SetExperimentTagRequest{
-			ID:    fmt.Sprintf("%d", *experiment1.ID),
-			Key:   "KeyTag1",
-			Value: "ValueTag1",
-		},
-		&struct{}{},
-	)
+	// Set tag on experiment
+	SetExperimentTag(s, experiment, "KeyTag1", "ValueTag1")
+	exp, err := s.experimentFixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
-	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
-		context.Background(), namespace.ID, *experiment1.ID,
-	)
-	assert.Nil(s.T(), err)
+
 	assert.True(s.T(), helpers.CheckTagExists(
-		experiment1.Tags, "KeyTag1", "ValueTag1"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'",
+		exp.Tags, "KeyTag1", "ValueTag1"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'",
 	)
 
-	// Update tag on experiment1
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf(
-			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
-		),
-		request.SetExperimentTagRequest{
-			ID:    fmt.Sprintf("%d", *experiment1.ID),
-			Key:   "KeyTag1",
-			Value: "ValueTag2",
-		},
-		&struct{}{},
-	)
+	// Update tag on experiment
+	SetExperimentTag(s, experiment, "KeyTag1", "ValueTag2")
+	exp, err = s.experimentFixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
-	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
-		context.Background(), namespace.ID, *experiment1.ID,
-	)
-	assert.Nil(s.T(), err)
+
 	assert.True(
 		s.T(),
-		helpers.CheckTagExists(experiment1.Tags, "KeyTag1", "ValueTag2"),
+		helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"),
 		"Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'",
 	)
 
-	// test that setting a tag on 1 experiment1 does not impact another experiment1.
-	experiment2, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
-		context.Background(), namespace.ID, *experiment2.ID,
-	)
+	// test that setting a tag on 1 experiment does not impact another experiment.
+	exp, err = s.experimentFixtures.GetExperimentByID(context.Background(), *experiment1.ID)
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), len(experiment2.Tags), 0)
+	assert.Equal(s.T(), len(exp.Tags), 0)
 
 	// test that setting a tag on different experiments maintain different values across experiments
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf(
-			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
-		),
-		request.SetExperimentTagRequest{
-			ID:    fmt.Sprintf("%d", *experiment2.ID),
-			Key:   "KeyTag1",
-			Value: "ValueTag3",
-		},
-		&struct{}{},
-	)
+	SetExperimentTag(s, experiment1, "KeyTag1", "ValueTag3")
+	exp, err = s.experimentFixtures.GetExperimentByID(context.Background(), *experiment.ID)
 	assert.Nil(s.T(), err)
-	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
-		context.Background(), namespace.ID, *experiment1.ID,
-	)
+	exp1, err := s.experimentFixtures.GetExperimentByID(context.Background(), *experiment1.ID)
 	assert.Nil(s.T(), err)
 	assert.True(
-		s.T(), helpers.CheckTagExists(experiment1.Tags, "KeyTag1", "ValueTag2"),
-		"Expected 'experiment1.tags' to contain 'KeyTag1' with value 'ValueTag2'",
+		s.T(), helpers.CheckTagExists(exp.Tags, "KeyTag1", "ValueTag2"),
+		"Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag2'",
 	)
-
-	experiment2, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
-		context.Background(), namespace.ID, *experiment2.ID,
-	)
-	assert.Nil(s.T(), err)
 	assert.True(
 		s.T(),
-		helpers.CheckTagExists(experiment2.Tags, "KeyTag1", "ValueTag3"),
-		"Expected 'experiment1.tags' to contain 'KeyTag1' with value 'ValueTag3'",
+		helpers.CheckTagExists(exp1.Tags, "KeyTag1", "ValueTag3"),
+		"Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag3'",
 	)
 }
 
 func (s *SetExperimentTagTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -215,7 +173,7 @@ func (s *SetExperimentTagTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
+			err := s.client.DoPostRequest(
 				fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
 				tt.request,
 				&resp,

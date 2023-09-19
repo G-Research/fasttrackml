@@ -359,14 +359,14 @@ index dd1874e..29de29c 100644
 +
 +
 +def create_experiment(name):
-+    client = httpx.Client(base_url=f"http://127.0.0.1:{PORT}/api/2.0/mlflow")
++    client = httpx.Client(base_url=f"http://127.0.0.1:{PORT}/mlflow/ajax-api/2.0/mlflow")
 +    response = client.post('/experiments/create', json={'name': name})
 +    data = response.json()
 +    return data['experiment_id']
 +
 +
 +def fill_up_fml_data(repo):
-+    client = httpx.Client(base_url=f"http://127.0.0.1:{PORT}/api/2.0/mlflow")
++    client = httpx.Client(base_url=f"http://127.0.0.1:{PORT}/mlflow/ajax-api/2.0/mlflow")
 +    contexts = [{'is_training': True, 'subset': 'train'},
 +                {'is_training': True, 'subset': 'val'},
 +                {'is_training': False}]

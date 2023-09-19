@@ -17,14 +17,16 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type UpdateRunTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
+	client             *helpers.HttpClient
+	runFixtures        *fixtures.RunFixtures
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestUpdateRunTestSuite(t *testing.T) {
@@ -32,31 +34,29 @@ func TestUpdateRunTestSuite(t *testing.T) {
 }
 
 func (s *UpdateRunTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.runFixtures = runFixtures
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = experimentFixtures
 }
 
 func (s *UpdateRunTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
 	// create test experiment.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
 
 	// create test run for the experiment
-	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 		ID:     strings.ReplaceAll(uuid.New().String(), "-", ""),
 		Name:   "TestRun",
 		Status: models.StatusRunning,
@@ -76,7 +76,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	resp := response.UpdateRunResponse{}
-	err = s.MlflowClient.DoPostRequest(
+	err = s.client.DoPostRequest(
 		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
 		request.UpdateRunRequest{
 			RunID:   run.ID,
@@ -98,7 +98,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	assert.Equal(s.T(), string(models.LifecycleStageActive), resp.RunInfo.LifecycleStage)
 
 	// check that run has been updated in database.
-	run, err = s.RunFixtures.GetRun(context.Background(), run.ID)
+	run, err = s.runFixtures.GetRun(context.Background(), run.ID)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), "UpdatedName", run.Name)
 	assert.Equal(s.T(), models.StatusScheduled, run.Status)
@@ -106,13 +106,6 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 }
 
 func (s *UpdateRunTestSuite) Test_Error() {
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -128,13 +121,15 @@ func (s *UpdateRunTestSuite) Test_Error() {
 			request: request.UpdateRunRequest{
 				RunID: "1",
 			},
-			error: api.NewResourceDoesNotExistError("unable to find run '1'"),
+			error: api.NewResourceDoesNotExistError(
+				"unable to find run '1': error getting 'run' entity by id: 1: record not found",
+			),
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
+			err := s.client.DoPostRequest(
 				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
 				tt.request,
 				&resp,

@@ -67,6 +67,7 @@ func NewRouter(controller *controller.Controller) *Router {
 		prefixList: []string{
 			"/api/2.0/mlflow/",
 			"/ajax-api/2.0/mlflow/",
+			"/mlflow/ajax-api/2.0/mlflow/",
 		},
 		controller: controller,
 	}

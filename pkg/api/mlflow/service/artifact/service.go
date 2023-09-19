@@ -5,6 +5,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
 )
@@ -25,15 +26,18 @@ func NewService(artifactStorage storage.Provider, runRepository repositories.Run
 
 // ListArtifacts handles business logic of `GET /artifacts/list` endpoint.
 func (s Service) ListArtifacts(
-	ctx context.Context, req *request.ListArtifactsRequest,
+	ctx context.Context, namespace *models.Namespace, req *request.ListArtifactsRequest,
 ) (string, []storage.ArtifactObject, error) {
 	if err := ValidateListArtifactsRequest(req); err != nil {
 		return "", nil, err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.GetRunID())
 	if err != nil {
-		return "", nil, api.NewInternalError("unable to get artifact URI for run '%s'", req.GetRunID())
+		return "", nil, api.NewInternalError("unable to find run '%s': %s", req.GetRunID(), err)
+	}
+	if run == nil {
+		return "", nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.GetRunID())
 	}
 
 	rootURI, artifacts, err := s.artifactStorage.List(

@@ -3,9 +3,9 @@ package response
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewMetricHistoryResponse_Ok(t *testing.T) {

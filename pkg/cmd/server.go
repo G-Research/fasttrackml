@@ -69,29 +69,6 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return eris.Wrap(err, "error initializing artifact storage")
 	}
-	mlflowCntrl := mlflowController.NewController(
-		run.NewService(
-			mlflowRepositories.NewTagRepository(db.GormDB()),
-			mlflowRepositories.NewRunRepository(db.GormDB()),
-			mlflowRepositories.NewParamRepository(db.GormDB()),
-			mlflowRepositories.NewMetricRepository(db.GormDB()),
-			mlflowRepositories.NewExperimentRepository(db.GormDB()),
-		),
-		model.NewService(),
-		metric.NewService(
-			mlflowRepositories.NewRunRepository(db.GormDB()),
-			mlflowRepositories.NewMetricRepository(db.GormDB()),
-		),
-		artifact.NewService(
-			storage,
-			mlflowRepositories.NewRunRepository(db.GormDB()),
-		),
-		experiment.NewService(
-			mlflowConfig,
-			mlflowRepositories.NewTagRepository(db.GormDB()),
-			mlflowRepositories.NewExperimentRepository(db.GormDB()),
-		),
-	)
 
 	// 5. init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.

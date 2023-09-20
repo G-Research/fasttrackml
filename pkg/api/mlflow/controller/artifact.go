@@ -49,11 +49,9 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("GetArtifact namespace: %s", ns.Code)
 
-	artifactURI, err := c.artifactService.GetArtifact(ctx.Context(), ns, &req)
+	artifact, err := c.artifactService.GetArtifact(ctx.Context(), ns, &req)
 	if err != nil {
 		return err
 	}
-
-	log.Debugf("artifactURI redirect: %#v", artifactURI)
-	return ctx.Redirect(artifactURI.String(), fiber.StatusMovedPermanently)
+	return ctx.SendStream(artifact)
 }

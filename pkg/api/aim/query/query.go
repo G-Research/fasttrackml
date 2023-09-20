@@ -268,7 +268,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 		case attributeGetter:
 			return value(attribute)
 		default:
-			return nil, fmt.Errorf("unsupported attribute value %#parsedNode", value)
+			return nil, fmt.Errorf("unsupported attribute value %#v", value)
 		}
 	default:
 		return nil, fmt.Errorf("unsupported attribute context %q", node.Ctx)

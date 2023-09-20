@@ -8,18 +8,6 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-// Status represents Status type.
-type Status string
-
-// Supported list of statuses.
-const (
-	StatusRunning   Status = "RUNNING"
-	StatusScheduled Status = "SCHEDULED"
-	StatusFinished  Status = "FINISHED"
-	StatusFailed    Status = "FAILED"
-	StatusKilled    Status = "KILLED"
-)
-
 // Run represents model to work with `runs` table.
 type Run struct {
 	ID             string         `gorm:"<-:create;column:run_uuid;type:varchar(32);not null;primaryKey"`

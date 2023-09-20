@@ -28,7 +28,7 @@ func importCmd(cmd *cobra.Command, args []string) error {
 	defer inputDB.Close()
 	defer outputDB.Close()
 
-	importer := database.NewImporter(inputDB.GormDB(), outputDB.GormDB())
+	importer := database.NewImporter(inputDB, outputDB)
 	if err := importer.Import(); err != nil {
 		return err
 	}
@@ -37,21 +37,31 @@ func importCmd(cmd *cobra.Command, args []string) error {
 
 // initDBs inits the input and output DB connections.
 func initDBs() (input, output database.DBProvider, err error) {
-	input, err = database.NewDBProvider(
+	databaseSlowThreshold := time.Second * 1
+	databasePoolMax := 20
+	databaseReset := false
+	databaseMigrate := false
+	artifactRoot := viper.GetString("artifact-root")
+	input, err = database.MakeDBProvider(
 		viper.GetString("input-database-uri"),
-		time.Second*1,
-		20,
-		false,
+		databaseSlowThreshold,
+		databasePoolMax,
+		databaseReset,
+		databaseMigrate,
+		artifactRoot,
 	)
 	if err != nil {
 		return input, output, fmt.Errorf("error connecting to input DB: %w", err)
 	}
 
-	output, err = database.NewDBProvider(
+	databaseMigrate = true
+	output, err = database.MakeDBProvider(
 		viper.GetString("output-database-uri"),
-		time.Second*1,
-		20,
-		false,
+		databaseSlowThreshold,
+		databasePoolMax,
+		databaseReset,
+		databaseMigrate,
+		artifactRoot,
 	)
 	if err != nil {
 		return input, output, fmt.Errorf("error connecting to output DB: %w", err)

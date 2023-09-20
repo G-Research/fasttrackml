@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/rotisserie/eris"
-	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
@@ -15,9 +14,13 @@ type TagFixtures struct {
 }
 
 // NewTagFixtures creates new instance of TagFixtures.
-func NewTagFixtures(db *gorm.DB) (*TagFixtures, error) {
+func NewTagFixtures(databaseDSN string) (*TagFixtures, error) {
+	db, err := CreateDB(databaseDSN)
+	if err != nil {
+		return nil, err
+	}
 	return &TagFixtures{
-		baseFixtures: baseFixtures{db: db},
+		baseFixtures: baseFixtures{db: db.GormDB()},
 	}, nil
 }
 

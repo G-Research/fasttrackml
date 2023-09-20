@@ -14,15 +14,17 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetRunsActiveTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
-	runs []*models.Run
+	client             *helpers.HttpClient
+	runFixtures        *fixtures.RunFixtures
+	experimentFixtures *fixtures.ExperimentFixtures
+	runs               []*models.Run
 }
 
 func TestGetRunsActiveTestSuite(t *testing.T) {
@@ -30,20 +32,21 @@ func TestGetRunsActiveTestSuite(t *testing.T) {
 }
 
 func (s *GetRunsActiveTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
+
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.runFixtures = runFixtures
+
+	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = expFixtures
 }
 
 func (s *GetRunsActiveTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
 
 	tests := []struct {
 		name         string
@@ -58,14 +61,14 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			name:         "GetActiveRuns",
 			wantRunCount: 3,
 			beforeRunFn: func() {
-				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+				exp := &models.Experiment{
 					Name:           uuid.New().String(),
-					NamespaceID:    namespace.ID,
 					LifecycleStage: models.LifecycleStageActive,
-				})
+				}
+				_, err := s.experimentFixtures.CreateExperiment(context.Background(), exp)
 				assert.Nil(s.T(), err)
 
-				s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 3)
+				s.runs, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 3)
 				assert.Nil(s.T(), err)
 			},
 		},
@@ -75,7 +78,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			beforeRunFn: func() {
 				// set 3rd run to status = StatusFinished
 				s.runs[2].Status = models.StatusFinished
-				assert.Nil(s.T(), s.RunFixtures.UpdateRun(context.Background(), s.runs[2]))
+				assert.Nil(s.T(), s.runFixtures.UpdateRun(context.Background(), s.runs[2]))
 			},
 		},
 	}
@@ -84,7 +87,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			if tt.beforeRunFn != nil {
 				tt.beforeRunFn()
 			}
-			data, err := s.AIMClient.DoStreamRequest(
+			data, err := s.client.DoStreamRequest(
 				http.MethodGet,
 				"/runs/active",
 				nil,
@@ -105,11 +108,19 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 				if run.Status == models.StatusRunning && run.LifecycleStage ==
 					models.LifecycleStageActive {
 					assert.Equal(s.T(), run.Name, decodedData[respNameKey])
-					assert.Equal(s.T(), fmt.Sprintf("%v", run.ExperimentID), decodedData[expIdKey])
-					assert.Equal(s.T(), run.Status == models.StatusRunning, decodedData[activeKey])
+					assert.Equal(s.T(),
+						fmt.Sprintf("%v", run.ExperimentID),
+						decodedData[expIdKey])
+					assert.Equal(s.T(),
+						run.Status == models.StatusRunning,
+						decodedData[activeKey])
 					assert.Equal(s.T(), false, decodedData[archivedKey])
-					assert.Equal(s.T(), run.StartTime.Int64, int64(decodedData[startTimeKey].(float64)))
-					assert.Equal(s.T(), run.EndTime.Int64, int64(decodedData[endTimeKey].(float64)))
+					assert.Equal(s.T(),
+						run.StartTime.Int64,
+						int64(decodedData[startTimeKey].(float64)))
+					assert.Equal(s.T(),
+						run.EndTime.Int64,
+						int64(decodedData[endTimeKey].(float64)))
 					responseCount++
 				} else {
 					assert.Nil(s.T(), decodedData[respNameKey])

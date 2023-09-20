@@ -18,14 +18,7 @@ type Local struct {
 }
 
 // NewLocal creates new Local storage instance.
-func NewLocal(config *config.ServiceConfig, server *fiber.App) (*Local, error) {
-	server.Static("/artifacts", config.ArtifactRoot, fiber.Static{
-		Compress:      true,
-		ByteRange:     true,
-		Browse:        true,
-		CacheDuration: 180 * time.Second,
-		MaxAge:        3600,
-	})
+func NewLocal(config *config.ServiceConfig) (*Local, error) {
 	return &Local{
 		config: config,
 	}, nil

@@ -55,6 +55,9 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
+	github.com/gofiber/template v1.8.2 // indirect
+	github.com/gofiber/template/html/v2 v2.0.5 // indirect
+	github.com/gofiber/utils v1.1.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/flatbuffers v2.0.8+incompatible // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

@@ -16,6 +16,8 @@ type NamespaceRepositoryProvider interface {
 	Create(ctx context.Context, namespace *models.Namespace) error
 	// GetByCode returns namespace by its Code.
 	GetByCode(ctx context.Context, code string) (*models.Namespace, error)
+	// ListNamespaces returns all the namespaces
+	ListNamespaces(ctx context.Context) ([]models.Namespace, error)
 }
 
 // NamespaceRepository repository to work with `namespace` entity.
@@ -50,4 +52,13 @@ func (r NamespaceRepository) GetByCode(ctx context.Context, code string) (*model
 		return nil, eris.Wrapf(err, "error getting namespace by code: %s", code)
 	}
 	return &namespace, nil
+}
+
+// ListNamespaces returns a list of all namespaces.
+func (r NamespaceRepository) ListNamespaces(ctx context.Context) ([]models.Namespace, error) {
+	var namespaces []models.Namespace
+	if err := r.db.WithContext(ctx).Find(&namespaces).Error; err != nil {
+		return nil, eris.Wrap(err, "error listing namespaces")
+	}
+	return namespaces, nil
 }

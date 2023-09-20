@@ -3,7 +3,6 @@ package storage
 import (
 	"net/url"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"

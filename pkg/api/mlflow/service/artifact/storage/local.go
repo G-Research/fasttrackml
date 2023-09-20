@@ -24,20 +24,14 @@ func NewLocal(config *config.ServiceConfig) (*Local, error) {
 }
 
 // List implements Provider interface.
-func (s Local) List(runArtifactPath, itemPath string) (string, []ArtifactObject, error) {
-	path, err := url.JoinPath(s.config.ArtifactRoot, runArtifactPath, itemPath)
+func (s Local) List(artifactURI, path string) (string, []ArtifactObject, error) {
+	// 1. process search `prefix` parameter.
+	path, err := url.JoinPath(artifactURI, path)
 	if err != nil {
 		return "", nil, eris.Wrap(err, "error constructing full path")
 	}
 
-	// test local storage existence
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		// path does not (yet) exist -- returning no artifacts
-		log.Infof("artifact dir does not exist: %s", path)
-		return path, []ArtifactObject{}, nil
-	}
-
-	// read objects
+	// 2. read data from local storage.
 	objects, err := os.ReadDir(path)
 	if err != nil {
 		return "", nil, eris.Wrapf(err, "error reading object from local storage")
@@ -51,17 +45,17 @@ func (s Local) List(runArtifactPath, itemPath string) (string, []ArtifactObject,
 			return "", nil, eris.Wrapf(err, "error getting info for object: %s", object.Name())
 		}
 		artifactList[i] = ArtifactObject{
-			Path:  info.Name(),
+			Path:  filepath.Join(path, info.Name()),
 			Size:  info.Size(),
 			IsDir: object.IsDir(),
 		}
 	}
-	return "/artifacts" + runArtifactPath, artifactList, nil
+	return s.config.ArtifactRoot, artifactList, nil
 }
 
 // GetArtifact will return actual item URI in the storage location
-func (s Local) GetArtifact(runArtifactPath, itemPath string) (io.Reader, error) {
-	path, err := url.JoinPath(s.config.ArtifactRoot, runArtifactPath, itemPath)
+func (s Local) GetArtifact(runArtifactURI, itemPath string) (io.Reader, error) {
+	path, err := url.JoinPath(s.config.ArtifactRoot, runArtifactURI, itemPath)
 	if err != nil {
 		return nil, eris.Wrap(err, "error constructing full path")
 	}

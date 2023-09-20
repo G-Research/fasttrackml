@@ -9,8 +9,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-var namespaces []map[string]any
-
 // GetNamespaces renders the index view
 func GetNamespaces(ctx *fiber.Ctx) error {
 	namespaceService := namespace.NewService(repositories.NewNamespaceRepository(database.DB))

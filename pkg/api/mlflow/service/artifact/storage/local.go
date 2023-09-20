@@ -3,9 +3,7 @@ package storage
 import (
 	"net/url"
 	"os"
-	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
@@ -57,5 +55,5 @@ func (s Local) List(runArtifactPath, additionalPath string) (string, []ArtifactO
 			IsDir: object.IsDir(),
 		}
 	}
-	return "/artifacts" + runArtifactPath, artifactList, nil
+	return path, artifactList, nil
 }

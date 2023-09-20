@@ -1,6 +1,9 @@
 package storage
 
-import "net/url"
+import (
+	"io"
+	"os"
+)
 
 // Noop represents empty storage adapter.
 type Noop struct{}
@@ -15,7 +18,7 @@ func (s Noop) List(_, _ string) (string, []ArtifactObject, error) {
 	return "", make([]ArtifactObject, 0), nil
 }
 
-// GetItemURI implements Provider interface.
-func (s Noop) GetItemURI(_, _ string) (*url.URL, error) {
-	return &url.URL{}, nil
+// GetArtifact implements Provider interface.
+func (s Noop) GetArtifact(_, _ string) (io.Reader, error) {
+	return &os.File{}, nil
 }

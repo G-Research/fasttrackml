@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
@@ -39,7 +38,7 @@ type Provider interface {
 }
 
 // NewArtifactStorage creates new Artifact storage.
-func NewArtifactStorage(config *config.ServiceConfig, server *fiber.App) (Provider, error) {
+func NewArtifactStorage(config *config.ServiceConfig) (Provider, error) {
 	if config.ArtifactRoot != "" {
 		u, err := url.Parse(config.ArtifactRoot)
 		if err != nil {
@@ -50,7 +49,7 @@ func NewArtifactStorage(config *config.ServiceConfig, server *fiber.App) (Provid
 		case "s3":
 			return NewS3(config)
 		case "", "file":
-			return NewLocal(config, server)
+			return NewLocal(config)
 		default:
 			return nil, eris.Errorf("unsupported schema has been provided: %s", u.Scheme)
 		}

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/url"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -98,7 +99,7 @@ func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 }
 
 
-// GetItemURI will return actual item URI in the storage location
-func (s S3) GetItemURI(runArtifactPath, itemPath string) (*url.URL, error) {
-	return nil, eris.New("GetItemURI not yet supported for s3 storage")
+// GetArtifact will return actual item in the storage location
+func (s S3) GetArtifact(runArtifactPath, itemPath string) (io.Reader, error) {
+	return nil, eris.New("GetArtifact not yet supported for s3 storage")
 }

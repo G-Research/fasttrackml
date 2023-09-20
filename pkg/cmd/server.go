@@ -71,7 +71,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
 	aimUI.AddRoutes(server)
 
-	storage, err := storage.NewArtifactStorage(mlflowConfig, server)
+	storage, err := storage.NewArtifactStorage(mlflowConfig)
 	if err != nil {
 		return eris.Wrap(err, "error initializing artifact storage")
 	}

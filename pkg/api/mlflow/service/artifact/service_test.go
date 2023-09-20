@@ -37,9 +37,8 @@ func TestService_ListArtifacts_Ok(t *testing.T) {
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
-		"GetByNamespaceIDAndRunID",
+		"GetByID",
 		context.TODO(),
-		uint(1),
 		"id",
 	).Return(&models.Run{
 		ID:          "id",
@@ -50,9 +49,6 @@ func TestService_ListArtifacts_Ok(t *testing.T) {
 	service := NewService(&artifactStorage, &runRepository)
 	rootURI, artifacts, err := service.ListArtifacts(
 		context.TODO(),
-		&models.Namespace{
-			ID: 1,
-		},
 		&request.ListArtifactsRequest{
 			RunID: "id",
 		},
@@ -108,16 +104,15 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundDatabaseError",
-			error: api.NewInternalError("unable to find run 'id': database error"),
+			error: api.NewInternalError("unable to get artifact URI for run 'id'"),
 			request: &request.ListArtifactsRequest{
 				RunID: "id",
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByNamespaceIDAndRunID",
+					"GetByID",
 					context.TODO(),
-					uint(1),
 					"id",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -142,9 +137,8 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByNamespaceIDAndRunID",
+					"GetByID",
 					context.TODO(),
-					uint(1),
 					"id",
 				).Return(&models.Run{
 					ID:          "id",
@@ -161,9 +155,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, _, err := tt.service().ListArtifacts(context.TODO(), &models.Namespace{
-				ID: 1,
-			}, tt.request)
+			_, _, err := tt.service().ListArtifacts(context.TODO(), tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}

@@ -16,14 +16,17 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type LogMetricTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
+	client             *helpers.HttpClient
+	runFixtures        *fixtures.RunFixtures
+	metricFixtures     *fixtures.MetricFixtures
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestLogMetricTestSuite(t *testing.T) {
@@ -31,27 +34,28 @@ func TestLogMetricTestSuite(t *testing.T) {
 }
 
 func (s *LogMetricTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.runFixtures = runFixtures
+	metricFixtures, err := fixtures.NewMetricFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.metricFixtures = metricFixtures
+	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = expFixtures
 }
 
 func (s *LogMetricTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
 
 	experiment := &models.Experiment{
 		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	}
-	_, err = s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
+	_, err := s.experimentFixtures.CreateExperiment(context.Background(), experiment)
 	assert.Nil(s.T(), err)
 
 	run := &models.Run{
@@ -61,11 +65,11 @@ func (s *LogMetricTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
 	}
-	run, err = s.RunFixtures.CreateRun(context.Background(), run)
+	run, err = s.runFixtures.CreateRun(context.Background(), run)
 	assert.Nil(s.T(), err)
 
 	resp := fiber.Map{}
-	err = s.MlflowClient.DoPostRequest(
+	err = s.client.DoPostRequest(
 		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
 		request.LogMetricRequest{
 			RunID:     run.ID,
@@ -80,7 +84,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 	assert.Empty(s.T(), resp)
 
 	// makes user that records has been created correctly in database.
-	metric, err := s.MetricFixtures.GetLatestMetricByRunID(context.Background(), run.ID)
+	metric, err := s.metricFixtures.GetLatestMetricByRunID(context.Background(), run.ID)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), &models.LatestMetric{
 		Key:       "key1",
@@ -104,19 +108,9 @@ func (s *LogMetricTestSuite) Test_Error() {
 		{
 			name:    "EmptyOrIncorrectRunID",
 			request: request.LogMetricRequest{},
-			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
-			setupDatabase: func() string {
-				_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-					ID:                  1,
-					Code:                "default",
-					DefaultExperimentID: common.GetPointer(int32(0)),
-				})
-				assert.Nil(s.T(), err)
-				return ""
-			},
-			cleanDatabase: func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-			},
+			error: api.NewInvalidParameterValueError(
+				"Missing value for required parameter 'run_id'",
+			),
 		},
 		{
 			name: "EmptyOrIncorrectKey",
@@ -124,18 +118,6 @@ func (s *LogMetricTestSuite) Test_Error() {
 				RunID: "id",
 			},
 			error: api.NewInvalidParameterValueError("Missing value for required parameter 'key'"),
-			setupDatabase: func() string {
-				_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-					ID:                  1,
-					Code:                "default",
-					DefaultExperimentID: common.GetPointer(int32(0)),
-				})
-				assert.Nil(s.T(), err)
-				return ""
-			},
-			cleanDatabase: func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-			},
 		},
 		{
 			name: "NotFoundRun",
@@ -144,19 +126,9 @@ func (s *LogMetricTestSuite) Test_Error() {
 				RunID:     "id",
 				Timestamp: 123456789,
 			},
-			error: api.NewResourceDoesNotExistError("unable to find run 'id'"),
-			setupDatabase: func() string {
-				_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-					ID:                  1,
-					Code:                "default",
-					DefaultExperimentID: common.GetPointer(int32(0)),
-				})
-				assert.Nil(s.T(), err)
-				return ""
-			},
-			cleanDatabase: func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-			},
+			error: api.NewResourceDoesNotExistError(
+				"unable to find run 'id': error getting 'run' entity by id: id: record not found",
+			),
 		},
 		{
 			name: "InvalidMetricValue",
@@ -167,19 +139,11 @@ func (s *LogMetricTestSuite) Test_Error() {
 			},
 			error: api.NewInvalidParameterValueError(`invalid metric value 'incorrect_value'`),
 			setupDatabase: func() string {
-				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-					ID:                  1,
-					Code:                "default",
-					DefaultExperimentID: common.GetPointer(int32(0)),
-				})
-				assert.Nil(s.T(), err)
-
 				experiment := &models.Experiment{
 					Name:           uuid.New().String(),
-					NamespaceID:    namespace.ID,
 					LifecycleStage: models.LifecycleStageActive,
 				}
-				_, err = s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
+				_, err := s.experimentFixtures.CreateExperiment(context.Background(), experiment)
 				assert.Nil(s.T(), err)
 
 				run := &models.Run{
@@ -189,12 +153,12 @@ func (s *LogMetricTestSuite) Test_Error() {
 					LifecycleStage: models.LifecycleStageActive,
 					Status:         models.StatusRunning,
 				}
-				run, err = s.RunFixtures.CreateRun(context.Background(), run)
+				run, err = s.runFixtures.CreateRun(context.Background(), run)
 				assert.Nil(s.T(), err)
 				return run.ID
 			},
 			cleanDatabase: func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+				assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 			},
 		},
 	}
@@ -202,13 +166,11 @@ func (s *LogMetricTestSuite) Test_Error() {
 		s.T().Run(tt.name, func(T *testing.T) {
 			// if setupDatabase has been provided then configure database with test data.
 			if tt.setupDatabase != nil {
-				if runID := tt.setupDatabase(); runID != "" {
-					tt.request.RunID = runID
-				}
+				tt.request.RunID = tt.setupDatabase()
 			}
 
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
+			err := s.client.DoPostRequest(
 				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
 				tt.request,
 				&resp,

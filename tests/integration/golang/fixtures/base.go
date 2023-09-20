@@ -1,6 +1,8 @@
 package fixtures
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
@@ -25,11 +27,24 @@ func (f baseFixtures) UnloadFixtures() error {
 		models.Run{},
 		models.ExperimentTag{},
 		models.Experiment{},
-		models.Namespace{},
 	} {
-		if err := f.db.Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(table).Error; err != nil {
+		if err := f.db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(table).Error; err != nil {
 			return errors.Wrap(err, "error deleting data")
 		}
 	}
 	return nil
+}
+
+// CreateDB will convert the a DSN input into a database connection
+func CreateDB(databaseDSN string) (db database.DBProvider, err error) {
+	db, err = database.MakeDBProvider(
+		databaseDSN,
+		1*time.Second,
+		20,
+		false,
+		false,
+		"",
+	)
+	database.DB = db.GormDB()
+	return
 }

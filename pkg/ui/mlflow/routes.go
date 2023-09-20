@@ -1,41 +1,37 @@
 package mlflow
 
 import (
+	"io/fs"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 
-	mlflowUI "github.com/G-Research/fasttrackml-ui-mlflow"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
-	"github.com/G-Research/fasttrackml/pkg/ui/common"
+	mlflow "github.com/G-Research/fasttrackml-ui-mlflow"
 )
 
-// Router represents `mlflow` UI router.
-type Router struct {
-	controller *controller.Controller
+type onlyRootFS struct {
+	fs.FS
+	Path string
 }
 
-// NewRouter creates new instance of `mlflow` router.
-func NewRouter(controller *controller.Controller) *Router {
-	return &Router{
-		controller: controller,
+func (f onlyRootFS) Open(name string) (fs.File, error) {
+	if name != "." {
+		return nil, &fs.PathError{Op: "open", Path: name, Err: fs.ErrNotExist}
 	}
+	return f.FS.Open(f.Path)
 }
 
-// Init configures the UI routes
-func (router Router) Init(r fiber.Router) {
-	// Handle MLFlow requests for artifacts
-	r.Get("/mlflow/get-artifact", router.controller.GetArtifact) 
-	
-	r.Use("/static/mlflow/", etag.New(), filesystem.New(filesystem.Config{
-		Root: http.FS(mlflowUI.FS),
+func AddRoutes(r fiber.Router) {
+	r.Use("/static-files/", etag.New(), filesystem.New(filesystem.Config{
+		Root: http.FS(mlflow.FS),
 	}))
 
-	r.Use("/mlflow/", etag.New(), filesystem.New(filesystem.Config{
-		Root: http.FS(
-			common.NewOnlyRootFS(mlflowUI.FS, "index.html"),
-		),
+	r.Use("/", etag.New(), filesystem.New(filesystem.Config{
+		Root: http.FS(onlyRootFS{
+			mlflow.FS,
+			"index.html",
+		}),
 	}))
 }

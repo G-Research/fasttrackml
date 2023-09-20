@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"io"
 	"net/url"
 
 	"github.com/gofiber/fiber/v2"
@@ -34,7 +35,7 @@ func (o ArtifactObject) IsDirectory() bool {
 // Provider provides and interface to work with artifact storage.
 type Provider interface {
 	List(runArtifactURI, path string) (string, []ArtifactObject, error)
-	GetItemURI(runArtifactURI, path string) (*url.URL, error)
+	GetArtifact(runArtifactURI, path string) (io.Reader, error)
 }
 
 // NewArtifactStorage creates new Artifact storage.

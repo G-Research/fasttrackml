@@ -10,7 +10,7 @@ with MLFlow.
 #### Run the tracking server
 
 > [!NOTE]
-> For the full guide, see [docs/quickstart.md](docs/quickstart.md).
+> For the full guide, see our [quickstart guide](https://github.com/G-Research/fasttrackml/blob/main/docs/quickstart.md).
 
 FastTrackML can be installed and run with `pip`:
 

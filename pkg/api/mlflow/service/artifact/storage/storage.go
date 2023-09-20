@@ -34,7 +34,7 @@ func (o ArtifactObject) IsDirectory() bool {
 // Provider provides and interface to work with artifact storage.
 type Provider interface {
 	List(runArtifactURI, path string) (string, []ArtifactObject, error)
-	GetArtifact(runArtifactURI, path string) (io.Reader, error)
+	GetArtifact(runArtifactURI, path string) (io.ReadCloser, error)
 }
 
 // NewArtifactStorage creates new Artifact storage.

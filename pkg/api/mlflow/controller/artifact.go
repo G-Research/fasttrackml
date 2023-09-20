@@ -36,15 +36,10 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("GetArtifact request: %#v", req)
 
-	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("GetArtifact namespace: %s", ns.Code)
-
-	artifact, err := c.artifactService.GetArtifact(ctx.Context(), ns, &req)
+	artifact, err := c.artifactService.GetArtifact(ctx.Context(), &req)
 	if err != nil {
 		return err
 	}
+	defer artifact.Close()
 	return ctx.SendStream(artifact)
 }

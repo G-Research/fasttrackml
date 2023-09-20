@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path/filepath"
 
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
@@ -54,7 +55,7 @@ func (s Local) List(artifactURI, path string) (string, []ArtifactObject, error) 
 }
 
 // GetArtifact will return actual item URI in the storage location
-func (s Local) GetArtifact(runArtifactURI, itemPath string) (io.Reader, error) {
+func (s Local) GetArtifact(runArtifactURI, itemPath string) (io.ReadCloser, error) {
 	path, err := url.JoinPath(s.config.ArtifactRoot, runArtifactURI, itemPath)
 	if err != nil {
 		return nil, eris.Wrap(err, "error constructing full path")

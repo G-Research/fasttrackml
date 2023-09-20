@@ -19,6 +19,6 @@ func (s Noop) List(_, _ string) (string, []ArtifactObject, error) {
 }
 
 // GetArtifact implements Provider interface.
-func (s Noop) GetArtifact(_, _ string) (io.Reader, error) {
+func (s Noop) GetArtifact(_, _ string) (io.ReadCloser, error) {
 	return &os.File{}, nil
 }

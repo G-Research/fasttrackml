@@ -100,6 +100,23 @@ func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 
 
 // GetArtifact will return actual item in the storage location
-func (s S3) GetArtifact(runArtifactPath, itemPath string) (io.Reader, error) {
-	return nil, eris.New("GetArtifact not yet supported for s3 storage")
+func (s S3) GetArtifact(runArtifactURI, itemPath string) (io.ReadCloser, error) {
+	bucketName, prefix, err := ExtractS3BucketAndPrefix(runArtifactURI)
+	if err != nil {
+		return nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
+	}
+
+	// Create a GetObjectInput with the bucket name and object key
+	input := &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(prefix + itemPath),
+	}
+
+	// Fetch the object from S3
+	resp, err := s.client.GetObject(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Body, nil
 }

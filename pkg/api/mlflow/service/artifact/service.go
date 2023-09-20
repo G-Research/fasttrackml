@@ -50,13 +50,13 @@ func (s Service) ListArtifacts(
 
 // GetArtifact handles business logic of `GET /get-artifact` endpoint.
 func (s Service) GetArtifact(
-	ctx context.Context, namespace *models.Namespace, req *request.GetArtifactRequest,
-) (io.Reader, error) {
+	ctx context.Context, req *request.GetArtifactRequest,
+) (io.ReadCloser, error) {
 	if err := ValidateGetArtifactRequest(req); err != nil {
 		return nil, err
 	}
 
-	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.GetRunID())
+	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
 	if err != nil {
 		return nil, api.NewInternalError("unable to find run '%s': %s", req.GetRunID(), err)
 	}

@@ -63,7 +63,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 	// 4. init `aim` api and ui routes.
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
-	aimUI.AddRoutes(server.Group("/aim/"))
+	aimUI.AddRoutes(server)
 
 	storage, err := storage.NewArtifactStorage(mlflowConfig)
 	if err != nil {
@@ -96,9 +96,9 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 			),
 		),
 	).Init(server)
-	mlflowUI.AddRoutes(server.Group("/mlflow/"))
+	mlflowUI.AddRoutes(server)
 	// TODO:DSuhinin we have to move it.
-	chooser.AddRoutes(server.Group("/"))
+	chooser.AddRoutes(server)
 
 	isRunning := make(chan struct{})
 	go func() {

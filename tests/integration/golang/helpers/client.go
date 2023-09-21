@@ -148,3 +148,40 @@ func (c HttpClient) doRequest(httpMethod string, uri string, response interface{
 
 	return nil
 }
+
+func (c HttpClient) DoGetRequestNoUnmarshalling(uri string, response interface{}, requestBody io.Reader) error {
+	// 1. create actual request object.
+	req, err := http.NewRequestWithContext(
+		context.Background(),
+		http.MethodGet,
+		StrReplace(
+			fmt.Sprintf(
+				"%s%s%s",
+				c.baseURL,
+				c.basePath,
+				uri,
+			),
+			[]string{},
+			[]interface{}{},
+		),
+		requestBody,
+	)
+	if err != nil {
+		return eris.Wrap(err, "error creating request")
+	}
+
+	// 3. send request data.
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return eris.Wrap(err, "error doing request")
+	}
+
+	// 4. read and check response data.
+	response, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return eris.Wrap(err, "error reading response data")
+	}
+	defer resp.Body.Close()
+
+	return nil
+}

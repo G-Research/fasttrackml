@@ -47,7 +47,6 @@ func (s Service) ListArtifacts(
 	return rootURI, artifacts, nil
 }
 
-
 // GetArtifact handles business logic of `GET /get-artifact` endpoint.
 func (s Service) GetArtifact(
 	ctx context.Context, req *request.GetArtifactRequest,

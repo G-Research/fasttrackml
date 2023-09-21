@@ -118,12 +118,12 @@ func (s *GetArtifactTestSuite) Test_Ok() {
 			// 4. make actual API call.
 			query, err := urlquery.Marshal(request.GetArtifactRequest{
 				RunID: run.ID,
-				Path: "artifact.file",
+				Path:  "artifact.file",
 			})
 			assert.Nil(s.T(), err)
 
 			var resp []byte
-			err = s.serviceClient.DoGetRequest(
+			err = s.serviceClient.DoGetRequestNoUnmarshalling(
 				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
 				&resp,
 			)

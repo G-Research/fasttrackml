@@ -18,7 +18,7 @@ const (
 // List of `/artifact/*` routes.
 const (
 	ArtifactsListRoute = "/list"
-	ArtifactsGetRoute = "/get-artifact"
+	ArtifactsGetRoute  = "/get-artifact"
 )
 
 // List of `/experiments/*` routes.

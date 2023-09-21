@@ -98,7 +98,6 @@ func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 	return fmt.Sprintf("s3://%s", bucket), artifactList, nil
 }
 
-
 // GetArtifact will return actual item in the storage location
 func (s S3) GetArtifact(runArtifactURI, itemPath string) (io.ReadCloser, error) {
 	bucketName, prefix, err := ExtractS3BucketAndPrefix(runArtifactURI)

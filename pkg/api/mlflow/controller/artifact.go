@@ -27,7 +27,6 @@ func (c Controller) ListArtifacts(ctx *fiber.Ctx) error {
 	return ctx.JSON(resp)
 }
 
-
 // GetArtifact handles `GET /get-artifact` endpoint.
 func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 	req := request.GetArtifactRequest{}

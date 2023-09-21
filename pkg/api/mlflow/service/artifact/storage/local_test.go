@@ -4,8 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
 // TestGetArtifact for the local storage implementation.

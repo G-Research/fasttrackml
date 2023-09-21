@@ -2,6 +2,7 @@ package storage
 
 import (
 	"net/url"
+	"sync"
 
 	"github.com/rotisserie/eris"
 
@@ -44,38 +45,52 @@ type ArtifactStorageFactoryProvider interface {
 
 // ArtifactStorageFactory represents Artifact Storage .
 type ArtifactStorageFactory struct {
-	storageList map[string]ArtifactStorageProvider
+	config      *config.ServiceConfig
+	storageList sync.Map
 }
 
 // NewArtifactStorageFactory creates new Artifact Storage Factory instance.
 func NewArtifactStorageFactory(config *config.ServiceConfig) (*ArtifactStorageFactory, error) {
-	s3Storage, err := NewS3(config)
-	if err != nil {
-		return nil, eris.Wrap(err, "error initializing s3 artifact storage")
-	}
-	localStorage, err := NewLocal(config)
-	if err != nil {
-		return nil, eris.Wrap(err, "error initializing local artifact storage")
-	}
 	return &ArtifactStorageFactory{
-		storageList: map[string]ArtifactStorageProvider{
-			S3StorageName:    s3Storage,
-			LocalStorageName: localStorage,
-		},
+		config:      config,
+		storageList: sync.Map{},
 	}, nil
 }
 
 // GetStorage returns Artifact storage based on provided runArtifactPath.
-func (s ArtifactStorageFactory) GetStorage(runArtifactPath string) (ArtifactStorageProvider, error) {
+func (s *ArtifactStorageFactory) GetStorage(runArtifactPath string) (ArtifactStorageProvider, error) {
 	u, err := url.Parse(runArtifactPath)
 	if err != nil {
 		return nil, eris.Wrap(err, "error parsing artifact root")
 	}
+
 	switch u.Scheme {
 	case S3StorageName:
-		return s.storageList[S3StorageName], nil
+		if storage, ok := s.storageList.Load(S3StorageName); ok {
+			if localStorage, ok := storage.(*S3); ok {
+				return localStorage, nil
+			}
+			return nil, eris.New("storage is not s3 artifact storage")
+		}
+		storage, err := NewS3(s.config)
+		if err != nil {
+			return nil, eris.Wrap(err, "error initializing s3 artifact storage")
+		}
+		s.storageList.Store(S3StorageName, storage)
+		return storage, nil
 	case "", LocalStorageName:
-		return s.storageList[LocalStorageName], nil
+		if storage, ok := s.storageList.Load(LocalStorageName); ok {
+			if localStorage, ok := storage.(*Local); ok {
+				return localStorage, nil
+			}
+			return nil, eris.New("storage is not local artifact storage")
+		}
+		storage, err := NewLocal(s.config)
+		if err != nil {
+			return nil, eris.Wrap(err, "error initializing local artifact storage")
+		}
+		s.storageList.Store(LocalStorageName, storage)
+		return storage, nil
 	default:
 		return nil, eris.Errorf("unsupported schema has been provided: %s", u.Scheme)
 	}

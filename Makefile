@@ -186,6 +186,7 @@ mocks-clean: ## cleans old mocks.
 .PHONY: mocks-generate
 mocks-generate: mocks-clean ## generate mock based on all project interfaces.
 	mockery --all --dir "./pkg/api/mlflow" --inpackage --case underscore
+	mockery --all --dir "./pkg/api/admin" --inpackage --case underscore
 
 #
 # Build targets

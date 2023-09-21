@@ -122,10 +122,8 @@ func (s *GetArtifactTestSuite) Test_Ok() {
 			})
 			assert.Nil(s.T(), err)
 
-			var resp []byte
-			err = s.serviceClient.DoGetRequestNoUnmarshalling(
+			resp, err := s.serviceClient.DoGetRequestNoUnmarshalling(
 				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
-				&resp,
 			)
 			assert.Nil(s.T(), err)
 

@@ -14,7 +14,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -65,11 +64,6 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
 	aimUI.AddRoutes(server.Group("/aim/"))
 
-	storage, err := storage.NewArtifactStorage(mlflowConfig)
-	if err != nil {
-		return eris.Wrap(err, "error initializing artifact storage")
-	}
-
 	// 5. init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
@@ -86,8 +80,8 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 				repositories.NewMetricRepository(db.GormDB()),
 			),
 			artifact.NewService(
-				storage,
 				repositories.NewRunRepository(db.GormDB()),
+				storage.NewArtifactStorageFactory(mlflowConfig),
 			),
 			experiment.NewService(
 				mlflowConfig,
@@ -131,7 +125,7 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 		config.DatabasePoolMax,
 		config.DatabaseReset,
 		config.DatabaseMigrate,
-		config.ArtifactRoot,
+		config.DefaultArtifactRoot,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to DB: %w", err)
@@ -208,7 +202,7 @@ func init() {
 	RootCmd.AddCommand(ServerCmd)
 
 	ServerCmd.Flags().StringP("listen-address", "a", "localhost:5000", "Address (host:post) to listen to")
-	ServerCmd.Flags().String("artifact-root", "./artifacts", "Artifact root")
+	ServerCmd.Flags().String("default-artifact-root", "./artifacts", "Artifact root")
 	ServerCmd.Flags().String("s3-endpoint-uri", "", "S3 compatible storage base endpoint url")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")

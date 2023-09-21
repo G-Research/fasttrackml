@@ -18,7 +18,7 @@ type ServiceConfig struct {
 	ListenAddress         string
 	AuthUsername          string
 	AuthPassword          string
-	ArtifactRoot          string
+	DefaultArtifactRoot   string
 	S3EndpointURI         string
 	DatabaseURI           string
 	DatabaseReset         bool
@@ -34,8 +34,8 @@ func NewServiceConfig() *ServiceConfig {
 		ListenAddress:         viper.GetString("listen-address"),
 		AuthUsername:          viper.GetString("auth-username"),
 		AuthPassword:          viper.GetString("auth-password"),
-		ArtifactRoot:          viper.GetString("artifact-root"),
 		S3EndpointURI:         viper.GetString("s3-endpoint-uri"),
+		DefaultArtifactRoot:   viper.GetString("default-artifact-root"),
 		DatabaseURI:           viper.GetString("database-uri"),
 		DatabaseReset:         viper.GetBool("database-reset"),
 		DatabasePoolMax:       viper.GetInt("database-pool-max"),
@@ -57,18 +57,18 @@ func (c *ServiceConfig) Validate() error {
 
 // validateConfiguration validates service configuration for correctness.
 func (c *ServiceConfig) validateConfiguration() error {
-	// 1. validate ArtifactRoot configuration parameter for correctness and valid values.
-	parsed, err := url.Parse(c.ArtifactRoot)
+	// 1. validate DefaultArtifactRoot configuration parameter for correctness and valid values.
+	parsed, err := url.Parse(c.DefaultArtifactRoot)
 	if err != nil {
-		return eris.Wrap(err, "error parsing 'artifact-root' flag")
+		return eris.Wrap(err, "error parsing 'default-artifact-root' flag")
 	}
 
 	if parsed.User != nil || parsed.RawQuery != "" || parsed.RawFragment != "" {
-		return eris.New("incorrect format of 'artifact-root' flag")
+		return eris.New("incorrect format of 'default-artifact-root' flag")
 	}
 
 	if !slices.Contains([]string{"", "file", "s3"}, parsed.Scheme) {
-		return eris.New("unsupported schema of 'artifact-root' flag")
+		return eris.New("unsupported schema of 'default-artifact-root' flag")
 	}
 
 	return nil
@@ -76,9 +76,9 @@ func (c *ServiceConfig) validateConfiguration() error {
 
 // normalizeConfiguration normalizes service configuration parameters.
 func (c *ServiceConfig) normalizeConfiguration() error {
-	parsed, err := url.Parse(c.ArtifactRoot)
+	parsed, err := url.Parse(c.DefaultArtifactRoot)
 	if err != nil {
-		return eris.Wrap(err, "error parsing 'artifact-root' flag")
+		return eris.Wrap(err, "error parsing 'default-artifact-root' flag")
 	}
 	switch parsed.Scheme {
 	case "s3":
@@ -86,9 +86,9 @@ func (c *ServiceConfig) normalizeConfiguration() error {
 	case "", "file":
 		absoluteArtifactRoot, err := filepath.Abs(path.Join(parsed.Host, parsed.Path))
 		if err != nil {
-			return eris.Wrapf(err, "error getting absolute path for 'artifact-root': %s", c.ArtifactRoot)
+			return eris.Wrapf(err, "error getting absolute path for 'default-artifact-root': %s", c.DefaultArtifactRoot)
 		}
-		c.ArtifactRoot = absoluteArtifactRoot
+		c.DefaultArtifactRoot = absoluteArtifactRoot
 	}
 	return nil
 }

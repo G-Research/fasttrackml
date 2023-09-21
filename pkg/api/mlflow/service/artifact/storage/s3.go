@@ -55,7 +55,7 @@ func NewS3(config *config.ServiceConfig) (*S3, error) {
 	return &storage, nil
 }
 
-// List implements Provider interface.
+// List implements ArtifactStorageProvider interface.
 func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 	bucket, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {

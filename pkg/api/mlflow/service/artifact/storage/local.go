@@ -23,7 +23,7 @@ func NewLocal(config *config.ServiceConfig) (*Local, error) {
 	}, nil
 }
 
-// List implements Provider interface.
+// List implements ArtifactStorageProvider interface.
 func (s Local) List(artifactURI, path string) (string, []ArtifactObject, error) {
 	// 1. process search `prefix` parameter.
 	path, err := url.JoinPath(artifactURI, path)
@@ -50,5 +50,5 @@ func (s Local) List(artifactURI, path string) (string, []ArtifactObject, error) 
 			IsDir: object.IsDir(),
 		}
 	}
-	return s.config.ArtifactRoot, artifactList, nil
+	return s.config.DefaultArtifactRoot, artifactList, nil
 }

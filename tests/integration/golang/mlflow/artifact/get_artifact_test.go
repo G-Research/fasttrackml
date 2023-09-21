@@ -64,11 +64,11 @@ func (s *GetArtifactTestSuite) Test_Ok() {
 	}{
 		{
 			name:   "TestWithBucket1",
-			bucket: "bucket1",
+			bucket: "bucket3",
 		},
 		{
 			name:   "TestWithBucket2",
-			bucket: "bucket2",
+			bucket: "bucket4",
 		},
 	}
 

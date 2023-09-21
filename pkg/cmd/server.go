@@ -71,11 +71,6 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
 	aimUI.AddRoutes(server)
 
-	storage, err := storage.NewArtifactStorage(mlflowConfig)
-	if err != nil {
-		return eris.Wrap(err, "error initializing artifact storage")
-	}
-
 	// 5. init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
@@ -93,8 +88,8 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 				mlflowRepositories.NewMetricRepository(db.GormDB()),
 			),
 			artifact.NewService(
-				storage,
 				mlflowRepositories.NewRunRepository(db.GormDB()),
+				storage.NewArtifactStorageFactory(mlflowConfig),
 			),
 			experiment.NewService(
 				mlflowConfig,
@@ -158,7 +153,7 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 		return nil, eris.Wrap(err, "error creating default namespace")
 	}
 
-	if err := database.CreateDefaultExperiment(db.GormDB(), config.ArtifactRoot); err != nil {
+	if err := database.CreateDefaultExperiment(db.GormDB(), config.DefaultArtifactRoot); err != nil {
 		return nil, eris.Wrap(err, "error creating default experiment")
 	}
 
@@ -238,7 +233,7 @@ func init() {
 	RootCmd.AddCommand(ServerCmd)
 
 	ServerCmd.Flags().StringP("listen-address", "a", "localhost:5000", "Address (host:post) to listen to")
-	ServerCmd.Flags().String("artifact-root", "./artifacts", "Artifact root")
+	ServerCmd.Flags().String("default-artifact-root", "./artifacts", "Artifact root")
 	ServerCmd.Flags().String("s3-endpoint-uri", "", "S3 compatible storage base endpoint url")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")

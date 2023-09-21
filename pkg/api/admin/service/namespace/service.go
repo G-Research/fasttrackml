@@ -21,8 +21,9 @@ func NewService(
 	}
 }
 
+// ListNamespaces returns all namespaces.
 func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, error) {
-	namespaces, err := s.namespaceRepository.ListNamespaces(ctx)
+	namespaces, err := s.namespaceRepository.List(ctx)
 	if err != nil {
 		return nil, err
 	}

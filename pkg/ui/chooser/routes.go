@@ -17,28 +17,32 @@ import (
 //go:embed embed
 var content embed.FS
 
-// Router represents `mlflow` router.
+// Router represents `chooser` router.
 type Router struct {
 	controller *controller.Controller
 }
 
-// NewRouter creates new instance of `mlflow` router.
+// NewRouter creates new instance of `chooser` router.
 func NewRouter(controller *controller.Controller) *Router {
 	return &Router{
 		controller: controller,
 	}
 }
 
-func (r Router) AddRoutes(fr fiber.Router) {
-	sub, _ := fs.Sub(content, "embed")
+// AddRoutes adds all the `chooser` routes
+func (r Router) AddRoutes(fr fiber.Router) error {
+	sub, err := fs.Sub(content, "embed")
+	if err != nil {
+		return err
+	}
 
 	fr.Use("/static/chooser/", etag.New(), filesystem.New(filesystem.Config{
 		Root: http.FS(sub),
 	}))
-	// engine and app for template rendering
-	engine := html.NewFileSystem(http.FS(sub), ".html")
+
+	// app for template rendering
 	app := fiber.New(fiber.Config{
-		Views: engine,
+		Views: html.NewFileSystem(http.FS(sub), ".html"),
 	})
 	fr.Mount("/", app)
 
@@ -51,4 +55,5 @@ func (r Router) AddRoutes(fr fiber.Router) {
 			common.NewOnlyRootFS(sub, "index.html"),
 		),
 	}))
+	return nil
 }

@@ -90,7 +90,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	router := server.Group("/aim/api/")
 	router.Use(namespaceMiddleware.New(namespaceRepository))
 	aimAPI.AddRoutes(router)
-	aimUI.AddRoutes(server.Group("/aim/"))
+	aimUI.AddRoutes(server)
 
 	storage, err := storage.NewArtifactStorage(mlflowConfig)
 	if err != nil {

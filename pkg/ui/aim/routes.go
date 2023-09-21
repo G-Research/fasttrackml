@@ -16,7 +16,7 @@ func AddRoutes(r fiber.Router) {
 		Root: http.FS(aim.FS),
 	}))
 
-	r.Use("/aim", etag.New(), filesystem.New(filesystem.Config{
+	r.Use("/aim/", etag.New(), filesystem.New(filesystem.Config{
 		Root: http.FS(
 			common.NewSingleFileFS(aim.FS, "index.html")),
 	}))

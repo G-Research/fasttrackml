@@ -105,26 +105,16 @@ jobs:
 
   go-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Go Integration Tests (${{ matrix.database-backend }}/${{ matrix.artifacts-backend }})
+    name: Go Integration Tests (${{ matrix.database-backend }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
         database-backend: [sqlite, postgres]
-        # TODO enable local artifacts backend once we support multiple artifacts backends
-        # in the same instance. See #299.
-        # artifacts-backend: [s3, local]
-        artifacts-backend: [s3]
         include:
           - database-backend: sqlite
             database-uri: sqlite:///tmp/fasttrackml.db
           - database-backend: postgres
             database-uri: postgres://postgres:postgres@postgres/postgres
-          - artifacts-backend: s3
-            artifacts-root: s3://fasttrackml
-          # TODO enable local artifacts backend once we support multiple artifacts backends
-          # in the same instance. See #299.
-          # - artifacts-backend: local
-          #   artifacts-root: /tmp/fasttrackml.artifacts
       fail-fast: false
     steps:
       - name: Checkout
@@ -143,7 +133,6 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_URI: ${{ matrix.database-uri }}
-          FML_ARTIFACT_ROOT: ${{ matrix.artifacts-root }}
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

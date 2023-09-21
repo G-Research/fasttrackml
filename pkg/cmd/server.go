@@ -64,6 +64,11 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
 	aimUI.AddRoutes(server.Group("/aim/"))
 
+	artifactStorageFactory, err := storage.NewArtifactStorageFactory(mlflowConfig)
+	if err != nil {
+		return err
+	}
+
 	// 5. init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
@@ -81,7 +86,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 			),
 			artifact.NewService(
 				repositories.NewRunRepository(db.GormDB()),
-				storage.NewArtifactStorageFactory(mlflowConfig),
+				artifactStorageFactory,
 			),
 			experiment.NewService(
 				mlflowConfig,

@@ -11,6 +11,11 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
+// LocalStorageName is a file storage name.
+const (
+	LocalStorageName = "file"
+)
+
 // Local represents local file storage adapter to work with artifacts.
 type Local struct {
 	config *config.ServiceConfig

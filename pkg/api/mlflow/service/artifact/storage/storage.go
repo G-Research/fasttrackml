@@ -38,34 +38,44 @@ type ArtifactStorageProvider interface {
 
 // ArtifactStorageFactoryProvider provides an interface to work with Artifact Storage.
 type ArtifactStorageFactoryProvider interface {
-	// CreateStorage creates new Artifact storage based on provided runArtifactPath.
-	CreateStorage(runArtifactPath string) (ArtifactStorageProvider, error)
+	// GetStorage returns Artifact storage based on provided runArtifactPath.
+	GetStorage(runArtifactPath string) (ArtifactStorageProvider, error)
 }
 
 // ArtifactStorageFactory represents Artifact Storage .
 type ArtifactStorageFactory struct {
-	config *config.ServiceConfig
+	storageList map[string]ArtifactStorageProvider
 }
 
 // NewArtifactStorageFactory creates new Artifact Storage Factory instance.
-func NewArtifactStorageFactory(config *config.ServiceConfig) *ArtifactStorageFactory {
-	return &ArtifactStorageFactory{
-		config: config,
+func NewArtifactStorageFactory(config *config.ServiceConfig) (*ArtifactStorageFactory, error) {
+	s3Storage, err := NewS3(config)
+	if err != nil {
+		return nil, eris.Wrap(err, "error initializing s3 artifact storage")
 	}
+	localStorage, err := NewLocal(config)
+	if err != nil {
+		return nil, eris.Wrap(err, "error initializing local artifact storage")
+	}
+	return &ArtifactStorageFactory{
+		storageList: map[string]ArtifactStorageProvider{
+			S3StorageName:    s3Storage,
+			LocalStorageName: localStorage,
+		},
+	}, nil
 }
 
-// CreateStorage creates new Artifact storage based on provided artifactPath.
-func (s ArtifactStorageFactory) CreateStorage(runArtifactPath string) (ArtifactStorageProvider, error) {
+// GetStorage returns Artifact storage based on provided runArtifactPath.
+func (s ArtifactStorageFactory) GetStorage(runArtifactPath string) (ArtifactStorageProvider, error) {
 	u, err := url.Parse(runArtifactPath)
 	if err != nil {
 		return nil, eris.Wrap(err, "error parsing artifact root")
 	}
-
 	switch u.Scheme {
-	case "s3":
-		return NewS3(s.config)
-	case "", "file":
-		return NewLocal(s.config)
+	case S3StorageName:
+		return s.storageList[S3StorageName], nil
+	case "", LocalStorageName:
+		return s.storageList[LocalStorageName], nil
 	default:
 		return nil, eris.Errorf("unsupported schema has been provided: %s", u.Scheme)
 	}

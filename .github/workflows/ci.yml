@@ -109,10 +109,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        database-backend: [sqlite, postgres]
+        database-backend: [sqlite, sqlcipher, postgres]
         include:
           - database-backend: sqlite
             database-uri: sqlite:///tmp/fasttrackml.db
+          - database-backend: sqlcipher
+            database-uri: sqlite:///tmp/fasttrackml.db?_key=passphrase
           - database-backend: postgres
             database-uri: postgres://postgres:postgres@postgres/postgres
       fail-fast: false

@@ -20,13 +20,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type ListArtifactTestSuite struct {
+type GetArtifactTestSuite struct {
 	suite.Suite
 	s3Client           *s3.Client
 	runFixtures        *fixtures.RunFixtures
@@ -34,11 +33,11 @@ type ListArtifactTestSuite struct {
 	experimentFixtures *fixtures.ExperimentFixtures
 }
 
-func TestListArtifactTestSuite(t *testing.T) {
-	suite.Run(t, new(ListArtifactTestSuite))
+func TestGetArtifactTestSuite(t *testing.T) {
+	suite.Run(t, new(GetArtifactTestSuite))
 }
 
-func (s *ListArtifactTestSuite) SetupTest() {
+func (s *GetArtifactTestSuite) SetupTest() {
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	assert.Nil(s.T(), err)
 
@@ -54,7 +53,7 @@ func (s *ListArtifactTestSuite) SetupTest() {
 	s.runFixtures = runFixtures
 }
 
-func (s *ListArtifactTestSuite) Test_Ok() {
+func (s *GetArtifactTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
@@ -117,30 +116,25 @@ func (s *ListArtifactTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			// 4. make actual API call.
-			query, err := urlquery.Marshal(request.ListArtifactsRequest{
+			query, err := urlquery.Marshal(request.GetArtifactRequest{
 				RunID: run.ID,
+				Path: "artifact.file",
 			})
 			assert.Nil(s.T(), err)
 
-			resp := response.ListArtifactsResponse{}
+			var resp []byte
 			err = s.serviceClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, query),
+				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
 				&resp,
 			)
 			assert.Nil(s.T(), err)
 
-			assert.Equal(s.T(), 1, len(resp.Files))
-			assert.Equal(s.T(), response.FilePartialResponse{
-				Path:     fmt.Sprintf("1/%s/artifacts/artifact.file", runID),
-				IsDir:    false,
-				FileSize: 7,
-			}, resp.Files[0])
-			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), "content", string(resp))
 		})
 	}
 }
 
-func (s *ListArtifactTestSuite) Test_Error() {
+func (s *GetArtifactTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
@@ -148,17 +142,17 @@ func (s *ListArtifactTestSuite) Test_Error() {
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
-		request *request.ListArtifactsRequest
+		request *request.GetArtifactRequest
 	}{
 		{
 			name:    "EmptyOrIncorrectRunIDOrRunUUID",
 			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
-			request: &request.ListArtifactsRequest{},
+			request: &request.GetArtifactRequest{},
 		},
 		{
 			name:  "IncorrectPathProvidedCase1",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "..",
 			},
@@ -166,7 +160,7 @@ func (s *ListArtifactTestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase2",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./..",
 			},
@@ -174,7 +168,7 @@ func (s *ListArtifactTestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase3",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./../",
 			},
@@ -182,7 +176,7 @@ func (s *ListArtifactTestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase4",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "foo/../bar",
 			},
@@ -190,7 +184,7 @@ func (s *ListArtifactTestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase5",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "/foo/../bar",
 			},
@@ -203,7 +197,7 @@ func (s *ListArtifactTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
 			err = s.serviceClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, query),
+				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
 				&resp,
 			)
 			assert.Nil(t, err)

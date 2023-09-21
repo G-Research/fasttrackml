@@ -18,6 +18,7 @@ const (
 // List of `/artifact/*` routes.
 const (
 	ArtifactsListRoute = "/list"
+	ArtifactsGetRoute = "/get-artifact"
 )
 
 // List of `/experiments/*` routes.
@@ -80,6 +81,7 @@ func (r Router) Init(server fiber.Router) {
 
 		artifacts := mainGroup.Group(ArtifactsRoutePrefix)
 		artifacts.Get(ArtifactsListRoute, r.controller.ListArtifacts)
+		artifacts.Get(ArtifactsGetRoute, r.controller.GetArtifact)
 
 		experiments := mainGroup.Group(ExperimentsRoutePrefix)
 		experiments.Post(ExperimentsCreateRoute, r.controller.CreateExperiment)

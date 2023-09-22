@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -108,7 +109,7 @@ func (s S3) GetArtifact(runArtifactURI, itemPath string) (io.ReadCloser, error) 
 	// Create a GetObjectInput with the bucket name and object key
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
-		Key:    aws.String(prefix + itemPath),
+		Key:    aws.String(filepath.Join(prefix, itemPath)),
 	}
 
 	// Fetch the object from S3

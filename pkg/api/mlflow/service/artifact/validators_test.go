@@ -201,6 +201,21 @@ func TestValidateGetArtifactRequest_Ok(t *testing.T) {
 				Path:  "foo/..bar",
 			},
 		},
+		{
+			name: "FilenameNoSlash",
+			request: request.GetArtifactRequest{
+				RunID: "run_id",
+				Path:  "foo.txt",
+			},
+		},
+		{
+			name: "Dirname/Filename",
+			request: request.GetArtifactRequest{
+				RunID: "directory/run_id",
+				Path:  "foo.txt",
+			},
+		},
+
 	}
 
 	for _, tt := range testData {
@@ -259,6 +274,14 @@ func TestValidateGetArtifactRequest_Error(t *testing.T) {
 			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "/foo/../bar",
+			},
+		},
+		{
+			name:  "IncorrectLeadingSlash",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			request: &request.GetArtifactRequest{
+				RunID: "run_id",
+				Path:  "/foo.bar",
 			},
 		},
 	}

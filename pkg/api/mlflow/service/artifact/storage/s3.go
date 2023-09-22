@@ -22,15 +22,10 @@ const (
 // S3 represents S3 adapter to work with artifacts.
 type S3 struct {
 	client *s3.Client
-	config *config.ServiceConfig
 }
 
 // NewS3 creates new S3 instance.
 func NewS3(config *config.ServiceConfig) (*S3, error) {
-	storage := S3{
-		config: config,
-	}
-
 	var clientOptions []func(o *s3.Options)
 	var configOptions []func(*awsConfig.LoadOptions) error
 	if config.S3EndpointURI != "" {
@@ -56,8 +51,10 @@ func NewS3(config *config.ServiceConfig) (*S3, error) {
 	if err != nil {
 		return nil, eris.Wrap(err, "error loading configuration for S3 client")
 	}
-	storage.client = s3.NewFromConfig(cfg, clientOptions...)
-	return &storage, nil
+
+	return &S3{
+		s3.NewFromConfig(cfg, clientOptions...),
+	}, nil
 }
 
 // List implements ArtifactStorageProvider interface.

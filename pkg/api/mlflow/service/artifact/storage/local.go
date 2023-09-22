@@ -20,15 +20,11 @@ const (
 )
 
 // Local represents local file storage adapter to work with artifacts.
-type Local struct {
-	config *config.ServiceConfig
-}
+type Local struct{}
 
 // NewLocal creates new Local storage instance.
 func NewLocal(config *config.ServiceConfig) (*Local, error) {
-	return &Local{
-		config: config,
-	}, nil
+	return &Local{}, nil
 }
 
 // List implements ArtifactStorageProvider interface.

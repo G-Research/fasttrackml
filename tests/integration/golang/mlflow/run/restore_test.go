@@ -9,11 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hetiansu5/urlquery"
-
 	"github.com/gofiber/fiber/v2"
-
 	"github.com/google/uuid"
+	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -151,7 +149,7 @@ func (s *RestoreRunTestSuite) Test_Error() {
 
 			resp := api.ErrorResponse{}
 			err = s.client.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsGetTagRoute, query),
+				fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute, query),
 				&resp,
 			)
 			assert.Nil(s.T(), err)

@@ -79,6 +79,7 @@ func (s *ImportTestSuite) SetupTest() {
 	s.runs = runs
 
 	appFixtures, err := fixtures.NewAppFixtures(helpers.GetInputDatabaseUri())
+	assert.Nil(s.T(), err)
 	app, err := appFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
 			ID:        uuid.New(),
@@ -87,8 +88,10 @@ func (s *ImportTestSuite) SetupTest() {
 		Type:  "mpi",
 		State: database.AppState{},
 	})
+	assert.Nil(s.T(), err)
 
 	dashboardFixtures, err := fixtures.NewDashboardFixtures(helpers.GetInputDatabaseUri())
+	assert.Nil(s.T(), err)
 	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
 		Base: database.Base{
 			ID:        uuid.New(),
@@ -97,19 +100,20 @@ func (s *ImportTestSuite) SetupTest() {
 		AppID: &app.ID,
 		Name:  uuid.NewString(),
 	})
+	assert.Nil(s.T(), err)
 
 	databaseSlowThreshold := time.Second * 1
 	databasePoolMax := 20
 	databaseReset := false
 	databaseMigrate := false
-	artifactRoot := "./artifacts"
+	defaultArtifactRoot := "./artifacts"
 	input, err := database.MakeDBProvider(
 		helpers.GetInputDatabaseUri(),
 		databaseSlowThreshold,
 		databasePoolMax,
 		databaseReset,
 		databaseMigrate,
-		artifactRoot,
+		defaultArtifactRoot,
 	)
 	assert.Nil(s.T(), err)
 	output, err := database.MakeDBProvider(
@@ -118,7 +122,7 @@ func (s *ImportTestSuite) SetupTest() {
 		databasePoolMax,
 		databaseReset,
 		databaseMigrate,
-		artifactRoot,
+		defaultArtifactRoot,
 	)
 	assert.Nil(s.T(), err)
 

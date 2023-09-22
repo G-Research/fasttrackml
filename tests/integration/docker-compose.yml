@@ -1,0 +1,78 @@
+services:
+  service:
+    image: golang:1.21
+    command: sh -c 'rm -rf /tmp/* && exec make run'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 2s
+      timeout: 5s
+      start_period: 5m
+    volumes:
+      - ../../:/src
+      - go-cache:/cache
+      - tmp:/tmp
+    working_dir: /src
+    depends_on:
+      minio:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      GOCACHE: /cache/go-build
+      GOMODCACHE: /cache/go-mod
+      FML_LISTEN_ADDRESS: ":5000"
+      FML_LOG_LEVEL: debug
+      FML_DATABASE_URI: ${FML_DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
+      FML_S3_ENDPOINT_URI: http://minio:9000
+      AWS_ACCESS_KEY_ID: "user"
+      AWS_SECRET_ACCESS_KEY: "password"
+
+  postgres:
+    image: postgres:latest
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+    environment:
+      - POSTGRES_PASSWORD=postgres
+
+  minio:
+    image: minio/minio:latest
+    entrypoint: sh
+    command: -c 'mkdir -p /data/{bucket1,bucket2,bucket3} && exec minio server /data'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+    environment:
+      MINIO_ROOT_USER: "user"
+      MINIO_ROOT_PASSWORD: "password"
+      MINIO_CONSOLE_ADDRESS: ":9001"
+
+  integration-tests:
+    image: golang:1.21
+    command: make test-go-integration
+    volumes:
+      - ../../:/src
+      - go-cache:/cache
+      - tmp:/tmp
+    working_dir: /src
+    depends_on:
+      minio:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service:
+        condition: service_healthy
+    environment:
+      GOCACHE: /cache/go-build
+      GOMODCACHE: /cache/go-mod
+      FML_SERVICE_URI: http://service:5000
+      FML_DATABASE_URI: ${FML_DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
+      FML_S3_ENDPOINT_URI: http://minio:9000
+      AWS_ACCESS_KEY_ID: "user"
+      AWS_SECRET_ACCESS_KEY: "password"
+
+volumes:
+  go-cache:
+  tmp:

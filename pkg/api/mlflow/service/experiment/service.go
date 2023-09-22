@@ -74,7 +74,7 @@ func (s Service) CreateExperiment(
 	}
 
 	if experiment.ArtifactLocation == "" {
-		path, err := url.JoinPath(s.config.ArtifactRoot, fmt.Sprintf("%d", *experiment.ID))
+		path, err := url.JoinPath(s.config.DefaultArtifactRoot, fmt.Sprintf("%d", *experiment.ID))
 		if err != nil {
 			return nil, api.NewInternalError(
 				"error creating artifact_location for experiment'%s': %s", experiment.Name, err,

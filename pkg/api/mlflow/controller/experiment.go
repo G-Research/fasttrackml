@@ -3,13 +3,12 @@ package controller
 import (
 	"encoding/json"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 )
 
 // CreateExperiment handles `POST /experiments/create` endpoint.

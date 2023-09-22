@@ -8,13 +8,13 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/exp/slices"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"

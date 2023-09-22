@@ -2,9 +2,10 @@ package database
 
 import (
 	"fmt"
+	"slices"
 
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

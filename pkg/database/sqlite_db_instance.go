@@ -7,14 +7,13 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
-	"github.com/rotisserie/eris"
-	"golang.org/x/exp/slices"
-
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/mattn/go-sqlite3"
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"

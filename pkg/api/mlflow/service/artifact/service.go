@@ -11,15 +11,18 @@ import (
 
 // Service provides service layer to work with `artifact` business logic.
 type Service struct {
-	runRepository   repositories.RunRepositoryProvider
-	artifactStorage storage.Provider
+	runRepository          repositories.RunRepositoryProvider
+	artifactStorageFactory storage.ArtifactStorageFactoryProvider
 }
 
 // NewService creates new Service instance.
-func NewService(artifactStorage storage.Provider, runRepository repositories.RunRepositoryProvider) *Service {
+func NewService(
+	runRepository repositories.RunRepositoryProvider,
+	artifactStorageFactory storage.ArtifactStorageFactoryProvider,
+) *Service {
 	return &Service{
-		runRepository:   runRepository,
-		artifactStorage: artifactStorage,
+		runRepository:          runRepository,
+		artifactStorageFactory: artifactStorageFactory,
 	}
 }
 
@@ -36,9 +39,11 @@ func (s Service) ListArtifacts(
 		return "", nil, api.NewInternalError("unable to get artifact URI for run '%s'", req.GetRunID())
 	}
 
-	rootURI, artifacts, err := s.artifactStorage.List(
-		run.ArtifactURI, req.Path,
-	)
+	artifactStorage, err := s.artifactStorageFactory.GetStorage(run.ArtifactURI)
+	if err != nil {
+		return "", nil, api.NewInternalError("run with id '%s' has unsupported artifact storage", run.ID)
+	}
+	rootURI, artifacts, err := artifactStorage.List(run.ArtifactURI, req.Path)
 	if err != nil {
 		return "", nil, api.NewInternalError("error getting artifact list from storage")
 	}

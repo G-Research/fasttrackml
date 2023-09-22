@@ -1,7 +1,9 @@
 package artifact
 
 import (
+	"cmp"
 	"context"
+	"slices"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -47,10 +49,16 @@ func (s Service) ListArtifacts(
 	if err != nil {
 		return "", nil, api.NewInternalError("run with id '%s' has unsupported artifact storage", run.ID)
 	}
-	rootURI, artifacts, err := artifactStorage.List(run.ArtifactURI, req.Path)
+
+	artifacts, err := artifactStorage.List(run.ArtifactURI, req.Path)
 	if err != nil {
 		return "", nil, api.NewInternalError("error getting artifact list from storage")
 	}
 
-	return rootURI, artifacts, nil
+	// sort artifacts by path
+	slices.SortFunc(artifacts, func(a, b storage.ArtifactObject) int {
+		return cmp.Compare(a.Path, b.Path)
+	})
+
+	return run.ArtifactURI, artifacts, nil
 }

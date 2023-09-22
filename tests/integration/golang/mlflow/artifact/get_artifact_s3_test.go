@@ -64,11 +64,11 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 	}{
 		{
 			name:   "TestWithBucket1",
-			bucket: "bucket3",
+			bucket: "bucket1",
 		},
 		{
 			name:   "TestWithBucket2",
-			bucket: "bucket4",
+			bucket: "bucket2",
 		},
 	}
 
@@ -109,11 +109,12 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			// 3. upload artifact object to S3.
-			_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
+			putObjReq := &s3.PutObjectInput{
 				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.file", runID)),
 				Body:   strings.NewReader(`content`),
 				Bucket: aws.String(tt.bucket),
-			})
+			}
+			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
 			assert.Nil(s.T(), err)
 
 			// 4. make actual API call.

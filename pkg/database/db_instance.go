@@ -52,7 +52,7 @@ func (db *DBInstance) GormDB() *gorm.DB {
 }
 
 // createDefaultExperiment will create the default experiment if needed.
-func createDefaultExperiment(artifactRoot string, db DBProvider) error {
+func createDefaultExperiment(defaultArtifactRoot string, db DBProvider) error {
 	if tx := db.GormDB().First(&Experiment{}, 0); tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			log.Info("Creating default experiment")
@@ -75,7 +75,7 @@ func createDefaultExperiment(artifactRoot string, db DBProvider) error {
 				return fmt.Errorf("error creating default experiment: %s", tx.Error)
 			}
 
-			exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(artifactRoot, "/"), *exp.ID)
+			exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(defaultArtifactRoot, "/"), *exp.ID)
 			if tx := db.GormDB().Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation); tx.Error != nil {
 				return fmt.Errorf("error updating artifact_location for experiment '%s': %s", exp.Name, tx.Error)
 			}

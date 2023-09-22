@@ -35,11 +35,11 @@ func NewServiceConfig() *ServiceConfig {
 		AuthUsername:          viper.GetString("auth-username"),
 		AuthPassword:          viper.GetString("auth-password"),
 		S3EndpointURI:         viper.GetString("s3-endpoint-uri"),
-		DefaultArtifactRoot:   viper.GetString("default-artifact-root"),
 		DatabaseURI:           viper.GetString("database-uri"),
 		DatabaseReset:         viper.GetBool("database-reset"),
 		DatabasePoolMax:       viper.GetInt("database-pool-max"),
 		DatabaseMigrate:       viper.GetBool("database-migrate"),
+		DefaultArtifactRoot:   viper.GetString("default-artifact-root"),
 		DatabaseSlowThreshold: viper.GetDuration("database-slow-threshold"),
 	}
 }

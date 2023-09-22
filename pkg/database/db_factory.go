@@ -10,7 +10,7 @@ import (
 
 // MakeDBProvider will create a DbProvider of the correct type from the parameters.
 func MakeDBProvider(
-	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, artifactRoot string,
+	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, defaultArtifactRoot string,
 ) (db DBProvider, err error) {
 	dsnURL, err := url.Parse(dsn)
 	if err != nil {
@@ -55,7 +55,7 @@ func MakeDBProvider(
 		return nil, err
 	}
 
-	if err := createDefaultExperiment(artifactRoot, db); err != nil {
+	if err := createDefaultExperiment(defaultArtifactRoot, db); err != nil {
 		db.Close()
 		return nil, err
 	}

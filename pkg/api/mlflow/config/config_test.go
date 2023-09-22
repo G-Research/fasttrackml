@@ -15,7 +15,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 		expectedConfig *ServiceConfig
 	}{
 		{
-			name: "ArtifactRootHasS3Prefix",
+			name: "DefaultArtifactRootHasS3Prefix",
 			providedConfig: &ServiceConfig{
 				DefaultArtifactRoot: "s3://bucket_name",
 			},
@@ -24,7 +24,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 			},
 		},
 		{
-			name: "ArtifactRootHasFilePrefixAndIsRelative",
+			name: "DefaultArtifactRootHasFilePrefixAndIsRelative",
 			providedConfig: &ServiceConfig{
 				DefaultArtifactRoot: "file://path1/path2/path3",
 			},
@@ -37,7 +37,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 			},
 		},
 		{
-			name: "ArtifactRootHasFilePrefixAndIsAbsolute",
+			name: "DefaultArtifactRootHasFilePrefixAndIsAbsolute",
 			providedConfig: &ServiceConfig{
 				DefaultArtifactRoot: "file:///path1/path2/path3",
 			},
@@ -46,7 +46,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 			},
 		},
 		{
-			name: "ArtifactRootHasEmptyPrefixAndIsAbsolute",
+			name: "DefaultArtifactRootHasEmptyPrefixAndIsAbsolute",
 			providedConfig: &ServiceConfig{
 				DefaultArtifactRoot: "/path1/path2/path3",
 			},
@@ -55,7 +55,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 			},
 		},
 		{
-			name: "ArtifactRootHasEmptyPrefixAndIsRelative",
+			name: "DefaultArtifactRootHasEmptyPrefixAndIsRelative",
 			providedConfig: &ServiceConfig{
 				DefaultArtifactRoot: "path1/path2/path3",
 			},
@@ -84,7 +84,7 @@ func TestServiceConfig_Validate_Error(t *testing.T) {
 		config *ServiceConfig
 	}{
 		{
-			name: "ArtifactRootHasIncorrectFormat",
+			name: "DefaultArtifactRootHasIncorrectFormat",
 			error: eris.New(
 				`error validating service configuration: error parsing 'default-artifact-root' flag: parse "incorrect_format_of_schema://something": first path segment in URL cannot contain colon`,
 			),
@@ -93,7 +93,7 @@ func TestServiceConfig_Validate_Error(t *testing.T) {
 			},
 		},
 		{
-			name:  "ArtifactRootHasUnsupportedSchema",
+			name:  "DefaultArtifactRootHasUnsupportedSchema",
 			error: eris.New("error validating service configuration: unsupported schema of 'default-artifact-root' flag"),
 			config: &ServiceConfig{
 				DefaultArtifactRoot: "unsupported://something",

@@ -102,14 +102,14 @@ func (s *ImportTestSuite) SetupTest() {
 	databasePoolMax := 20
 	databaseReset := false
 	databaseMigrate := false
-	artifactRoot := "./artifacts"
+	defaultArtifactRoot := "./artifacts"
 	input, err := database.MakeDBProvider(
 		helpers.GetInputDatabaseUri(),
 		databaseSlowThreshold,
 		databasePoolMax,
 		databaseReset,
 		databaseMigrate,
-		artifactRoot,
+		defaultArtifactRoot,
 	)
 	assert.Nil(s.T(), err)
 	output, err := database.MakeDBProvider(
@@ -118,7 +118,7 @@ func (s *ImportTestSuite) SetupTest() {
 		databasePoolMax,
 		databaseReset,
 		databaseMigrate,
-		artifactRoot,
+		defaultArtifactRoot,
 	)
 	assert.Nil(s.T(), err)
 

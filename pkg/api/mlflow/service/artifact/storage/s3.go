@@ -61,11 +61,11 @@ func NewS3(config *config.ServiceConfig) (*S3, error) {
 }
 
 // List implements ArtifactStorageProvider interface.
-func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
+func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
 	// 1. create s3 request input.
 	bucket, rootPrefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {
-		return "", nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
+		return nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
 	}
 	input := s3.ListObjectsV2Input{
 		Bucket:    aws.String(bucket),
@@ -75,7 +75,7 @@ func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 	// 2. process search `path` parameter.
 	prefix, err := url.JoinPath(rootPrefix, path)
 	if err != nil {
-		return "", nil, eris.Wrap(err, "error constructing s3 prefix")
+		return nil, eris.Wrap(err, "error constructing s3 prefix")
 	}
 	if prefix != "" {
 		prefix = prefix + "/"
@@ -85,21 +85,21 @@ func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 	// 3. read data from s3 storage.
 	paginator := s3.NewListObjectsV2Paginator(s.client, &input)
 	if err != nil {
-		return "", nil, eris.Wrap(err, "error creating s3 paginated request")
+		return nil, eris.Wrap(err, "error creating s3 paginated request")
 	}
 
 	var artifactList []ArtifactObject
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(context.TODO())
 		if err != nil {
-			return "", nil, eris.Wrap(err, "error getting s3 page objects")
+			return nil, eris.Wrap(err, "error getting s3 page objects")
 		}
 
 		log.Debugf("got %d directories from S3 storage for bucket %q and prefix %q", len(page.CommonPrefixes), bucket, prefix)
 		for _, dir := range page.CommonPrefixes {
 			relPath, err := filepath.Rel(rootPrefix, *dir.Prefix)
 			if err != nil {
-				return "", nil, eris.Wrapf(err, "error getting relative path for dir: %s", *dir.Prefix)
+				return nil, eris.Wrapf(err, "error getting relative path for dir: %s", *dir.Prefix)
 			}
 			artifactList = append(artifactList, ArtifactObject{
 				Path:  relPath,
@@ -112,7 +112,7 @@ func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 		for _, object := range page.Contents {
 			relPath, err := filepath.Rel(rootPrefix, *object.Key)
 			if err != nil {
-				return "", nil, eris.Wrapf(err, "error getting relative path for object: %s", *object.Key)
+				return nil, eris.Wrapf(err, "error getting relative path for object: %s", *object.Key)
 			}
 			artifactList = append(artifactList, ArtifactObject{
 				Path:  relPath,
@@ -122,5 +122,5 @@ func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 		}
 	}
 
-	return artifactURI, artifactList, nil
+	return artifactList, nil
 }

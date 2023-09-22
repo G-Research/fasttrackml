@@ -43,10 +43,10 @@ func (s Service) ListArtifacts(
 	if err != nil {
 		return "", nil, api.NewInternalError("run with id '%s' has unsupported artifact storage", run.ID)
 	}
-	rootURI, artifacts, err := artifactStorage.List(run.ArtifactURI, req.Path)
+	artifacts, err := artifactStorage.List(run.ArtifactURI, req.Path)
 	if err != nil {
 		return "", nil, api.NewInternalError("error getting artifact list from storage")
 	}
 
-	return rootURI, artifacts, nil
+	return run.ArtifactURI, artifacts, nil
 }

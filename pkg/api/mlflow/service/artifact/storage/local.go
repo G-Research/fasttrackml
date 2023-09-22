@@ -32,23 +32,23 @@ func NewLocal(config *config.ServiceConfig) (*Local, error) {
 }
 
 // List implements ArtifactStorageProvider interface.
-func (s Local) List(artifactURI, path string) (string, []ArtifactObject, error) {
+func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
 	// 1. trim the `file://` prefix if it exists.
 	artifactURI = strings.TrimPrefix(artifactURI, "file://")
 
 	// 2. process search `path` parameter.
 	absPath, err := url.JoinPath(artifactURI, path)
 	if err != nil {
-		return "", nil, eris.Wrap(err, "error constructing full path")
+		return nil, eris.Wrap(err, "error constructing full path")
 	}
 
 	// 3. read data from local storage.
 	objects, err := os.ReadDir(absPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return artifactURI, []ArtifactObject{}, nil
+			return []ArtifactObject{}, nil
 		}
-		return "", nil, eris.Wrapf(err, "error reading object from local storage")
+		return nil, eris.Wrapf(err, "error reading object from local storage")
 	}
 
 	log.Debugf("got %d objects from local storage for path %q", len(objects), absPath)
@@ -60,7 +60,7 @@ func (s Local) List(artifactURI, path string) (string, []ArtifactObject, error) 
 				// file has been removed since we read the directory
 				continue
 			}
-			return "", nil, eris.Wrapf(err, "error getting info for object: %s", object.Name())
+			return nil, eris.Wrapf(err, "error getting info for object: %s", object.Name())
 		}
 		artifactList[i] = ArtifactObject{
 			Path:  filepath.Join(path, info.Name()),
@@ -69,5 +69,5 @@ func (s Local) List(artifactURI, path string) (string, []ArtifactObject, error) 
 		}
 	}
 
-	return artifactURI, artifactList, nil
+	return artifactList, nil
 }

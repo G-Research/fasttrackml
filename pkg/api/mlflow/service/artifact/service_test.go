@@ -19,15 +19,14 @@ func TestService_ListArtifacts_Ok(t *testing.T) {
 	artifactStorage.On(
 		"List", "/artifact/uri", "",
 	).Return(
-		"/root/uri/",
 		[]storage.ArtifactObject{
 			{
-				Path:  "/artifact/path1",
+				Path:  "path1",
 				Size:  1234567890,
 				IsDir: false,
 			},
 			{
-				Path:  "/artifact/path2",
+				Path:  "path2",
 				Size:  123456788,
 				IsDir: true,
 			},
@@ -60,15 +59,15 @@ func TestService_ListArtifacts_Ok(t *testing.T) {
 	)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "/root/uri/", rootURI)
+	assert.Equal(t, "/artifact/uri", rootURI)
 	assert.Equal(t, []storage.ArtifactObject{
 		{
-			Path:  "/artifact/path1",
+			Path:  "path1",
 			Size:  1234567890,
 			IsDir: false,
 		},
 		{
-			Path:  "/artifact/path2",
+			Path:  "path2",
 			Size:  123456788,
 			IsDir: true,
 		},
@@ -137,7 +136,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 				artifactStorage.On(
 					"List", "/artifact/uri", "",
 				).Return(
-					"", nil, errors.New("storage error"),
+					nil, errors.New("storage error"),
 				)
 
 				artifactStorageFactory := storage.MockArtifactStorageFactoryProvider{}

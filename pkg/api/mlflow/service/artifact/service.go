@@ -3,6 +3,7 @@ package artifact
 import (
 	"cmp"
 	"context"
+	"io"
 	"slices"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -74,8 +75,12 @@ func (s Service) GetArtifact(
 	if run == nil {
 		return nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.GetRunID())
 	}
+	artifactStorage, err := s.artifactStorageFactory.GetStorage(run.ArtifactURI)
+	if err != nil {
+		return nil, api.NewInternalError("run with id '%s' has unsupported artifact storage", run.ID)
+	}
 
-	artifactReader, err := s.artifactStorage.GetArtifact(
+	artifactReader, err := artifactStorage.GetArtifact(
 		run.ArtifactURI, req.Path,
 	)
 	if err != nil {

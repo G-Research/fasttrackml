@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	io "io"
 	"net/url"
 	"path/filepath"
 
@@ -123,19 +124,17 @@ func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
 }
 
 // GetArtifact will return actual item in the storage location
-func (s S3) GetArtifact(runArtifactURI, itemPath string) (io.ReadCloser, error) {
-	bucketName, prefix, err := ExtractS3BucketAndPrefix(runArtifactURI)
+func (s S3) GetArtifact(artifactURI, itemPath string) (io.ReadCloser, error) {
+	bucketName, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {
 		return nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
 	}
 
-	// Create a GetObjectInput with the bucket name and object key
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(filepath.Join(prefix, itemPath)),
 	}
 
-	// Fetch the object from S3
 	resp, err := s.client.GetObject(context.TODO(), input)
 	if err != nil {
 		return nil, err

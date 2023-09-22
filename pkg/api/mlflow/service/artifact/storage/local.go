@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	io "io"
 	"io/fs"
 	"net/url"
 	"os"
@@ -70,9 +71,10 @@ func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
 	return artifactList, nil
 }
 
-// GetArtifact will return actual item URI in the storage location
-func (s Local) GetArtifact(runArtifactURI, itemPath string) (io.ReadCloser, error) {
-	path, err := url.JoinPath(s.config.ArtifactRoot, runArtifactURI, itemPath)
+// GetArtifact will return actual item URI in the storage location.
+func (s Local) GetArtifact(artifactURI, itemPath string) (io.ReadCloser, error) {
+	artifactURI = strings.TrimPrefix(artifactURI, "file://")
+	path, err := url.JoinPath(artifactURI, itemPath)
 	if err != nil {
 		return nil, eris.Wrap(err, "error constructing full path")
 	}

@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"io/fs"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,31 +14,31 @@ import (
 // TestGetArtifact for the local storage implementation.
 func TestGetArtifact_Ok(t *testing.T) {
 	// setup
-	serviceArtifactRoot := "/tmp"
+	defaultArtifactRoot := t.TempDir()
 	runArtifactRoot := "/run-artifact-root/"
 	fileName := "file.txt"
+	fileContent := "artifact content"
 
-	err := os.MkdirAll(serviceArtifactRoot+runArtifactRoot, os.ModePerm)
+	err := os.MkdirAll(filepath.Join(defaultArtifactRoot, runArtifactRoot), os.ModePerm)
 	assert.Nil(t, err)
 
-	f, err := os.Create(serviceArtifactRoot + runArtifactRoot + fileName)
+	f, err := os.Create(filepath.Join(defaultArtifactRoot, runArtifactRoot, fileName))
 	assert.Nil(t, err)
-	_, err = f.Write([]byte("artifact here"))
+	_, err = f.Write([]byte(fileContent))
 	assert.Nil(t, err)
 
 	// invoke
 	svcConfig := &config.ServiceConfig{
-		ArtifactRoot: serviceArtifactRoot,
+		DefaultArtifactRoot: defaultArtifactRoot,
 	}
 	svc, err := NewLocal(svcConfig)
 	assert.Nil(t, err)
 
-	file, err := svc.GetArtifact(runArtifactRoot, fileName)
+	file, err := svc.GetArtifact(filepath.Join(defaultArtifactRoot, runArtifactRoot), fileName)
 	assert.Nil(t, err)
 	defer func() {
 		file.Close()
 		os.Remove(f.Name())
-		os.Remove(serviceArtifactRoot + runArtifactRoot)
 	}()
 
 	// verify
@@ -45,41 +47,42 @@ func TestGetArtifact_Ok(t *testing.T) {
 	ln, err := file.Read(p)
 	assert.Nil(t, err)
 
-	assert.Equal(t, "artifact here", string(p[:ln]))
+	assert.Equal(t, fileContent, string(p[:ln]))
 }
 
 func TestGetArtifact_Error(t *testing.T) {
 	// setup
-	serviceArtifactRoot := "/tmp"
+	defaultArtifactRoot := t.TempDir()
 	runArtifactRoot := "/run-artifact-root/"
 	fileName := "file.txt"
+	fileContent := "artifact content"
 
-	err := os.MkdirAll(serviceArtifactRoot+runArtifactRoot, os.ModePerm)
+	err := os.MkdirAll(filepath.Join(defaultArtifactRoot, runArtifactRoot), os.ModePerm)
 	assert.Nil(t, err)
 
-	f, err := os.Create(serviceArtifactRoot + runArtifactRoot + fileName)
+	f, err := os.Create(filepath.Join(defaultArtifactRoot, runArtifactRoot, fileName))
 	assert.Nil(t, err)
-	_, err = f.Write([]byte("artifact here"))
+	_, err = f.Write([]byte(fileContent))
 	assert.Nil(t, err)
 
 	// invoke
 	svcConfig := &config.ServiceConfig{
-		ArtifactRoot: serviceArtifactRoot,
+		DefaultArtifactRoot: defaultArtifactRoot,
 	}
 	svc, err := NewLocal(svcConfig)
 	assert.Nil(t, err)
 
-	file, err := svc.GetArtifact(runArtifactRoot, "some-other-item")
+	file, err := svc.GetArtifact(filepath.Join(defaultArtifactRoot, runArtifactRoot), "some-other-item")
 	assert.NotNil(t, err)
 	defer func() {
 		file.Close()
 		os.Remove(f.Name())
-		os.Remove(serviceArtifactRoot + runArtifactRoot)
 	}()
 
 	// verify
 	assert.Nil(t, file)
 	assert.NotNil(t, err)
+}
 
 func TestLocal_ListArtifacts_Ok(t *testing.T) {
 	testData := []struct {

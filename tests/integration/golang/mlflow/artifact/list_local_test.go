@@ -132,13 +132,18 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 
 			assert.Equal(s.T(), run.ArtifactURI, rootDirResp.RootURI)
 			assert.Equal(s.T(), 2, len(rootDirResp.Files))
-			assert.Equal(s.T(), "artifact.dir", rootDirResp.Files[0].Path)
-			assert.Equal(s.T(), true, rootDirResp.Files[0].IsDir)
-			assert.Equal(s.T(), response.FilePartialResponse{
-				Path:     "artifact.file1",
-				IsDir:    false,
-				FileSize: 8,
-			}, rootDirResp.Files[1])
+			assert.Equal(s.T(), []response.FilePartialResponse{
+				{
+					Path:     "artifact.dir",
+					IsDir:    true,
+					FileSize: 0,
+				},
+				{
+					Path:     "artifact.file1",
+					IsDir:    false,
+					FileSize: 8,
+				},
+			}, rootDirResp.Files)
 			assert.Nil(s.T(), err)
 
 			// 5. make actual API call for sub dir.

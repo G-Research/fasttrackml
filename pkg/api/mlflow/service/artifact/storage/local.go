@@ -60,8 +60,10 @@ func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
 		}
 		artifactList[i] = ArtifactObject{
 			Path:  filepath.Join(path, info.Name()),
-			Size:  info.Size(),
 			IsDir: object.IsDir(),
+		}
+		if !object.IsDir() {
+			artifactList[i].Size = info.Size()
 		}
 	}
 

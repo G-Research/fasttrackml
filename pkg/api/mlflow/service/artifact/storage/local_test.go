@@ -44,13 +44,18 @@ func TestLocal_ListArtifacts_Ok(t *testing.T) {
 			// 3. list artifacts for root dir.
 			rootDirResp, err := storage.List(runArtifactURI, "")
 			assert.Equal(t, 2, len(rootDirResp))
-			assert.Equal(t, "artifact.dir", rootDirResp[0].Path)
-			assert.Equal(t, true, rootDirResp[0].IsDir)
-			assert.Equal(t, ArtifactObject{
-				Path:  "artifact.file1",
-				IsDir: false,
-				Size:  8,
-			}, rootDirResp[1])
+			assert.Equal(t, []ArtifactObject{
+				{
+					Path:  "artifact.dir",
+					IsDir: true,
+					Size:  0,
+				},
+				{
+					Path:  "artifact.file1",
+					IsDir: false,
+					Size:  8,
+				},
+			}, rootDirResp)
 			assert.Nil(t, err)
 
 			// 4. list artifacts for sub dir.

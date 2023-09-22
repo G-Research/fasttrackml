@@ -18,12 +18,12 @@ type ServiceConfig struct {
 	ListenAddress         string
 	AuthUsername          string
 	AuthPassword          string
-	DefaultArtifactRoot   string
 	S3EndpointURI         string
 	DatabaseURI           string
 	DatabaseReset         bool
 	DatabasePoolMax       int
 	DatabaseMigrate       bool
+	DefaultArtifactRoot   string
 	DatabaseSlowThreshold time.Duration
 }
 

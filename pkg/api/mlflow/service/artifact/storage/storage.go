@@ -32,13 +32,13 @@ func (o ArtifactObject) IsDirectory() bool {
 	return o.IsDir
 }
 
-// ArtifactStorageProvider provides and interface to work with artifact storage.
+// ArtifactStorageProvider provides an interface to work with artifact storage.
 type ArtifactStorageProvider interface {
-	List(runArtifactURI, path string) ([]ArtifactObject, error)
-	GetArtifact(runArtifactURI, path string) (io.ReadCloser, error)
+	List(artifactURI, path string) ([]ArtifactObject, error)
+	GetArtifact(artifactURI, path string) (io.ReadCloser, error)
 }
 
-// ArtifactStorageFactoryProvider provides an interface to work with Artifact Storage.
+// ArtifactStorageFactoryProvider provides an interface provider to work with Artifact Storage.
 type ArtifactStorageFactoryProvider interface {
 	// GetStorage returns Artifact storage based on provided runArtifactPath.
 	GetStorage(runArtifactPath string) (ArtifactStorageProvider, error)

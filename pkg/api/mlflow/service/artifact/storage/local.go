@@ -71,7 +71,7 @@ func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
 	return artifactList, nil
 }
 
-// GetArtifact will return actual item URI in the storage location.
+// GetArtifact returns actual file content at the storage location.
 func (s Local) GetArtifact(artifactURI, itemPath string) (io.ReadCloser, error) {
 	artifactURI = strings.TrimPrefix(artifactURI, "file://")
 	path, err := url.JoinPath(artifactURI, itemPath)

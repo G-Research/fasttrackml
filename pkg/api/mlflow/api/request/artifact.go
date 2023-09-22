@@ -7,7 +7,7 @@ type ListArtifactsRequest struct {
 	RunUUID string `query:"run_uuid"`
 }
 
-// GetArtifactRequest is for linking to individual artifact item
+// GetArtifactRequest is for retrieving an individual artifact item.
 type GetArtifactRequest struct {
 	Path    string `query:"path"`
 	RunID   string `query:"run_id"`
@@ -22,7 +22,7 @@ func (r ListArtifactsRequest) GetRunID() string {
 	return r.RunUUID
 }
 
-// GetRunID returns Run ID.
+// GetRunID returns RunID if available, otherwise RunUUID.
 func (r GetArtifactRequest) GetRunID() string {
 	if r.RunID != "" {
 		return r.RunID

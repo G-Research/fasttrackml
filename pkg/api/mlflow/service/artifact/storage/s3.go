@@ -123,7 +123,7 @@ func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
 	return artifactList, nil
 }
 
-// GetArtifact will return actual item in the storage location
+// GetArtifact returns file content at the storage location.
 func (s S3) GetArtifact(artifactURI, itemPath string) (io.ReadCloser, error) {
 	bucketName, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {

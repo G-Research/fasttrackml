@@ -14,20 +14,15 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/G-Research/fasttrackml/pkg/api/admin"
-	adminController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
-	adminRepositories "github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
-	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
-	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
@@ -35,7 +30,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
-	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
@@ -64,55 +58,45 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	defer db.Close()
 
 	// 3. init main HTTP server.
-	namespaceRepository := adminRepositories.NewNamespaceRepository(db.GormDB())
-	server := initServer(mlflowConfig, namespaceRepository)
+	server := initServer(mlflowConfig)
 
 	// 4. init `aim` api and ui routes.
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
 	aimUI.AddRoutes(server)
 
-	storage, err := storage.NewArtifactStorage(mlflowConfig)
+	artifactStorageFactory, err := storage.NewArtifactStorageFactory(mlflowConfig)
 	if err != nil {
-		return eris.Wrap(err, "error initializing artifact storage")
+		return err
 	}
 
 	// 5. init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
-		mlflowController.NewController(
+		controller.NewController(
 			run.NewService(
-				mlflowRepositories.NewTagRepository(db.GormDB()),
-				mlflowRepositories.NewRunRepository(db.GormDB()),
-				mlflowRepositories.NewParamRepository(db.GormDB()),
-				mlflowRepositories.NewMetricRepository(db.GormDB()),
-				mlflowRepositories.NewExperimentRepository(db.GormDB()),
+				repositories.NewTagRepository(db.GormDB()),
+				repositories.NewRunRepository(db.GormDB()),
+				repositories.NewParamRepository(db.GormDB()),
+				repositories.NewMetricRepository(db.GormDB()),
+				repositories.NewExperimentRepository(db.GormDB()),
 			),
 			model.NewService(),
 			metric.NewService(
-				mlflowRepositories.NewRunRepository(db.GormDB()),
-				mlflowRepositories.NewMetricRepository(db.GormDB()),
+				repositories.NewMetricRepository(db.GormDB()),
 			),
 			artifact.NewService(
-				storage,
-				mlflowRepositories.NewRunRepository(db.GormDB()),
+				repositories.NewRunRepository(db.GormDB()),
+				artifactStorageFactory,
 			),
 			experiment.NewService(
 				mlflowConfig,
-				mlflowRepositories.NewTagRepository(db.GormDB()),
-				mlflowRepositories.NewExperimentRepository(db.GormDB()),
+				repositories.NewTagRepository(db.GormDB()),
+				repositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
 	).Init(server)
 	mlflowUI.AddRoutes(server)
-
-	// 6. init `admin` api routes.
-	admin.NewRouter(
-		adminController.NewController(
-			namespace.NewService(namespaceRepository),
-		),
-	).Init(server)
-
-	// 7. init `chooser` ui routes.
+	// TODO:DSuhinin we have to move it.
 	chooser.AddRoutes(server)
 
 	isRunning := make(chan struct{})
@@ -140,38 +124,24 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 // initDB init DB connection.
 func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
-	db, err := database.NewDBProvider(
+	db, err := database.MakeDBProvider(
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
 		config.DatabasePoolMax,
 		config.DatabaseReset,
+		config.DatabaseMigrate,
+		config.DefaultArtifactRoot,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to DB: %w", err)
 	}
-
-	if err := database.CheckAndMigrateDB(config.DatabaseMigrate, db.GormDB()); err != nil {
-		return nil, eris.Wrap(err, "error running database migration")
-	}
-
-	if err := database.CreateDefaultNamespace(db.GormDB()); err != nil {
-		return nil, eris.Wrap(err, "error creating default namespace")
-	}
-
-	if err := database.CreateDefaultExperiment(db.GormDB(), config.ArtifactRoot); err != nil {
-		return nil, eris.Wrap(err, "error creating default experiment")
-	}
-
 	// cache a global reference to the gorm.DB
 	database.DB = db.GormDB()
 	return db, nil
 }
 
 // initServer init HTTP server with base configuration.
-func initServer(
-	config *mlflowConfig.ServiceConfig,
-	namespaceRepository adminRepositories.NamespaceRepositoryProvider,
-) *fiber.App {
+func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 	server := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
 		ReadBufferSize:        16384,
@@ -222,7 +192,6 @@ func initServer(
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
-	server.Use(namespaceMiddleware.New(namespaceRepository))
 
 	server.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")
@@ -238,7 +207,7 @@ func init() {
 	RootCmd.AddCommand(ServerCmd)
 
 	ServerCmd.Flags().StringP("listen-address", "a", "localhost:5000", "Address (host:post) to listen to")
-	ServerCmd.Flags().String("artifact-root", "./artifacts", "Artifact root")
+	ServerCmd.Flags().String("default-artifact-root", "./artifacts", "Default artifact root")
 	ServerCmd.Flags().String("s3-endpoint-uri", "", "S3 compatible storage base endpoint url")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")

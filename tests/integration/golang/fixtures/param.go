@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/rotisserie/eris"
-	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
@@ -15,9 +14,13 @@ type ParamFixtures struct {
 }
 
 // NewParamFixtures creates new instance of ParamFixtures.
-func NewParamFixtures(db *gorm.DB) (*ParamFixtures, error) {
+func NewParamFixtures(databaseDSN string) (*ParamFixtures, error) {
+	db, err := CreateDB(databaseDSN)
+	if err != nil {
+		return nil, err
+	}
 	return &ParamFixtures{
-		baseFixtures: baseFixtures{db: db},
+		baseFixtures: baseFixtures{db: db.GormDB()},
 	}, nil
 }
 

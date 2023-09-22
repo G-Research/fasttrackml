@@ -18,16 +18,10 @@ import (
 )
 
 func TestService_CreateExperiment_Ok(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	// init repository mocks.
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 	experimentRepository.On(
-		"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
+		"GetByName", context.TODO(), "name",
 	).Return(nil, nil)
 	experimentRepository.On(
 		"Create", context.TODO(), mock.Anything,
@@ -39,7 +33,7 @@ func TestService_CreateExperiment_Ok(t *testing.T) {
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
-	experiment, err := service.CreateExperiment(context.TODO(), &ns, &request.CreateExperimentRequest{
+	experiment, err := service.CreateExperiment(context.TODO(), &request.CreateExperimentRequest{
 		Name: "name",
 		Tags: []request.ExperimentTagPartialRequest{
 			{
@@ -66,12 +60,6 @@ func TestService_CreateExperiment_Ok(t *testing.T) {
 }
 
 func TestService_CreateExperiment_Error(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -102,7 +90,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
+					"GetByName", context.TODO(), "name",
 				).Return(nil, nil)
 				return NewService(
 					&config.ServiceConfig{},
@@ -120,7 +108,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
+					"GetByName", context.TODO(), "name",
 				).Return(nil, errors.New("database error"))
 				return NewService(
 					&config.ServiceConfig{},
@@ -138,7 +126,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
+					"GetByName", context.TODO(), "name",
 				).Return(&models.Experiment{}, nil)
 				return NewService(
 					&config.ServiceConfig{},
@@ -156,7 +144,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
+					"GetByName", context.TODO(), "name",
 				).Return(nil, nil)
 				experimentRepository.On(
 					"Create", context.TODO(), mock.Anything,
@@ -177,7 +165,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
+					"GetByName", context.TODO(), "name",
 				).Return(nil, nil)
 				experimentRepository.On(
 					"Create",
@@ -202,23 +190,17 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, err := tt.service().CreateExperiment(context.TODO(), &ns, tt.request)
+			_, err := tt.service().CreateExperiment(context.TODO(), tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
 }
 
 func TestService_DeleteExperiment_Ok(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	// init repository mocks.
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 	experimentRepository.On(
-		"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+		"GetByID", context.TODO(), int32(1),
 	).Return(&models.Experiment{
 		ID: common.GetPointer(int32(1)),
 	}, nil)
@@ -238,7 +220,7 @@ func TestService_DeleteExperiment_Ok(t *testing.T) {
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
-	err := service.DeleteExperiment(context.TODO(), &ns, &request.DeleteExperimentRequest{
+	err := service.DeleteExperiment(context.TODO(), &request.DeleteExperimentRequest{
 		ID: "1",
 	})
 
@@ -247,12 +229,6 @@ func TestService_DeleteExperiment_Ok(t *testing.T) {
 }
 
 func TestService_DeleteExperiment_Error(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -296,7 +272,7 @@ func TestService_DeleteExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+					"GetByID", context.TODO(), int32(1),
 				).Return(nil, errors.New("experiment not found"))
 				return NewService(
 					&config.ServiceConfig{},
@@ -314,7 +290,7 @@ func TestService_DeleteExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+					"GetByID", context.TODO(), int32(1),
 				).Return(&models.Experiment{
 					ID: common.GetPointer(int32(1)),
 				}, nil)
@@ -333,22 +309,16 @@ func TestService_DeleteExperiment_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			assert.Equal(t, tt.error, tt.service().DeleteExperiment(context.TODO(), &ns, tt.request))
+			assert.Equal(t, tt.error, tt.service().DeleteExperiment(context.TODO(), tt.request))
 		})
 	}
 }
 
 func TestService_GetExperiment_Ok(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	// init repository mocks.
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 	experimentRepository.On(
-		"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+		"GetByID", context.TODO(), int32(1),
 	).Return(&models.Experiment{
 		ID:   common.GetPointer(int32(1)),
 		Name: "name",
@@ -375,7 +345,7 @@ func TestService_GetExperiment_Ok(t *testing.T) {
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
-	experiment, err := service.GetExperiment(context.TODO(), &ns, &request.GetExperimentRequest{
+	experiment, err := service.GetExperiment(context.TODO(), &request.GetExperimentRequest{
 		ID: "1",
 	})
 
@@ -401,12 +371,6 @@ func TestService_GetExperiment_Ok(t *testing.T) {
 }
 
 func TestService_GetExperiment_Error(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -450,7 +414,7 @@ func TestService_GetExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+					"GetByID", context.TODO(), int32(1),
 				).Return(nil, errors.New("experiment not found"))
 				return NewService(
 					&config.ServiceConfig{},
@@ -464,23 +428,17 @@ func TestService_GetExperiment_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, err := tt.service().GetExperiment(context.TODO(), &ns, tt.request)
+			_, err := tt.service().GetExperiment(context.TODO(), tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
 }
 
 func TestService_GetExperimentByName_Ok(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	// init repository mocks.
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 	experimentRepository.On(
-		"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
+		"GetByName", context.TODO(), "name",
 	).Return(&models.Experiment{
 		ID:   common.GetPointer(int32(1)),
 		Name: "name",
@@ -507,13 +465,9 @@ func TestService_GetExperimentByName_Ok(t *testing.T) {
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
-	experiment, err := service.GetExperimentByName(
-		context.TODO(),
-		&ns,
-		&request.GetExperimentRequest{
-			Name: "name",
-		},
-	)
+	experiment, err := service.GetExperimentByName(context.TODO(), &request.GetExperimentRequest{
+		Name: "name",
+	})
 
 	// compare results.
 	assert.Nil(t, err)
@@ -537,12 +491,6 @@ func TestService_GetExperimentByName_Ok(t *testing.T) {
 }
 
 func TestService_GetExperimentByName_Error(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -570,7 +518,7 @@ func TestService_GetExperimentByName_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
+					"GetByName", context.TODO(), "name",
 				).Return(nil, errors.New("database error"))
 				return NewService(
 					&config.ServiceConfig{},
@@ -588,7 +536,7 @@ func TestService_GetExperimentByName_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
+					"GetByName", context.TODO(), "name",
 				).Return(nil, nil)
 				return NewService(
 					&config.ServiceConfig{},
@@ -602,23 +550,17 @@ func TestService_GetExperimentByName_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, err := tt.service().GetExperimentByName(context.TODO(), &ns, tt.request)
+			_, err := tt.service().GetExperimentByName(context.TODO(), tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
 }
 
 func TestService_RestoreExperiment_Ok(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	// init repository mocks.
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 	experimentRepository.On(
-		"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+		"GetByID", context.TODO(), int32(1),
 	).Return(&models.Experiment{
 		ID: common.GetPointer(int32(1)),
 	}, nil)
@@ -638,7 +580,7 @@ func TestService_RestoreExperiment_Ok(t *testing.T) {
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
-	err := service.RestoreExperiment(context.TODO(), &ns, &request.RestoreExperimentRequest{
+	err := service.RestoreExperiment(context.TODO(), &request.RestoreExperimentRequest{
 		ID: "1",
 	})
 
@@ -647,12 +589,6 @@ func TestService_RestoreExperiment_Ok(t *testing.T) {
 }
 
 func TestService_RestoreExperiment_Error(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -696,7 +632,7 @@ func TestService_RestoreExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+					"GetByID", context.TODO(), int32(1),
 				).Return(nil, errors.New("experiment not found"))
 				return NewService(
 					&config.ServiceConfig{},
@@ -714,7 +650,7 @@ func TestService_RestoreExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+					"GetByID", context.TODO(), int32(1),
 				).Return(&models.Experiment{
 					ID: common.GetPointer(int32(1)),
 				}, nil)
@@ -733,22 +669,16 @@ func TestService_RestoreExperiment_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			assert.Equal(t, tt.error, tt.service().RestoreExperiment(context.TODO(), &ns, tt.request))
+			assert.Equal(t, tt.error, tt.service().RestoreExperiment(context.TODO(), tt.request))
 		})
 	}
 }
 
 func TestService_SetExperimentTag_Ok(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	// init repository mocks.
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 	experimentRepository.On(
-		"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+		"GetByID", context.TODO(), int32(1),
 	).Return(&models.Experiment{
 		ID: common.GetPointer(int32(1)),
 	}, nil)
@@ -770,7 +700,7 @@ func TestService_SetExperimentTag_Ok(t *testing.T) {
 		&tagsRepository,
 		&experimentRepository,
 	)
-	err := service.SetExperimentTag(context.TODO(), &ns, &request.SetExperimentTagRequest{
+	err := service.SetExperimentTag(context.TODO(), &request.SetExperimentTagRequest{
 		ID:    "1",
 		Key:   "key",
 		Value: "value",
@@ -781,12 +711,6 @@ func TestService_SetExperimentTag_Ok(t *testing.T) {
 }
 
 func TestService_SetExperimentTag_Error(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -846,7 +770,7 @@ func TestService_SetExperimentTag_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+					"GetByID", context.TODO(), int32(1),
 				).Return(nil, errors.New("experiment not found"))
 				return NewService(
 					&config.ServiceConfig{},
@@ -865,7 +789,7 @@ func TestService_SetExperimentTag_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+					"GetByID", context.TODO(), int32(1),
 				).Return(&models.Experiment{
 					ID: common.GetPointer(int32(1)),
 				}, nil)
@@ -888,22 +812,16 @@ func TestService_SetExperimentTag_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			assert.Equal(t, tt.error, tt.service().SetExperimentTag(context.TODO(), &ns, tt.request))
+			assert.Equal(t, tt.error, tt.service().SetExperimentTag(context.TODO(), tt.request))
 		})
 	}
 }
 
 func TestService_UpdateExperiment_Ok(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	// init repository mocks.
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 	experimentRepository.On(
-		"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+		"GetByID", context.TODO(), int32(1),
 	).Return(&models.Experiment{
 		ID: common.GetPointer(int32(1)),
 	}, nil)
@@ -923,7 +841,7 @@ func TestService_UpdateExperiment_Ok(t *testing.T) {
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
-	err := service.UpdateExperiment(context.TODO(), &ns, &request.UpdateExperimentRequest{
+	err := service.UpdateExperiment(context.TODO(), &request.UpdateExperimentRequest{
 		ID:   "1",
 		Name: "name",
 	})
@@ -933,12 +851,6 @@ func TestService_UpdateExperiment_Ok(t *testing.T) {
 }
 
 func TestService_UpdateExperiment_Error(t *testing.T) {
-	// initialise namespace to which experiment under the test belongs to.
-	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
-	}
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -998,7 +910,7 @@ func TestService_UpdateExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+					"GetByID", context.TODO(), int32(1),
 				).Return(nil, errors.New("experiment not found"))
 				return NewService(
 					&config.ServiceConfig{},
@@ -1017,7 +929,7 @@ func TestService_UpdateExperiment_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
+					"GetByID", context.TODO(), int32(1),
 				).Return(&models.Experiment{
 					ID: common.GetPointer(int32(1)),
 				}, nil)
@@ -1036,7 +948,7 @@ func TestService_UpdateExperiment_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			assert.Equal(t, tt.error, tt.service().UpdateExperiment(context.TODO(), &ns, tt.request))
+			assert.Equal(t, tt.error, tt.service().UpdateExperiment(context.TODO(), tt.request))
 		})
 	}
 }

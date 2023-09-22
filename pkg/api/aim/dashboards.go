@@ -5,27 +5,16 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetDashboards(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("getDashboards namespace: %s", ns.Code)
-
 	var dashboards []database.Dashboard
 	if err := database.DB.
-		Preload("App").
-		Joins("LEFT JOIN apps ON apps.id = dashboards.app_id").
 		Where("NOT dashboards.is_archived").
-		Where("apps.namespace_id = ?", ns.ID).
+		Joins("App", database.DB.Select("ID", "Type", "IsArchived")).
 		Order("dashboards.updated_at").
 		Find(&dashboards).
 		Error; err != nil {
@@ -36,12 +25,6 @@ func GetDashboards(c *fiber.Ctx) error {
 }
 
 func CreateDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("createDashboard namespace: %s", ns.Code)
-
 	var d struct {
 		AppID       uuid.UUID `json:"app_id"`
 		Name        string
@@ -56,7 +39,6 @@ func CreateDashboard(c *fiber.Ctx) error {
 		Base: database.Base{
 			ID: d.AppID,
 		},
-		NamespaceID: ns.ID,
 	}
 	if err := database.DB.
 		Select("ID", "Type").
@@ -86,12 +68,6 @@ func CreateDashboard(c *fiber.Ctx) error {
 }
 
 func GetDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("getDashboard namespace: %s", ns.Code)
-
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}
@@ -100,17 +76,15 @@ func GetDashboard(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	dashboard := database.Dashboard{
+	dash := database.Dashboard{
 		Base: database.Base{
 			ID: p.ID,
 		},
 	}
 	if err := database.DB.
 		Where("NOT dashboards.is_archived").
-		Preload("App").
-		Joins("LEFT JOIN apps ON apps.id = dashboards.app_id").
-		Where("apps.namespace_id = ?", ns.ID).
-		First(&dashboard).
+		Joins("App", database.DB.Select("ID", "Type", "IsArchived")).
+		First(&dash).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return fiber.ErrNotFound
@@ -118,16 +92,10 @@ func GetDashboard(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find dashboard %q: %s", p.ID, err))
 	}
 
-	return c.JSON(dashboard)
+	return c.JSON(dash)
 }
 
 func UpdateDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("updateDashboard namespace: %s", ns.Code)
-
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}
@@ -151,9 +119,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 		},
 	}
 	if err := database.DB.
-		Joins("LEFT JOIN apps ON dashboards.app_id = apps.id").
-		Where("NOT dashboards.is_archived").
-		Where("apps.namespace_id = ?", ns.ID).
+		Where("NOT is_archived").
 		First(&dash).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -176,12 +142,6 @@ func UpdateDashboard(c *fiber.Ctx) error {
 }
 
 func DeleteDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("deleteDashboard namespace: %s", ns.Code)
-
 	p := struct {
 		ID uuid.UUID `params:"id"`
 	}{}
@@ -196,10 +156,8 @@ func DeleteDashboard(c *fiber.Ctx) error {
 		},
 	}
 	if err := database.DB.
-		Select("dashboards.id").
-		Joins("LEFT JOIN apps ON dashboards.app_id = apps.id").
-		Where("NOT dashboards.is_archived").
-		Where("apps.namespace_id = ?", ns.ID).
+		Select("ID").
+		Where("NOT is_archived").
 		First(&dash).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {

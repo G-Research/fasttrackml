@@ -13,15 +13,18 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetRunMetricsTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
-	run *models.Run
+	client             *helpers.HttpClient
+	runFixtures        *fixtures.RunFixtures
+	experimentFixtures *fixtures.ExperimentFixtures
+	metricFixtures     *fixtures.MetricFixtures
+	run                *models.Run
 }
 
 func TestGetRunMetricsTestSuite(t *testing.T) {
@@ -29,29 +32,34 @@ func TestGetRunMetricsTestSuite(t *testing.T) {
 }
 
 func (s *GetRunMetricsTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
 
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
+	s.runFixtures = runFixtures
 
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = expFixtures
+
+	metricFixtures, err := fixtures.NewMetricFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.metricFixtures = metricFixtures
+
+	exp := &models.Experiment{
 		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
-	})
+	}
+	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), experiment)
+	s.run, err = s.runFixtures.CreateExampleRun(context.Background(), exp)
 	assert.Nil(s.T(), err)
 }
 
 func (s *GetRunMetricsTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string
@@ -91,7 +99,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.GetRunMetrics
-			err := s.AIMClient.DoPostRequest(
+			err := s.client.DoPostRequest(
 				fmt.Sprintf("/runs/%s/metric/get-batch", tt.runID),
 				tt.request,
 				&resp,
@@ -104,7 +112,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 
 func (s *GetRunMetricsTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name  string
@@ -120,7 +128,7 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoGetRequest(
+			err := s.client.DoGetRequest(
 				fmt.Sprintf("/runs/%s/metric/get-batch", tt.runID),
 				&resp,
 			)

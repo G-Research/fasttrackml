@@ -6,24 +6,14 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetExperiments(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("getExperiments namespace: %s", ns.Code)
-
 	var experiments []struct {
 		database.Experiment
 		RunCount int
@@ -36,7 +26,6 @@ func GetExperiments(c *fiber.Ctx) error {
 			"experiments.creation_time",
 			"COUNT(runs.run_uuid) AS run_count",
 		).
-		Where("experiments.namespace_id = ?", ns.ID).
 		Where("experiments.lifecycle_stage = ?", database.LifecycleStageActive).
 		Joins("LEFT JOIN runs USING(experiment_id)").
 		Group("experiments.experiment_id").
@@ -60,17 +49,11 @@ func GetExperiments(c *fiber.Ctx) error {
 }
 
 func GetExperiment(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("getExperiment namespace: %s", ns.Code)
-
 	p := struct {
 		ID string `params:"id"`
 	}{}
 
-	if err = c.ParamsParser(&p); err != nil {
+	if err := c.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -78,10 +61,10 @@ func GetExperiment(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("unable to parse experiment id %q: %s", p.ID, err))
 	}
+	id32 := int32(id)
 
 	if tx := database.DB.Select("ID").First(&database.Experiment{
-		ID:          common.GetPointer(int32(id)),
-		NamespaceID: ns.ID,
+		ID: &id32,
 	}); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
 			return fiber.ErrNotFound
@@ -103,7 +86,6 @@ func GetExperiment(c *fiber.Ctx) error {
 		).
 		Joins("LEFT JOIN runs USING(experiment_id)").
 		Group("experiments.experiment_id").
-		Where("experiments.namespace_id = ?", ns.ID).
 		Where("experiments.experiment_id = ?", id).
 		First(&exp); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
@@ -123,18 +105,12 @@ func GetExperiment(c *fiber.Ctx) error {
 }
 
 func GetExperimentRuns(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("getExperimentRuns namespace: %s", ns.Code)
-
 	q := struct {
 		Limit  int    `query:"limit"`
 		Offset string `query:"offset"`
 	}{}
 
-	if err = c.QueryParser(&q); err != nil {
+	if err := c.QueryParser(&q); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -142,7 +118,7 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 		ID string `params:"id"`
 	}{}
 
-	if err = c.ParamsParser(&p); err != nil {
+	if err := c.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -150,10 +126,10 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("unable to parse experiment id %q: %s", p.ID, err))
 	}
+	id32 := int32(id)
 
 	if tx := database.DB.Select("ID").First(&database.Experiment{
-		ID:          common.GetPointer(int32(id)),
-		NamespaceID: ns.ID,
+		ID: &id32,
 	}); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
 			return fiber.ErrNotFound
@@ -173,8 +149,8 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 		run := &database.Run{
 			ID: q.Offset,
 		}
-		if err = database.DB.Select("row_num").First(&run).Error; err != nil && err != gorm.ErrRecordNotFound {
-			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, err)
+		if tx := database.DB.Select("row_num").First(&run); tx.Error != nil && tx.Error != gorm.ErrRecordNotFound {
+			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, tx.Error)
 		}
 
 		tx.Where("row_num < ?", run.RowNum)
@@ -207,12 +183,6 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 }
 
 func GetExperimentActivity(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("GetExperimentActivity namespace: %s", ns.Code)
-
 	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
@@ -222,7 +192,7 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 		ID string `params:"id"`
 	}{}
 
-	if err = c.ParamsParser(&p); err != nil {
+	if err := c.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -230,12 +200,10 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("unable to parse experiment id %q: %s", p.ID, err))
 	}
+	id32 := int32(id)
 
-	if tx := database.DB.Select(
-		"ID",
-	).First(&database.Experiment{
-		ID:          common.GetPointer(int32(id)),
-		NamespaceID: ns.ID,
+	if tx := database.DB.Select("ID").First(&database.Experiment{
+		ID: &id32,
 	}); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
 			return fiber.ErrNotFound
@@ -245,15 +213,14 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 
 	var runs []database.Run
 	if tx := database.DB.
-		Select("runs.start_time", "runs.lifecycle_stage", "runs.status").
-		Joins("LEFT JOIN experiments USING(experiment_id)").
-		Where("experiments.namespace_id = ?", ns.ID).
-		Where("experiments.experiment_id = ?", id).
+		Select("StartTime", "LifecycleStage", "Status").
+		Where("experiment_id = ?", id).
 		Find(&runs); tx.Error != nil {
 		return fmt.Errorf("error retrieving runs for experiment %q: %w", p.ID, tx.Error)
 	}
 
-	numActiveRuns, numArchivedRuns := 0, 0
+	numArchivedRuns := 0
+	numActiveRuns := 0
 	activity := map[string]int{}
 	for _, r := range runs {
 		key := time.UnixMilli(r.StartTime.Int64).Add(time.Duration(-tzOffset) * time.Minute).Format("2006-01-02T15:00:00")
@@ -275,43 +242,24 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 }
 
 func DeleteExperiment(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("deleteExperiment namespace: %s", ns.Code)
-
 	params := struct {
 		ID string `params:"id"`
 	}{}
 
-	if err = c.ParamsParser(&params); err != nil {
+	if err := c.ParamsParser(&params); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 	id, err := strconv.ParseInt(params.ID, 10, 32)
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("unable to parse experiment id %q: %s", params.ID, err))
 	}
-
-	// validate that requested experiment exists.
-	if tx := database.DB.Select(
-		"ID",
-	).Where(
-		"experiments.namespace_id = ?", ns.ID,
-	).First(&database.Experiment{
-		ID: common.GetPointer(int32(id)),
-	}); tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("unable to find experiment %q: %w", params.ID, tx.Error)
-	}
+	id32 := int32(id)
 
 	// TODO this code should move to service with injected repository
 	experimentRepo := repositories.NewExperimentRepository(database.DB)
-	if err = experimentRepo.Delete(c.Context(), &models.Experiment{
-		ID: common.GetPointer(int32(id)),
-	}); err != nil {
+	experiment := models.Experiment{ID: &id32}
+	err = experimentRepo.Delete(c.Context(), &experiment)
+	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
 			fmt.Sprintf("unable to delete experiment %q: %s", params.ID, err))
 	}

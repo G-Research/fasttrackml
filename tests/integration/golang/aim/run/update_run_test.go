@@ -15,13 +15,16 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type UpdateRunTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
-	run *models.Run
+	client             *helpers.HttpClient
+	runFixtures        *fixtures.RunFixtures
+	experimentFixtures *fixtures.ExperimentFixtures
+	run                *models.Run
 }
 
 func TestUpdateRunTestSuite(t *testing.T) {
@@ -29,28 +32,30 @@ func TestUpdateRunTestSuite(t *testing.T) {
 }
 
 func (s *UpdateRunTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
+	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
 
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.runFixtures = runFixtures
+
+	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = expFixtures
+
+	exp := &models.Experiment{
 		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
-	})
+	}
+	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
 	assert.Nil(s.T(), err)
 
-	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), experiment)
+	s.run, err = s.runFixtures.CreateExampleRun(context.Background(), exp)
 	assert.Nil(s.T(), err)
 }
 
 func (s *UpdateRunTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name    string
@@ -69,13 +74,13 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Success
-			err := s.AIMClient.DoPutRequest(
+			err := s.client.DoPutRequest(
 				fmt.Sprintf("/runs/%s", *tt.request.RunID),
 				tt.request,
 				&resp,
 			)
 			assert.Nil(s.T(), err)
-			run, err := s.RunFixtures.GetRun(context.Background(), s.run.ID)
+			run, err := s.runFixtures.GetRun(context.Background(), s.run.ID)
 			assert.Nil(s.T(), err)
 			// TODO the PUT endpoint only updates LifecycleStage
 			// assert.Equal(t, newName, run.Name)
@@ -87,7 +92,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 
 func (s *UpdateRunTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.runFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name        string
@@ -103,7 +108,7 @@ func (s *UpdateRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoPutRequest(
+			err := s.client.DoPutRequest(
 				fmt.Sprintf("/runs/%s", s.run.ID),
 				tt.requestBody,
 				&resp,

@@ -17,14 +17,15 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type SearchExperimentsTestSuite struct {
 	suite.Suite
-	helpers.BaseTestSuite
+	client             *helpers.HttpClient
+	experimentFixtures *fixtures.ExperimentFixtures
 }
 
 func TestSearchExperimentsTestSuite(t *testing.T) {
@@ -32,21 +33,17 @@ func TestSearchExperimentsTestSuite(t *testing.T) {
 }
 
 func (s *SearchExperimentsTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
+	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.experimentFixtures = experimentFixtures
 }
 
 func (s *SearchExperimentsTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 	// 1. prepare database with test data.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	experiments := []models.Experiment{
 		{
 			Name: "Test Experiment 1",
@@ -101,10 +98,9 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		},
 	}
 	for _, ex := range experiments {
-		_, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-			Name:        ex.Name,
-			Tags:        ex.Tags,
-			NamespaceID: namespace.ID,
+		_, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+			Name: ex.Name,
+			Tags: ex.Tags,
 			CreationTime: sql.NullInt64{
 				Int64: time.Now().UTC().UnixMilli(),
 				Valid: true,
@@ -129,12 +125,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 			request: request.SearchExperimentsRequest{
 				Filter: "attribute.name != 'Test Experiment 5'",
 			},
-			expected: []string{
-				"Test Experiment 1",
-				"Test Experiment 2",
-				"Test Experiment 3",
-				"Test Experiment 4",
-			},
+			expected: []string{"Test Experiment 1", "Test Experiment 2", "Test Experiment 3", "Test Experiment 4", "Default"},
 		},
 		{
 			name: "TestViewType",
@@ -149,6 +140,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 				OrderBy: []string{"name ASC"},
 			},
 			expected: []string{
+				"Default",
 				"Test Experiment 1",
 				"Test Experiment 2",
 				"Test Experiment 3",
@@ -162,7 +154,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 				OrderBy:    []string{"name ASC"},
 				MaxResults: 3,
 			},
-			expected: []string{"Test Experiment 1", "Test Experiment 2", "Test Experiment 3"},
+			expected: []string{"Default", "Test Experiment 1", "Test Experiment 2"},
 		},
 	}
 
@@ -172,7 +164,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 			assert.Nil(t, err)
 
 			resp := response.SearchExperimentsResponse{}
-			err = s.MlflowClient.DoGetRequest(
+			err = s.client.DoGetRequest(
 				fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query),
 				&resp,
 			)
@@ -189,17 +181,6 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 }
 
 func (s *SearchExperimentsTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -275,7 +256,7 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 			query, err := urlquery.Marshal(tt.request)
 			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
-			err = s.MlflowClient.DoGetRequest(
+			err = s.client.DoGetRequest(
 				fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query),
 				&resp,
 			)

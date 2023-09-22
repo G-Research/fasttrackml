@@ -28,7 +28,7 @@ func importCmd(cmd *cobra.Command, args []string) error {
 	defer inputDB.Close()
 	defer outputDB.Close()
 
-	importer := database.NewImporter(inputDB.GormDB(), outputDB.GormDB())
+	importer := database.NewImporter(inputDB, outputDB)
 	if err := importer.Import(); err != nil {
 		return err
 	}
@@ -37,21 +37,31 @@ func importCmd(cmd *cobra.Command, args []string) error {
 
 // initDBs inits the input and output DB connections.
 func initDBs() (input, output database.DBProvider, err error) {
-	input, err = database.NewDBProvider(
+	databaseSlowThreshold := time.Second * 1
+	databasePoolMax := 20
+	databaseReset := false
+	databaseMigrate := false
+	defaultArtifactRoot := viper.GetString("default-artifact-root")
+	input, err = database.MakeDBProvider(
 		viper.GetString("input-database-uri"),
-		time.Second*1,
-		20,
-		false,
+		databaseSlowThreshold,
+		databasePoolMax,
+		databaseReset,
+		databaseMigrate,
+		defaultArtifactRoot,
 	)
 	if err != nil {
 		return input, output, fmt.Errorf("error connecting to input DB: %w", err)
 	}
 
-	output, err = database.NewDBProvider(
+	databaseMigrate = true
+	output, err = database.MakeDBProvider(
 		viper.GetString("output-database-uri"),
-		time.Second*1,
-		20,
-		false,
+		databaseSlowThreshold,
+		databasePoolMax,
+		databaseReset,
+		databaseMigrate,
+		defaultArtifactRoot,
 	)
 	if err != nil {
 		return input, output, fmt.Errorf("error connecting to output DB: %w", err)
@@ -64,7 +74,7 @@ func init() {
 
 	ImportCmd.Flags().StringP("input-database-uri", "i", "", "Input Database URI (eg., sqlite://fasttrackml.db)")
 	ImportCmd.Flags().StringP("output-database-uri", "o", "", "Output Database URI (eg., postgres://user:psw@postgres:5432)")
-	ImportCmd.Flags().StringP("artifact-root", "a", "./artifacts", "Artifact Root")
+	ImportCmd.Flags().StringP("default-artifact-root", "a", "./artifacts", "Artifact Root")
 	ImportCmd.MarkFlagRequired("input-database-uri")
 	ImportCmd.MarkFlagRequired("output-database-uri")
 }

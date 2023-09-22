@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"io"
+
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 
@@ -40,5 +42,7 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 		return err
 	}
 	defer artifact.Close()
-	return ctx.SendStream(artifact)
+
+	_, err = io.CopyBuffer(ctx, artifact, make([]byte, 4096))
+	return err
 }

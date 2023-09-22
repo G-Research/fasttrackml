@@ -215,7 +215,6 @@ func TestValidateGetArtifactRequest_Ok(t *testing.T) {
 				Path:  "foo.txt",
 			},
 		},
-
 	}
 
 	for _, tt := range testData {

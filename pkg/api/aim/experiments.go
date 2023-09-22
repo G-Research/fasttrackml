@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
+
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
-
-	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 )
 
 func GetExperiments(c *fiber.Ctx) error {

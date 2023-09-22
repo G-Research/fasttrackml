@@ -120,7 +120,7 @@ func (s *GetRunTestSuite) Test_Ok() {
 
 	resp := response.GetRunResponse{}
 	err = s.client.DoGetRequest(
-		fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsGetTagRoute, query),
+		fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute, query),
 		&resp,
 	)
 	assert.Nil(s.T(), err)
@@ -185,7 +185,7 @@ func (s *GetRunTestSuite) Test_Error() {
 
 			resp := api.ErrorResponse{}
 			err = s.client.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsGetTagRoute, query),
+				fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute, query),
 				&resp,
 			)
 			assert.Nil(s.T(), err)

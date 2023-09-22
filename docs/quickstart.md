@@ -2,13 +2,21 @@
 
 ## Install FastTrackML
 
-### On Linux and macOS
+### With `pip`
+
+```bash
+pip install fasttrackml
+```
+
+### With a script
+
+#### On Linux and macOS
 
 ```bash
 curl -fsSL https://fasttrackml.io/install.sh | sh
 ```
 
-### On Windows
+#### On Windows
 
 ```bash
 iwr -useb https://fasttrackml.io/install.ps1 | iex

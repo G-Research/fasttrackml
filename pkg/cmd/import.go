@@ -64,7 +64,7 @@ func init() {
 
 	ImportCmd.Flags().StringP("input-database-uri", "i", "", "Input Database URI (eg., sqlite://fasttrackml.db)")
 	ImportCmd.Flags().StringP("output-database-uri", "o", "", "Output Database URI (eg., postgres://user:psw@postgres:5432)")
-	ImportCmd.Flags().StringP("artifact-root", "a", "./artifacts", "Artifact Root")
+	ImportCmd.Flags().StringP("default-artifact-root", "a", "./artifacts", "Artifact Root")
 	ImportCmd.MarkFlagRequired("input-database-uri")
 	ImportCmd.MarkFlagRequired("output-database-uri")
 }

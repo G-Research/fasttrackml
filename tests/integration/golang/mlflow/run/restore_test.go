@@ -146,7 +146,7 @@ func (s *RestoreRunTestSuite) Test_Error() {
 
 			resp := api.ErrorResponse{}
 			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsGetTagRoute, query),
+				fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute, query),
 				&resp,
 			)
 			assert.Nil(s.T(), err)

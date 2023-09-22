@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-	glog "log"
 	"net/url"
 	"time"
 
@@ -11,7 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 // PostgresDBInstance is the Postgres-specific DbInstance variant.
@@ -31,23 +29,11 @@ func NewPostgresDBInstance(
 
 	log.Infof("Using database %s", dsnURL.Redacted())
 
-	dbLogLevel := logger.Warn
-	if log.GetLevel() == log.DebugLevel {
-		dbLogLevel = logger.Info
-	}
 	gormDB, err := gorm.Open(conn, &gorm.Config{
-		Logger: logger.New(
-			glog.New(
-				log.StandardLogger().WriterLevel(log.WarnLevel),
-				"",
-				0,
-			),
-			logger.Config{
-				SlowThreshold:             slowThreshold,
-				LogLevel:                  dbLogLevel,
-				IgnoreRecordNotFoundError: true,
-			},
-		),
+		Logger: NewLoggerAdaptor(log.StandardLogger(), LoggerAdaptorConfig{
+			SlowThreshold:             slowThreshold,
+			IgnoreRecordNotFoundError: true,
+		}),
 	})
 	if err != nil {
 		pgdb.Close()

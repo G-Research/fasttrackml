@@ -14,6 +14,11 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
+// S3StorageName is a s3 storage name.
+const (
+	S3StorageName = "s3"
+)
+
 // S3 represents S3 adapter to work with artifacts.
 type S3 struct {
 	client *s3.Client
@@ -55,7 +60,7 @@ func NewS3(config *config.ServiceConfig) (*S3, error) {
 	return &storage, nil
 }
 
-// List implements Provider interface.
+// List implements ArtifactStorageProvider interface.
 func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
 	bucket, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {

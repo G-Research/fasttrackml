@@ -25,7 +25,7 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type GetArtifactTestSuite struct {
+type GetArtifactS3TestSuite struct {
 	suite.Suite
 	s3Client           *s3.Client
 	runFixtures        *fixtures.RunFixtures
@@ -34,14 +34,14 @@ type GetArtifactTestSuite struct {
 }
 
 func TestGetArtifactTestSuite(t *testing.T) {
-	suite.Run(t, new(GetArtifactTestSuite))
+	suite.Run(t, new(GetArtifactS3TestSuite))
 }
 
-func (s *GetArtifactTestSuite) SetupTest() {
+func (s *GetArtifactS3TestSuite) SetupTest() {
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	assert.Nil(s.T(), err)
-
 	s.s3Client = s3Client
+
 	s.serviceClient = helpers.NewMlflowApiClient(helpers.GetServiceUri())
 
 	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
@@ -53,7 +53,7 @@ func (s *GetArtifactTestSuite) SetupTest() {
 	s.runFixtures = runFixtures
 }
 
-func (s *GetArtifactTestSuite) Test_Ok() {
+func (s *GetArtifactS3TestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
@@ -106,6 +106,7 @@ func (s *GetArtifactTestSuite) Test_Ok() {
 				ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 				LifecycleStage: models.LifecycleStageActive,
 			})
+			assert.Nil(s.T(), err)
 
 			// 3. upload artifact object to S3.
 			_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
@@ -132,7 +133,7 @@ func (s *GetArtifactTestSuite) Test_Ok() {
 	}
 }
 
-func (s *GetArtifactTestSuite) Test_Error() {
+func (s *GetArtifactS3TestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()

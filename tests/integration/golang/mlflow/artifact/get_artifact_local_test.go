@@ -136,7 +136,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			resp, err = s.serviceClient.DoGetRequestNoUnmarshalling(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, subDirQuery),
+				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, subDirQuery),
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "contentXX", string(resp))

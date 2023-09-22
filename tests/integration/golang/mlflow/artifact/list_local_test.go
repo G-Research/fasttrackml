@@ -163,6 +163,24 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 				FileSize: 9,
 			}, subDirResp.Files[0])
 			assert.Nil(s.T(), err)
+
+			// 6. make actual API call for non-existing dir.
+			nonExistingDirQuery, err := urlquery.Marshal(request.ListArtifactsRequest{
+				RunID: run.ID,
+				Path:  "non-existing-dir",
+			})
+			assert.Nil(s.T(), err)
+
+			nonExistingDirResp := response.ListArtifactsResponse{}
+			err = s.serviceClient.DoGetRequest(
+				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, nonExistingDirQuery),
+				&nonExistingDirResp,
+			)
+			assert.Nil(s.T(), err)
+
+			assert.Equal(s.T(), run.ArtifactURI, nonExistingDirResp.RootURI)
+			assert.Equal(s.T(), 0, len(nonExistingDirResp.Files))
+			assert.Nil(s.T(), err)
 		})
 	}
 }

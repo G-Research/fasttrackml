@@ -143,4 +143,3 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 		})
 	}
 }
-

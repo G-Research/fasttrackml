@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
@@ -32,13 +33,16 @@ func NewLocal(config *config.ServiceConfig) (*Local, error) {
 
 // List implements ArtifactStorageProvider interface.
 func (s Local) List(artifactURI, path string) (string, []ArtifactObject, error) {
-	// 1. process search `path` parameter.
+	// 1. trim the `file://` prefix if it exists.
+	artifactURI = strings.TrimPrefix(artifactURI, "file://")
+
+	// 2. process search `path` parameter.
 	absPath, err := url.JoinPath(artifactURI, path)
 	if err != nil {
 		return "", nil, eris.Wrap(err, "error constructing full path")
 	}
 
-	// 2. read data from local storage.
+	// 3. read data from local storage.
 	objects, err := os.ReadDir(absPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {

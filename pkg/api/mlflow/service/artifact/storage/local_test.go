@@ -1,3 +1,4 @@
+
 package storage
 
 import (
@@ -28,13 +29,13 @@ func TestGetArtifact_Ok(t *testing.T) {
 	assert.Nil(t, err)
 
 	// invoke
-	svcConfig := &config.ServiceConfig{
+	config := &config.ServiceConfig{
 		DefaultArtifactRoot: defaultArtifactRoot,
 	}
-	svc, err := NewLocal(svcConfig)
+	storage, err := NewLocal(config)
 	assert.Nil(t, err)
 
-	file, err := svc.GetArtifact(filepath.Join(defaultArtifactRoot, runArtifactRoot), fileName)
+	file, err := storage.Get(filepath.Join(defaultArtifactRoot, runArtifactRoot), fileName)
 	assert.Nil(t, err)
 	defer func() {
 		file.Close()
@@ -43,11 +44,10 @@ func TestGetArtifact_Ok(t *testing.T) {
 
 	// verify
 	assert.NotNil(t, file)
-	p := make([]byte, 20)
-	ln, err := file.Read(p)
+	readBuffer := make([]byte, 20)
+	ln, err := file.Read(readBuffer)
 	assert.Nil(t, err)
-
-	assert.Equal(t, fileContent, string(p[:ln]))
+	assert.Equal(t, fileContent, string(readBuffer[:ln]))
 }
 
 func TestGetArtifact_Error(t *testing.T) {
@@ -66,13 +66,13 @@ func TestGetArtifact_Error(t *testing.T) {
 	assert.Nil(t, err)
 
 	// invoke
-	svcConfig := &config.ServiceConfig{
+	config := &config.ServiceConfig{
 		DefaultArtifactRoot: defaultArtifactRoot,
 	}
-	svc, err := NewLocal(svcConfig)
+	storage, err := NewLocal(config)
 	assert.Nil(t, err)
 
-	file, err := svc.GetArtifact(filepath.Join(defaultArtifactRoot, runArtifactRoot), "some-other-item")
+	file, err := storage.Get(filepath.Join(defaultArtifactRoot, runArtifactRoot), "some-other-item")
 	assert.NotNil(t, err)
 	defer func() {
 		file.Close()

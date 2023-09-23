@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"io"
+	"path/filepath"
 	"slices"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -60,7 +61,7 @@ func (s Service) ListArtifacts(
 	return run.ArtifactURI, artifacts, nil
 }
 
-// GetArtifact handles business logic of `GET /get-artifact` endpoint.
+// GetArtifact handles business logic of `GET /artifacts/get` endpoint.
 func (s Service) GetArtifact(
 	ctx context.Context, req *request.GetArtifactRequest,
 ) (io.ReadCloser, error) {
@@ -80,11 +81,11 @@ func (s Service) GetArtifact(
 		return nil, api.NewInternalError("run with id '%s' has unsupported artifact storage", run.ID)
 	}
 
-	artifactReader, err := artifactStorage.GetArtifact(
+	artifactReader, err := artifactStorage.Get(
 		run.ArtifactURI, req.Path,
 	)
 	if err != nil {
-		return nil, api.NewInternalError("error getting artifact URI from storage")
+		return nil, api.NewInternalError("error getting artifact object for URI: %s", filepath.Join(run.ArtifactURI, req.Path))
 	}
 
 	return artifactReader, nil

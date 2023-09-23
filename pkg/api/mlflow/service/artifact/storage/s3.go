@@ -2,7 +2,7 @@ package storage
 
 import (
 	"context"
-	io "io"
+	"io"
 	"net/url"
 	"path/filepath"
 
@@ -123,8 +123,8 @@ func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
 	return artifactList, nil
 }
 
-// GetArtifact returns file content at the storage location.
-func (s S3) GetArtifact(artifactURI, itemPath string) (io.ReadCloser, error) {
+// Get returns file content at the storage location.
+func (s S3) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
 	bucketName, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {
 		return nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
@@ -137,7 +137,7 @@ func (s S3) GetArtifact(artifactURI, itemPath string) (io.ReadCloser, error) {
 
 	resp, err := s.client.GetObject(context.TODO(), input)
 	if err != nil {
-		return nil, err
+		return nil, eris.Wrap(err, "error fetching object from s3")
 	}
 
 	return resp.Body, nil

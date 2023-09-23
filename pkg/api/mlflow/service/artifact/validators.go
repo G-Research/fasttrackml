@@ -33,7 +33,7 @@ func ValidateListArtifactsRequest(req *request.ListArtifactsRequest) error {
 	return nil
 }
 
-// ValidateGetArtifactRequest validates `GET /get-artifact` request.
+// ValidateGetArtifactRequest validates `GET /artifacts/get` request.
 func ValidateGetArtifactRequest(req *request.GetArtifactRequest) error {
 	if req.RunID == "" && req.RunUUID == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")

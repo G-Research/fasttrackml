@@ -2,7 +2,7 @@ package storage
 
 import (
 	"errors"
-	io "io"
+	"io"
 	"io/fs"
 	"net/url"
 	"os"
@@ -71,8 +71,8 @@ func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
 	return artifactList, nil
 }
 
-// GetArtifact returns actual file content at the storage location.
-func (s Local) GetArtifact(artifactURI, itemPath string) (io.ReadCloser, error) {
+// Get returns actual file content at the storage location.
+func (s Local) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
 	artifactURI = strings.TrimPrefix(artifactURI, "file://")
 	path, err := url.JoinPath(artifactURI, itemPath)
 	if err != nil {

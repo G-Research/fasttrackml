@@ -29,7 +29,7 @@ func (c Controller) ListArtifacts(ctx *fiber.Ctx) error {
 	return ctx.JSON(resp)
 }
 
-// GetArtifact handles `GET /get-artifact` endpoint.
+// GetArtifact handles `GET /artifacts/get` endpoint.
 func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 	req := request.GetArtifactRequest{}
 	if err := ctx.QueryParser(&req); err != nil {
@@ -43,6 +43,7 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 	}
 	defer artifact.Close()
 
-	_, err = io.CopyBuffer(ctx, artifact, make([]byte, 4096))
+	bytesWritten, err := io.CopyBuffer(ctx, artifact, make([]byte, 4096))
+	log.Debugf("GetArtifact wrote bytes to output stream: %d", bytesWritten)
 	return err
 }

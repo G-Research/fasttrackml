@@ -66,9 +66,13 @@ func (c HttpClient) DoDeleteRequest(uri string, response interface{}) error {
 
 // DoStreamRequest do stream request.
 func (c HttpClient) DoStreamRequest(method, uri string, request interface{}) ([]byte, error) {
-	data, err := json.Marshal(request)
-	if err != nil {
-		return nil, eris.Wrap(err, "error marshaling request")
+	var requestBody io.Reader
+	if request != nil {
+		data, err := json.Marshal(request)
+		if err != nil {
+			return nil, eris.Wrap(err, "error marshaling request")
+		}
+		requestBody = bytes.NewBuffer(data)
 	}
 
 	// 1. create actual request object.
@@ -85,7 +89,7 @@ func (c HttpClient) DoStreamRequest(method, uri string, request interface{}) ([]
 			[]string{},
 			[]interface{}{},
 		),
-		bytes.NewBuffer(data),
+		requestBody,
 	)
 	if err != nil {
 		return nil, eris.Wrap(err, "error creating request")
@@ -147,40 +151,4 @@ func (c HttpClient) doRequest(httpMethod string, uri string, response interface{
 	}
 
 	return nil
-}
-
-// DoGetRequestNoUnmarshalling executes GET request to the uri, returning
-// responses body or error
-func (c HttpClient) DoGetRequestNoUnmarshalling(uri string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(
-		context.Background(),
-		http.MethodGet,
-		StrReplace(
-			fmt.Sprintf(
-				"%s%s%s",
-				c.baseURL,
-				c.basePath,
-				uri,
-			),
-			[]string{},
-			[]interface{}{},
-		),
-		nil,
-	)
-	if err != nil {
-		return nil, eris.Wrap(err, "error creating request")
-	}
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, eris.Wrap(err, "error doing request")
-	}
-
-	response, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, eris.Wrap(err, "error reading response data")
-	}
-	defer resp.Body.Close()
-
-	return response, nil
 }

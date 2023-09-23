@@ -4,14 +4,13 @@ package artifact
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/hetiansu5/urlquery"
@@ -73,20 +72,6 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			experimentArtifactDir := t.TempDir()
 			experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name: fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
-				Tags: []models.ExperimentTag{
-					{
-						Key:   "key1",
-						Value: "value1",
-					},
-				},
-				CreationTime: sql.NullInt64{
-					Int64: time.Now().UTC().UnixMilli(),
-					Valid: true,
-				},
-				LastUpdateTime: sql.NullInt64{
-					Int64: time.Now().UTC().UnixMilli(),
-					Valid: true,
-				},
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("%s%s", tt.prefix, experimentArtifactDir),
 			})
@@ -122,8 +107,10 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			})
 			assert.Nil(s.T(), err)
 
-			resp, err := s.serviceClient.DoGetRequestNoUnmarshalling(
+			resp, err := s.serviceClient.DoStreamRequest(
+				http.MethodGet,
 				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, rootFileQuery),
+				nil,
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "contentX", string(resp))
@@ -135,8 +122,10 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			})
 			assert.Nil(s.T(), err)
 
-			resp, err = s.serviceClient.DoGetRequestNoUnmarshalling(
+			resp, err = s.serviceClient.DoStreamRequest(
+				http.MethodGet,
 				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, subDirQuery),
+				nil,
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "contentXX", string(resp))

@@ -201,7 +201,7 @@ type App struct {
 	Type        string   `gorm:"not null" json:"type"`
 	State       AppState `json:"state"`
 	Namespace   Namespace
-	NamespaceID uint `gorm:"column:namespace_id"`
+	NamespaceID uint `gorm:"column:namespace_id;not null"`
 }
 
 type AppState map[string]any

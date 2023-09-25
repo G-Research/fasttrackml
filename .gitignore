@@ -19,9 +19,6 @@ tests/integration/python/*/*.src
 outputs
 poetry.lock
 
-# Mocks
-mock_*
-
 # Misc
 .DS_Store
 

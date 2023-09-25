@@ -46,7 +46,7 @@ func NewSqliteDBInstance(
 
 	q := configureQuery(dsnURL)
 	dsnURL.RawQuery = q.Encode()
-        if err := removeFile(q, dsnURL, reset); err != nil {
+	if err := removeFile(q, dsnURL, reset); err != nil {
 		return nil, eris.Wrap(err, "could not reset database")
 	}
 
@@ -86,7 +86,6 @@ func NewSqliteDBInstance(
 		Conn: s,
 	}
 
-	q.Set("_query_only", "true")
 	dsnURL.RawQuery = q.Encode()
 	r, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dsnURL.String(), "sqlite://", "file:", 1))
 	if err != nil {
@@ -98,13 +97,7 @@ func NewSqliteDBInstance(
 		Conn: r,
 	}
 
-	logURL := dsnURL
-	q = logURL.Query()
-	if q.Has("_key") {
-		q.Set("_key", "xxxxx")
-	}
-	logURL.RawQuery = q.Encode()
-	log.Infof("Using database %s", logURL.Redacted())
+	logDsnURL(&dsnURL)
 
 	db.DB, err = gorm.Open(sourceConn, &gorm.Config{
 		Logger: NewLoggerAdaptor(log.StandardLogger(), LoggerAdaptorConfig{
@@ -128,6 +121,16 @@ func NewSqliteDBInstance(
 	return &db, nil
 }
 
+func logDsnURL(dsnURL *url.URL) {
+	logURL := dsnURL
+	q := logURL.Query()
+	if q.Has("_key") {
+		q.Set("_key", "xxxxx")
+	}
+	logURL.RawQuery = q.Encode()
+	log.Infof("Using database %s", logURL.Redacted())
+}
+
 // removeFile removes the sqlite db file if needed for reset.
 func removeFile(q url.Values, dsnURL url.URL, reset bool) error {
 	if reset && q.Get("mode") != "memory" {
@@ -145,11 +148,13 @@ func removeFile(q url.Values, dsnURL url.URL, reset bool) error {
 
 // configureQuery sets the query Values we need.
 func configureQuery(dsnURL url.URL) url.Values {
-        q := dsnURL.Query()
+	q := dsnURL.Query()
 	q.Set("_case_sensitive_like", "true")
 	q.Set("_mutex", "no")
 	if q.Get("mode") != "memory" && !(q.Has("_journal") || q.Has("_journal_mode")) {
 		q.Set("_journal", "WAL")
 	}
+	q.Set("_query_only", "true")
+
 	return q
 }

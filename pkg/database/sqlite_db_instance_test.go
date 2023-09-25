@@ -89,3 +89,43 @@ func Test_configureQuery(t *testing.T) {
 		assert.Equal(t, testCase.expectedValues, result)
 	}
 }
+
+func TestLogDsnURL(t *testing.T) {
+	// Define test cases as a slice of structs
+	testCases := []struct {
+		name           string
+		inputURL       string
+		expectedResult string
+	}{
+		{
+			name:           "No _key parameter",
+			inputURL:       "https://example.com/db?user=user123",
+			expectedResult: "https://example.com/db?user=user123",
+		},
+		{
+			name:           "With _key parameter",
+			inputURL:       "https://example.com/db?user=user123&_key=secret",
+			expectedResult: "https://example.com/db?user=user123&_key=xxxxx",
+		},
+		// Add more test cases as needed
+	}
+
+	// Iterate through test cases
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Parse the input URL
+			dsnURL, err := url.Parse(tc.inputURL)
+			assert.NoError(t, err)
+
+			// Call the function
+			logDsnURL(dsnURL)
+
+			// Parse the expected result URL
+			expectedURL, err := url.Parse(tc.expectedResult)
+			assert.NoError(t, err)
+
+			// Assert the query values
+			assert.Equal(t, expectedURL.Query(), dsnURL.Query())
+		})
+	}
+}

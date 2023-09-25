@@ -4,7 +4,6 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -12,17 +11,14 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetProjectActivityTestSuite struct {
 	suite.Suite
-	client             *helpers.HttpClient
-	projectFixtures    *fixtures.ProjectFixtures
-	experimentFixtures *fixtures.ExperimentFixtures
-	runFixtures        *fixtures.RunFixtures
+	helpers.BaseTestSuite
 }
 
 func TestGetProjectActivityTestSuite(t *testing.T) {
@@ -30,46 +26,48 @@ func TestGetProjectActivityTestSuite(t *testing.T) {
 }
 
 func (s *GetProjectActivityTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	projectFixtures, err := fixtures.NewProjectFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.projectFixtures = projectFixtures
-
-	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
-
-	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = expFixtures
-
-	exp := &models.Experiment{
-		Name:           uuid.New().String(),
-		LifecycleStage: models.LifecycleStageActive,
-	}
-	_, err = s.experimentFixtures.CreateExperiment(context.Background(), exp)
-	assert.Nil(s.T(), err)
-
-	_, err = s.runFixtures.CreateExampleRuns(context.Background(), exp, 5)
-	assert.Nil(s.T(), err)
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetProjectActivityTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.projectFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	assert.Nil(s.T(), err)
+
+	runs, err := s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 10)
+	assert.Nil(s.T(), err)
+
+	archivedRunsIds := []string{runs[0].ID, runs[1].ID}
+	err = s.RunFixtures.ArchiveRuns(context.Background(), archivedRunsIds)
+	assert.Nil(s.T(), err)
+
 	var resp response.ProjectActivityResponse
-	err := s.client.DoGetRequest(
-		fmt.Sprintf("/projects/activity"),
+	err = s.AIMClient.DoGetRequest(
+		"/projects/activity",
 		&resp,
 	)
 	assert.Nil(s.T(), err)
 
-	activity, err := s.projectFixtures.GetProjectActivity(context.Background())
-
-	assert.Equal(s.T(), activity.NumActiveRuns, resp.NumActiveRuns)
-	assert.Equal(s.T(), activity.NumArchivedRuns, resp.NumArchivedRuns)
-	assert.Equal(s.T(), activity.NumExperiments, resp.NumExperiments)
-	assert.Equal(s.T(), activity.NumRuns, resp.NumRuns)
+	assert.Equal(s.T(), 8, resp.NumActiveRuns)
+	assert.Equal(s.T(), 2, resp.NumArchivedRuns)
+	assert.Equal(s.T(), 1, resp.NumExperiments)
+	assert.Equal(s.T(), 10, resp.NumRuns)
+	assert.Equal(s.T(), 1, len(resp.ActivityMap))
+	for _, v := range resp.ActivityMap {
+		assert.Equal(s.T(), 10, v)
+	}
 }

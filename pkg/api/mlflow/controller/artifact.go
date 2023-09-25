@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bufio"
 	"io"
 
 	"github.com/gofiber/fiber/v2"
@@ -41,10 +42,17 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	defer artifact.Close()
 
 	ctx.Set("Content-Type", "application/octet-stream")
-	bytesWritten, err := io.CopyBuffer(ctx, artifact, make([]byte, 4096))
-	log.Debugf("GetArtifact wrote bytes to output stream: %d", bytesWritten)
-	return err
+	ctx.Context().Response.SetBodyStreamWriter(func(w *bufio.Writer) {
+		defer artifact.Close()
+		bytesWritten, err := io.CopyBuffer(w, artifact, make([]byte, 4096))
+		if err != nil {
+			log.Errorf("error encountered in %s %s: error streaming artifact: %s", ctx.Method(), ctx.Path(), err)
+		}
+		log.Debugf("GetArtifact wrote bytes to output stream: %d", bytesWritten)
+		w.Flush()
+	})
+
+	return nil
 }

@@ -87,7 +87,7 @@ go-build: ## build app binary.
 go-format: ## format go code.
 	@echo '>>> Formatting go code.'
 	@gofumpt -w .
-	@goimports -w -local github.com/G-Research/fasttrackml .
+	@goimports -w -local github.com/G-Research/fasttrackml $(shell find . -type f -name '*.go' -not -name 'mock_*.go')
 
 .PHONY: go-dist
 go-dist: go-build ## archive app binary.

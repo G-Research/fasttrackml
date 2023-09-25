@@ -95,13 +95,13 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 // getFilename returns the final bit of the path (the filename).
 func getFilename(path string) string {
 	pathParts := strings.Split(path, "/")
-	return pathParts[len(pathParts) - 1]
+	return pathParts[len(pathParts)-1]
 }
 
 // getContentType will determine the content type of the file.
 func getContentType(filename string) string {
 	fileParts := strings.Split(filename, ".")
-	fileExt := fileParts[len(fileParts) - 1]
+	fileExt := fileParts[len(fileParts)-1]
 	if slices.Contains(textTypes, fileExt) {
 		return "text/plain"
 	}

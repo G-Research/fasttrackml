@@ -170,12 +170,14 @@ service-clean: ## clean containers.
 # Mockery targets.
 #
 .PHONY: mocks-clean
-mocks-clean: ## cleans old mocks.
-	find . -name "mock_*.go" -type f -print0 | xargs -0 /bin/rm -f
+mocks-clean: ## cleans mocks.
+	@echo ">>> Cleaning mocks."
+	@find ./pkg -name 'mock_*.go' -type f -delete
 
 .PHONY: mocks-generate
 mocks-generate: mocks-clean ## generate mock based on all project interfaces.
-	mockery --all --dir "./pkg/api/mlflow" --inpackage --case underscore
+	@echo ">>> Generating mocks."
+	@mockery
 
 #
 # Build targets

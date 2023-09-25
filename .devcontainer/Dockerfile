@@ -6,9 +6,9 @@ FROM mcr.microsoft.com/devcontainers/go:1-${VARIANT} AS base
 
 FROM base AS tools
 RUN export GOBIN=/tmp/tools \
- && go install github.com/vektra/mockery/v2@v2.32.4 \
- && go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.1 \
- && go install golang.org/x/tools/cmd/goimports@v0.11.0 \
+ && go install github.com/vektra/mockery/v2@v2.34.0 \
+ && go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.2 \
+ && go install golang.org/x/tools/cmd/goimports@v0.13.0 \
  && go install mvdan.cc/gofumpt@v0.5.0
 
 # ==================================================================

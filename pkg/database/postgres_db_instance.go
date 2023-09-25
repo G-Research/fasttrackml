@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"net/url"
 	"time"
 
@@ -48,11 +47,11 @@ func NewPostgresDBInstance(
 	})
 	if err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, eris.Wrap(err, "failed to connect to database")
 	}
 	db.DB = gormDB
 
-	sqlDB, err := db.DB.DB()
+	sqlDB, err := gormDB.DB()
 	if err != nil {
 		return nil, eris.Wrap(err, "failed to get underlying database connection pool")
 	}

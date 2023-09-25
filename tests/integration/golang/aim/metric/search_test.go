@@ -28,7 +28,6 @@ type SearchMetricsTestSuite struct {
 	runs               []*models.Run
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
-	tagFixtures        *fixtures.TagFixtures
 	paramFixtures      *fixtures.ParamFixtures
 	metricFixtures     *fixtures.MetricFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
@@ -43,9 +42,6 @@ func (s *SearchMetricsTestSuite) SetupTest() {
 	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.runFixtures = runFixtures
-	tagFixtures, err := fixtures.NewTagFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.tagFixtures = tagFixtures
 	paramFixtures, err := fixtures.NewParamFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.paramFixtures = paramFixtures
@@ -87,12 +83,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		ExperimentID:   *experiment.ID,
 		ArtifactURI:    "artifact_uri1",
 		LifecycleStage: models.LifecycleStageActive,
-	})
-	assert.Nil(s.T(), err)
-	_, err = s.tagFixtures.CreateTag(context.Background(), &models.Tag{
-		Key:   "mlflow.runName",
-		Value: "TestRunTag1",
-		RunID: run1.ID,
 	})
 	assert.Nil(s.T(), err)
 	_, err = s.metricFixtures.CreateMetric(context.Background(), &models.Metric{
@@ -181,12 +171,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
-	_, err = s.tagFixtures.CreateTag(context.Background(), &models.Tag{
-		Key:   "mlflow.runName",
-		Value: "TestRunTag2",
-		RunID: run2.ID,
-	})
-	assert.Nil(s.T(), err)
 	_, err = s.metricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric1",
 		Value:     0.5,
@@ -271,12 +255,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		ExperimentID:   *experiment.ID,
 		ArtifactURI:    "artifact_uri3",
 		LifecycleStage: models.LifecycleStageActive,
-	})
-	assert.Nil(s.T(), err)
-	_, err = s.tagFixtures.CreateTag(context.Background(), &models.Tag{
-		Key:   "mlflow.runName",
-		Value: "TestRunTag3",
-		RunID: run3.ID,
 	})
 	assert.Nil(s.T(), err)
 	_, err = s.metricFixtures.CreateMetric(context.Background(), &models.Metric{

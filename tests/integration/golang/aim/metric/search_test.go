@@ -748,6 +748,16 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				metric2Run3,
 			},
 		},
+		{
+			name: "SearchMetricComplexQuery",
+			request: request.SearchMetricRequest{
+				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2")) and metric.last_step >= 1 and (run.name.endswith("2") or re.match("TestRun1", run.name)) and (metric.last < 1.6) and run.duration > 0`,
+			},
+
+			metrics: []*models.LatestMetric{
+				metric1Run2,
+			},
+		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
@@ -763,10 +773,9 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			decodedData, err := encoding.Decode(bytes.NewBuffer(resp))
 			assert.Nil(s.T(), err)
 
-			metricCount := 0
-			metricsResp := []*models.LatestMetric{}
+			decodedMetrics := []*models.LatestMetric{}
 			for _, run := range runs {
-				metricCount = 0
+				metricCount := 0
 				for decodedData[fmt.Sprintf("%v.traces.%d.name", run.ID, metricCount)] != nil {
 					epochsKey := fmt.Sprintf("%v.traces.%d.epochs.blob", run.ID, metricCount)
 					itersKey := fmt.Sprintf("%v.traces.%d.iters.blob", run.ID, metricCount)
@@ -774,7 +783,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 					timestampsKey := fmt.Sprintf("%v.traces.%d.timestamps.blob", run.ID, metricCount)
 					valuesKey := fmt.Sprintf("%v.traces.%d.values.blob", run.ID, metricCount)
 
-					metr := models.LatestMetric{
+					m := models.LatestMetric{
 						Key:       decodedData[nameKey].(string),
 						Value:     decodedData[valuesKey].([]float64)[0],
 						Timestamp: int64(decodedData[timestampsKey].([]float64)[0] * 1000),
@@ -783,15 +792,17 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 						RunID:     run.ID,
 						LastIter:  int64(decodedData[itersKey].([]float64)[0]),
 					}
-					metricsResp = append(metricsResp, &metr)
+					decodedMetrics = append(decodedMetrics, &m)
 					metricCount++
 				}
 			}
+
+			// Check if the received metrics match the expected ones
 			for _, metric := range metrics {
 				if slices.Contains(tt.metrics, metric) {
-					assert.Contains(s.T(), metricsResp, metric)
+					assert.Contains(s.T(), decodedMetrics, metric)
 				} else {
-					assert.NotContains(s.T(), metricsResp, metric)
+					assert.NotContains(s.T(), decodedMetrics, metric)
 				}
 			}
 		})

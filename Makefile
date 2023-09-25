@@ -54,6 +54,17 @@ help: ## display this help
 	@echo
 
 #
+# Tools targets.
+#
+.PHONY: install-tools ## install tools.
+install-tools:
+	@echo '>>> Installing tools.'
+	@go install github.com/vektra/mockery/v2@v2.32.4
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.1
+	@go install golang.org/x/tools/cmd/goimports@v0.11.0
+	@go install mvdan.cc/gofumpt@v0.5.0
+
+#
 # Linter targets.
 #
 lint: ## run set of linters over the code.

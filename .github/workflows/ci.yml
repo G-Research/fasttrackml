@@ -29,10 +29,8 @@ jobs:
         id: tags
         run: echo tags=$(cat .go-build-tags) >> $GITHUB_OUTPUT
 
-      - name: Download formatters
-        run: |
-          go install golang.org/x/tools/cmd/goimports@v0.11.0
-          go install mvdan.cc/gofumpt@v0.5.0
+      - name: Install tools
+        run: make install-tools
 
       - name: Check formatting
         run: |
@@ -46,9 +44,6 @@ jobs:
             done
             exit 1
           fi
-
-      - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.32.4
 
       - name: Generate mocks
         run: make mocks-generate

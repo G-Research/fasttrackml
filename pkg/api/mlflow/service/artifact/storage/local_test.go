@@ -28,10 +28,7 @@ func TestGetArtifact_Ok(t *testing.T) {
 	assert.Nil(t, err)
 
 	// invoke
-	config := &config.ServiceConfig{
-		DefaultArtifactRoot: defaultArtifactRoot,
-	}
-	storage, err := NewLocal(config)
+	storage, err := NewLocal(nil)
 	assert.Nil(t, err)
 
 	file, err := storage.Get(filepath.Join(defaultArtifactRoot, runArtifactRoot), fileName)

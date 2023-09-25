@@ -34,12 +34,10 @@ jobs:
 
       - name: Check formatting
         run: |
-          unformatted=$(
-            gofumpt -l .
-            goimports -l --local github.com/G-Research/fasttrackml .
-          )
-          if [ -n "$unformatted" ]; then
-            for file in $unformatted; do
+          make go-format
+          modified=$(git ls-files --modified -- '*.go')
+          if [ -n "$modified" ]; then
+            for file in $modified; do
               echo "::error file=$file::$file is not formatted properly (hint: run \"make go-format\" to fix this)"
             done
             exit 1

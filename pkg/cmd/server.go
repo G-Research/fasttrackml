@@ -72,7 +72,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	// 3. create database listeners.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	namespaceListener, err := dao.NewNamespaceListener(ctx, db.DSN())
+	namespaceListener, err := dao.NewNamespaceListener(ctx, db.GormDB())
 	if err != nil {
 		return eris.Wrap(err, "error creating namespace notification listener")
 	}

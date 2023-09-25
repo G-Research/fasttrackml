@@ -138,6 +138,7 @@ func (r NamespaceCachedRepository) Delete(ctx context.Context, namespace *models
 
 // processEvent process incoming event from database.
 func (r NamespaceCachedRepository) processEvent(data string) error {
+	log.Debugf("got incoming namespace event: %s", data)
 	event := NamespaceEvent{}
 	if err := json.Unmarshal([]byte(data), &event); err != nil {
 		return eris.Wrap(err, "error unmarshaling incoming database event")

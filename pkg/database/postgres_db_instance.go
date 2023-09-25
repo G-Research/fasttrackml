@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"net/url"
 	"time"
 
@@ -21,7 +20,7 @@ type PostgresDBInstance struct {
 func NewPostgresDBInstance(
 	dsnURL url.URL, slowThreshold time.Duration, poolMax int, reset bool,
 ) (*PostgresDBInstance, error) {
-	pgdb := PostgresDBInstance{
+	db := PostgresDBInstance{
 		DBInstance: DBInstance{dsn: dsnURL.String()},
 	}
 
@@ -36,12 +35,20 @@ func NewPostgresDBInstance(
 		}),
 	})
 	if err != nil {
-		pgdb.Close()
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		db.Close()
+		return nil, eris.Wrap(err, "failed to connect to database")
 	}
-	pgdb.DB = gormDB
+	db.DB = gormDB
 
-	return &pgdb, nil
+	sqlDB, err := gormDB.DB()
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to get underlying database connection pool")
+	}
+	sqlDB.SetConnMaxIdleTime(time.Minute)
+	sqlDB.SetMaxIdleConns(poolMax)
+	sqlDB.SetMaxOpenConns(poolMax)
+
+	return &db, nil
 }
 
 // Reset resets database.

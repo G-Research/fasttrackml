@@ -95,12 +95,6 @@ jobs:
         with:
           go-version: "1.21"
 
-      - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.32.4
-
-      - name: Generate mocks
-        run: make mocks-generate
-
       - name: Run Go Unit Tests
         run: make test-go-unit
 

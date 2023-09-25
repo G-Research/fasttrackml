@@ -287,7 +287,7 @@ index dd1874e..29de29c 100644
 +    elif db == "sqlite+key":
 +        db_path = f"sqlite://{temp_dir}/sqlalchemy.db?_key=passphrase&_journal_mode=WAL"
 +    elif db == "postgres":
-+        db_path = "postgres://postgres:postgres@localhost/test?sslmode=disable"
++        db_path = "postgres://postgres:postgres@localhost/test"
 +    else:
 +        raise ValueError(f"Database '{db}' not supported.")
 +    process = init_server(db_path, temp_dir)

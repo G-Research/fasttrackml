@@ -118,7 +118,7 @@ jobs:
           - database-backend: sqlite
             database-uri: sqlite:///tmp/fasttrackml.db
           - database-backend: postgres
-            database-uri: postgres://postgres:postgres@postgres/postgres?sslmode=disable
+            database-uri: postgres://postgres:postgres@postgres/postgres
           - artifacts-backend: s3
             artifacts-root: s3://fasttrackml
           # TODO enable local artifacts backend once we support multiple artifacts backends

@@ -12,8 +12,10 @@ import (
 func Test_removeFile(t *testing.T) {
 	tempFile, err := os.CreateTemp(t.TempDir(), "test-db")
 	assert.Nil(t, err)
+	err = tempFile.Close()
+	assert.Nil(t, err)
 
-	testCases := []struct {
+	tests := []struct {
 		name              string
 		q                 url.Values
 		dsnURL            url.URL
@@ -38,15 +40,15 @@ func Test_removeFile(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := removeFile(tc.q, tc.dsnURL, tc.reset)
-			if (err != nil) != tc.expectErr {
-				t.Errorf("Test case '%s' failed. Got error: %v, expected error: %v", tc.name, err, tc.expectErr)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := removeFile(tt.q, tt.dsnURL, tt.reset)
+			if (err != nil) != tt.expectErr {
+				t.Errorf("Test case '%s' failed. Got error: %v, expected error: %v", tt.name, err, tt.expectErr)
 			}
 
 			_, err = os.Stat(tempFile.Name()) // Check if the file still exists
-			if tc.expectFileRemoved {
+			if tt.expectFileRemoved {
 				assert.NotNil(t, err)
 				assert.IsType(t, &fs.PathError{}, err)
 			} else {
@@ -57,7 +59,7 @@ func Test_removeFile(t *testing.T) {
 }
 
 func Test_configureQuery(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		inputURL       url.URL
 		expectedValues url.Values
 	}{
@@ -69,6 +71,7 @@ func Test_configureQuery(t *testing.T) {
 				"_case_sensitive_like": {"true"},
 				"_mutex":               {"no"},
 				"_journal":             {"WAL"},
+				"_query_only":          {"true"},
 				"mode":                 {"disk"},
 			},
 		},
@@ -79,20 +82,21 @@ func Test_configureQuery(t *testing.T) {
 			expectedValues: url.Values{
 				"_case_sensitive_like": {"true"},
 				"_mutex":               {"no"},
+				"_query_only":          {"true"},
 				"mode":                 {"memory"},
 			},
 		},
 	}
 
-	for _, testCase := range testCases {
-		result := configureQuery(testCase.inputURL)
-		assert.Equal(t, testCase.expectedValues, result)
+	for _, tt := range tests {
+		result := configureQuery(tt.inputURL)
+		assert.Equal(t, tt.expectedValues, result)
 	}
 }
 
-func TestLogDsnURL(t *testing.T) {
+func Test_logDsnURL(t *testing.T) {
 	// Define test cases as a slice of structs
-	testCases := []struct {
+	tests := []struct {
 		name           string
 		inputURL       string
 		expectedResult string
@@ -111,17 +115,17 @@ func TestLogDsnURL(t *testing.T) {
 	}
 
 	// Iterate through test cases
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			// Parse the input URL
-			dsnURL, err := url.Parse(tc.inputURL)
+			dsnURL, err := url.Parse(tt.inputURL)
 			assert.NoError(t, err)
 
 			// Call the function
 			logDsnURL(dsnURL)
 
 			// Parse the expected result URL
-			expectedURL, err := url.Parse(tc.expectedResult)
+			expectedURL, err := url.Parse(tt.expectedResult)
 			assert.NoError(t, err)
 
 			// Assert the query values

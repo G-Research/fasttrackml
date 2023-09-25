@@ -22,7 +22,7 @@ func Test_getContentType(t *testing.T) {
 	}{
 		{
 			name:     "FromListOfTextTypes",
-			filename: "document.hocon",
+			filename: "document.mlproject",
 			expected: "text/plain",
 		},
 		{

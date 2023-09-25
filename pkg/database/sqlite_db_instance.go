@@ -44,23 +44,10 @@ func NewSqliteDBInstance(
 	var sourceConn gorm.Dialector
 	var replicaConn gorm.Dialector
 
-	q := dsnURL.Query()
-	q.Set("_case_sensitive_like", "true")
-	q.Set("_mutex", "no")
-	if q.Get("mode") != "memory" && !(q.Has("_journal") || q.Has("_journal_mode")) {
-		q.Set("_journal", "WAL")
-	}
+	q := configureQuery(dsnURL)
 	dsnURL.RawQuery = q.Encode()
-
-	if reset && q.Get("mode") != "memory" {
-		file := dsnURL.Host
-		if file == "" {
-			file = dsnURL.Path
-		}
-		log.Infof("Removing database file %s", file)
-		if err := os.Remove(file); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("failed to remove database file: %w", err)
-		}
+        if err := removeFile(q, dsnURL, reset); err != nil {
+		return nil, eris.Wrap(err, "could not reset database")
 	}
 
 	if !slices.Contains(sql.Drivers(), SQLiteCustomDriverName) {
@@ -139,4 +126,30 @@ func NewSqliteDBInstance(
 	)
 
 	return &db, nil
+}
+
+// removeFile removes the sqlite db file if needed for reset.
+func removeFile(q url.Values, dsnURL url.URL, reset bool) error {
+	if reset && q.Get("mode") != "memory" {
+		file := dsnURL.Host
+		if file == "" {
+			file = dsnURL.Path
+		}
+		log.Infof("Removing database file %s", file)
+		if err := os.Remove(file); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+	return nil
+}
+
+// configureQuery sets the query Values we need.
+func configureQuery(dsnURL url.URL) url.Values {
+        q := dsnURL.Query()
+	q.Set("_case_sensitive_like", "true")
+	q.Set("_mutex", "no")
+	if q.Get("mode") != "memory" && !(q.Has("_journal") || q.Has("_journal_mode")) {
+		q.Set("_journal", "WAL")
+	}
+	return q
 }

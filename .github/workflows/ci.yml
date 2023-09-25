@@ -45,8 +45,16 @@ jobs:
             exit 1
           fi
 
-      - name: Generate mocks
-        run: make mocks-generate
+      - name: Check mocks
+        run: |
+          make mocks-generate
+          modified=$(git ls-files --modified -- '*/mock_*.go')
+          if [ -n "$modified" ]; then
+            for file in $modified; do
+              echo "::error file=$file::$file is not up to date (hint: run \"make mocks-generate\" to fix this)"
+            done
+            exit 1
+          fi
 
       - name: Check with go vet
         run: go vet --tags "${{ steps.tags.outputs.tags }}" ./...

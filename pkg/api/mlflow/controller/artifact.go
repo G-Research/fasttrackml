@@ -43,6 +43,7 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 	}
 	defer artifact.Close()
 
+	ctx.Set("Content-Type", "application/octet-stream")
 	bytesWritten, err := io.CopyBuffer(ctx, artifact, make([]byte, 4096))
 	log.Debugf("GetArtifact wrote bytes to output stream: %d", bytesWritten)
 	return err

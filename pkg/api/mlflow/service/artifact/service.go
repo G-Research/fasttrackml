@@ -85,7 +85,10 @@ func (s Service) GetArtifact(
 		run.ArtifactURI, req.Path,
 	)
 	if err != nil {
-		return nil, api.NewInternalError("error getting artifact object for URI: %s", filepath.Join(run.ArtifactURI, req.Path))
+		return nil, api.NewInternalError(
+			"error getting artifact object for URI: %s",
+			filepath.Join(run.ArtifactURI, req.Path),
+		)
 	}
 
 	return artifactReader, nil

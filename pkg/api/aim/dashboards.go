@@ -22,15 +22,10 @@ func GetDashboards(c *fiber.Ctx) error {
 
 	var dashboards []database.Dashboard
 	if err := database.DB.
-		InnerJoins(
-			"App",
-			database.DB.Select(
-				"ID", "Type",
-			).Where(
-				&database.App{NamespaceID: ns.ID}, "NamespaceID",
-			),
-		).
+		Preload("App").
+		Joins("LEFT JOIN apps ON apps.id = dashboards.app_id").
 		Where("NOT dashboards.is_archived").
+		Where("apps.namespace_id = ?", ns.ID).
 		Order("dashboards.updated_at").
 		Find(&dashboards).
 		Error; err != nil {
@@ -111,15 +106,10 @@ func GetDashboard(c *fiber.Ctx) error {
 		},
 	}
 	if err := database.DB.
-		InnerJoins(
-			"App",
-			database.DB.Select(
-				"ID", "Type",
-			).Where(
-				&database.App{NamespaceID: ns.ID}, "NamespaceID",
-			),
-		).
 		Where("NOT dashboards.is_archived").
+		Preload("App").
+		Joins("LEFT JOIN apps ON apps.id = dashboards.app_id").
+		Where("apps.namespace_id = ?", ns.ID).
 		First(&dashboard).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -161,11 +151,9 @@ func UpdateDashboard(c *fiber.Ctx) error {
 		},
 	}
 	if err := database.DB.
-		InnerJoins(
-			"App",
-			database.DB.Where(&database.App{NamespaceID: ns.ID}, "NamespaceID"),
-		).
+		Joins("LEFT JOIN apps ON dashboards.app_id = apps.id").
 		Where("NOT dashboards.is_archived").
+		Where("apps.namespace_id = ?", ns.ID).
 		First(&dash).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -209,11 +197,9 @@ func DeleteDashboard(c *fiber.Ctx) error {
 	}
 	if err := database.DB.
 		Select("dashboards.id").
-		InnerJoins(
-			"App",
-			database.DB.Where(&database.App{NamespaceID: ns.ID}, "NamespaceID"),
-		).
+		Joins("LEFT JOIN apps ON dashboards.app_id = apps.id").
 		Where("NOT dashboards.is_archived").
+		Where("apps.namespace_id = ?", ns.ID).
 		First(&dash).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {

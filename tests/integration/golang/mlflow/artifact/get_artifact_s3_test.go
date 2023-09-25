@@ -75,7 +75,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// 1. create test experiment.
 			experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name: fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
+				Name:             fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("s3://%s/1", tt.bucket),
 			})

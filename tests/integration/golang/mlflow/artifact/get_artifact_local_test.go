@@ -71,7 +71,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			// 1. create test experiment.
 			experimentArtifactDir := t.TempDir()
 			experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name: fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
+				Name:             fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("%s%s", tt.prefix, experimentArtifactDir),
 			})

@@ -5,6 +5,8 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
+	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
 // List of route prefixes.
@@ -57,18 +59,23 @@ const (
 
 // Router represents `mlflow` router.
 type Router struct {
-	prefixList []string
-	controller *controller.Controller
+	prefixList          []string
+	controller          *controller.Controller
+	namespaceRepository repositories.NamespaceRepositoryProvider
 }
 
 // NewRouter creates new instance of `mlflow` router.
-func NewRouter(controller *controller.Controller) *Router {
+func NewRouter(
+	controller *controller.Controller,
+	namespaceRepository repositories.NamespaceRepositoryProvider,
+) *Router {
 	return &Router{
 		prefixList: []string{
 			"/api/2.0/mlflow/",
 			"/ajax-api/2.0/mlflow/",
 		},
-		controller: controller,
+		controller:          controller,
+		namespaceRepository: namespaceRepository,
 	}
 }
 
@@ -76,6 +83,7 @@ func NewRouter(controller *controller.Controller) *Router {
 func (r Router) Init(server fiber.Router) {
 	for _, prefix := range r.prefixList {
 		mainGroup := server.Group(prefix)
+		mainGroup.Use(namespaceMiddleware.New(r.namespaceRepository))
 
 		artifacts := mainGroup.Group(ArtifactsRoutePrefix)
 		artifacts.Get(ArtifactsListRoute, r.controller.ListArtifacts)

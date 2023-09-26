@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -21,7 +22,6 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/admin"
 	adminController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
-	adminRepositories "github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -35,6 +35,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
+	"github.com/G-Research/fasttrackml/pkg/common/dao"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
@@ -63,12 +65,27 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	// 3. init main HTTP server.
-	namespaceRepository := adminRepositories.NewNamespaceRepository(db.GormDB())
-	server := initServer(mlflowConfig, namespaceRepository)
+	// 3. create database listeners.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	namespaceListener, err := dao.NewNamespaceListener(ctx, db.GormDB())
+	if err != nil {
+		return eris.Wrap(err, "error creating namespace notification listener")
+	}
 
-	// 4. init `aim` api and ui routes.
-	aimAPI.AddRoutes(server.Group("/aim/api/"))
+	// 4. init main HTTP server.
+	namespaceRepository, err := repositories.NewNamespaceCachedRepository(
+		db.GormDB(), namespaceListener, repositories.NewNamespaceRepository(db.GormDB()),
+	)
+	if err != nil {
+		return eris.Wrap(err, "error creating cached namespace repository")
+	}
+	server := initServer(mlflowConfig)
+
+	// 5. init `aim` api and ui routes.
+	router := server.Group("/aim/api/")
+	router.Use(namespaceMiddleware.New(namespaceRepository))
+	aimAPI.AddRoutes(router)
 	aimUI.AddRoutes(server)
 
 	artifactStorageFactory, err := storage.NewArtifactStorageFactory(mlflowConfig)
@@ -102,6 +119,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
+		namespaceRepository,
 	).Init(server)
 	mlflowUI.AddRoutes(server)
 
@@ -170,7 +188,6 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 // initServer init HTTP server with base configuration.
 func initServer(
 	config *mlflowConfig.ServiceConfig,
-	namespaceRepository adminRepositories.NamespaceRepositoryProvider,
 ) *fiber.App {
 	server := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
@@ -222,7 +239,6 @@ func initServer(
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
-	server.Use(namespaceMiddleware.New(namespaceRepository))
 
 	server.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")

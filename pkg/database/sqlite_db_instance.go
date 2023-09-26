@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/url"
 	"os"
 	"regexp"
@@ -59,7 +58,7 @@ func NewSqliteDBInstance(
 		}
 		log.Infof("Removing database file %s", file)
 		if err := os.Remove(file); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("failed to remove database file: %w", err)
+			return nil, eris.Wrap(err, "failed to remove database file")
 		}
 	}
 
@@ -88,7 +87,7 @@ func NewSqliteDBInstance(
 
 	s, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dsnURL.String(), "sqlite://", "file:", 1))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, eris.Wrap(err, "failed to connect to database")
 	}
 	db.closers = append(db.closers, s)
 	s.SetMaxIdleConns(1)
@@ -104,7 +103,7 @@ func NewSqliteDBInstance(
 	r, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dsnURL.String(), "sqlite://", "file:", 1))
 	if err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, eris.Wrap(err, "failed to connect to database")
 	}
 	db.closers = append(db.closers, r)
 	replicaConn = sqlite.Dialector{
@@ -127,7 +126,7 @@ func NewSqliteDBInstance(
 	})
 	if err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, eris.Wrap(err, "failed to connect to database")
 	}
 
 	db.Use(

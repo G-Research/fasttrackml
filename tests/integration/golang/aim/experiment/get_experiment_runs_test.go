@@ -54,10 +54,14 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperimentRuns
-	err = s.AIMClient.DoGetRequest(
-		fmt.Sprintf("/experiments/%d/runs?limit=4&offset=%s", *experiment.ID, runs[8].ID),
-		&resp,
-	)
+	err = s.AIMClient.DoRequest(&helpers.HttpRequest{
+		URI: fmt.Sprintf("/experiments/%d/runs", *experiment.ID),
+		Params: map[any]any{
+			"limit":  4,
+			"offset": runs[8].ID,
+		},
+		Response: &resp,
+	})
 	assert.Nil(s.T(), err)
 
 	assert.Equal(s.T(), 4, len(resp.Runs))
@@ -104,9 +108,7 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			var resp api.ErrorResponse
 			err := s.AIMClient.DoGetRequest(
-				fmt.Sprintf(
-					"/experiments/%s/runs", tt.ID,
-				),
+				fmt.Sprintf("/experiments/%s/runs", tt.ID),
 				&resp,
 			)
 			assert.Nil(t, err)

@@ -54,15 +54,14 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperimentRuns
-	err = s.AIMClient.DoRequest(&helpers.HttpRequest{
+	assert.Nil(s.T(), s.AIMClient.DoRequest(&helpers.HttpRequest{
 		URI: fmt.Sprintf("/experiments/%d/runs", *experiment.ID),
 		Params: map[any]any{
 			"limit":  4,
 			"offset": runs[8].ID,
 		},
 		Response: &resp,
-	})
-	assert.Nil(s.T(), err)
+	}))
 
 	assert.Equal(s.T(), 4, len(resp.Runs))
 	for index := 0; index < len(resp.Runs); index++ {

@@ -11,7 +11,6 @@ import (
 	"github.com/gofiber/template/html/v2"
 
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
-	"github.com/G-Research/fasttrackml/pkg/ui/common"
 )
 
 //go:embed embed
@@ -30,11 +29,8 @@ func NewRouter(controller *controller.Controller) *Router {
 }
 
 // AddRoutes adds all the `chooser` routes
-func (r Router) AddRoutes(fr fiber.Router) error {
-	sub, err := fs.Sub(content, "embed")
-	if err != nil {
-		return err
-	}
+func (r Router) AddRoutes(fr fiber.Router) {
+	sub, _ := fs.Sub(content, "embed")
 
 	fr.Use("/static/chooser/", etag.New(), filesystem.New(filesystem.Config{
 		Root: http.FS(sub),
@@ -48,12 +44,4 @@ func (r Router) AddRoutes(fr fiber.Router) error {
 
 	// specific routes
 	app.Get("/", r.controller.GetNamespaces)
-
-	// default route
-	app.Use("/", etag.New(), filesystem.New(filesystem.Config{
-		Root: http.FS(
-			common.NewOnlyRootFS(sub, "index.html"),
-		),
-	}))
-	return nil
 }

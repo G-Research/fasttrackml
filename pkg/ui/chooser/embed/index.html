@@ -66,7 +66,7 @@
         <ul id="namespaces-list">
             {{ range .Data }}
             <li>
-                <a href="#" onclick="window.location = (window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}});">{{.Code}}</a>    
+                <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.Description}}</a>    
             </li>
             {{ end }}
         </ul>

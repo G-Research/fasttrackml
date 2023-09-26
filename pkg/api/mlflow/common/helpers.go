@@ -3,38 +3,36 @@ package common
 import (
 	"mime"
 	"path"
-	"strings"
-
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 // textTypes used by GetContentType.
 var textTypes = []string{
-	"txt",
-	"log",
-	"err",
-	"cfg",
-	"conf",
-	"cnf",
-	"cf",
-	"ini",
-	"properties",
-	"prop",
-	"hocon",
-	"toml",
-	"yaml",
-	"yml",
-	"xml",
-	"json",
-	"js",
-	"py",
-	"py3",
-	"csv",
-	"tsv",
-	"md",
-	"rst",
-	"MLmodel",
-	"mlproject",
+	".txt",
+	".log",
+	".err",
+	".cfg",
+	".conf",
+	".cnf",
+	".cf",
+	".ini",
+	".properties",
+	".prop",
+	".hocon",
+	".toml",
+	".yaml",
+	".yml",
+	".xml",
+	".json",
+	".js",
+	".py",
+	".py3",
+	".csv",
+	".tsv",
+	".md",
+	".rst",
+	".MLmodel",
+	".mlproject",
 }
 
 // GetPointer returns pointer for provided string.
@@ -51,7 +49,7 @@ func GetFilename(fullpath string) string {
 // GetContentType will determine the content type of the file.
 func GetContentType(filename string) string {
 	fileExt := path.Ext(filename)
-	if slices.Contains(textTypes, strings.Trim(fileExt, ".")) {
+	if slices.Contains(textTypes, fileExt) {
 		return "text/plain"
 	}
 	mimeType := mime.TypeByExtension(fileExt)

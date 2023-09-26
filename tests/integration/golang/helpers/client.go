@@ -64,7 +64,7 @@ func (c HttpClient) DoRequest(request *HttpRequest) error {
 	// 1. check if request object were provided. if provided then marshal it.
 	var requestBody io.Reader
 	if request.Request != nil {
-		data, err := json.Marshal(request)
+		data, err := json.Marshal(request.Request)
 		if err != nil {
 			return eris.Wrap(err, "error marshaling request object")
 		}
@@ -80,7 +80,7 @@ func (c HttpClient) DoRequest(request *HttpRequest) error {
 	if request.Params != nil {
 		query := u.Query()
 		for key, value := range request.Params {
-			query.Set(fmt.Sprintf("%s", key), fmt.Sprintf("%s", value))
+			query.Set(fmt.Sprintf("%v", key), fmt.Sprintf("%v", value))
 		}
 		u.RawQuery = query.Encode()
 	}
@@ -91,19 +91,7 @@ func (c HttpClient) DoRequest(request *HttpRequest) error {
 		request.Method = HttpMethodGet
 	}
 	req, err := http.NewRequestWithContext(
-		context.Background(),
-		string(request.Method),
-		StrReplace(
-			fmt.Sprintf(
-				"%s%s%s",
-				c.baseURL,
-				c.basePath,
-				request.URI,
-			),
-			[]string{},
-			[]interface{}{},
-		),
-		requestBody,
+		context.Background(), string(request.Method), u.String(), requestBody,
 	)
 	if err != nil {
 		return eris.Wrap(err, "error creating request")

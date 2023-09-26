@@ -4,9 +4,8 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"slices"
 	"time"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/rotisserie/eris"
 	"github.com/spf13/viper"

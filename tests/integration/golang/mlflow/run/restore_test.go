@@ -9,11 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hetiansu5/urlquery"
-
 	"github.com/gofiber/fiber/v2"
-
 	"github.com/google/uuid"
+	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 

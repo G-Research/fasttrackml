@@ -54,6 +54,17 @@ help: ## display this help
 	@echo
 
 #
+# Tools targets.
+#
+.PHONY: install-tools ## install tools.
+install-tools:
+	@echo '>>> Installing tools.'
+	@go install github.com/vektra/mockery/v2@v2.34.0
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.2
+	@go install golang.org/x/tools/cmd/goimports@v0.13.0
+	@go install mvdan.cc/gofumpt@v0.5.0
+
+#
 # Linter targets.
 #
 lint: ## run set of linters over the code.
@@ -76,7 +87,7 @@ go-build: ## build app binary.
 go-format: ## format go code.
 	@echo '>>> Formatting go code.'
 	@gofumpt -w .
-	@goimports -w -local github.com/G-Research/fasttrackml .
+	@goimports -w -local github.com/G-Research/fasttrackml $(shell find . -type f -name '*.go' -not -name 'mock_*.go')
 
 .PHONY: go-dist
 go-dist: go-build ## archive app binary.
@@ -170,12 +181,14 @@ service-clean: ## clean containers.
 # Mockery targets.
 #
 .PHONY: mocks-clean
-mocks-clean: ## cleans old mocks.
-	find . -name "mock_*.go" -type f -print0 | xargs -0 /bin/rm -f
+mocks-clean: ## cleans mocks.
+	@echo ">>> Cleaning mocks."
+	@find ./pkg -name 'mock_*.go' -type f -delete
 
 .PHONY: mocks-generate
 mocks-generate: mocks-clean ## generate mock based on all project interfaces.
-	mockery --all --dir "./pkg/api/mlflow" --inpackage --case underscore
+	@echo ">>> Generating mocks."
+	@mockery
 
 #
 # Build targets

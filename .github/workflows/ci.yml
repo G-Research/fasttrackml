@@ -29,29 +29,30 @@ jobs:
         id: tags
         run: echo tags=$(cat .go-build-tags) >> $GITHUB_OUTPUT
 
-      - name: Download formatters
-        run: |
-          go install golang.org/x/tools/cmd/goimports@v0.11.0
-          go install mvdan.cc/gofumpt@v0.5.0
+      - name: Install tools
+        run: make install-tools
 
       - name: Check formatting
         run: |
-          unformatted=$(
-            gofumpt -l .
-            goimports -l --local github.com/G-Research/fasttrackml .
-          )
-          if [ -n "$unformatted" ]; then
-            for file in $unformatted; do
+          make go-format
+          modified=$(git ls-files --modified -- '*.go')
+          if [ -n "$modified" ]; then
+            for file in $modified; do
               echo "::error file=$file::$file is not formatted properly (hint: run \"make go-format\" to fix this)"
             done
             exit 1
           fi
 
-      - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.32.4
-
-      - name: Generate mocks
-        run: make mocks-generate
+      - name: Check mocks
+        run: |
+          make mocks-generate
+          modified=$(git ls-files --modified -- '*/mock_*.go')
+          if [ -n "$modified" ]; then
+            for file in $modified; do
+              echo "::error file=$file::$file is not up to date (hint: run \"make mocks-generate\" to fix this)"
+            done
+            exit 1
+          fi
 
       - name: Check with go vet
         run: go vet --tags "${{ steps.tags.outputs.tags }}" ./...
@@ -93,12 +94,6 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "1.21"
-
-      - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.32.4
-
-      - name: Generate mocks
-        run: make mocks-generate
 
       - name: Run Go Unit Tests
         run: make test-go-unit

@@ -6,14 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestGetFileName test the getFilename private helper.
-func TestGetFileName(t *testing.T) {
-	path := "/path/to/file/test.txt"
-	expected := "test.txt"
-	result := GetFilename(path)
-	assert.Equal(t, expected, result)
-}
-
 // TestGetContentType the TestGetContentType private helpers
 func TestGetContentType(t *testing.T) {
 	testCases := []struct {

@@ -40,12 +40,6 @@ func GetPointer[T any](str T) *T {
 	return &str
 }
 
-// GetFilename returns the final bit of the path (the filename).
-func GetFilename(fullpath string) string {
-	_, filename := path.Split(fullpath)
-	return filename
-}
-
 // GetContentType will determine the content type of the file.
 func GetContentType(filename string) string {
 	fileExt := path.Ext(filename)

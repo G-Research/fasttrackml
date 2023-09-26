@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"path/filepath"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -46,7 +47,7 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	filename := common.GetFilename(req.Path)
+	filename := filepath.Base(req.Path)
 	ctx.Set("Content-Type", common.GetContentType(filename))
 	ctx.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 	ctx.Set("X-Content-Type-Options", "nosniff")

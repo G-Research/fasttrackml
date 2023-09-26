@@ -78,5 +78,12 @@ func (s Local) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, eris.Wrap(err, "error constructing full path")
 	}
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return nil, eris.Wrap(err, "cannot check status of path")
+	}
+	if fileInfo.IsDir() {
+		return nil, eris.New("cannot get a directory")
+	}
 	return os.Open(path)
 }

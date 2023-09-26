@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
 // TestGetArtifact for the local storage implementation.
@@ -50,10 +48,11 @@ func TestGetArtifact_Error(t *testing.T) {
 	// setup
 	defaultArtifactRoot := t.TempDir()
 	runArtifactRoot := "/run-artifact-root/"
+	subdir := "subdir/"
 	fileName := "file.txt"
 	fileContent := "artifact content"
 
-	err := os.MkdirAll(filepath.Join(defaultArtifactRoot, runArtifactRoot), os.ModePerm)
+	err := os.MkdirAll(filepath.Join(defaultArtifactRoot, runArtifactRoot, subdir), os.ModePerm)
 	assert.Nil(t, err)
 
 	f, err := os.Create(filepath.Join(defaultArtifactRoot, runArtifactRoot, fileName))
@@ -62,21 +61,25 @@ func TestGetArtifact_Error(t *testing.T) {
 	assert.Nil(t, err)
 
 	// invoke
-	config := &config.ServiceConfig{
-		DefaultArtifactRoot: defaultArtifactRoot,
-	}
-	storage, err := NewLocal(config)
+	storage, err := NewLocal(nil)
 	assert.Nil(t, err)
 
 	file, err := storage.Get(filepath.Join(defaultArtifactRoot, runArtifactRoot), "some-other-item")
 	assert.NotNil(t, err)
 	defer func() {
-		file.Close()
+		if file != nil {
+			file.Close()
+		}
 		os.Remove(f.Name())
 	}()
 
 	// verify
 	assert.Nil(t, file)
+	assert.NotNil(t, err)
+
+	// test subdir
+	subdirFile, err := storage.Get(filepath.Join(defaultArtifactRoot, runArtifactRoot), subdir)
+	assert.Nil(t, subdirFile)
 	assert.NotNil(t, err)
 }
 

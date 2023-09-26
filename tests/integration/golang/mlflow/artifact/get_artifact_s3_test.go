@@ -73,7 +73,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
-			// 1. create test experiment.
+			// create test experiment
 			experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
 				LifecycleStage:   models.LifecycleStageActive,
@@ -81,7 +81,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			})
 			assert.Nil(s.T(), err)
 
-			// 2. create test run.
+			// create test run
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
 			run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             runID,
@@ -93,7 +93,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			})
 			assert.Nil(s.T(), err)
 
-			// 3. upload artifact object to S3.
+			// upload artifact root object to S3
 			putObjReq := &s3.PutObjectInput{
 				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.file", runID)),
 				Body:   strings.NewReader(`content`),
@@ -102,7 +102,19 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
 			assert.Nil(s.T(), err)
 
-			// 4. make actual API call.
+			// upload artifact subdir object to S3
+			putObjReq = &s3.PutObjectInput{
+				Key:    aws.String(fmt.Sprintf(
+					"1/%s/artifacts/artifact.subdir/artifact.file",
+					runID),
+				),
+				Body:   strings.NewReader(`content`),
+				Bucket: aws.String(tt.bucket),
+			}
+			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
+			assert.Nil(s.T(), err)
+
+			// make API call for root object
 			query, err := urlquery.Marshal(request.GetArtifactRequest{
 				RunID: run.ID,
 				Path:  "artifact.file",
@@ -115,8 +127,37 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 				nil,
 			)
 			assert.Nil(s.T(), err)
-
 			assert.Equal(s.T(), "content", string(resp))
+
+			// make API call for subdir object
+			query, err = urlquery.Marshal(request.GetArtifactRequest{
+				RunID: run.ID,
+				Path:  "artifact.subdir/artifact.file",
+			})
+			assert.Nil(s.T(), err)
+
+			resp, err = s.serviceClient.DoStreamRequest(
+				http.MethodGet,
+				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
+				nil,
+			)
+			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), "content", string(resp))
+
+			// make API call for existing subdir (expecting error)
+			query, err = urlquery.Marshal(request.GetArtifactRequest{
+				RunID: run.ID,
+				Path:  "artifact.subdir",
+			})
+			assert.Nil(s.T(), err)
+
+			resp, err = s.serviceClient.DoStreamRequest(
+				http.MethodGet,
+				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
+				nil,
+			)
+			assert.Nil(s.T(), err)
+			assert.Contains(s.T(), string(resp), "error getting artifact object")
 		})
 	}
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
@@ -129,6 +130,74 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "contentXX", string(resp))
+		})
+	}
+}
+
+func (s *GetArtifactLocalTestSuite) Test_Error() {
+	testData := []struct {
+		name    string
+		error   *api.ErrorResponse
+		request *request.GetArtifactRequest
+	}{
+		{
+			name:    "EmptyOrIncorrectRunIDOrRunUUID",
+			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			request: &request.GetArtifactRequest{},
+		},
+		{
+			name:  "IncorrectPathProvidedCase1",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			request: &request.GetArtifactRequest{
+				RunID: "run_id",
+				Path:  "..",
+			},
+		},
+		{
+			name:  "IncorrectPathProvidedCase2",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			request: &request.GetArtifactRequest{
+				RunID: "run_id",
+				Path:  "./..",
+			},
+		},
+		{
+			name:  "IncorrectPathProvidedCase3",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			request: &request.GetArtifactRequest{
+				RunID: "run_id",
+				Path:  "./../",
+			},
+		},
+		{
+			name:  "IncorrectPathProvidedCase4",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			request: &request.GetArtifactRequest{
+				RunID: "run_id",
+				Path:  "foo/../bar",
+			},
+		},
+		{
+			name:  "IncorrectPathProvidedCase5",
+			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			request: &request.GetArtifactRequest{
+				RunID: "run_id",
+				Path:  "/foo/../bar",
+			},
+		},
+	}
+
+	for _, tt := range testData {
+		s.T().Run(tt.name, func(t *testing.T) {
+			query, err := urlquery.Marshal(tt.request)
+			assert.Nil(s.T(), err)
+			resp := api.ErrorResponse{}
+			err = s.serviceClient.DoGetRequest(
+				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
+				&resp,
+			)
+			assert.Nil(t, err)
+			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}
 }

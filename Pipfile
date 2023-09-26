@@ -4,9 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-mlflow-skinny = "==2.6.0"
 black = "*"
+boto3 = "*"
 isort = "*"
+matplotlib = "*"
+mlflow-skinny = "~=2.7.0"
+pandas = "*"
+pyarrow = "*"
 
 [dev-packages]
 

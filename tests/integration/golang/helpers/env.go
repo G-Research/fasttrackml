@@ -7,7 +7,7 @@ func GetDatabaseUri() string {
 	if ok {
 		return uri
 	}
-	return "sqlite://fasttrackml.db"
+	return "sqlite:///tmp/fasttrackml.db"
 }
 
 func GetServiceUri() string {
@@ -31,7 +31,7 @@ func GetInputDatabaseUri() string {
 	if ok {
 		return uri
 	}
-	return "sqlite://fasttrackml-in.db"
+	return "sqlite:///tmp/fasttrackml-in.db"
 }
 
 func GetOutputDatabaseUri() string {
@@ -39,5 +39,5 @@ func GetOutputDatabaseUri() string {
 	if ok {
 		return uri
 	}
-	return "sqlite://fasttrackml-out.db"
+	return "sqlite:///tmp/fasttrackml-out.db"
 }

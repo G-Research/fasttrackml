@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -429,7 +429,7 @@ func CreateDefaultNamespace(db *gorm.DB) error {
 }
 
 // CreateDefaultExperiment creates the default experiment if it doesn't exist.
-func CreateDefaultExperiment(db *gorm.DB, artifactRoot string) error {
+func CreateDefaultExperiment(db *gorm.DB, defaultArtifactRoot string) error {
 	if err := db.First(&Experiment{}, 0).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Creating default experiment")
@@ -458,7 +458,7 @@ func CreateDefaultExperiment(db *gorm.DB, artifactRoot string) error {
 					return err
 				}
 
-				exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(artifactRoot, "/"), *exp.ID)
+				exp.ArtifactLocation = fmt.Sprintf("%s/%d", strings.TrimRight(defaultArtifactRoot, "/"), *exp.ID)
 				if err := tx.Model(&exp).Update("ArtifactLocation", exp.ArtifactLocation).Error; err != nil {
 					return fmt.Errorf("error updating artifact_location for experiment '%s': %s", exp.Name, err)
 				}

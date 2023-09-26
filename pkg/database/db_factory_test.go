@@ -34,9 +34,7 @@ func TestMakeDBProvider(t *testing.T) {
 
 			// expecting the global 'DB' not to be set
 			assert.Nil(t, DB)
-
-			err = db.Close()
-			assert.Nil(t, err)
+			assert.Nil(t, db.Close())
 		})
 	}
 }

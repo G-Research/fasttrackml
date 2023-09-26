@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"net/url"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -14,18 +14,18 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
+// S3StorageName is a s3 storage name.
+const (
+	S3StorageName = "s3"
+)
+
 // S3 represents S3 adapter to work with artifacts.
 type S3 struct {
 	client *s3.Client
-	config *config.ServiceConfig
 }
 
 // NewS3 creates new S3 instance.
 func NewS3(config *config.ServiceConfig) (*S3, error) {
-	storage := S3{
-		config: config,
-	}
-
 	var clientOptions []func(o *s3.Options)
 	var configOptions []func(*awsConfig.LoadOptions) error
 	if config.S3EndpointURI != "" {
@@ -51,48 +51,73 @@ func NewS3(config *config.ServiceConfig) (*S3, error) {
 	if err != nil {
 		return nil, eris.Wrap(err, "error loading configuration for S3 client")
 	}
-	storage.client = s3.NewFromConfig(cfg, clientOptions...)
-	return &storage, nil
+
+	return &S3{
+		s3.NewFromConfig(cfg, clientOptions...),
+	}, nil
 }
 
-// List implements Provider interface.
-func (s S3) List(artifactURI, path string) (string, []ArtifactObject, error) {
-	bucket, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
+// List implements ArtifactStorageProvider interface.
+func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
+	// 1. create s3 request input.
+	bucket, rootPrefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {
-		return "", nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
+		return nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
 	}
 	input := s3.ListObjectsV2Input{
-		Bucket: aws.String(bucket),
-		Prefix: aws.String(prefix),
+		Bucket:    aws.String(bucket),
+		Delimiter: aws.String("/"),
 	}
 
-	// 1. process search `prefix` parameter.
-	path, err = url.JoinPath(*input.Prefix, path)
+	// 2. process search `path` parameter.
+	prefix, err := url.JoinPath(rootPrefix, path)
 	if err != nil {
-		return "", nil, eris.Wrap(err, "error constructing s3 prefix")
+		return nil, eris.Wrap(err, "error constructing s3 prefix")
 	}
-	input.Prefix = aws.String(path)
+	if prefix != "" {
+		prefix = prefix + "/"
+	}
+	input.Prefix = aws.String(prefix)
 
+	// 3. read data from s3 storage.
 	paginator := s3.NewListObjectsV2Paginator(s.client, &input)
 	if err != nil {
-		return "", nil, eris.Wrap(err, "error creating s3 paginated request")
+		return nil, eris.Wrap(err, "error creating s3 paginated request")
 	}
 
 	var artifactList []ArtifactObject
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(context.TODO())
 		if err != nil {
-			return "", nil, eris.Wrap(err, "error getting s3 page objects")
+			return nil, eris.Wrap(err, "error getting s3 page objects")
 		}
-		log.Debugf("got %d objects from S3 storage for path: %s", len(page.Contents), path)
-		for _, object := range page.Contents {
+
+		log.Debugf("got %d directories from S3 storage for bucket %q and prefix %q", len(page.CommonPrefixes), bucket, prefix)
+		for _, dir := range page.CommonPrefixes {
+			relPath, err := filepath.Rel(rootPrefix, *dir.Prefix)
+			if err != nil {
+				return nil, eris.Wrapf(err, "error getting relative path for dir: %s", *dir.Prefix)
+			}
 			artifactList = append(artifactList, ArtifactObject{
-				Path:  *object.Key,
+				Path:  relPath,
+				Size:  0,
+				IsDir: true,
+			})
+		}
+
+		log.Debugf("got %d objects from S3 storage for bucket %q and prefix %q", len(page.Contents), bucket, prefix)
+		for _, object := range page.Contents {
+			relPath, err := filepath.Rel(rootPrefix, *object.Key)
+			if err != nil {
+				return nil, eris.Wrapf(err, "error getting relative path for object: %s", *object.Key)
+			}
+			artifactList = append(artifactList, ArtifactObject{
+				Path:  relPath,
 				Size:  object.Size,
 				IsDir: false,
 			})
 		}
 	}
 
-	return fmt.Sprintf("s3://%s", bucket), artifactList, nil
+	return artifactList, nil
 }

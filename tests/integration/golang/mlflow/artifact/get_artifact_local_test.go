@@ -135,6 +135,28 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 }
 
 func (s *GetArtifactLocalTestSuite) Test_Error() {
+	// create test experiment
+	experimentArtifactDir := s.T().TempDir()
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:             fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
+		LifecycleStage:   models.LifecycleStageActive,
+		ArtifactLocation: experimentArtifactDir,
+	})
+	assert.Nil(s.T(), err)
+
+	// create test run
+	runID := strings.ReplaceAll(uuid.New().String(), "-", "")
+	runArtifactDir := filepath.Join(experimentArtifactDir, runID, "artifacts")
+	_, err = s.runFixtures.CreateRun(context.Background(), &models.Run{
+		ID:             runID,
+		Status:         models.StatusRunning,
+		SourceType:     "JOB",
+		ExperimentID:   *experiment.ID,
+		ArtifactURI:    runArtifactDir,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	assert.Nil(s.T(), err)
+
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -183,6 +205,20 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "/foo/../bar",
+			},
+		},
+		{
+			name: "NonExistentPathProvided",
+			error: api.NewInternalError(
+				fmt.Sprintf(
+					"error getting artifact object for URI: %s/%s/artifacts/non-existent-file",
+					experimentArtifactDir,
+					runID,
+				),
+			),
+			request: &request.GetArtifactRequest{
+				RunID: runID,
+				Path:  "non-existent-file",
 			},
 		},
 	}

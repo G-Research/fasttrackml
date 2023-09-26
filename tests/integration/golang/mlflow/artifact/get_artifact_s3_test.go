@@ -104,7 +104,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 
 			// upload artifact subdir object to S3
 			putObjReq = &s3.PutObjectInput{
-				Key:    aws.String(fmt.Sprintf(
+				Key: aws.String(fmt.Sprintf(
 					"1/%s/artifacts/artifact.subdir/artifact.file",
 					runID),
 				),
@@ -143,21 +143,6 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "content", string(resp))
-
-			// make API call for existing subdir (expecting error)
-			query, err = urlquery.Marshal(request.GetArtifactRequest{
-				RunID: run.ID,
-				Path:  "artifact.subdir",
-			})
-			assert.Nil(s.T(), err)
-
-			resp, err = s.serviceClient.DoStreamRequest(
-				http.MethodGet,
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
-				nil,
-			)
-			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), string(resp), "error getting artifact object")
 		})
 	}
 }
@@ -166,6 +151,35 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
+
+	// create test experiment
+	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:             "Test Experiment In Bucket bucket1",
+		LifecycleStage:   models.LifecycleStageActive,
+		ArtifactLocation: "s3://bucket1/1",
+	})
+	assert.Nil(s.T(), err)
+
+	// create test run
+	runID := strings.ReplaceAll(uuid.New().String(), "-", "")
+	_, err = s.runFixtures.CreateRun(context.Background(), &models.Run{
+		ID:             runID,
+		Status:         models.StatusRunning,
+		SourceType:     "JOB",
+		ExperimentID:   *experiment.ID,
+		ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	assert.Nil(s.T(), err)
+
+	// upload artifact subdir object to S3
+	putObjReq := &s3.PutObjectInput{
+		Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.subdir/artifact.file", runID)),
+		Body:   strings.NewReader(`content`),
+		Bucket: aws.String("bucket1"),
+	}
+	_, err = s.s3Client.PutObject(context.Background(), putObjReq)
+	assert.Nil(s.T(), err)
 
 	testData := []struct {
 		name    string
@@ -215,6 +229,16 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "/foo/../bar",
+			},
+		},
+		{
+			name: "S3IncompletePath",
+			error: api.NewInternalError(
+				fmt.Sprintf("error getting artifact object for URI: s3:/bucket1/1/%s/artifacts/artifact.subdir", runID),
+			),
+			request: &request.GetArtifactRequest{
+				RunID: runID,
+				Path:  "artifact.subdir",
 			},
 		},
 	}

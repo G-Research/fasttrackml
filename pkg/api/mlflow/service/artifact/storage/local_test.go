@@ -12,15 +12,11 @@ import (
 // TestGetArtifact for the local storage implementation.
 func TestGetArtifact_Ok(t *testing.T) {
 	// setup
-	defaultArtifactRoot := t.TempDir()
-	runArtifactRoot := "/run-artifact-root/"
+	runArtifactRoot := t.TempDir()
 	fileName := "file.txt"
 	fileContent := "artifact content"
 
-	err := os.MkdirAll(filepath.Join(defaultArtifactRoot, runArtifactRoot), os.ModePerm)
-	assert.Nil(t, err)
-
-	f, err := os.Create(filepath.Join(defaultArtifactRoot, runArtifactRoot, fileName))
+	f, err := os.Create(filepath.Join(runArtifactRoot, fileName))
 	assert.Nil(t, err)
 	_, err = f.Write([]byte(fileContent))
 	assert.Nil(t, err)
@@ -29,7 +25,7 @@ func TestGetArtifact_Ok(t *testing.T) {
 	storage, err := NewLocal(nil)
 	assert.Nil(t, err)
 
-	file, err := storage.Get(filepath.Join(defaultArtifactRoot, runArtifactRoot), fileName)
+	file, err := storage.Get(runArtifactRoot, fileName)
 	assert.Nil(t, err)
 	defer func() {
 		file.Close()
@@ -46,31 +42,22 @@ func TestGetArtifact_Ok(t *testing.T) {
 
 func TestGetArtifact_Error(t *testing.T) {
 	// setup
-	defaultArtifactRoot := t.TempDir()
-	runArtifactRoot := "/run-artifact-root/"
+	runArtifactRoot := t.TempDir()
 	subdir := "subdir/"
-	fileName := "file.txt"
-	fileContent := "artifact content"
 
-	err := os.MkdirAll(filepath.Join(defaultArtifactRoot, runArtifactRoot, subdir), os.ModePerm)
-	assert.Nil(t, err)
-
-	f, err := os.Create(filepath.Join(defaultArtifactRoot, runArtifactRoot, fileName))
-	assert.Nil(t, err)
-	_, err = f.Write([]byte(fileContent))
+	err := os.MkdirAll(filepath.Join(runArtifactRoot, subdir), os.ModePerm)
 	assert.Nil(t, err)
 
 	// invoke
 	storage, err := NewLocal(nil)
 	assert.Nil(t, err)
 
-	file, err := storage.Get(filepath.Join(defaultArtifactRoot, runArtifactRoot), "some-other-item")
+	file, err := storage.Get(filepath.Join(runArtifactRoot), "some-other-item")
 	assert.NotNil(t, err)
 	defer func() {
 		if file != nil {
 			file.Close()
 		}
-		os.Remove(f.Name())
 	}()
 
 	// verify
@@ -78,7 +65,7 @@ func TestGetArtifact_Error(t *testing.T) {
 	assert.NotNil(t, err)
 
 	// test subdir
-	subdirFile, err := storage.Get(filepath.Join(defaultArtifactRoot, runArtifactRoot), subdir)
+	subdirFile, err := storage.Get(filepath.Join(runArtifactRoot), subdir)
 	assert.Nil(t, subdirFile)
 	assert.NotNil(t, err)
 }

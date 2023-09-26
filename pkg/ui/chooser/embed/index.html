@@ -47,7 +47,7 @@
 
     <!-- We load the UI with JS to avoid issues when an URL with embedded credentials is used -->
     <main>
-        <p id="selected-namespace"></p>
+        <p >Selected Namespace: {{.CurrentNamespace.Description}}</p>
         <p>Which UI do you want to use?</p>
         <div class="ui">
             <article>
@@ -64,7 +64,7 @@
             </article>
         </div>
         <ul id="namespaces-list">
-            {{ range .Data }}
+            {{ range .Namespaces }}
             <li>
                 <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.Description}}</a>    
             </li>
@@ -76,21 +76,6 @@
         <p>Brought to you by <a href="https://opensource.gresearch.co.uk" target="_blank">G-Research Open-Source</a>.
         </p>
     </footer>
-
-    <script>
-        function setCurrentNamespace() {
-            var currentUrl = window.location.href;
-            var namespaceIndex = currentUrl.indexOf('/ns/');
-            var namespaceText = document.getElementById('selected-namespace')
-            if (namespaceIndex !== -1) {
-                namespaceText.innerText = "Selected Namespace: " + currentUrl.substring(namespaceIndex + 4).slice(0, -1);
-            } else {
-                namespaceText.innerText = "Selected Namespace: default"
-            }
-        }
-    
-        window.onload = setCurrentNamespace;
-    </script>
 </body>
 
 </html>

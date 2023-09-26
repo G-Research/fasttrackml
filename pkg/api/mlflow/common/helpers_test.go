@@ -1,20 +1,21 @@
-package controller
+package common
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-// Test_getFilename test the getFilename private helper.
-func Test_getFilename(t *testing.T) {
+// TestGetFileName test the getFilename private helper.
+func TestGetFileName(t *testing.T) {
 	path := "/path/to/file/test.txt"
 	expected := "test.txt"
-	result := getFilename(path)
+	result := GetFilename(path)
 	assert.Equal(t, expected, result)
 }
 
-// Test_getContentType the Test_getContentType private helpers
-func Test_getContentType(t *testing.T) {
+// TestGetContentType the TestGetContentType private helpers
+func TestGetContentType(t *testing.T) {
 	testCases := []struct {
 		name     string
 		filename string
@@ -43,7 +44,7 @@ func Test_getContentType(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		result := getContentType(testCase.filename)
+		result := GetContentType(testCase.filename)
 		assert.Equal(t, testCase.expected, result, "Unexpected content type for filename: %s", testCase.filename)
 	}
 }

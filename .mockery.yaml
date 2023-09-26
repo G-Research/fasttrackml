@@ -4,8 +4,8 @@ with-expecter: false
 inpackage: true
 packages:
   github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories:
-      interfaces:
-        NamespaceRepositoryProvider:
+    interfaces:
+      NamespaceRepositoryProvider:
   github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories:
     interfaces:
       BaseRepositoryProvider:

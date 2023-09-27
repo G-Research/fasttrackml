@@ -3,8 +3,10 @@ package artifact
 import (
 	"cmp"
 	"context"
+	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"slices"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -85,10 +87,20 @@ func (s Service) GetArtifact(
 		run.ArtifactURI, req.Path,
 	)
 	if err != nil {
-		return nil, api.NewInternalError(
+		msg := fmt.Sprintf(
 			"error getting artifact object for URI: %s",
 			filepath.Join(run.ArtifactURI, req.Path),
 		)
+		statError := regexp.MustCompile(storage.PathError)
+		isDirError := regexp.MustCompile(storage.IsDirError)
+		switch {
+		case statError.MatchString(err.Error()):
+			return nil, api.NewResourceDoesNotExistError(msg)
+		case isDirError.MatchString(err.Error()):	
+			return nil, api.NewInvalidParameterValueError(msg)
+		default:
+			return nil, api.NewInternalError(msg)
+		}
 	}
 
 	return artifactReader, nil

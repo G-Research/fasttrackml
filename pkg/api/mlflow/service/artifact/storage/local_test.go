@@ -27,10 +27,7 @@ func TestGetArtifact_Ok(t *testing.T) {
 
 	file, err := storage.Get(runArtifactRoot, fileName)
 	assert.Nil(t, err)
-	defer func() {
-		file.Close()
-		os.Remove(f.Name())
-	}()
+	defer file.Close()
 
 	// verify
 	assert.NotNil(t, file)
@@ -43,7 +40,7 @@ func TestGetArtifact_Ok(t *testing.T) {
 func TestGetArtifact_Error(t *testing.T) {
 	// setup
 	runArtifactRoot := t.TempDir()
-	subdir := "subdir/"
+	subdir := "subdir"
 
 	err := os.MkdirAll(filepath.Join(runArtifactRoot, subdir), os.ModePerm)
 	assert.Nil(t, err)
@@ -52,13 +49,9 @@ func TestGetArtifact_Error(t *testing.T) {
 	storage, err := NewLocal(nil)
 	assert.Nil(t, err)
 
-	file, err := storage.Get(filepath.Join(runArtifactRoot), "some-other-item")
+	file, err := storage.Get(filepath.Join(runArtifactRoot), "non-existent-file")
 	assert.NotNil(t, err)
-	defer func() {
-		if file != nil {
-			file.Close()
-		}
-	}()
+	assert.Nil(t, file)
 
 	// verify
 	assert.Nil(t, file)

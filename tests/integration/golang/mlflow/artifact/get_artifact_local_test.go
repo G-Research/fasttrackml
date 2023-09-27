@@ -157,6 +157,9 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 	})
 	assert.Nil(s.T(), err)
 
+	err = os.MkdirAll(filepath.Join(runArtifactDir, "subdir"), fs.ModePerm)
+	assert.Nil(s.T(), err)
+
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -209,7 +212,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 		},
 		{
 			name: "NonExistentPathProvided",
-			error: api.NewInternalError(
+			error: api.NewResourceDoesNotExistError(
 				fmt.Sprintf(
 					"error getting artifact object for URI: %s/%s/artifacts/non-existent-file",
 					experimentArtifactDir,
@@ -219,6 +222,20 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 			request: &request.GetArtifactRequest{
 				RunID: runID,
 				Path:  "non-existent-file",
+			},
+		},
+		{
+			name: "ExistingDirectoryProvided",
+			error: api.NewInvalidParameterValueError(
+				fmt.Sprintf(
+					"error getting artifact object for URI: %s/%s/artifacts/subdir",
+					experimentArtifactDir,
+					runID,
+				),
+			),
+			request: &request.GetArtifactRequest{
+				RunID: runID,
+				Path:  "subdir",
 			},
 		},
 	}

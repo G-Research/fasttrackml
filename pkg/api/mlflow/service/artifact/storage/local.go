@@ -18,6 +18,8 @@ import (
 // LocalStorageName is a file storage name.
 const (
 	LocalStorageName = "file"
+	PathError = "cannot check status of path"
+	IsDirError = "cannot get a directory"
 )
 
 // Local represents local file storage adapter to work with artifacts.
@@ -80,10 +82,10 @@ func (s Local) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
 	}
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return nil, eris.Wrap(err, "cannot check status of path")
+		return nil, eris.Wrap(err, PathError)
 	}
 	if fileInfo.IsDir() {
-		return nil, eris.New("cannot get a directory")
+		return nil, eris.New(IsDirError)
 	}
 	return os.Open(path)
 }

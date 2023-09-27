@@ -61,7 +61,7 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 				return fmt.Errorf("unable to copy artifact Reader to output stream: %w", err)
 			}
 			if err := w.Flush(); err != nil {
-				return fmt.Errorf("GetArtifact error encountered flushing stream: %w", err)
+				return fmt.Errorf("unable to flush output stream: %w", err)
 			}
 			log.Debugf("GetArtifact wrote bytes to output stream: %d", bytesWritten)
 			return nil

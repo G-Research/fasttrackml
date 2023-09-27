@@ -1,0 +1,17 @@
+dir: "{{ .InterfaceDir }}"
+filename: "mock_{{ .InterfaceNameSnake }}.go"
+with-expecter: false
+inpackage: true
+packages:
+  github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories:
+    interfaces:
+      BaseRepositoryProvider:
+      ExperimentRepositoryProvider:
+      MetricRepositoryProvider:
+      ParamRepositoryProvider:
+      RunRepositoryProvider:
+      TagRepositoryProvider:
+  github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage:
+    interfaces:
+      ArtifactStorageFactoryProvider:
+      ArtifactStorageProvider:

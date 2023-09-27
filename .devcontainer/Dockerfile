@@ -1,6 +1,19 @@
 # [Choice] Go version (use -bookworm, or -bullseye variants on local arm64/Apple Silicon): 1, 1.21, 1.20, 1-bookworm, 1.21-bookworm, 1.20-bookworm, 1-bullseye, 1.21-bullseye, 1.20-bullseye
 ARG VARIANT=1-bookworm
-FROM mcr.microsoft.com/devcontainers/go:1-${VARIANT}
+FROM mcr.microsoft.com/devcontainers/go:1-${VARIANT} AS base
+
+# ==================================================================
+
+FROM base AS tools
+RUN export GOBIN=/tmp/tools \
+ && go install github.com/vektra/mockery/v2@v2.34.0 \
+ && go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.2 \
+ && go install golang.org/x/tools/cmd/goimports@v0.13.0 \
+ && go install mvdan.cc/gofumpt@v0.5.0
+
+# ==================================================================
+
+FROM base AS dev
 
 # [Optional] Uncomment this section to install additional OS packages.
 RUN apt-get update \
@@ -17,13 +30,8 @@ RUN apt-get update \
     ripgrep \
     sqlite3
 
-# [Optional] Uncomment the next lines to use go get to install anything else you need
-USER vscode
-RUN go install github.com/vektra/mockery/v2@v2.32.4 \
- && go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.1 \
- && go install golang.org/x/tools/cmd/goimports@v0.11.0 \
- && go install mvdan.cc/gofumpt@v0.5.0
-USER root
+# Install tools
+COPY --from=tools /tmp/tools /usr/local/bin
 
 # [Optional] Uncomment this line to install global node packages.
 # RUN su vscode -c "source /usr/local/share/nvm/nvm.sh && npm install -g <your-package-here>" 2>&1

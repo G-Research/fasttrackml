@@ -32,7 +32,7 @@ type GetArtifactS3TestSuite struct {
 	experimentFixtures *fixtures.ExperimentFixtures
 }
 
-func TestGetArtifactTestSuite(t *testing.T) {
+func TestGetArtifactS3TestSuite(t *testing.T) {
 	suite.Run(t, new(GetArtifactS3TestSuite))
 }
 
@@ -108,7 +108,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 					"1/%s/artifacts/artifact.subdir/artifact.file",
 					runID),
 				),
-				Body:   strings.NewReader(`content`),
+				Body:   strings.NewReader(`subdir-object-content`),
 				Bucket: aws.String(tt.bucket),
 			}
 			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
@@ -142,7 +142,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 				nil,
 			)
 			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "content", string(resp))
+			assert.Equal(s.T(), "subdir-object-content", string(resp))
 		})
 	}
 }
@@ -239,6 +239,16 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 			request: &request.GetArtifactRequest{
 				RunID: runID,
 				Path:  "artifact.subdir",
+			},
+		},
+		{
+			name: "NonExistentFile",
+			error: api.NewInternalError(
+				fmt.Sprintf("error getting artifact object for URI: s3:/bucket1/1/%s/artifacts/non-existent-file", runID),
+			),
+			request: &request.GetArtifactRequest{
+				RunID: runID,
+				Path:  "non-existent-file",
 			},
 		},
 	}

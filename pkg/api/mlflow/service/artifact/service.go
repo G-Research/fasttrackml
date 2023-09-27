@@ -96,7 +96,7 @@ func (s Service) GetArtifact(
 		switch {
 		case statError.MatchString(err.Error()):
 			return nil, api.NewResourceDoesNotExistError(msg)
-		case isDirError.MatchString(err.Error()):	
+		case isDirError.MatchString(err.Error()):
 			return nil, api.NewInvalidParameterValueError(msg)
 		default:
 			return nil, api.NewInternalError(msg)

@@ -233,7 +233,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 		},
 		{
 			name: "S3IncompletePath",
-			error: api.NewInternalError(
+			error: api.NewResourceDoesNotExistError(
 				fmt.Sprintf("error getting artifact object for URI: s3:/bucket1/1/%s/artifacts/artifact.subdir", runID),
 			),
 			request: &request.GetArtifactRequest{
@@ -243,7 +243,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 		},
 		{
 			name: "NonExistentFile",
-			error: api.NewInternalError(
+			error: api.NewResourceDoesNotExistError(
 				fmt.Sprintf("error getting artifact object for URI: s3:/bucket1/1/%s/artifacts/non-existent-file", runID),
 			),
 			request: &request.GetArtifactRequest{

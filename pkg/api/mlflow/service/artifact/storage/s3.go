@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/url"
 	"path/filepath"
+	"regexp"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -137,7 +138,11 @@ func (s S3) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
 
 	resp, err := s.client.GetObject(context.TODO(), input)
 	if err != nil {
-		return nil, eris.Wrap(err, "error fetching object from s3")
+		notFoundRegexp := regexp.MustCompile("StatusCode.+404")
+		if notFoundRegexp.MatchString(err.Error()) {
+			return nil, eris.Wrap(err, PathError)
+		}
+		return nil, eris.Wrap(err, "unable to get object")
 	}
 
 	return resp.Body, nil

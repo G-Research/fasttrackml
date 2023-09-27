@@ -18,8 +18,6 @@ import (
 // LocalStorageName is a file storage name.
 const (
 	LocalStorageName = "file"
-	PathError        = "cannot check status of path"
-	IsDirError       = "cannot get a directory"
 )
 
 // Local represents local file storage adapter to work with artifacts.

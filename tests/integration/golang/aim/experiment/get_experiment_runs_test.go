@@ -54,14 +54,15 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperimentRuns
-	assert.Nil(s.T(), s.AIMClient.DoRequest(&helpers.HttpRequest{
-		URI: fmt.Sprintf("/experiments/%d/runs", *experiment.ID),
-		Params: map[any]any{
+	assert.Nil(
+		s.T(),
+		s.AIMClient.WithParams(map[any]any{
 			"limit":  4,
 			"offset": runs[8].ID,
-		},
-		Response: &resp,
-	}))
+		}).WithResponse(&resp).DoRequest(
+			fmt.Sprintf("/experiments/%d/runs", *experiment.ID),
+		),
+	)
 
 	assert.Equal(s.T(), 4, len(resp.Runs))
 	for index := 0; index < len(resp.Runs); index++ {
@@ -106,11 +107,9 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			var resp api.ErrorResponse
-			err := s.AIMClient.DoGetRequest(
+			assert.Nil(t, s.AIMClient.WithResponse(&resp).DoRequest(
 				fmt.Sprintf("/experiments/%s/runs", tt.ID),
-				&resp,
-			)
-			assert.Nil(t, err)
+			))
 			assert.Equal(s.T(), tt.error, resp.Error())
 		})
 	}

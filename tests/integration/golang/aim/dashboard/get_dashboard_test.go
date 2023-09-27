@@ -69,8 +69,7 @@ func (s *GetDashboardTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp database.Dashboard
-	err = s.AIMClient.DoGetRequest(fmt.Sprintf("/dashboards/%v", dashboard.ID), &resp)
-	assert.Nil(s.T(), err)
+	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest(fmt.Sprintf("/dashboards/%s", dashboard.ID)))
 	assert.Equal(s.T(), dashboard.ID, resp.ID)
 	assert.Equal(s.T(), &app.ID, resp.AppID)
 	assert.Equal(s.T(), dashboard.Name, resp.Name)
@@ -93,18 +92,20 @@ func (s *GetDashboardTestSuite) Test_Error() {
 
 	tests := []struct {
 		name    string
-		idParam uuid.UUID
+		idParam string
 	}{
 		{
 			name:    "GetDashboardWithNotFoundID",
-			idParam: uuid.New(),
+			idParam: uuid.New().String(),
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoGetRequest(fmt.Sprintf("/dashboards/%v", tt.idParam), &resp)
-			assert.Nil(s.T(), err)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithResponse(&resp).DoRequest(fmt.Sprintf("/dashboards/%s", tt.idParam)),
+			)
 			assert.Equal(s.T(), "Not Found", resp.Message)
 		})
 	}

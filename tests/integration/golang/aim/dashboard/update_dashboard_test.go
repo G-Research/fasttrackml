@@ -5,6 +5,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -84,8 +85,18 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Dashboard
-			err := s.AIMClient.DoPutRequest(fmt.Sprintf("/dashboards/%s", dashboard.ID), tt.requestBody, &resp)
-			assert.Nil(s.T(), err)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPut,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("/dashboards/%s", dashboard.ID),
+				),
+			)
 
 			actualDashboard, err := s.DashboardFixtures.GetDashboardByID(context.Background(), dashboard.ID.String())
 
@@ -149,12 +160,15 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoPutRequest(
-				fmt.Sprintf("/dashboards/%s", dashboard.ID),
+			assert.Nil(s.T(), s.AIMClient.WithMethod(
+				http.MethodPut,
+			).WithRequest(
 				tt.requestBody,
+			).WithResponse(
 				&resp,
-			)
-			assert.Nil(s.T(), err)
+			).DoRequest(
+				fmt.Sprintf("/dashboards/%s", dashboard.ID),
+			))
 			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
 		})
 	}

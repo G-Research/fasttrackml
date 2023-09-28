@@ -335,13 +335,13 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	runs := []*models.Run{run1, run2, run3}
 	tests := []struct {
 		name    string
-		request request.SearchMetricRequest
+		request request.SearchMetricsRequest
 		metrics []*models.LatestMetric
 	}{
 		// Search Metric Name
 		{
 			name: "SearchMetricNameOperationEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1")`,
 			},
 
@@ -353,7 +353,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameOperationNotEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric3")`,
 			},
 
@@ -368,7 +368,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameOperationStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test"))`,
 			},
 
@@ -385,7 +385,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameOperationEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("3"))`,
 			},
 
@@ -397,7 +397,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last
 		{
 			name: "SearchMetricLastOperationEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6)`,
 			},
 
@@ -407,7 +407,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastOperationNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6)`,
 			},
 
@@ -423,7 +423,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastOperationGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6)`,
 			},
 
@@ -436,7 +436,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastOperationLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6)`,
 			},
 
@@ -448,7 +448,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastOperationGreaterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6)`,
 			},
 
@@ -462,7 +462,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastOperationLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6)`,
 			},
 
@@ -476,7 +476,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step
 		{
 			name: "SearchMetricLastStepOperationEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 1)`,
 			},
 
@@ -486,7 +486,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepOperationNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 1)`,
 			},
 
@@ -502,7 +502,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepOperationGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 1)`,
 			},
 
@@ -518,7 +518,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepOperationLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3)`,
 			},
 
@@ -530,7 +530,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepOperationGreaterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 1)`,
 			},
 
@@ -547,7 +547,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepOperationLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3)`,
 			},
 
@@ -564,7 +564,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric by Run attributes
 		{
 			name: "SearchRunArchived",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.archived == True`,
 			},
 
@@ -572,7 +572,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunNotArchived",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.archived == False`,
 			},
 
@@ -589,7 +589,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunActive",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.active == True`,
 			},
 
@@ -601,7 +601,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunNotActive",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.active == False`,
 			},
 
@@ -615,7 +615,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchDurationOperationGrater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration > 0`,
 			},
 
@@ -629,7 +629,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunDurationOperationGraterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration >= 0`,
 			},
 
@@ -646,7 +646,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunDurationOperationLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration < %d`, (run3.EndTime.Int64-run3.StartTime.Int64)/1000),
 			},
 
@@ -658,7 +658,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunDurationOperationLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration <= %d`, (run3.EndTime.Int64-run3.StartTime.Int64)/1000),
 			},
 
@@ -672,7 +672,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunDurationOperationEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration == 0`,
 			},
 
@@ -684,7 +684,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunDurationOperationNotEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration != 0`,
 			},
 
@@ -698,7 +698,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunStartTimeOperationGrater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at > 123456789`,
 			},
 
@@ -709,7 +709,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunStartTimeOperationGraterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at >= 123456789`,
 			},
 
@@ -723,7 +723,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunStartTimeOperationNotEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at != 123456789`,
 			},
 
@@ -737,7 +737,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunStartTimeOperationEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at == 123456789`,
 			},
 
@@ -749,7 +749,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunStartTimeOperationLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at < 222222222`,
 			},
 
@@ -764,7 +764,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunStartTimeOperationLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at <= 222222222`,
 			},
 
@@ -781,7 +781,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunFinalizedAtOperationGrater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at > 123456789`,
 			},
 
@@ -795,7 +795,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunFinalizedAtOperationGraterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at >= 123456789`,
 			},
 
@@ -812,7 +812,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunFinalizedAtOperationNotEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at != 123456789`,
 			},
 
@@ -826,7 +826,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunFinalizedAtOperationEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at == 123456789`,
 			},
 
@@ -838,7 +838,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunFinalizedAtOperationLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at < 444444444`,
 			},
 
@@ -850,7 +850,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunFinalizedAtOperationLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at <= 444444444`,
 			},
 
@@ -867,7 +867,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunHashOperationEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.hash == "%s"`, run1.ID),
 			},
 
@@ -879,7 +879,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunHashOperationNotEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.hash != "%s"`, run1.ID),
 			},
 
@@ -893,7 +893,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunNameOperationNotEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.name != "TestRun1"`,
 			},
 
@@ -907,7 +907,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunNameOperationEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.name == "TestRun1"`,
 			},
 
@@ -919,7 +919,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunNameOperationIn",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and "Run3" in run.name`,
 			},
 
@@ -930,7 +930,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunNameOperationNotIn",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and "Run3" not in run.name`,
 			},
 
@@ -945,7 +945,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunNameOperationStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.name.startswith("Test")`,
 			},
 
@@ -962,7 +962,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunNameOperationStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.name.endswith('3')`,
 			},
 
@@ -973,7 +973,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunExperimentOperationEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.experiment == "%s"`, experiment.Name),
 			},
 
@@ -988,7 +988,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunExperimentOperationNotEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.experiment != "%s"`, experiment.Name),
 			},
 
@@ -999,7 +999,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunTagOperationEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.tags['mlflow.runName'] == "TestRunTag1"`,
 			},
 
@@ -1011,7 +1011,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchRunTagOperationNotEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.tags['mlflow.runName'] != "TestRunTag1"`,
 			},
 
@@ -1026,7 +1026,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (equal operation) and Run Name
 		{
 			name: "SearchMetricNameAndRunNameOperationRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and re.match("TestRun1", run.name))`,
 			},
 
@@ -1036,7 +1036,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and re.search("TestRun1", run.name))`,
 			},
 
@@ -1046,7 +1046,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.name == "TestRun1")`,
 			},
 
@@ -1056,7 +1056,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.name != "TestRun1")`,
 			},
 
@@ -1067,7 +1067,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.name.startswith("Test"))`,
 			},
 
@@ -1079,7 +1079,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.name.endswith("Run2"))`,
 			},
 
@@ -1090,7 +1090,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (not equal operation) and Run Name
 		{
 			name: "SearchMetricNameAndRunNameOperationNotEqualsAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and re.match("TestRun1", run.name))`,
 			},
 
@@ -1101,7 +1101,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationNotEqualsAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and re.search("TestRun1", run.name))`,
 			},
 
@@ -1112,7 +1112,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.name == "TestRun1")`,
 			},
 
@@ -1123,7 +1123,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.name != "TestRun1")`,
 			},
 
@@ -1135,7 +1135,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationNotEqualsAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.name.startswith("Test"))`,
 			},
 
@@ -1149,7 +1149,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationNotEqualsAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.name.endswith("Run2"))`,
 			},
 
@@ -1161,7 +1161,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (startswith operation) and Run Name
 		{
 			name: "SearchMetricNameAndRunNameOperationStartsWithAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and re.match("TestRun1", run.name))`,
 			},
 
@@ -1173,7 +1173,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationStartsWithAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and re.search("TestRun1", run.name))`,
 			},
 
@@ -1185,7 +1185,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationStartsWithAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.name == "TestRun1")`,
 			},
 
@@ -1197,7 +1197,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationStartsWithAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.name != "TestRun1")`,
 			},
 
@@ -1211,7 +1211,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationStartsWithAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.name.startswith("Test"))`,
 			},
 
@@ -1228,7 +1228,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationStartsWithAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.name.endswith("Run2"))`,
 			},
 
@@ -1241,7 +1241,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (endswith operation) and Run Name
 		{
 			name: "SearchMetricNameAndRunNameOperationEndsWithAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and re.match("TestRun1", run.name))`,
 			},
 
@@ -1251,7 +1251,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationEndsWithAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and re.search("TestRun1", run.name))`,
 			},
 
@@ -1261,7 +1261,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationEndsWithAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.name == "TestRun1")`,
 			},
 
@@ -1271,7 +1271,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationEndsWithAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.name != "TestRun1")`,
 			},
 
@@ -1282,7 +1282,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationEndsWithAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.name.startswith("Test"))`,
 			},
 
@@ -1294,7 +1294,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunNameOperationEndsWithAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.name.endswith("Run2"))`,
 			},
 
@@ -1305,7 +1305,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (equal operation) and Run Duration
 		{
 			name: "SearchMetricNameAndRunDurationOperationEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration == 222222)`,
 			},
 
@@ -1315,7 +1315,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationNotEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration != 222222)`,
 			},
 
@@ -1326,7 +1326,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration > 0)`,
 			},
 
@@ -1337,7 +1337,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration >= 0)`,
 			},
 
@@ -1349,7 +1349,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration < 333333)`,
 			},
 
@@ -1360,7 +1360,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration <= 333333)`,
 			},
 
@@ -1373,7 +1373,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (not equals operation) and Run Duration
 		{
 			name: "SearchMetricNameAndRunDurationOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration == 222222)`,
 			},
 
@@ -1383,7 +1383,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration != 222222)`,
 			},
 
@@ -1396,7 +1396,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationNotEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration > 0)`,
 			},
 
@@ -1408,7 +1408,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationNotEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration >= 0)`,
 			},
 
@@ -1422,7 +1422,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationNotEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration < 333333)`,
 			},
 
@@ -1434,7 +1434,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationNotEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration <= 333333)`,
 			},
 
@@ -1449,7 +1449,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (startswith operation) and Run Duration
 		{
 			name: "SearchMetricNameAndRunDurationOperationStartsWithAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration == 222222)`,
 			},
 
@@ -1460,7 +1460,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationStartsWithAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration != 222222)`,
 			},
 
@@ -1475,7 +1475,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationStartsWithAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration > 0)`,
 			},
 
@@ -1489,7 +1489,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationStartsWithAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration >= 0)`,
 			},
 
@@ -1506,7 +1506,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationStartsWithAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration < 333333)`,
 			},
 
@@ -1520,7 +1520,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationStartsWithAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration <= 333333)`,
 			},
 
@@ -1538,7 +1538,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (endswith operation) and Run Duration
 		{
 			name: "SearchMetricNameAndRunDurationOperationEndsWithAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration == 222222)`,
 			},
 
@@ -1548,7 +1548,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationEndsWithAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration != 222222)`,
 			},
 
@@ -1559,7 +1559,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationEndsWithAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration > 0)`,
 			},
 
@@ -1570,7 +1570,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationEndsWithAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration >= 0)`,
 			},
 
@@ -1582,7 +1582,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationEndsWithAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration < 333333)`,
 			},
 
@@ -1593,7 +1593,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunDurationOperationEndsWithAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration <= 333333)`,
 			},
 
@@ -1606,7 +1606,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (equal operation) and Run Hash
 		{
 			name: "SearchMetricNameAndRunHashOperationEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name == "TestMetric1" and run.hash == "%s")`, run1.ID),
 			},
 
@@ -1616,7 +1616,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunHashOperationNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name == "TestMetric1" and run.hash != "%s")`, run1.ID),
 			},
 
@@ -1628,7 +1628,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (not equal operation) and Run Hash
 		{
 			name: "SearchMetricNameAndRunHashOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name != "TestMetric1" and run.hash == "%s")`, run1.ID),
 			},
 
@@ -1639,7 +1639,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunHashOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name != "TestMetric1" and run.hash != "%s")`, run1.ID),
 			},
 
@@ -1652,7 +1652,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (startswith operation) and Run Hash
 		{
 			name: "SearchMetricNameAndRunHashOperationStartsWithAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name.startswith("Test") and run.hash == "%s")`, run1.ID),
 			},
 
@@ -1664,7 +1664,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunHashOperationStartsWithAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name.startswith("Test") and run.hash != "%s")`, run1.ID),
 			},
 
@@ -1679,7 +1679,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (endswith operation) and Run Hash
 		{
 			name: "SearchMetricNameAndRunHashOperationEndsWithAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name.endswith("Metric2") and run.hash == "%s")`, run1.ID),
 			},
 
@@ -1689,7 +1689,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunHashOperationEndsWithAndNotEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name.endswith("Metric2") and run.hash != "%s")`, run1.ID),
 			},
 
@@ -1701,7 +1701,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (equals operation) and Run FinalizedAt
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at > 123456789)`,
 			},
 
@@ -1712,7 +1712,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationGreaterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at >= 123456789)`,
 			},
 
@@ -1724,7 +1724,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at < 444444444)`,
 			},
 
@@ -1734,7 +1734,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at <= 444444444)`,
 			},
 
@@ -1746,7 +1746,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedOperationAtEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at == 123456789)`,
 			},
 
@@ -1756,7 +1756,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at != 123456789)`,
 			},
 
@@ -1768,7 +1768,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (not equals operation) and Run FinalizedAt
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationNotEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at > 123456789)`,
 			},
 
@@ -1780,7 +1780,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationNotEqualsAndGreaterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at >= 123456789)`,
 			},
 
@@ -1794,7 +1794,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationNotEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at < 444444444)`,
 			},
 
@@ -1805,7 +1805,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationNotEqualsAndLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at <= 444444444)`,
 			},
 
@@ -1819,7 +1819,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at == 123456789)`,
 			},
 
@@ -1830,7 +1830,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at != 123456789)`,
 			},
 
@@ -1843,7 +1843,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (startswith operation) and Run FinalizedAt
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationStartsWithAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at > 123456789)`,
 			},
 
@@ -1857,7 +1857,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationStartsWithAndGreaterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at >= 123456789)`,
 			},
 
@@ -1874,7 +1874,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationStartsWithAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at < 444444444)`,
 			},
 
@@ -1886,7 +1886,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNamehAndRunFinalizedAtOperationStartsWithAndLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at <= 444444444)`,
 			},
 
@@ -1903,7 +1903,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationStartsWithAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at == 123456789)`,
 			},
 
@@ -1915,7 +1915,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationStartsWithAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at != 123456789)`,
 			},
 
@@ -1930,7 +1930,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (endswith operation) and Run FinalizedAt
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationEndsWithAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at > 123456789)`,
 			},
 
@@ -1941,7 +1941,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationEndsWithAndGreaterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at >= 123456789)`,
 			},
 
@@ -1953,7 +1953,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationEndsWithAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at < 444444444)`,
 			},
 
@@ -1963,7 +1963,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationEndsWithAndLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at <= 444444444)`,
 			},
 
@@ -1975,7 +1975,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationEndsWithAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at == 123456789)`,
 			},
 
@@ -1985,7 +1985,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameAndRunFinalizedAtOperationEndsWithAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at != 123456789)`,
 			},
 
@@ -1997,7 +1997,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (equals operation) and Run CreatedAt
 		{
 			name: "SearchMetricNameEqualsAndRunCreatedAtOperationGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at > 123456789)`,
 			},
 
@@ -2007,7 +2007,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameEqualsAndRunCreatedAtOperationGreaterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at >= 123456789)`,
 			},
 
@@ -2018,7 +2018,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameEqualsAndRunCreatedAtOperationLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at < 222222222)`,
 			},
 
@@ -2029,7 +2029,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameEqualsAndRunCreatedAtOperationLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at <= 222222222)`,
 			},
 
@@ -2041,7 +2041,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameEqualsAndRunCreatedAtOperationEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at == 123456789)`,
 			},
 
@@ -2051,7 +2051,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameEqualsAndRunCreatedAtOperationNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at != 123456789)`,
 			},
 
@@ -2063,7 +2063,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (not equals operation) and Run CreatedAt
 		{
 			name: "SearchMetricNameNotEqualsAndRunCreatedAtOperationGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at > 123456789)`,
 			},
 
@@ -2073,7 +2073,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameNotEqualsAndRunCreatedAtOperationGreaterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at >= 123456789)`,
 			},
 
@@ -2085,7 +2085,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameNotEqualsAndRunCreatedAtOperationLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at < 222222222)`,
 			},
 
@@ -2098,7 +2098,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameNotEqualsAndRunCreatedAtOperationLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at <= 222222222)`,
 			},
 
@@ -2112,7 +2112,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameNotEqualsAndRunCreatedAtOperationEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at == 123456789)`,
 			},
 
@@ -2123,7 +2123,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameNotEqualsAndRunCreatedAtOperationNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at != 123456789)`,
 			},
 
@@ -2136,7 +2136,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (startswith operation) and Run CreatedAt
 		{
 			name: "SearchMetricNameStartsWithAndRunCreatedAtOperationGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at > 123456789)`,
 			},
 
@@ -2147,7 +2147,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameStartsWithAndRunCreatedAtOperationGreaterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at >= 123456789)`,
 			},
 
@@ -2161,7 +2161,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameStartsWithAndRunCreatedAtOperationLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at < 222222222)`,
 			},
 
@@ -2176,7 +2176,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameStartsWithAndRunCreatedAtOperationLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at <= 222222222)`,
 			},
 
@@ -2193,7 +2193,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameStartsWithAndRunCreatedAtOperationEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at == 123456789)`,
 			},
 
@@ -2205,7 +2205,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameStartsWithAndRunCreatedAtOperationNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at != 123456789)`,
 			},
 
@@ -2220,7 +2220,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Name (endswith operation) and Run CreatedAt
 		{
 			name: "SearchMetricNameEndsWithAndRunCreatedAtOperationNotEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at > 123456789)`,
 			},
 
@@ -2230,7 +2230,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameEndsWithAndRunCreatedAtOperationNotEqualsAndGreaterOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at >= 123456789)`,
 			},
 
@@ -2241,7 +2241,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameEndsWithAndRunCreatedAtOperationNotEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at < 222222222)`,
 			},
 
@@ -2252,7 +2252,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameEndsWithAndRunCreatedAtOperationNotEqualsAndLessOrEqual",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at <= 222222222)`,
 			},
 
@@ -2264,7 +2264,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameEndsWithAndRunCreatedAtOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at == 123456789)`,
 			},
 
@@ -2274,7 +2274,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricNameEndsWithAndRunCreatedAtOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at != 123456789)`,
 			},
 
@@ -2287,7 +2287,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (equal operation) and Run Name
 		{
 			name: "SearchMetricLastAndRunNameOperationRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and re.match("TestRun3", run.name))`,
 			},
 
@@ -2297,7 +2297,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and re.search("TestRun3", run.name))`,
 			},
 
@@ -2307,7 +2307,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.name == "TestRun3")`,
 			},
 
@@ -2317,7 +2317,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.name != "TestRun3")`,
 			},
 
@@ -2325,7 +2325,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.name.startswith("Test"))`,
 			},
 
@@ -2335,7 +2335,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.name.endswith("Run2"))`,
 			},
 
@@ -2345,7 +2345,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (not equal operation) and Run Name
 		{
 			name: "SearchMetricLastAndRunNameOperationNotEqualsAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and re.match("TestRun3", run.name))`,
 			},
 
@@ -2355,7 +2355,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationNotEqualsAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and re.search("TestRun3", run.name))`,
 			},
 
@@ -2365,7 +2365,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.name == "TestRun3")`,
 			},
 
@@ -2375,7 +2375,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.name != "TestRun3")`,
 			},
 
@@ -2390,7 +2390,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationNotEqualsAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.name.startswith("Test"))`,
 			},
 
@@ -2406,7 +2406,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationNotEqualsAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.name.endswith("Run3"))`,
 			},
 
@@ -2418,7 +2418,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (greater operation) and Run Name
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and re.match("TestRun1", run.name))`,
 			},
 
@@ -2429,7 +2429,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and re.search("TestRun1", run.name))`,
 			},
 
@@ -2440,7 +2440,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.name == "TestRun1")`,
 			},
 
@@ -2451,7 +2451,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.name != "TestRun1")`,
 			},
 
@@ -2462,7 +2462,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.name.startswith("Test"))`,
 			},
 
@@ -2475,7 +2475,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.name.endswith("Run2"))`,
 			},
 
@@ -2488,7 +2488,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (greater or equals operation) and Run Name
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterOrEqualsAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and re.match("TestRun1", run.name))`,
 			},
 
@@ -2499,7 +2499,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterOrEqualsAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and re.search("TestRun1", run.name))`,
 			},
 
@@ -2510,7 +2510,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.name == "TestRun1")`,
 			},
 
@@ -2521,7 +2521,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.name != "TestRun1")`,
 			},
 
@@ -2533,7 +2533,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterOrEqualsAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.name.startswith("Test"))`,
 			},
 
@@ -2547,7 +2547,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationGreaterOrEqualsAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.name.endswith("Run2"))`,
 			},
 
@@ -2559,7 +2559,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (less operation) and Run Name
 		{
 			name: "SearchMetricLastAndRunNameOperationLessAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and re.match("TestRun1", run.name))`,
 			},
 
@@ -2569,7 +2569,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationLessAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and re.search("TestRun1", run.name))`,
 			},
 
@@ -2579,7 +2579,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationLessAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.name == "TestRun1")`,
 			},
 
@@ -2589,7 +2589,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationLessAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.name != "TestRun1")`,
 			},
 
@@ -2600,7 +2600,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationLessAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.name.startswith("Test"))`,
 			},
 
@@ -2612,7 +2612,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationLessAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.name.endswith("Run2"))`,
 			},
 
@@ -2623,7 +2623,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (less or equals operation) and Run Name
 		{
 			name: "SearchMetricLastAndRunNameOperationLessOrEqualsAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and re.match("TestRun1", run.name))`,
 			},
 
@@ -2633,7 +2633,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationLessOrEqualsAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and re.search("TestRun1", run.name))`,
 			},
 
@@ -2643,7 +2643,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationLessOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.name == "TestRun1")`,
 			},
 
@@ -2653,7 +2653,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationLessOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.name != "TestRun1")`,
 			},
 
@@ -2664,7 +2664,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationLessOrEqualsAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.name.startswith("Test"))`,
 			},
 
@@ -2677,7 +2677,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationLessOrEqualsAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.name.endswith("Run2"))`,
 			},
 
@@ -2688,7 +2688,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (equal operation) and Run Duration
 		{
 			name: "SearchMetricLastAndRunDurationOperationEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration == 222222)`,
 			},
 
@@ -2698,7 +2698,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration != 222222)`,
 			},
 
@@ -2706,7 +2706,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration > 0)`,
 			},
 
@@ -2716,7 +2716,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration >= 0)`,
 			},
 
@@ -2726,7 +2726,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration < 222222)`,
 			},
 
@@ -2734,7 +2734,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration <= 222222)`,
 			},
 
@@ -2745,7 +2745,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (not equal operation) and Run Duration
 		{
 			name: "SearchMetricLastAndRunDurationOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration == 222222)`,
 			},
 
@@ -2755,7 +2755,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration != 222222)`,
 			},
 
@@ -2770,7 +2770,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationNotEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration > 0)`,
 			},
 
@@ -2783,7 +2783,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationNotEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration >= 0)`,
 			},
 
@@ -2799,7 +2799,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationNotEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration < 222222)`,
 			},
 
@@ -2811,7 +2811,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationNotEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration <= 222222)`,
 			},
 
@@ -2826,7 +2826,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (greater operation) and Run Duration
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration == 222222)`,
 			},
 
@@ -2834,7 +2834,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration != 222222)`,
 			},
 
@@ -2847,7 +2847,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration > 0)`,
 			},
 
@@ -2858,7 +2858,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration >= 0)`,
 			},
 
@@ -2871,7 +2871,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration < 333333)`,
 			},
 
@@ -2882,7 +2882,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration <= 333333)`,
 			},
 
@@ -2896,7 +2896,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (greater or equals operation) and Run Duration
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration == 222222)`,
 			},
 
@@ -2906,7 +2906,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration != 222222)`,
 			},
 
@@ -2919,7 +2919,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration > 0)`,
 			},
 
@@ -2931,7 +2931,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration >= 0)`,
 			},
 
@@ -2945,7 +2945,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration < 333333)`,
 			},
 
@@ -2957,7 +2957,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration <= 333333)`,
 			},
 
@@ -2972,7 +2972,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (less operation) and Run Duration
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration == 222222)`,
 			},
 
@@ -2982,7 +2982,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration != 222222)`,
 			},
 
@@ -2993,7 +2993,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration > 0)`,
 			},
 
@@ -3004,7 +3004,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration >= 0)`,
 			},
 
@@ -3016,7 +3016,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration < 333333)`,
 			},
 
@@ -3027,7 +3027,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration <= 333333)`,
 			},
 
@@ -3040,7 +3040,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (less or equals operation) and Run Duration
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration == 222222)`,
 			},
 
@@ -3051,7 +3051,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration != 222222)`,
 			},
 
@@ -3062,7 +3062,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration > 0)`,
 			},
 
@@ -3074,7 +3074,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration >= 0)`,
 			},
 
@@ -3087,7 +3087,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration < 333333)`,
 			},
 
@@ -3099,7 +3099,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationLessOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration <= 333333)`,
 			},
 
@@ -3113,7 +3113,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (equal operation) and Run Hash
 		{
 			name: "SearchMetricLastAndRunHashOperationEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -3123,7 +3123,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunHashOperationEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -3132,7 +3132,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (not equal operation) and Run Hash
 		{
 			name: "SearchMetricLastAndRunHashOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.1) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -3143,7 +3143,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunHashOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.1) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -3158,7 +3158,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (greater operation) and Run Hash
 		{
 			name: "SearchMetricLastAndRunHashOperationGreaterAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.1) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -3169,7 +3169,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunHashOperationGreaterAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.1) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -3183,7 +3183,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (greater or equals operation) and Run Hash
 		{
 			name: "SearchMetricLastAndRunHashOperationGreaterOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.1) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -3195,7 +3195,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunHashOperationGreaterOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.1) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -3209,7 +3209,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (less operation) and Run Hash
 		{
 			name: "SearchMetricLastAndRunHashOperationLessAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 3.1) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -3220,7 +3220,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunHashOperationLessAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 3.1) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -3234,7 +3234,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (less or equals operation) and Run Hash
 		{
 			name: "SearchMetricLastAndRunHashOperationLessOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 3.1) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -3246,7 +3246,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunHashOperationLessOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 3.1) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -3261,7 +3261,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (equal operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.finalized_at == 123456789)`,
 			},
 
@@ -3271,7 +3271,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.finalized_at != 123456789)`,
 			},
 
@@ -3281,7 +3281,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.finalized_at > 123456789)`,
 			},
 
@@ -3289,7 +3289,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.finalized_at >= 123456789)`,
 			},
 
@@ -3299,7 +3299,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.finalized_at < 444444444)`,
 			},
 
@@ -3307,7 +3307,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.finalized_at <= 444444444)`,
 			},
 
@@ -3318,7 +3318,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (not equal operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at == 123456789)`,
 			},
 
@@ -3330,7 +3330,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at != 123456789)`,
 			},
 
@@ -3343,7 +3343,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationNotEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at > 123456789)`,
 			},
 
@@ -3356,7 +3356,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationNotEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at >= 123456789)`,
 			},
 
@@ -3372,7 +3372,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationNotEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at < 444444444)`,
 			},
 
@@ -3384,7 +3384,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationNotEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at <= 444444444)`,
 			},
 
@@ -3402,7 +3402,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (greater operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at == 123456789)`,
 			},
 
@@ -3413,7 +3413,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at != 123456789)`,
 			},
 
@@ -3424,7 +3424,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at > 123456789)`,
 			},
 
@@ -3435,7 +3435,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at >= 123456789)`,
 			},
 
@@ -3448,7 +3448,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at < 444444444)`,
 			},
 
@@ -3459,7 +3459,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at <= 444444444)`,
 			},
 
@@ -3473,7 +3473,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (greater or equals operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at == 123456789)`,
 			},
 
@@ -3484,7 +3484,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at != 123456789)`,
 			},
 
@@ -3496,7 +3496,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at > 123456789)`,
 			},
 
@@ -3508,7 +3508,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at >= 123456789)`,
 			},
 
@@ -3522,7 +3522,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at < 444444444)`,
 			},
 
@@ -3533,7 +3533,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationGreaterOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at <= 444444444)`,
 			},
 
@@ -3548,7 +3548,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (less operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at == 123456789)`,
 			},
 
@@ -3558,7 +3558,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at != 123456789)`,
 			},
 
@@ -3569,7 +3569,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at > 123456789)`,
 			},
 
@@ -3580,7 +3580,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at >= 123456789)`,
 			},
 
@@ -3592,7 +3592,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at < 444444444)`,
 			},
 
@@ -3602,7 +3602,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at <= 444444444)`,
 			},
 
@@ -3615,7 +3615,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (less or equals operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at == 123456789)`,
 			},
 
@@ -3625,7 +3625,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at != 123456789)`,
 			},
 
@@ -3637,7 +3637,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at > 123456789)`,
 			},
 
@@ -3649,7 +3649,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at >= 123456789)`,
 			},
 
@@ -3662,7 +3662,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at < 444444444)`,
 			},
 
@@ -3672,7 +3672,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationLessOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at <= 444444444)`,
 			},
 
@@ -3686,7 +3686,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (equal operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.created_at == 123456789)`,
 			},
 
@@ -3696,7 +3696,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.created_at != 123456789)`,
 			},
 
@@ -3706,7 +3706,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.created_at > 123456789)`,
 			},
 
@@ -3714,7 +3714,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.created_at >= 123456789)`,
 			},
 
@@ -3724,7 +3724,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.created_at < 222222222)`,
 			},
 
@@ -3732,7 +3732,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.created_at <= 222222222)`,
 			},
 
@@ -3743,7 +3743,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (not equal operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at == 111111111)`,
 			},
 
@@ -3755,7 +3755,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at != 111111111)`,
 			},
 
@@ -3768,7 +3768,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationNotEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at > 111111111)`,
 			},
 
@@ -3781,7 +3781,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationNotEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at >= 111111111)`,
 			},
 
@@ -3797,7 +3797,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationNotEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at < 222222222)`,
 			},
 
@@ -3812,7 +3812,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationNotEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at <= 222222222)`,
 			},
 
@@ -3830,7 +3830,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (greater operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at == 111111111)`,
 			},
 
@@ -3841,7 +3841,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at != 111111111)`,
 			},
 
@@ -3852,7 +3852,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at > 111111111)`,
 			},
 
@@ -3863,7 +3863,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at >= 111111111)`,
 			},
 
@@ -3876,7 +3876,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at < 123456789)`,
 			},
 
@@ -3887,7 +3887,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at <= 123456789)`,
 			},
 
@@ -3901,7 +3901,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (greater or equals operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at == 111111111)`,
 			},
 
@@ -3912,7 +3912,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at != 111111111)`,
 			},
 
@@ -3924,7 +3924,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at > 111111111)`,
 			},
 
@@ -3936,7 +3936,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at >= 111111111)`,
 			},
 
@@ -3950,7 +3950,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at < 222222222)`,
 			},
 
@@ -3963,7 +3963,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationGreaterOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at <= 222222222)`,
 			},
 
@@ -3978,7 +3978,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (less operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at == 111111111)`,
 			},
 
@@ -3988,7 +3988,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at != 111111111)`,
 			},
 
@@ -3999,7 +3999,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at > 111111111)`,
 			},
 
@@ -4010,7 +4010,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at >= 111111111)`,
 			},
 
@@ -4022,7 +4022,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at < 222222222)`,
 			},
 
@@ -4033,7 +4033,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at <= 222222222)`,
 			},
 
@@ -4046,7 +4046,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last (less or equals operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at == 111111111)`,
 			},
 
@@ -4056,7 +4056,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at != 111111111)`,
 			},
 
@@ -4068,7 +4068,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at > 111111111)`,
 			},
 
@@ -4080,7 +4080,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at >= 111111111)`,
 			},
 
@@ -4093,7 +4093,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at < 222222222)`,
 			},
 
@@ -4104,7 +4104,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationLessOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at <= 222222222)`,
 			},
 
@@ -4118,7 +4118,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (equal operation) and Run Name
 		{
 			name: "SearchMetricLastStepAndRunNameOperationRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and re.match("TestRun2", run.name))`,
 			},
 
@@ -4128,7 +4128,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and re.search("TestRun2", run.name))`,
 			},
 
@@ -4138,7 +4138,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.name == "TestRun2")`,
 			},
 
@@ -4148,7 +4148,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.name != "TestRun2")`,
 			},
 
@@ -4158,7 +4158,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.name.startswith("Test"))`,
 			},
 
@@ -4169,7 +4169,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.name.endswith("Run2"))`,
 			},
 
@@ -4180,7 +4180,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (not equal operation) and Run Name
 		{
 			name: "SearchMetricLastStepAndRunNameOperationNotEqualsAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and re.match("TestRun2", run.name))`,
 			},
 
@@ -4191,7 +4191,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationNotEqualsAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and re.search("TestRun2", run.name))`,
 			},
 
@@ -4202,7 +4202,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.name == "TestRun2")`,
 			},
 
@@ -4213,7 +4213,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.name != "TestRun2")`,
 			},
 
@@ -4226,7 +4226,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationNotEqualsAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.name.startswith("Test"))`,
 			},
 
@@ -4241,7 +4241,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationNotEqualsAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.name.endswith("Run2"))`,
 			},
 
@@ -4253,7 +4253,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (greater operation) and Run Name
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and re.match("TestRun2", run.name))`,
 			},
 
@@ -4264,7 +4264,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and re.search("TestRun2", run.name))`,
 			},
 
@@ -4275,7 +4275,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.name == "TestRun2")`,
 			},
 
@@ -4286,7 +4286,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.name != "TestRun2")`,
 			},
 
@@ -4298,7 +4298,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.name.startswith("Test"))`,
 			},
 
@@ -4312,7 +4312,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.name.endswith("Run2"))`,
 			},
 
@@ -4324,7 +4324,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (greater or equal operation) and Run Name
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterOrEqualsAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and re.match("TestRun2", run.name))`,
 			},
 
@@ -4336,7 +4336,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterOrEqualsAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and re.search("TestRun2", run.name))`,
 			},
 
@@ -4348,7 +4348,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.name == "TestRun2")`,
 			},
 
@@ -4360,7 +4360,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.name != "TestRun2")`,
 			},
 
@@ -4373,7 +4373,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterOrEqualsAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.name.startswith("Test"))`,
 			},
 
@@ -4389,7 +4389,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationGreaterOrEqualsAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.name.endswith("Run2"))`,
 			},
 
@@ -4402,7 +4402,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (less operation) and Run Name
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and re.match("TestRun2", run.name))`,
 			},
 
@@ -4412,7 +4412,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and re.search("TestRun2", run.name))`,
 			},
 
@@ -4422,7 +4422,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.name == "TestRun2")`,
 			},
 
@@ -4432,7 +4432,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.name != "TestRun2")`,
 			},
 
@@ -4443,7 +4443,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.name.startswith("Test"))`,
 			},
 
@@ -4455,7 +4455,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.name.endswith("Run2"))`,
 			},
 
@@ -4466,7 +4466,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (less or equal operation) and Run Name
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessOrEqualsAndRegexpMatchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and re.match("TestRun2", run.name))`,
 			},
 
@@ -4478,7 +4478,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessOrEqualsAndRegexpSearchFunction",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and re.search("TestRun2", run.name))`,
 			},
 
@@ -4490,7 +4490,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.name == "TestRun2")`,
 			},
 
@@ -4502,7 +4502,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.name != "TestRun2")`,
 			},
 
@@ -4515,7 +4515,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessrOrEqualsAndStartsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.name.startswith("Test"))`,
 			},
 
@@ -4531,7 +4531,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunNameOperationLessOrEqualsAndEndsWith",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.name.endswith("Run2"))`,
 			},
 
@@ -4544,7 +4544,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step(equal operation) and Run Duration
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration == 333333)`,
 			},
 
@@ -4554,7 +4554,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration != 333333)`,
 			},
 
@@ -4564,7 +4564,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration > 0)`,
 			},
 
@@ -4574,7 +4574,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration >= 0)`,
 			},
 
@@ -4585,7 +4585,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration < 333333)`,
 			},
 
@@ -4595,7 +4595,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration <= 333333)`,
 			},
 
@@ -4607,7 +4607,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step(not equal operation) and Run Duration
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration == 333333)`,
 			},
 
@@ -4618,7 +4618,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration != 333333)`,
 			},
 
@@ -4631,7 +4631,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationNotEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration > 0)`,
 			},
 
@@ -4644,7 +4644,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationNotEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration >= 0)`,
 			},
 
@@ -4659,7 +4659,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationNotEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration < 333333)`,
 			},
 
@@ -4672,7 +4672,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationNotEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration <= 333333)`,
 			},
 
@@ -4689,7 +4689,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step(greater operation) and Run Duration
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration == 333333)`,
 			},
 
@@ -4700,7 +4700,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration != 333333)`,
 			},
 
@@ -4712,7 +4712,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration > 0)`,
 			},
 
@@ -4725,7 +4725,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration >= 0)`,
 			},
 
@@ -4739,7 +4739,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration < 333333)`,
 			},
 
@@ -4751,7 +4751,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration <= 333333)`,
 			},
 
@@ -4766,7 +4766,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step(greater or equals operation) and Run Duration
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration == 333333)`,
 			},
 
@@ -4778,7 +4778,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration != 333333)`,
 			},
 
@@ -4791,7 +4791,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration > 0)`,
 			},
 
@@ -4805,7 +4805,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration >= 0)`,
 			},
 
@@ -4821,7 +4821,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration < 333333)`,
 			},
 
@@ -4834,7 +4834,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationGreaterOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration <= 333333)`,
 			},
 
@@ -4851,7 +4851,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step(less operation) and Run Duration
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration == 333333)`,
 			},
 
@@ -4861,7 +4861,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration != 333333)`,
 			},
 
@@ -4872,7 +4872,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration > 0)`,
 			},
 
@@ -4882,7 +4882,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration >= 0)`,
 			},
 
@@ -4894,7 +4894,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration < 333333)`,
 			},
 
@@ -4905,7 +4905,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration <= 333333)`,
 			},
 
@@ -4918,7 +4918,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step(less or equals operation) and Run Duration
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration == 333333)`,
 			},
 
@@ -4930,7 +4930,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration != 333333)`,
 			},
 
@@ -4943,7 +4943,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration > 0)`,
 			},
 
@@ -4956,7 +4956,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration >= 0)`,
 			},
 
@@ -4972,7 +4972,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration < 333333)`,
 			},
 
@@ -4985,7 +4985,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunDurationOperationLessOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration <= 333333)`,
 			},
 
@@ -5002,7 +5002,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (equal operation) and Run Hash
 		{
 			name: "SearchMetricLastStepAndRunHashOperationEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -5012,7 +5012,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunHashOperationEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -5023,7 +5023,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (not equal operation) and Run Hash
 		{
 			name: "SearchMetricLastStepAndRunHashOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -5034,7 +5034,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunHashOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -5048,7 +5048,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (greater operation) and Run Hash
 		{
 			name: "SearchMetricLastStepAndRunHashOperationGreaterAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -5058,7 +5058,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunHashOperationGreaterAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -5072,7 +5072,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (greater or equals operation) and Run Hash
 		{
 			name: "SearchMetricLastStepAndRunHashOperationGreaterOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -5083,7 +5083,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunHashOperationGreaterOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -5098,7 +5098,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (less operation) and Run Hash
 		{
 			name: "SearchMetricLastStepAndRunHashOperationLessAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -5109,7 +5109,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunHashOperationLessAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -5120,7 +5120,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (less or equals operation) and Run Hash
 		{
 			name: "SearchMetricLastStepAndRunHashOperationLessOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.hash == "%s")`, run1.ID),
 			},
 
@@ -5132,7 +5132,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunHashOperationLessOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.hash != "%s")`, run1.ID),
 			},
 
@@ -5146,7 +5146,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (equal operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at == 123456789)`,
 			},
 
@@ -5156,7 +5156,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at != 123456789)`,
 			},
 
@@ -5166,7 +5166,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at > 123456789)`,
 			},
 
@@ -5176,7 +5176,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at >= 123456789)`,
 			},
 
@@ -5187,7 +5187,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at < 444444444)`,
 			},
 
@@ -5197,7 +5197,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at <= 444444444)`,
 			},
 
@@ -5209,7 +5209,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (not equal operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at == 123456789)`,
 			},
 
@@ -5220,7 +5220,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at != 123456789)`,
 			},
 
@@ -5233,7 +5233,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationNotEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at > 123456789)`,
 			},
 
@@ -5246,7 +5246,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationNotEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at >= 123456789)`,
 			},
 
@@ -5261,7 +5261,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationNotEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at < 444444444)`,
 			},
 
@@ -5272,7 +5272,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationNotEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at <= 444444444)`,
 			},
 
@@ -5289,7 +5289,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (greater operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.finalized_at == 123456789)`,
 			},
 
@@ -5299,7 +5299,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.finalized_at != 123456789)`,
 			},
 
@@ -5312,7 +5312,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.finalized_at > 123456789)`,
 			},
 
@@ -5325,7 +5325,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.finalized_at >= 123456789)`,
 			},
 
@@ -5339,7 +5339,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.finalized_at < 444444444)`,
 			},
 
@@ -5349,7 +5349,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.finalized_at <= 444444444)`,
 			},
 
@@ -5364,7 +5364,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (greater or equals operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.finalized_at == 123456789)`,
 			},
 
@@ -5375,7 +5375,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.finalized_at != 123456789)`,
 			},
 
@@ -5389,7 +5389,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.finalized_at > 123456789)`,
 			},
 
@@ -5403,7 +5403,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.finalized_at >= 123456789)`,
 			},
 
@@ -5419,7 +5419,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.finalized_at < 444444444)`,
 			},
 
@@ -5430,7 +5430,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationGreaterOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.finalized_at <= 444444444)`,
 			},
 
@@ -5447,7 +5447,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (less operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.finalized_at == 123456789)`,
 			},
 
@@ -5458,7 +5458,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.finalized_at != 123456789)`,
 			},
 
@@ -5468,7 +5468,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.finalized_at > 123456789)`,
 			},
 
@@ -5478,7 +5478,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.finalized_at >= 123456789)`,
 			},
 
@@ -5490,7 +5490,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.finalized_at < 444444444)`,
 			},
 
@@ -5501,7 +5501,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.finalized_at <= 444444444)`,
 			},
 
@@ -5514,7 +5514,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (less or equals operation) and Run FinalizedAt
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.finalized_at == 123456789)`,
 			},
 
@@ -5526,7 +5526,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.finalized_at != 123456789)`,
 			},
 
@@ -5539,7 +5539,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.finalized_at > 123456789)`,
 			},
 
@@ -5552,7 +5552,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.finalized_at >= 123456789)`,
 			},
 
@@ -5568,7 +5568,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.finalized_at < 444444444)`,
 			},
 
@@ -5580,7 +5580,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunFinalizedAtOperationLessOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.finalized_at <= 444444444)`,
 			},
 
@@ -5597,7 +5597,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (equal operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.created_at == 123456789)`,
 			},
 
@@ -5607,7 +5607,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.created_at != 123456789)`,
 			},
 
@@ -5617,7 +5617,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.created_at > 123456789)`,
 			},
 
@@ -5625,7 +5625,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.created_at >= 123456789)`,
 			},
 
@@ -5635,7 +5635,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.created_at < 123456789)`,
 			},
 
@@ -5645,7 +5645,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.created_at <= 123456789)`,
 			},
 
@@ -5657,7 +5657,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (not equal operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationNotEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.created_at == 123456789)`,
 			},
 
@@ -5668,7 +5668,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationNotEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.created_at != 123456789)`,
 			},
 
@@ -5681,7 +5681,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationNotEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.created_at > 111111111)`,
 			},
 
@@ -5694,7 +5694,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationNotEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.created_at >= 111111111)`,
 			},
 
@@ -5709,7 +5709,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationNotEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.created_at < 222222222)`,
 			},
 
@@ -5722,7 +5722,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationNotEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.created_at <= 222222222)`,
 			},
 
@@ -5739,7 +5739,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (greater operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at == 123456789)`,
 			},
 
@@ -5749,7 +5749,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at != 123456789)`,
 			},
 
@@ -5762,7 +5762,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at > 111111111)`,
 			},
 
@@ -5774,7 +5774,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at >= 111111111)`,
 			},
 
@@ -5788,7 +5788,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at < 222222222)`,
 			},
 
@@ -5800,7 +5800,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at <= 222222222)`,
 			},
 
@@ -5815,7 +5815,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (greater or equals operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at == 123456789)`,
 			},
 
@@ -5826,7 +5826,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at != 123456789)`,
 			},
 
@@ -5840,7 +5840,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at > 111111111)`,
 			},
 
@@ -5853,7 +5853,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at >= 111111111)`,
 			},
 
@@ -5869,7 +5869,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at < 222222222)`,
 			},
 
@@ -5883,7 +5883,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationGreaterOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at <= 222222222)`,
 			},
 
@@ -5900,7 +5900,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (less operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at == 123456789)`,
 			},
 
@@ -5911,7 +5911,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at != 123456789)`,
 			},
 
@@ -5921,7 +5921,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at > 111111111)`,
 			},
 
@@ -5932,7 +5932,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at >= 111111111)`,
 			},
 
@@ -5944,7 +5944,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at < 123456789)`,
 			},
 
@@ -5954,7 +5954,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at <= 123456789)`,
 			},
 
@@ -5967,7 +5967,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search Metric Last Step (less or equals operation) and Run CreatedAt
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessOrEqualsAndEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at == 123456789)`,
 			},
 
@@ -5979,7 +5979,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessOrEqualsAndNotEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at != 123456789)`,
 			},
 
@@ -5992,7 +5992,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessOrEqualsAndGreater",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at > 111111111)`,
 			},
 
@@ -6005,7 +6005,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessOrEqualsAndGreaterOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at >= 111111111)`,
 			},
 
@@ -6021,7 +6021,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessOrEqualsAndLess",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at < 222222222)`,
 			},
 
@@ -6036,7 +6036,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationLessOrEqualsAndLessOrEquals",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at <= 222222222)`,
 			},
 
@@ -6053,7 +6053,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		// Search complex query
 		{
 			name: "SearchMetricComplexQuery",
-			request: request.SearchMetricRequest{
+			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2")) and metric.last_step >= 1 and (run.name.endswith("2") or re.match("TestRun1", run.name)) and (metric.last < 1.6) and run.duration > 0`,
 			},
 

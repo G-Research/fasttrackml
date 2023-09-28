@@ -1,7 +1,7 @@
 package request
 
-// SearchMetricRequest is a request struct for `GET /runs/search/metric/` endpoint.
-type SearchMetricRequest struct {
+// SearchMetricsRequest is a request struct for `GET /runs/search/metric/` endpoint.
+type SearchMetricsRequest struct {
 	Query          string `query:"q"`
 	Steps          int    `query:"p"`
 	XAxis          string `query:"x_axis"`

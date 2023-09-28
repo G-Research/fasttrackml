@@ -37,7 +37,7 @@ func (s *SearchMetricsTestSuite) SetupTest() {
 
 func (s *SearchMetricsTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.ExperimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -6092,10 +6092,4 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			assert.Equal(s.T(), tt.metrics, decodedMetrics)
 		})
 	}
-}
-
-func (s *SearchMetricsTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.ExperimentFixtures.UnloadFixtures())
-	}()
 }

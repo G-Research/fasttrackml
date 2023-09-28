@@ -3,11 +3,14 @@ package artifact
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"path/filepath"
-	"regexp"
 	"slices"
+
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -91,17 +94,12 @@ func (s Service) GetArtifact(
 			"error getting artifact object for URI: %s",
 			filepath.Join(run.ArtifactURI, req.Path),
 		)
-		statError := regexp.MustCompile(storage.PathError)
-		isDirError := regexp.MustCompile(storage.IsDirError)
-		switch {
-		case statError.MatchString(err.Error()):
+		var s3NotFound *types.NoSuchKey
+		if errors.Is(err, fs.ErrNotExist) || errors.As(err, &s3NotFound) {
 			return nil, api.NewResourceDoesNotExistError(msg)
-		case isDirError.MatchString(err.Error()):
-			return nil, api.NewInvalidParameterValueError(msg)
-		default:
+		} else {
 			return nil, api.NewInternalError(msg)
 		}
 	}
-
 	return artifactReader, nil
 }

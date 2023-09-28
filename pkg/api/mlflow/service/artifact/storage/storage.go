@@ -10,13 +10,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
-const (
-	// PathError indicates an item could not be found.
-	PathError = "path not found"
-	// IsDirError indicates that the requested item is a directory.
-	IsDirError = "cannot get a directory"
-)
-
 // ArtifactObject represents Artifact object agnostic to selected storage.
 type ArtifactObject struct {
 	Path  string

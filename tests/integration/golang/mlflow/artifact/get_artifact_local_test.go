@@ -226,7 +226,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 		},
 		{
 			name: "ExistingDirectoryProvided",
-			error: api.NewInvalidParameterValueError(
+			error: api.NewResourceDoesNotExistError(
 				fmt.Sprintf(
 					"error getting artifact object for URI: %s/%s/artifacts/subdir",
 					experimentArtifactDir,

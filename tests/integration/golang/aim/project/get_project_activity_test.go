@@ -4,7 +4,6 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -61,13 +60,13 @@ func (s *GetProjectActivityTestSuite) Test_Ok() {
 	}()
 	var resp response.ProjectActivityResponse
 	err := s.client.DoGetRequest(
-		fmt.Sprintf("/projects/activity"),
+		"/projects/activity",
 		&resp,
 	)
 	assert.Nil(s.T(), err)
 
 	activity, err := s.projectFixtures.GetProjectActivity(context.Background())
-
+	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), activity.NumActiveRuns, resp.NumActiveRuns)
 	assert.Equal(s.T(), activity.NumArchivedRuns, resp.NumArchivedRuns)
 	assert.Equal(s.T(), activity.NumExperiments, resp.NumExperiments)

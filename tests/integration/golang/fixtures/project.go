@@ -39,7 +39,7 @@ func (f *ProjectFixtures) GetProject(ctx context.Context) *response.GetProjectRe
 		Name:             "FastTrackML",
 		Path:             f.db.Dialector.Name(),
 		Description:      "",
-		TelemetryEnabled: float64(0),
+		TelemetryEnabled: false,
 	}
 }
 
@@ -80,10 +80,10 @@ func (f *ProjectFixtures) GetProjectActivity(
 	activity := map[string]int{time.Now().Format("2006-01-02T15:00:00"): int(numRuns)}
 
 	return &response.ProjectActivityResponse{
-		NumExperiments:  float64(numExperiments),
-		NumRuns:         float64(numRuns),
-		NumArchivedRuns: float64(numArchivedRuns),
-		NumActiveRuns:   float64(numActiveRuns),
+		NumExperiments:  numExperiments,
+		NumRuns:         numRuns,
+		NumArchivedRuns: numArchivedRuns,
+		NumActiveRuns:   numActiveRuns,
 		ActivityMap:     activity,
 	}, nil
 }

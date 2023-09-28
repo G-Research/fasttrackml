@@ -10,8 +10,6 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -94,8 +92,7 @@ func (s Service) GetArtifact(
 			"error getting artifact object for URI: %s",
 			filepath.Join(run.ArtifactURI, req.Path),
 		)
-		var s3NotFound *types.NoSuchKey
-		if errors.Is(err, fs.ErrNotExist) || errors.As(err, &s3NotFound) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, api.NewResourceDoesNotExistError(msg)
 		} else {
 			return nil, api.NewInternalError(msg)

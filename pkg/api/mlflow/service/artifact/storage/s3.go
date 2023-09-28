@@ -142,9 +142,9 @@ func (s S3) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
 	if err != nil {
 		var s3NoSuchKey *types.NoSuchKey
 		if errors.As(err, &s3NoSuchKey) {
-			return nil, fs.ErrNotExist
+			return nil, eris.Wrap(fs.ErrNotExist, "object does not exist")
 		}
-		return nil, err
+		return nil, eris.Wrap(err, "error getting object")
 	}
 
 	return resp.Body, nil

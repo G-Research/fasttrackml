@@ -85,5 +85,9 @@ func (s Local) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
 	if fileInfo.IsDir() {
 		return nil, eris.Wrap(fs.ErrNotExist, "path is a directory")
 	}
-	return os.Open(path)
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, eris.Wrap(err, "unable to open file")
+	}
+	return file, nil
 }

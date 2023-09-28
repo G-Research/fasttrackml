@@ -49,7 +49,7 @@ func TestGetArtifact_Error(t *testing.T) {
 	storage, err := NewLocal(nil)
 	assert.Nil(t, err)
 
-	file, err := storage.Get(filepath.Join(runArtifactRoot), "non-existent-file")
+	file, err := storage.Get(runArtifactRoot, "non-existent-file")
 	assert.NotNil(t, err)
 	assert.Nil(t, file)
 
@@ -58,7 +58,7 @@ func TestGetArtifact_Error(t *testing.T) {
 	assert.NotNil(t, err)
 
 	// test subdir
-	subdirFile, err := storage.Get(filepath.Join(runArtifactRoot), subdir)
+	subdirFile, err := storage.Get(runArtifactRoot, subdir)
 	assert.Nil(t, subdirFile)
 	assert.NotNil(t, err)
 }

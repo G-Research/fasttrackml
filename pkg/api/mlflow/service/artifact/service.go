@@ -88,15 +88,11 @@ func (s Service) GetArtifact(
 		run.ArtifactURI, req.Path,
 	)
 	if err != nil {
-		msg := fmt.Sprintf(
-			"error getting artifact object for URI: %s",
-			filepath.Join(run.ArtifactURI, req.Path),
-		)
+		msg := fmt.Sprintf("error getting artifact object for URI: %s", filepath.Join(run.ArtifactURI, req.Path))
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, api.NewResourceDoesNotExistError(msg)
-		} else {
-			return nil, api.NewInternalError(msg)
 		}
+		return nil, api.NewInternalError(msg)
 	}
 	return artifactReader, nil
 }

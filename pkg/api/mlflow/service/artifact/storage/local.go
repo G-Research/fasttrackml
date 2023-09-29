@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"io"
 	"io/fs"
 	"net/url"
 	"os"
@@ -68,4 +69,25 @@ func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
 	}
 
 	return artifactList, nil
+}
+
+// Get returns actual file content at the storage location.
+func (s Local) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
+	artifactURI = strings.TrimPrefix(artifactURI, "file://")
+	path, err := url.JoinPath(artifactURI, itemPath)
+	if err != nil {
+		return nil, eris.Wrap(err, "error constructing full path")
+	}
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return nil, eris.Wrap(err, "path could not be opened")
+	}
+	if fileInfo.IsDir() {
+		return nil, eris.Wrap(fs.ErrNotExist, "path is a directory")
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, eris.Wrap(err, "unable to open file")
+	}
+	return file, nil
 }

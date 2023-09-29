@@ -2,12 +2,16 @@ package storage
 
 import (
 	"context"
+	"errors"
+	"io"
+	"io/fs"
 	"net/url"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
@@ -120,4 +124,28 @@ func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
 	}
 
 	return artifactList, nil
+}
+
+// Get returns file content at the storage location.
+func (s S3) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
+	bucketName, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
+	if err != nil {
+		return nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
+	}
+
+	input := &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(filepath.Join(prefix, itemPath)),
+	}
+
+	resp, err := s.client.GetObject(context.TODO(), input)
+	if err != nil {
+		var s3NoSuchKey *types.NoSuchKey
+		if errors.As(err, &s3NoSuchKey) {
+			return nil, eris.Wrap(fs.ErrNotExist, "object does not exist")
+		}
+		return nil, eris.Wrap(err, "error getting object")
+	}
+
+	return resp.Body, nil
 }

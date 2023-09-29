@@ -3,6 +3,11 @@ package artifact
 import (
 	"cmp"
 	"context"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"path/filepath"
 	"slices"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -57,4 +62,41 @@ func (s Service) ListArtifacts(
 	})
 
 	return run.ArtifactURI, artifacts, nil
+}
+
+// GetArtifact handles business logic of `GET /artifacts/get` endpoint.
+func (s Service) GetArtifact(
+	ctx context.Context, req *request.GetArtifactRequest,
+) (io.ReadCloser, error) {
+	if err := ValidateGetArtifactRequest(req); err != nil {
+		return nil, err
+	}
+
+	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
+	if err != nil {
+		return nil, api.NewInternalError("unable to find run '%s': %s", req.GetRunID(), err)
+	}
+	if run == nil {
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.GetRunID())
+	}
+	artifactStorage, err := s.artifactStorageFactory.GetStorage(run.ArtifactURI)
+	if err != nil {
+		return nil, api.NewInternalError("run with id '%s' has unsupported artifact storage", run.ID)
+	}
+
+	artifactReader, err := artifactStorage.Get(
+		run.ArtifactURI, req.Path,
+	)
+	if err != nil {
+		msg := fmt.Sprintf(
+			"error getting artifact object for URI: %s",
+			filepath.Join(run.ArtifactURI, req.Path),
+		)
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, api.NewResourceDoesNotExistError(msg)
+		} else {
+			return nil, api.NewInternalError(msg)
+		}
+	}
+	return artifactReader, nil
 }

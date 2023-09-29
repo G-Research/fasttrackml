@@ -9,6 +9,59 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetArtifact_Ok(t *testing.T) {
+	// setup
+	runArtifactRoot := t.TempDir()
+	fileName := "file.txt"
+	fileContent := "artifact content"
+
+	f, err := os.Create(filepath.Join(runArtifactRoot, fileName))
+	assert.Nil(t, err)
+	_, err = f.Write([]byte(fileContent))
+	assert.Nil(t, err)
+
+	// invoke
+	storage, err := NewLocal(nil)
+	assert.Nil(t, err)
+
+	file, err := storage.Get(runArtifactRoot, fileName)
+	assert.Nil(t, err)
+	defer file.Close()
+
+	// verify
+	assert.NotNil(t, file)
+	readBuffer := make([]byte, 20)
+	ln, err := file.Read(readBuffer)
+	assert.Nil(t, err)
+	assert.Equal(t, fileContent, string(readBuffer[:ln]))
+}
+
+func TestGetArtifact_Error(t *testing.T) {
+	// setup
+	runArtifactRoot := t.TempDir()
+	subdir := "subdir"
+
+	err := os.MkdirAll(filepath.Join(runArtifactRoot, subdir), os.ModePerm)
+	assert.Nil(t, err)
+
+	// invoke
+	storage, err := NewLocal(nil)
+	assert.Nil(t, err)
+
+	file, err := storage.Get(runArtifactRoot, "non-existent-file")
+	assert.NotNil(t, err)
+	assert.Nil(t, file)
+
+	// verify
+	assert.Nil(t, file)
+	assert.NotNil(t, err)
+
+	// test subdir
+	subdirFile, err := storage.Get(runArtifactRoot, subdir)
+	assert.Nil(t, subdirFile)
+	assert.NotNil(t, err)
+}
+
 func TestLocal_ListArtifacts_Ok(t *testing.T) {
 	testData := []struct {
 		name   string

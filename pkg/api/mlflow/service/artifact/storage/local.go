@@ -68,19 +68,27 @@ func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
 }
 
 // Get returns actual file content at the storage location.
-func (s Local) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
+func (s Local) Get(artifactURI, path string) (io.ReadCloser, error) {
+	// 1. trim the `file://` prefix if it exists.
 	artifactURI = strings.TrimPrefix(artifactURI, "file://")
-	path := filepath.Join(artifactURI, itemPath)
-	fileInfo, err := os.Stat(path)
+
+	// 2. process `path` parameter.
+	absPath := filepath.Join(artifactURI, path)
+
+	// 3. check that the file exists and is not a directory.
+	fileInfo, err := os.Stat(absPath)
 	if err != nil {
 		return nil, eris.Wrap(err, "path could not be opened")
 	}
 	if fileInfo.IsDir() {
 		return nil, eris.Wrap(fs.ErrNotExist, "path is a directory")
 	}
-	file, err := os.Open(path)
+
+	// 4. open the file.
+	file, err := os.Open(absPath)
 	if err != nil {
 		return nil, eris.Wrap(err, "unable to open file")
 	}
+
 	return file, nil
 }

@@ -119,7 +119,8 @@ func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
 }
 
 // Get returns file content at the storage location.
-func (s S3) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
+func (s S3) Get(artifactURI, path string) (io.ReadCloser, error) {
+	// 1. create s3 request input.
 	bucketName, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {
 		return nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
@@ -127,9 +128,10 @@ func (s S3) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
 
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
-		Key:    aws.String(filepath.Join(prefix, itemPath)),
+		Key:    aws.String(filepath.Join(prefix, path)),
 	}
 
+	// 2. get object from s3 storage.
 	resp, err := s.client.GetObject(context.TODO(), input)
 	if err != nil {
 		var s3NoSuchKey *types.NoSuchKey

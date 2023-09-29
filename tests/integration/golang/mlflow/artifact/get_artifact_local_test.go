@@ -20,16 +20,14 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetArtifactLocalTestSuite struct {
 	suite.Suite
-	runFixtures        *fixtures.RunFixtures
-	serviceClient      *helpers.HttpClient
-	experimentFixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
 }
 
 func TestGetArtifactLocalTestSuite(t *testing.T) {
@@ -37,21 +35,20 @@ func TestGetArtifactLocalTestSuite(t *testing.T) {
 }
 
 func (s *GetArtifactLocalTestSuite) SetupTest() {
-	s.serviceClient = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-
-	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = experimentFixtures
-
-	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetArtifactLocalTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
 
 	tests := []struct {
 		name   string
@@ -71,8 +68,9 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// 1. create test experiment.
 			experimentArtifactDir := t.TempDir()
-			experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
+				NamespaceID:      namespace.ID,
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("%s%s", tt.prefix, experimentArtifactDir),
 			})
@@ -81,7 +79,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			// 2. create test run.
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
 			runArtifactDir := filepath.Join(experimentArtifactDir, runID, "artifacts")
-			run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
+			run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             runID,
 				Status:         models.StatusRunning,
 				SourceType:     "JOB",
@@ -108,7 +106,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			})
 			assert.Nil(s.T(), err)
 
-			resp, err := s.serviceClient.DoStreamRequest(
+			resp, err := s.MlflowClient.DoStreamRequest(
 				http.MethodGet,
 				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, rootFileQuery),
 				nil,
@@ -123,7 +121,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			})
 			assert.Nil(s.T(), err)
 
-			resp, err = s.serviceClient.DoStreamRequest(
+			resp, err = s.MlflowClient.DoStreamRequest(
 				http.MethodGet,
 				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, subDirQuery),
 				nil,
@@ -135,10 +133,22 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 }
 
 func (s *GetArtifactLocalTestSuite) Test_Error() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	// create test experiment
 	experimentArtifactDir := s.T().TempDir()
-	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:             fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
+		NamespaceID:      namespace.ID,
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: experimentArtifactDir,
 	})
@@ -147,7 +157,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 	// create test run
 	runID := strings.ReplaceAll(uuid.New().String(), "-", "")
 	runArtifactDir := filepath.Join(experimentArtifactDir, runID, "artifacts")
-	_, err = s.runFixtures.CreateRun(context.Background(), &models.Run{
+	_, err = s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             runID,
 		Status:         models.StatusRunning,
 		SourceType:     "JOB",
@@ -245,7 +255,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 			query, err := urlquery.Marshal(tt.request)
 			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
-			err = s.serviceClient.DoGetRequest(
+			err = s.MlflowClient.DoGetRequest(
 				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
 				&resp,
 			)

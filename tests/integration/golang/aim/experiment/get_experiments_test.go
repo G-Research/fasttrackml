@@ -43,7 +43,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	experiments := map[string]*models.Experiment{}
+	experiments := map[int32]*models.Experiment{}
 	for i := 0; i < 5; i++ {
 		experiment := &models.Experiment{
 			Name: fmt.Sprintf("Test Experiment %d", i),
@@ -67,7 +67,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 		}
 		experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
 		assert.Nil(s.T(), err)
-		experiments[fmt.Sprintf("%d", *experiment.ID)] = experiment
+		experiments[*experiment.ID] = experiment
 	}
 
 	var resp response.Experiments

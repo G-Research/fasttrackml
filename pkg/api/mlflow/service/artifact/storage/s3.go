@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"io/fs"
-	"net/url"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -74,10 +73,7 @@ func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
 	}
 
 	// 2. process search `path` parameter.
-	prefix, err := url.JoinPath(rootPrefix, path)
-	if err != nil {
-		return nil, eris.Wrap(err, "error constructing s3 prefix")
-	}
+	prefix := filepath.Join(rootPrefix, path)
 	if prefix != "" {
 		prefix = prefix + "/"
 	}

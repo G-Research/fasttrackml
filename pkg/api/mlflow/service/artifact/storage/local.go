@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"io/fs"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,10 +33,7 @@ func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
 	artifactURI = strings.TrimPrefix(artifactURI, "file://")
 
 	// 2. process search `path` parameter.
-	absPath, err := url.JoinPath(artifactURI, path)
-	if err != nil {
-		return nil, eris.Wrap(err, "error constructing full path")
-	}
+	absPath := filepath.Join(artifactURI, path)
 
 	// 3. read data from local storage.
 	objects, err := os.ReadDir(absPath)
@@ -74,10 +70,7 @@ func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
 // Get returns actual file content at the storage location.
 func (s Local) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
 	artifactURI = strings.TrimPrefix(artifactURI, "file://")
-	path, err := url.JoinPath(artifactURI, itemPath)
-	if err != nil {
-		return nil, eris.Wrap(err, "error constructing full path")
-	}
+	path := filepath.Join(artifactURI, itemPath)
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		return nil, eris.Wrap(err, "path could not be opened")

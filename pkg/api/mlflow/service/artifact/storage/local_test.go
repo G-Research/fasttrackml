@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -15,6 +16,7 @@ func TestGetArtifact_Ok(t *testing.T) {
 	fileName := "file.txt"
 	fileContent := "artifact content"
 
+	// #nosec G304
 	f, err := os.Create(filepath.Join(runArtifactRoot, fileName))
 	assert.Nil(t, err)
 	_, err = f.Write([]byte(fileContent))
@@ -24,7 +26,7 @@ func TestGetArtifact_Ok(t *testing.T) {
 	storage, err := NewLocal(nil)
 	assert.Nil(t, err)
 
-	file, err := storage.Get(runArtifactRoot, fileName)
+	file, err := storage.Get(context.Background(), runArtifactRoot, fileName)
 	assert.Nil(t, err)
 	defer file.Close()
 
@@ -48,7 +50,7 @@ func TestGetArtifact_Error(t *testing.T) {
 	storage, err := NewLocal(nil)
 	assert.Nil(t, err)
 
-	file, err := storage.Get(runArtifactRoot, "non-existent-file")
+	file, err := storage.Get(context.Background(), runArtifactRoot, "non-existent-file")
 	assert.NotNil(t, err)
 	assert.Nil(t, file)
 
@@ -57,13 +59,13 @@ func TestGetArtifact_Error(t *testing.T) {
 	assert.NotNil(t, err)
 
 	// test subdir
-	subdirFile, err := storage.Get(runArtifactRoot, subdir)
+	subdirFile, err := storage.Get(context.Background(), runArtifactRoot, subdir)
 	assert.Nil(t, subdirFile)
 	assert.NotNil(t, err)
 }
 
 func TestLocal_ListArtifacts_Ok(t *testing.T) {
-	testData := []struct {
+	tests := []struct {
 		name   string
 		prefix string
 	}{
@@ -77,7 +79,7 @@ func TestLocal_ListArtifacts_Ok(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			runArtifactDir := t.TempDir()
 			runArtifactURI := tt.prefix + runArtifactDir
@@ -95,7 +97,7 @@ func TestLocal_ListArtifacts_Ok(t *testing.T) {
 			assert.Nil(t, err)
 
 			// 3. list artifacts for root dir.
-			rootDirResp, err := storage.List(runArtifactURI, "")
+			rootDirResp, err := storage.List(context.Background(), runArtifactURI, "")
 			assert.Equal(t, 2, len(rootDirResp))
 			assert.Equal(t, []ArtifactObject{
 				{
@@ -112,7 +114,7 @@ func TestLocal_ListArtifacts_Ok(t *testing.T) {
 			assert.Nil(t, err)
 
 			// 4. list artifacts for sub dir.
-			subDirResp, err := storage.List(runArtifactURI, "artifact.dir")
+			subDirResp, err := storage.List(context.Background(), runArtifactURI, "artifact.dir")
 			assert.Equal(t, 1, len(subDirResp))
 			assert.Equal(t, ArtifactObject{
 				Path:  "artifact.dir/artifact.file2",
@@ -122,7 +124,7 @@ func TestLocal_ListArtifacts_Ok(t *testing.T) {
 			assert.Nil(t, err)
 
 			// 5. list artifacts for non-existing dir.
-			nonExistingDirResp, err := storage.List(runArtifactURI, "non-existing-dir")
+			nonExistingDirResp, err := storage.List(context.Background(), runArtifactURI, "non-existing-dir")
 			assert.Equal(t, 0, len(nonExistingDirResp))
 			assert.Nil(t, err)
 		})

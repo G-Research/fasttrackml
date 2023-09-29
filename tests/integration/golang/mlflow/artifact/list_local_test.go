@@ -52,7 +52,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	testData := []struct {
+	tests := []struct {
 		name   string
 		prefix string
 	}{
@@ -66,7 +66,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// 1. create test experiment.
 			experimentArtifactDir := t.TempDir()
@@ -200,14 +200,14 @@ func (s *ListArtifactLocalTestSuite) Test_Error() {
 	})
 	assert.Nil(s.T(), err)
 
-	testData := []struct {
+	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.ListArtifactsRequest
 	}{
 		{
 			name:    "EmptyOrIncorrectRunIDOrRunUUID",
-			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.ListArtifactsRequest{},
 		},
 		{
@@ -252,7 +252,7 @@ func (s *ListArtifactLocalTestSuite) Test_Error() {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			query, err := urlquery.Marshal(tt.request)
 			assert.Nil(s.T(), err)

@@ -1,10 +1,10 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"io"
 	"io/fs"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,15 +29,12 @@ func NewLocal(config *config.ServiceConfig) (*Local, error) {
 }
 
 // List implements ArtifactStorageProvider interface.
-func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
+func (s Local) List(ctx context.Context, artifactURI, path string) ([]ArtifactObject, error) {
 	// 1. trim the `file://` prefix if it exists.
 	artifactURI = strings.TrimPrefix(artifactURI, "file://")
 
 	// 2. process search `path` parameter.
-	absPath, err := url.JoinPath(artifactURI, path)
-	if err != nil {
-		return nil, eris.Wrap(err, "error constructing full path")
-	}
+	absPath := filepath.Join(artifactURI, path)
 
 	// 3. read data from local storage.
 	objects, err := os.ReadDir(absPath)
@@ -72,22 +69,29 @@ func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
 }
 
 // Get returns actual file content at the storage location.
-func (s Local) Get(artifactURI, itemPath string) (io.ReadCloser, error) {
+func (s Local) Get(ctx context.Context, artifactURI, path string) (io.ReadCloser, error) {
+	// 1. trim the `file://` prefix if it exists.
 	artifactURI = strings.TrimPrefix(artifactURI, "file://")
-	path, err := url.JoinPath(artifactURI, itemPath)
-	if err != nil {
-		return nil, eris.Wrap(err, "error constructing full path")
-	}
-	fileInfo, err := os.Stat(path)
+
+	// 2. process `path` parameter.
+	absPath := filepath.Join(artifactURI, path)
+
+	// 3. check that the file exists and is not a directory.
+	fileInfo, err := os.Stat(absPath)
 	if err != nil {
 		return nil, eris.Wrap(err, "path could not be opened")
 	}
 	if fileInfo.IsDir() {
 		return nil, eris.Wrap(fs.ErrNotExist, "path is a directory")
 	}
-	file, err := os.Open(path)
+
+	// 4. open the file.
+	// artifactURI and path are validated by the caller
+	// #nosec G304
+	file, err := os.Open(absPath)
 	if err != nil {
 		return nil, eris.Wrap(err, "unable to open file")
 	}
+
 	return file, nil
 }

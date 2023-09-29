@@ -167,7 +167,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 	}{
 		{
 			name:    "EmptyOrIncorrectRunIDOrRunUUID",
-			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.GetArtifactRequest{},
 		},
 		{

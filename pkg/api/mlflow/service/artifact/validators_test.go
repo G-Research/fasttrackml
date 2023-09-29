@@ -12,60 +12,60 @@ import (
 func TestValidateListArtifactsRequest_Ok(t *testing.T) {
 	tests := []struct {
 		name    string
-		request request.ListArtifactsRequest
+		request *request.ListArtifactsRequest
 	}{
 		{
 			name: "NotEmptyPathCase1",
-			request: request.ListArtifactsRequest{
+			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo/..asd../",
 			},
 		},
 		{
 			name: "NotEmptyPathCase2",
-			request: request.ListArtifactsRequest{
+			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "./foo",
 			},
 		},
 		{
 			name: "NotEmptyPathCase3",
-			request: request.ListArtifactsRequest{
+			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "./foo/",
 			},
 		},
 		{
 			name: "NotEmptyPathCase4",
-			request: request.ListArtifactsRequest{
+			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  ".foo",
 			},
 		},
 		{
 			name: "NotEmptyPathCase5",
-			request: request.ListArtifactsRequest{
+			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo.bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase6",
-			request: request.ListArtifactsRequest{
+			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo..bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase7",
-			request: request.ListArtifactsRequest{
+			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo../bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase8",
-			request: request.ListArtifactsRequest{
+			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo/..bar",
 			},
@@ -74,7 +74,7 @@ func TestValidateListArtifactsRequest_Ok(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Nil(t, ValidateListArtifactsRequest(&tt.request))
+			assert.Nil(t, ValidateListArtifactsRequest(tt.request))
 		})
 	}
 }
@@ -143,81 +143,81 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 func TestValidateGetArtifactRequest_Ok(t *testing.T) {
 	tests := []struct {
 		name    string
-		request request.GetArtifactRequest
+		request *request.GetArtifactRequest
 	}{
 		{
 			name: "NotEmptyPathCase1",
-			request: request.GetArtifactRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "foo/..asd../",
 			},
 		},
 		{
 			name: "NotEmptyPathCase2",
-			request: request.GetArtifactRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./foo",
 			},
 		},
 		{
 			name: "NotEmptyPathCase3",
-			request: request.GetArtifactRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./foo/",
 			},
 		},
 		{
 			name: "NotEmptyPathCase4",
-			request: request.GetArtifactRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  ".foo",
 			},
 		},
 		{
 			name: "NotEmptyPathCase5",
-			request: request.GetArtifactRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "foo.bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase6",
-			request: request.GetArtifactRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "foo..bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase7",
-			request: request.GetArtifactRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "foo../bar",
 			},
 		},
 		{
 			name: "NotEmptyPathCase8",
-			request: request.GetArtifactRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "foo/..bar",
 			},
 		},
 		{
 			name: "RunUUIDAndNotEmptyPath",
-			request: request.GetArtifactRequest{
+			request: &request.GetArtifactRequest{
 				RunUUID: "6766d949-07e8-4fff-b3d2-b5f820007cbe",
 				Path:    "foo/..bar",
 			},
 		},
 		{
 			name: "FilenameNoSlash",
-			request: request.GetArtifactRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "foo.txt",
 			},
 		},
 		{
 			name: "Dirname/Filename",
-			request: request.GetArtifactRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "directory/run_id",
 				Path:  "foo.txt",
 			},
@@ -226,7 +226,7 @@ func TestValidateGetArtifactRequest_Ok(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Nil(t, ValidateGetArtifactRequest(&tt.request))
+			assert.Nil(t, ValidateGetArtifactRequest(tt.request))
 		})
 	}
 }

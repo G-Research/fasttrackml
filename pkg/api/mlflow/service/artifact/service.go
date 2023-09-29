@@ -46,12 +46,12 @@ func (s Service) ListArtifacts(
 		return "", nil, api.NewInternalError("unable to get artifact URI for run '%s'", req.GetRunID())
 	}
 
-	artifactStorage, err := s.artifactStorageFactory.GetStorage(run.ArtifactURI)
+	artifactStorage, err := s.artifactStorageFactory.GetStorage(ctx, run.ArtifactURI)
 	if err != nil {
 		return "", nil, api.NewInternalError("run with id '%s' has unsupported artifact storage", run.ID)
 	}
 
-	artifacts, err := artifactStorage.List(run.ArtifactURI, req.Path)
+	artifacts, err := artifactStorage.List(ctx, run.ArtifactURI, req.Path)
 	if err != nil {
 		return "", nil, api.NewInternalError("error getting artifact list from storage")
 	}
@@ -79,24 +79,20 @@ func (s Service) GetArtifact(
 	if run == nil {
 		return nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.GetRunID())
 	}
-	artifactStorage, err := s.artifactStorageFactory.GetStorage(run.ArtifactURI)
+	artifactStorage, err := s.artifactStorageFactory.GetStorage(ctx, run.ArtifactURI)
 	if err != nil {
 		return nil, api.NewInternalError("run with id '%s' has unsupported artifact storage", run.ID)
 	}
 
 	artifactReader, err := artifactStorage.Get(
-		run.ArtifactURI, req.Path,
+		ctx, run.ArtifactURI, req.Path,
 	)
 	if err != nil {
-		msg := fmt.Sprintf(
-			"error getting artifact object for URI: %s",
-			filepath.Join(run.ArtifactURI, req.Path),
-		)
+		msg := fmt.Sprintf("error getting artifact object for URI: %s", filepath.Join(run.ArtifactURI, req.Path))
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, api.NewResourceDoesNotExistError(msg)
-		} else {
-			return nil, api.NewInternalError(msg)
 		}
+		return nil, api.NewInternalError(msg)
 	}
 	return artifactReader, nil
 }

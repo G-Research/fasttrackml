@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"io"
 	"io/fs"
@@ -28,7 +29,7 @@ func NewLocal(config *config.ServiceConfig) (*Local, error) {
 }
 
 // List implements ArtifactStorageProvider interface.
-func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
+func (s Local) List(ctx context.Context, artifactURI, path string) ([]ArtifactObject, error) {
 	// 1. trim the `file://` prefix if it exists.
 	artifactURI = strings.TrimPrefix(artifactURI, "file://")
 
@@ -68,7 +69,7 @@ func (s Local) List(artifactURI, path string) ([]ArtifactObject, error) {
 }
 
 // Get returns actual file content at the storage location.
-func (s Local) Get(artifactURI, path string) (io.ReadCloser, error) {
+func (s Local) Get(ctx context.Context, artifactURI, path string) (io.ReadCloser, error) {
 	// 1. trim the `file://` prefix if it exists.
 	artifactURI = strings.TrimPrefix(artifactURI, "file://")
 

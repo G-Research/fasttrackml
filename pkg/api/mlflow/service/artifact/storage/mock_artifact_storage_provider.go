@@ -3,6 +3,7 @@
 package storage
 
 import (
+	context "context"
 	io "io"
 
 	mock "github.com/stretchr/testify/mock"
@@ -13,25 +14,25 @@ type MockArtifactStorageProvider struct {
 	mock.Mock
 }
 
-// Get provides a mock function with given fields: artifactURI, path
-func (_m *MockArtifactStorageProvider) Get(artifactURI string, path string) (io.ReadCloser, error) {
-	ret := _m.Called(artifactURI, path)
+// Get provides a mock function with given fields: ctx, artifactURI, path
+func (_m *MockArtifactStorageProvider) Get(ctx context.Context, artifactURI string, path string) (io.ReadCloser, error) {
+	ret := _m.Called(ctx, artifactURI, path)
 
 	var r0 io.ReadCloser
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (io.ReadCloser, error)); ok {
-		return rf(artifactURI, path)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (io.ReadCloser, error)); ok {
+		return rf(ctx, artifactURI, path)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) io.ReadCloser); ok {
-		r0 = rf(artifactURI, path)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) io.ReadCloser); ok {
+		r0 = rf(ctx, artifactURI, path)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(io.ReadCloser)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(artifactURI, path)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, artifactURI, path)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -39,25 +40,25 @@ func (_m *MockArtifactStorageProvider) Get(artifactURI string, path string) (io.
 	return r0, r1
 }
 
-// List provides a mock function with given fields: artifactURI, path
-func (_m *MockArtifactStorageProvider) List(artifactURI string, path string) ([]ArtifactObject, error) {
-	ret := _m.Called(artifactURI, path)
+// List provides a mock function with given fields: ctx, artifactURI, path
+func (_m *MockArtifactStorageProvider) List(ctx context.Context, artifactURI string, path string) ([]ArtifactObject, error) {
+	ret := _m.Called(ctx, artifactURI, path)
 
 	var r0 []ArtifactObject
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) ([]ArtifactObject, error)); ok {
-		return rf(artifactURI, path)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]ArtifactObject, error)); ok {
+		return rf(ctx, artifactURI, path)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) []ArtifactObject); ok {
-		r0 = rf(artifactURI, path)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []ArtifactObject); ok {
+		r0 = rf(ctx, artifactURI, path)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]ArtifactObject)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(artifactURI, path)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, artifactURI, path)
 	} else {
 		r1 = ret.Error(1)
 	}

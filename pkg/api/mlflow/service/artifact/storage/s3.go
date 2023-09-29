@@ -28,7 +28,7 @@ type S3 struct {
 }
 
 // NewS3 creates new S3 instance.
-func NewS3(config *config.ServiceConfig) (*S3, error) {
+func NewS3(ctx context.Context, config *config.ServiceConfig) (*S3, error) {
 	var clientOptions []func(o *s3.Options)
 	var configOptions []func(*awsConfig.LoadOptions) error
 	if config.S3EndpointURI != "" {
@@ -50,7 +50,7 @@ func NewS3(config *config.ServiceConfig) (*S3, error) {
 		))
 	}
 
-	cfg, err := awsConfig.LoadDefaultConfig(context.TODO(), configOptions...)
+	cfg, err := awsConfig.LoadDefaultConfig(ctx, configOptions...)
 	if err != nil {
 		return nil, eris.Wrap(err, "error loading configuration for S3 client")
 	}
@@ -61,7 +61,7 @@ func NewS3(config *config.ServiceConfig) (*S3, error) {
 }
 
 // List implements ArtifactStorageProvider interface.
-func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
+func (s S3) List(ctx context.Context, artifactURI, path string) ([]ArtifactObject, error) {
 	// 1. create s3 request input.
 	bucket, rootPrefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {
@@ -83,7 +83,7 @@ func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
 	var artifactList []ArtifactObject
 	paginator := s3.NewListObjectsV2Paginator(s.client, &input)
 	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(context.TODO())
+		page, err := paginator.NextPage(ctx)
 		if err != nil {
 			return nil, eris.Wrap(err, "error getting s3 page objects")
 		}
@@ -119,7 +119,7 @@ func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
 }
 
 // Get returns file content at the storage location.
-func (s S3) Get(artifactURI, path string) (io.ReadCloser, error) {
+func (s S3) Get(ctx context.Context, artifactURI, path string) (io.ReadCloser, error) {
 	// 1. create s3 request input.
 	bucketName, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {
@@ -132,7 +132,7 @@ func (s S3) Get(artifactURI, path string) (io.ReadCloser, error) {
 	}
 
 	// 2. get object from s3 storage.
-	resp, err := s.client.GetObject(context.TODO(), input)
+	resp, err := s.client.GetObject(ctx, input)
 	if err != nil {
 		// errors.Is is not working for s3 errors, so we need to use errors.As instead.
 		var s3NoSuchKey *types.NoSuchKey

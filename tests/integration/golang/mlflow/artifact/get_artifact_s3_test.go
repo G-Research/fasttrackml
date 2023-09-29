@@ -57,7 +57,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
-	testData := []struct {
+	tests := []struct {
 		name   string
 		bucket string
 	}{

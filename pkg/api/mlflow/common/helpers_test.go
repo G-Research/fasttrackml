@@ -6,9 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestGetContentType the TestGetContentType private helpers
 func TestGetContentType(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		name     string
 		filename string
 		expected string
@@ -35,8 +34,8 @@ func TestGetContentType(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testCases {
-		result := GetContentType(testCase.filename)
-		assert.Equal(t, testCase.expected, result, "Unexpected content type for filename: %s", testCase.filename)
+	for _, tt := range tests {
+		result := GetContentType(tt.filename)
+		assert.Equal(t, tt.expected, result, "Unexpected content type for filename: %s", tt.filename)
 	}
 }

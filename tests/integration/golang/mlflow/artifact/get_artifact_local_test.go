@@ -53,7 +53,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
-	testData := []struct {
+	tests := []struct {
 		name   string
 		prefix string
 	}{
@@ -67,7 +67,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// 1. create test experiment.
 			experimentArtifactDir := t.TempDir()
@@ -160,7 +160,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 	err = os.MkdirAll(filepath.Join(runArtifactDir, "subdir"), fs.ModePerm)
 	assert.Nil(s.T(), err)
 
-	testData := []struct {
+	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetArtifactRequest
@@ -240,7 +240,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			query, err := urlquery.Marshal(tt.request)
 			assert.Nil(s.T(), err)

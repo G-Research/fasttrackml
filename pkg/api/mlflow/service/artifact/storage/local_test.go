@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestGetArtifact for the local storage implementation.
 func TestGetArtifact_Ok(t *testing.T) {
 	// setup
 	runArtifactRoot := t.TempDir()

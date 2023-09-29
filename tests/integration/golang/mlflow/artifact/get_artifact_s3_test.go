@@ -71,7 +71,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// create test experiment
 			experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -96,7 +96,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			// upload artifact root object to S3
 			putObjReq := &s3.PutObjectInput{
 				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.file", runID)),
-				Body:   strings.NewReader(`content`),
+				Body:   strings.NewReader("content"),
 				Bucket: aws.String(tt.bucket),
 			}
 			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
@@ -108,7 +108,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 					"1/%s/artifacts/artifact.subdir/artifact.file",
 					runID),
 				),
-				Body:   strings.NewReader(`subdir-object-content`),
+				Body:   strings.NewReader("subdir-object-content"),
 				Bucket: aws.String(tt.bucket),
 			}
 			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
@@ -175,20 +175,20 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 	// upload artifact subdir object to S3
 	putObjReq := &s3.PutObjectInput{
 		Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.subdir/artifact.file", runID)),
-		Body:   strings.NewReader(`content`),
+		Body:   strings.NewReader("content"),
 		Bucket: aws.String("bucket1"),
 	}
 	_, err = s.s3Client.PutObject(context.Background(), putObjReq)
 	assert.Nil(s.T(), err)
 
-	testData := []struct {
+	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetArtifactRequest
 	}{
 		{
 			name:    "EmptyOrIncorrectRunIDOrRunUUID",
-			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.GetArtifactRequest{},
 		},
 		{
@@ -253,7 +253,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			query, err := urlquery.Marshal(tt.request)
 			assert.Nil(s.T(), err)

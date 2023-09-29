@@ -10,7 +10,7 @@ import (
 )
 
 func TestValidateListArtifactsRequest_Ok(t *testing.T) {
-	testData := []struct {
+	tests := []struct {
 		name    string
 		request request.ListArtifactsRequest
 	}{
@@ -72,7 +72,7 @@ func TestValidateListArtifactsRequest_Ok(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Nil(t, ValidateListArtifactsRequest(&tt.request))
 		})
@@ -80,7 +80,7 @@ func TestValidateListArtifactsRequest_Ok(t *testing.T) {
 }
 
 func TestValidateListArtifactsRequest_Error(t *testing.T) {
-	testData := []struct {
+	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.ListArtifactsRequest
@@ -132,7 +132,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateListArtifactsRequest(tt.request)
 			assert.Equal(t, tt.error, err)
@@ -141,7 +141,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 }
 
 func TestValidateGetArtifactRequest_Ok(t *testing.T) {
-	testData := []struct {
+	tests := []struct {
 		name    string
 		request request.GetArtifactRequest
 	}{
@@ -202,6 +202,13 @@ func TestValidateGetArtifactRequest_Ok(t *testing.T) {
 			},
 		},
 		{
+			name: "RunUUIDAndNotEmptyPath",
+			request: request.GetArtifactRequest{
+				RunUUID: "6766d949-07e8-4fff-b3d2-b5f820007cbe",
+				Path:    "foo/..bar",
+			},
+		},
+		{
 			name: "FilenameNoSlash",
 			request: request.GetArtifactRequest{
 				RunID: "run_id",
@@ -217,7 +224,7 @@ func TestValidateGetArtifactRequest_Ok(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Nil(t, ValidateGetArtifactRequest(&tt.request))
 		})
@@ -225,7 +232,7 @@ func TestValidateGetArtifactRequest_Ok(t *testing.T) {
 }
 
 func TestValidateGetArtifactRequest_Error(t *testing.T) {
-	testData := []struct {
+	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.GetArtifactRequest
@@ -285,7 +292,7 @@ func TestValidateGetArtifactRequest_Error(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateGetArtifactRequest(tt.request)
 			assert.Equal(t, tt.error, err)

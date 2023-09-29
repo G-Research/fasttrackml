@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -58,10 +59,10 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 		if err := func() error {
 			bytesWritten, err := io.CopyBuffer(w, artifact, make([]byte, 4096))
 			if err != nil {
-				return fmt.Errorf("unable to copy artifact Reader to output stream: %w", err)
+				return eris.Errorf("error copying artifact Reader to output stream: %w", err)
 			}
 			if err := w.Flush(); err != nil {
-				return fmt.Errorf("unable to flush output stream: %w", err)
+				return eris.Errorf("error flushing output stream: %w", err)
 			}
 			log.Debugf("GetArtifact wrote bytes to output stream: %d", bytesWritten)
 			return nil

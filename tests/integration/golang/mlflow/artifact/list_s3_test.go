@@ -59,7 +59,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
 	}()
 
-	testData := []struct {
+	tests := []struct {
 		name   string
 		bucket string
 	}{
@@ -73,7 +73,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// 1. create test experiment.
 			experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -112,13 +112,13 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			// 3. upload artifact objects to S3.
 			_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
 				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.file1", runID)),
-				Body:   strings.NewReader(`contentX`),
+				Body:   strings.NewReader("contentX"),
 				Bucket: aws.String(tt.bucket),
 			})
 			assert.Nil(s.T(), err)
 			_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
 				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.dir/artifact.file2", runID)),
-				Body:   strings.NewReader(`contentXX`),
+				Body:   strings.NewReader("contentXX"),
 				Bucket: aws.String(tt.bucket),
 			})
 			assert.Nil(s.T(), err)
@@ -197,14 +197,14 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 }
 
 func (s *ListArtifactS3TestSuite) Test_Error() {
-	testData := []struct {
+	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
 		request *request.ListArtifactsRequest
 	}{
 		{
 			name:    "EmptyOrIncorrectRunIDOrRunUUID",
-			error:   api.NewInvalidParameterValueError(`Missing value for required parameter 'run_id'`),
+			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.ListArtifactsRequest{},
 		},
 		{
@@ -249,7 +249,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			query, err := urlquery.Marshal(tt.request)
 			assert.Nil(s.T(), err)

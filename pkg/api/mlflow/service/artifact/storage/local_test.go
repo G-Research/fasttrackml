@@ -15,6 +15,7 @@ func TestGetArtifact_Ok(t *testing.T) {
 	fileName := "file.txt"
 	fileContent := "artifact content"
 
+	// #nosec G304
 	f, err := os.Create(filepath.Join(runArtifactRoot, fileName))
 	assert.Nil(t, err)
 	_, err = f.Write([]byte(fileContent))
@@ -63,7 +64,7 @@ func TestGetArtifact_Error(t *testing.T) {
 }
 
 func TestLocal_ListArtifacts_Ok(t *testing.T) {
-	testData := []struct {
+	tests := []struct {
 		name   string
 		prefix string
 	}{
@@ -77,7 +78,7 @@ func TestLocal_ListArtifacts_Ok(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testData {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			runArtifactDir := t.TempDir()
 			runArtifactURI := tt.prefix + runArtifactDir

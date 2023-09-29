@@ -24,7 +24,7 @@ type GetExperimentsTestSuite struct {
 }
 
 func TestGetExperimentsTestSuite(t *testing.T) {
-	suite.Run(t, new(GetExperimentsTestSuite))
+	suite.Run(t, new(GetExperimentTestSuite))
 }
 
 func (s *GetExperimentsTestSuite) SetupTest() {

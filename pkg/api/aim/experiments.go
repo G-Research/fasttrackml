@@ -113,7 +113,7 @@ func GetExperiment(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"id":            strconv.Itoa(int(id)),
+		"id":            id,
 		"name":          exp.Name,
 		"description":   nil,
 		"archived":      exp.LifecycleStage == database.LifecycleStageDeleted,

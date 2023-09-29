@@ -2,7 +2,7 @@ package response
 
 // GetExperiment represents the response json fot the GetExperimnt endpoint.
 type GetExperiment struct {
-	ID           string  `json:"id"`
+	ID           int32   `json:"id"`
 	Name         string  `json:"name"`
 	Description  string  `json:"description"`
 	Archived     bool    `json:"archived"`

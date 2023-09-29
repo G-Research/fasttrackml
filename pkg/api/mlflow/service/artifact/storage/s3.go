@@ -134,6 +134,7 @@ func (s S3) Get(artifactURI, path string) (io.ReadCloser, error) {
 	// 2. get object from s3 storage.
 	resp, err := s.client.GetObject(context.TODO(), input)
 	if err != nil {
+		// errors.Is is not working for s3 errors, so we need to use errors.As instead.
 		var s3NoSuchKey *types.NoSuchKey
 		if errors.As(err, &s3NoSuchKey) {
 			return nil, eris.Wrap(fs.ErrNotExist, "object does not exist")

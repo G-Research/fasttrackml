@@ -85,6 +85,8 @@ func (s Local) Get(artifactURI, path string) (io.ReadCloser, error) {
 	}
 
 	// 4. open the file.
+	// artifactURI and path are validated by the caller
+	// #nosec G304
 	file, err := os.Open(absPath)
 	if err != nil {
 		return nil, eris.Wrap(err, "unable to open file")

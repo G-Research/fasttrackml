@@ -84,12 +84,8 @@ func (s S3) List(artifactURI, path string) ([]ArtifactObject, error) {
 	input.Prefix = aws.String(prefix)
 
 	// 3. read data from s3 storage.
-	paginator := s3.NewListObjectsV2Paginator(s.client, &input)
-	if err != nil {
-		return nil, eris.Wrap(err, "error creating s3 paginated request")
-	}
-
 	var artifactList []ArtifactObject
+	paginator := s3.NewListObjectsV2Paginator(s.client, &input)
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(context.TODO())
 		if err != nil {

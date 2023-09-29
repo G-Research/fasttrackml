@@ -59,16 +59,7 @@ func (s *CreateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.App
-			assert.Nil(
-				s.T(),
-				s.AIMClient.WithMethod(
-					http.MethodPost,
-				).WithRequest(
-					tt.requestBody,
-				).WithResponse(
-					&resp,
-				).DoRequest("/apps"),
-			)
+			assert.Nil(s.T(), s.AIMClient.WithMethod(http.MethodPost).WithRequest(tt.requestBody).WithResponse(&resp).DoRequest("/apps"))
 			assert.Equal(s.T(), tt.requestBody.Type, resp.Type)
 			assert.Equal(s.T(), tt.requestBody.State["app-state-key"], resp.State["app-state-key"])
 			assert.NotEmpty(s.T(), resp.ID)

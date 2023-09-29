@@ -36,12 +36,12 @@ type HttpClient struct {
 	responseType ResponseType
 }
 
-// NewMlflowApiClient creates new HTTP client for the mlflow api
-func NewMlflowApiClient(baseURL string) *HttpClient {
+// NewClient creates new preconfigured HTTP client.
+func NewClient(baseURL, basePath string) *HttpClient {
 	return &HttpClient{
 		client:   &http.Client{},
 		baseURL:  baseURL,
-		basePath: "/api/2.0/mlflow",
+		basePath: basePath,
 		method:   http.MethodGet,
 		headers: map[string]string{
 			"Content-Type": "application/json",
@@ -50,18 +50,14 @@ func NewMlflowApiClient(baseURL string) *HttpClient {
 	}
 }
 
+// NewMlflowApiClient creates new HTTP client for the mlflow api
+func NewMlflowApiClient(baseURL string) *HttpClient {
+	return NewClient(baseURL, "/api/2.0/mlflow")
+}
+
 // NewAimApiClient creates new HTTP client for the aim api
 func NewAimApiClient(baseURL string) *HttpClient {
-	return &HttpClient{
-		client:   &http.Client{},
-		baseURL:  baseURL,
-		basePath: "/aim/api",
-		method:   http.MethodGet,
-		headers: map[string]string{
-			"Content-Type": "application/json",
-		},
-		responseType: ResponseTypeJSON,
-	}
+	return NewClient(baseURL, "/aim/api")
 }
 
 // WithMethod sets the HTTP method.
@@ -140,7 +136,7 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 	// 4. create actual request object.
 	// if HttpMethod was not provided, then by default use HttpMethodGet.
 	req, err := http.NewRequestWithContext(
-		context.Background(), string(c.method), u.String(), requestBody,
+		context.Background(), c.method, u.String(), requestBody,
 	)
 	if err != nil {
 		return eris.Wrap(err, "error creating request")

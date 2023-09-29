@@ -66,13 +66,10 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var resp response.Error
 			assert.Nil(
 				s.T(),
 				s.AIMClient.WithMethod(
 					http.MethodDelete,
-				).WithResponse(
-					&resp,
 				).DoRequest(
 					"/apps/%s", app.ID,
 				),

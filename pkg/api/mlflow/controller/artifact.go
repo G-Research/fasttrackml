@@ -59,10 +59,10 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 		if err := func() error {
 			bytesWritten, err := io.CopyBuffer(w, artifact, make([]byte, 4096))
 			if err != nil {
-				return eris.Errorf("error copying artifact Reader to output stream: %w", err)
+				return eris.Wrap(err, "error copying artifact Reader to output stream")
 			}
 			if err := w.Flush(); err != nil {
-				return eris.Errorf("error flushing output stream: %w", err)
+				return eris.Wrap(err, "error flushing output stream")
 			}
 			log.Debugf("GetArtifact wrote bytes to output stream: %d", bytesWritten)
 			return nil

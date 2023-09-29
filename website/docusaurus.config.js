@@ -135,7 +135,7 @@ const config = {
             announcementBar: {
                 // https://docusaurus.io/docs/api/themes/configuration#announcement-bar
                 id: 'announcement-bar',
-                content: `FastTrackML 0.3.1 has been <a href="https://github.com/G-Research/fasttrackml/releases/tag/v0.3.1" target="_blank">released</a>!`,
+                content: `FastTrackML 0.3.2 has been <a href="https://github.com/G-Research/fasttrackml/releases/tag/v0.3.2" target="_blank">released</a>!`,
                 isCloseable: true,
             },
             colorMode: {

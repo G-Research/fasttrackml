@@ -4,7 +4,6 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -88,7 +87,7 @@ func (s *DeleteDashboardTestSuite) Test_Ok() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("/dashboards/%s", dashboard.ID),
+					"/dashboards/%s", dashboard.ID,
 				),
 			)
 			dashboards, err := s.DashboardFixtures.GetDashboards(context.Background())
@@ -155,7 +154,7 @@ func (s *DeleteDashboardTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("/dashboards/%s", tt.idParam),
+					"/dashboards/%s", tt.idParam,
 				),
 			)
 			assert.Contains(s.T(), resp.Message, "Not Found")

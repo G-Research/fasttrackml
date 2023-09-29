@@ -5,6 +5,7 @@ package experiment
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,12 +60,18 @@ func (s *CreateExperimentTestSuite) Test_Ok() {
 		},
 	}
 	resp := response.CreateExperimentResponse{}
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute),
-		req,
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
 	assert.NotEmpty(s.T(), resp.ID)
 }
 
@@ -105,12 +112,18 @@ func (s *CreateExperimentTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute),
+				),
 			)
-			assert.Nil(t, err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

@@ -4,6 +4,7 @@ package run
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -58,8 +59,16 @@ func (s *CreateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.App
-			err := s.AIMClient.DoPostRequest("/apps", tt.requestBody, &resp)
-			assert.Nil(s.T(), err)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest("/apps"),
+			)
 			assert.Equal(s.T(), tt.requestBody.Type, resp.Type)
 			assert.Equal(s.T(), tt.requestBody.State["app-state-key"], resp.State["app-state-key"])
 			assert.NotEmpty(s.T(), resp.ID)
@@ -96,8 +105,16 @@ func (s *CreateAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoPostRequest("/apps", tt.requestBody, &resp)
-			assert.Nil(s.T(), err)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest("/apps"),
+			)
 			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
 		})
 	}

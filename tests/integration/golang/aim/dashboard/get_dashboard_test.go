@@ -4,7 +4,6 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -69,7 +68,7 @@ func (s *GetDashboardTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp database.Dashboard
-	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest(fmt.Sprintf("/dashboards/%s", dashboard.ID)))
+	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/dashboards/%s", dashboard.ID))
 	assert.Equal(s.T(), dashboard.ID, resp.ID)
 	assert.Equal(s.T(), &app.ID, resp.AppID)
 	assert.Equal(s.T(), dashboard.Name, resp.Name)
@@ -104,7 +103,7 @@ func (s *GetDashboardTestSuite) Test_Error() {
 			var resp response.Error
 			assert.Nil(
 				s.T(),
-				s.AIMClient.WithResponse(&resp).DoRequest(fmt.Sprintf("/dashboards/%s", tt.idParam)),
+				s.AIMClient.WithResponse(&resp).DoRequest("/dashboards/%s", tt.idParam),
 			)
 			assert.Equal(s.T(), "Not Found", resp.Message)
 		})

@@ -7,12 +7,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"net/http"
 	"slices"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -745,17 +743,19 @@ func (s *SearchTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var resp []byte
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(s.T(), err)
-			resp, err = s.AIMClient.DoStreamRequest(
-				http.MethodGet,
-				fmt.Sprintf("/runs/search/run?%s", query),
-				nil,
+			resp := new(bytes.Buffer)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithResponseType(
+					helpers.ResponseTypeStream,
+				).WithQuery(map[any]any{
+					"q": tt.request.Query,
+				}).WithResponse(
+					resp,
+				).DoRequest("/runs/search/run"),
 			)
-			assert.Nil(s.T(), err)
 
-			decodedData, err := encoding.Decode(bytes.NewBuffer(resp))
+			decodedData, err := encoding.Decode(resp)
 			assert.Nil(s.T(), err)
 
 			for _, run := range runs {

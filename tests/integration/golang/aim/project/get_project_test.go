@@ -41,11 +41,7 @@ func (s *GetProjectTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp response.GetProjectResponse
-	err = s.AIMClient.DoGetRequest(
-		"/projects",
-		&resp,
-	)
-	assert.Nil(s.T(), err)
+	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/projects"))
 	assert.Equal(s.T(), "FastTrackML", resp.Name)
 	// assert.Equal(s.T(), "", resp.Path)
 	assert.Equal(s.T(), "", resp.Description)

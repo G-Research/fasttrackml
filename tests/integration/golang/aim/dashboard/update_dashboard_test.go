@@ -4,7 +4,6 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -94,7 +93,7 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("/dashboards/%s", dashboard.ID),
+					"/dashboards/%s", dashboard.ID,
 				),
 			)
 
@@ -167,7 +166,7 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
 			).WithResponse(
 				&resp,
 			).DoRequest(
-				fmt.Sprintf("/dashboards/%s", dashboard.ID),
+				"/dashboards/%s", dashboard.ID,
 			))
 			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
 		})

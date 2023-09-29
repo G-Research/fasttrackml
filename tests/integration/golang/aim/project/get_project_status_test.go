@@ -40,10 +40,6 @@ func (s *GetProjectStatusTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp string
-	err = s.AIMClient.DoGetRequest(
-		"/projects/status",
-		&resp,
-	)
-	assert.Nil(s.T(), err)
+	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/projects/status"))
 	assert.Equal(s.T(), "up-to-date", resp)
 }

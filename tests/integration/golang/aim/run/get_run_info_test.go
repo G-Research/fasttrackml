@@ -64,11 +64,10 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.GetRunInfo
-			err := s.AIMClient.DoGetRequest(
-				fmt.Sprintf("/runs/%s/info", tt.runID),
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID),
 			)
-			assert.Nil(s.T(), err)
 			// TODO this assertion fails because ID is not rendered by the endpoint
 			// assert.Equal(s.T(), s.run.ID, resp.Props.ID)
 			assert.Equal(s.T(), s.run.Name, resp.Props.Name)
@@ -99,11 +98,7 @@ func (s *GetRunInfoTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoGetRequest(
-				fmt.Sprintf("/runs/%s/info", tt.runID),
-				&resp,
-			)
-			assert.Nil(s.T(), err)
+			assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID))
 			assert.Equal(s.T(), "Not Found", resp.Message)
 		})
 	}

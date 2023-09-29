@@ -60,8 +60,7 @@ func (s *GetAppsTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			var resp []response.App
-			err = s.AIMClient.DoGetRequest("/apps", &resp)
-			assert.Nil(s.T(), err)
+			assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/apps"))
 			assert.Equal(s.T(), tt.expectedAppCount, len(resp))
 			for idx := 0; idx < tt.expectedAppCount; idx++ {
 				assert.Equal(s.T(), apps[idx].ID.String(), resp[idx].ID)

@@ -5,6 +5,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
@@ -69,12 +70,18 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Success
-			err := s.AIMClient.DoPutRequest(
-				fmt.Sprintf("/runs/%s", *tt.request.RunID),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPut,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/runs/%s", *tt.request.RunID,
+				),
 			)
-			assert.Nil(s.T(), err)
 			run, err := s.RunFixtures.GetRun(context.Background(), s.run.ID)
 			assert.Nil(s.T(), err)
 			// TODO the PUT endpoint only updates LifecycleStage
@@ -103,12 +110,18 @@ func (s *UpdateRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoPutRequest(
-				fmt.Sprintf("/runs/%s", s.run.ID),
-				tt.requestBody,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPut,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/runs/%s", s.run.ID,
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
 		})
 	}

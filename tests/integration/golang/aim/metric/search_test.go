@@ -5,8 +5,6 @@ package run
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
@@ -86,43 +84,72 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	tests := []struct {
-		name  string
-		query string
+		name   string
+		params map[any]any
 	}{
 		{
-			name:  "TestStartWithFunction",
-			query: `q=(metric.name=='key1' and run.name.startswith("chill"))&p=500&report_progress=false`,
+			name: "TestStartWithFunction",
+			params: map[any]any{
+				"q":               `(metric.name=='key1' and run.name.startswith("chill"))`,
+				"p":               500,
+				"report_progress": false,
+			},
 		},
 		{
-			name:  "TestEndWithFunction",
-			query: `q=(metric.name=='key1' and run.name.endswith("run"))&p=500&report_progress=false`,
+			name: "TestEndWithFunction",
+			params: map[any]any{
+				"q":               `(metric.name=='key1' and run.name.endswith("run"))`,
+				"p":               500,
+				"report_progress": false,
+			},
 		},
 		{
-			name:  "TestRegexpMatchFunction",
-			query: `q=(metric.name=='key1' and re.match("chill", run.name))&p=500&report_progress=false`,
+			name: "TestRegexpMatchFunction",
+			params: map[any]any{
+				"q":               `(metric.name=='key1' and re.match("chill", run.name))`,
+				"p":               500,
+				"report_progress": false,
+			},
 		},
 		{
-			name:  "TestRegexpSearchFunction",
-			query: `q=(metric.name=='key1' and re.search("run", run.name))&p=500&report_progress=false`,
+			name: "TestRegexpSearchFunction",
+			params: map[any]any{
+				"q":               `(metric.name=='key1' and re.search("run", run.name))`,
+				"p":               500,
+				"report_progress": false,
+			},
 		},
 		{
-			name:  "TestInFunction",
-			query: `q=(metric.name=='key1' and 'chill' in run.name)&p=500&report_progress=false`,
+			name: "TestInFunction",
+			params: map[any]any{
+				"q":               `(metric.name=='key1' and 'chill' in run.name)`,
+				"p":               500,
+				"report_progress": false,
+			},
 		},
 		{
-			name:  "TestNotInFunction",
-			query: `q=(metric.name=='key1' and 'grill' not in run.name)&p=500&report_progress=false`,
+			name: "TestNotInFunction",
+			params: map[any]any{
+				"q":               `(metric.name=='key1' and 'grill' not in run.name)`,
+				"p":               500,
+				"report_progress": false,
+			},
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			data, err := s.AIMClient.DoStreamRequest(
-				http.MethodGet,
-				fmt.Sprintf("/runs/search/metric?%s", tt.query),
-				nil,
+			resp := new(bytes.Buffer)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithQuery(
+					tt.params,
+				).WithResponseType(
+					helpers.ResponseTypeStream,
+				).WithResponse(
+					resp,
+				).DoRequest("/runs/search/metric"),
 			)
-			assert.Nil(s.T(), err)
-			decodedData, err := encoding.Decode(bytes.NewBuffer(data))
+			decodedData, err := encoding.Decode(resp)
 			assert.Nil(s.T(), err)
 			value, ok := decodedData["id.props.name"]
 			assert.True(s.T(), ok)

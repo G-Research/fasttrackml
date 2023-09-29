@@ -6,12 +6,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -91,21 +91,28 @@ func (s *DeleteRunTagTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	// make actual call to API.
-	query, err := urlquery.Marshal(request.GetRunRequest{
+	query := request.GetRunRequest{
 		RunID: run.ID,
-	})
-	assert.Nil(s.T(), err)
-
+	}
+	req := request.DeleteRunTagRequest{
+		RunID: run.ID,
+		Key:   "tag1",
+	}
 	resp := fiber.Map{}
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute, query),
-		&request.DeleteRunTagRequest{
-			RunID: run.ID,
-			Key:   "tag1",
-		},
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithQuery(
+			query,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), fiber.Map{}, resp)
 
 	// make sure that we still have one tag connected to Run.
@@ -193,12 +200,18 @@ func (s *DeleteRunTagTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute),
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

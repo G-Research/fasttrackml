@@ -4,7 +4,6 @@ package experiment
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -56,11 +55,11 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	var resp response.GetExperimentRuns
 	assert.Nil(
 		s.T(),
-		s.AIMClient.WithParams(map[any]any{
+		s.AIMClient.WithQuery(map[any]any{
 			"limit":  4,
 			"offset": runs[8].ID,
 		}).WithResponse(&resp).DoRequest(
-			fmt.Sprintf("/experiments/%d/runs", *experiment.ID),
+			"/experiments/%d/runs", *experiment.ID,
 		),
 	)
 
@@ -107,9 +106,7 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			var resp api.ErrorResponse
-			assert.Nil(t, s.AIMClient.WithResponse(&resp).DoRequest(
-				fmt.Sprintf("/experiments/%s/runs", tt.ID),
-			))
+			assert.Nil(t, s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%s/runs", tt.ID))
 			assert.Equal(s.T(), tt.error, resp.Error())
 		})
 	}

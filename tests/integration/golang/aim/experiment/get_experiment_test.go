@@ -67,9 +67,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperiment
-	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest(
-		fmt.Sprintf("/experiments/%d", *experiment.ID),
-	))
+	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
 
 	assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.ID)
 	assert.Equal(s.T(), experiment.Name, resp.Name)
@@ -111,9 +109,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			var resp api.ErrorResponse
-			assert.Nil(t, s.AIMClient.WithResponse(&resp).DoRequest(
-				fmt.Sprintf("/experiments/%s", tt.ID),
-			))
+			assert.Nil(t, s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
 			assert.Equal(s.T(), tt.error, resp.Error())
 		})
 	}

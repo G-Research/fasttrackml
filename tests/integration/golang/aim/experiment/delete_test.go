@@ -5,7 +5,6 @@ package experiment
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -79,7 +78,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("/experiments/%d", *experiment.ID),
+			"/experiments/%d", *experiment.ID,
 		),
 	)
 
@@ -119,7 +118,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("/experiments/%s", tt.ID),
+					"/experiments/%s", tt.ID,
 				),
 			)
 			assert.Contains(s.T(), resp.Error(), "Not Found")

@@ -4,7 +4,7 @@ package run
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -66,9 +66,17 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var deleteResponse response.Error
-			err := s.AIMClient.DoDeleteRequest(fmt.Sprintf("/apps/%s", app.ID), &deleteResponse)
-			assert.Nil(s.T(), err)
+			var resp response.Error
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodDelete,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/apps/%s", app.ID,
+				),
+			)
 			apps, err := s.AppFixtures.GetApps(context.Background())
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedAppCount, len(apps))
@@ -112,10 +120,18 @@ func (s *DeleteAppTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var deleteResponse response.Error
-			err := s.AIMClient.DoDeleteRequest(fmt.Sprintf("/apps/%s", tt.idParam), &deleteResponse)
-			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), deleteResponse.Message, "Not Found")
+			var resp response.Error
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodDelete,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/apps/%s", tt.idParam,
+				),
+			)
+			assert.Contains(s.T(), resp.Message, "Not Found")
 
 			apps, err := s.AppFixtures.GetApps(context.Background())
 			assert.Nil(s.T(), err)

@@ -123,7 +123,11 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	).Init(server)
 
 	// 8. init `chooser` ui routes.
-	chooser.AddRoutes(server)
+	chooser.NewRouter(
+		chooserController.NewController(
+			namespace.NewService(*namespaceRepository),
+		),
+	).AddRoutes(server)
 
 	isRunning := make(chan struct{})
 	go func() {

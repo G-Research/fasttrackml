@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/template/html/v2"
 
-	"github.com/G-Research/fasttrackml/pkg/ui/common"
+	"github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"

@@ -3,23 +3,19 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"fmt"
-	glog "log"
 	"net/url"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
-	"github.com/rotisserie/eris"
-	"golang.org/x/exp/slices"
-
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/mattn/go-sqlite3"
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"gorm.io/plugin/dbresolver"
 )
 
@@ -57,7 +53,7 @@ func NewSqliteDBInstance(
 		}
 		log.Infof("Removing database file %s", file)
 		if err := os.Remove(file); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("failed to remove database file: %w", err)
+			return nil, eris.Wrap(err, "failed to remove database file")
 		}
 	}
 
@@ -86,7 +82,7 @@ func NewSqliteDBInstance(
 
 	s, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dsnURL.String(), "sqlite://", "file:", 1))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, eris.Wrap(err, "failed to connect to database")
 	}
 	db.closers = append(db.closers, s)
 	s.SetMaxIdleConns(1)
@@ -102,7 +98,7 @@ func NewSqliteDBInstance(
 	r, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dsnURL.String(), "sqlite://", "file:", 1))
 	if err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, eris.Wrap(err, "failed to connect to database")
 	}
 	db.closers = append(db.closers, r)
 	replicaConn = sqlite.Dialector{
@@ -117,27 +113,15 @@ func NewSqliteDBInstance(
 	logURL.RawQuery = q.Encode()
 	log.Infof("Using database %s", logURL.Redacted())
 
-	dbLogLevel := logger.Warn
-	if log.GetLevel() == log.DebugLevel {
-		dbLogLevel = logger.Info
-	}
 	db.DB, err = gorm.Open(sourceConn, &gorm.Config{
-		Logger: logger.New(
-			glog.New(
-				log.StandardLogger().WriterLevel(log.WarnLevel),
-				"",
-				0,
-			),
-			logger.Config{
-				SlowThreshold:             slowThreshold,
-				LogLevel:                  dbLogLevel,
-				IgnoreRecordNotFoundError: true,
-			},
-		),
+		Logger: NewLoggerAdaptor(log.StandardLogger(), LoggerAdaptorConfig{
+			SlowThreshold:             slowThreshold,
+			IgnoreRecordNotFoundError: true,
+		}),
 	})
 	if err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, eris.Wrap(err, "failed to connect to database")
 	}
 
 	db.Use(
@@ -147,11 +131,6 @@ func NewSqliteDBInstance(
 			},
 		}),
 	)
-
-	sqlDB, _ := db.DB.DB()
-	sqlDB.SetConnMaxIdleTime(time.Minute)
-	sqlDB.SetMaxIdleConns(poolMax)
-	sqlDB.SetMaxOpenConns(poolMax)
 
 	return &db, nil
 }

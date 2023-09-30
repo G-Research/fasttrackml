@@ -6,6 +6,7 @@ dist/
 fml
 fasttrackml
 *.exe
+__debug_bin*
 
 # Local database
 fasttrackml.db*
@@ -20,14 +21,11 @@ tests/integration/python/*/*.src
 outputs
 poetry.lock
 
-# Mocks
-mock_*
-
 # Misc
 .DS_Store
 
 # Optional workspace
-go.work
+go.work*
 *.code-workspace
 
 # Python wheels

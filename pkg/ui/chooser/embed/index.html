@@ -27,6 +27,12 @@
             margin-top: -25px;
             margin-bottom: -50px;
         }
+        
+        #namespaces-list { 
+             overflow:auto;
+             height:20%;
+             list-style-type: none;
+         }
     </style>
 </head>
 
@@ -41,6 +47,7 @@
 
     <!-- We load the UI with JS to avoid issues when an URL with embedded credentials is used -->
     <main>
+        <p >Selected Namespace: {{.CurrentNamespace.Description}}</p>
         <p>Which UI do you want to use?</p>
         <div class="ui">
             <article>
@@ -56,7 +63,17 @@
                 <p>This is the modern Aim UI, much faster than MLFlow.</p>
             </article>
         </div>
+
+        <ul id="namespaces-list">
+            {{ range .Namespaces }}
+            <li>
+                <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.Description}}</a>    
+            </li>
+            {{ end }}
+        </ul>
+
 	<p><a href="#" onclick="window.location = window.location.origin + '/admin/ns/'">Manage namespaces</a></p>
+
     </main>
 
     <footer>

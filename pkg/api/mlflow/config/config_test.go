@@ -15,21 +15,21 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 		expectedConfig *ServiceConfig
 	}{
 		{
-			name: "ArtifactRootHasS3Prefix",
+			name: "DefaultArtifactRootHasS3Prefix",
 			providedConfig: &ServiceConfig{
-				ArtifactRoot: "s3://bucket_name",
+				DefaultArtifactRoot: "s3://bucket_name",
 			},
 			expectedConfig: &ServiceConfig{
-				ArtifactRoot: "s3://bucket_name",
+				DefaultArtifactRoot: "s3://bucket_name",
 			},
 		},
 		{
-			name: "ArtifactRootHasFilePrefixAndIsRelative",
+			name: "DefaultArtifactRootHasFilePrefixAndIsRelative",
 			providedConfig: &ServiceConfig{
-				ArtifactRoot: "file://path1/path2/path3",
+				DefaultArtifactRoot: "file://path1/path2/path3",
 			},
 			expectedConfig: &ServiceConfig{
-				ArtifactRoot: (func() string {
+				DefaultArtifactRoot: (func() string {
 					path, err := filepath.Abs("path1/path2/path3")
 					assert.Nil(t, err)
 					return path
@@ -37,30 +37,30 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 			},
 		},
 		{
-			name: "ArtifactRootHasFilePrefixAndIsAbsolute",
+			name: "DefaultArtifactRootHasFilePrefixAndIsAbsolute",
 			providedConfig: &ServiceConfig{
-				ArtifactRoot: "file:///path1/path2/path3",
+				DefaultArtifactRoot: "file:///path1/path2/path3",
 			},
 			expectedConfig: &ServiceConfig{
-				ArtifactRoot: "/path1/path2/path3",
+				DefaultArtifactRoot: "/path1/path2/path3",
 			},
 		},
 		{
-			name: "ArtifactRootHasEmptyPrefixAndIsAbsolute",
+			name: "DefaultArtifactRootHasEmptyPrefixAndIsAbsolute",
 			providedConfig: &ServiceConfig{
-				ArtifactRoot: "/path1/path2/path3",
+				DefaultArtifactRoot: "/path1/path2/path3",
 			},
 			expectedConfig: &ServiceConfig{
-				ArtifactRoot: "/path1/path2/path3",
+				DefaultArtifactRoot: "/path1/path2/path3",
 			},
 		},
 		{
-			name: "ArtifactRootHasEmptyPrefixAndIsRelative",
+			name: "DefaultArtifactRootHasEmptyPrefixAndIsRelative",
 			providedConfig: &ServiceConfig{
-				ArtifactRoot: "path1/path2/path3",
+				DefaultArtifactRoot: "path1/path2/path3",
 			},
 			expectedConfig: &ServiceConfig{
-				ArtifactRoot: (func() string {
+				DefaultArtifactRoot: (func() string {
 					path, err := filepath.Abs("path1/path2/path3")
 					assert.Nil(t, err)
 					return path
@@ -72,7 +72,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Nil(t, tt.providedConfig.Validate())
-			assert.Equal(t, tt.providedConfig.ArtifactRoot, tt.expectedConfig.ArtifactRoot)
+			assert.Equal(t, tt.providedConfig.DefaultArtifactRoot, tt.expectedConfig.DefaultArtifactRoot)
 		})
 	}
 }
@@ -84,19 +84,19 @@ func TestServiceConfig_Validate_Error(t *testing.T) {
 		config *ServiceConfig
 	}{
 		{
-			name: "ArtifactRootHasIncorrectFormat",
+			name: "DefaultArtifactRootHasIncorrectFormat",
 			error: eris.New(
-				`error validating service configuration: error parsing 'artifact-root' flag: parse "incorrect_format_of_schema://something": first path segment in URL cannot contain colon`,
+				`error validating service configuration: error parsing 'default-artifact-root' flag: parse "incorrect_format_of_schema://something": first path segment in URL cannot contain colon`,
 			),
 			config: &ServiceConfig{
-				ArtifactRoot: "incorrect_format_of_schema://something",
+				DefaultArtifactRoot: "incorrect_format_of_schema://something",
 			},
 		},
 		{
-			name:  "ArtifactRootHasUnsupportedSchema",
-			error: eris.New("error validating service configuration: unsupported schema of 'artifact-root' flag"),
+			name:  "DefaultArtifactRootHasUnsupportedSchema",
+			error: eris.New("error validating service configuration: unsupported schema of 'default-artifact-root' flag"),
 			config: &ServiceConfig{
-				ArtifactRoot: "unsupported://something",
+				DefaultArtifactRoot: "unsupported://something",
 			},
 		},
 	}

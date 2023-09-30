@@ -117,14 +117,13 @@ func TestService_ListNamespace_Ok(t *testing.T) {
 		ID:   1,
 		Code: "code",
 	}
-
-	nss := []*models.Namespace{&ns}
+	testNamespaces := []models.Namespace{ns}
 
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
 	namespaceRepository.On(
 		"List", context.TODO(),
-	).Return(nss, nil)
+	).Return(testNamespaces, nil)
 
 	// call service under testing.
 	service := NewService(
@@ -134,7 +133,7 @@ func TestService_ListNamespace_Ok(t *testing.T) {
 
 	// compare results.
 	assert.Nil(t, err)
-	assert.Equal(t, nss, namespaces)
+	assert.Equal(t, testNamespaces, namespaces)
 }
 
 // TestService_GetExperiment_Error tests the unsuccessful call to GetNamespace.
@@ -143,7 +142,7 @@ func TestService_ListNamespaces_Error(t *testing.T) {
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
 	namespaceRepository.On(
 		"List", context.TODO(),
-	).Return(nil, errors.New("something is wrong"))
+	).Return(nil, errors.New("error listing namespaces"))
 
 	// call service under testing.
 	service := NewService(

@@ -29,29 +29,30 @@ jobs:
         id: tags
         run: echo tags=$(cat .go-build-tags) >> $GITHUB_OUTPUT
 
-      - name: Download formatters
-        run: |
-          go install golang.org/x/tools/cmd/goimports@v0.11.0
-          go install mvdan.cc/gofumpt@v0.5.0
+      - name: Install tools
+        run: make install-tools
 
       - name: Check formatting
         run: |
-          unformatted=$(
-            gofumpt -l .
-            goimports -l --local github.com/G-Research/fasttrackml .
-          )
-          if [ -n "$unformatted" ]; then
-            for file in $unformatted; do
+          make go-format
+          modified=$(git ls-files --modified -- '*.go')
+          if [ -n "$modified" ]; then
+            for file in $modified; do
               echo "::error file=$file::$file is not formatted properly (hint: run \"make go-format\" to fix this)"
             done
             exit 1
           fi
 
-      - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.32.4
-
-      - name: Generate mocks
-        run: make mocks-generate
+      - name: Check mocks
+        run: |
+          make mocks-generate
+          modified=$(git ls-files --modified -- '*/mock_*.go')
+          if [ -n "$modified" ]; then
+            for file in $modified; do
+              echo "::error file=$file::$file is not up to date (hint: run \"make mocks-generate\" to fix this)"
+            done
+            exit 1
+          fi
 
       - name: Check with go vet
         run: go vet --tags "${{ steps.tags.outputs.tags }}" ./...
@@ -94,44 +95,30 @@ jobs:
         with:
           go-version: "1.21"
 
-      - name: Download mockery
-        run: go install github.com/vektra/mockery/v2@v2.32.4
-
-      - name: Generate mocks
-        run: make mocks-generate
-
       - name: Run Go Unit Tests
         run: make test-go-unit
 
   go-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Go Integration Tests (${{ matrix.database-backend }}/${{ matrix.artifacts-backend }})
+    name: Go Integration Tests (${{ matrix.database-backend }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        database-backend: [sqlite, postgres]
-        # TODO enable local artifacts backend once we support multiple artifacts backends
-        # in the same instance. See #299.
-        # artifacts-backend: [s3, local]
-        artifacts-backend: [s3]
+        database-backend: [sqlite, sqlcipher, postgres]
         include:
           - database-backend: sqlite
             database-uri: sqlite:///tmp/fasttrackml.db
+          - database-backend: sqlcipher
+            database-uri: sqlite:///tmp/fasttrackml.db?_key=passphrase
           - database-backend: postgres
             database-uri: postgres://postgres:postgres@postgres/postgres
-          - artifacts-backend: s3
-            artifacts-root: s3://fasttrackml
-          # TODO enable local artifacts backend once we support multiple artifacts backends
-          # in the same instance. See #299.
-          # - artifacts-backend: local
-          #   artifacts-root: /tmp/fasttrackml.artifacts
       fail-fast: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Setup Go
         uses: actions/setup-go@v4
@@ -143,7 +130,6 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_URI: ${{ matrix.database-uri }}
-          FML_ARTIFACT_ROOT: ${{ matrix.artifacts-root }}
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
@@ -267,14 +253,14 @@ jobs:
           echo version=$(git describe --tags --always --match='v*' | sed 's/^v//') >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: fasttrackml
           tags: |
@@ -284,7 +270,7 @@ jobs:
             type=edge
 
       - name: Build container image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           build-args: |
@@ -337,7 +323,7 @@ jobs:
           name: fasttrackml-oci-image
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}

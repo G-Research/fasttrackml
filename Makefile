@@ -38,10 +38,11 @@ else
 endif
 ARCHIVE_NAME=dist/fasttrackml_$(shell go env GOOS | sed s/darwin/macos/)_$(shell go env GOARCH | sed s/amd64/x86_64/).$(ARCHIVE_EXT)
 ARCHIVE_FILES=$(APP) LICENSE README.md
+# Docker compose file.
+COMPOSE_FILE=tests/integration/docker-compose.yml
+# Docker compose project name.
+COMPOSE_PROJECT_NAME=$(APP)-integration-tests
 
-ifeq ($(FML_DATABASE_URI),)
-  FML_DATABASE_URI := "sqlite://fasttrackml.db"
-endif
 #
 # Default target (help)
 #
@@ -51,6 +52,17 @@ help: ## display this help
 	@echo
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-24s\033[0m - %s\n", $$1, $$2}'
 	@echo
+
+#
+# Tools targets.
+#
+.PHONY: install-tools ## install tools.
+install-tools:
+	@echo '>>> Installing tools.'
+	@go install github.com/vektra/mockery/v2@v2.34.0
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.2
+	@go install golang.org/x/tools/cmd/goimports@v0.13.0
+	@go install mvdan.cc/gofumpt@v0.5.0
 
 #
 # Linter targets.
@@ -75,7 +87,7 @@ go-build: ## build app binary.
 go-format: ## format go code.
 	@echo '>>> Formatting go code.'
 	@gofumpt -w .
-	@goimports -w -local github.com/G-Research/fasttrackml .
+	@goimports -w -local github.com/G-Research/fasttrackml $(shell find . -type f -name '*.go' -not -name 'mock_*.go')
 
 .PHONY: go-dist
 go-dist: go-build ## archive app binary.
@@ -120,7 +132,7 @@ test-go-unit: ## run go unit tests.
 .PHONY: test-go-integration
 test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
-	go test -v -p 1 -tags="integration" ./tests/integration/golang/...
+	go test -v -p 1 -count=1 -tags="integration" ./tests/integration/golang/...
 
 PHONY: test-python-integration
 test-python-integration: test-python-integration-mlflow test-python-integration-aim  ## run all the python integration tests.
@@ -138,54 +150,45 @@ test-python-integration-aim: build ## run the Aim python integration tests.
 #
 # Service test targets
 #
-.PHONY: service-build
-service-build: ## build service and all its dependencies
-	@docker-compose build
-
-.PHONY: start-service-dependencies
-service-start-dependencies: ## start service dependencies in docker.
-	@echo ">>> Start all Service dependencies."
-	@docker-compose up \
-	-d \
-	minio postgres
-
 .PHONY: service-start
-service-start: service-build service-start-dependencies ## start service in docker.
-	@echo ">>> Sleeping 5 seconds until dependencies start."
-	@sleep 5
-	@echo ">>> Starting service."
+service-start: ## start service in container.
 	@echo ">>> Starting up service container."
-	@docker-compose up -d service
+	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
+		docker-compose up -d service
 
 .PHONY: service-stop
-service-stop: ## stop service in docker.
-	@echo ">>> Stopping service."
-	@docker-compose stop
+service-stop: ## stop service in container.
+	@echo ">>> Stopping service container."
+	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
+		docker-compose stop service
 
 .PHONY: service-restart
-service-restart: service-stop service-start ## restart service in docker
+service-restart: service-stop service-start ## restart service in container.
 
 .PHONY: service-test
-service-test: service-stop service-start ## run tests over the service in docker.
-	@echo ">>> Running tests over service."
-	@docker-compose \
-		run integration-tests
+service-test: service-restart ## run integration tests in container.
+	@echo ">>> Running integration tests in container."
+	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
+	    docker-compose run integration-tests
 
 .PHONY: service-clean
-service-clean: ## clean service in docker.
-	@echo ">>> Cleaning service."
-	@docker-compose down -v --remove-orphans
+service-clean: ## clean containers.
+	@echo ">>> Cleaning containers."
+	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
+		docker-compose down -v --remove-orphans
 
 #
 # Mockery targets.
 #
 .PHONY: mocks-clean
-mocks-clean: ## cleans old mocks.
-	find . -name "mock_*.go" -type f -print0 | xargs -0 /bin/rm -f
+mocks-clean: ## cleans mocks.
+	@echo ">>> Cleaning mocks."
+	@find ./pkg -name 'mock_*.go' -type f -delete
 
 .PHONY: mocks-generate
 mocks-generate: mocks-clean ## generate mock based on all project interfaces.
-	mockery --all --dir "./pkg/api/mlflow" --inpackage --case underscore
+	@echo ">>> Generating mocks."
+	@mockery
 
 #
 # Build targets

@@ -1,8 +1,6 @@
 package database
 
 import (
-	"fmt"
-	glog "log"
 	"net/url"
 	"time"
 
@@ -11,7 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 // PostgresDBInstance is the Postgres-specific DbInstance variant.
@@ -23,7 +20,7 @@ type PostgresDBInstance struct {
 func NewPostgresDBInstance(
 	dsnURL url.URL, slowThreshold time.Duration, poolMax int, reset bool,
 ) (*PostgresDBInstance, error) {
-	pgdb := PostgresDBInstance{
+	db := PostgresDBInstance{
 		DBInstance: DBInstance{dsn: dsnURL.String()},
 	}
 
@@ -31,31 +28,27 @@ func NewPostgresDBInstance(
 
 	log.Infof("Using database %s", dsnURL.Redacted())
 
-	dbLogLevel := logger.Warn
-	if log.GetLevel() == log.DebugLevel {
-		dbLogLevel = logger.Info
-	}
 	gormDB, err := gorm.Open(conn, &gorm.Config{
-		Logger: logger.New(
-			glog.New(
-				log.StandardLogger().WriterLevel(log.WarnLevel),
-				"",
-				0,
-			),
-			logger.Config{
-				SlowThreshold:             slowThreshold,
-				LogLevel:                  dbLogLevel,
-				IgnoreRecordNotFoundError: true,
-			},
-		),
+		Logger: NewLoggerAdaptor(log.StandardLogger(), LoggerAdaptorConfig{
+			SlowThreshold:             slowThreshold,
+			IgnoreRecordNotFoundError: true,
+		}),
 	})
 	if err != nil {
-		pgdb.Close()
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		db.Close()
+		return nil, eris.Wrap(err, "failed to connect to database")
 	}
-	pgdb.DB = gormDB
+	db.DB = gormDB
 
-	return &pgdb, nil
+	sqlDB, err := gormDB.DB()
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to get underlying database connection pool")
+	}
+	sqlDB.SetConnMaxIdleTime(time.Minute)
+	sqlDB.SetMaxIdleConns(poolMax)
+	sqlDB.SetMaxOpenConns(poolMax)
+
+	return &db, nil
 }
 
 // Reset resets database.

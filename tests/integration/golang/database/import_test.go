@@ -96,8 +96,9 @@ func (s *ImportTestSuite) SetupTest() {
 			ID:        uuid.New(),
 			CreatedAt: time.Now(),
 		},
-		Type:  "mpi",
-		State: database.AppState{},
+		NamespaceID: 1,
+		Type:        "mpi",
+		State:       database.AppState{},
 	})
 	assert.Nil(s.T(), err)
 

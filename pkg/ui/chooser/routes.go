@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/template/html/v2"
 
 	"github.com/G-Research/fasttrackml/pkg/ui/common"
 
@@ -16,16 +17,32 @@ import (
 //go:embed embed/*
 var content embed.FS
 
-func AddRoutes(r fiber.Router) {
+// Router represents `chooser` router.
+type Router struct {
+	controller *controller.Controller
+}
+
+// NewRouter creates new instance of `chooser` router.
+func NewRouter(controller *controller.Controller) *Router {
+	return &Router{
+		controller: controller,
+	}
+}
+
+// AddRoutes adds all the `chooser` routes
+func (r Router) AddRoutes(fr fiber.Router) {
 	sub, _ := fs.Sub(content, "embed")
 
-	r.Use("/static/chooser/", etag.New(), filesystem.New(filesystem.Config{
+	fr.Use("/static/chooser/", etag.New(), filesystem.New(filesystem.Config{
 		Root: http.FS(sub),
 	}))
 
-	r.Use("/", etag.New(), filesystem.New(filesystem.Config{
-		Root: http.FS(
-			common.NewOnlyRootFS(sub, "index.html"),
-		),
-	}))
+	// app for template rendering
+	app := fiber.New(fiber.Config{
+		Views: html.NewFileSystem(http.FS(sub), ".html"),
+	})
+	fr.Mount("/", app)
+
+	// specific routes
+	app.Get("/", r.controller.GetNamespaces)
 }

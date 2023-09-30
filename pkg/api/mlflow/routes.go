@@ -17,6 +17,7 @@ const (
 
 // List of `/artifact/*` routes.
 const (
+	ArtifactsGetRoute  = "/get"
 	ArtifactsListRoute = "/list"
 )
 
@@ -42,7 +43,7 @@ const (
 
 // List of `/runs/*` routes.
 const (
-	RunsGetTagRoute       = "/get"
+	RunsGetRoute          = "/get"
 	RunsCreateRoute       = "/create"
 	RunsDeleteRoute       = "/delete"
 	RunsSearchRoute       = "/search"
@@ -78,6 +79,7 @@ func (r Router) Init(server fiber.Router) {
 		mainGroup := server.Group(prefix)
 
 		artifacts := mainGroup.Group(ArtifactsRoutePrefix)
+		artifacts.Get(ArtifactsGetRoute, r.controller.GetArtifact)
 		artifacts.Get(ArtifactsListRoute, r.controller.ListArtifacts)
 
 		experiments := mainGroup.Group(ExperimentsRoutePrefix)
@@ -101,7 +103,7 @@ func (r Router) Init(server fiber.Router) {
 		runs.Post(RunsCreateRoute, r.controller.CreateRun)
 		runs.Post(RunsDeleteRoute, r.controller.DeleteRun)
 		runs.Post(RunsDeleteTagRoute, r.controller.DeleteRunTag)
-		runs.Get(RunsGetTagRoute, r.controller.GetRun)
+		runs.Get(RunsGetRoute, r.controller.GetRun)
 		runs.Post(RunsLogBatchRoute, r.controller.LogBatch)
 		runs.Post(RunsLogMetricRoute, r.controller.LogMetric)
 		runs.Post(RunsLogParameterRoute, r.controller.LogParam)

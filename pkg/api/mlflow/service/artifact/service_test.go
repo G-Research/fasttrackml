@@ -15,24 +15,28 @@ import (
 )
 
 func TestService_ListArtifacts_Ok(t *testing.T) {
-	artifactStorage := storage.MockProvider{}
+	artifactStorage := storage.MockArtifactStorageProvider{}
 	artifactStorage.On(
-		"List", "/artifact/uri", "",
+		"List", context.TODO(), "/artifact/uri", "",
 	).Return(
-		"/root/uri/",
 		[]storage.ArtifactObject{
 			{
-				Path:  "/artifact/path1",
+				Path:  "path1",
 				Size:  1234567890,
 				IsDir: false,
 			},
 			{
-				Path:  "/artifact/path2",
+				Path:  "path2",
 				Size:  123456788,
 				IsDir: true,
 			},
 		}, nil,
 	)
+
+	artifactStorageFactory := storage.MockArtifactStorageFactoryProvider{}
+	artifactStorageFactory.On(
+		"GetStorage", context.TODO(), "/artifact/uri",
+	).Return(&artifactStorage, nil)
 
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
@@ -47,7 +51,7 @@ func TestService_ListArtifacts_Ok(t *testing.T) {
 	}, nil)
 
 	// call service under testing.
-	service := NewService(&artifactStorage, &runRepository)
+	service := NewService(&runRepository, &artifactStorageFactory)
 	rootURI, artifacts, err := service.ListArtifacts(
 		context.TODO(),
 		&models.Namespace{
@@ -59,15 +63,15 @@ func TestService_ListArtifacts_Ok(t *testing.T) {
 	)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "/root/uri/", rootURI)
+	assert.Equal(t, "/artifact/uri", rootURI)
 	assert.Equal(t, []storage.ArtifactObject{
 		{
-			Path:  "/artifact/path1",
+			Path:  "path1",
 			Size:  1234567890,
 			IsDir: false,
 		},
 		{
-			Path:  "/artifact/path2",
+			Path:  "path2",
 			Size:  123456788,
 			IsDir: true,
 		},
@@ -87,8 +91,8 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 			request: &request.ListArtifactsRequest{},
 			service: func() *Service {
 				return NewService(
-					&storage.MockProvider{},
 					&repositories.MockRunRepositoryProvider{},
+					&storage.MockArtifactStorageFactoryProvider{},
 				)
 			},
 		},
@@ -101,8 +105,8 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 			},
 			service: func() *Service {
 				return NewService(
-					&storage.MockProvider{},
 					&repositories.MockRunRepositoryProvider{},
+					&storage.MockArtifactStorageFactoryProvider{},
 				)
 			},
 		},
@@ -121,8 +125,8 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 					"id",
 				).Return(nil, errors.New("database error"))
 				return NewService(
-					&storage.MockProvider{},
 					&runRepository,
+					&storage.MockArtifactStorageFactoryProvider{},
 				)
 			},
 		},
@@ -133,12 +137,17 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 				RunID: "id",
 			},
 			service: func() *Service {
-				artifactStorage := storage.MockProvider{}
+				artifactStorage := storage.MockArtifactStorageProvider{}
 				artifactStorage.On(
-					"List", "/artifact/uri", "",
+					"List", context.TODO(), "/artifact/uri", "",
 				).Return(
-					"", nil, errors.New("storage error"),
+					nil, errors.New("storage error"),
 				)
+
+				artifactStorageFactory := storage.MockArtifactStorageFactoryProvider{}
+				artifactStorageFactory.On(
+					"GetStorage", context.TODO(), "/artifact/uri",
+				).Return(&artifactStorage, nil)
 
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
@@ -151,8 +160,8 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 					ArtifactURI: "/artifact/uri",
 				}, nil)
 				return NewService(
-					&artifactStorage,
 					&runRepository,
+					&artifactStorageFactory,
 				)
 			},
 		},

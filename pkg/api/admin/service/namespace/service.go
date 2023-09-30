@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rotisserie/eris"
+
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/rotisserie/eris"
 )
 
 // Service provides service layer to work with `namespace` business logic.

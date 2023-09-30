@@ -3,8 +3,9 @@ package namespace
 import (
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 )
 
 func TestValidateUpdateRunRequest_Ok(t *testing.T) {

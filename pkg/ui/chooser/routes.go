@@ -5,8 +5,9 @@ import (
 	"io/fs"
 	"net/http"
 
-	"github.com/G-Research/fasttrackml/pkg/ui/common"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
+
+	"github.com/G-Research/fasttrackml/pkg/ui/common"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"

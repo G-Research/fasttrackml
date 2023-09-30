@@ -1,9 +1,10 @@
 package controller
 
 import (
+	"github.com/gofiber/fiber/v2"
+
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/request"
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/response"
-	"github.com/gofiber/fiber/v2"
 )
 
 // GetNamespaces renders the data for list view.

@@ -21,8 +21,11 @@
       <td>{{ .Description }}</td>
       <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
       <td>
-	<a href="#" onclick="editNamespace('{{ .ID }}')">Edit</a>
-	<a href="#" onclick="deleteNamespace('{{ .ID }}')">Delete</a> 
+      {{ if ne .Code "default" }}  
+        <a href="#" onclick="editNamespace('{{ .ID }}')">Edit</a>
+        <a href="#" onclick="deleteNamespace('{{ .ID }}')">Delete</a> 
+      {{ end }}
+      </td>  
     </tr>
     {{ end }}
   </tbody>

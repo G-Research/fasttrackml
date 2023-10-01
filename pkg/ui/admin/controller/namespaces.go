@@ -7,7 +7,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/response"
 )
 
-// GetNamespaces renders the data for list view.
+// GetNamespaces renders the data for list view with no message.
 func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
 	return c.renderIndex(ctx, "")
 }
@@ -94,6 +94,7 @@ func (c Controller) UpdateNamespace(ctx *fiber.Ctx) error {
 	})
 }
 
+// DeleteNamespace deletes a namespace record.
 func (c Controller) DeleteNamespace(ctx *fiber.Ctx) error {
 	p := struct {
 		ID uint `params:"id"`
@@ -116,6 +117,7 @@ func (c Controller) DeleteNamespace(ctx *fiber.Ctx) error {
 	})
 }
 
+// renderIndex renders the index page with the given message.
 func (c Controller) renderIndex(ctx *fiber.Ctx, msg string) error {
 	namespaces, err := c.namespaceService.ListNamespaces(ctx.Context())
 	if err != nil {

@@ -26,18 +26,26 @@ func NewService(
 
 // ListNamespaces returns all namespaces.
 func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, error) {
-	return s.namespaceRepository.List(ctx)
+	namespaces, err := s.namespaceRepository.List(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "error listing namespaces")
+	}
+	return namespaces, nil
 }
 
 // GetNamespace returns one namespace by ID.
 func (s Service) GetNamespace(ctx context.Context, id uint) (*models.Namespace, error) {
-	return s.namespaceRepository.GetByID(ctx, id)
+	namespace, err := s.namespaceRepository.GetByID(ctx, id)
+	if err != nil {
+		return nil, eris.Wrap(err, "error getting namespace by id")
+	}
+	return namespace, nil
 }
 
-// CreateNamespace creates a new namespace with default experiment.
+// CreateNamespace creates a new namespace and default experiment.
 func (s Service) CreateNamespace(ctx context.Context, code, description string) (*models.Namespace, error) {
 	if err := ValidateNamespace(code); err != nil {
-		return nil, eris.Wrap(err, "validation error")
+		return nil, eris.Wrap(err, "error validating namespace")
 	}
 	exp := &models.Experiment{
 		Name:           fmt.Sprintf("%s-exp", code),
@@ -52,18 +60,21 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 		DefaultExperimentID: &initialDefaultExpID,
 	}
 	if err := s.namespaceRepository.Create(ctx, namespace); err != nil {
-		return nil, err
+		return nil, eris.Wrap(err, "error creating namespace")
 	}
 	// update with true DefaultExperimentID
 	namespace.DefaultExperimentID = namespace.Experiments[0].ID
 	err := s.namespaceRepository.Update(ctx, namespace)
-	return namespace, err
+	if err != nil {
+		return nil, eris.Wrap(err, "error setting namespace default experiment id during create")
+	}
+	return namespace, nil
 }
 
 // UpdateNamespace updates the code and description fields.
 func (s Service) UpdateNamespace(ctx context.Context, id uint, code, description string) (*models.Namespace, error) {
 	if err := ValidateNamespace(code); err != nil {
-		return nil, eris.Wrap(err, "validation error")
+		return nil, eris.Wrap(err, "error validating namespace")
 	}
 	namespace := &models.Namespace{
 		ID:          id,
@@ -71,10 +82,17 @@ func (s Service) UpdateNamespace(ctx context.Context, id uint, code, description
 		Description: description,
 	}
 	err := s.namespaceRepository.Update(ctx, namespace)
-	return namespace, err
+	if err != nil {
+		return nil, eris.Wrap(err, "error updating namespace")
+	}
+	return namespace, nil
 }
 
-// DeleteNamespace will delete the namespace.
+// DeleteNamespace deletes the namespace.
 func (s Service) DeleteNamespace(ctx context.Context, id uint) error {
-	return s.namespaceRepository.Delete(ctx, id)
+	err := s.namespaceRepository.Delete(ctx, id)
+	if err != nil {
+		return eris.Wrap(err, "error deleting namespace")
+	}
+	return nil
 }

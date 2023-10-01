@@ -7,21 +7,19 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/response"
 )
 
-// GetNamespaces renders the data for list view with no message.
+// GetNamespaces renders the list view with no message.
 func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
 	return c.renderIndex(ctx, "")
 }
 
-// GetNamespace renders the data for view/edit one namespace
+// GetNamespace renders the update view for a namespace.
 func (c Controller) GetNamespace(ctx *fiber.Ctx) error {
 	p := struct {
 		ID uint `params:"id"`
 	}{}
-
 	if err := ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-
 	ns, err := c.namespaceService.GetNamespace(ctx.Context(), p.ID)
 	if err != nil {
 		return fiber.NewError(fiber.ErrInternalServerError.Code, "unable to find namespace")
@@ -29,7 +27,6 @@ func (c Controller) GetNamespace(ctx *fiber.Ctx) error {
 	if ns == nil {
 		return fiber.NewError(fiber.StatusNotFound, "namespace not found")
 	}
-
 	return ctx.Render("ns/update", fiber.Map{
 		"ID":          ns.ID,
 		"Code":        ns.Code,
@@ -37,7 +34,7 @@ func (c Controller) GetNamespace(ctx *fiber.Ctx) error {
 	})
 }
 
-// NewNamespace renders the data for view/edit one namespace
+// NewNamespace renders the create view for a namespace.
 func (c Controller) NewNamespace(ctx *fiber.Ctx) error {
 	ns := response.Namespace{}
 	return ctx.Render("ns/create", fiber.Map{
@@ -61,11 +58,10 @@ func (c Controller) CreateNamespace(ctx *fiber.Ctx) error {
 			"ErrorMessage": err.Error(),
 		})
 	}
-
 	return c.renderIndex(ctx, "Successfully added new namespace")
 }
 
-// UpdateNamespace creates a new namespace record.
+// UpdateNamespace udpates an existing namespace record.
 func (c Controller) UpdateNamespace(ctx *fiber.Ctx) error {
 	p := struct {
 		ID uint `params:"id"`
@@ -87,7 +83,6 @@ func (c Controller) UpdateNamespace(ctx *fiber.Ctx) error {
 			"message": err.Error(),
 		})
 	}
-
 	return ctx.JSON(fiber.Map{
 		"status":  "success",
 		"message": "Successfully updated namespace.",
@@ -103,7 +98,6 @@ func (c Controller) DeleteNamespace(ctx *fiber.Ctx) error {
 	if err := ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-
 	err := c.namespaceService.DeleteNamespace(ctx.Context(), p.ID)
 	if err != nil {
 		return ctx.JSON(fiber.Map{

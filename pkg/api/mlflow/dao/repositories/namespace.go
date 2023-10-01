@@ -23,7 +23,7 @@ type NamespaceRepositoryProvider interface {
 	// GetByID returns namespace by its ID.
 	GetByID(ctx context.Context, id uint) (*models.Namespace, error)
 	// List returns all namespaces.
-	List(ctx context.Context) ([]*models.Namespace, error)
+	List(ctx context.Context) ([]models.Namespace, error)
 }
 
 // NamespaceRepository repository to work with `namespace` entity.
@@ -89,8 +89,8 @@ func (r NamespaceRepository) GetByID(ctx context.Context, id uint) (*models.Name
 }
 
 // List returns all namespaces.
-func (r NamespaceRepository) List(ctx context.Context) ([]*models.Namespace, error) {
-	var namespaces []*models.Namespace
+func (r NamespaceRepository) List(ctx context.Context) ([]models.Namespace, error) {
+	var namespaces []models.Namespace
 	if err := r.db.WithContext(ctx).Find(&namespaces).Error; err != nil {
 		return nil, eris.Wrapf(err, "error listing namespaces")
 	}

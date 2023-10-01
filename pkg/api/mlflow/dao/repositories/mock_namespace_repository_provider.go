@@ -28,6 +28,20 @@ func (_m *MockNamespaceRepositoryProvider) Create(ctx context.Context, namespace
 	return r0
 }
 
+// Delete provides a mock function with given fields: ctx, id
+func (_m *MockNamespaceRepositoryProvider) Delete(ctx context.Context, id uint) error {
+	ret := _m.Called(ctx, id)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetByCode provides a mock function with given fields: ctx, code
 func (_m *MockNamespaceRepositoryProvider) GetByCode(ctx context.Context, code string) (*models.Namespace, error) {
 	ret := _m.Called(ctx, code)
@@ -47,6 +61,32 @@ func (_m *MockNamespaceRepositoryProvider) GetByCode(ctx context.Context, code s
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = rf(ctx, code)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetByID provides a mock function with given fields: ctx, id
+func (_m *MockNamespaceRepositoryProvider) GetByID(ctx context.Context, id uint) (*models.Namespace, error) {
+	ret := _m.Called(ctx, id)
+
+	var r0 *models.Namespace
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) (*models.Namespace, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint) *models.Namespace); ok {
+		r0 = rf(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Namespace)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -78,6 +118,20 @@ func (_m *MockNamespaceRepositoryProvider) List(ctx context.Context) ([]models.N
 	}
 
 	return r0, r1
+}
+
+// Update provides a mock function with given fields: ctx, namespace
+func (_m *MockNamespaceRepositoryProvider) Update(ctx context.Context, namespace *models.Namespace) error {
+	ret := _m.Called(ctx, namespace)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Namespace) error); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // NewMockNamespaceRepositoryProvider creates a new instance of MockNamespaceRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

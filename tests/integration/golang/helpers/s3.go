@@ -11,7 +11,7 @@ import (
 
 // NewS3Client creates new instance of S3 client.
 func NewS3Client(endpoint string) (*s3.Client, error) {
-	cfg, err := awsConfig.LoadDefaultConfig(context.TODO(), awsConfig.WithEndpointResolverWithOptions(
+	cfg, err := awsConfig.LoadDefaultConfig(context.Background(), awsConfig.WithEndpointResolverWithOptions(
 		aws.EndpointResolverWithOptionsFunc(
 			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 				if service == s3.ServiceID {

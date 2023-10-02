@@ -4,11 +4,10 @@ package artifact
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -20,23 +19,22 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type ListArtifactS3TestSuite struct {
+type GetArtifactS3TestSuite struct {
 	suite.Suite
 	helpers.BaseTestSuite
 	s3Client *s3.Client
 }
 
-func TestListArtifactS3TestSuite(t *testing.T) {
-	suite.Run(t, new(ListArtifactS3TestSuite))
+func TestGetArtifactS3TestSuite(t *testing.T) {
+	suite.Run(t, new(GetArtifactS3TestSuite))
 }
 
-func (s *ListArtifactS3TestSuite) SetupTest() {
+func (s *GetArtifactS3TestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
 
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
@@ -45,7 +43,7 @@ func (s *ListArtifactS3TestSuite) SetupTest() {
 	s.s3Client = s3Client
 }
 
-func (s *ListArtifactS3TestSuite) Test_Ok() {
+func (s *GetArtifactS3TestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
@@ -73,30 +71,16 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			// 1. create test experiment.
+			// create test experiment
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name: fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
-				Tags: []models.ExperimentTag{
-					{
-						Key:   "key1",
-						Value: "value1",
-					},
-				},
-				NamespaceID: namespace.ID,
-				CreationTime: sql.NullInt64{
-					Int64: time.Now().UTC().UnixMilli(),
-					Valid: true,
-				},
-				LastUpdateTime: sql.NullInt64{
-					Int64: time.Now().UTC().UnixMilli(),
-					Valid: true,
-				},
+				Name:             fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
+				NamespaceID:      namespace.ID,
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("s3://%s/1", tt.bucket),
 			})
 			assert.Nil(s.T(), err)
 
-			// 2. create test run.
+			// create test run
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
 			run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             runID,
@@ -108,119 +92,116 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			})
 			assert.Nil(s.T(), err)
 
-			// 3. upload artifact objects to S3.
-			_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
-				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.file1", runID)),
-				Body:   strings.NewReader("contentX"),
+			// upload artifact root object to S3
+			putObjReq := &s3.PutObjectInput{
+				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.file", runID)),
+				Body:   strings.NewReader("content"),
 				Bucket: aws.String(tt.bucket),
-			})
+			}
+			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
 			assert.Nil(s.T(), err)
-			_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
-				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.dir/artifact.file2", runID)),
-				Body:   strings.NewReader("contentXX"),
+
+			// upload artifact subdir object to S3
+			putObjReq = &s3.PutObjectInput{
+				Key: aws.String(fmt.Sprintf(
+					"1/%s/artifacts/artifact.subdir/artifact.file",
+					runID),
+				),
+				Body:   strings.NewReader("subdir-object-content"),
 				Bucket: aws.String(tt.bucket),
-			})
+			}
+			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
 			assert.Nil(s.T(), err)
 
-			// 4. make actual API call for root dir.
-			rootDirQuery, err := urlquery.Marshal(request.ListArtifactsRequest{
+			// make API call for root object
+			query, err := urlquery.Marshal(request.GetArtifactRequest{
 				RunID: run.ID,
+				Path:  "artifact.file",
 			})
 			assert.Nil(s.T(), err)
 
-			rootDirResp := response.ListArtifactsResponse{}
-			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, rootDirQuery),
-				&rootDirResp,
+			resp, err := s.MlflowClient.DoStreamRequest(
+				http.MethodGet,
+				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
+				nil,
 			)
 			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), "content", string(resp))
 
-			assert.Equal(s.T(), run.ArtifactURI, rootDirResp.RootURI)
-			assert.Equal(s.T(), 2, len(rootDirResp.Files))
-			assert.Equal(s.T(), []response.FilePartialResponse{
-				{
-					Path:     "artifact.dir",
-					IsDir:    true,
-					FileSize: 0,
-				},
-				{
-					Path:     "artifact.file1",
-					IsDir:    false,
-					FileSize: 8,
-				},
-			}, rootDirResp.Files)
-			assert.Nil(s.T(), err)
-
-			// 5. make actual API call for sub dir.
-			subDirQuery, err := urlquery.Marshal(request.ListArtifactsRequest{
+			// make API call for subdir object
+			query, err = urlquery.Marshal(request.GetArtifactRequest{
 				RunID: run.ID,
-				Path:  "artifact.dir",
+				Path:  "artifact.subdir/artifact.file",
 			})
 			assert.Nil(s.T(), err)
 
-			subDirResp := response.ListArtifactsResponse{}
-			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, subDirQuery),
-				&subDirResp,
+			resp, err = s.MlflowClient.DoStreamRequest(
+				http.MethodGet,
+				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
+				nil,
 			)
 			assert.Nil(s.T(), err)
-
-			assert.Equal(s.T(), run.ArtifactURI, subDirResp.RootURI)
-			assert.Equal(s.T(), 1, len(subDirResp.Files))
-			assert.Equal(s.T(), response.FilePartialResponse{
-				Path:     "artifact.dir/artifact.file2",
-				IsDir:    false,
-				FileSize: 9,
-			}, subDirResp.Files[0])
-			assert.Nil(s.T(), err)
-
-			// 6. make actual API call for non-existing dir.
-			nonExistingDirQuery, err := urlquery.Marshal(request.ListArtifactsRequest{
-				RunID: run.ID,
-				Path:  "non-existing-dir",
-			})
-			assert.Nil(s.T(), err)
-
-			nonExistingDirResp := response.ListArtifactsResponse{}
-			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, nonExistingDirQuery),
-				&nonExistingDirResp,
-			)
-			assert.Nil(s.T(), err)
-
-			assert.Equal(s.T(), run.ArtifactURI, nonExistingDirResp.RootURI)
-			assert.Equal(s.T(), 0, len(nonExistingDirResp.Files))
-			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), "subdir-object-content", string(resp))
 		})
 	}
 }
 
-func (s *ListArtifactS3TestSuite) Test_Error() {
+func (s *GetArtifactS3TestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
 	assert.Nil(s.T(), err)
 
+	// create test experiment
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:             "Test Experiment In Bucket bucket1",
+		NamespaceID:      namespace.ID,
+		LifecycleStage:   models.LifecycleStageActive,
+		ArtifactLocation: "s3://bucket1/1",
+	})
+	assert.Nil(s.T(), err)
+
+	// create test run
+	runID := strings.ReplaceAll(uuid.New().String(), "-", "")
+	_, err = s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:             runID,
+		Status:         models.StatusRunning,
+		SourceType:     "JOB",
+		ExperimentID:   *experiment.ID,
+		ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	assert.Nil(s.T(), err)
+
+	// upload artifact subdir object to S3
+	putObjReq := &s3.PutObjectInput{
+		Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.subdir/artifact.file", runID)),
+		Body:   strings.NewReader("content"),
+		Bucket: aws.String("bucket1"),
+	}
+	_, err = s.s3Client.PutObject(context.Background(), putObjReq)
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
-		request *request.ListArtifactsRequest
+		request *request.GetArtifactRequest
 	}{
 		{
 			name:    "EmptyOrIncorrectRunIDOrRunUUID",
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
-			request: &request.ListArtifactsRequest{},
+			request: &request.GetArtifactRequest{},
 		},
 		{
 			name:  "IncorrectPathProvidedCase1",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "..",
 			},
@@ -228,7 +209,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase2",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./..",
 			},
@@ -236,7 +217,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase3",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./../",
 			},
@@ -244,7 +225,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase4",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "foo/../bar",
 			},
@@ -252,9 +233,29 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase5",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "/foo/../bar",
+			},
+		},
+		{
+			name: "S3IncompletePath",
+			error: api.NewResourceDoesNotExistError(
+				fmt.Sprintf("error getting artifact object for URI: s3:/bucket1/1/%s/artifacts/artifact.subdir", runID),
+			),
+			request: &request.GetArtifactRequest{
+				RunID: runID,
+				Path:  "artifact.subdir",
+			},
+		},
+		{
+			name: "NonExistentFile",
+			error: api.NewResourceDoesNotExistError(
+				fmt.Sprintf("error getting artifact object for URI: s3:/bucket1/1/%s/artifacts/non-existent-file", runID),
+			),
+			request: &request.GetArtifactRequest{
+				RunID: runID,
+				Path:  "non-existent-file",
 			},
 		},
 	}
@@ -265,7 +266,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
 			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, query),
+				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
 				&resp,
 			)
 			assert.Nil(t, err)

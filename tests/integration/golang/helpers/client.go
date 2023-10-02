@@ -66,9 +66,13 @@ func (c HttpClient) DoDeleteRequest(uri string, response interface{}) error {
 
 // DoStreamRequest do stream request.
 func (c HttpClient) DoStreamRequest(method, uri string, request interface{}) ([]byte, error) {
-	data, err := json.Marshal(request)
-	if err != nil {
-		return nil, eris.Wrap(err, "error marshaling request")
+	var requestBody io.Reader
+	if request != nil {
+		data, err := json.Marshal(request)
+		if err != nil {
+			return nil, eris.Wrap(err, "error marshaling request")
+		}
+		requestBody = bytes.NewBuffer(data)
 	}
 
 	// 1. create actual request object.
@@ -85,7 +89,7 @@ func (c HttpClient) DoStreamRequest(method, uri string, request interface{}) ([]
 			[]string{},
 			[]interface{}{},
 		),
-		bytes.NewBuffer(data),
+		requestBody,
 	)
 	if err != nil {
 		return nil, eris.Wrap(err, "error creating request")

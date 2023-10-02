@@ -1,6 +1,7 @@
 package aim
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
@@ -67,7 +68,7 @@ func CreateDashboard(c *fiber.Ctx) error {
 		Select("ID", "Type").
 		First(&app).
 		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", d.AppID, err))
@@ -122,7 +123,7 @@ func GetDashboard(c *fiber.Ctx) error {
 		Where("NOT dashboards.is_archived").
 		First(&dashboard).
 		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find dashboard %q: %s", p.ID, err))
@@ -168,7 +169,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 		Where("NOT dashboards.is_archived").
 		First(&dash).
 		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find dashboard %q: %s", p.ID, err))
@@ -216,7 +217,7 @@ func DeleteDashboard(c *fiber.Ctx) error {
 		Where("NOT dashboards.is_archived").
 		First(&dash).
 		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))

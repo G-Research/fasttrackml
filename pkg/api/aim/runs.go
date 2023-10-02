@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -89,7 +90,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 	}
 
 	if err := tx.First(&r).Error; err != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fmt.Errorf("error retrieving run %q: %w", p.ID, tx.Error)
@@ -174,7 +175,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	r := database.Run{
 		ID: p.ID,
 	}
-	if tx := database.DB.
+	if err := database.DB.
 		Select("ID").
 		Joins(
 			"Experiment",
@@ -185,11 +186,11 @@ func GetRunMetrics(c *fiber.Ctx) error {
 				Where("key IN ?", metricKeys).
 				Order("iter")
 		}).
-		First(&r); tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
+		First(&r).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fmt.Errorf("unable to find run %q: %w", p.ID, tx.Error)
+		return fmt.Errorf("unable to find run %q: %w", p.ID, err)
 	}
 
 	metrics := make(map[string]struct {
@@ -408,7 +409,7 @@ func SearchRuns(c *fiber.Ctx) error {
 			ID: q.Offset,
 		}
 		// TODO:DSuhinin -> do we need `namespace` restriction? it seems like yyyyess, but ....
-		if tx = database.DB.Select("row_num").First(&run); tx.Error != nil && tx.Error != gorm.ErrRecordNotFound {
+		if err = database.DB.Select("row_num").First(&run).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, tx.Error)
 		}
 

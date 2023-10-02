@@ -51,7 +51,7 @@ func GetProjectActivity(c *fiber.Ctx) error {
 		"runs.start_time",
 		"runs.lifecycle_stage",
 	).Joins(
-		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 	).Where(
 		"experiments.namespace_id = ?", ns.ID,
 	).Find(
@@ -122,7 +122,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 		).Joins(
 			"JOIN runs USING(run_uuid)",
 		).Joins(
-			"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 		).Where(
 			"experiments.namespace_id = ?", ns.ID,
 		).Where(
@@ -146,7 +146,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 		).Joins(
 			"JOIN runs USING(run_uuid)",
 		).Joins(
-			"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 		).Where(
 			"experiments.namespace_id = ?", ns.ID,
 		).Where(
@@ -191,7 +191,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 			).Joins(
 				"JOIN runs USING(run_uuid)",
 			).Joins(
-				"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 			).Where(
 				"experiments.namespace_id = ?", ns.ID,
 			).Where(

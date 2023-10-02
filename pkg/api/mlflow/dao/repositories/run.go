@@ -94,7 +94,7 @@ func (r RunRepository) GetByNamespaceIDRunIDAndLifecycleStage(
 	).Preload(
 		"Tags",
 	).Joins(
-		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 	).Where(
 		"experiments.namespace_id = ?", namespaceID,
 	).Where(
@@ -122,7 +122,7 @@ func (r RunRepository) GetByNamespaceIDAndRunID(
 	).Preload(
 		"Tags",
 	).Joins(
-		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 	).Where(
 		"experiments.namespace_id = ?", namespaceID,
 	).First(&run).Error; err != nil {

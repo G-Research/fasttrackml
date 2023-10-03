@@ -193,28 +193,28 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			name:  "TestRunNameWithRegexpMatchFunction",
 			query: `(re.match('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE (IFNULL("runs"."name", '') REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
 			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithRegexpSearchFunction",
 			query: `(re.search('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE (IFNULL("runs"."name", '') REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithNegatedRegexpMatchFunction",
 			query: `not (re.match('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" NOT REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE (IFNULL("runs"."name", '') NOT REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
 			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithNegatedRegexpSearchFunction",
 			query: `not (re.search('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" NOT REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE (IFNULL("runs"."name", '') NOT REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{

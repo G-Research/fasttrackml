@@ -42,45 +42,75 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 		expectedVars []interface{}
 	}{
 		{
-			name:         "TestRunNameWithoutFunction",
-			query:        `(run.name == 'run')`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" = $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithoutFunction",
+			query: `(run.name == 'run')`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" = $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithInFunction",
-			query:        `('run' in run.name)`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithInFunction",
+			query: `('run' in run.name)`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithNotInFunction",
-			query:        `('run' not in run.name)`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" NOT LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithNotInFunction",
+			query: `('run' not in run.name)`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" NOT LIKE $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithStartWithFunction",
-			query:        `(run.name.startswith('run'))`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithStartWithFunction",
+			query: `(run.name.startswith('run'))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run%", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithEndWithFunction",
-			query:        `(run.name.endswith('run'))`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithEndWithFunction",
+			query: `(run.name.endswith('run'))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithRegexpMatchFunction",
-			query:        `(re.match('run', run.name))`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" ~ $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithRegexpMatchFunction",
+			query: `(re.match('run', run.name))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" ~ $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithRegexpSearchFunction",
-			query:        `(re.search('run', run.name))`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" ~ $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithRegexpSearchFunction",
+			query: `(re.search('run', run.name))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" ~ $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestRunNameWithNegatedRegexpMatchFunction",
+			query: `not (re.match('run', run.name))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" !~ $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestRunNameWithNegatedRegexpSearchFunction",
+			query: `not (re.search('run', run.name))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" !~ $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 	}
@@ -102,7 +132,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			assert.Nil(s.T(), err)
 			result := parsedQuery.Filter(
 				s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
-			).First(&models.Run{})
+			).Select("ID").First(&models.Run{})
 			assert.Nil(s.T(), result.Error)
 			assert.Equal(s.T(), tt.expectedSQL, result.Statement.SQL.String())
 			assert.Equal(s.T(), tt.expectedVars, result.Statement.Vars)
@@ -118,45 +148,75 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 		expectedVars []interface{}
 	}{
 		{
-			name:         "TestRunNameWithoutFunction",
-			query:        `(run.name == 'run')`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" = $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithoutFunction",
+			query: `(run.name == 'run')`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" = $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithInFunction",
-			query:        `('run' in run.name)`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithInFunction",
+			query: `('run' in run.name)`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithNotInFunction",
-			query:        `('run' not in run.name)`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" NOT LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithNotInFunction",
+			query: `('run' not in run.name)`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" NOT LIKE $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithStartWithFunction",
-			query:        `(run.name.startswith('run'))`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithStartWithFunction",
+			query: `(run.name.startswith('run'))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run%", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithEndWithFunction",
-			query:        `(run.name.endswith('run'))`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithEndWithFunction",
+			query: `(run.name.endswith('run'))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"%run", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithRegexpMatchFunction",
-			query:        `(re.match('run', run.name))`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" regexp $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithRegexpMatchFunction",
+			query: `(re.match('run', run.name))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" regexp $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestRunNameWithRegexpSearchFunction",
-			query:        `(re.search('run', run.name))`,
-			expectedSQL:  `SELECT * FROM "runs" WHERE ("runs"."name" regexp $1 AND "runs"."lifecycle_stage" <> $2) ORDER BY "runs"."run_uuid" LIMIT 1`,
+			name:  "TestRunNameWithRegexpSearchFunction",
+			query: `(re.search('run', run.name))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" regexp $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestRunNameWithNegatedRegexpMatchFunction",
+			query: `not (re.match('run', run.name))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" NOT regexp $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestRunNameWithNegatedRegexpSearchFunction",
+			query: `not (re.search('run', run.name))`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`WHERE ("runs"."name" NOT regexp $1 AND "runs"."lifecycle_stage" <> $2) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 	}
@@ -178,7 +238,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			assert.Nil(s.T(), err)
 			result := parsedQuery.Filter(
 				s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
-			).First(&models.Run{})
+			).Select("ID").First(&models.Run{})
 			assert.Nil(s.T(), result.Error)
 			assert.Equal(s.T(), tt.expectedSQL, result.Statement.SQL.String())
 			assert.Equal(s.T(), tt.expectedVars, result.Statement.Vars)

@@ -66,13 +66,12 @@ func (_m *MockArtifactStorageProvider) List(ctx context.Context, artifactURI str
 	return r0, r1
 }
 
-type mockConstructorTestingTNewMockArtifactStorageProvider interface {
+// NewMockArtifactStorageProvider creates a new instance of MockArtifactStorageProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// The first argument is typically a *testing.T value.
+func NewMockArtifactStorageProvider(t interface {
 	mock.TestingT
 	Cleanup(func())
-}
-
-// NewMockArtifactStorageProvider creates a new instance of MockArtifactStorageProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-func NewMockArtifactStorageProvider(t mockConstructorTestingTNewMockArtifactStorageProvider) *MockArtifactStorageProvider {
+}) *MockArtifactStorageProvider {
 	mock := &MockArtifactStorageProvider{}
 	mock.Mock.Test(t)
 

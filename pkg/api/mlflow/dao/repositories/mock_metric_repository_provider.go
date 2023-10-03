@@ -138,13 +138,12 @@ func (_m *MockMetricRepositoryProvider) GetMetricHistoryByRunIDAndKey(ctx contex
 	return r0, r1
 }
 
-type mockConstructorTestingTNewMockMetricRepositoryProvider interface {
+// NewMockMetricRepositoryProvider creates a new instance of MockMetricRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// The first argument is typically a *testing.T value.
+func NewMockMetricRepositoryProvider(t interface {
 	mock.TestingT
 	Cleanup(func())
-}
-
-// NewMockMetricRepositoryProvider creates a new instance of MockMetricRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-func NewMockMetricRepositoryProvider(t mockConstructorTestingTNewMockMetricRepositoryProvider) *MockMetricRepositoryProvider {
+}) *MockMetricRepositoryProvider {
 	mock := &MockMetricRepositoryProvider{}
 	mock.Mock.Test(t)
 

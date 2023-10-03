@@ -28,13 +28,12 @@ func (_m *MockParamRepositoryProvider) CreateBatch(ctx context.Context, batchSiz
 	return r0
 }
 
-type mockConstructorTestingTNewMockParamRepositoryProvider interface {
+// NewMockParamRepositoryProvider creates a new instance of MockParamRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// The first argument is typically a *testing.T value.
+func NewMockParamRepositoryProvider(t interface {
 	mock.TestingT
 	Cleanup(func())
-}
-
-// NewMockParamRepositoryProvider creates a new instance of MockParamRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-func NewMockParamRepositoryProvider(t mockConstructorTestingTNewMockParamRepositoryProvider) *MockParamRepositoryProvider {
+}) *MockParamRepositoryProvider {
 	mock := &MockParamRepositoryProvider{}
 	mock.Mock.Test(t)
 

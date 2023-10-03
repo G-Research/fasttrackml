@@ -108,13 +108,12 @@ func (_m *MockNamespaceRepositoryProvider) Update(ctx context.Context, namespace
 	return r0
 }
 
-type mockConstructorTestingTNewMockNamespaceRepositoryProvider interface {
+// NewMockNamespaceRepositoryProvider creates a new instance of MockNamespaceRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// The first argument is typically a *testing.T value.
+func NewMockNamespaceRepositoryProvider(t interface {
 	mock.TestingT
 	Cleanup(func())
-}
-
-// NewMockNamespaceRepositoryProvider creates a new instance of MockNamespaceRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-func NewMockNamespaceRepositoryProvider(t mockConstructorTestingTNewMockNamespaceRepositoryProvider) *MockNamespaceRepositoryProvider {
+}) *MockNamespaceRepositoryProvider {
 	mock := &MockNamespaceRepositoryProvider{}
 	mock.Mock.Test(t)
 

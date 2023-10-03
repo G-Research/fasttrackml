@@ -28,13 +28,12 @@ func (_m *MockBaseRepositoryProvider) GetDB() *gorm.DB {
 	return r0
 }
 
-type mockConstructorTestingTNewMockBaseRepositoryProvider interface {
+// NewMockBaseRepositoryProvider creates a new instance of MockBaseRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// The first argument is typically a *testing.T value.
+func NewMockBaseRepositoryProvider(t interface {
 	mock.TestingT
 	Cleanup(func())
-}
-
-// NewMockBaseRepositoryProvider creates a new instance of MockBaseRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-func NewMockBaseRepositoryProvider(t mockConstructorTestingTNewMockBaseRepositoryProvider) *MockBaseRepositoryProvider {
+}) *MockBaseRepositoryProvider {
 	mock := &MockBaseRepositoryProvider{}
 	mock.Mock.Test(t)
 

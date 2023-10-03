@@ -122,13 +122,12 @@ func (_m *MockExperimentRepositoryProvider) Update(ctx context.Context, experime
 	return r0
 }
 
-type mockConstructorTestingTNewMockExperimentRepositoryProvider interface {
+// NewMockExperimentRepositoryProvider creates a new instance of MockExperimentRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// The first argument is typically a *testing.T value.
+func NewMockExperimentRepositoryProvider(t interface {
 	mock.TestingT
 	Cleanup(func())
-}
-
-// NewMockExperimentRepositoryProvider creates a new instance of MockExperimentRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-func NewMockExperimentRepositoryProvider(t mockConstructorTestingTNewMockExperimentRepositoryProvider) *MockExperimentRepositoryProvider {
+}) *MockExperimentRepositoryProvider {
 	mock := &MockExperimentRepositoryProvider{}
 	mock.Mock.Test(t)
 

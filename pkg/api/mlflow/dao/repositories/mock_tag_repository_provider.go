@@ -101,13 +101,12 @@ func (_m *MockTagRepositoryProvider) GetDB() *gorm.DB {
 	return r0
 }
 
-type mockConstructorTestingTNewMockTagRepositoryProvider interface {
+// NewMockTagRepositoryProvider creates a new instance of MockTagRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// The first argument is typically a *testing.T value.
+func NewMockTagRepositoryProvider(t interface {
 	mock.TestingT
 	Cleanup(func())
-}
-
-// NewMockTagRepositoryProvider creates a new instance of MockTagRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-func NewMockTagRepositoryProvider(t mockConstructorTestingTNewMockTagRepositoryProvider) *MockTagRepositoryProvider {
+}) *MockTagRepositoryProvider {
 	mock := &MockTagRepositoryProvider{}
 	mock.Mock.Test(t)
 

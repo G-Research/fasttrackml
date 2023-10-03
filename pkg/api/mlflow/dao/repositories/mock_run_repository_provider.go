@@ -251,13 +251,12 @@ func (_m *MockRunRepositoryProvider) UpdateWithTransaction(ctx context.Context, 
 	return r0
 }
 
-type mockConstructorTestingTNewMockRunRepositoryProvider interface {
+// NewMockRunRepositoryProvider creates a new instance of MockRunRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// The first argument is typically a *testing.T value.
+func NewMockRunRepositoryProvider(t interface {
 	mock.TestingT
 	Cleanup(func())
-}
-
-// NewMockRunRepositoryProvider creates a new instance of MockRunRepositoryProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-func NewMockRunRepositoryProvider(t mockConstructorTestingTNewMockRunRepositoryProvider) *MockRunRepositoryProvider {
+}) *MockRunRepositoryProvider {
 	mock := &MockRunRepositoryProvider{}
 	mock.Mock.Test(t)
 

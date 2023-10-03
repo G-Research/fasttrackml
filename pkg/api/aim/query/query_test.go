@@ -113,6 +113,24 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
+		{
+			name:  "TestNegativeInteger",
+			query: `run.metrics['my_metric'].last < -1`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
+				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"my_metric", -1, models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestNegativeFloat",
+			query: `run.metrics['my_metric'].last < -1.0`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
+				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {
@@ -218,6 +236,24 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				`WHERE ("runs"."name" NOT regexp $1 AND "runs"."lifecycle_stage" <> $2) ` +
 				`ORDER BY "runs"."run_uuid" LIMIT 1`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestNegativeInteger",
+			query: `run.metrics['my_metric'].last < -1`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
+				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"my_metric", -1, models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestNegativeFloat",
+			query: `run.metrics['my_metric'].last < -1.0`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
+				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3) ` +
+				`ORDER BY "runs"."run_uuid" LIMIT 1`,
+			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
 	}
 

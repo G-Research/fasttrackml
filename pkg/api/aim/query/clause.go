@@ -1,8 +1,6 @@
 package query
 
 import (
-	"fmt"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm/clause"
 )
@@ -22,7 +20,7 @@ func (regexp Regexp) Build(builder clause.Builder) {
 	default:
 		builder.WriteString(" regexp ")
 	}
-	builder.AddVar(builder, fmt.Sprintf("%s", regexp.Value))
+	builder.AddVar(builder, regexp.Value)
 }
 
 // NegationBuild builds negative statement.

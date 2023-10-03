@@ -18,8 +18,10 @@ func (regexp Regexp) Build(builder clause.Builder) {
 	builder.WriteQuoted(regexp.Column)
 	switch regexp.Dialector {
 	case postgres.Dialector{}.Name():
+		//nolint
 		builder.WriteString(" ~ ")
 	default:
+		//nolint
 		builder.WriteString(" regexp ")
 	}
 	builder.AddVar(builder, fmt.Sprintf("%s", regexp.Value))
@@ -30,8 +32,10 @@ func (regexp Regexp) NegationBuild(builder clause.Builder) {
 	builder.WriteQuoted(regexp.Column)
 	switch regexp.Dialector {
 	case postgres.Dialector{}.Name():
+		//nolint
 		builder.WriteString(" !~ ")
 	default:
+		//nolint
 		builder.WriteString(" NOT regexp ")
 	}
 	builder.AddVar(builder, regexp.Value)

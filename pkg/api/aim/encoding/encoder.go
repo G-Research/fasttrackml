@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+
+	"github.com/rotisserie/eris"
 )
 
 type (
@@ -83,7 +85,9 @@ func encodePath(w io.Writer, p []any) error {
 			buf.Write(pathSentinel)
 		case int:
 			buf.Write(pathSentinel)
-			binary.Write(buf, binary.BigEndian, int64(c))
+			if err := binary.Write(buf, binary.BigEndian, int64(c)); err != nil {
+				return eris.Wrap(err, "error writing data into buffer")
+			}
 			buf.Write(pathSentinel)
 		default:
 			return fmt.Errorf("unsupported path component %#v", c)
@@ -137,7 +141,9 @@ func encodeValue(w io.Writer, v any) error {
 	}
 
 	if bin {
-		binary.Write(buf, binary.LittleEndian, v)
+		if err := binary.Write(buf, binary.LittleEndian, v); err != nil {
+			return eris.Wrap(err, "error writing data into buffer")
+		}
 	}
 
 	if err := binary.Write(w, binary.LittleEndian, uint32(buf.Len()+1)); err != nil {

@@ -161,7 +161,10 @@ func (c Controller) LogMetric(ctx *fiber.Ctx) error {
 	var req request.LogMetricRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
+			return api.NewInvalidParameterValueError(
+				"Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.",
+				err.Field, err.Value,
+			)
 		}
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
@@ -185,7 +188,10 @@ func (c Controller) LogParam(ctx *fiber.Ctx) error {
 	var req request.LogParamRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
+			return api.NewInvalidParameterValueError(
+				"Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.",
+				err.Field, err.Value,
+			)
 		}
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}

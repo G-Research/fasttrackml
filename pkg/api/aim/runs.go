@@ -335,6 +335,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 	return nil
 }
 
+//nolint:gocyclo
 func SearchRuns(c *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(c.Context())
 	if err != nil {
@@ -532,6 +533,7 @@ func SearchRuns(c *fiber.Ctx) error {
 	return nil
 }
 
+//nolint:gocyclo
 func SearchMetrics(c *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(c.Context())
 	if err != nil {
@@ -655,7 +657,12 @@ func SearchMetrics(c *fiber.Ctx) error {
 		Joins(
 			"INNER JOIN (?) runmetrics USING(run_uuid, key)",
 			pq.Filter(database.DB.
-				Select("runs.run_uuid", "runs.row_num", "latest_metrics.key", fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps))).
+				Select(
+					"runs.run_uuid",
+					"runs.row_num",
+					"latest_metrics.key",
+					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
+				).
 				Table("runs").
 				Joins("LEFT JOIN experiments USING(experiment_id)").
 				Where("experiments.namespace_id = ?", ns.ID).
@@ -670,13 +677,19 @@ func SearchMetrics(c *fiber.Ctx) error {
 	if q.XAxis != "" {
 		tx.
 			Select("metrics.*", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
-			Joins("LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND metrics.iter = x_axis.iter AND x_axis.key = ?", q.XAxis)
+			Joins(
+				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND metrics.iter = x_axis.iter AND x_axis.key = ?",
+				q.XAxis,
+			)
 		xAxis = true
 	}
 
 	rows, err := tx.Rows()
 	if err != nil {
 		return fmt.Errorf("error searching run metrics: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return api.NewInternalError("error getting query result: %s", err)
 	}
 
 	c.Set("Content-Type", "application/octet-stream")
@@ -822,6 +835,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 	return nil
 }
 
+//nolint:gocyclo
 func SearchAlignedMetrics(c *fiber.Ctx) error {
 	b := struct {
 		AlignBy string `json:"align_by"`
@@ -879,6 +893,9 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	).Rows()
 	if err != nil {
 		return fmt.Errorf("error searching aligned run metrics: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return api.NewInternalError("error getting query result: %s", err)
 	}
 
 	c.Set("Content-Type", "application/octet-stream")

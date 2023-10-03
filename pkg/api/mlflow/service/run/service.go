@@ -136,6 +136,7 @@ func (s Service) GetRun(
 	return run, nil
 }
 
+// nolint:gocyclo
 func (s Service) SearchRuns(
 	ctx context.Context, namespace *models.Namespace, req *request.SearchRunsRequest,
 ) ([]models.Run, int, int, error) {
@@ -234,7 +235,9 @@ func (s Service) SearchRuns(
 						}
 						value = strings.Trim(value.(string), `"'`)
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid string attribute comparison operator '%s'", comparison,
+						)
 					}
 				case "run_id":
 					key = "run_uuid"
@@ -257,7 +260,10 @@ func (s Service) SearchRuns(
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
 					}
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']", key)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']",
+						key,
+					)
 				}
 			case "metric", "metrics":
 				switch comparison {
@@ -347,7 +353,10 @@ func (s Service) SearchRuns(
 		case "tag":
 			kind = &database.Tag{}
 		default:
-			return nil, 0, 0, api.NewInvalidParameterValueError("invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", components[1])
+			return nil, 0, 0, api.NewInvalidParameterValueError(
+				"invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']",
+				components[1],
+			)
 		}
 		if kind != nil {
 			table := fmt.Sprintf("order_%d", n)

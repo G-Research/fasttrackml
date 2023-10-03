@@ -372,18 +372,20 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 					if err != nil {
 						return nil, err
 					}
-					exprs[i], err = newSqlComparison(o, l, r)
+					expression, err := newSqlComparison(o, l, r)
 					if err != nil {
 						return nil, err
 					}
+					exprs[i] = expression
 				}
 			case clause.Eq:
 				switch left := left.(type) {
 				case bool:
-					exprs[i], err = newSqlBoolComparison(op, right, left)
+					expression, err := newSqlBoolComparison(op, right, left)
 					if err != nil {
 						return nil, err
 					}
+					exprs[i] = expression
 				default:
 					return nil, fmt.Errorf("unsupported comparison %q", ast.Dump(node))
 				}
@@ -408,6 +410,7 @@ func (pq *parsedQuery) parseList(node *ast.List) (any, error) {
 	return list, nil
 }
 
+// nolint:gocyclo
 func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 	switch node.Ctx {
 	case ast.Load:
@@ -485,8 +488,11 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 										alias := fmt.Sprintf("metrics_%d", len(pq.joins))
 										j = join{
 											alias: alias,
-											query: fmt.Sprintf("LEFT JOIN latest_metrics %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?", alias, table, alias, alias),
-											args:  []any{v},
+											query: fmt.Sprintf(
+												"LEFT JOIN latest_metrics %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?",
+												alias, table, alias, alias,
+											),
+											args: []any{v},
 										}
 										pq.joins[fmt.Sprintf("metrics:%s", v)] = j
 									}
@@ -551,8 +557,11 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 							alias := fmt.Sprintf("params_%d", len(pq.joins))
 							j = join{
 								alias: alias,
-								query: fmt.Sprintf("LEFT JOIN params %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?", alias, table, alias, alias),
-								args:  []any{attr},
+								query: fmt.Sprintf(
+									"LEFT JOIN params %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?",
+									alias, table, alias, alias,
+								),
+								args: []any{attr},
 							}
 							pq.joins[fmt.Sprintf("params:%s", attr)] = j
 						}

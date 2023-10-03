@@ -4,13 +4,25 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+
+	"github.com/rotisserie/eris"
 )
 
-func GenerateRandomName() string {
-	p, _ := rand.Int(rand.Reader, big.NewInt(int64(len(PREDICATES))))
-	n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(NOUNS))))
-	i, _ := rand.Int(rand.Reader, big.NewInt(1000))
-	return fmt.Sprintf("%s-%s-%d", PREDICATES[p.Int64()], NOUNS[n.Int64()], i)
+// GenerateRandomName generates random name for `run`.
+func GenerateRandomName() (string, error) {
+	p, err := rand.Int(rand.Reader, big.NewInt(int64(len(PREDICATES))))
+	if err != nil {
+		return "", eris.Wrap(err, "error getting random integer number")
+	}
+	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(NOUNS))))
+	if err != nil {
+		return "", eris.Wrap(err, "error getting random integer number")
+	}
+	i, err := rand.Int(rand.Reader, big.NewInt(1000))
+	if err != nil {
+		return "", eris.Wrap(err, "error getting random integer number")
+	}
+	return fmt.Sprintf("%s-%s-%d", PREDICATES[p.Int64()], NOUNS[n.Int64()], i), nil
 }
 
 var (

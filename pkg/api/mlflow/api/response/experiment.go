@@ -88,8 +88,8 @@ func NewSearchExperimentsResponse(
 	return &resp, nil
 }
 
-// NewExperimentPartialResponse is a helper function for NewExperimentResponse and NewSearchExperimentsResponse functions,
-// because the use almost the same response structure.
+// NewExperimentPartialResponse is a helper function for NewExperimentResponse and
+// NewSearchExperimentsResponse functions, because the use almost the same response structure.
 func NewExperimentPartialResponse(experiment *models.Experiment) *ExperimentPartialResponse {
 	tags := make([]ExperimentTagPartialResponse, len(experiment.Tags))
 	for n, t := range experiment.Tags {

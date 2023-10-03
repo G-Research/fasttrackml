@@ -60,6 +60,7 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 	ctx.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 	ctx.Set("X-Content-Type-Options", "nosniff")
 	ctx.Context().Response.SetBodyStreamWriter(func(w *bufio.Writer) {
+		//nolint:errcheck
 		defer artifact.Close()
 
 		start := time.Now()

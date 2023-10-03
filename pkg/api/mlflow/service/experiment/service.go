@@ -247,6 +247,7 @@ func (s Service) SetExperimentTag(
 	return nil
 }
 
+// nolint: gocyclo
 func (s Service) SearchExperiments(
 	ctx context.Context, ns *models.Namespace, req *request.SearchExperimentsRequest,
 ) ([]models.Experiment, int, int, error) {
@@ -325,7 +326,9 @@ func (s Service) SearchExperiments(
 						}
 						value = v
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid numeric attribute comparison operator '%s'", comparison,
+						)
 					}
 				case "name":
 					switch strings.ToUpper(comparison) {
@@ -340,7 +343,9 @@ func (s Service) SearchExperiments(
 							value = strings.ToLower(value.(string))
 						}
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid string attribute comparison operator '%s'", comparison,
+						)
 					}
 				default:
 					return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['name', 'creation_time', 'last_update_time']", key)
@@ -364,10 +369,14 @@ func (s Service) SearchExperiments(
 				}
 				query.Joins(
 					fmt.Sprintf("JOIN (?) AS %s ON experiments.experiment_id = %s.experiment_id", table, table),
-					database.DB.Select("experiment_id", "value").Where("key = ?", key).Where(where, value).Model(&database.ExperimentTag{}),
+					database.DB.Select(
+						"experiment_id", "value",
+					).Where("key = ?", key).Where(where, value).Model(&database.ExperimentTag{}),
 				)
 			default:
-				return nil, 0, 0, api.NewInvalidParameterValueError("invalid entity type '%s'. Valid values are ['tag', 'attribute']", entity)
+				return nil, 0, 0, api.NewInvalidParameterValueError(
+					"invalid entity type '%s'. Valid values are ['tag', 'attribute']", entity,
+				)
 			}
 		}
 	}
@@ -387,7 +396,10 @@ func (s Service) SearchExperiments(
 			fallthrough
 		case "name", "creation_time", "last_update_time":
 		default:
-			return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']", column)
+			return nil, 0, 0, api.NewInvalidParameterValueError(
+				`invalid attribute '%s'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']`,
+				column,
+			)
 		}
 		query.Order(clause.OrderByColumn{
 			Column: clause.Column{Name: column},

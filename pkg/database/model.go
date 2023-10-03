@@ -61,6 +61,7 @@ type ExperimentTag struct {
 	ExperimentID int32  `gorm:"not null;primaryKey"`
 }
 
+//nolint:lll
 type Run struct {
 	ID             string         `gorm:"<-:create;column:run_uuid;type:varchar(32);not null;primaryKey"`
 	Name           string         `gorm:"type:varchar(250)"`

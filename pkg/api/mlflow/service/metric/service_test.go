@@ -305,6 +305,7 @@ func TestNewService_GetMetricHistories_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.NotNil(t, rows)
+	assert.Nil(t, rows.Err())
 	assert.NotNil(t, iterator)
 }
 

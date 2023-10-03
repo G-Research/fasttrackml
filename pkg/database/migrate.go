@@ -12,6 +12,8 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 )
 
 var supportedAlembicVersions = []string{
@@ -20,6 +22,8 @@ var supportedAlembicVersions = []string{
 	"7f2a7d5fae7d",
 }
 
+// CheckAndMigrateDB makes database migration.
+// nolint:gocyclo
 func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 	var alembicVersion AlembicVersion
 	var schemaVersion SchemaVersion
@@ -33,7 +37,11 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 
 	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != "e0d125c68d9a" {
 		if !migrate && alembicVersion.Version != "" {
-			return fmt.Errorf("unsupported database schema versions alembic %s, FastTrackML %s", alembicVersion.Version, schemaVersion.Version)
+			return fmt.Errorf(
+				"unsupported database schema versions alembic %s, FastTrackML %s",
+				alembicVersion.Version,
+				schemaVersion.Version,
+			)
 		}
 
 		runWithoutForeignKeyIfNeeded := func(fn func() error) error { return fn() }
@@ -433,28 +441,29 @@ func CreateDefaultExperiment(db *gorm.DB, defaultArtifactRoot string) error {
 	if err := db.First(&Experiment{}, 0).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Creating default experiment")
-			var id int32 = 0
-			ts := time.Now().UTC().UnixMilli()
-			exp := Experiment{
-				ID:             &id,
-				Name:           "Default",
-				LifecycleStage: LifecycleStageActive,
-				CreationTime: sql.NullInt64{
-					Int64: ts,
-					Valid: true,
-				},
-				LastUpdateTime: sql.NullInt64{
-					Int64: ts,
-					Valid: true,
-				},
-			}
 			ns := Namespace{Code: "default"}
 			if err = db.Find(&ns).Error; err != nil {
 				return fmt.Errorf("error finding default namespace: %s", err)
 			}
-			exp.NamespaceID = ns.ID
-			if err = db.Transaction(func(tx *gorm.DB) error {
-				if err = tx.Create(&exp).Error; err != nil {
+
+			if err := db.Transaction(func(tx *gorm.DB) error {
+				ts := time.Now().UTC().UnixMilli()
+				exp := Experiment{
+					ID:             common.GetPointer(int32(0)),
+					Name:           "Default",
+					NamespaceID:    ns.ID,
+					LifecycleStage: LifecycleStageActive,
+					CreationTime: sql.NullInt64{
+						Int64: ts,
+						Valid: true,
+					},
+					LastUpdateTime: sql.NullInt64{
+						Int64: ts,
+						Valid: true,
+					},
+				}
+
+				if err := tx.Create(&exp).Error; err != nil {
 					return err
 				}
 

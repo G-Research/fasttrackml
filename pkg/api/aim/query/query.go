@@ -741,14 +741,14 @@ func (pq *parsedQuery) parseUnaryOp(node *ast.UnaryOp) (any, error) {
 		case float64:
 			return -e, nil
 		default:
-			return nil, fmt.Errorf("unsupported unary operation %q on %T", node.Op, e)
+			return nil, fmt.Errorf("unsupported type %T for unary operation %q", e, node.Op)
 		}
 	case ast.Not:
 		switch e := e.(type) {
 		case clause.Expression:
 			return clause.Not(e), nil
 		default:
-			return nil, fmt.Errorf("unsupported unary operation %q on %T", node.Op, e)
+			return nil, fmt.Errorf("unsupported type %T for unary operation %q", e, node.Op)
 		}
 	default:
 		return nil, fmt.Errorf("unsupported unary operation %q", node.Op)

@@ -733,13 +733,23 @@ func (pq *parsedQuery) parseUnaryOp(node *ast.UnaryOp) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	c, ok := e.(clause.Expression)
-	if !ok {
-		return nil, fmt.Errorf("not a valid SQL expression: %#v", e)
-	}
 	switch node.Op {
+	case ast.USub:
+		switch e := e.(type) {
+		case int:
+			return -e, nil
+		case float64:
+			return -e, nil
+		default:
+			return nil, fmt.Errorf("unsupported unary operation %q on %T", node.Op, e)
+		}
 	case ast.Not:
-		return clause.Not(c), nil
+		switch e := e.(type) {
+		case clause.Expression:
+			return clause.Not(e), nil
+		default:
+			return nil, fmt.Errorf("unsupported unary operation %q on %T", node.Op, e)
+		}
 	default:
 		return nil, fmt.Errorf("unsupported unary operation %q", node.Op)
 	}

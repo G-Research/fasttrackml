@@ -90,7 +90,7 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 	}{
 		{
 			name:  "IncorrectExperimentID",
-			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt:parsing "incorrect_experiment_id": invalid syntax`,
+			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`,
 			ID:    "incorrect_experiment_id",
 		},
 		{

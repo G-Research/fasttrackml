@@ -16,8 +16,10 @@ func (regexp Regexp) Build(builder clause.Builder) {
 	builder.WriteQuoted(regexp.Column)
 	switch regexp.Dialector {
 	case postgres.Dialector{}.Name():
+		// #nosec G104
 		builder.WriteString(" ~ ")
 	default:
+		// #nosec G104
 		builder.WriteString(" REGEXP ")
 	}
 	builder.AddVar(builder, regexp.Value)
@@ -28,8 +30,10 @@ func (regexp Regexp) NegationBuild(builder clause.Builder) {
 	builder.WriteQuoted(regexp.Column)
 	switch regexp.Dialector {
 	case postgres.Dialector{}.Name():
+		// #nosec G104
 		builder.WriteString(" !~ ")
 	default:
+		// #nosec G104
 		builder.WriteString(" NOT REGEXP ")
 	}
 	builder.AddVar(builder, regexp.Value)

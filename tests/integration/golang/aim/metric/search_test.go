@@ -7,11 +7,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -331,7 +329,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -343,7 +340,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric3")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -358,7 +354,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -375,7 +370,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("3"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric3Run2,
@@ -386,7 +380,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -396,7 +389,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -412,7 +404,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -425,7 +416,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -437,7 +427,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -451,7 +440,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -464,7 +452,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 1)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -474,7 +461,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 1)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -490,7 +476,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 1)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -506,7 +491,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -518,7 +502,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 1)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -535,7 +518,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -551,15 +533,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.archived == True`,
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchRunNotArchived",
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.archived == False`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -576,7 +555,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.active == True`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -588,7 +566,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.active == False`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -602,7 +579,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration > 0`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -616,7 +592,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration >= 0`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -633,7 +608,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration < %d`, (run3.EndTime.Int64-run3.StartTime.Int64)/1000),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -645,7 +619,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration <= %d`, (run3.EndTime.Int64-run3.StartTime.Int64)/1000),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -659,7 +632,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration == 0`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -671,7 +643,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.duration != 0`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -685,7 +656,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at > 123456789`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 				metric2Run3,
@@ -696,7 +666,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at >= 123456789`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -710,7 +679,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at != 123456789`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -724,7 +692,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at == 123456789`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -736,7 +703,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at < 222222222`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -751,7 +717,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.created_at <= 222222222`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -768,7 +733,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at > 123456789`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -782,7 +746,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at >= 123456789`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -799,7 +762,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at != 123456789`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -813,7 +775,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at == 123456789`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -825,7 +786,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at < 444444444`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -837,7 +797,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.finalized_at <= 444444444`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -854,7 +813,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.hash == "%s"`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -866,7 +824,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.hash != "%s"`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -880,7 +837,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.name != "TestRun1"`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -894,7 +850,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.name == "TestRun1"`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -906,7 +861,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and "Run3" in run.name`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 				metric2Run3,
@@ -917,7 +871,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and "Run3" not in run.name`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -932,7 +885,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.name.startswith("Test")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -949,7 +901,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.name.endswith('3')`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 				metric2Run3,
@@ -960,7 +911,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.experiment == "%s"`, experiment.Name),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -975,7 +925,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.experiment != "%s"`, experiment.Name),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 				metric2Run3,
@@ -986,7 +935,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.tags['mlflow.runName'] == "TestRunTag1"`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -998,7 +946,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and run.tags['mlflow.runName'] != "TestRunTag1"`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -1012,7 +959,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and re.match("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -1022,7 +968,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and re.search("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -1032,7 +977,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.name == "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -1042,7 +986,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.name != "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -1053,7 +996,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -1065,7 +1007,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 			},
@@ -1075,7 +1016,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and re.match("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1086,7 +1026,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and re.search("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1097,7 +1036,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.name == "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1108,7 +1046,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.name != "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -1120,7 +1057,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1134,7 +1070,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -1145,7 +1080,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and re.match("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1157,7 +1091,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and re.search("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1169,7 +1102,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.name == "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1181,7 +1113,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.name != "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -1195,7 +1126,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1212,7 +1142,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -1224,7 +1153,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and re.match("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -1234,7 +1162,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and re.search("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -1244,7 +1171,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.name == "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -1254,7 +1180,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.name != "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric2Run3,
@@ -1265,7 +1190,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -1277,7 +1201,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -1287,7 +1210,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration == 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 			},
@@ -1297,7 +1219,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration != 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -1308,7 +1229,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -1319,7 +1239,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -1331,7 +1250,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run3,
@@ -1342,7 +1260,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -1354,7 +1271,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration == 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -1364,7 +1280,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration != 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1377,7 +1292,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -1389,7 +1303,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1403,7 +1316,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1415,7 +1327,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1429,7 +1340,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration == 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 				metric2Run3,
@@ -1440,7 +1350,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration != 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1455,7 +1364,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -1469,7 +1377,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1486,7 +1393,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1500,7 +1406,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1517,7 +1422,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration == 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -1527,7 +1431,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration != 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -1538,7 +1441,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric2Run3,
@@ -1549,7 +1451,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -1561,7 +1462,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run3,
@@ -1572,7 +1472,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -1584,7 +1483,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name == "TestMetric1" and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -1594,7 +1492,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name == "TestMetric1" and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -1605,7 +1502,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name != "TestMetric1" and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1616,7 +1512,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name != "TestMetric1" and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -1628,7 +1523,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name.startswith("Test") and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1640,7 +1534,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name.startswith("Test") and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -1654,7 +1547,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name.endswith("Metric2") and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -1664,7 +1556,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(metric.name.endswith("Metric2") and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric2Run3,
@@ -1675,7 +1566,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -1686,7 +1576,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -1698,7 +1587,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at < 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -1708,7 +1596,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -1720,7 +1607,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -1730,7 +1616,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -1741,7 +1626,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -1753,7 +1637,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1767,7 +1650,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at < 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1778,7 +1660,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1792,7 +1673,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -1803,7 +1683,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -1815,7 +1694,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -1829,7 +1707,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1846,7 +1723,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at < 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1858,7 +1734,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1875,7 +1750,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -1887,7 +1761,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -1901,7 +1774,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric2Run3,
@@ -1912,7 +1784,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -1924,7 +1795,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at < 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -1934,7 +1804,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -1946,7 +1815,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -1956,7 +1824,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric2Run3,
@@ -1967,7 +1834,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 			},
@@ -1977,7 +1843,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run3,
@@ -1988,7 +1853,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at < 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -1999,7 +1863,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -2011,7 +1874,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -2021,7 +1883,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name == "TestMetric1" and run.created_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -2032,7 +1893,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -2042,7 +1902,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2054,7 +1913,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at < 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2067,7 +1925,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2081,7 +1938,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2092,7 +1948,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name != "TestMetric1" and run.created_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -2104,7 +1959,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 				metric2Run3,
@@ -2115,7 +1969,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -2129,7 +1982,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at < 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -2144,7 +1996,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -2161,7 +2012,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -2173,7 +2023,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.startswith("Test") and run.created_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -2187,7 +2036,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -2197,7 +2045,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run3,
@@ -2208,7 +2055,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at < 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -2219,7 +2065,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -2231,7 +2076,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -2241,7 +2085,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(metric.name.endswith("Metric2") and run.created_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric2Run3,
@@ -2252,7 +2095,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and re.match("TestRun3", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -2262,7 +2104,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and re.search("TestRun3", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -2272,7 +2113,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.name == "TestRun3")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -2282,15 +2122,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.name != "TestRun3")`,
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationStartsWith",
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -2300,15 +2137,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.name.endswith("Run2"))`,
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationNotEqualsAndRegexpMatchFunction",
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and re.match("TestRun3", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 			},
@@ -2318,7 +2152,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and re.search("TestRun3", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 			},
@@ -2328,7 +2161,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.name == "TestRun3")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 			},
@@ -2338,7 +2170,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.name != "TestRun3")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -2353,7 +2184,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -2369,7 +2199,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.name.endswith("Run3"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 			},
@@ -2379,7 +2208,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and re.match("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2390,7 +2218,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and re.search("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2401,7 +2228,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.name == "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2412,7 +2238,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.name != "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -2423,7 +2248,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2436,7 +2260,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -2447,7 +2270,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and re.match("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2458,7 +2280,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and re.search("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2469,7 +2290,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.name == "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2480,7 +2300,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.name != "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -2492,7 +2311,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2506,7 +2324,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -2517,7 +2334,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and re.match("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -2527,7 +2343,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and re.search("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -2537,7 +2352,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.name == "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -2547,7 +2361,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.name != "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -2558,7 +2371,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -2570,7 +2382,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 			},
@@ -2580,7 +2391,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and re.match("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -2590,7 +2400,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and re.search("TestRun1", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -2600,7 +2409,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.name == "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -2610,7 +2418,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.name != "TestRun1")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -2621,7 +2428,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -2634,7 +2440,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 			},
@@ -2644,7 +2449,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration == 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -2654,15 +2458,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration != 222222)`,
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationEqualsAndGreater",
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -2672,7 +2473,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -2682,15 +2482,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration < 222222)`,
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationEqualsAndLessOrEquals",
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration <= 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -2700,7 +2497,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration == 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 			},
@@ -2710,7 +2506,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration != 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -2725,7 +2520,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -2738,7 +2532,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -2754,7 +2547,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration < 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -2766,7 +2558,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.duration <= 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -2779,15 +2570,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration == 222222)`,
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterAndNotEquals",
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration != 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2800,7 +2588,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -2811,7 +2598,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2824,7 +2610,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2835,7 +2620,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2848,7 +2632,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration == 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -2858,7 +2641,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration != 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2871,7 +2653,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -2883,7 +2664,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2897,7 +2677,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2909,7 +2688,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -2923,7 +2701,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration == 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 			},
@@ -2933,7 +2710,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration != 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -2944,7 +2720,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -2955,7 +2730,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -2967,7 +2741,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run3,
@@ -2978,7 +2751,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -2990,7 +2762,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration == 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 				metric2Run3,
@@ -3001,7 +2772,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration != 222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -3012,7 +2782,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -3024,7 +2793,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -3037,7 +2805,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run3,
@@ -3049,7 +2816,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -3062,7 +2828,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -3072,15 +2837,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.hash != "%s")`, run1.ID),
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunHashOperationNotEqualsAndEquals",
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.1) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3091,7 +2853,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.1) and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -3105,7 +2866,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.1) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3116,7 +2876,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.1) and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -3129,7 +2888,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.1) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3141,7 +2899,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.1) and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -3154,7 +2911,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 3.1) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3165,7 +2921,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 3.1) and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -3178,7 +2933,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 3.1) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3190,7 +2944,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 3.1) and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -3204,7 +2957,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -3214,7 +2966,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -3224,15 +2975,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.finalized_at > 123456789)`,
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationEqualsAndGreaterOrEquals",
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -3242,15 +2990,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.finalized_at < 444444444)`,
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationEqualsAndLessOrEquals",
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -3260,7 +3005,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3272,7 +3016,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -3285,7 +3028,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -3298,7 +3040,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3314,7 +3055,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at < 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3326,7 +3066,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3342,7 +3081,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3353,7 +3091,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -3364,7 +3101,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -3375,7 +3111,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3388,7 +3123,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at < 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3399,7 +3133,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3412,7 +3145,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3423,7 +3155,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -3435,7 +3166,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -3447,7 +3177,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3461,7 +3190,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at < 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3472,7 +3200,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3486,7 +3213,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -3496,7 +3222,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -3507,7 +3232,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -3518,7 +3242,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -3530,7 +3253,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at < 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -3540,7 +3262,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -3552,7 +3273,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -3562,7 +3282,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -3574,7 +3293,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric1Run3,
@@ -3586,7 +3304,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -3599,7 +3316,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at < 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -3609,7 +3325,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -3622,7 +3337,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.created_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -3632,7 +3346,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.created_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -3642,15 +3355,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.created_at > 123456789)`,
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationEqualsAndGreaterOrEquals",
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.created_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
@@ -3660,15 +3370,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.created_at < 222222222)`,
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationEqualsAndLessOrEquals",
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run3,
 			},
@@ -3678,7 +3385,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at == 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -3690,7 +3396,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at != 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3703,7 +3408,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at > 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3716,7 +3420,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at >= 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3732,7 +3435,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at < 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3747,7 +3449,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last != 1.6) and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -3763,7 +3464,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at == 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -3774,7 +3474,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at != 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3785,7 +3484,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at > 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3796,7 +3494,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at >= 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3809,7 +3506,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at < 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -3820,7 +3516,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.created_at <= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3833,7 +3528,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at == 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 				metric3Run2,
@@ -3844,7 +3538,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at != 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3856,7 +3549,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at > 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3868,7 +3560,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at >= 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3882,7 +3573,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at < 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3895,7 +3585,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last >= 1.6) and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -3909,7 +3598,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at == 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 			},
@@ -3919,7 +3607,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at != 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run3,
@@ -3930,7 +3617,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at > 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run3,
@@ -3941,7 +3627,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at >= 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -3953,7 +3638,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at < 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -3964,7 +3648,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last < 1.6) and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -3976,7 +3659,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at == 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 			},
@@ -3986,7 +3668,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at != 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run3,
@@ -3998,7 +3679,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at > 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run3,
@@ -4010,7 +3690,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at >= 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -4023,7 +3702,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at < 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -4034,7 +3712,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last <= 1.6) and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric1Run2,
@@ -4047,7 +3724,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and re.match("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4057,7 +3733,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and re.search("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4067,7 +3742,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.name == "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4077,7 +3751,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.name != "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -4087,7 +3760,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -4098,7 +3770,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4108,7 +3779,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and re.match("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4119,7 +3789,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and re.search("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4130,7 +3799,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.name == "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4141,7 +3809,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.name != "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -4154,7 +3821,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -4169,7 +3835,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4180,7 +3845,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and re.match("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4191,7 +3855,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and re.search("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4202,7 +3865,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.name == "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4213,7 +3875,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.name != "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric1Run3,
@@ -4225,7 +3886,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric1Run2,
@@ -4239,7 +3899,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4250,7 +3909,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and re.match("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4262,7 +3920,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and re.search("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4274,7 +3931,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.name == "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4286,7 +3942,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.name != "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -4299,7 +3954,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -4315,7 +3969,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4327,7 +3980,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and re.match("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4337,7 +3989,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and re.search("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4347,7 +3998,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.name == "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4357,7 +4007,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.name != "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4368,7 +4017,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4380,7 +4028,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4390,7 +4037,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and re.match("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4402,7 +4048,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and re.search("TestRun2", run.name))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4414,7 +4059,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.name == "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4426,7 +4070,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.name != "TestRun2")`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4439,7 +4082,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.name.startswith("Test"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4455,7 +4097,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.name.endswith("Run2"))`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4467,7 +4108,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration == 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4477,7 +4117,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration != 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -4487,7 +4126,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4497,7 +4135,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -4508,7 +4145,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -4518,7 +4154,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  == 2) and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -4529,7 +4164,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration == 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4540,7 +4174,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration != 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -4553,7 +4186,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4566,7 +4198,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -4581,7 +4212,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -4594,7 +4224,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  != 2) and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -4609,7 +4238,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration == 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4620,7 +4248,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration != 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric1Run3,
@@ -4632,7 +4259,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4645,7 +4271,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric1Run2,
@@ -4659,7 +4284,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric1Run3,
@@ -4671,7 +4295,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  > 2) and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric1Run2,
@@ -4685,7 +4308,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration == 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4697,7 +4319,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration != 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -4710,7 +4331,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4724,7 +4344,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -4740,7 +4359,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -4753,7 +4371,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  >= 2) and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -4769,7 +4386,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration == 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4779,7 +4395,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration != 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4790,7 +4405,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4800,7 +4414,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4812,7 +4425,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4823,7 +4435,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  < 3) and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4835,7 +4446,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration == 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4847,7 +4457,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration != 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4860,7 +4469,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration > 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -4873,7 +4481,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration >= 0)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4889,7 +4496,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration < 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4902,7 +4508,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step  <= 3) and run.duration <= 333333)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -4918,7 +4523,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -4928,7 +4532,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -4938,7 +4541,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -4949,7 +4551,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4962,7 +4563,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 			},
@@ -4972,7 +4572,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -4985,7 +4584,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -4996,7 +4594,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -5010,7 +4607,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5021,7 +4617,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -5031,7 +4626,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.hash == "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5043,7 +4637,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: fmt.Sprintf(`(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.hash != "%s")`, run1.ID),
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -5056,7 +4649,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -5066,7 +4658,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -5076,7 +4667,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -5086,7 +4676,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -5097,7 +4686,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at < 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -5107,7 +4695,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric2Run2,
@@ -5118,7 +4705,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -5129,7 +4715,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -5142,7 +4727,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -5155,7 +4739,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -5170,7 +4753,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at < 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -5181,7 +4763,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.finalized_at <= 444444444)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -5196,7 +4777,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.finalized_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 			},
@@ -5206,7 +4786,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -5219,7 +4798,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -5232,7 +4810,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric1Run2,
@@ -5430,7 +5007,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.finalized_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -5443,7 +5019,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.finalized_at > 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -5456,7 +5031,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.finalized_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5520,15 +5094,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.created_at > 123456789)`,
 			},
-
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationEqualsAndGreaterOrEquals",
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.created_at >= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 			},
@@ -5570,7 +5141,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.created_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -5583,7 +5153,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.created_at > 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -5596,7 +5165,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.created_at >= 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -5624,7 +5192,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step != 2) and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric3Run1,
@@ -5639,7 +5206,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 			},
@@ -5649,7 +5215,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric3Run2,
@@ -5662,7 +5227,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at > 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric1Run3,
@@ -5674,7 +5238,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at >= 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric1Run2,
@@ -5688,7 +5251,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at < 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric1Run2,
@@ -5700,7 +5262,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step > 2) and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric3Run1,
 				metric1Run2,
@@ -5714,7 +5275,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -5725,7 +5285,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -5739,7 +5298,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at > 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -5752,7 +5310,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at >= 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -5768,7 +5325,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at < 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -5782,7 +5338,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step >= 2) and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run1,
 				metric3Run1,
@@ -5798,7 +5353,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5809,7 +5363,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -5819,7 +5372,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at > 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5830,7 +5382,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at >= 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5842,7 +5393,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at < 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric2Run2,
 			},
@@ -5852,7 +5402,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step < 3) and run.created_at <= 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5864,7 +5413,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at == 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5876,7 +5424,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at != 123456789)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 				metric2Run2,
@@ -5889,7 +5436,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at > 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5902,7 +5448,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at >= 111111111)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5918,7 +5463,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at < 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5933,7 +5477,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") or (metric.name == "TestMetric3")) and (metric.last_step <= 3) and run.created_at <= 222222222)`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 				metric2Run1,
@@ -5949,7 +5492,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			request: request.SearchMetricsRequest{
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2")) and metric.last_step >= 1 and (run.name.endswith("2") or re.match("TestRun1", run.name)) and (metric.last < 1.6) and run.duration > 0`,
 			},
-
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 			},
@@ -5957,22 +5499,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var resp []byte
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(s.T(), err)
-			resp, err = s.AIMClient.DoStreamRequest(
-				http.MethodGet,
-				fmt.Sprintf(`/runs/search/metric?%s`, query),
-				nil,
+			resp := new(bytes.Buffer)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithQuery(
+					tt.request,
+				).WithResponseType(
+					helpers.ResponseTypeStream,
+				).WithResponse(
+					resp,
+				).DoRequest("/runs/search/metric"),
 			)
-			assert.Nil(s.T(), err)
-			decodedData, err := encoding.Decode(bytes.NewBuffer(resp))
+			decodedData, err := encoding.Decode(resp)
 			assert.Nil(s.T(), err)
 
-			decodedMetrics := []*models.LatestMetric{}
+			var decodedMetrics []*models.LatestMetric
 			for _, run := range runs {
 				metricCount := 0
-
 				for decodedData[fmt.Sprintf("%v.traces.%d.name", run.ID, metricCount)] != nil {
 					prefix := fmt.Sprintf("%v.traces.%d", run.ID, metricCount)
 					epochsKey := prefix + ".epochs.blob"

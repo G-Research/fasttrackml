@@ -122,6 +122,11 @@ func (r NamespaceCachedRepository) GetByCode(ctx context.Context, code string) (
 	return namespace, nil
 }
 
+// List returns a list of all namespaces.
+func (r NamespaceCachedRepository) List(ctx context.Context) ([]models.Namespace, error) {
+	return r.namespaceRepository.List(ctx)
+}
+
 // Delete deletes existing models.Namespace entity.
 func (r NamespaceCachedRepository) Delete(ctx context.Context, namespace *models.Namespace) error {
 	if err := r.namespaceRepository.Delete(ctx, namespace); err != nil {

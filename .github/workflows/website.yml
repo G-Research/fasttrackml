@@ -3,13 +3,14 @@ name: Build and Deploy website to Pages
 on:
   push:
     paths:
-      - 'website/**'
-      - 'docs/**'
+      - "website/**"
+      - "docs/**"
   pull_request:
     paths:
-      - 'website/**'
-      - 'docs/**'
+      - "website/**"
+      - "docs/**"
   workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
+  workflow_call: # Allows you to run this workflow from another workflow
 
 permissions: # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
   contents: read
@@ -23,7 +24,7 @@ defaults: # Default to bash
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_run' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
     outputs:
       has_pages: ${{ steps.has-pages.outputs.has_pages }}
     steps:

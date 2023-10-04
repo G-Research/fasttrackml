@@ -5,19 +5,17 @@ import (
 	"io/fs"
 	"net/http"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/template/html/v2"
 
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
-
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/etag"
 )
 
-//go:embed embed/*
+//go:embed embed
 var content embed.FS
 
-// Router represents `chooser` router.
 type Router struct {
 	controller *controller.Controller
 }

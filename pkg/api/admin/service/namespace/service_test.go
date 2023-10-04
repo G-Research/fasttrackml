@@ -81,7 +81,6 @@ func TestService_GetNamespace_Ok(t *testing.T) {
 	).Return(&ns, nil)
 
 	// call service under testing.
-	// call service under testing.
 	service := NewService(&namespaceRepository, &experimentRepository)
 	namespace, err := service.GetNamespace(context.TODO(), uint(0))
 
@@ -98,7 +97,6 @@ func TestService_GetNamespace_Error(t *testing.T) {
 		"GetByID", context.TODO(), uint(0),
 	).Return(nil, errors.New("something is wrong"))
 
-	// call service under testing.
 	// call service under testing.
 	service := NewService(&namespaceRepository, &experimentRepository)
 	namespace, err := service.GetNamespace(context.TODO(), uint(0))
@@ -166,7 +164,6 @@ func TestService_DeleteNamespace_Ok(t *testing.T) {
 	).Return(&ns, nil)
 
 	// call service under testing.
-	// call service under testing.
 	service := NewService(&namespaceRepository, &experimentRepository)
 	err := service.DeleteNamespace(context.TODO(), uint(0))
 
@@ -182,7 +179,6 @@ func TestService_DeleteNamespace_Error(t *testing.T) {
 		"GetByID", context.TODO(), uint(0),
 	).Return(nil, nil)
 
-	// call service under testing.
 	// call service under testing.
 	service := NewService(&namespaceRepository, &experimentRepository)
 	err := service.DeleteNamespace(context.TODO(), uint(0))
@@ -213,7 +209,6 @@ func TestService_UpdateNamespace_Ok(t *testing.T) {
 	).Return(&ns, nil)
 
 	// call service under testing.
-	// call service under testing.
 	service := NewService(&namespaceRepository, &experimentRepository)
 	_, err := service.UpdateNamespace(context.TODO(), uint(1), "code", "description")
 
@@ -229,7 +224,6 @@ func TestService_UpdateNamespace_Error(t *testing.T) {
 		"GetByID", context.TODO(), uint(1),
 	).Return(nil, nil)
 
-	// call service under testing.
 	// call service under testing.
 	service := NewService(&namespaceRepository, &experimentRepository)
 	_, err := service.UpdateNamespace(context.TODO(), uint(1), "code", "description")

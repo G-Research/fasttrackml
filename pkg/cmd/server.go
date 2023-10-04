@@ -112,7 +112,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	adminUI.NewRouter(
 		adminUIController.NewController(
 			namespace.NewService(
-				*namespaceRepository,
+				namespaceRepository,
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
@@ -122,7 +122,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	adminAPI.NewRouter(
 		adminAPIController.NewController(
 			namespace.NewService(
-				*namespaceRepository,
+				namespaceRepository,
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
@@ -132,7 +132,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	chooser.NewRouter(
 		chooserController.NewController(
 			namespace.NewService(
-				*namespaceRepository,
+				namespaceRepository,
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),

@@ -12,7 +12,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 )
 
-// TestService_CreateNamespace_Ok tests successful calls to the repository.
 func TestService_CreateNamespace_Ok(t *testing.T) {
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
@@ -43,7 +42,6 @@ func TestService_CreateNamespace_Ok(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-// TestService_CreateNamespace_Error tests unsuccessful calls to the repository.
 func TestService_CreateNamespace_Error(t *testing.T) {
 	ns := models.Namespace{}
 	err := errors.New("repository error")
@@ -66,7 +64,6 @@ func TestService_CreateNamespace_Error(t *testing.T) {
 	// assert.NotNil(t, err)
 }
 
-// TestService_GetNamespace_Ok tests the successful call to GetNamespace.
 func TestService_GetNamespace_Ok(t *testing.T) {
 	// initialise namespace.
 	ns := models.Namespace{
@@ -91,7 +88,6 @@ func TestService_GetNamespace_Ok(t *testing.T) {
 	assert.Equal(t, &ns, namespace)
 }
 
-// TestService_GetNamespace_Error tests the unsuccessful call to GetNamespace.
 func TestService_GetNamespace_Error(t *testing.T) {
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
@@ -110,7 +106,6 @@ func TestService_GetNamespace_Error(t *testing.T) {
 	assert.Nil(t, namespace)
 }
 
-// TestService_ListNamespaces_OK tests the successful call to GetNamespace.
 func TestService_ListNamespace_Ok(t *testing.T) {
 	// initialise namespaces.
 	ns := models.Namespace{
@@ -136,7 +131,6 @@ func TestService_ListNamespace_Ok(t *testing.T) {
 	assert.Equal(t, testNamespaces, namespaces)
 }
 
-// TestService_GetExperiment_Error tests the unsuccessful call to GetNamespace.
 func TestService_ListNamespaces_Error(t *testing.T) {
 	// init repository mocks
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
@@ -155,7 +149,6 @@ func TestService_ListNamespaces_Error(t *testing.T) {
 	assert.Nil(t, namespaces)
 }
 
-// TestService_DeleteNamespace_Ok tests the successful call to DeleteNamespace.
 func TestService_DeleteNamespace_Ok(t *testing.T) {
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
@@ -173,7 +166,6 @@ func TestService_DeleteNamespace_Ok(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-// TestService_DeleteExperiment_Error tests the unsuccessful call to DeleteNamespace.
 func TestService_DeleteExperiment_Error(t *testing.T) {
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}

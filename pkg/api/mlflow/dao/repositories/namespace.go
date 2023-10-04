@@ -14,7 +14,7 @@ import (
 type NamespaceRepositoryProvider interface {
 	// Create creates new models.Namespace entity.
 	Create(ctx context.Context, namespace *models.Namespace) error
-	// Update will modify the existing models.Namespace entity.
+	// Update modifies the existing models.Namespace entity.
 	Update(ctx context.Context, namespace *models.Namespace) error
 	// Delete removes a namespace and it's associated experiments by its ID.
 	Delete(ctx context.Context, id uint) error

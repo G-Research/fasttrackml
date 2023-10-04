@@ -103,6 +103,7 @@ func TestService_GetNamespace_Error(t *testing.T) {
 
 	// compare results.
 	assert.NotNil(t, err)
+	assert.Equal(t, "error getting namespace by id: something is wrong", err.Error())
 	assert.Nil(t, namespace)
 }
 
@@ -146,15 +147,22 @@ func TestService_ListNamespaces_Error(t *testing.T) {
 
 	// compare results.
 	assert.NotNil(t, err)
+	assert.Equal(t, "error listing namespaces: error listing namespaces", err.Error())
 	assert.Nil(t, namespaces)
 }
 
 func TestService_DeleteNamespace_Ok(t *testing.T) {
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
+	ns := models.Namespace{
+		ID:   1,
+		Code: "code",
+	}
 	namespaceRepository.On(
 		"Delete", context.TODO(), uint(0),
-	).Return(nil)
+	).Return(nil).On(
+		"GetByID", context.TODO(), uint(0),
+	).Return(&ns, nil)
 
 	// call service under testing.
 	service := NewService(
@@ -166,12 +174,12 @@ func TestService_DeleteNamespace_Ok(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestService_DeleteExperiment_Error(t *testing.T) {
+func TestService_DeleteNamespace_Error(t *testing.T) {
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
 	namespaceRepository.On(
-		"Delete", context.TODO(), uint(0),
-	).Return(errors.New("something is wrong"))
+		"GetByID", context.TODO(), uint(0),
+	).Return(nil, nil)
 
 	// call service under testing.
 	service := NewService(
@@ -181,11 +189,15 @@ func TestService_DeleteExperiment_Error(t *testing.T) {
 
 	// compare results.
 	assert.NotNil(t, err)
+	assert.Equal(t, "error finding namespace by id: 0", err.Error())
 }
 
 func TestService_UpdateNamespace_Ok(t *testing.T) {
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
+	ns := models.Namespace{
+		ID: 1,
+	}
 	namespaceRepository.On(
 		"Update",
 		context.TODO(),
@@ -195,7 +207,9 @@ func TestService_UpdateNamespace_Ok(t *testing.T) {
 			assert.Equal(t, "description", ns.Description)
 			return true
 		}),
-	).Return(nil)
+	).Return(nil).On(
+		"GetByID", context.TODO(), uint(1),
+	).Return(&ns, nil)
 
 	// call service under testing.
 	service := NewService(&namespaceRepository)
@@ -203,4 +217,20 @@ func TestService_UpdateNamespace_Ok(t *testing.T) {
 
 	// compare results.
 	assert.Nil(t, err)
+}
+
+func TestService_UpdateNamespace_Error(t *testing.T) {
+	// init repository mocks.
+	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
+	namespaceRepository.On(
+		"GetByID", context.TODO(), uint(1),
+	).Return(nil, nil)
+
+	// call service under testing.
+	service := NewService(&namespaceRepository)
+	_, err := service.UpdateNamespace(context.TODO(), uint(1), "code", "description")
+
+	// compare results.
+	assert.NotNil(t, err)
+	assert.Equal(t, "error finding namespace by id: 1", err.Error())
 }

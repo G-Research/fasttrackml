@@ -73,16 +73,20 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 
 // UpdateNamespace updates the code and description fields.
 func (s Service) UpdateNamespace(ctx context.Context, id uint, code, description string) (*models.Namespace, error) {
-	if err := ValidateNamespace(code); err != nil {
-		return nil, eris.Wrap(err, "error validating namespace")
-	}
-	namespace := &models.Namespace{
-		ID:          id,
-		Code:        code,
-		Description: description,
-	}
-	err := s.namespaceRepository.Update(ctx, namespace)
+	namespace, err := s.namespaceRepository.GetByID(ctx, id)
 	if err != nil {
+		return nil, eris.Wrapf(err, "error finding namespace by id: %v", id)
+	}
+	if namespace == nil {
+		return nil, eris.Errorf("error finding namespace by id: %v", id)
+	}
+	if err := ValidateNamespace(code); err != nil {
+		return nil, eris.Wrap(err, "error validating namespace code")
+	}
+	namespace.Code = code
+	namespace.Description = description
+
+	if err := s.namespaceRepository.Update(ctx, namespace); err != nil {
 		return nil, eris.Wrap(err, "error updating namespace")
 	}
 	return namespace, nil
@@ -90,8 +94,14 @@ func (s Service) UpdateNamespace(ctx context.Context, id uint, code, description
 
 // DeleteNamespace deletes the namespace.
 func (s Service) DeleteNamespace(ctx context.Context, id uint) error {
-	err := s.namespaceRepository.Delete(ctx, id)
+	namespace, err := s.namespaceRepository.GetByID(ctx, id)
 	if err != nil {
+		return eris.Wrapf(err, "error finding namespace by id: %v", id)
+	}
+	if namespace == nil {
+		return eris.Errorf("error finding namespace by id: %v", id)
+	}
+	if err := s.namespaceRepository.Delete(ctx, id); err != nil {
 		return eris.Wrap(err, "error deleting namespace")
 	}
 	return nil

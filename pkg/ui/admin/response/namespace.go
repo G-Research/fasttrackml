@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Namespace represents the data of a Namespace.
+// Namespace represents the data for viewing/editing a Namespace.
 type Namespace struct {
 	ID          uint       `json:"id"`
 	Code        string     `json:"code"`

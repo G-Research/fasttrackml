@@ -92,7 +92,7 @@ func (r NamespaceRepository) GetByID(ctx context.Context, id uint) (*models.Name
 func (r NamespaceRepository) List(ctx context.Context) ([]models.Namespace, error) {
 	var namespaces []models.Namespace
 	if err := r.db.WithContext(ctx).Find(&namespaces).Error; err != nil {
-		return nil, eris.Wrapf(err, "error listing namespaces")
+		return nil, eris.Wrap(err, "error listing namespaces")
 	}
 	return namespaces, nil
 }

@@ -12,15 +12,18 @@ import (
 
 // Service provides service layer to work with `namespace` business logic.
 type Service struct {
-	namespaceRepository repositories.NamespaceRepositoryProvider
+	namespaceRepository  repositories.NamespaceRepositoryProvider
+	experimentRepository repositories.ExperimentRepositoryProvider
 }
 
 // NewService creates new Service instance.
 func NewService(
 	namespaceRepository repositories.NamespaceRepositoryProvider,
+	experimentRepository repositories.ExperimentRepositoryProvider,
 ) *Service {
 	return &Service{
-		namespaceRepository: namespaceRepository,
+		namespaceRepository:  namespaceRepository,
+		experimentRepository: experimentRepository,
 	}
 }
 
@@ -47,26 +50,21 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 	if err := ValidateNamespace(code); err != nil {
 		return nil, eris.Wrap(err, "error validating namespace")
 	}
-	exp := &models.Experiment{
+	experiment := &models.Experiment{
 		Name:           fmt.Sprintf("%s-exp", code),
 		LifecycleStage: models.LifecycleStageActive,
 	}
-	// placeholder DefaultExperimentID
-	initialDefaultExpID := int32(0)
+	if err := s.experimentRepository.Create(ctx, experiment); err != nil {
+		return nil, eris.Wrap(err, "error creating default experiment for namespace")
+	}
 	namespace := &models.Namespace{
 		Code:                code,
 		Description:         description,
-		Experiments:         []models.Experiment{*exp},
-		DefaultExperimentID: &initialDefaultExpID,
+		Experiments:         []models.Experiment{*experiment},
+		DefaultExperimentID: experiment.ID,
 	}
 	if err := s.namespaceRepository.Create(ctx, namespace); err != nil {
 		return nil, eris.Wrap(err, "error creating namespace")
-	}
-	// update with true DefaultExperimentID
-	namespace.DefaultExperimentID = namespace.Experiments[0].ID
-	err := s.namespaceRepository.Update(ctx, namespace)
-	if err != nil {
-		return nil, eris.Wrap(err, "error setting namespace default experiment id during create")
 	}
 	return namespace, nil
 }

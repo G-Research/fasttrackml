@@ -19,8 +19,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	adminAPI "github.com/G-Research/fasttrackml/pkg/api/admin"
-	adminAPIController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -111,21 +109,14 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	// 6. init `admin` UI routes.
 	adminUI.NewRouter(
 		adminUIController.NewController(
-			namespace.NewService(*namespaceRepository),
+			namespace.NewService(namespaceRepository),
 		),
 	).Init(server)
 
-	// 7. init `admin` api routes.
-	adminAPI.NewRouter(
-		adminAPIController.NewController(
-			namespace.NewService(*namespaceRepository),
-		),
-	).Init(server)
-
-	// 8. init `chooser` ui routes.
+	// 7. init `chooser` ui routes.
 	chooser.NewRouter(
 		chooserController.NewController(
-			namespace.NewService(*namespaceRepository),
+			namespace.NewService(namespaceRepository),
 		),
 	).AddRoutes(server)
 

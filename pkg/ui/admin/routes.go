@@ -16,19 +16,19 @@ import (
 //go:embed embed/*
 var content embed.FS
 
-// Router represents `mlflow` router.
+// Router represents `admin` router.
 type Router struct {
 	controller *controller.Controller
 }
 
-// NewRouter creates new instance of `mlflow` router.
+// NewRouter creates new instance of `admin` router.
 func NewRouter(controller *controller.Controller) *Router {
 	return &Router{
 		controller: controller,
 	}
 }
 
-// Init makes initialization of all `mlflow` routes.
+// Init makes initialization of all `admin` routes.
 func (r Router) Init(fr fiber.Router) {
 	sub, _ := fs.Sub(content, "embed")
 

@@ -147,7 +147,7 @@ module.exports = async function configCreatorAsync() {
                 },
                 announcementBar: {
                     // https://docusaurus.io/docs/api/themes/configuration#announcement-bar
-                    id: 'announcement-bar',
+                    id: `announcement-bar-${releaseVersion}`,
                     content: `FastTrackML ${releaseVersion} has been <a href="${releaseUrl}" target="_blank">released</a>!`,
                     isCloseable: true,
                 },

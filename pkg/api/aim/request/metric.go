@@ -6,19 +6,21 @@ import (
 
 // GetAlignedMetricRequest is a request object for `GET /mlflow/metrics/align` endpoint.
 type GetAlignedMetricRequest struct {
-	AlignBy string                    `json:"align_by"`
 	Runs    []AlignedMetricRunRequest `json:"runs"`
+	AlignBy string                    `json:"align_by"`
 }
 
+// AlignedMetricRunRequest is a partial request object for GetAlignedMetricRequest
 type AlignedMetricRunRequest struct {
 	ID     string                      `json:"run_id"`
 	Traces []AlignedMetricTraceRequest `json:"traces"`
 }
 
+// AlignedMetricTraceRequest is a partial request object for AlignedMetricRunRequest
 type AlignedMetricTraceRequest struct {
 	Context fiber.Map `json:"context"`
 	Name    string    `json:"name"`
-	Slice   [3]int    `json:"slice"`
+	Slice   []int     `json:"slice"`
 }
 
 // SearchMetricsRequest is a request struct for `GET /runs/search/metric/` endpoint.

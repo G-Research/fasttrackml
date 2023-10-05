@@ -30,6 +30,20 @@ var (
 	filterInGroup = regexp.MustCompile(`,\s*`)
 )
 
+// supported expression list.
+const (
+	InExpression            = "IN"
+	NotInExpression         = "NOT IN"
+	LikeExpression          = "LIKE"
+	ILikeExpression         = "ILIKE"
+	EqualExpression         = "="
+	NotEqualExpression      = "!="
+	LessExpression          = "<"
+	LessOrEqualExpression   = "<="
+	GraterExpression        = ">"
+	GraterOrEqualExpression = ">="
+)
+
 // Service provides service layer to work with `run` business logic.
 type Service struct {
 	tagRepository        repositories.TagRepositoryProvider
@@ -216,7 +230,8 @@ func (s Service) SearchRuns(
 				switch key {
 				case "start_time", "end_time":
 					switch comparison {
-					case ">", ">=", "!=", "=", "<", "<=":
+					case GraterExpression, GraterOrEqualExpression, NotEqualExpression,
+						EqualExpression, LessExpression, LessOrEqualExpression:
 						v, err := strconv.Atoi(value.(string))
 						if err != nil {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric value '%s'", value)
@@ -233,7 +248,7 @@ func (s Service) SearchRuns(
 					fallthrough
 				case "status", "user_id", "artifact_uri":
 					switch strings.ToUpper(comparison) {
-					case "!=", "=", "LIKE", "ILIKE":
+					case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 						if strings.HasPrefix(value.(string), "(") {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 						}
@@ -246,12 +261,12 @@ func (s Service) SearchRuns(
 				case "run_id":
 					key = "run_uuid"
 					switch strings.ToUpper(comparison) {
-					case "!=", "=", "LIKE", "ILIKE":
+					case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 						if strings.HasPrefix(value.(string), "(") {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
-					case "IN", "NOT IN":
+					case InExpression, NotInExpression:
 						if !strings.HasPrefix(value.(string), "(") {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid list definition '%s'", value)
 						}
@@ -274,7 +289,8 @@ func (s Service) SearchRuns(
 				}
 			case "metric", "metrics":
 				switch comparison {
-				case ">", ">=", "!=", "=", "<", "<=":
+				case GraterExpression, GraterOrEqualExpression,
+					NotEqualExpression, EqualExpression, LessExpression, LessOrEqualExpression:
 					v, err := strconv.ParseFloat(value.(string), 64)
 					if err != nil {
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric value '%s'", value)
@@ -288,7 +304,7 @@ func (s Service) SearchRuns(
 				kind = &database.LatestMetric{}
 			case "parameter", "parameters", "param", "params":
 				switch strings.ToUpper(comparison) {
-				case "!=", "=", "LIKE", "ILIKE":
+				case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 					if strings.HasPrefix(value.(string), "(") {
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 					}
@@ -301,7 +317,7 @@ func (s Service) SearchRuns(
 				kind = &database.Param{}
 			case "tag", "tags":
 				switch strings.ToUpper(comparison) {
-				case "!=", "=", "LIKE", "ILIKE":
+				case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 					if strings.HasPrefix(value.(string), "(") {
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 					}
@@ -319,9 +335,9 @@ func (s Service) SearchRuns(
 			}
 
 			if kind == nil {
-				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == ILikeExpression {
 					key = fmt.Sprintf("LOWER(runs.%s)", key)
-					comparison = "LIKE"
+					comparison = LikeExpression
 					value = strings.ToLower(value.(string))
 					tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
 				} else {
@@ -330,7 +346,7 @@ func (s Service) SearchRuns(
 			} else {
 				table := fmt.Sprintf("filter_%d", n)
 				where := fmt.Sprintf("value %s ?", comparison)
-				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == ILikeExpression {
 					where = "LOWER(value) LIKE ?"
 					value = strings.ToLower(value.(string))
 				}

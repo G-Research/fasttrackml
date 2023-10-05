@@ -16,7 +16,7 @@ func TestMakeDBProvider(t *testing.T) {
 		{
 			name:              "WithSqliteURI",
 			dsn:               "sqlite:///tmp/fasttrack.db",
-			expectedDialector: "sqlite",
+			expectedDialector: SQLiteDialectorName,
 		},
 	}
 	for _, tt := range tests {

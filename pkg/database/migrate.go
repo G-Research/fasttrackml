@@ -46,7 +46,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 
 		runWithoutForeignKeyIfNeeded := func(fn func() error) error { return fn() }
 		switch db.Dialector.Name() {
-		case "sqlite":
+		case SQLiteDialectorName:
 			//nolint:errcheck
 			migrator := db.Migrator().(sqlite.Migrator)
 			runWithoutForeignKeyIfNeeded = migrator.RunWithoutForeignKey
@@ -234,10 +234,10 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 					constraints := []string{"Params", "Tags", "Metrics", "LatestMetrics"}
 					for _, constraint := range constraints {
 						switch tx.Dialector.Name() {
-						case "sqlite":
+						case SQLiteDialectorName:
 							// SQLite tables need to be recreated to add or remove constraints.
 							// By not dropping the constraint, we can avoid having to recreate the table twice.
-						case "postgres":
+						case PostgresDialectorName:
 							// Existing MLFlow Postgres databases have foreign key constraints
 							// with their own names. We need to drop them before we can add our own.
 							table := tx.NamingStrategy.TableName(constraint)
@@ -283,10 +283,10 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 						}
 						for _, e := range elems {
 							switch tx.Dialector.Name() {
-							case "sqlite":
+							case SQLiteDialectorName:
 								// SQLite tables need to be recreated to add or remove constraints.
 								// By not dropping the constraint, we can avoid having to recreate the table twice.
-							case "postgres":
+							case PostgresDialectorName:
 								// Existing MLFlow Postgres databases have foreign key constraints with their own names.
 								// We need to drop them before we can add our own.
 								fk := fmt.Sprintf("%s_experiment_id_fkey", e.Table)

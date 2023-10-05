@@ -30,6 +30,20 @@ var (
 	experimentOrder = regexp.MustCompile(`^(?:attr(?:ibutes?)?\.)?(\w+)(?i:\s+(ASC|DESC))?$`)
 )
 
+// supported expression list.
+const (
+	InExpression            = "IN"
+	NotInExpression         = "NOT IN"
+	LikeExpression          = "LIKE"
+	ILikeExpression         = "ILIKE"
+	EqualExpression         = "="
+	NotEqualExpression      = "!="
+	LessExpression          = "<"
+	LessOrEqualExpression   = "<="
+	GraterExpression        = ">"
+	GraterOrEqualExpression = ">="
+)
+
 // Service provides service layer to work with `metric` business logic.
 type Service struct {
 	config               *config.ServiceConfig
@@ -321,7 +335,8 @@ func (s Service) SearchExperiments(
 				switch key {
 				case "creation_time", "last_update_time":
 					switch comparison {
-					case ">", ">=", "!=", "=", "<", "<=":
+					case GraterExpression, GraterOrEqualExpression, NotEqualExpression,
+						EqualExpression, LessExpression, LessOrEqualExpression:
 						v, err := strconv.Atoi(value.(string))
 						if err != nil {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric value '%s'", value)
@@ -334,14 +349,14 @@ func (s Service) SearchExperiments(
 					}
 				case "name":
 					switch strings.ToUpper(comparison) {
-					case "!=", "=", "LIKE", "ILIKE":
+					case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 						if strings.HasPrefix(value.(string), "(") {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
-						if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+						if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == ILikeExpression {
 							key = fmt.Sprintf("LOWER(%s)", key)
-							comparison = "LIKE"
+							comparison = LikeExpression
 							value = strings.ToLower(value.(string))
 						}
 					default:
@@ -357,7 +372,7 @@ func (s Service) SearchExperiments(
 				query.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
 			case "tag", "tags":
 				switch strings.ToUpper(comparison) {
-				case "!=", "=", "LIKE", "ILIKE":
+				case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 					if strings.HasPrefix(value.(string), "(") {
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 					}
@@ -367,7 +382,7 @@ func (s Service) SearchExperiments(
 				}
 				table := fmt.Sprintf("filter_%d", n)
 				where := fmt.Sprintf("value %s ?", comparison)
-				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == ILikeExpression {
 					where = "LOWER(value) LIKE ?"
 					value = strings.ToLower(value.(string))
 				}

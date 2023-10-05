@@ -17,7 +17,7 @@ func NewDBProvider(
 		return nil, eris.Wrap(err, "invalid database URL")
 	}
 	switch dsnURL.Scheme {
-	case "sqlite":
+	case SQLiteSchemaName:
 		db, err = NewSqliteDBInstance(
 			*dsnURL,
 			slowThreshold,
@@ -27,7 +27,7 @@ func NewDBProvider(
 		if err != nil {
 			return nil, eris.Wrap(err, "error creating sqlite provider")
 		}
-	case "postgres", "postgresql":
+	case PostgresSchemaName, PostgresQLSchemaName:
 		db, err = NewPostgresDBInstance(
 			*dsnURL,
 			slowThreshold,

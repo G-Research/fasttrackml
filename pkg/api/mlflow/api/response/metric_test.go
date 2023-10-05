@@ -3,9 +3,10 @@ package response
 import (
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 func TestNewMetricHistoryResponse_Ok(t *testing.T) {
@@ -33,7 +34,7 @@ func TestNewMetricHistoryResponse_Ok(t *testing.T) {
 						Key:       "key",
 						Timestamp: 1234567890,
 						Step:      1,
-						Value:     "NaN",
+						Value:     common.NANValue,
 					},
 				},
 			},
@@ -98,7 +99,7 @@ func TestNewMetricHistoryBulkResponse_Ok(t *testing.T) {
 						Key:       "key",
 						Timestamp: 1234567890,
 						Step:      1,
-						Value:     "NaN",
+						Value:     common.NANValue,
 					},
 				},
 			},

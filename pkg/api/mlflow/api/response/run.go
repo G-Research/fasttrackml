@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // RunTagPartialResponse is a partial response object for different responses.
@@ -176,7 +176,7 @@ func NewRunPartialResponse(run *models.Run) *RunPartialResponse {
 			Step:      m.Step,
 		}
 		if m.IsNan {
-			metrics[n].Value = "NaN"
+			metrics[n].Value = common.NANValue
 		}
 	}
 

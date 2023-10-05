@@ -1496,7 +1496,7 @@ func TestService_LogMetric_Error(t *testing.T) {
 				RunID:     "1",
 				Key:       "key",
 				Step:      1,
-				Value:     "NaN",
+				Value:     common.NANValue,
 				Timestamp: 1234567890,
 			},
 			service: func() *Service {

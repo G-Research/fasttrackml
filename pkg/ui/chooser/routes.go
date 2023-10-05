@@ -16,6 +16,7 @@ import (
 //go:embed embed
 var content embed.FS
 
+// Router represents `chooser` router.
 type Router struct {
 	controller *controller.Controller
 }

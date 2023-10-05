@@ -43,25 +43,24 @@ func TestService_CreateNamespace_Ok(t *testing.T) {
 }
 
 func TestService_CreateNamespace_Error(t *testing.T) {
-	ns := models.Namespace{}
 	err := errors.New("repository error")
 
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
 	namespaceRepository.On(
 		"Create", context.TODO(), mock.Anything, mock.Anything,
-	).Return(nil, err)
+	).Return(err)
 	namespaceRepository.On(
 		"Update", context.TODO(), mock.Anything, mock.Anything,
-	).Return(ns, nil)
+	).Return(nil)
 
-	// TODO someting is not right with mock
-	// // call service under testing.
-	// service := NewService(&namespaceRepository)
-	// _, err = service.CreateNamespace(context.TODO(), "code", "description")
+	// call service under testing.
+	service := NewService(&namespaceRepository)
+	_, err = service.CreateNamespace(context.TODO(), "code", "description")
 
-	// // compare results.
-	// assert.NotNil(t, err)
+	// compare results.
+	assert.NotNil(t, err)
+	assert.Equal(t, "error creating namespace: repository error", err.Error())
 }
 
 func TestService_GetNamespace_Ok(t *testing.T) {

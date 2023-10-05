@@ -1,16 +1,10 @@
-<script type="text/javascript" language="javascript">
-  $( document ).ready(function() {
-     new DataTable('#namespaces');        
-  });
-</script>
 <h1>Namespaces</h1>
 {{ template "partials/messages" . }}
-<table id="namespaces" class="display">
+<table id="namespaces">
   <thead>
     <tr>
       <th>Code</th>
       <th>Description</th>
-      <th>Created At</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -19,16 +13,16 @@
     <tr>
       <td>{{ .Code }}</td>
       <td>{{ .Description }}</td>
-      <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
       <td>
-      {{ if ne .Code "default" }}  
-        <a href="#" onclick="editNamespace('{{ .ID }}')">Edit</a>
-        <a href="#" onclick="deleteNamespace('{{ .ID }}')">Delete</a> 
-      {{ end }}
-      </td>  
+        {{ if ne .Code "default" }}
+        <a href="#" class="namespace-actions" onclick="editNamespace('{{ .ID }}')"><i
+            class="Icon__container icon-edit"></i> Edit</a>
+        <a href="#" class="namespace-actions" onclick="deleteNamespace('{{ .ID }}')"><i
+            class="Icon__container icon-delete"></i> Delete</a>
+        {{ end }}
+      </td>
     </tr>
     {{ end }}
   </tbody>
 </table>
-
-<p><a href="#" onclick="createNamespace()">Create new namespace</a></p>
+<p><input type="button" value="New Namespace" onclick="createNamespace()"></p>

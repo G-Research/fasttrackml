@@ -1,0 +1,16 @@
+<div id="form-container">
+    <div id="form-fields">
+        <div>
+            <label for="code">* Code:</label>
+            <input type="text" id="code" name="code" required value="{{ .Namespace.Code }}">
+        </div>
+        <div>
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" value="{{ .Namespace.Description }}">
+        </div>
+        <div>
+            <input type="submit" value="Save">
+            <input type="button" value="Cancel" onclick="namespaceIndex()">
+        </div>
+    </div>
+</div>

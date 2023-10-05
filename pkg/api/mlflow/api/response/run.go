@@ -144,6 +144,7 @@ func NewSearchRunsResponse(runs []models.Run, limit, offset int) (*SearchRunsRes
 
 	// transform each models.Run entity.
 	for i, run := range runs {
+		//nolint:gosec
 		resp.Runs[i] = NewRunPartialResponse(&run)
 	}
 

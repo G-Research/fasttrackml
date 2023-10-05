@@ -144,7 +144,7 @@ issues:
   # it can be disabled by `exclude-use-default: false`. To creators all
   # excluded by default patterns execute `golangci-lint run --help`
   exclude:
-    - abcdef
+    - declaration of "err" shadows declaration at line
 
   # Independently from option `exclude` we use default exclude patterns,
   # it can be disabled by this option. To creators all

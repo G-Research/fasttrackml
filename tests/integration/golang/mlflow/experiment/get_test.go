@@ -118,7 +118,8 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		{
 			name: "IncorrectExperimentID",
 			error: api.NewBadRequestError(
-				`unable to parse experiment id 'incorrect_experiment_id': strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`,
+				`unable to parse experiment id 'incorrect_experiment_id': strconv.ParseInt: ` +
+					`parsing "incorrect_experiment_id": invalid syntax`,
 			),
 			request: &request.GetExperimentRequest{
 				ID: "incorrect_experiment_id",

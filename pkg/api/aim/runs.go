@@ -335,6 +335,8 @@ func GetRunsActive(c *fiber.Ctx) error {
 	return nil
 }
 
+// TODO:get back and ifx `gocyclo` problem.
+//
 //nolint:gocyclo
 func SearchRuns(c *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(c.Context())
@@ -533,6 +535,8 @@ func SearchRuns(c *fiber.Ctx) error {
 	return nil
 }
 
+// TODO:get back and ifx `gocyclo` problem.
+//
 //nolint:gocyclo
 func SearchMetrics(c *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(c.Context())
@@ -694,6 +698,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/octet-stream")
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		//nolint:errcheck
 		defer rows.Close()
 
 		start := time.Now()
@@ -835,6 +840,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 	return nil
 }
 
+// TODO:get back and ifx `gocyclo` problem.
+//
 //nolint:gocyclo
 func SearchAlignedMetrics(c *fiber.Ctx) error {
 	b := struct {
@@ -900,6 +907,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/octet-stream")
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		//nolint:errcheck
 		defer rows.Close()
 
 		start := time.Now()
@@ -1131,6 +1139,7 @@ func DeleteBatch(c *fiber.Ctx) error {
 func toNumpy(values []float64) fiber.Map {
 	buf := bytes.NewBuffer(make([]byte, 0, len(values)*8))
 	for _, v := range values {
+		//nolint:gosec,errcheck
 		binary.Write(buf, binary.LittleEndian, v)
 	}
 	return fiber.Map{

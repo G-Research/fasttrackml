@@ -23,10 +23,11 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
+//nolint:lll
 var (
-	experimentOrder = regexp.MustCompile(`^(?:attr(?:ibutes?)?\.)?(\w+)(?i:\s+(ASC|DESC))?$`)
 	filterAnd       = regexp.MustCompile(`(?i)\s+AND\s+`)
 	filterCond      = regexp.MustCompile(`^(?:(\w+)\.)?("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'[^']+'(?:,\s*)?)+\)|"[^"]+"|'[^']+'|[\w\.]+)$`)
+	experimentOrder = regexp.MustCompile(`^(?:attr(?:ibutes?)?\.)?(\w+)(?i:\s+(ASC|DESC))?$`)
 )
 
 // Service provides service layer to work with `metric` business logic.
@@ -248,6 +249,7 @@ func (s Service) SetExperimentTag(
 }
 
 // nolint: gocyclo
+// TODO:get back and ifx `gocyclo` problem.
 func (s Service) SearchExperiments(
 	ctx context.Context, ns *models.Namespace, req *request.SearchExperimentsRequest,
 ) ([]models.Experiment, int, int, error) {
@@ -348,7 +350,9 @@ func (s Service) SearchExperiments(
 						)
 					}
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['name', 'creation_time', 'last_update_time']", key)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid attribute '%s'. Valid values are ['name', 'creation_time', 'last_update_time']", key,
+					)
 				}
 				query.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
 			case "tag", "tags":

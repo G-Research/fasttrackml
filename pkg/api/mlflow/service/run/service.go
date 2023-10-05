@@ -22,11 +22,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
+//nolint:lll
 var (
+	runOrder      = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
 	filterAnd     = regexp.MustCompile(`(?i)\s+AND\s+`)
 	filterCond    = regexp.MustCompile(`^(?:(\w+)\.)?("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'[^']+'(?:,\s*)?)+\)|"[^"]+"|'[^']+'|[\w\.]+)$`)
 	filterInGroup = regexp.MustCompile(`,\s*`)
-	runOrder      = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
 )
 
 // Service provides service layer to work with `run` business logic.
@@ -137,6 +138,7 @@ func (s Service) GetRun(
 }
 
 // nolint:gocyclo
+// TODO:get back and ifx `gocyclo` problem.
 func (s Service) SearchRuns(
 	ctx context.Context, namespace *models.Namespace, req *request.SearchRunsRequest,
 ) ([]models.Run, int, int, error) {
@@ -221,7 +223,9 @@ func (s Service) SearchRuns(
 						}
 						value = v
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid numeric attribute comparison operator '%s'", comparison,
+						)
 					}
 				case "run_name":
 					key = "mlflow.runName"
@@ -257,11 +261,14 @@ func (s Service) SearchRuns(
 						}
 						value = values
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid string attribute comparison operator '%s'", comparison,
+						)
 					}
 				default:
 					return nil, 0, 0, api.NewInvalidParameterValueError(
-						"invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']",
+						`invalid attribute '%s'. `+
+							`Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']`,
 						key,
 					)
 				}
@@ -274,7 +281,9 @@ func (s Service) SearchRuns(
 					}
 					value = v
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid metric comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid metric comparison operator '%s'", comparison,
+					)
 				}
 				kind = &database.LatestMetric{}
 			case "parameter", "parameters", "param", "params":
@@ -285,7 +294,9 @@ func (s Service) SearchRuns(
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid param comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid param comparison operator '%s'", comparison,
+					)
 				}
 				kind = &database.Param{}
 			case "tag", "tags":
@@ -296,11 +307,15 @@ func (s Service) SearchRuns(
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid tag comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid tag comparison operator '%s'", comparison,
+					)
 				}
 				kind = &database.Tag{}
 			default:
-				return nil, 0, 0, api.NewInvalidParameterValueError("invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
+				return nil, 0, 0, api.NewInvalidParameterValueError(
+					"invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity,
+				)
 			}
 
 			if kind == nil {

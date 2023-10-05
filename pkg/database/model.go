@@ -223,7 +223,6 @@ func (s *AppState) Scan(v interface{}) error {
 	if nullS.Valid {
 		return json.Unmarshal([]byte(nullS.String), s)
 	}
-	s = nil
 	return nil
 }
 

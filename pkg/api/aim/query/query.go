@@ -411,6 +411,7 @@ func (pq *parsedQuery) parseList(node *ast.List) (any, error) {
 }
 
 // nolint:gocyclo
+// TODO:get back and ifx `gocyclo` problem.
 func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 	switch node.Ctx {
 	case ast.Load:
@@ -535,8 +536,11 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 										alias := fmt.Sprintf("tags_%d", len(pq.joins))
 										j = join{
 											alias: alias,
-											query: fmt.Sprintf("LEFT JOIN tags %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?", alias, table, alias, alias),
-											args:  []any{v},
+											query: fmt.Sprintf(
+												"LEFT JOIN tags %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?",
+												alias, table, alias, alias,
+											),
+											args: []any{v},
 										}
 										pq.joins[fmt.Sprintf("tags:%s", v)] = j
 									}

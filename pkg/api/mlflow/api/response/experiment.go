@@ -82,6 +82,7 @@ func NewSearchExperimentsResponse(
 	}
 	// transform each models.Experiment entity.
 	for _, experiment := range experiments {
+		//nolint:gosec
 		resp.Experiments = append(resp.Experiments, NewExperimentPartialResponse(&experiment))
 	}
 

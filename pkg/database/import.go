@@ -117,6 +117,7 @@ func (s *Importer) importTable(table string) error {
 			if err := rows.Err(); err != nil {
 				return eris.Wrap(err, "error getting query result")
 			}
+			//nolint:errcheck
 			defer rows.Close()
 
 			count := 0

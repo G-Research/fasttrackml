@@ -86,15 +86,18 @@ func TestServiceConfig_Validate_Error(t *testing.T) {
 		{
 			name: "DefaultArtifactRootHasIncorrectFormat",
 			error: eris.New(
-				`error validating service configuration: error parsing 'default-artifact-root' flag: parse "incorrect_format_of_schema://something": first path segment in URL cannot contain colon`,
+				`error validating service configuration: error parsing 'default-artifact-root' flag: parse ` +
+					`"incorrect_format_of_schema://something": first path segment in URL cannot contain colon`,
 			),
 			config: &ServiceConfig{
 				DefaultArtifactRoot: "incorrect_format_of_schema://something",
 			},
 		},
 		{
-			name:  "DefaultArtifactRootHasUnsupportedSchema",
-			error: eris.New("error validating service configuration: unsupported schema of 'default-artifact-root' flag"),
+			name: "DefaultArtifactRootHasUnsupportedSchema",
+			error: eris.New(
+				"error validating service configuration: unsupported schema of 'default-artifact-root' flag",
+			),
 			config: &ServiceConfig{
 				DefaultArtifactRoot: "unsupported://something",
 			},

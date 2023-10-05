@@ -47,6 +47,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 		runWithoutForeignKeyIfNeeded := func(fn func() error) error { return fn() }
 		switch db.Dialector.Name() {
 		case "sqlite":
+			//nolint:errcheck
 			migrator := db.Migrator().(sqlite.Migrator)
 			runWithoutForeignKeyIfNeeded = migrator.RunWithoutForeignKey
 		}

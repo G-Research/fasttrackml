@@ -38,15 +38,14 @@ func NewDBProvider(
 			return nil, eris.Wrap(err, "error creating postgres provider")
 		}
 	default:
-		{
-			return nil, eris.New("unsupported database type")
-		}
+		return nil, eris.New("unsupported database type")
 	}
 
 	// TODO:DSuhinin - it shouldn't be there. NewDBProvider has to only create an instance without any hidden logic.
 	if reset {
 		log.Infof("reseting database")
 		if err := db.Reset(); err != nil {
+			//nolint:errcheck,gosec
 			db.Close()
 			return nil, eris.Wrap(err, "error resetting database")
 		}

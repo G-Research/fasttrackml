@@ -7,18 +7,18 @@
 {{ template "partials/messages" . }}
 <form action="#" method="post" id="updateForm">
   <div id="form-grid">
-    <input type="hidden" id="id" name="id" readonly value="{{ .ID }}">
+    <input type="hidden" id="id" name="id" readonly value="{{ .Namespace.ID }}">
     <div>
       <label for="code">Code:</label>
     </div>
     <div>
-      <input type="text" id="code" name="code" required value="{{ .Code }}">
+      <input type="text" id="code" name="code" required value="{{ .Namespace.Code }}">
     </div>
     <div>
       <label for="description">Description:</label>
     </div>
     <div>
-      <input type="text" id="description" name="description" value="{{ .Description }}">
+      <input type="text" id="description" name="description" value="{{ .Namespace.Description }}">
     </div>
     <div>	 
       <input type="submit" value="Save">

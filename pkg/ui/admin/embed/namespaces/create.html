@@ -1,18 +1,18 @@
 <h1>Create Namespace</h1>
 {{ template "partials/messages" . }}
-<form action="/admin/ns" method="post">
+<form action="/admin/namespaces" method="post">
   <div id="form-grid">
     <div>
       <label for="code">Code:</label>
     </div>
     <div>
-      <input type="text" id="code" name="code" required value="{{ .Code }}">
+      <input type="text" id="code" name="code" required value="{{ .Namespace.Code }}">
     </div>
     <div>
       <label for="description">Description:</label>
     </div>
     <div>
-      <input type="text" id="description" name="description" value="{{ .Description }}">
+      <input type="text" id="description" name="description" value="{{ .Namespace.Description }}">
     </div>
     <div>	 
       <input type="submit" value="Save">

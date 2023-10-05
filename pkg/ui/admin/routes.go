@@ -41,7 +41,7 @@ func (r Router) Init(fr fiber.Router) {
 	fr.Mount("/admin", app)
 
 	// specific routes
-	namespaces := app.Group("ns")
+	namespaces := app.Group("namespaces")
 	namespaces.Get("/", r.controller.GetNamespaces)
 	namespaces.Post("/", r.controller.CreateNamespace)
 	namespaces.Get("/new", r.controller.NewNamespace)

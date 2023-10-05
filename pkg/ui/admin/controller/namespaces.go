@@ -20,41 +20,36 @@ func (c Controller) GetNamespace(ctx *fiber.Ctx) error {
 	if err := ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	ns, err := c.namespaceService.GetNamespace(ctx.Context(), p.ID)
+	namespace, err := c.namespaceService.GetNamespace(ctx.Context(), p.ID)
 	if err != nil {
 		return fiber.NewError(fiber.ErrInternalServerError.Code, "unable to find namespace")
 	}
-	if ns == nil {
+	if namespace == nil {
 		return fiber.NewError(fiber.StatusNotFound, "namespace not found")
 	}
-	return ctx.Render("ns/update", fiber.Map{
-		"ID":          ns.ID,
-		"Code":        ns.Code,
-		"Description": ns.Description,
+	return ctx.Render("namespaces/update", fiber.Map{
+		"Namespace": namespace,
 	})
 }
 
 // NewNamespace renders the create view for a namespace.
 func (c Controller) NewNamespace(ctx *fiber.Ctx) error {
-	ns := response.Namespace{}
-	return ctx.Render("ns/create", fiber.Map{
-		"ID":          ns.ID,
-		"Code":        ns.Code,
-		"Description": ns.Description,
+	namespace := response.Namespace{}
+	return ctx.Render("namespaces/create", fiber.Map{
+		"Namespace": namespace,
 	})
 }
 
 // CreateNamespace creates a new namespace record.
 func (c Controller) CreateNamespace(ctx *fiber.Ctx) error {
-	var req request.Namespace
-	if err := ctx.BodyParser(&req); err != nil {
+	var namespace request.Namespace
+	if err := ctx.BodyParser(&namespace); err != nil {
 		return fiber.NewError(400, "unable to parse request body")
 	}
-	_, err := c.namespaceService.CreateNamespace(ctx.Context(), req.Code, req.Description)
+	_, err := c.namespaceService.CreateNamespace(ctx.Context(), namespace.Code, namespace.Description)
 	if err != nil {
-		return ctx.Render("ns/create", fiber.Map{
-			"Code":         req.Code,
-			"Description":  req.Description,
+		return ctx.Render("namespaces/create", fiber.Map{
+			"Namespace":    namespace,
 			"ErrorMessage": err.Error(),
 		})
 	}
@@ -115,13 +110,13 @@ func (c Controller) DeleteNamespace(ctx *fiber.Ctx) error {
 func (c Controller) renderIndex(ctx *fiber.Ctx, msg string) error {
 	namespaces, err := c.namespaceService.ListNamespaces(ctx.Context())
 	if err != nil {
-		return ctx.Render("ns/index", fiber.Map{
-			"Data":         namespaces,
+		return ctx.Render("namespaces/index", fiber.Map{
+			"Namespaces":   namespaces,
 			"ErrorMessage": err.Error(),
 		})
 	}
-	return ctx.Render("ns/index", fiber.Map{
-		"Data":           namespaces,
+	return ctx.Render("namespaces/index", fiber.Map{
+		"Namespaces":     namespaces,
 		"SuccessMessage": msg,
 	})
 }

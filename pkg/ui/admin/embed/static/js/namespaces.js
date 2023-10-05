@@ -13,7 +13,7 @@ function handleUpdateNamespace() {
 
     // Perform a PUT request using jQuery's $.ajax
     $.ajax({
-      url: "/admin/ns/" + formDataObject["id"],
+      url: "/admin/namespaces/" + formDataObject["id"],
       type: "PUT",
       contentType: "application/json",
       data: JSON.stringify(formDataObject), // Convert to JSON format
@@ -22,15 +22,15 @@ function handleUpdateNamespace() {
 }
 
 function createNamespace() {
-  redirectTo('/admin/ns/new');
+  redirectTo('/admin/namespaces/new');
 }
 
 function editNamespace(id) {
-  redirectTo('/admin/ns/' + id);
+  redirectTo('/admin/namespaces/' + id);
 }
 
 function namespaceIndex() {
-  redirectTo('/admin/ns/');
+  redirectTo('/admin/namespaces/');
 }
 
 function redirectTo(path) {
@@ -43,14 +43,14 @@ function deleteNamespace(id) {
   }
   // Perform a DELETE request using jQuery's $.ajax
   $.ajax({
-    url: "/admin/ns/" + id,
+    url: "/admin/namespaces/" + id,
     type: "DELETE",
     contentType: "application/json",
   }).done(handleResponse);
 }
 
 function handleResponse(data, jqxhr, status) {
-  redirectTo('/admin/ns/'
+  redirectTo('/admin/namespaces/'
 	     + "?message=" + encodeURIComponent(data["message"])
 	     + "&status=" + data["status"]);
 }

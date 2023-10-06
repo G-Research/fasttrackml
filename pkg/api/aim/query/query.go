@@ -411,7 +411,7 @@ func (pq *parsedQuery) parseList(node *ast.List) (any, error) {
 }
 
 // nolint:gocyclo
-// TODO:get back and ifx `gocyclo` problem.
+// TODO:get back and fix `gocyclo` problem.
 func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 	switch node.Ctx {
 	case ast.Load:

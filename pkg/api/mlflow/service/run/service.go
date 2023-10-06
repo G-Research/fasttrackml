@@ -152,7 +152,7 @@ func (s Service) GetRun(
 }
 
 // nolint:gocyclo
-// TODO:get back and ifx `gocyclo` problem.
+// TODO:get back and fix `gocyclo` problem.
 func (s Service) SearchRuns(
 	ctx context.Context, namespace *models.Namespace, req *request.SearchRunsRequest,
 ) ([]models.Run, int, int, error) {

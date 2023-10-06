@@ -263,7 +263,7 @@ func (s Service) SetExperimentTag(
 }
 
 // nolint: gocyclo
-// TODO:get back and ifx `gocyclo` problem.
+// TODO:get back and fix `gocyclo` problem.
 func (s Service) SearchExperiments(
 	ctx context.Context, ns *models.Namespace, req *request.SearchExperimentsRequest,
 ) ([]models.Experiment, int, int, error) {

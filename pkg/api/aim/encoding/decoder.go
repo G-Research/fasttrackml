@@ -44,7 +44,7 @@ func (d *reader) readField() ([]byte, error) {
 
 // Decode decodes input stream of data into map[string]interface{}.
 // nolint:gocyclo
-// TODO:get back and ifx `gocyclo` problem.
+// TODO:get back and fix `gocyclo` problem.
 func Decode(data io.Reader) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 	d := reader{bufio.NewReader(data)}

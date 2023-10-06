@@ -335,7 +335,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 	return nil
 }
 
-// TODO:get back and ifx `gocyclo` problem.
+// TODO:get back and fix `gocyclo` problem.
 //
 //nolint:gocyclo
 func SearchRuns(c *fiber.Ctx) error {
@@ -535,7 +535,7 @@ func SearchRuns(c *fiber.Ctx) error {
 	return nil
 }
 
-// TODO:get back and ifx `gocyclo` problem.
+// TODO:get back and fix `gocyclo` problem.
 //
 //nolint:gocyclo
 func SearchMetrics(c *fiber.Ctx) error {
@@ -840,7 +840,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 	return nil
 }
 
-// TODO:get back and ifx `gocyclo` problem.
+// TODO:get back and fix `gocyclo` problem.
 //
 //nolint:gocyclo
 func SearchAlignedMetrics(c *fiber.Ctx) error {

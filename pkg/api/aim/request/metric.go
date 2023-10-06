@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// GetAlignedMetricRequest is a request object for `GET /mlflow/metrics/align` endpoint.
+// GetAlignedMetricRequest is a request object for `GET /search/metrics/align` endpoint.
 type GetAlignedMetricRequest struct {
 	Runs    []AlignedMetricRunRequest `json:"runs"`
 	AlignBy string                    `json:"align_by"`

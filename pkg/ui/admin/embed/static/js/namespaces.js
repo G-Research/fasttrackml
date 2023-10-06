@@ -13,10 +13,10 @@ function handleUpdateNamespace() {
 
     // Perform a PUT request using jQuery's $.ajax
     $.ajax({
-      url: "/admin/namespaces/" + formDataObject["id"],
+      url: `/admin/namespaces/${formDataObject["id"]}`,
       type: "PUT",
       contentType: "application/json",
-      data: JSON.stringify(formDataObject), // Convert to JSON format
+      data: JSON.stringify(formDataObject), // Convert form data to JSON format
     }).done(handleResponse);
   });
 }
@@ -26,7 +26,7 @@ function createNamespace() {
 }
 
 function editNamespace(id) {
-  redirectTo('/admin/namespaces/' + id);
+  redirectTo(`/admin/namespaces/${id}`);
 }
 
 function namespaceIndex() {
@@ -43,7 +43,7 @@ function deleteNamespace(id) {
   }
   // Perform a DELETE request using jQuery's $.ajax
   $.ajax({
-    url: "/admin/namespaces/" + id,
+    url: `/admin/namespaces/${id}`,
     type: "DELETE",
     contentType: "application/json",
   }).done(handleResponse);
@@ -51,6 +51,6 @@ function deleteNamespace(id) {
 
 function handleResponse(data, jqxhr, status) {
   redirectTo('/admin/namespaces/'
-	     + "?message=" + encodeURIComponent(data["message"])
-	     + "&status=" + data["status"]);
+       + `?message=${encodeURIComponent(data["message"])}`
+       + `&status=${data["status"]}`);
 }

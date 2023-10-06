@@ -5,6 +5,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/request"
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/response"
+	"github.com/G-Research/fasttrackml/pkg/ui/common"
 )
 
 // GetNamespaces renders the list view with no message.
@@ -48,7 +49,7 @@ func (c Controller) CreateNamespace(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Render("namespaces/create", fiber.Map{
 			"Namespace":    namespace,
-			"ErrorMessage": err.Error(),
+			"ErrorMessage": common.ErrorMessageForUI("namespace code", err.Error()),
 		})
 	}
 	return c.renderIndex(ctx, "Successfully added new namespace")
@@ -69,7 +70,7 @@ func (c Controller) UpdateNamespace(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.JSON(fiber.Map{
 			"status":  "error",
-			"message": err.Error(),
+			"message": common.ErrorMessageForUI("namespace code", err.Error()),
 		})
 	}
 	return ctx.JSON(fiber.Map{
@@ -88,7 +89,7 @@ func (c Controller) DeleteNamespace(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.JSON(fiber.Map{
 			"status":  "error",
-			"message": err.Error(),
+			"message": common.ErrorMessageForUI("namespace code", err.Error()),
 		})
 	}
 	return ctx.JSON(fiber.Map{
@@ -103,7 +104,7 @@ func (c Controller) renderIndex(ctx *fiber.Ctx, msg string) error {
 	if err != nil {
 		return ctx.Render("namespaces/index", fiber.Map{
 			"Namespaces":   namespaces,
-			"ErrorMessage": err.Error(),
+			"ErrorMessage": common.ErrorMessageForUI("namespace code", err.Error()),
 		})
 	}
 	return ctx.Render("namespaces/index", fiber.Map{

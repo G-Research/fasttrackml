@@ -14,13 +14,11 @@ func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
 
 // GetNamespace renders the update view for a namespace.
 func (c Controller) GetNamespace(ctx *fiber.Ctx) error {
-	p := struct {
-		ID uint `params:"id"`
-	}{}
-	if err := ctx.ParamsParser(&p); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	id, err := ctx.ParamsInt("id")
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "unable to parse id")
 	}
-	namespace, err := c.namespaceService.GetNamespace(ctx.Context(), p.ID)
+	namespace, err := c.namespaceService.GetNamespace(ctx.Context(), uint(id))
 	if err != nil {
 		return fiber.NewError(fiber.ErrInternalServerError.Code, "unable to find namespace")
 	}
@@ -58,20 +56,16 @@ func (c Controller) CreateNamespace(ctx *fiber.Ctx) error {
 
 // UpdateNamespace udpates an existing namespace record.
 func (c Controller) UpdateNamespace(ctx *fiber.Ctx) error {
-	p := struct {
-		ID uint `params:"id"`
-	}{}
-
-	if err := ctx.ParamsParser(&p); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	id, err := ctx.ParamsInt("id")
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "unable to parse id")
 	}
-
 	var req request.Namespace
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "unable to parse request body")
 	}
 
-	_, err := c.namespaceService.UpdateNamespace(ctx.Context(), p.ID, req.Code, req.Description)
+	_, err = c.namespaceService.UpdateNamespace(ctx.Context(), uint(id), req.Code, req.Description)
 	if err != nil {
 		return ctx.JSON(fiber.Map{
 			"status":  "error",
@@ -86,14 +80,11 @@ func (c Controller) UpdateNamespace(ctx *fiber.Ctx) error {
 
 // DeleteNamespace deletes a namespace record.
 func (c Controller) DeleteNamespace(ctx *fiber.Ctx) error {
-	p := struct {
-		ID uint `params:"id"`
-	}{}
-
-	if err := ctx.ParamsParser(&p); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	id, err := ctx.ParamsInt("id")
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "unable to parse id")
 	}
-	err := c.namespaceService.DeleteNamespace(ctx.Context(), p.ID)
+	err = c.namespaceService.DeleteNamespace(ctx.Context(), uint(id))
 	if err != nil {
 		return ctx.JSON(fiber.Map{
 			"status":  "error",

@@ -87,7 +87,6 @@ func GetApp(c *fiber.Ctx) error {
 	}
 	if err := database.DB.
 		Where("NOT is_archived").
-		Where("namespace_id = ?", ns.ID).
 		First(&app).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -131,7 +130,6 @@ func UpdateApp(c *fiber.Ctx) error {
 	}
 	if err := database.DB.
 		Where("NOT is_archived").
-		Where("namespace_id = ?", ns.ID).
 		First(&app).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -177,7 +175,6 @@ func DeleteApp(c *fiber.Ctx) error {
 	if err := database.DB.
 		Select("ID").
 		Where("NOT is_archived").
-		Where("namespace_id = ?", ns.ID).
 		First(&app).
 		Error; err != nil {
 		if err == gorm.ErrRecordNotFound {

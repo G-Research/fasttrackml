@@ -76,5 +76,6 @@ services:
       MINIO_ROOT_USER: user
       MINIO_ROOT_PASSWORD: password
       MINIO_CONSOLE_ADDRESS: ":9001"
-    command: server /data
+    entrypoint: sh
+    command: -c 'mkdir -p /data/{bucket1,bucket2,bucket3} && exec minio server /data'
     network_mode: service:db

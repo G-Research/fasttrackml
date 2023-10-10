@@ -24,7 +24,7 @@ You can filter the metrics using the following metric attributes:
 | Property    | Type |
 | -------- | ------- |
 | ```name```  | ```string```|
-| ```last``` | ``numeric```|
+| ```last``` | ```numeric```|
 | ```last_step``` | ```numeric```|
 | ```first_step``` | ```numeric```|
 

@@ -748,6 +748,8 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 				tt.request,
 			).WithResponse(
 				resp,
+			).WithResponseType(
+				helpers.ResponseTypeStream,
 			).DoRequest(
 				"/runs/search/metric/align/",
 			))

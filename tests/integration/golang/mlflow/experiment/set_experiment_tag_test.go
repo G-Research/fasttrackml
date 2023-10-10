@@ -89,8 +89,6 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 			http.MethodPost,
 		).WithRequest(
 			req,
-		).WithResponse(
-			&struct{}{},
 		).DoRequest(
 			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
 		),
@@ -116,8 +114,6 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 			http.MethodPost,
 		).WithRequest(
 			req,
-		).WithResponse(
-			&struct{}{},
 		).DoRequest(
 			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
 		),
@@ -152,8 +148,6 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 			http.MethodPost,
 		).WithRequest(
 			req,
-		).WithResponse(
-			&struct{}{},
 		).DoRequest(
 			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
 		),

@@ -37,7 +37,7 @@ For the ```string``` attributes you can use the following comparing operator:
 - ``` .endswith() ```
 
 ### Numeric operations
-For the numeric attributes you can use the following comparing operator:
+For the ```numeric``` attributes you can use the following comparing operator:
 - ``` == ```
 - ``` != ```
 - ``` > ```
@@ -46,7 +46,7 @@ For the numeric attributes you can use the following comparing operator:
 - ``` <= ```
 
 ### Boolean operations
-For the boolean attributes you can use the following comparing operator:
+For the ```boolean``` attributes you can use the following comparing operator:
 - ``` == ```
 - ``` != ```
 

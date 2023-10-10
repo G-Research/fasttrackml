@@ -45,9 +45,9 @@ func (r Router) Init(fr fiber.Router) {
 	namespaces.Get("/", r.controller.GetNamespaces)
 	namespaces.Post("/", r.controller.CreateNamespace)
 	namespaces.Get("/new", r.controller.NewNamespace)
-	namespaces.Get("/:id/", r.controller.GetNamespace)
-	namespaces.Put("/:id/", r.controller.UpdateNamespace)
-	namespaces.Delete("/:id/", r.controller.DeleteNamespace)
+	namespaces.Get("/:id<int>/", r.controller.GetNamespace)
+	namespaces.Put("/:id<int>/", r.controller.UpdateNamespace)
+	namespaces.Delete("/:id<int>/", r.controller.DeleteNamespace)
 
 	// default route
 	app.Use("/", etag.New(), filesystem.New(filesystem.Config{

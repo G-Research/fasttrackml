@@ -173,18 +173,19 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	}
 
 	metrics := make(map[string]struct {
-		values []float64
+		values []*float64
 		iters  []int
 	}, len(metricKeys))
 	for _, m := range r.Metrics {
 		k := metrics[m.Key]
 
 		v := m.Value
+		pv := &v
 		if m.IsNan {
-			v = math.NaN()
+			pv = nil
 		}
 
-		k.values = append(k.values, v)
+		k.values = append(k.values, pv)
 		k.iters = append(k.iters, int(m.Iter))
 		metrics[m.Key] = k
 	}

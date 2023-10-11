@@ -98,13 +98,22 @@ func (s *UpdateRunTestSuite) Test_Error() {
 	}()
 	tests := []struct {
 		name        string
+		id          string
 		requestBody any
+		error       string
 	}{
 		{
 			name: "UpdateRunWithIncorrectArchived",
+			id:   s.run.ID,
 			requestBody: map[string]any{
 				"Archived": "this-cannot-unmarshal",
 			},
+			error: "cannot unmarshal",
+		},
+		{
+			name:  "UpdateRunWithIncorrectID",
+			id:    "incorrect-ID",
+			error: "unable to find run 'incorrect-ID'",
 		},
 	}
 	for _, tt := range tests {
@@ -119,10 +128,11 @@ func (s *UpdateRunTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					"/runs/%s", s.run.ID,
+					"/runs/%s", tt.ID,
 				),
 			)
-			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
+			assert.Nil(s.T(), err)
+			assert.Contains(s.T(), resp.Message, tt.error)
 		})
 	}
 }

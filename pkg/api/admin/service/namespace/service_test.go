@@ -188,7 +188,7 @@ func TestService_DeleteNamespace_Error(t *testing.T) {
 
 	// compare results.
 	assert.NotNil(t, err)
-	assert.Equal(t, "error finding namespace by id: 0", err.Error())
+	assert.Equal(t, "namespace not found by id: 0", err.Error())
 }
 
 func TestService_UpdateNamespace_Ok(t *testing.T) {
@@ -231,5 +231,5 @@ func TestService_UpdateNamespace_Error(t *testing.T) {
 
 	// compare results.
 	assert.NotNil(t, err)
-	assert.Equal(t, "error finding namespace by id: 1", err.Error())
+	assert.Equal(t, "namespace not found by id: 1", err.Error())
 }

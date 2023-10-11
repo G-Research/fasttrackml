@@ -158,7 +158,7 @@ run.archived != True
 
 ### Run parameters
 Run parameters could be accessed via attributes.
-![FastTrackML Run List, param filter](images/runs_param_filter.png)
+![FastTrackML Run List, param filter](images/search_runs_param_filter.png)
 
 ### Filtering Runs with Unset Attributes
 
@@ -170,20 +170,20 @@ run.attribute is None
 This expression will return runs for which the specified attribute is not defined.
 
 Showing all the runs
-![FastTrackML Run List](images/runs.png)
+![FastTrackML Run List](images/search_runs.png)
 
 Showing only the runs where param1 is not set
-![FastTrackML Run List of not set param](images/runs_none_param.png)
+![FastTrackML Run List of not set param](images/search_runs_none_param.png)
 
 ### Filter Runs using Regular Expressions
 - ``` .match() ```
 - ``` .search() ```
 
 Match finds an exact match at the beginning of a string.
-![FastTrackML Run filter using regular expression match](images/runs_regular_expression_match.png)
+![FastTrackML Run filter using regular expression match](images/search_runs_regular_expression_match.png)
 
 Search looks for a pattern anywhere in the string.
-![FastTrackML Run filter using regular expression match](images/runs_regular_expression_search.png)
+![FastTrackML Run filter using regular expression match](images/search_runs_regular_expression_search.png)
 
 ### Complex query for run search
 The query selects the runs that meet the following conditions:
@@ -265,7 +265,7 @@ You can also filter the metrics by combining  metric attributes with run attribu
 
 Showing the metrics with the last value greater than 6 belonging to a run with the name that starts with marvelous.
 
-![FastTrackML Metric List filter by metric and run attributes](images/metrics_filter_by_run.png)
+![FastTrackML Metric List filter by metric and run attributes](images/search_metrics_filter_by_run.png)
 
 ### Complex query for metric search
 The query selects the metrics that meet the following conditions:

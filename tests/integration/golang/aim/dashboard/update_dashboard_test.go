@@ -147,21 +147,21 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
 
 	tests := []struct {
 		name        string
-		id          uuid.UUID
+		ID          uuid.UUID
 		requestBody map[string]interface{}
 		error       string
 	}{
 		{
 			name: "UpdateDashboardWithIncorrectDescriptionType",
-			id:   dashboard.ID,
+			ID:   dashboard.ID,
 			requestBody: map[string]interface{}{
 				"Description": map[string]interface{}{"Description": "latest-description"},
 			},
 			error: "cannot unmarshal",
 		},
 		{
-			name:  "UpdateDashboardWithIncorrectID",
-			id:    uuid.New(),
+			name:  "UpdateDashboardWithUnknownID",
+			ID:    uuid.New(),
 			error: "Not Found",
 		},
 	}

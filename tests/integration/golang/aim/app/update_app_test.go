@@ -116,21 +116,21 @@ func (s *UpdateAppTestSuite) Test_Error() {
 
 	tests := []struct {
 		name        string
-		id          uuid.UUID
+		ID          uuid.UUID
 		requestBody any
 		error       string
 	}{
 		{
 			name: "UpdateAppWithIncorrectState",
-			id:   app.ID,
+			ID:   app.ID,
 			requestBody: map[string]any{
 				"State": "this-cannot-unmarshal",
 			},
 			error: "cannot unmarshal",
 		},
 		{
-			name:  "UpdateAppWithIncorrectAppID",
-			id:    uuid.New(),
+			name:  "UpdateAppWithUnknownID",
+			ID:    uuid.New(),
 			error: "Not Found",
 		},
 	}

@@ -98,21 +98,21 @@ func (s *UpdateRunTestSuite) Test_Error() {
 	}()
 	tests := []struct {
 		name        string
-		id          string
+		ID          string
 		requestBody any
 		error       string
 	}{
 		{
 			name: "UpdateRunWithIncorrectArchived",
-			id:   s.run.ID,
+			ID:   s.run.ID,
 			requestBody: map[string]any{
 				"Archived": "this-cannot-unmarshal",
 			},
 			error: "cannot unmarshal",
 		},
 		{
-			name:  "UpdateRunWithIncorrectID",
-			id:    "incorrect-ID",
+			name:  "UpdateRunWithUnknownID",
+			ID:    "incorrect-ID",
 			error: "unable to find run 'incorrect-ID'",
 		},
 	}

@@ -116,13 +116,22 @@ func (s *UpdateAppTestSuite) Test_Error() {
 
 	tests := []struct {
 		name        string
-		requestBody any
+		id          uuid.UUID
+		requestBody map[string]any
+		error       string
 	}{
 		{
 			name: "UpdateAppWithIncorrectState",
+			id:   app.ID,
 			requestBody: map[string]any{
 				"State": "this-cannot-unmarshal",
 			},
+			error: "cannot unmarshal",
+		},
+		{
+			name:  "UpdateAppWithIncorrectAppID",
+			id:    uuid.New(),
+			error: "Not Found",
 		},
 	}
 	for _, tt := range tests {
@@ -137,11 +146,11 @@ func (s *UpdateAppTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					"/apps/%s", app.ID,
+					"/apps/%s", tt.ID,
 				),
 			)
 			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
+			assert.Contains(s.T(), resp.Message, tt.error)
 		})
 	}
 }

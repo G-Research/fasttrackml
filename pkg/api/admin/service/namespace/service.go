@@ -75,10 +75,10 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 func (s Service) UpdateNamespace(ctx context.Context, id uint, code, description string) (*models.Namespace, error) {
 	namespace, err := s.namespaceRepository.GetByID(ctx, id)
 	if err != nil {
-		return nil, eris.Wrapf(err, "error finding namespace by id: %v", id)
+		return nil, eris.Wrapf(err, "error finding namespace by id: %d", id)
 	}
 	if namespace == nil {
-		return nil, eris.Errorf("error finding namespace by id: %v", id)
+		return nil, eris.Errorf("namespace not found by id: %d", id)
 	}
 	if err := ValidateNamespace(code); err != nil {
 		return nil, eris.Wrap(err, "error validating namespace code")
@@ -96,10 +96,10 @@ func (s Service) UpdateNamespace(ctx context.Context, id uint, code, description
 func (s Service) DeleteNamespace(ctx context.Context, id uint) error {
 	namespace, err := s.namespaceRepository.GetByID(ctx, id)
 	if err != nil {
-		return eris.Wrapf(err, "error finding namespace by id: %v", id)
+		return eris.Wrapf(err, "error finding namespace by id: %d", id)
 	}
 	if namespace == nil {
-		return eris.Errorf("error finding namespace by id: %v", id)
+		return eris.Errorf("error finding namespace by id: %d", id)
 	}
 	if err := s.namespaceRepository.Delete(ctx, id); err != nil {
 		return eris.Wrap(err, "error deleting namespace")

@@ -8,6 +8,11 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/ui/common"
 )
 
+const (
+	StatusError   = "error"
+	StatusSuccess = "success"
+)
+
 // GetNamespaces renders the list view with no message.
 func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
 	return c.renderIndex(ctx, "")
@@ -48,8 +53,9 @@ func (c Controller) CreateNamespace(ctx *fiber.Ctx) error {
 	_, err := c.namespaceService.CreateNamespace(ctx.Context(), namespace.Code, namespace.Description)
 	if err != nil {
 		return ctx.Render("namespaces/create", fiber.Map{
-			"Namespace":    namespace,
-			"ErrorMessage": common.ErrorMessageForUI("namespace code", err.Error()),
+			"Namespace": namespace,
+			"Status":    StatusError,
+			"Message":   common.ErrorMessageForUI("namespace code", err.Error()),
 		})
 	}
 	return c.renderIndex(ctx, "Successfully added new namespace")
@@ -69,12 +75,12 @@ func (c Controller) UpdateNamespace(ctx *fiber.Ctx) error {
 	_, err = c.namespaceService.UpdateNamespace(ctx.Context(), uint(id), req.Code, req.Description)
 	if err != nil {
 		return ctx.JSON(fiber.Map{
-			"status":  "error",
+			"status":  StatusError,
 			"message": common.ErrorMessageForUI("namespace code", err.Error()),
 		})
 	}
 	return ctx.JSON(fiber.Map{
-		"status":  "success",
+		"status":  StatusSuccess,
 		"message": "Successfully updated namespace.",
 	})
 }
@@ -88,12 +94,12 @@ func (c Controller) DeleteNamespace(ctx *fiber.Ctx) error {
 	err = c.namespaceService.DeleteNamespace(ctx.Context(), uint(id))
 	if err != nil {
 		return ctx.JSON(fiber.Map{
-			"status":  "error",
+			"status":  StatusError,
 			"message": common.ErrorMessageForUI("namespace code", err.Error()),
 		})
 	}
 	return ctx.JSON(fiber.Map{
-		"status":  "success",
+		"status":  StatusSuccess,
 		"message": "Successfully deleted namespace.",
 	})
 }
@@ -103,12 +109,14 @@ func (c Controller) renderIndex(ctx *fiber.Ctx, msg string) error {
 	namespaces, err := c.namespaceService.ListNamespaces(ctx.Context())
 	if err != nil {
 		return ctx.Render("namespaces/index", fiber.Map{
-			"Namespaces":   namespaces,
-			"ErrorMessage": common.ErrorMessageForUI("namespace code", err.Error()),
+			"Namespaces": namespaces,
+			"Status":     StatusError,
+			"Message":    err.Error(),
 		})
 	}
 	return ctx.Render("namespaces/index", fiber.Map{
-		"Namespaces":     namespaces,
-		"SuccessMessage": msg,
+		"Namespaces": namespaces,
+		"Status":     StatusSuccess,
+		"Message":    msg,
 	})
 }

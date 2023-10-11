@@ -5,18 +5,17 @@
     status = urlParams.get('status');
     if (message != null) {
       $('#message').html(message + '<br/><br/>')
-      $('#message').css('color', 'darkgreen');
+      $('#message').addClass('success-message');
     }
     if (status == "error") {
-      $('#message').css('color', 'darkred');
+      $('#message').addClass('error-message');
     }
   });
 </script>
 <div id="message"></div>
-{{ if .ErrorMessage }}
-<p style="color: darkred">{{ .ErrorMessage}}</p>
-{{ end }}
-{{ if .SuccessMessage }}
-<p style="color: darkgreen">{{ .SuccessMessage }}</p>
+{{ if eq .Status "error"}}
+<p class="error-message">{{ .Message }}</p>
+{{ else if eq .Status "success" }}
+<p class="success-message">{{ .Message }}</p>
 {{ end }}
 

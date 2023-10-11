@@ -30,6 +30,14 @@ main {
     text-decoration: none;
 }
 
+.error-message {
+    color: darkred;
+}
+
+.success-message {
+    color: darkgreen;
+}
+
 h1 {
     font-size: 2.5rem;
     margin-bottom: 1rem;

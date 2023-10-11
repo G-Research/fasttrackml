@@ -11,7 +11,7 @@ You can filter the runs using the following run attributes:
 | ```name```         | Run name                                            | ```string```     |
 | ```hash```         | Run hash                                            | ```string```     |
 | ```experiment```   | Experiment name                                     | ```string```     |
-| ```tags```         | List of run tags                                    |```dictionary```  |
+| ```tags```         | List of run tags                                    | ```dictionary``` |
 | ```archived```     | True if run is archived, otherwise False            | ```boolean```    |
 | ```active```       | True if run is active(in progress), otherwise False | ```boolean```    |
 | ```duration```     | Run duration in seconds                             | ```numeric```    |
@@ -21,12 +21,12 @@ You can filter the runs using the following run attributes:
 
 ## Search Metrics
 You can filter the metrics using the following metric attributes:
-| Property         | Type         |
-| ---------------- | ------------ |
-| ```name```       | ```string``` |
-| ```last```       | ```numeric```|
-| ```last_step```  | ```numeric```|
-| ```first_step``` | ```numeric```|
+| Property         | Type          |
+| ---------------- | ------------- |
+| ```name```       | ```string```  |
+| ```last```       | ```numeric``` |
+| ```last_step```  | ```numeric``` |
+| ```first_step``` | ```numeric``` |
 
 ### String operations
 For the ```string``` attributes you can use the following comparing operator:

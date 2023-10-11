@@ -80,12 +80,19 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 	assert.Nil(s.T(), err)
 
 	tests := []struct {
-		name string
-		ID   string
+		name  string
+		ID    string
+		error string
 	}{
 		{
-			name: "GetInvalidExperimentID",
-			ID:   "123",
+			name:  "GetInvalidExperimentID",
+			ID:    "123",
+			error: "Not Found",
+		},
+		{
+			name:  "DeleteIncorrectExperimentID",
+			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`,
+			ID:    "incorrect_experiment_id",
 		},
 	}
 	for _, tt := range tests {
@@ -94,9 +101,9 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 			assert.Nil(s.T(), s.AIMClient.WithQuery(map[any]any{
 				"limit": 4,
 			}).WithResponse(&resp).DoRequest(
-				"/experiments/%s/runs", tt.ID,
+				"/experiments/%s/activity", tt.ID,
 			))
-			assert.Contains(s.T(), resp.Error(), "Not Found")
+			assert.Contains(s.T(), resp.Error(), tt.error)
 		})
 	}
 }

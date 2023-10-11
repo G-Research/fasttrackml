@@ -117,7 +117,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 	tests := []struct {
 		name        string
 		id          uuid.UUID
-		requestBody map[string]any
+		requestBody any
 		error       string
 	}{
 		{

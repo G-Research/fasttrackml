@@ -6,26 +6,26 @@ This document provides an overview of the search syntax that users can utilize t
 
 ## Search Runs
 You can filter the runs using the following run attributes:
-| Property    | Description | Type |
-| -------- | ------- | ------- |
-| ```name```  | Run name | ```string```|
-| ```hash``` | Run hash | ```string```|
-| ```experiment``` | Experiment name | ```string```|
-| ```tags``` | List of run tags |```dictionary```|
-| ```archived``` | True if run is archived, otherwise False | ```boolean```|
-| ```active``` | True if run is active(in progress), otherwise False | ```boolean``` |
-| ```duration``` | Run duration in seconds | ```numeric```|
-| ```created_at``` | Run creation datetime | ```numeric``` |
-| ```finalized_at``` | Run end datetime | ```numeric``` |
-| ```metrics``` | Set of run metrics | ```dictionary``` |
+| Property           | Description                                         | Type             |
+| ------------------ | --------------------------------------------------- | ---------------- |
+| ```name```         | Run name                                            | ```string```     |
+| ```hash```         | Run hash                                            | ```string```     |
+| ```experiment```   | Experiment name                                     | ```string```     |
+| ```tags```         | List of run tags                                    |```dictionary```  |
+| ```archived```     | True if run is archived, otherwise False            | ```boolean```    |
+| ```active```       | True if run is active(in progress), otherwise False | ```boolean```    |
+| ```duration```     | Run duration in seconds                             | ```numeric```    |
+| ```created_at```   | Run creation datetime                               | ```numeric```    |
+| ```finalized_at``` | Run end datetime                                    | ```numeric```    |
+| ```metrics```      | Set of run metrics                                  | ```dictionary``` |
 
 ## Search Metrics
 You can filter the metrics using the following metric attributes:
-| Property    | Type |
-| -------- | ------- |
-| ```name```  | ```string```|
-| ```last``` | ```numeric```|
-| ```last_step``` | ```numeric```|
+| Property         | Type         |
+| ---------------- | ------------ |
+| ```name```       | ```string``` |
+| ```last```       | ```numeric```|
+| ```last_step```  | ```numeric```|
 | ```first_step``` | ```numeric```|
 
 ### String operations

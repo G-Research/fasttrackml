@@ -6,6 +6,7 @@ import (
 
 	"github.com/rotisserie/eris"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 )
@@ -51,18 +52,16 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 		Name:           fmt.Sprintf("%s-exp", code),
 		LifecycleStage: models.LifecycleStageActive,
 	}
-	// placeholder DefaultExperimentID
-	initialDefaultExpID := int32(0)
 	namespace := &models.Namespace{
 		Code:                code,
 		Description:         description,
 		Experiments:         []models.Experiment{*exp},
-		DefaultExperimentID: &initialDefaultExpID,
+		DefaultExperimentID: common.GetPointer(int32(0)),
 	}
 	if err := s.namespaceRepository.Create(ctx, namespace); err != nil {
 		return nil, eris.Wrap(err, "error creating namespace")
 	}
-	// update with true DefaultExperimentID
+	// update Namespace with correct DefaultExperimentID now that it is known
 	namespace.DefaultExperimentID = namespace.Experiments[0].ID
 	err := s.namespaceRepository.Update(ctx, namespace)
 	if err != nil {
@@ -99,7 +98,7 @@ func (s Service) DeleteNamespace(ctx context.Context, id uint) error {
 		return eris.Wrapf(err, "error finding namespace by id: %d", id)
 	}
 	if namespace == nil {
-		return eris.Errorf("error finding namespace by id: %d", id)
+		return eris.Errorf("namespace not found by id: %d", id)
 	}
 	if err := s.namespaceRepository.Delete(ctx, id); err != nil {
 		return eris.Wrap(err, "error deleting namespace")

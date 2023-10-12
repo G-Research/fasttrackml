@@ -1,22 +1,23 @@
 # Search Syntax Documentation
 ## Introduction
+This document serves as a guide to the search syntax that enables users to effectively filter metrics and runs. 
+The syntax follows Python conventions. 
+In the sections that follow, we will delve into the specifics of the supported operations and provide examples.
 
-This document provides an overview of the search syntax that users can utilize to filter metrics and runs.
-
-
-- [Search Runs](#search-runs)
-- [Search Metrics](#search-metrics)
-- [Operations](#operations)
-  - [String operations](#string-operations)
-  - [Numeric operations](#numeric-operations)
-  - [Boolean operations](#boolean-operations)
-  - [Logical operations](#logical-operations)
+  - [Search Runs](#search-runs)
+  - [Search Metrics](#search-metrics)
+  - [Operations](#operations)
+    - [String operations](#string-operations)
+    - [Numeric operations](#numeric-operations)
+    - [Boolean operations](#boolean-operations)
+      - [Implicit Boolean comparison](#implicit-boolean-comparison)
+    - [Logical operations](#logical-operations)
 - [Search run examples](#search-run-examples)
   - [Example with run.name (string)](#example-with-runname-string)
   - [Example with run.duration (numeric)](#example-with-runduration-numeric)
   - [Example with run.archived (boolean)](#example-with-runarchived-boolean)
   - [Run parameters](#run-parameters)
-  - [Filtering Runs with Unset Attributes](#filtering-runs-with-unset-attributes)
+  - [Filtering Runs with Unset Parameters](#filtering-runs-with-unset-parameters)
   - [Filter Runs using Regular Expressions](#filter-runs-using-regular-expressions)
   - [Complex query for run search](#complex-query-for-run-search)
 - [Search metrics examples](#search-metrics-examples)
@@ -27,33 +28,33 @@ This document provides an overview of the search syntax that users can utilize t
 
 
 ## Search Runs
-You can filter the runs using the following run attributes:
-| Property           | Description                                         | Type             |
-| ------------------ | --------------------------------------------------- | ---------------- |
-| ```name```         | Run name                                            | ```string```     |
-| ```hash```         | Run hash                                            | ```string```     |
-| ```experiment```   | Experiment name                                     | ```string```     |
-| ```tags```         | List of run tags                                    | ```dictionary``` |
-| ```archived```     | True if run is archived, otherwise False            | ```boolean```    |
-| ```active```       | True if run is active(in progress), otherwise False | ```boolean```    |
-| ```duration```     | Run duration in seconds                             | ```numeric```    |
-| ```created_at```   | Run creation datetime                               | ```numeric```    |
-| ```finalized_at``` | Run end datetime                                    | ```numeric```    |
-| ```metrics```      | Set of run metrics                                  | ```dictionary``` |
+You can filter the runs using the following attributes associated with the ```run``` object:
+| Property               | Description                                         | Type             |
+| ---------------------- | --------------------------------------------------- | ---------------- |
+| ```run.name```         | Run name                                            | ```string```     |
+| ```run.hash```         | Run hash                                            | ```string```     |
+| ```run.experiment```   | Experiment name                                     | ```string```     |
+| ```run.tags```         | List of run tags                                    | ```dictionary``` |
+| ```run.archived```     | True if run is archived, otherwise False            | ```boolean```    |
+| ```run.active```       | True if run is active(in progress), otherwise False | ```boolean```    |
+| ```run.duration```     | Run duration in seconds                             | ```numeric```    |
+| ```run.created_at```   | Run creation datetime                               | ```numeric```    |
+| ```run.finalized_at``` | Run end datetime                                    | ```numeric```    |
+| ```run.metrics```      | Set of run metrics                                  | ```dictionary``` |
 
 ## Search Metrics
-You can filter the metrics using the following metric attributes:
-| Property         | Type          |
-| ---------------- | ------------- |
-| ```name```       | ```string```  |
-| ```last```       | ```numeric``` |
-| ```last_step```  | ```numeric``` |
-| ```first_step``` | ```numeric``` |
+You can filter the metrics using the following metric attributes associated with the ```metric``` object:
+| Property                | Type          |
+| ----------------------- | ------------- |
+| ```metric.name```       | ```string```  |
+| ```metric.last```       | ```numeric``` |
+| ```metric.last_step```  | ```numeric``` |
+| ```metric.first_step``` | ```numeric``` |
 
 ## Operations
 
 ### String operations
-For the ```string``` attributes you can use the following comparing operator:
+For the ```string``` attributes you can use the following comparison operator:
 - ``` == ```
 - ``` != ```
 - ``` in ```
@@ -61,7 +62,7 @@ For the ```string``` attributes you can use the following comparing operator:
 - ``` .endswith() ```
 
 ### Numeric operations
-For the ```numeric``` attributes you can use the following comparing operator:
+For the ```numeric``` attributes you can use the following comparison operator:
 - ``` == ```
 - ``` != ```
 - ``` > ```
@@ -70,10 +71,21 @@ For the ```numeric``` attributes you can use the following comparing operator:
 - ``` <= ```
 
 ### Boolean operations
-For the ```boolean``` attributes you can use the following comparing operator:
+For the ```boolean``` attributes you can use the following comparison operator:
 - ``` == ```
 - ``` != ```
 
+#### Implicit Boolean comparison
+You can also use boolean attributes directly in a conditional statement without any comparison operator. 
+Equivalent to comparing the attribute to True.
+
+```python
+run.archived  # Checks if run.archived is equal to True
+```
+Equivalent to comparing the attribute to False.
+```python
+not run.archived  # Checks if run.archived is equal to False
+```
 ### Logical operations
 You can create complex search queries combining multiple conditions with logical operators.
 - ``` and ```
@@ -113,36 +125,36 @@ run.name.endswith('Run1')
 
 ### Example with ```run.duration``` (numeric)
 
-Select only the runs where the duration is exactly 111111111
+Select only the runs where the duration is exactly 60
 
 ```python
-run.duration == 111111111
+run.duration == 60
 ```
 
 
-Select only the runs where the duration is not 111111111
+Select only the runs where the duration is not 60
 ```python
-run.duration != 111111111
+run.duration != 60
 ```
 
-Select only the runs where the duration is greater than 111111111
+Select only the runs where the duration is greater than 60
 ```python
-run.duration > 111111111
+run.duration > 60
 ```
 
-Select only the runs where the duration is greater or equal to 111111111
+Select only the runs where the duration is greater or equal to 60
 ```python
-run.duration >= 111111111
+run.duration >= 60
 ```
 
-Select only the runs where the duration is less than 111111111
+Select only the runs where the duration is less than 60
 ```python
-run.duration < 111111111
+run.duration < 60
 ```
 
-Select only the runs where the duration is less or equal to 111111111
+Select only the runs where the duration is less or equal to 60
 ```python
-run.duration <= 111111111
+run.duration <= 60
 ```
 
 ### Example with ```run.archived``` (boolean)
@@ -157,10 +169,10 @@ run.archived != True
 ```
 
 ### Run parameters
-Run parameters could be accessed via attributes.
+Run parameters can be accessed via parameters.
 ![FastTrackML Run List, param filter](images/search_runs_param_filter.png)
 
-### Filtering Runs with Unset Attributes
+### Filtering Runs with Unset Parameters
 
 To filter runs based on whether an attribute is not set, you can use the following syntax:
 
@@ -176,8 +188,8 @@ Showing only the runs where param1 is not set
 ![FastTrackML Run List of not set param](images/search_runs_none_param.png)
 
 ### Filter Runs using Regular Expressions
-- ``` .match() ```
-- ``` .search() ```
+- ``` re.match() ```
+- ``` re.search() ```
 
 Match finds an exact match at the beginning of a string.
 ![FastTrackML Run filter using regular expression match](images/search_runs_regular_expression_match.png)
@@ -191,7 +203,7 @@ The query selects the runs that meet the following conditions:
 
 - run.archived can be either True or False.
 - The duration of run must be greater than 0.
-- The run has to contain a metric named 'TestMetric' and is value of last  must be greater than 2.5.
+- The run has to contain a metric named 'TestMetric' and its last recorded value must be greater than 2.5.
 - The name of run should not end with '4'.
   
 ```python

@@ -39,6 +39,7 @@ module.exports = async function configCreatorAsync() {
         customFields: {
             email: 'fasttrackml@gr-oss.io',
             newIssueUrl: 'https://github.com/G-Research/fasttrackml/issues/new',
+            slackInviteUrl: 'https://join.slack.com/t/mlops-community/shared_invite/zt-23zxny538-tiMmR~BzXByKHz1rBxCrqQ',
         },
 
         presets: [

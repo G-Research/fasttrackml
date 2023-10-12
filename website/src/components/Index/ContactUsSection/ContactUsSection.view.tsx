@@ -2,7 +2,7 @@ import React from 'react';
 import clsx from 'clsx';
 import {useForm, SubmitHandler} from "react-hook-form";
 import styles from './ContactUsSection.module.css';
-import {openNewIssue, openNewEmail} from "@site/src/core/utils";
+import {openNewIssue, openNewEmail, openInNewTab} from "@site/src/core/utils";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
 
@@ -31,6 +31,7 @@ export default function ContactUsSection(): React.JSX.Element {
     } = useDocusaurusContext();
     const email = customFields?.email;
     const newIssueUrl = customFields?.newIssueUrl;
+    const slackInviteUrl = customFields?.slackInviteUrl;
 
     const onUsingGitHub: SubmitHandler<Inputs> = data => {
         openNewIssue(newIssueUrl as string, data.subject, getMessage(data.name, data.company, data.message));
@@ -38,6 +39,10 @@ export default function ContactUsSection(): React.JSX.Element {
 
     const onSendEmail: SubmitHandler<Inputs> = data => {
         openNewEmail(email as string, data.subject, getMessage(data.name, data.company, data.message));
+    };
+
+    const onJoinSlack: SubmitHandler<Inputs> = data => {
+        openInNewTab(slackInviteUrl as string)
     };
 
     return <section>
@@ -91,6 +96,11 @@ export default function ContactUsSection(): React.JSX.Element {
                                 title={newIssueUrl as string}
                                 disabled={!isValid}>
                             💬 Using GitHub
+                        </button>
+                        <button type="submit" className="button button--primary button--lg"
+                                title={slackInviteUrl as string}
+                                disabled={!isValid} onClick={handleSubmit(onJoinSlack)}>
+                            💬 On Slack
                         </button>
                     </div>
                 </div>

@@ -1,8 +1,8 @@
 # Search Syntax Documentation
 ## Introduction
 This document serves as a guide to the search syntax that enables users to effectively filter metrics and runs. 
-The syntax follows Python conventions. 
-In the sections that follow, we will delve into the specifics of the supported operations and provide examples.
+
+The syntax follows Python conventions, in the sections that follow, we will delve into the specifics of the supported operations and provide examples.
 
   - [Search Runs](#search-runs)
   - [Search Metrics](#search-metrics)
@@ -77,6 +77,7 @@ For the ```boolean``` attributes you can use the following comparison operator:
 
 #### Implicit Boolean comparison
 You can also use boolean attributes directly in a conditional statement without any comparison operator. 
+
 Equivalent to comparing the attribute to True.
 
 ```python

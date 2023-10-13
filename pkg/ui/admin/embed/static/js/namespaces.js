@@ -50,7 +50,22 @@ function deleteNamespace(id) {
 }
 
 function handleResponse(data, jqxhr, status) {
-  redirectTo('/admin/namespaces/'
-       + `?message=${encodeURIComponent(data["message"])}`
-       + `&status=${data["status"]}`);
+  if (data['status'] == 'success'){
+    redirectTo('/admin/namespaces/'
+        + `?message=${encodeURIComponent(data["message"])}`
+        + `&status=success`);
+  }
+  else {
+    showErrorMessage(data['message']);
+  }
+}
+
+function showSuccessMessage(msg) {
+  $('#message').html(msg + '<br/><br/>')
+  $('#message').addClass('success-message');
+}
+
+function showErrorMessage(msg) {
+  $('#message').html(msg + '<br/><br/>')
+  $('#message').addClass('error-message');
 }

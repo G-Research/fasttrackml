@@ -3,12 +3,11 @@
     urlParams = new URLSearchParams(window.location.search);
     message = urlParams.get('message');
     status = urlParams.get('status');
-    if (message != null) {
-      $('#message').html(message + '<br/><br/>')
-      $('#message').addClass('success-message');
+    if (status == "success") {
+      showSuccessMessage(message)
     }
     if (status == "error") {
-      $('#message').addClass('error-message');
+      showErrorMessage(message)
     }
   });
 </script>

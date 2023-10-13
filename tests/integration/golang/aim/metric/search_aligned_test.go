@@ -749,7 +749,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 			).WithResponse(
 				resp,
 			).WithResponseType(
-				helpers.ResponseTypeStream,
+				helpers.ResponseTypeBuffer,
 			).DoRequest(
 				"/runs/search/metric/align/",
 			))

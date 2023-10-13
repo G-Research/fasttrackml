@@ -87,7 +87,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			assert.Nil(
 				s.T(),
 				s.AIMClient.WithResponseType(
-					helpers.ResponseTypeStream,
+					helpers.ResponseTypeBuffer,
 				).WithResponse(
 					resp,
 				).DoRequest("/runs/active"),

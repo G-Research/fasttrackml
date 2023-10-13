@@ -122,7 +122,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			assert.Nil(s.T(), s.MlflowClient.WithQuery(
 				query,
 			).WithResponseType(
-				helpers.ResponseTypeStream,
+				helpers.ResponseTypeBuffer,
 			).WithResponse(
 				resp,
 			).DoRequest(
@@ -140,7 +140,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			assert.Nil(s.T(), s.MlflowClient.WithQuery(
 				query,
 			).WithResponseType(
-				helpers.ResponseTypeStream,
+				helpers.ResponseTypeBuffer,
 			).WithResponse(
 				resp,
 			).DoRequest(

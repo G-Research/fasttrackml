@@ -122,7 +122,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 				).WithRequest(
 					tt.request,
 				).WithResponseType(
-					helpers.ResponseTypeStream,
+					helpers.ResponseTypeBuffer,
 				).WithResponse(
 					resp,
 				).DoRequest(

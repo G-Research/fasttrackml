@@ -108,7 +108,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			assert.Nil(s.T(), s.MlflowClient.WithQuery(
 				rootFileQuery,
 			).WithResponseType(
-				helpers.ResponseTypeStream,
+				helpers.ResponseTypeBuffer,
 			).WithResponse(
 				resp,
 			).DoRequest(
@@ -126,7 +126,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			assert.Nil(s.T(), s.MlflowClient.WithQuery(
 				subDirQuery,
 			).WithResponseType(
-				helpers.ResponseTypeStream,
+				helpers.ResponseTypeBuffer,
 			).WithResponse(
 				resp,
 			).DoRequest(

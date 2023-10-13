@@ -748,7 +748,7 @@ func (s *SearchTestSuite) Test_Ok() {
 			assert.Nil(
 				s.T(),
 				s.AIMClient.WithResponseType(
-					helpers.ResponseTypeStream,
+					helpers.ResponseTypeBuffer,
 				).WithQuery(map[any]any{
 					"q": tt.request.Query,
 				}).WithResponse(

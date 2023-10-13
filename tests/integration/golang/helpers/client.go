@@ -18,9 +18,10 @@ import (
 type ResponseType string
 
 // Supported list of  HTTP response types.
+// TODO:dsuhinin - add another type `stream`. For this type return `io.ReadCloser`.
 const (
 	ResponseTypeJSON   ResponseType = "json"
-	ResponseTypeStream ResponseType = "stream"
+	ResponseTypeBuffer ResponseType = "buffer"
 )
 
 // HttpClient represents HTTP client.
@@ -164,16 +165,18 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 			if err != nil {
 				return eris.Wrap(err, "error reading response data")
 			}
+			//nolint:errcheck
 			defer resp.Body.Close()
 			if err := json.Unmarshal(body, c.response); err != nil {
 				return eris.Wrap(err, "error unmarshaling response data")
 			}
-		case ResponseTypeStream:
+		case ResponseTypeBuffer:
 			buffer, ok := c.response.(io.Writer)
 			if !ok {
 				return eris.New("response object has no implementation of a io.Writer")
 			}
 			_, err := io.Copy(buffer, resp.Body)
+			//nolint:errcheck
 			defer resp.Body.Close()
 			if err != nil {
 				return eris.Wrap(err, "error reading streaming response")

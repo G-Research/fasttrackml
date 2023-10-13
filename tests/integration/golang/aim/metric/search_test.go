@@ -5889,7 +5889,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				s.AIMClient.WithQuery(
 					tt.request,
 				).WithResponseType(
-					helpers.ResponseTypeStream,
+					helpers.ResponseTypeBuffer,
 				).WithResponse(
 					resp,
 				).DoRequest("/runs/search/metric"),

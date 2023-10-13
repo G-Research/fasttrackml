@@ -114,7 +114,8 @@ func (s *CreateRunTestSuite) Test_Error() {
 				ExperimentID: "invalid_experiment_id",
 			},
 			error: api.NewBadRequestError(
-				`unable to parse experiment id 'invalid_experiment_id': strconv.ParseInt: parsing "invalid_experiment_id": invalid syntax`,
+				`unable to parse experiment id 'invalid_experiment_id': strconv.ParseInt: ` +
+					`parsing "invalid_experiment_id": invalid syntax`,
 			),
 		},
 		{

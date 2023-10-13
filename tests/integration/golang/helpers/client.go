@@ -103,6 +103,7 @@ func (c HttpClient) DoStreamRequest(method, uri string, request interface{}) ([]
 	}
 
 	body, err := io.ReadAll(resp.Body)
+	//nolint:errcheck
 	defer resp.Body.Close()
 	if err != nil {
 		return nil, eris.Wrap(err, "error reading streaming response")
@@ -145,6 +146,7 @@ func (c HttpClient) doRequest(httpMethod string, uri string, response interface{
 	if err != nil {
 		return eris.Wrap(err, "error reading response data")
 	}
+	//nolint:errcheck
 	defer resp.Body.Close()
 	if err := json.Unmarshal(body, response); err != nil {
 		return eris.Wrap(err, "error unmarshaling response data")

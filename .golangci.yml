@@ -45,6 +45,11 @@ output:
 
   # all available settings of specific linters
 linters-settings:
+  exhaustive:
+    # Presence of "default" case in switch statements satisfies exhaustiveness,
+    # even if all enum members are not listed.
+    # Default: false
+    default-signifies-exhaustive: true
   errcheck:
     # report about not checking of errors in type assetions: `a := b.(MyStruct)`;
     # default is false: such cases aren't reported by default.
@@ -139,7 +144,7 @@ issues:
   # it can be disabled by `exclude-use-default: false`. To creators all
   # excluded by default patterns execute `golangci-lint run --help`
   exclude:
-    - abcdef
+    - declaration of "err" shadows declaration at line
 
   # Independently from option `exclude` we use default exclude patterns,
   # it can be disabled by this option. To creators all

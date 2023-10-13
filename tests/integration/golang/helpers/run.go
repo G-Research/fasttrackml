@@ -6,7 +6,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-// TransformRunsToActivityMap transform a slice of runs into a map of experiments activity to match the GetExperimentsActivity endpoint response.
+// TransformRunsToActivityMap transform a slice of runs into a map of
+// experiments activity to match the GetExperimentsActivity endpoint response.
 func TransformRunsToActivityMap(runs []*models.Run) map[string]int {
 	activity := map[string]int{}
 	for _, r := range runs {

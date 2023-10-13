@@ -90,9 +90,10 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 			error: "Not Found",
 		},
 		{
-			name:  "DeleteIncorrectExperimentID",
-			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`,
-			ID:    "incorrect_experiment_id",
+			name: "DeleteIncorrectExperimentID",
+			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt:` +
+				` parsing "incorrect_experiment_id": invalid syntax`,
+			ID: "incorrect_experiment_id",
 		},
 	}
 	for _, tt := range tests {

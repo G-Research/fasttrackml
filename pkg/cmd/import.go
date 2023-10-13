@@ -25,7 +25,9 @@ func importCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck
 	defer inputDB.Close()
+	//nolint:errcheck
 	defer outputDB.Close()
 
 	importer := database.NewImporter(inputDB.GormDB(), outputDB.GormDB())
@@ -59,11 +61,16 @@ func initDBs() (input, output database.DBProvider, err error) {
 	return
 }
 
+// nolint:errcheck,gosec
 func init() {
 	RootCmd.AddCommand(ImportCmd)
 
-	ImportCmd.Flags().StringP("input-database-uri", "i", "", "Input Database URI (eg., sqlite://fasttrackml.db)")
-	ImportCmd.Flags().StringP("output-database-uri", "o", "", "Output Database URI (eg., postgres://user:psw@postgres:5432)")
+	ImportCmd.Flags().StringP(
+		"input-database-uri", "i", "", "Input Database URI (eg., sqlite://fasttrackml.db)",
+	)
+	ImportCmd.Flags().StringP(
+		"output-database-uri", "o", "", "Output Database URI (eg., postgres://user:psw@postgres:5432)",
+	)
 	ImportCmd.Flags().StringP("default-artifact-root", "a", "./artifacts", "Artifact Root")
 	ImportCmd.MarkFlagRequired("input-database-uri")
 	ImportCmd.MarkFlagRequired("output-database-uri")

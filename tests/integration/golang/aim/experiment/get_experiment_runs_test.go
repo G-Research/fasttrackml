@@ -4,7 +4,6 @@ package experiment
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -54,11 +53,15 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperimentRuns
-	err = s.AIMClient.DoGetRequest(
-		fmt.Sprintf("/experiments/%d/runs?limit=4&offset=%s", *experiment.ID, runs[8].ID),
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.AIMClient.WithQuery(map[any]any{
+			"limit":  4,
+			"offset": runs[8].ID,
+		}).WithResponse(&resp).DoRequest(
+			"/experiments/%d/runs", *experiment.ID,
+		),
 	)
-	assert.Nil(s.T(), err)
 
 	assert.Equal(s.T(), 4, len(resp.Runs))
 	for index := 0; index < len(resp.Runs); index++ {
@@ -89,9 +92,10 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 		ID    string
 	}{
 		{
-			name:  "IncorrectExperimentID",
-			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`,
-			ID:    "incorrect_experiment_id",
+			name: "IncorrectExperimentID",
+			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt: ` +
+				`parsing "incorrect_experiment_id": invalid syntax`,
+			ID: "incorrect_experiment_id",
 		},
 		{
 			name:  "NotFoundExperiment",
@@ -103,13 +107,7 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			var resp api.ErrorResponse
-			err := s.AIMClient.DoGetRequest(
-				fmt.Sprintf(
-					"/experiments/%s/runs", tt.ID,
-				),
-				&resp,
-			)
-			assert.Nil(t, err)
+			assert.Nil(t, s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%s/runs", tt.ID))
 			assert.Equal(s.T(), tt.error, resp.Error())
 		})
 	}

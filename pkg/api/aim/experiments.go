@@ -290,7 +290,9 @@ func DeleteExperiment(c *fiber.Ctx) error {
 	}
 	id, err := strconv.ParseInt(params.ID, 10, 32)
 	if err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("unable to parse experiment id %q: %s", params.ID, err))
+		return fiber.NewError(
+			fiber.StatusUnprocessableEntity, fmt.Sprintf("unable to parse experiment id %q: %s", params.ID, err),
+		)
 	}
 
 	// validate that requested experiment exists.

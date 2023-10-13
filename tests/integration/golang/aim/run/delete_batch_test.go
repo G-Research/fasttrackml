@@ -4,6 +4,7 @@ package run
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -76,12 +77,16 @@ func (s *DeleteBatchTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			resp := fiber.Map{}
-			err = s.AIMClient.DoPostRequest(
-				"/runs/delete-batch",
-				tt.runIDs,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(http.MethodPost).WithRequest(
+					tt.runIDs,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/runs/delete-batch",
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
 
 			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
@@ -121,12 +126,16 @@ func (s *DeleteBatchTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 
 			var resp api.ErrorResponse
-			err = s.AIMClient.DoPostRequest(
-				"/runs/delete-batch",
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(http.MethodPost).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/runs/delete-batch",
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), resp.Error(), "count of deleted runs does not match length of ids input")
 
 			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)

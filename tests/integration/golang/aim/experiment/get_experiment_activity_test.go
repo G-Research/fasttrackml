@@ -4,7 +4,6 @@ package experiment
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -58,8 +57,10 @@ func (s *GetExperimentActivityTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	var resp response.GetExperimentActivity
-	err = s.AIMClient.DoGetRequest(fmt.Sprintf("/experiments/%d/activity", *experiment.ID), &resp)
-	assert.Nil(s.T(), err)
+	assert.Nil(
+		s.T(),
+		s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%d/activity", *experiment.ID),
+	)
 	assert.Equal(s.T(), resp.NumRuns, len(runs))
 	assert.Equal(s.T(), resp.NumArchivedRuns, len(archivedRunsIds))
 	assert.Equal(s.T(), resp.NumActiveRuns, len(runs)-len(archivedRunsIds))
@@ -90,13 +91,11 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp api.ErrorResponse
-			err := s.AIMClient.DoGetRequest(
-				fmt.Sprintf(
-					"/experiments/%s/runs?limit=4", tt.ID,
-				),
-				&resp,
-			)
-			assert.Nil(s.T(), err)
+			assert.Nil(s.T(), s.AIMClient.WithQuery(map[any]any{
+				"limit": 4,
+			}).WithResponse(&resp).DoRequest(
+				"/experiments/%s/runs", tt.ID,
+			))
 			assert.Contains(s.T(), resp.Error(), "Not Found")
 		})
 	}

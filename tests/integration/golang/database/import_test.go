@@ -238,9 +238,13 @@ func validateRowCounts(t *testing.T, db *gorm.DB, counts rowCounts) {
 func validateTable(t *testing.T, source, dest *gorm.DB, table string) {
 	sourceRows, err := source.Table(table).Rows()
 	assert.Nil(t, err)
+	assert.Nil(t, sourceRows.Err())
 	destRows, err := dest.Table(table).Rows()
 	assert.Nil(t, err)
+	assert.Nil(t, destRows.Err())
+	//nolint:errcheck
 	defer sourceRows.Close()
+	//nolint:errcheck
 	defer destRows.Close()
 
 	for sourceRows.Next() {

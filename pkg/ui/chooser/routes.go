@@ -30,6 +30,7 @@ func NewRouter(controller *controller.Controller) *Router {
 
 // AddRoutes adds all the `chooser` routes
 func (r Router) AddRoutes(fr fiber.Router) {
+	//nolint:errcheck
 	sub, _ := fs.Sub(content, "embed")
 
 	fr.Use("/static/chooser/", etag.New(), filesystem.New(filesystem.Config{

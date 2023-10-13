@@ -5,6 +5,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
@@ -53,27 +54,35 @@ func (s *CreateRunTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	resp := response.CreateRunResponse{}
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
-		request.CreateRunRequest{
-			Name: "TestRun",
-			Tags: []request.RunTagPartialRequest{
-				{
-					Key:   "key1",
-					Value: "value1",
-				},
-				{
-					Key:   "key2",
-					Value: "value2",
-				},
+	req := request.CreateRunRequest{
+		Name: "TestRun",
+		Tags: []request.RunTagPartialRequest{
+			{
+				Key:   "key1",
+				Value: "value1",
 			},
-			StartTime:    1234567890,
-			ExperimentID: fmt.Sprintf("%d", *experiment.ID),
+			{
+				Key:   "key2",
+				Value: "value2",
+			},
 		},
-		&resp,
+		StartTime:    1234567890,
+		ExperimentID: fmt.Sprintf("%d", *experiment.ID),
+	}
+
+	resp := response.CreateRunResponse{}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
 	assert.NotEmpty(s.T(), resp.Run.Info.ID)
 	assert.NotEmpty(s.T(), resp.Run.Info.UUID)
 	assert.Equal(s.T(), "TestRun", resp.Run.Info.Name)
@@ -114,7 +123,8 @@ func (s *CreateRunTestSuite) Test_Error() {
 				ExperimentID: "invalid_experiment_id",
 			},
 			error: api.NewBadRequestError(
-				`unable to parse experiment id 'invalid_experiment_id': strconv.ParseInt: parsing "invalid_experiment_id": invalid syntax`,
+				`unable to parse experiment id 'invalid_experiment_id': strconv.ParseInt: ` +
+					`parsing "invalid_experiment_id": invalid syntax`,
 			),
 		},
 		{
@@ -130,12 +140,18 @@ func (s *CreateRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

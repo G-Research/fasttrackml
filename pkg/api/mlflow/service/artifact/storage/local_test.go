@@ -28,6 +28,7 @@ func TestGetArtifact_Ok(t *testing.T) {
 
 	file, err := storage.Get(context.Background(), runArtifactRoot, fileName)
 	assert.Nil(t, err)
+	//nolint:errcheck
 	defer file.Close()
 
 	// verify

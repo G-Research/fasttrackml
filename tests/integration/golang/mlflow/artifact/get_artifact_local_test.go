@@ -3,17 +3,16 @@
 package artifact
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -100,34 +99,40 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			// 4. make actual API call for root dir file
-			rootFileQuery, err := urlquery.Marshal(request.GetArtifactRequest{
+			rootFileQuery := request.GetArtifactRequest{
 				RunID: run.ID,
 				Path:  "artifact.file1",
-			})
-			assert.Nil(s.T(), err)
+			}
 
-			resp, err := s.MlflowClient.DoStreamRequest(
-				http.MethodGet,
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, rootFileQuery),
-				nil,
-			)
-			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "contentX", string(resp))
+			resp := new(bytes.Buffer)
+			assert.Nil(s.T(), s.MlflowClient.WithQuery(
+				rootFileQuery,
+			).WithResponseType(
+				helpers.ResponseTypeBuffer,
+			).WithResponse(
+				resp,
+			).DoRequest(
+				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+			))
+			assert.Equal(s.T(), "contentX", resp.String())
 
 			// 5. make actual API call for sub dir file
-			subDirQuery, err := urlquery.Marshal(request.GetArtifactRequest{
+			subDirQuery := request.GetArtifactRequest{
 				RunID: run.ID,
 				Path:  "artifact.dir/artifact.file2",
-			})
-			assert.Nil(s.T(), err)
+			}
 
-			resp, err = s.MlflowClient.DoStreamRequest(
-				http.MethodGet,
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, subDirQuery),
-				nil,
-			)
-			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), "contentXX", string(resp))
+			resp = new(bytes.Buffer)
+			assert.Nil(s.T(), s.MlflowClient.WithQuery(
+				subDirQuery,
+			).WithResponseType(
+				helpers.ResponseTypeBuffer,
+			).WithResponse(
+				resp,
+			).DoRequest(
+				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+			))
+			assert.Equal(s.T(), "contentXX", resp.String())
 		})
 	}
 }
@@ -173,17 +178,17 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
-		request *request.GetArtifactRequest
+		request request.GetArtifactRequest
 	}{
 		{
 			name:    "EmptyOrIncorrectRunIDOrRunUUID",
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
-			request: &request.GetArtifactRequest{},
+			request: request.GetArtifactRequest{},
 		},
 		{
 			name:  "IncorrectPathProvidedCase1",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.GetArtifactRequest{
+			request: request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "..",
 			},
@@ -191,7 +196,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase2",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.GetArtifactRequest{
+			request: request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./..",
 			},
@@ -199,7 +204,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase3",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.GetArtifactRequest{
+			request: request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./../",
 			},
@@ -207,7 +212,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase4",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.GetArtifactRequest{
+			request: request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "foo/../bar",
 			},
@@ -215,7 +220,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase5",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.GetArtifactRequest{
+			request: request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "/foo/../bar",
 			},
@@ -229,7 +234,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 					runID,
 				),
 			),
-			request: &request.GetArtifactRequest{
+			request: request.GetArtifactRequest{
 				RunID: runID,
 				Path:  "non-existent-file",
 			},
@@ -243,7 +248,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 					runID,
 				),
 			),
-			request: &request.GetArtifactRequest{
+			request: request.GetArtifactRequest{
 				RunID: runID,
 				Path:  "subdir",
 			},
@@ -252,14 +257,14 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
-			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute, query),
+			assert.Nil(t, s.MlflowClient.WithQuery(
+				tt.request,
+			).WithResponse(
 				&resp,
-			)
-			assert.Nil(t, err)
+			).DoRequest(
+				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+			))
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

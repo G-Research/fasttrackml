@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -70,19 +69,22 @@ func (s *GetExperimentByNameTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	// 2. make actual API call.
-	query, err := urlquery.Marshal(request.GetExperimentRequest{
+	request := request.GetExperimentRequest{
 		Name: experiment.Name,
-	})
-	assert.Nil(s.T(), err)
+	}
 
 	resp := response.GetExperimentResponse{}
-	err = s.MlflowClient.DoGetRequest(
-		fmt.Sprintf(
-			"%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute, query,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithQuery(
+			request,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute),
 		),
-		&resp,
 	)
-	assert.Nil(s.T(), err)
+
 	// 3. check actual API response.
 	assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.Experiment.ID)
 	assert.Equal(s.T(), experiment.Name, resp.Experiment.Name)
@@ -112,19 +114,19 @@ func (s *GetExperimentByNameTestSuite) Test_Error() {
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
-		request *request.GetExperimentRequest
+		request request.GetExperimentRequest
 	}{
 		{
 			name:  "NotFoundExperiment",
 			error: api.NewResourceDoesNotExistError(`unable to find experiment 'incorrect_experiment_name'`),
-			request: &request.GetExperimentRequest{
+			request: request.GetExperimentRequest{
 				Name: "incorrect_experiment_name",
 			},
 		},
 		{
 			name:  "EmptyExperimentName",
 			error: api.NewInvalidParameterValueError(`Missing value for required parameter 'experiment_name'`),
-			request: &request.GetExperimentRequest{
+			request: request.GetExperimentRequest{
 				Name: "",
 			},
 		},
@@ -132,14 +134,17 @@ func (s *GetExperimentByNameTestSuite) Test_Error() {
 
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
-			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute, query),
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithQuery(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute),
+				),
 			)
-			assert.Nil(t, err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

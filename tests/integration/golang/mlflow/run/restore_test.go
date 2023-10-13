@@ -6,12 +6,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -94,15 +94,22 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
+	req := request.RestoreRunRequest{
+		RunID: run.ID,
+	}
 	resp := fiber.Map{}
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute),
-		request.RestoreRunRequest{
-			RunID: run.ID,
-		},
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), fiber.Map{}, resp)
 
 	// check that run has been updated in database.
@@ -122,18 +129,18 @@ func (s *RestoreRunTestSuite) Test_Error() {
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
-		request request.GetRunRequest
+		request request.RestoreRunRequest
 	}{
 		{
 			name:    "EmptyOrIncorrectRunID",
-			request: request.GetRunRequest{},
+			request: request.RestoreRunRequest{},
 			error: api.NewInvalidParameterValueError(
 				"Missing value for required parameter 'run_id'",
 			),
 		},
 		{
 			name: "NotFoundRun",
-			request: request.GetRunRequest{
+			request: request.RestoreRunRequest{
 				RunID: "id",
 			},
 			error: api.NewResourceDoesNotExistError("unable to find run 'id'"),
@@ -141,15 +148,19 @@ func (s *RestoreRunTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(s.T(), err)
-
 			resp := api.ErrorResponse{}
-			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute, query),
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute),
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

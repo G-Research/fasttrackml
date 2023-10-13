@@ -4,7 +4,7 @@ package run
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -73,8 +73,18 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.App
-			err := s.AIMClient.DoPutRequest(fmt.Sprintf("/apps/%s", app.ID), tt.requestBody, &resp)
-			assert.Nil(s.T(), err)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPut,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/apps/%s", app.ID,
+				),
+			)
 			assert.Equal(s.T(), "app-type", resp.Type)
 			assert.Equal(s.T(), response.AppState{"app-state-key": "new-app-state-value"}, resp.State)
 		})
@@ -118,7 +128,18 @@ func (s *UpdateAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoPutRequest(fmt.Sprintf("/apps/%s", app.ID), tt.requestBody, &resp)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPut,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/apps/%s", app.ID,
+				),
+			)
 			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
 		})

@@ -54,6 +54,9 @@ func NewMetricRepository(db *gorm.DB) *MetricRepository {
 }
 
 // CreateBatch creates []models.Metric entities in batch.
+// TODO:get back and fix `gocyclo` problem.
+//
+//nolint:gocyclo
 func (r MetricRepository) CreateBatch(
 	ctx context.Context, run *models.Run, batchSize int, metrics []models.Metric,
 ) error {

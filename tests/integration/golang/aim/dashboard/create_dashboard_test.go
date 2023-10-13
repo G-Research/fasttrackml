@@ -4,6 +4,7 @@ package run
 
 import (
 	"context"
+	"net/http"
 	"testing"
 	"time"
 
@@ -72,8 +73,16 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Dashboard
-			err := s.AIMClient.DoPostRequest("/dashboards", tt.requestBody, &resp)
-			assert.Nil(s.T(), err)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest("/dashboards"),
+			)
 
 			dashboards, err := s.DashboardFixtures.GetDashboards(context.Background())
 			assert.Nil(s.T(), err)
@@ -116,12 +125,16 @@ func (s *CreateDashboardTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoPostRequest(
-				"/dashboards",
-				tt.requestBody,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest("/dashboards"),
 			)
-			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), resp.Message, "Not Found")
 		})
 	}

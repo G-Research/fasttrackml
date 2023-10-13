@@ -76,11 +76,7 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			var resp []response.Dashboard
-			err = s.AIMClient.DoGetRequest(
-				"/dashboards",
-				&resp,
-			)
-			assert.Nil(s.T(), err)
+			assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/dashboards"))
 			assert.Equal(s.T(), tt.expectedDashboardCount, len(resp))
 			for idx := 0; idx < tt.expectedDashboardCount; idx++ {
 				assert.Equal(s.T(), dashboards[idx].ID.String(), resp[idx].ID)

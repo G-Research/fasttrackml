@@ -48,7 +48,7 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 }
 
 // removeExactMatches will return a new slice of params which excludes exact matches
-func (r ParamRepository) removeExactMatches(ctx context.Context, params []models.Param) ([]models.Param, error) {
+func (r ParamRepository) removeExactMatches(_ context.Context, params []models.Param) ([]models.Param, error) {
 	var keys []string
 	paramMap := map[string]models.Param{}
 	for _, param := range params {

@@ -62,6 +62,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck
 	defer db.Close()
 
 	// 3. init main HTTP server.
@@ -237,6 +238,7 @@ func initServer(
 	return server
 }
 
+// nolint:errcheck,gosec
 func init() {
 	RootCmd.AddCommand(ServerCmd)
 

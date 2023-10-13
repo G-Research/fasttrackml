@@ -3,6 +3,7 @@
 package metric
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -113,17 +114,25 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			data, err := s.MlflowClient.DoStreamRequest(
-				http.MethodPost,
-				fmt.Sprintf(
-					"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoriesRoute,
+			resp := new(bytes.Buffer)
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponseType(
+					helpers.ResponseTypeBuffer,
+				).WithResponse(
+					resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoriesRoute),
 				),
-				tt.request,
 			)
-			assert.Nil(s.T(), err)
+
 			// TODO:DSuhinin - data is encoded so we need a bit more smart way to check the data.
 			// right now we can go with this simple approach.
-			assert.NotNil(s.T(), data)
+			assert.NotEmpty(s.T(), resp.String())
 		})
 	}
 }
@@ -172,10 +181,17 @@ func (s *GetHistoriesTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoriesRoute),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoriesRoute),
+				),
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

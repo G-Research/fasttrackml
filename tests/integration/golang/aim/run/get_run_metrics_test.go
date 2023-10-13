@@ -4,7 +4,7 @@ package run
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
@@ -91,12 +91,18 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.GetRunMetrics
-			err := s.AIMClient.DoPostRequest(
-				fmt.Sprintf("/runs/%s/metric/get-batch", tt.runID),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/runs/%s/metric/get-batch", tt.runID,
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.ElementsMatch(s.T(), tt.expectedResponse, resp)
 		})
 	}
@@ -120,11 +126,10 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.AIMClient.DoGetRequest(
-				fmt.Sprintf("/runs/%s/metric/get-batch", tt.runID),
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithResponse(&resp).DoRequest("/runs/%s/metric/get-batch", tt.runID),
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error, resp.Message)
 		})
 	}

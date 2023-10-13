@@ -65,7 +65,11 @@ func ConvertCreateRunRequestToDBModel(
 	}
 
 	if run.Name == "" {
-		run.Name = GenerateRandomName()
+		name, err := GenerateRandomName()
+		if err != nil {
+			return nil, eris.Wrap(err, "error generating run name")
+		}
+		run.Name = name
 		run.Tags = append(run.Tags, models.Tag{
 			Key:   TagKeySourceName,
 			Value: run.Name,

@@ -61,6 +61,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck
 	defer db.Close()
 
 	namespaceRepository := mlflowRepositories.NewNamespaceRepository(db.GormDB())
@@ -239,6 +240,7 @@ func initServer(
 	return server
 }
 
+// nolint:errcheck,gosec
 func init() {
 	RootCmd.AddCommand(ServerCmd)
 

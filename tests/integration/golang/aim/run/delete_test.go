@@ -4,7 +4,7 @@ package run
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -84,8 +84,16 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			var resp fiber.Map
-			err = s.AIMClient.DoDeleteRequest(fmt.Sprintf("/runs/%s", tt.request.RunID), &resp)
-			assert.Nil(s.T(), err)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(http.MethodDelete).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/runs/%s", tt.request.RunID,
+				),
+			)
 
 			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
 			assert.Nil(s.T(), err)
@@ -122,8 +130,16 @@ func (s *DeleteRunTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 
 			var resp api.ErrorResponse
-			err = s.AIMClient.DoDeleteRequest(fmt.Sprintf("/runs/%s", tt.request.RunID), &resp)
-			assert.Nil(s.T(), err)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(http.MethodDelete).WithRequest(
+					tt.request.RunID,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/runs/%s", tt.request.RunID,
+				),
+			)
 			assert.Contains(s.T(), resp.Error(), "unable to find run 'some-other-id'")
 
 			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(

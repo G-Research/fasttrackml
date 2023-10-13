@@ -139,7 +139,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		LastIter:  1,
 	})
-
+	assert.Nil(s.T(), err)
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id2",
 		Name:       "TestRun2",
@@ -218,7 +218,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  1,
 	})
-
+	assert.Nil(s.T(), err)
 	run3, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id3",
 		Name:       "TestRun3",
@@ -741,14 +741,20 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			data, err := s.AIMClient.DoStreamRequest(
+			resp := new(bytes.Buffer)
+			assert.Nil(s.T(), s.AIMClient.WithMethod(
 				http.MethodPost,
-				"/runs/search/metric/align/",
+			).WithRequest(
 				tt.request,
-			)
-			assert.Nil(s.T(), err)
+			).WithResponse(
+				resp,
+			).WithResponseType(
+				helpers.ResponseTypeBuffer,
+			).DoRequest(
+				"/runs/search/metric/align/",
+			))
 
-			decodedData, err := encoding.Decode(bytes.NewBuffer(data))
+			decodedData, err := encoding.Decode(resp)
 			assert.Nil(s.T(), err)
 
 			xValues := make(map[int][]float64)
@@ -756,8 +762,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 			for _, run := range runs {
 				metricCount := 0
 				for decodedData[fmt.Sprintf("%v.%d.name", run.ID, metricCount)] != nil {
-					prefix := fmt.Sprintf("%v.%d", run.ID, metricCount)
-					valueKey := prefix + ".x_axis_values.blob"
+					valueKey := fmt.Sprintf("%v.%d.x_axis_values.blob", run.ID, metricCount)
 					xValues[metricCount] = append(xValues[metricCount], decodedData[valueKey].([]float64)[0])
 
 					metricCount++

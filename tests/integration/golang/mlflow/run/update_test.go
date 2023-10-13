@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -75,18 +76,25 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
+	req := request.UpdateRunRequest{
+		RunID:   run.ID,
+		Name:    "UpdatedName",
+		Status:  string(models.StatusScheduled),
+		EndTime: 1111111111,
+	}
 	resp := response.UpdateRunResponse{}
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
-		request.UpdateRunRequest{
-			RunID:   run.ID,
-			Name:    "UpdatedName",
-			Status:  string(models.StatusScheduled),
-			EndTime: 1111111111,
-		},
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
 	assert.NotEmpty(s.T(), resp.RunInfo.ID)
 	assert.NotEmpty(s.T(), resp.RunInfo.UUID)
 	assert.Equal(s.T(), "UpdatedName", resp.RunInfo.Name)
@@ -134,12 +142,18 @@ func (s *UpdateRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

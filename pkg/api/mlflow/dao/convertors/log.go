@@ -8,6 +8,7 @@ import (
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
@@ -54,12 +55,12 @@ func ConvertLogBatchRequestToDBModel(
 			m.Value = v
 		} else if v, ok := metric.Value.(string); ok {
 			switch v {
-			case "NaN":
+			case common.NANValue:
 				m.Value = 0
 				m.IsNan = true
-			case "Infinity":
+			case common.NANPositiveInfinity:
 				m.Value = math.MaxFloat64
-			case "-Infinity":
+			case common.NANNegativeInfinity:
 				m.Value = -math.MaxFloat64
 			default:
 				return nil, nil, nil, eris.Errorf("invalid metric value '%s'", v)

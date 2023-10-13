@@ -1,6 +1,7 @@
 package response
 
 import (
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
@@ -20,22 +21,22 @@ type GetMetricHistoryResponse struct {
 
 // NewMetricHistoryResponse creates new GetMetricHistoryResponse object.
 func NewMetricHistoryResponse(metrics []models.Metric) *GetMetricHistoryResponse {
-	response := GetMetricHistoryResponse{
+	resp := GetMetricHistoryResponse{
 		Metrics: make([]MetricPartialResponse, len(metrics)),
 	}
 
 	for n, m := range metrics {
-		response.Metrics[n] = MetricPartialResponse{
+		resp.Metrics[n] = MetricPartialResponse{
 			Key:       m.Key,
 			Step:      m.Step,
 			Value:     m.Value,
 			Timestamp: m.Timestamp,
 		}
 		if m.IsNan {
-			response.Metrics[n].Value = "NaN"
+			resp.Metrics[n].Value = common.NANValue
 		}
 	}
-	return &response
+	return &resp
 }
 
 // GetMetricHistoryBulkResponse is a response object for `GET mlflow/metrics/get-history-bulk` endpoint.
@@ -45,12 +46,12 @@ type GetMetricHistoryBulkResponse struct {
 
 // NewMetricHistoryBulkResponse creates new GetMetricHistoryBulkResponse object.
 func NewMetricHistoryBulkResponse(metrics []models.Metric) *GetMetricHistoryBulkResponse {
-	response := GetMetricHistoryBulkResponse{
+	resp := GetMetricHistoryBulkResponse{
 		Metrics: make([]MetricPartialResponse, len(metrics)),
 	}
 
 	for n, m := range metrics {
-		response.Metrics[n] = MetricPartialResponse{
+		resp.Metrics[n] = MetricPartialResponse{
 			RunID:     m.RunID,
 			Key:       m.Key,
 			Step:      m.Step,
@@ -58,8 +59,8 @@ func NewMetricHistoryBulkResponse(metrics []models.Metric) *GetMetricHistoryBulk
 			Timestamp: m.Timestamp,
 		}
 		if m.IsNan {
-			response.Metrics[n].Value = "NaN"
+			resp.Metrics[n].Value = common.NANValue
 		}
 	}
-	return &response
+	return &resp
 }

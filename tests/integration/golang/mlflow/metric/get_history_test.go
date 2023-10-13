@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -73,20 +72,22 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	query, err := urlquery.Marshal(&request.GetMetricHistoryRequest{
+	req := request.GetMetricHistoryRequest{
 		RunID:     run.ID,
 		MetricKey: "key1",
-	})
-	assert.Nil(s.T(), err)
+	}
 
 	resp := response.GetMetricHistoryResponse{}
-	err = s.MlflowClient.DoGetRequest(
-		fmt.Sprintf(
-			"%s%s?%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute, query,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithQuery(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute),
 		),
-		&resp,
 	)
-	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), response.GetMetricHistoryResponse{
 		Metrics: []response.MetricPartialResponse{
 			{
@@ -127,17 +128,17 @@ func (s *GetHistoryTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(s.T(), err)
-
 			resp := api.ErrorResponse{}
-			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf(
-					"%s%s?%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute, query,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithQuery(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute),
 				),
-				&resp,
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

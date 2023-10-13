@@ -89,11 +89,15 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 
 	// 5. check that response contains metric from previous step.
 	resp := response.ProjectParamsResponse{}
-	err = s.AIMClient.DoGetRequest(
-		"/projects/params?sequence=metric",
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.AIMClient.WithQuery(
+			map[any]any{"sequence": "metric"},
+		).WithResponse(
+			&resp,
+		).DoRequest("/projects/params"),
 	)
-	assert.Nil(s.T(), err)
+
 	assert.Equal(s.T(), 1, len(resp.Metric))
 	_, ok := resp.Metric[metric.Key]
 	assert.True(s.T(), ok)
@@ -114,11 +118,14 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 
 	// 7. check that endpoint returns an empty response.
 	resp = response.ProjectParamsResponse{}
-	err = s.AIMClient.DoGetRequest(
-		"/projects/params?sequence=metric",
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.AIMClient.WithQuery(
+			map[any]any{"sequence": "metric"},
+		).WithResponse(
+			&resp,
+		).DoRequest("/projects/params"),
 	)
-	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), 0, len(resp.Metric))
 	_, ok = resp.Metric[metric.Key]
 	assert.False(s.T(), ok)

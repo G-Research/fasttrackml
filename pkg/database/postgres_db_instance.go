@@ -35,7 +35,6 @@ func NewPostgresDBInstance(
 		}),
 	})
 	if err != nil {
-		db.Close()
 		return nil, eris.Wrap(err, "failed to connect to database")
 	}
 	db.DB = gormDB

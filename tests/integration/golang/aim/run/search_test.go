@@ -735,7 +735,8 @@ func (s *SearchTestSuite) Test_Ok() {
 		{
 			name: "SearchComplexQuery",
 			request: request.SearchRunsRequest{
-				Query: `(run.archived == True or run.archived == False) and run.duration > 0 and run.metrics['TestMetric'].last > 2.5 and not run.name.endswith('4')`,
+				Query: `(run.archived == True or run.archived == False) and run.duration > 0` +
+					`and run.metrics['TestMetric'].last > 2.5 and not run.name.endswith('4')`,
 			},
 
 			runs: []*models.Run{

@@ -14,7 +14,8 @@ func ConvertSetRunTagRequestToDBModel(runID string, req *request.SetRunTagReques
 	}
 }
 
-// ConvertSetExperimentTagRequestToDBModel converts request.SetExperimentTagRequest into actual models.ExperimentTag model.
+// ConvertSetExperimentTagRequestToDBModel converts
+// request.SetExperimentTagRequest into actual models.ExperimentTag model.
 func ConvertSetExperimentTagRequestToDBModel(
 	experimentID int32, req *request.SetExperimentTagRequest,
 ) *models.ExperimentTag {

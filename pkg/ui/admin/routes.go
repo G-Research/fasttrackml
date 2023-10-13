@@ -30,6 +30,7 @@ func NewRouter(controller *controller.Controller) *Router {
 
 // Init makes initialization of all `admin` routes.
 func (r Router) Init(fr fiber.Router) {
+	//nolint:errcheck
 	sub, _ := fs.Sub(content, "embed")
 
 	// engine and app for template rendering

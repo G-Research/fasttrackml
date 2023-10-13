@@ -60,6 +60,8 @@ For the ```string``` attributes you can use the following comparison operator:
 - ``` in ```
 - ``` .startswith() ```
 - ``` .endswith() ```
+- ``` re.match() ```
+- ``` re.search() ```
 
 ### Numeric operations
 For the ```numeric``` attributes you can use the following comparison operator:
@@ -93,7 +95,12 @@ You can create complex search queries combining multiple conditions with logical
 - ``` or ```
 - ``` not ```
 
+### ```in``` operator
+The ```in``` operator can also be used for checking whether a value is in a list
 
+```python
+run.experiment in ["my-first-experiment", "my-second-experiment"]
+```
 
 ## Search run examples
 
@@ -126,61 +133,45 @@ run.name.endswith('Run1')
 
 ### Example with ```run.duration``` (numeric)
 
-Select only the runs where the duration is exactly 60
+Select only the runs where the duration is exactly 3600 seconds (1 hour)
 
 ```python
-run.duration == 60
+run.duration == 3600
 ```
 
-
-Select only the runs where the duration is not 60
+Select only the runs where the duration is greater or equal to 3600 seconds (1 hour)
 ```python
-run.duration != 60
+run.duration >= 3600
 ```
 
-Select only the runs where the duration is greater than 60
+Select only the runs where the duration is less than 3600 seconds (1 hour)
 ```python
-run.duration > 60
-```
-
-Select only the runs where the duration is greater or equal to 60
-```python
-run.duration >= 60
-```
-
-Select only the runs where the duration is less than 60
-```python
-run.duration < 60
-```
-
-Select only the runs where the duration is less or equal to 60
-```python
-run.duration <= 60
+run.duration < 3600
 ```
 
 ### Example with ```run.archived``` (boolean)
 Select only the runs where the archived attribute is true
 ```python
-run.archived == True
+run.archived
 ```
 
 Select only the runs where the archived attribute is not true
 ```python
-run.archived != True
+not run.archived
 ```
 
 ### Run parameters
-Run parameters can be accessed via parameters.
+Run parameters can be accessed via attributes.
 ![FastTrackML Run List, param filter](images/search_runs_param_filter.png)
 
 ### Filtering Runs with Unset Parameters
 
-To filter runs based on whether an attribute is not set, you can use the following syntax:
+To filter runs based on whether a parameter is not set, you can use the following syntax:
 
 ```python
 run.attribute is None
 ```
-This expression will return runs for which the specified attribute is not defined.
+This expression will return runs for which the specified parameter is not defined.
 
 Showing all the runs
 ![FastTrackML Run List](images/search_runs.png)
@@ -189,8 +180,6 @@ Showing only the runs where param1 is not set
 ![FastTrackML Run List of not set param](images/search_runs_none_param.png)
 
 ### Filter Runs using Regular Expressions
-- ``` re.match() ```
-- ``` re.search() ```
 
 Match finds an exact match at the beginning of a string.
 ![FastTrackML Run filter using regular expression match](images/search_runs_regular_expression_match.png)
@@ -202,10 +191,10 @@ Search looks for a pattern anywhere in the string.
 The query selects the runs that meet the following conditions:
 
 
-- run.archived can be either True or False.
-- The duration of run must be greater than 0.
-- The run has to contain a metric named 'TestMetric' and its last recorded value must be greater than 2.5.
-- The name of run should not end with '4'.
+- ```run.archived``` can be either ```True``` or ```False```.
+- The duration of ```run``` must be greater than ```0```.
+- The ```run``` has to contain a metric named ```'TestMetric'``` and its last recorded value must be greater than ```2.5```.
+- The name of ```run``` should not end with ```'4'```.
   
 ```python
 (run.archived == True or run.archived == False) and run.duration > 0 and run.metrics['TestMetric'].last > 2.5 and not run.name.endswith('4')
@@ -219,26 +208,10 @@ Select only the metrics where the name exactly matches "TestMetric1"
 metric.name == "TestRun1"
 ```
 
-Select only the metrics where the name is different from "TestMetric1"
-```python
-metric.name != "TestRun1"
-```
-
-Select only the metrics where "Run1" is contained in the run name
-```python
-"Metric1" in metric.name
-```
-
 Select only the metrics where the name starts with "Test"
 ```python
 metric.name.startswith('Test')
 ```
-
-Select only the metrics where the name ends with "Metric1"
-```python
-metric.name.endswith('Metric1')
-```
-
 
 ### Example with ```metric.last``` (numeric)
 
@@ -246,16 +219,6 @@ Select only the metrics where the last value is exactly 1.1
 
 ```python
 metric.last == 1.1
-```
-
-Select only the metrics where the last value is not 1.1
-```python
-metric.last != 1.1
-```
-
-Select only the metrics where the last value is greater than 1.1
-```python
-metric.last > 1.1
 ```
 
 Select only the metrics where the duration is greater or equal to 1.1
@@ -268,11 +231,6 @@ Select only the metrics where the last value is less than 1.1
 metric.last < 1.1
 ```
 
-Select only the metrics where the last value is less or equal to 1.1
-```python
-metric.last <= 1.1
-```
-
 ### Filter Metrics by run
 You can also filter the metrics by combining  metric attributes with run attributes.
 
@@ -283,11 +241,11 @@ Showing the metrics with the last value greater than 6 belonging to a run with t
 ### Complex query for metric search
 The query selects the metrics that meet the following conditions:
 
-- The metric.name field must be "TestMetric1" or "TestMetric2."
-- The metric.last_step field must be greater than or equal to 1.
-- The run.name field must either end with "2" or start with "TestRun1."
-- The metric.last field must be less than 1.6.
-- The run.duration must be greater than 0.
+- The ```metric.name``` field must be ```"TestMetric1"``` or ```"TestMetric2"```.
+- The``` metric.last_step``` field must be greater than or equal to ```1```.
+- The ```run.name``` field must either end with ```"2"``` or start with ```"TestRun1"```.
+- The ```metric.last``` field must be less than ```1.6```.
+- The ```run.duration``` must be greater than ```0```.
   
 ```python
 ((metric.name == "TestMetric1") or (metric.name == "TestMetric2")) and metric.last_step >= 1 and (run.name.endswith("2") or re.match("TestRun1", run.name)) and (metric.last < 1.6) and run.duration > 0

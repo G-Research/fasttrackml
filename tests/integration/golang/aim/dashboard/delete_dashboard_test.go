@@ -4,7 +4,7 @@ package run
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -79,9 +79,17 @@ func (s *DeleteDashboardTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var deleteResponse response.Error
-			err := s.AIMClient.DoDeleteRequest(fmt.Sprintf("/dashboards/%s", dashboard.ID), &deleteResponse)
-			assert.Nil(s.T(), err)
+			var resp response.Error
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodDelete,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/dashboards/%s", dashboard.ID,
+				),
+			)
 			dashboards, err := s.DashboardFixtures.GetDashboards(context.Background())
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedDashboardCount, len(dashboards))
@@ -138,10 +146,18 @@ func (s *DeleteDashboardTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var deleteResponse response.Error
-			err := s.AIMClient.DoDeleteRequest(fmt.Sprintf("/dashboards/%s", tt.idParam), &deleteResponse)
-			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), deleteResponse.Message, "Not Found")
+			var resp response.Error
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodDelete,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/dashboards/%s", tt.idParam,
+				),
+			)
+			assert.Contains(s.T(), resp.Message, "Not Found")
 
 			dashboards, err := s.DashboardFixtures.GetDashboards(context.Background())
 			assert.Nil(s.T(), err)

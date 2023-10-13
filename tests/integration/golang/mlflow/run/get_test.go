@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -101,17 +100,22 @@ func (s *GetRunTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	query, err := urlquery.Marshal(request.GetRunRequest{
+	query := request.GetRunRequest{
 		RunID: run.ID,
-	})
-	assert.Nil(s.T(), err)
+	}
 
 	resp := response.GetRunResponse{}
-	err = s.MlflowClient.DoGetRequest(
-		fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute, query),
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithQuery(
+			query,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
+
 	assert.NotEmpty(s.T(), resp.Run.Info.ID)
 	assert.NotEmpty(s.T(), resp.Run.Info.UUID)
 	assert.Equal(s.T(), "TestRun", resp.Run.Info.Name)
@@ -173,13 +177,16 @@ func (s *GetRunTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(s.T(), err)
-
 			resp := api.ErrorResponse{}
-			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute, query),
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithQuery(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+				),
 			)
 			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

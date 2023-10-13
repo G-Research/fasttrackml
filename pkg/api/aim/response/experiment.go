@@ -10,7 +10,7 @@ type GetExperiment struct {
 	CreationTime float64 `json:"creation_time"`
 }
 
-// GetExperiment represents the response json fot the GetExperimntActivity endpoint.
+// GetExperimentActivity represents the response json fot the GetExperimentActivity endpoint.
 type GetExperimentActivity struct {
 	NumRuns         int            `json:"num_runs"`
 	NumArchivedRuns int            `json:"num_archived_runs"`
@@ -18,7 +18,7 @@ type GetExperimentActivity struct {
 	ActivityMap     map[string]int `json:"activity_map"`
 }
 
-// GetExperiment represents the response json fot the GetExperimntRuns endpoint.
+// GetExperimentRuns represents the response json fot the GetExperimentRuns endpoint.
 type GetExperimentRuns struct {
 	ID   string          `json:"id"`
 	Runs []ExperimentRun `json:"runs"`

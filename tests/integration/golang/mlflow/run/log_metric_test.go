@@ -5,6 +5,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -64,19 +65,26 @@ func (s *LogMetricTestSuite) Test_Ok() {
 	run, err = s.RunFixtures.CreateRun(context.Background(), run)
 	assert.Nil(s.T(), err)
 
+	req := request.LogMetricRequest{
+		RunID:     run.ID,
+		Key:       "key1",
+		Value:     1.1,
+		Timestamp: 1234567890,
+		Step:      1,
+	}
 	resp := fiber.Map{}
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
-		request.LogMetricRequest{
-			RunID:     run.ID,
-			Key:       "key1",
-			Value:     1.1,
-			Timestamp: 1234567890,
-			Step:      1,
-		},
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
 	assert.Empty(s.T(), resp)
 
 	// makes user that records has been created correctly in database.
@@ -208,12 +216,18 @@ func (s *LogMetricTestSuite) Test_Error() {
 			}
 
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 
 			// if cleanDatabase has been provided then clean database after the test.

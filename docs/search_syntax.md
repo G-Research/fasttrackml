@@ -214,6 +214,11 @@ Select only the metrics where the name starts with "Test"
 metric.name.startswith('Test')
 ```
 
+Select only the metrics where the name contains "Metric1"
+```python
+re.search("Metric1", metric.name)
+```
+
 ### Example with ```metric.last``` (numeric)
 
 Select only the metrics where the last value is exactly 1.1

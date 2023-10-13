@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -168,15 +167,17 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(t, err)
-
 			resp := response.SearchExperimentsResponse{}
-			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query),
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithQuery(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute),
+				),
 			)
-			assert.Nil(t, err)
 
 			names := make([]string, len(resp.Experiments))
 			for i, exp := range resp.Experiments {
@@ -203,54 +204,54 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
-		request *request.SearchExperimentsRequest
+		request request.SearchExperimentsRequest
 	}{
 		{
 			name:  "InvalidViewType",
 			error: api.NewInvalidParameterValueError("Invalid view_type 'invalid_ViewType'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				ViewType: "invalid_ViewType",
 			},
 		},
 		{
 			name:  "InvalidMaxResult",
 			error: api.NewInvalidParameterValueError("Invalid value for parameter 'max_results' supplied."),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				MaxResults: 10000000,
 			},
 		},
 		{
 			name:  "InvalidFilterValue",
 			error: api.NewInvalidParameterValueError("invalid numeric value 'cc'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				Filter: "attribute.creation_time > cc",
 			},
 		},
 		{
 			name:  "MalformedFilter",
 			error: api.NewInvalidParameterValueError("malformed filter 'invalid_filter'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				Filter: "invalid_filter",
 			},
 		},
 		{
 			name:  "InvalidNumericValue",
 			error: api.NewInvalidParameterValueError("invalid numeric value 'invalid_value'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				Filter: "creation_time > invalid_value",
 			},
 		},
 		{
 			name:  "InvalidStringOperator",
 			error: api.NewInvalidParameterValueError("invalid string attribute comparison operator '<'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				Filter: "attribute.name < 'value'",
 			},
 		},
 		{
 			name:  "InvalidTagOperator",
 			error: api.NewInvalidParameterValueError("invalid tag comparison operator '<'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				Filter: "tag.value < 'value'",
 			},
 		},
@@ -259,7 +260,7 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 			error: api.NewInvalidParameterValueError(
 				"invalid entity type 'invalid_entity'. Valid values are ['tag', 'attribute']",
 			),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				Filter: "invalid_entity.name = value",
 			},
 		},
@@ -269,7 +270,7 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 				`invalid attribute 'invalid_attribute'. ` +
 					`Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']`,
 			),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				OrderBy: []string{"invalid_attribute"},
 			},
 		},
@@ -277,14 +278,17 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
-			err = s.MlflowClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query),
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithQuery(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute),
+				),
 			)
-			assert.Nil(t, err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

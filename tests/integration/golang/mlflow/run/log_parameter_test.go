@@ -5,6 +5,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -69,12 +70,18 @@ func (s *LogParamTestSuite) Test_Ok() {
 		Value: "value1",
 	}
 	resp := map[string]any{}
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
-		req,
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
 	assert.Empty(s.T(), resp)
 }
 
@@ -92,12 +99,18 @@ func (s *LogParamTestSuite) Test_Error() {
 		Value: "value1",
 	}
 	resp := api.ErrorResponse{}
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
-		req,
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
 	assert.Equal(
 		s.T(),
 		api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'").Error(),

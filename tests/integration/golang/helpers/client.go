@@ -7,149 +7,181 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"reflect"
 
+	"github.com/hetiansu5/urlquery"
 	"github.com/rotisserie/eris"
+)
+
+// ResponseType represents HTTP response type.
+type ResponseType string
+
+// Supported list of  HTTP response types.
+// TODO:dsuhinin - add another type `stream`. For this type return `io.ReadCloser`.
+const (
+	ResponseTypeJSON   ResponseType = "json"
+	ResponseTypeBuffer ResponseType = "buffer"
 )
 
 // HttpClient represents HTTP client.
 type HttpClient struct {
-	client   *http.Client
-	baseURL  string
-	basePath string
+	client       *http.Client
+	baseURL      string
+	basePath     string
+	method       string
+	params       any
+	headers      map[string]string
+	request      any
+	response     any
+	responseType ResponseType
+}
+
+// NewClient creates new preconfigured HTTP client.
+func NewClient(baseURL, basePath string) *HttpClient {
+	return &HttpClient{
+		client:   &http.Client{},
+		baseURL:  baseURL,
+		basePath: basePath,
+		method:   http.MethodGet,
+		headers: map[string]string{
+			"Content-Type": "application/json",
+		},
+		responseType: ResponseTypeJSON,
+	}
 }
 
 // NewMlflowApiClient creates new HTTP client for the mlflow api
 func NewMlflowApiClient(baseURL string) *HttpClient {
-	return &HttpClient{
-		client:   &http.Client{},
-		baseURL:  baseURL,
-		basePath: "/api/2.0/mlflow",
-	}
+	return NewClient(baseURL, "/api/2.0/mlflow")
 }
 
 // NewAimApiClient creates new HTTP client for the aim api
 func NewAimApiClient(baseURL string) *HttpClient {
-	return &HttpClient{
-		client:   &http.Client{},
-		baseURL:  baseURL,
-		basePath: "/aim/api",
-	}
+	return NewClient(baseURL, "/aim/api")
 }
 
-// DoPostRequest do POST request.
-func (c HttpClient) DoPostRequest(uri string, request interface{}, response interface{}) error {
-	data, err := json.Marshal(request)
-	if err != nil {
-		return eris.Wrap(err, "error marshaling request")
-	}
-	return c.doRequest(http.MethodPost, uri, response, bytes.NewBuffer(data))
+// WithMethod sets the HTTP method.
+func (c *HttpClient) WithMethod(method string) *HttpClient {
+	c.method = method
+	return c
 }
 
-// DoPutRequest do PUT request.
-func (c HttpClient) DoPutRequest(uri string, request interface{}, response interface{}) error {
-	data, err := json.Marshal(request)
-	if err != nil {
-		return eris.Wrap(err, "error marshaling request")
-	}
-	return c.doRequest(http.MethodPut, uri, response, bytes.NewBuffer(data))
+// WithQuery adds query parameters to the HTTP request.
+func (c *HttpClient) WithQuery(params any) *HttpClient {
+	c.params = params
+	return c
 }
 
-// DoGetRequest do GET request.
-func (c HttpClient) DoGetRequest(uri string, response interface{}) error {
-	return c.doRequest(http.MethodGet, uri, response, nil)
+// WithRequest sets request object.
+func (c *HttpClient) WithRequest(request any) *HttpClient {
+	c.request = request
+	return c
 }
 
-// DoDeleteRequest do DELETE request.
-func (c HttpClient) DoDeleteRequest(uri string, response interface{}) error {
-	return c.doRequest(http.MethodDelete, uri, response, nil)
+// WithHeaders adds headers to the HTTP request.
+func (c *HttpClient) WithHeaders(headers map[string]string) *HttpClient {
+	c.headers = headers
+	return c
 }
 
-// DoStreamRequest do stream request.
-func (c HttpClient) DoStreamRequest(method, uri string, request interface{}) ([]byte, error) {
+// WithResponse sets the response object where HTTP response will be deserialized.
+func (c *HttpClient) WithResponse(response any) *HttpClient {
+	c.response = response
+	return c
+}
+
+// WithResponseType sets the response object type.
+func (c *HttpClient) WithResponseType(responseType ResponseType) *HttpClient {
+	c.responseType = responseType
+	return c
+}
+
+// DoRequest do actual HTTP request based on provided parameters.
+func (c *HttpClient) DoRequest(uri string, values ...any) error {
+	// 1. check if request object were provided. if provided then marshal it.
 	var requestBody io.Reader
-	if request != nil {
-		data, err := json.Marshal(request)
+	if c.request != nil {
+		data, err := json.Marshal(c.request)
 		if err != nil {
-			return nil, eris.Wrap(err, "error marshaling request")
+			return eris.Wrap(err, "error marshaling request object")
 		}
 		requestBody = bytes.NewBuffer(data)
 	}
 
-	// 1. create actual request object.
+	// 2. build actual URL.
+	u, err := url.Parse(fmt.Sprintf("%s%s%s", c.baseURL, c.basePath, fmt.Sprintf(uri, values...)))
+	if err != nil {
+		return eris.Wrap(err, "error building url")
+	}
+	// 3. if params were provided then add params to actual url.
+	if c.params != nil {
+		switch reflect.ValueOf(c.params).Kind() {
+		case reflect.Struct:
+			query, err := urlquery.Marshal(c.params)
+			if err != nil {
+				return eris.New("error marshaling params")
+			}
+			u.RawQuery = string(query)
+		case reflect.Map:
+			query := u.Query()
+			for key, value := range c.params.(map[any]any) {
+				query.Set(fmt.Sprintf("%v", key), fmt.Sprintf("%v", value))
+			}
+			u.RawQuery = query.Encode()
+		default:
+			return eris.New("unsupported type of params. should be struct or map[any]any")
+		}
+	}
+
+	// 4. create actual request object.
+	// if HttpMethod was not provided, then by default use HttpMethodGet.
 	req, err := http.NewRequestWithContext(
-		context.Background(),
-		method,
-		StrReplace(
-			fmt.Sprintf(
-				"%s%s%s",
-				c.baseURL,
-				c.basePath,
-				uri,
-			),
-			[]string{},
-			[]interface{}{},
-		),
-		requestBody,
-	)
-	if err != nil {
-		return nil, eris.Wrap(err, "error creating request")
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	// 2. send request data.
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, eris.Wrap(err, "error doing request")
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	//nolint:errcheck
-	defer resp.Body.Close()
-	if err != nil {
-		return nil, eris.Wrap(err, "error reading streaming response")
-	}
-
-	return body, nil
-}
-
-// doRequest do request of any http method
-func (c HttpClient) doRequest(httpMethod string, uri string, response interface{}, requestBody io.Reader) error {
-	// 1. create actual request object.
-	req, err := http.NewRequestWithContext(
-		context.Background(),
-		httpMethod,
-		StrReplace(
-			fmt.Sprintf(
-				"%s%s%s",
-				c.baseURL,
-				c.basePath,
-				uri,
-			),
-			[]string{},
-			[]interface{}{},
-		),
-		requestBody,
+		context.Background(), c.method, u.String(), requestBody,
 	)
 	if err != nil {
 		return eris.Wrap(err, "error creating request")
 	}
-	req.Header.Set("Content-Type", "application/json")
 
-	// 3. send request data.
+	// 5. if headers were provided, then attach them.
+	// by default attach `"Content-Type", "application/json"`
+	if c.headers != nil {
+		for key, value := range c.headers {
+			req.Header.Set(key, value)
+		}
+	}
+
+	// 6. send request data.
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return eris.Wrap(err, "error doing request")
 	}
 
-	// 4. read and check response data.
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return eris.Wrap(err, "error reading response data")
-	}
-	//nolint:errcheck
-	defer resp.Body.Close()
-	if err := json.Unmarshal(body, response); err != nil {
-		return eris.Wrap(err, "error unmarshaling response data")
+	// 7. read and check response data.
+	if c.response != nil {
+		switch c.responseType {
+		case ResponseTypeJSON:
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return eris.Wrap(err, "error reading response data")
+			}
+			//nolint:errcheck
+			defer resp.Body.Close()
+			if err := json.Unmarshal(body, c.response); err != nil {
+				return eris.Wrap(err, "error unmarshaling response data")
+			}
+		case ResponseTypeBuffer:
+			buffer, ok := c.response.(io.Writer)
+			if !ok {
+				return eris.New("response object has no implementation of a io.Writer")
+			}
+			_, err := io.Copy(buffer, resp.Body)
+			//nolint:errcheck
+			defer resp.Body.Close()
+			if err != nil {
+				return eris.Wrap(err, "error reading streaming response")
+			}
+		}
 	}
 
 	return nil

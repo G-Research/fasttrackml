@@ -7,11 +7,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -548,7 +546,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Query: `((metric.name == "TestMetric1") or (metric.name == "TestMetric2") ` +
 					`or (metric.name == "TestMetric3")) and run.archived == True`,
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchRunNotArchived",
@@ -2187,7 +2184,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") ` +
 					`or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.name != "TestRun3")`,
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationStartsWith",
@@ -2205,7 +2201,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") ` +
 					`or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.name.endswith("Run2"))`,
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunNameOperationNotEqualsAndRegexpMatchFunction",
@@ -2559,7 +2554,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") ` +
 					`or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration != 222222)`,
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationEqualsAndGreater",
@@ -2587,7 +2581,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") ` +
 					`or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.duration < 222222)`,
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationEqualsAndLessOrEquals",
@@ -2684,7 +2677,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") ` +
 					`or (metric.name == "TestMetric3")) and (metric.last > 1.6) and run.duration == 222222)`,
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunDurationOperationGreaterAndNotEquals",
@@ -2983,7 +2975,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 					run1.ID,
 				),
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunHashOperationNotEqualsAndEquals",
@@ -3164,7 +3155,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") ` +
 					`or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.finalized_at > 123456789)`,
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationEqualsAndGreaterOrEquals",
@@ -3182,7 +3172,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") ` +
 					`or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.finalized_at < 444444444)`,
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunFinalizedAtOperationEqualsAndLessOrEquals",
@@ -3582,7 +3571,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") ` +
 					`or (metric.name == "TestMetric3")) and (metric.last == 1.1) and run.created_at > 123456789)`,
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationEqualsAndGreaterOrEquals",
@@ -3600,7 +3588,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") ` +
 					`or (metric.name == "TestMetric3")) and (metric.last == 1.6) and run.created_at < 222222222)`,
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastAndRunCreatedAtOperationEqualsAndLessOrEquals",
@@ -5460,7 +5447,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Query: `(((metric.name == "TestMetric1") or (metric.name == "TestMetric2") ` +
 					`or (metric.name == "TestMetric3")) and (metric.last_step == 2) and run.created_at > 123456789)`,
 			},
-			metrics: []*models.LatestMetric{},
 		},
 		{
 			name: "SearchMetricLastStepAndRunCreatedAtOperationEqualsAndGreaterOrEquals",
@@ -5897,22 +5883,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var resp []byte
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(s.T(), err)
-			resp, err = s.AIMClient.DoStreamRequest(
-				http.MethodGet,
-				fmt.Sprintf(`/runs/search/metric?%s`, query),
-				nil,
+			resp := new(bytes.Buffer)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithQuery(
+					tt.request,
+				).WithResponseType(
+					helpers.ResponseTypeBuffer,
+				).WithResponse(
+					resp,
+				).DoRequest("/runs/search/metric"),
 			)
-			assert.Nil(s.T(), err)
-			decodedData, err := encoding.Decode(bytes.NewBuffer(resp))
+			decodedData, err := encoding.Decode(resp)
 			assert.Nil(s.T(), err)
 
-			decodedMetrics := []*models.LatestMetric{}
+			var decodedMetrics []*models.LatestMetric
 			for _, run := range runs {
 				metricCount := 0
-
 				for decodedData[fmt.Sprintf("%v.traces.%d.name", run.ID, metricCount)] != nil {
 					prefix := fmt.Sprintf("%v.traces.%d", run.ID, metricCount)
 					epochsKey := prefix + ".epochs.blob"

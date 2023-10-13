@@ -5,7 +5,7 @@ package experiment
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -71,11 +71,16 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 	length := len(experiments)
 
 	var resp response.DeleteExperiment
-	err = s.AIMClient.DoDeleteRequest(
-		fmt.Sprintf("/experiments/%d", *experiment.ID),
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.AIMClient.WithMethod(
+			http.MethodDelete,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"/experiments/%d", *experiment.ID,
+		),
 	)
-	assert.Nil(s.T(), err)
 
 	remainingExperiments, err := s.ExperimentFixtures.GetTestExperiments(context.Background())
 	assert.Nil(s.T(), err)
@@ -106,10 +111,17 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp api.ErrorResponse
-			err := s.AIMClient.DoDeleteRequest(fmt.Sprintf("/experiments/%s", tt.ID), &resp)
-			assert.Nil(s.T(), err)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodDelete,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/experiments/%s", tt.ID,
+				),
+			)
 			assert.Contains(s.T(), resp.Error(), "Not Found")
-
 			assert.NoError(s.T(), err)
 		})
 	}

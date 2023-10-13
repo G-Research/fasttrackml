@@ -4,7 +4,7 @@ package run
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -86,12 +86,18 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			resp := map[string]any{}
-			err = s.AIMClient.DoPostRequest(
-				fmt.Sprintf("/runs/archive-batch?archive=%s", tt.archiveParam),
-				tt.runIDs,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(http.MethodPost).WithQuery(map[any]any{
+					"archive": tt.archiveParam,
+				}).WithRequest(
+					tt.runIDs,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/runs/archive-batch",
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), map[string]interface{}{"status": "OK"}, resp)
 
 			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
@@ -138,12 +144,18 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 			assert.Nil(s.T(), err)
 
 			var resp fiber.Map
-			err = s.AIMClient.DoPostRequest(
-				"/runs/archive-batch?archive=true",
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(http.MethodPost).WithQuery(map[any]any{
+					"archive": true,
+				}).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/runs/archive-batch",
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
 
 			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)

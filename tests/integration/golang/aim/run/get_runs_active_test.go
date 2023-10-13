@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
@@ -84,14 +83,16 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			if tt.beforeRunFn != nil {
 				tt.beforeRunFn()
 			}
-			data, err := s.AIMClient.DoStreamRequest(
-				http.MethodGet,
-				"/runs/active",
-				nil,
+			resp := new(bytes.Buffer)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithResponseType(
+					helpers.ResponseTypeBuffer,
+				).WithResponse(
+					resp,
+				).DoRequest("/runs/active"),
 			)
-			assert.Nil(s.T(), err)
-
-			decodedData, err := encoding.Decode(bytes.NewBuffer(data))
+			decodedData, err := encoding.Decode(resp)
 			assert.Nil(s.T(), err)
 
 			responseCount := 0

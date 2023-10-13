@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -77,18 +78,22 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	assert.Nil(s.T(), err)
 
 	// Set tag on experiment1
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf(
-			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
+	req := request.SetExperimentTagRequest{
+		ID:    fmt.Sprintf("%d", *experiment1.ID),
+		Key:   "KeyTag1",
+		Value: "ValueTag1",
+	}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
 		),
-		request.SetExperimentTagRequest{
-			ID:    fmt.Sprintf("%d", *experiment1.ID),
-			Key:   "KeyTag1",
-			Value: "ValueTag1",
-		},
-		&struct{}{},
 	)
-	assert.Nil(s.T(), err)
+
 	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
 		context.Background(), namespace.ID, *experiment1.ID,
 	)
@@ -98,18 +103,22 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	)
 
 	// Update tag on experiment1
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf(
-			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
+	req = request.SetExperimentTagRequest{
+		ID:    fmt.Sprintf("%d", *experiment1.ID),
+		Key:   "KeyTag1",
+		Value: "ValueTag2",
+	}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
 		),
-		request.SetExperimentTagRequest{
-			ID:    fmt.Sprintf("%d", *experiment1.ID),
-			Key:   "KeyTag1",
-			Value: "ValueTag2",
-		},
-		&struct{}{},
 	)
-	assert.Nil(s.T(), err)
+
 	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
 		context.Background(), namespace.ID, *experiment1.ID,
 	)
@@ -128,18 +137,21 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	assert.Equal(s.T(), len(experiment2.Tags), 0)
 
 	// test that setting a tag on different experiments maintain different values across experiments
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf(
-			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
+	req = request.SetExperimentTagRequest{
+		ID:    fmt.Sprintf("%d", *experiment2.ID),
+		Key:   "KeyTag1",
+		Value: "ValueTag3",
+	}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
 		),
-		request.SetExperimentTagRequest{
-			ID:    fmt.Sprintf("%d", *experiment2.ID),
-			Key:   "KeyTag1",
-			Value: "ValueTag3",
-		},
-		&struct{}{},
 	)
-	assert.Nil(s.T(), err)
 	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
 		context.Background(), namespace.ID, *experiment1.ID,
 	)
@@ -218,12 +230,18 @@ func (s *SetExperimentTagTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
+				),
 			)
-			assert.Nil(t, err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

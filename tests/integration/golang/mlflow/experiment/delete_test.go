@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -76,12 +77,18 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 		ID: fmt.Sprintf("%d", *experiment.ID),
 	}
 	resp := fiber.Map{}
-	err = s.MlflowClient.DoPostRequest(
-		fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsDeleteRoute),
-		req,
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsDeleteRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
 
 	// 3. check actual API response.
 	exp, err := s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
@@ -138,12 +145,18 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.MlflowClient.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsDeleteRoute),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsDeleteRoute),
+				),
 			)
-			assert.Nil(t, err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

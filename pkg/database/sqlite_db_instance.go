@@ -97,6 +97,7 @@ func NewSqliteDBInstance(
 	dsnURL.RawQuery = q.Encode()
 	r, err := sql.Open(SQLiteCustomDriverName, strings.Replace(dsnURL.String(), "sqlite://", "file:", 1))
 	if err != nil {
+		//nolint:errcheck,gosec
 		db.Close()
 		return nil, eris.Wrap(err, "failed to connect to database")
 	}
@@ -120,17 +121,20 @@ func NewSqliteDBInstance(
 		}),
 	})
 	if err != nil {
+		//nolint:errcheck,gosec
 		db.Close()
 		return nil, eris.Wrap(err, "failed to connect to database")
 	}
 
-	db.Use(
+	if err := db.Use(
 		dbresolver.Register(dbresolver.Config{
 			Replicas: []gorm.Dialector{
 				replicaConn,
 			},
 		}),
-	)
+	); err != nil {
+		return nil, eris.Wrap(err, "error attaching plugin")
+	}
 
 	return &db, nil
 }

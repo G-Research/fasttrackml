@@ -295,6 +295,7 @@ func TestNewService_GetMetricHistories_Ok(t *testing.T) {
 
 	// call service under testing.
 	service := NewService(&runRepository, &metricRepository)
+	//nolint:sqlclosecheck
 	rows, iterator, err := service.GetMetricHistories(context.TODO(), &models.Namespace{
 		ID: 1,
 	}, &request.GetMetricHistoriesRequest{
@@ -305,6 +306,7 @@ func TestNewService_GetMetricHistories_Ok(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.NotNil(t, rows)
+	assert.Nil(t, rows.Err())
 	assert.NotNil(t, iterator)
 }
 
@@ -391,6 +393,7 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
+			//nolint:rowserrcheck,sqlclosecheck
 			_, _, err := tt.service().GetMetricHistories(context.TODO(), &models.Namespace{ID: 1}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})

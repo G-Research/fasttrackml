@@ -207,7 +207,8 @@ func (s *SetExperimentTagTestSuite) Test_Error() {
 		{
 			name: "IncorrectExperimentID",
 			error: api.NewBadRequestError(
-				`Unable to parse experiment id 'incorrect_experiment_id': strconv.ParseInt: parsing "incorrect_experiment_id": invalid syntax`,
+				`Unable to parse experiment id 'incorrect_experiment_id': strconv.ParseInt: ` +
+					`parsing "incorrect_experiment_id": invalid syntax`,
 			),
 			request: &request.SetExperimentTagRequest{
 				ID:  "incorrect_experiment_id",
@@ -215,8 +216,10 @@ func (s *SetExperimentTagTestSuite) Test_Error() {
 			},
 		},
 		{
-			name:  "NotFoundExperiment",
-			error: api.NewResourceDoesNotExistError(`unable to find experiment '1': error getting experiment by id: 1: record not found`),
+			name: "NotFoundExperiment",
+			error: api.NewResourceDoesNotExistError(
+				`unable to find experiment '1': error getting experiment by id: 1: record not found`,
+			),
 			request: &request.SetExperimentTagRequest{
 				ID:  "1",
 				Key: "test_key",

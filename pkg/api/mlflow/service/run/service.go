@@ -22,11 +22,26 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
+//nolint:lll
 var (
+	runOrder      = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
 	filterAnd     = regexp.MustCompile(`(?i)\s+AND\s+`)
 	filterCond    = regexp.MustCompile(`^(?:(\w+)\.)?("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'[^']+'(?:,\s*)?)+\)|"[^"]+"|'[^']+'|[\w\.]+)$`)
 	filterInGroup = regexp.MustCompile(`,\s*`)
-	runOrder      = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
+)
+
+// supported expression list.
+const (
+	InExpression            = "IN"
+	NotInExpression         = "NOT IN"
+	LikeExpression          = "LIKE"
+	ILikeExpression         = "ILIKE"
+	EqualExpression         = "="
+	NotEqualExpression      = "!="
+	LessExpression          = "<"
+	LessOrEqualExpression   = "<="
+	GraterExpression        = ">"
+	GraterOrEqualExpression = ">="
 )
 
 // Service provides service layer to work with `run` business logic.
@@ -136,6 +151,8 @@ func (s Service) GetRun(
 	return run, nil
 }
 
+// nolint:gocyclo
+// TODO:get back and fix `gocyclo` problem.
 func (s Service) SearchRuns(
 	ctx context.Context, namespace *models.Namespace, req *request.SearchRunsRequest,
 ) ([]models.Run, int, int, error) {
@@ -213,14 +230,17 @@ func (s Service) SearchRuns(
 				switch key {
 				case "start_time", "end_time":
 					switch comparison {
-					case ">", ">=", "!=", "=", "<", "<=":
+					case GraterExpression, GraterOrEqualExpression, NotEqualExpression,
+						EqualExpression, LessExpression, LessOrEqualExpression:
 						v, err := strconv.Atoi(value.(string))
 						if err != nil {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric value '%s'", value)
 						}
 						value = v
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid numeric attribute comparison operator '%s'", comparison,
+						)
 					}
 				case "run_name":
 					key = "mlflow.runName"
@@ -228,23 +248,25 @@ func (s Service) SearchRuns(
 					fallthrough
 				case "status", "user_id", "artifact_uri":
 					switch strings.ToUpper(comparison) {
-					case "!=", "=", "LIKE", "ILIKE":
+					case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 						if strings.HasPrefix(value.(string), "(") {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid string attribute comparison operator '%s'", comparison,
+						)
 					}
 				case "run_id":
 					key = "run_uuid"
 					switch strings.ToUpper(comparison) {
-					case "!=", "=", "LIKE", "ILIKE":
+					case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 						if strings.HasPrefix(value.(string), "(") {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
-					case "IN", "NOT IN":
+					case InExpression, NotInExpression:
 						if !strings.HasPrefix(value.(string), "(") {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid list definition '%s'", value)
 						}
@@ -254,53 +276,68 @@ func (s Service) SearchRuns(
 						}
 						value = values
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid string attribute comparison operator '%s'", comparison,
+						)
 					}
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']", key)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						`invalid attribute '%s'. `+
+							`Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']`,
+						key,
+					)
 				}
 			case "metric", "metrics":
 				switch comparison {
-				case ">", ">=", "!=", "=", "<", "<=":
+				case GraterExpression, GraterOrEqualExpression,
+					NotEqualExpression, EqualExpression, LessExpression, LessOrEqualExpression:
 					v, err := strconv.ParseFloat(value.(string), 64)
 					if err != nil {
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric value '%s'", value)
 					}
 					value = v
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid metric comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid metric comparison operator '%s'", comparison,
+					)
 				}
 				kind = &database.LatestMetric{}
 			case "parameter", "parameters", "param", "params":
 				switch strings.ToUpper(comparison) {
-				case "!=", "=", "LIKE", "ILIKE":
+				case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 					if strings.HasPrefix(value.(string), "(") {
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid param comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid param comparison operator '%s'", comparison,
+					)
 				}
 				kind = &database.Param{}
 			case "tag", "tags":
 				switch strings.ToUpper(comparison) {
-				case "!=", "=", "LIKE", "ILIKE":
+				case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 					if strings.HasPrefix(value.(string), "(") {
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid tag comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid tag comparison operator '%s'", comparison,
+					)
 				}
 				kind = &database.Tag{}
 			default:
-				return nil, 0, 0, api.NewInvalidParameterValueError("invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
+				return nil, 0, 0, api.NewInvalidParameterValueError(
+					"invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity,
+				)
 			}
 
 			if kind == nil {
-				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == ILikeExpression {
 					key = fmt.Sprintf("LOWER(runs.%s)", key)
-					comparison = "LIKE"
+					comparison = LikeExpression
 					value = strings.ToLower(value.(string))
 					tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
 				} else {
@@ -309,7 +346,7 @@ func (s Service) SearchRuns(
 			} else {
 				table := fmt.Sprintf("filter_%d", n)
 				where := fmt.Sprintf("value %s ?", comparison)
-				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == ILikeExpression {
 					where = "LOWER(value) LIKE ?"
 					value = strings.ToLower(value.(string))
 				}
@@ -347,7 +384,10 @@ func (s Service) SearchRuns(
 		case "tag":
 			kind = &database.Tag{}
 		default:
-			return nil, 0, 0, api.NewInvalidParameterValueError("invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", components[1])
+			return nil, 0, 0, api.NewInvalidParameterValueError(
+				"invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']",
+				components[1],
+			)
 		}
 		if kind != nil {
 			table := fmt.Sprintf("order_%d", n)

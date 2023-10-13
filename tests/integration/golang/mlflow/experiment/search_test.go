@@ -256,15 +256,20 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 			},
 		},
 		{
-			name:  "InvalidEntity",
-			error: api.NewInvalidParameterValueError("invalid entity type 'invalid_entity'. Valid values are ['tag', 'attribute']"),
+			name: "InvalidEntity",
+			error: api.NewInvalidParameterValueError(
+				"invalid entity type 'invalid_entity'. Valid values are ['tag', 'attribute']",
+			),
 			request: request.SearchExperimentsRequest{
 				Filter: "invalid_entity.name = value",
 			},
 		},
 		{
-			name:  "InvalidOrderByAttribute",
-			error: api.NewInvalidParameterValueError("invalid attribute 'invalid_attribute'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']"),
+			name: "InvalidOrderByAttribute",
+			error: api.NewInvalidParameterValueError(
+				`invalid attribute 'invalid_attribute'. ` +
+					`Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']`,
+			),
 			request: request.SearchExperimentsRequest{
 				OrderBy: []string{"invalid_attribute"},
 			},

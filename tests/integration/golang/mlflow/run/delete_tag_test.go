@@ -192,7 +192,8 @@ func (s *DeleteRunTagTestSuite) Test_Error() {
 				RunID: run.ID,
 			},
 			error: api.NewResourceDoesNotExistError(
-				`Unable to find tag 'not_found_tag' for run '%s': error getting tag by run id: %s and tag key: not_found_tag: record not found`,
+				`Unable to find tag 'not_found_tag' for run '%s': error getting tag by run id: %s and `+
+					`tag key: not_found_tag: record not found`,
 				run.ID, run.ID,
 			),
 		},

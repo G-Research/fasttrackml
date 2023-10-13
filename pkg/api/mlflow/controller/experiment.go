@@ -17,8 +17,11 @@ func (c Controller) CreateExperiment(ctx *fiber.Ctx) error {
 	var req request.CreateExperimentRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		if err, ok := err.(*json.UnmarshalTypeError); ok {
-			// TODO:DSuhinin do we really need this? or maybe we can always just return a common error message like in other cases?
-			return api.NewInvalidParameterValueError("Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. See the API docs for more information about request parameters.", err.Field, err.Value)
+			return api.NewInvalidParameterValueError(
+				`Invalid value for parameter '%s' supplied. Hint: Value was of type '%s'. `+
+					`See the API docs for more information about request parameters.`,
+				err.Field, err.Value,
+			)
 		}
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}

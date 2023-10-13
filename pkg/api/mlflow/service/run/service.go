@@ -78,9 +78,18 @@ func (s Service) CreateRun(
 		return nil, api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ExperimentID, err)
 	}
 
+	// experimentID 0 should be interpreted as the default for the namespace
+	if experimentID == 0 {
+		experimentID = int64(*ns.DefaultExperimentID)
+	}
+
 	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(experimentID))
 	if err != nil {
-		return nil, api.NewResourceDoesNotExistError("unable to find experiment with id '%s': %s", req.ExperimentID, err)
+		return nil, api.NewResourceDoesNotExistError(
+			"unable to find experiment for namespace with id '%d': %s",
+			experimentID,
+			err,
+		)
 	}
 
 	run, err := convertors.ConvertCreateRunRequestToDBModel(experiment, req)

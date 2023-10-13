@@ -139,7 +139,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		LastIter:  1,
 	})
-
+	assert.Nil(s.T(), err)
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id2",
 		Name:       "TestRun2",
@@ -218,7 +218,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  1,
 	})
-
+	assert.Nil(s.T(), err)
 	run3, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id3",
 		Name:       "TestRun3",

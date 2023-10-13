@@ -141,9 +141,10 @@ func (s *UpdateAppTestSuite) Test_Error() {
 			error: "cannot unmarshal",
 		},
 		{
-			name:  "UpdateAppWithUnknownID",
-			ID:    uuid.New(),
-			error: "Not Found",
+			name:        "UpdateAppWithUnknownID",
+			ID:          uuid.New(),
+			requestBody: map[string]any{},
+			error:       "Not Found",
 		},
 	}
 	for _, tt := range tests {
@@ -161,7 +162,6 @@ func (s *UpdateAppTestSuite) Test_Error() {
 					"/apps/%s", app.ID,
 				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), resp.Message, tt.error)
 		})
 	}

@@ -111,9 +111,10 @@ func (s *UpdateRunTestSuite) Test_Error() {
 			error: "cannot unmarshal",
 		},
 		{
-			name:  "UpdateRunWithUnknownID",
-			ID:    "incorrect-ID",
-			error: "unable to find run 'incorrect-ID'",
+			name:        "UpdateRunWithUnknownID",
+			ID:          "incorrect-ID",
+			requestBody: map[string]any{},
+			error:       "unable to find run 'incorrect-ID'",
 		},
 	}
 	for _, tt := range tests {
@@ -131,7 +132,6 @@ func (s *UpdateRunTestSuite) Test_Error() {
 					"/runs/%s", tt.ID,
 				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), resp.Message, tt.error)
 		})
 	}

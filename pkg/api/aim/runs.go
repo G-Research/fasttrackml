@@ -51,7 +51,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 	}
 
 	tx := database.DB.
-		Joins(
+		InnerJoins(
 			"Experiment",
 			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
 		).
@@ -177,7 +177,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	}
 	if err := database.DB.
 		Select("ID").
-		Joins(
+		InnerJoins(
 			"Experiment",
 			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
 		).
@@ -245,7 +245,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 	var runs []database.Run
 	if tx := database.DB.
 		Where("status = ?", database.StatusRunning).
-		Joins(
+		InnerJoins(
 			"Experiment",
 			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
 		).
@@ -394,7 +394,7 @@ func SearchRuns(c *fiber.Ctx) error {
 	log.Debugf("Total runs: %d", total)
 
 	tx := database.DB.
-		Joins(
+		InnerJoins(
 			"Experiment",
 			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
 		).
@@ -595,7 +595,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 
 	var runs []database.Run
 	if tx := database.DB.
-		Joins(
+		InnerJoins(
 			"Experiment",
 			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
 		).

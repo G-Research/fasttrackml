@@ -94,9 +94,8 @@ func (r RunRepository) GetByNamespaceIDRunIDAndLifecycleStage(
 	).Preload(
 		"Tags",
 	).Joins(
-		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-	).Where(
-		"experiments.namespace_id = ?", namespaceID,
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+		namespaceID,
 	).Where(
 		`runs.lifecycle_stage = ?`, lifecycleStage,
 	).First(&run).Error; err != nil {
@@ -122,9 +121,8 @@ func (r RunRepository) GetByNamespaceIDAndRunID(
 	).Preload(
 		"Tags",
 	).Joins(
-		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-	).Where(
-		"experiments.namespace_id = ?", namespaceID,
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+		namespaceID,
 	).First(&run).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

@@ -610,8 +610,10 @@ func SearchMetrics(c *fiber.Ctx) error {
 		Where("run_uuid IN (?)", pq.Filter(database.DB.
 			Select("runs.run_uuid").
 			Table("runs").
-			Joins("LEFT JOIN experiments USING(experiment_id)").
-			Where("experiments.namespace_id = ?", ns.ID).
+			Joins(
+				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+				ns.ID,
+			).
 			Joins("LEFT JOIN latest_metrics USING(run_uuid)"))).
 		Order("runs.row_num DESC").
 		Find(&runs); tx.Error != nil {
@@ -669,8 +671,10 @@ func SearchMetrics(c *fiber.Ctx) error {
 					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
 				).
 				Table("runs").
-				Joins("LEFT JOIN experiments USING(experiment_id)").
-				Where("experiments.namespace_id = ?", ns.ID).
+				Joins(
+					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+					ns.ID,
+				).
 				Joins("LEFT JOIN latest_metrics USING(run_uuid)")),
 		).
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").

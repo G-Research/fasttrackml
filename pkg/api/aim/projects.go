@@ -51,9 +51,8 @@ func GetProjectActivity(c *fiber.Ctx) error {
 		"runs.start_time",
 		"runs.lifecycle_stage",
 	).Joins(
-		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-	).Where(
-		"experiments.namespace_id = ?", ns.ID,
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+		ns.ID,
 	).Find(
 		&runs,
 	); tx.Error != nil {
@@ -122,9 +121,8 @@ func GetProjectParams(c *fiber.Ctx) error {
 		).Joins(
 			"JOIN runs USING(run_uuid)",
 		).Joins(
-			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-		).Where(
-			"experiments.namespace_id = ?", ns.ID,
+			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+			ns.ID,
 		).Where(
 			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
 		).Pluck(
@@ -146,9 +144,8 @@ func GetProjectParams(c *fiber.Ctx) error {
 		).Joins(
 			"JOIN runs USING(run_uuid)",
 		).Joins(
-			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-		).Where(
-			"experiments.namespace_id = ?", ns.ID,
+			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+			ns.ID,
 		).Where(
 			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
 		).Pluck(
@@ -191,9 +188,8 @@ func GetProjectParams(c *fiber.Ctx) error {
 			).Joins(
 				"JOIN runs USING(run_uuid)",
 			).Joins(
-				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-			).Where(
-				"experiments.namespace_id = ?", ns.ID,
+				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+				ns.ID,
 			).Where(
 				"runs.lifecycle_stage = ?", database.LifecycleStageActive,
 			).Pluck(

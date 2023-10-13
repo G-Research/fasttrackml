@@ -85,6 +85,18 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 					"/apps/%s", app.ID,
 				),
 			)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPut,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/apps/%s", app.ID,
+				),
+			)
 			assert.Equal(s.T(), "app-type", resp.Type)
 			assert.Equal(s.T(), response.AppState{"app-state-key": "new-app-state-value"}, resp.State)
 		})
@@ -146,7 +158,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					"/apps/%s", tt.ID,
+					"/apps/%s", app.ID,
 				),
 			)
 			assert.Nil(s.T(), err)

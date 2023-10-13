@@ -21,28 +21,29 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type CreateRunTestSuite struct {
+type CreateRunWithNamespaceTestSuite struct {
 	suite.Suite
 	helpers.BaseTestSuite
 }
 
-func TestCreateRunTestSuite(t *testing.T) {
-	suite.Run(t, new(CreateRunTestSuite))
+func TestCreateRunWithNamespaceTestSuite(t *testing.T) {
+	suite.Run(t, new(CreateRunWithNamespaceTestSuite))
 }
 
-func (s *CreateRunTestSuite) SetupTest() {
+func (s *CreateRunWithNamespaceTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
+	s.BaseTestSuite.MlflowClient = helpers.NewClient(helpers.GetServiceUri(), "/ns/custom-ns/api/2.0/mlflow")
 }
 
-func (s *CreateRunTestSuite) Test_Ok() {
+func (s *CreateRunWithNamespaceTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	// create test experiment.
+	// create test namespace and experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
-		Code:                "default",
+		Code:                "custom-ns",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
 	assert.Nil(s.T(), err)
@@ -54,6 +55,12 @@ func (s *CreateRunTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
+	// set namespace default experiment.
+	namespace.DefaultExperimentID = experiment.ID
+	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
+	assert.Nil(s.T(), err)
+
+	// send request with "0" for experiment ID, which is default provided by mlflow client.
 	req := request.CreateRunRequest{
 		Name: "TestRun",
 		Tags: []request.RunTagPartialRequest{
@@ -67,7 +74,7 @@ func (s *CreateRunTestSuite) Test_Ok() {
 			},
 		},
 		StartTime:    1234567890,
-		ExperimentID: fmt.Sprintf("%d", *experiment.ID),
+		ExperimentID: "0",
 	}
 
 	resp := response.CreateRunResponse{}
@@ -104,10 +111,10 @@ func (s *CreateRunTestSuite) Test_Ok() {
 	}, resp.Run.Data.Tags)
 }
 
-func (s *CreateRunTestSuite) Test_Error() {
+func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
-		Code:                "default",
+		Code:                "custom-ns",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
 	assert.Nil(s.T(), err)

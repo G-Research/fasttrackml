@@ -79,6 +79,12 @@ func (c *HttpClient) WithRequest(request any) *HttpClient {
 	return c
 }
 
+// WithBasePath sets base path.
+func (c *HttpClient) WithBasePath(basePath string) *HttpClient {
+	c.basePath = basePath
+	return c
+}
+
 // WithHeaders adds headers to the HTTP request.
 func (c *HttpClient) WithHeaders(headers map[string]string) *HttpClient {
 	c.headers = headers

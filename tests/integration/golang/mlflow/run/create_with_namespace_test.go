@@ -21,7 +21,6 @@ func TestCreateRunWithNamespaceTestSuite(t *testing.T) {
 
 func (s *CreateRunWithNamespaceTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
-	s.BaseTestSuite.MlflowClient = helpers.NewClient(helpers.GetServiceUri(), "/ns/custom-ns/api/2.0/mlflow")
 }
 
 func (s *CreateRunWithNamespaceTestSuite) Test_Ok() {
@@ -75,6 +74,8 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Ok() {
 			req,
 		).WithResponse(
 			&resp,
+		).WithBasePath(
+			"/ns/custom-ns"
 		).DoRequest(
 			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
 		),

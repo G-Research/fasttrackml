@@ -3,8 +3,21 @@
 package run
 
 import (
+	"context"
+	"fmt"
+	"net/http"
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -73,7 +86,7 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Ok() {
 		).WithResponse(
 			&resp,
 		).WithBasePath(
-			"/ns/custom-ns"
+			"/ns/custom-ns",
 		).DoRequest(
 			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
 		),

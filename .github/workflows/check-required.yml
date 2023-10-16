@@ -4,11 +4,14 @@ name: Check required jobs
 # It checks if the "All required checks done" job was actually successful
 # (and not just skipped) and creates a check run if that is the case. The
 # check run can be used to protect the main branch from being merged if the
-# CI is not passing.
+# CI is not passing. We need to use a GitHub app token to create the check
+# run because otherwise the check suite will be assigned to the first workflow
+# run for the CI, which might not be the latest one. See 
+# https://github.com/orgs/community/discussions/24616#discussioncomment-6088422
+# for more details.
 
 on:
   workflow_run:
-    types: [completed]
     workflows: [CI]
 
 permissions:
@@ -18,45 +21,86 @@ permissions:
 jobs:
   required-jobs:
     name: Check required jobs
+    environment: create-check
     runs-on: ubuntu-latest
     steps:
+      - name: Generate an app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: actions/github-script@v6
         with:
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            // list jobs for worklow run attempt
-            const { data: { jobs } } = await github.rest.actions.listJobsForWorkflowRunAttempt({
-              owner: context.payload.repository.owner.login,
-              repo: context.payload.repository.name,
-              run_id: context.payload.workflow_run.id,
-              attempt_number: context.payload.workflow_run.run_attempt,
-            });
-            // check if required job was successful
-            var success = false;
-            core.info(`Checking jobs for workflow run ${context.payload.workflow_run.html_url}`);
-            jobs.forEach(job => {
-              var mark = '-'
-              if (job.name === 'All required checks done') {
-                if (job.conclusion === 'success') {
-                  success = true;
-                  mark = '✅';
-                } else {
-                  mark = '❌';
-                }
-              }
-              core.info(`${mark} ${job.name}: ${job.conclusion}`);
-            });
-            // create check run if job was successful
-            if (success) {
+            const name = 'All required checks succeeded';
+            const head_sha = context.payload.workflow_run.head_sha;
+            const owner = context.payload.repository.owner.login;
+            const repo = context.payload.repository.name;
+            const url = `${context.payload.workflow_run.html_url}/attempts/${context.payload.workflow_run.run_attempt}`;
+            const summary = `See [workflow run](${url}) for details.`;
+            const status = context.payload.workflow_run.status;
+
+            core.info(`Workflow run ${url} has status '${status}'.`)
+
+            if (status === 'in_progress' || status === 'queued') {
+              core.info(`Creating check run with status '${status}'.`)
               await github.rest.checks.create({
-                owner: context.payload.repository.owner.login,
-                repo: context.payload.repository.name,
-                name: 'All required checks succeeded',
-                head_sha: context.payload.workflow_run.head_sha,
-                status: 'completed',
-                conclusion: 'success',
+                owner: owner,
+                repo: repo,
+                name: name,
+                head_sha: head_sha,
+                status: status,
+                started_at: context.payload.workflow_run.started_at,
                 output: {
-                  title: 'All required checks succeeded',
-                  summary: `See [workflow run](${context.payload.workflow_run.html_url}) for details.`,
+                  title: name,
+                  summary: summary,
                 },
+              });  
+            } else if (status === 'completed') {
+              // list jobs for worklow run attempt
+              const { data: { jobs } } = await github.rest.actions.listJobsForWorkflowRunAttempt({
+                owner: owner,
+                repo: repo,
+                run_id: context.payload.workflow_run.id,
+                attempt_number: context.payload.workflow_run.run_attempt,
               });
+              // check if required job was successful
+              var success = false;
+              core.info("Checking jobs");
+              jobs.forEach(job => {
+                var mark = '-'
+                if (job.name === 'All required checks done') {
+                  if (job.conclusion === 'success') {
+                    success = true;
+                    mark = '✅';
+                  } else {
+                    mark = '❌';
+                  }
+                }
+                core.info(`${mark} ${job.name}: ${job.conclusion}`);
+              });
+              // create check run if job was successful
+              if (success) {
+                core.info(`All required jobs succeeded, creating check run with status 'completed' and conclusion 'success'.`)
+                await github.rest.checks.create({
+                  owner: owner,
+                  repo: repo,
+                  name: name,
+                  head_sha: head_sha,
+                  status: 'completed',
+                  conclusion: 'success',
+                  completed_at: context.payload.workflow_run.completed_at,
+                  output: {
+                    title: name,
+                    summary: summary,
+                  },
+                });
+              } else {
+                core.warning('Not all required jobs succeeded, not creating check run.');
+              }
+            } else {
+              core.warning(`Unknown status '${status}', not creating check run.`);
             }

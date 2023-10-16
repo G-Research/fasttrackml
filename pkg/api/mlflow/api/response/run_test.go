@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -81,7 +83,7 @@ func TestNewRunPartialResponse(t *testing.T) {
 					Metrics: []RunMetricPartialResponse{
 						{
 							Key:       "Key",
-							Value:     "NaN",
+							Value:     common.NANValue,
 							Timestamp: 1234567890,
 							Step:      1,
 						},

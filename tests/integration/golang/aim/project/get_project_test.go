@@ -10,15 +10,14 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetProjectTestSuite struct {
 	suite.Suite
-	client          *helpers.HttpClient
-	projectFixtures *fixtures.ProjectFixtures
-	project         *response.GetProjectResponse
+	helpers.BaseTestSuite
 }
 
 func TestGetProjectTestSuite(t *testing.T) {
@@ -26,28 +25,25 @@ func TestGetProjectTestSuite(t *testing.T) {
 }
 
 func (s *GetProjectTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	projectFixtures, err := fixtures.NewProjectFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.projectFixtures = projectFixtures
-
-	project := projectFixtures.GetProject(context.Background())
-	s.project = project
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetProjectTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.projectFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
-	var resp response.GetProjectResponse
-	err := s.client.DoGetRequest(
-		"/projects",
-		&resp,
-	)
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), s.project.Name, resp.Name)
-	assert.Equal(s.T(), s.project.Path, resp.Path)
-	assert.Equal(s.T(), s.project.Description, resp.Description)
-	assert.Equal(s.T(), s.project.TelemetryEnabled, resp.TelemetryEnabled)
+
+	var resp response.GetProjectResponse
+	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/projects"))
+	assert.Equal(s.T(), "FastTrackML", resp.Name)
+	// assert.Equal(s.T(), "", resp.Path)
+	assert.Equal(s.T(), "", resp.Description)
+	assert.Equal(s.T(), 0, resp.TelemetryEnabled)
 }

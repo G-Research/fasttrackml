@@ -34,6 +34,7 @@ func Test_renumberRows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+	//nolint:errcheck
 	defer mockDb.Close()
 
 	lockExpect := func() {
@@ -45,7 +46,8 @@ func Test_renumberRows(t *testing.T) {
 		Conn:       mockDb,
 		DriverName: "postgres",
 	})
-	db, _ := gorm.Open(dialector, &gorm.Config{})
+	db, err := gorm.Open(dialector, &gorm.Config{})
+	assert.Nil(t, err)
 
 	repo := NewRunRepository(db)
 

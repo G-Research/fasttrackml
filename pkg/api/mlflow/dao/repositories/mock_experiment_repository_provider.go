@@ -56,25 +56,25 @@ func (_m *MockExperimentRepositoryProvider) DeleteBatch(ctx context.Context, ids
 	return r0
 }
 
-// GetByID provides a mock function with given fields: ctx, experimentID
-func (_m *MockExperimentRepositoryProvider) GetByID(ctx context.Context, experimentID int32) (*models.Experiment, error) {
-	ret := _m.Called(ctx, experimentID)
+// GetByNamespaceIDAndExperimentID provides a mock function with given fields: ctx, namespaceID, experimentID
+func (_m *MockExperimentRepositoryProvider) GetByNamespaceIDAndExperimentID(ctx context.Context, namespaceID uint, experimentID int32) (*models.Experiment, error) {
+	ret := _m.Called(ctx, namespaceID, experimentID)
 
 	var r0 *models.Experiment
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int32) (*models.Experiment, error)); ok {
-		return rf(ctx, experimentID)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, int32) (*models.Experiment, error)); ok {
+		return rf(ctx, namespaceID, experimentID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int32) *models.Experiment); ok {
-		r0 = rf(ctx, experimentID)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, int32) *models.Experiment); ok {
+		r0 = rf(ctx, namespaceID, experimentID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Experiment)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int32) error); ok {
-		r1 = rf(ctx, experimentID)
+	if rf, ok := ret.Get(1).(func(context.Context, uint, int32) error); ok {
+		r1 = rf(ctx, namespaceID, experimentID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -82,25 +82,25 @@ func (_m *MockExperimentRepositoryProvider) GetByID(ctx context.Context, experim
 	return r0, r1
 }
 
-// GetByName provides a mock function with given fields: ctx, name
-func (_m *MockExperimentRepositoryProvider) GetByName(ctx context.Context, name string) (*models.Experiment, error) {
-	ret := _m.Called(ctx, name)
+// GetByNamespaceIDAndName provides a mock function with given fields: ctx, namespaceID, name
+func (_m *MockExperimentRepositoryProvider) GetByNamespaceIDAndName(ctx context.Context, namespaceID uint, name string) (*models.Experiment, error) {
+	ret := _m.Called(ctx, namespaceID, name)
 
 	var r0 *models.Experiment
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.Experiment, error)); ok {
-		return rf(ctx, name)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, string) (*models.Experiment, error)); ok {
+		return rf(ctx, namespaceID, name)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *models.Experiment); ok {
-		r0 = rf(ctx, name)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, string) *models.Experiment); ok {
+		r0 = rf(ctx, namespaceID, name)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Experiment)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, name)
+	if rf, ok := ret.Get(1).(func(context.Context, uint, string) error); ok {
+		r1 = rf(ctx, namespaceID, name)
 	} else {
 		r1 = ret.Error(1)
 	}

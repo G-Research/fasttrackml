@@ -22,11 +22,26 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
+//nolint:lll
 var (
+	runOrder      = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
 	filterAnd     = regexp.MustCompile(`(?i)\s+AND\s+`)
 	filterCond    = regexp.MustCompile(`^(?:(\w+)\.)?("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'[^']+'(?:,\s*)?)+\)|"[^"]+"|'[^']+'|[\w\.]+)$`)
 	filterInGroup = regexp.MustCompile(`,\s*`)
-	runOrder      = regexp.MustCompile(`^(attribute|metric|param|tag)s?\.("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)(?i:\s+(ASC|DESC))?$`)
+)
+
+// supported expression list.
+const (
+	InExpression            = "IN"
+	NotInExpression         = "NOT IN"
+	LikeExpression          = "LIKE"
+	ILikeExpression         = "ILIKE"
+	EqualExpression         = "="
+	NotEqualExpression      = "!="
+	LessExpression          = "<"
+	LessOrEqualExpression   = "<="
+	GraterExpression        = ">"
+	GraterOrEqualExpression = ">="
 )
 
 // Service provides service layer to work with `run` business logic.
@@ -55,13 +70,15 @@ func NewService(
 	}
 }
 
-func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (*models.Run, error) {
+func (s Service) CreateRun(
+	ctx context.Context, ns *models.Namespace, req *request.CreateRunRequest,
+) (*models.Run, error) {
 	experimentID, err := strconv.ParseInt(req.ExperimentID, 10, 32)
 	if err != nil {
 		return nil, api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ExperimentID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByID(ctx, int32(experimentID))
+	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(experimentID))
 	if err != nil {
 		return nil, api.NewResourceDoesNotExistError("unable to find experiment with id '%s': %s", req.ExperimentID, err)
 	}
@@ -77,14 +94,19 @@ func (s Service) CreateRun(ctx context.Context, req *request.CreateRunRequest) (
 	return run, nil
 }
 
-func (s Service) UpdateRun(ctx context.Context, req *request.UpdateRunRequest) (*models.Run, error) {
+func (s Service) UpdateRun(
+	ctx context.Context, namespace *models.Namespace, req *request.UpdateRunRequest,
+) (*models.Run, error) {
 	if err := ValidateUpdateRunRequest(req); err != nil {
 		return nil, err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.GetRunID())
 	if err != nil {
 		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.GetRunID())
 	}
 
 	run = convertors.ConvertUpdateRunRequestToDBModel(run, req)
@@ -109,20 +131,31 @@ func (s Service) UpdateRun(ctx context.Context, req *request.UpdateRunRequest) (
 	return run, nil
 }
 
-func (s Service) GetRun(ctx context.Context, req *request.GetRunRequest) (*models.Run, error) {
+func (s Service) GetRun(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.GetRunRequest,
+) (*models.Run, error) {
 	if err := ValidateGetRunRequest(req); err != nil {
 		return nil, err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.GetRunID())
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.GetRunID())
 	if err != nil {
 		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.GetRunID(), err)
+	}
+	if run == nil {
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.GetRunID())
 	}
 
 	return run, nil
 }
 
-func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest) ([]models.Run, int, int, error) {
+// nolint:gocyclo
+// TODO:get back and fix `gocyclo` problem.
+func (s Service) SearchRuns(
+	ctx context.Context, namespace *models.Namespace, req *request.SearchRunsRequest,
+) ([]models.Run, int, int, error) {
 	if err := ValidateSearchRunsRequest(req); err != nil {
 		return nil, 0, 0, err
 	}
@@ -144,10 +177,14 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 			database.LifecycleStageDeleted,
 		}
 	}
-	tx := database.DB.Where(
-		"experiment_id IN ?", req.ExperimentIDs,
+	tx := database.DB.Joins(
+		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 	).Where(
-		"lifecycle_stage IN ?", lifecyleStages,
+		"experiments.namespace_id = ?", namespace.ID,
+	).Where(
+		"runs.experiment_id IN ?", req.ExperimentIDs,
+	).Where(
+		"runs.lifecycle_stage IN ?", lifecyleStages,
 	)
 
 	// MaxResults
@@ -193,14 +230,17 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 				switch key {
 				case "start_time", "end_time":
 					switch comparison {
-					case ">", ">=", "!=", "=", "<", "<=":
+					case GraterExpression, GraterOrEqualExpression, NotEqualExpression,
+						EqualExpression, LessExpression, LessOrEqualExpression:
 						v, err := strconv.Atoi(value.(string))
 						if err != nil {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric value '%s'", value)
 						}
 						value = v
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid numeric attribute comparison operator '%s'", comparison,
+						)
 					}
 				case "run_name":
 					key = "mlflow.runName"
@@ -208,23 +248,25 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 					fallthrough
 				case "status", "user_id", "artifact_uri":
 					switch strings.ToUpper(comparison) {
-					case "!=", "=", "LIKE", "ILIKE":
+					case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 						if strings.HasPrefix(value.(string), "(") {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid string attribute comparison operator '%s'", comparison,
+						)
 					}
 				case "run_id":
 					key = "run_uuid"
 					switch strings.ToUpper(comparison) {
-					case "!=", "=", "LIKE", "ILIKE":
+					case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 						if strings.HasPrefix(value.(string), "(") {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
-					case "IN", "NOT IN":
+					case InExpression, NotInExpression:
 						if !strings.HasPrefix(value.(string), "(") {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid list definition '%s'", value)
 						}
@@ -234,53 +276,68 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 						}
 						value = values
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid string attribute comparison operator '%s'", comparison,
+						)
 					}
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']", key)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						`invalid attribute '%s'. `+
+							`Valid values are ['run_name', 'start_time', 'end_time', 'status', 'user_id', 'artifact_uri', 'run_id']`,
+						key,
+					)
 				}
 			case "metric", "metrics":
 				switch comparison {
-				case ">", ">=", "!=", "=", "<", "<=":
+				case GraterExpression, GraterOrEqualExpression,
+					NotEqualExpression, EqualExpression, LessExpression, LessOrEqualExpression:
 					v, err := strconv.ParseFloat(value.(string), 64)
 					if err != nil {
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric value '%s'", value)
 					}
 					value = v
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid metric comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid metric comparison operator '%s'", comparison,
+					)
 				}
 				kind = &database.LatestMetric{}
 			case "parameter", "parameters", "param", "params":
 				switch strings.ToUpper(comparison) {
-				case "!=", "=", "LIKE", "ILIKE":
+				case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 					if strings.HasPrefix(value.(string), "(") {
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid param comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid param comparison operator '%s'", comparison,
+					)
 				}
 				kind = &database.Param{}
 			case "tag", "tags":
 				switch strings.ToUpper(comparison) {
-				case "!=", "=", "LIKE", "ILIKE":
+				case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 					if strings.HasPrefix(value.(string), "(") {
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 					}
 					value = strings.Trim(value.(string), `"'`)
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid tag comparison operator '%s'", comparison)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid tag comparison operator '%s'", comparison,
+					)
 				}
 				kind = &database.Tag{}
 			default:
-				return nil, 0, 0, api.NewInvalidParameterValueError("invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity)
+				return nil, 0, 0, api.NewInvalidParameterValueError(
+					"invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", entity,
+				)
 			}
 
 			if kind == nil {
-				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == ILikeExpression {
 					key = fmt.Sprintf("LOWER(runs.%s)", key)
-					comparison = "LIKE"
+					comparison = LikeExpression
 					value = strings.ToLower(value.(string))
 					tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
 				} else {
@@ -289,7 +346,7 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 			} else {
 				table := fmt.Sprintf("filter_%d", n)
 				where := fmt.Sprintf("value %s ?", comparison)
-				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == ILikeExpression {
 					where = "LOWER(value) LIKE ?"
 					value = strings.ToLower(value.(string))
 				}
@@ -327,7 +384,10 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 		case "tag":
 			kind = &database.Tag{}
 		default:
-			return nil, 0, 0, api.NewInvalidParameterValueError("invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']", components[1])
+			return nil, 0, 0, api.NewInvalidParameterValueError(
+				"invalid entity type '%s'. Valid values are ['metric', 'parameter', 'tag', 'attribute']",
+				components[1],
+			)
 		}
 		if kind != nil {
 			table := fmt.Sprintf("order_%d", n)
@@ -363,14 +423,19 @@ func (s Service) SearchRuns(ctx context.Context, req *request.SearchRunsRequest)
 }
 
 // DeleteRun handles delete models.Run entity business logic.
-func (s Service) DeleteRun(ctx context.Context, req *request.DeleteRunRequest) error {
+func (s Service) DeleteRun(
+	ctx context.Context, namespace *models.Namespace, req *request.DeleteRunRequest,
+) error {
 	if err := ValidateDeleteRunRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.RunID)
 	if err != nil {
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
 	if err := s.runRepository.Archive(ctx, run); err != nil {
@@ -380,14 +445,21 @@ func (s Service) DeleteRun(ctx context.Context, req *request.DeleteRunRequest) e
 	return nil
 }
 
-func (s Service) RestoreRun(ctx context.Context, req *request.RestoreRunRequest) error {
+func (s Service) RestoreRun(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.RestoreRunRequest,
+) error {
 	if err := ValidateRestoreRunRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.RunID)
 	if err != nil {
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
 	run.DeletedTime = sql.NullInt64{Valid: false}
@@ -399,14 +471,21 @@ func (s Service) RestoreRun(ctx context.Context, req *request.RestoreRunRequest)
 	return nil
 }
 
-func (s Service) LogMetric(ctx context.Context, req *request.LogMetricRequest) error {
+func (s Service) LogMetric(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.LogMetricRequest,
+) error {
 	if err := ValidateLogMetricRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByID(ctx, req.RunID)
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.RunID)
 	if err != nil {
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
 	metric, err := convertors.ConvertMetricParamRequestToDBModel(run.ID, req)
@@ -420,12 +499,18 @@ func (s Service) LogMetric(ctx context.Context, req *request.LogMetricRequest) e
 	return nil
 }
 
-func (s Service) LogParam(ctx context.Context, req *request.LogParamRequest) error {
+func (s Service) LogParam(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.LogParamRequest,
+) error {
 	if err := ValidateLogParamRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	run, err := s.runRepository.GetByNamespaceIDRunIDAndLifecycleStage(
+		ctx, namespace.ID, req.RunID, models.LifecycleStageActive,
+	)
 	if err != nil {
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
@@ -441,12 +526,18 @@ func (s Service) LogParam(ctx context.Context, req *request.LogParamRequest) err
 	return nil
 }
 
-func (s Service) SetRunTag(ctx context.Context, req *request.SetRunTagRequest) error {
+func (s Service) SetRunTag(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.SetRunTagRequest,
+) error {
 	if err := ValidateSetRunTagRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	run, err := s.runRepository.GetByNamespaceIDRunIDAndLifecycleStage(
+		ctx, namespace.ID, req.RunID, models.LifecycleStageActive,
+	)
 	if err != nil {
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
@@ -461,12 +552,18 @@ func (s Service) SetRunTag(ctx context.Context, req *request.SetRunTagRequest) e
 	return nil
 }
 
-func (s Service) DeleteRunTag(ctx context.Context, req *request.DeleteRunTagRequest) error {
+func (s Service) DeleteRunTag(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.DeleteRunTagRequest,
+) error {
 	if err := ValidateDeleteRunTagRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	run, err := s.runRepository.GetByNamespaceIDRunIDAndLifecycleStage(
+		ctx, namespace.ID, req.RunID, models.LifecycleStageActive,
+	)
 	if err != nil {
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
@@ -486,12 +583,18 @@ func (s Service) DeleteRunTag(ctx context.Context, req *request.DeleteRunTagRequ
 	return nil
 }
 
-func (s Service) LogBatch(ctx context.Context, req *request.LogBatchRequest) error {
+func (s Service) LogBatch(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.LogBatchRequest,
+) error {
 	if err := ValidateLogBatchRequest(req); err != nil {
 		return err
 	}
 
-	run, err := s.runRepository.GetByIDAndLifecycleStage(ctx, req.RunID, models.LifecycleStageActive)
+	run, err := s.runRepository.GetByNamespaceIDRunIDAndLifecycleStage(
+		ctx, namespace.ID, req.RunID, models.LifecycleStageActive,
+	)
 	if err != nil {
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}

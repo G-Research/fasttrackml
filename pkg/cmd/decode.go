@@ -22,6 +22,7 @@ var DecodeCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
+			//nolint:errcheck
 			defer f.Close()
 		}
 

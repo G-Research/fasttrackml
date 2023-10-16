@@ -8,6 +8,7 @@ packages:
       BaseRepositoryProvider:
       ExperimentRepositoryProvider:
       MetricRepositoryProvider:
+      NamespaceRepositoryProvider:
       ParamRepositoryProvider:
       RunRepositoryProvider:
       TagRepositoryProvider:

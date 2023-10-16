@@ -55,6 +55,7 @@ help: ## display this help
 
 #
 # Tools targets.
+# This needs to be kept in sync with .devcontainer/Dockerfile.
 #
 .PHONY: install-tools ## install tools.
 install-tools:

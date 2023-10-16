@@ -2,7 +2,7 @@ package controller
 
 import "github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 
-// Controller handles all the input HTTP requests.
+// Controller contains all the request handler functions for the admin ui.
 type Controller struct {
 	namespaceService *namespace.Service
 }

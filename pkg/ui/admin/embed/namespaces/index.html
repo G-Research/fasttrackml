@@ -1,0 +1,28 @@
+<h1>Namespaces</h1>
+{{ template "partials/messages" . }}
+<table id="namespaces">
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Description</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Namespaces }}
+    <tr>
+      <td>{{ .Code }}</td>
+      <td>{{ .Description }}</td>
+      <td>
+        {{ if ne .Code "default" }}
+        <a href="#" class="namespace-actions" onclick="editNamespace('{{ .ID }}')"><i
+            class="Icon__container icon-edit"></i> Edit</a>
+        <a href="#" class="namespace-actions" onclick="deleteNamespace('{{ .ID }}')"><i
+            class="Icon__container icon-delete"></i> Delete</a>
+        {{ end }}
+      </td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+<p><input type="button" value="New Namespace" onclick="createNamespace()"></p>

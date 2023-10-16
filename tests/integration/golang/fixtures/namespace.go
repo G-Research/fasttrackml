@@ -6,8 +6,8 @@ import (
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 
-	"github.com/G-Research/fasttrackml/pkg/api/admin/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 )
 
 // NamespaceFixtures represents data fixtures object.

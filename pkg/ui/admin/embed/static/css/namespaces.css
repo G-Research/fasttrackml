@@ -1,0 +1,48 @@
+:root {
+    --accent: #00a4e0;
+}
+
+main {
+    text-align: center;
+    padding-top: 0px
+}
+
+.logo {
+    height: 150px;
+    margin-top: -25px;
+    margin-bottom: -50px;
+}
+
+#namespaces {
+    display: inline-table;
+}
+
+#form-container {
+    display: flex;
+    justify-content: center;
+}
+
+#form-fields {
+    text-align: left;
+}
+
+.namespace-actions {
+    text-decoration: none;
+}
+
+.error-message {
+    color: darkred;
+}
+
+.success-message {
+    color: darkgreen;
+}
+
+.help-text {
+    font-size:small;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}

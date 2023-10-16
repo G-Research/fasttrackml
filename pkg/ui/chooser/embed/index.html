@@ -63,6 +63,7 @@
                 <p>This is the modern Aim UI, much faster than MLFlow.</p>
             </article>
         </div>
+
         <ul id="namespaces-list">
             {{ range .Namespaces }}
             <li>
@@ -70,6 +71,9 @@
             </li>
             {{ end }}
         </ul>
+
+	<p><a href="#" onclick="window.location = window.location.origin + '/admin/namespaces/'">Manage namespaces</a></p>
+
     </main>
 
     <footer>

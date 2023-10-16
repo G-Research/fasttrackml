@@ -72,10 +72,23 @@ func (s *ArtifactStorageFactory) GetStorage(
 	}
 
 	switch u.Scheme {
+	case GCStorageName:
+		if storage, ok := s.storageList.Load(GCStorageName); ok {
+			if gcStorage, ok := storage.(*GC); ok {
+				return gcStorage, nil
+			}
+			return nil, eris.New("storage is not gc artifact storage")
+		}
+		storage, err := NewGC(ctx, s.config)
+		if err != nil {
+			return nil, eris.Wrap(err, "error initializing gc artifact storage")
+		}
+		s.storageList.Store(GCStorageName, storage)
+		return storage, nil
 	case S3StorageName:
 		if storage, ok := s.storageList.Load(S3StorageName); ok {
-			if localStorage, ok := storage.(*S3); ok {
-				return localStorage, nil
+			if s3Storage, ok := storage.(*S3); ok {
+				return s3Storage, nil
 			}
 			return nil, eris.New("storage is not s3 artifact storage")
 		}

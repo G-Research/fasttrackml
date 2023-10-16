@@ -13,8 +13,6 @@ type CreateRunWithNamespaceTestSuite struct {
 	helpers.BaseTestSuite
 }
 
-// TODO enable once ns-admin-ui is merged
-/*
 func TestCreateRunWithNamespaceTestSuite(t *testing.T) {
 	suite.Run(t, new(CreateRunWithNamespaceTestSuite))
 }
@@ -153,4 +151,3 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 		})
 	}
 }
-*/

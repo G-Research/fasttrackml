@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -15,15 +16,14 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type UpdateExperimentTestSuite struct {
 	suite.Suite
-	client             *helpers.HttpClient
-	experimentFixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
 }
 
 func TestUpdateExperimentTestSuite(t *testing.T) {
@@ -31,19 +31,24 @@ func TestUpdateExperimentTestSuite(t *testing.T) {
 }
 
 func (s *UpdateExperimentTestSuite) SetupTest() {
-	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = experimentFixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *UpdateExperimentTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	// 1. prepare database with test data.
-	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name: "Test Experiment",
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:        "Test Experiment",
+		NamespaceID: namespace.ID,
 		CreationTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
@@ -61,19 +66,38 @@ func (s *UpdateExperimentTestSuite) Test_Ok() {
 		ID:   fmt.Sprintf("%d", *experiment.ID),
 		Name: "Test Updated Experiment",
 	}
-	err = s.client.DoPostRequest(
-		fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute),
-		req,
-		&struct{}{},
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&struct{}{},
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
 
-	exp, err := s.experimentFixtures.GetExperimentByID(context.Background(), *experiment.ID)
+	exp, err := s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
+		context.Background(), namespace.ID, *experiment.ID,
+	)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), "Test Updated Experiment", exp.Name)
 }
 
 func (s *UpdateExperimentTestSuite) Test_Error() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -109,12 +133,18 @@ func (s *UpdateExperimentTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.client.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute),
+				),
 			)
-			assert.Nil(t, err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

@@ -17,6 +17,12 @@ import (
 )
 
 func TestService_CreateRun_Ok(t *testing.T) {
+	// initialise namespace to which experiment under the test belongs to.
+	ns := models.Namespace{
+		ID:   1,
+		Code: "code",
+	}
+
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
@@ -43,8 +49,9 @@ func TestService_CreateRun_Ok(t *testing.T) {
 
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 	experimentRepository.On(
-		"GetByID",
+		"GetByNamespaceIDAndExperimentID",
 		context.TODO(),
+		ns.ID,
 		int32(1),
 	).Return(&models.Experiment{
 		ID:               common.GetPointer(int32(1)),
@@ -59,7 +66,7 @@ func TestService_CreateRun_Ok(t *testing.T) {
 		&repositories.MockMetricRepositoryProvider{},
 		&experimentRepository,
 	)
-	run, err := service.CreateRun(context.TODO(), &request.CreateRunRequest{
+	run, err := service.CreateRun(context.TODO(), &ns, &request.CreateRunRequest{
 		ExperimentID: "1",
 		UserID:       "1",
 		Name:         "name",
@@ -90,6 +97,12 @@ func TestService_CreateRun_Ok(t *testing.T) {
 }
 
 func TestService_CreateRun_Error(t *testing.T) {
+	// initialise namespace to which experiment under the test belongs to.
+	ns := models.Namespace{
+		ID:   1,
+		Code: "code",
+	}
+
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -119,8 +132,9 @@ func TestService_CreateRun_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndExperimentID",
 					context.TODO(),
+					ns.ID,
 					int32(1),
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -149,8 +163,9 @@ func TestService_CreateRun_Error(t *testing.T) {
 			service: func() *Service {
 				experimentRepository := repositories.MockExperimentRepositoryProvider{}
 				experimentRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndExperimentID",
 					context.TODO(),
+					ns.ID,
 					int32(1),
 				).Return(&models.Experiment{ID: common.GetPointer(int32(1))}, nil)
 				runRepository := repositories.MockRunRepositoryProvider{}
@@ -188,7 +203,7 @@ func TestService_CreateRun_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, err := tt.service().CreateRun(context.TODO(), tt.request)
+			_, err := tt.service().CreateRun(context.TODO(), &ns, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
@@ -228,8 +243,9 @@ func TestService_UpdateRun_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndRunID",
 					context.TODO(),
+					uint(1),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -246,7 +262,7 @@ func TestService_UpdateRun_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, err := tt.service().UpdateRun(context.TODO(), tt.request)
+			_, err := tt.service().UpdateRun(context.TODO(), &models.Namespace{ID: 1}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
@@ -256,8 +272,9 @@ func TestService_RestoreRun_Ok(t *testing.T) {
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
-		"GetByID",
+		"GetByNamespaceIDAndRunID",
 		context.TODO(),
+		uint(1),
 		"1",
 	).Return(&models.Run{ID: "1"}, nil)
 	runRepository.On(
@@ -278,7 +295,7 @@ func TestService_RestoreRun_Ok(t *testing.T) {
 		&repositories.MockMetricRepositoryProvider{},
 		&repositories.MockExperimentRepositoryProvider{},
 	)
-	err := service.RestoreRun(context.TODO(), &request.RestoreRunRequest{RunID: "1"})
+	err := service.RestoreRun(context.TODO(), &models.Namespace{ID: 1}, &request.RestoreRunRequest{RunID: "1"})
 
 	// compare results.
 	assert.Nil(t, err)
@@ -314,8 +331,9 @@ func TestService_RestoreRun_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndRunID",
 					context.TODO(),
+					uint(1),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -336,8 +354,9 @@ func TestService_RestoreRun_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndRunID",
 					context.TODO(),
+					uint(1),
 					"1",
 				).Return(&models.Run{
 					ID: "1",
@@ -366,7 +385,7 @@ func TestService_RestoreRun_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			err := tt.service().RestoreRun(context.TODO(), tt.request)
+			err := tt.service().RestoreRun(context.TODO(), &models.Namespace{ID: 1}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
@@ -376,8 +395,9 @@ func TestService_SetRunTag_Ok(t *testing.T) {
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
-		"GetByIDAndLifecycleStage",
+		"GetByNamespaceIDRunIDAndLifecycleStage",
 		context.TODO(),
+		uint(1),
 		"1",
 		models.LifecycleStageActive,
 	).Return(
@@ -399,7 +419,9 @@ func TestService_SetRunTag_Ok(t *testing.T) {
 		&repositories.MockMetricRepositoryProvider{},
 		&repositories.MockExperimentRepositoryProvider{},
 	)
-	err := service.SetRunTag(context.TODO(), &request.SetRunTagRequest{
+	err := service.SetRunTag(context.TODO(), &models.Namespace{
+		ID: 1,
+	}, &request.SetRunTagRequest{
 		RunID: "1",
 		Key:   "key",
 		Value: "value",
@@ -414,8 +436,9 @@ func TestService_DeleteRun_Ok(t *testing.T) {
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
-		"GetByID",
+		"GetByNamespaceIDAndRunID",
 		context.TODO(),
+		uint(1),
 		"1",
 	).Return(&models.Run{ID: "1"}, nil)
 	runRepository.On(
@@ -432,7 +455,7 @@ func TestService_DeleteRun_Ok(t *testing.T) {
 		&repositories.MockMetricRepositoryProvider{},
 		&repositories.MockExperimentRepositoryProvider{},
 	)
-	err := service.DeleteRun(context.TODO(), &request.DeleteRunRequest{RunID: "1"})
+	err := service.DeleteRun(context.TODO(), &models.Namespace{ID: 1}, &request.DeleteRunRequest{RunID: "1"})
 
 	// compare results.
 	assert.Nil(t, err)
@@ -468,8 +491,9 @@ func TestService_DeleteRun_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndRunID",
 					context.TODO(),
+					uint(1),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -490,8 +514,9 @@ func TestService_DeleteRun_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndRunID",
 					context.TODO(),
+					uint(1),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -512,8 +537,9 @@ func TestService_DeleteRun_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndRunID",
 					context.TODO(),
+					uint(1),
 					"1",
 				).Return(&models.Run{
 					ID: "1",
@@ -540,7 +566,9 @@ func TestService_DeleteRun_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			err := tt.service().DeleteRun(context.TODO(), tt.request)
+			err := tt.service().DeleteRun(context.TODO(), &models.Namespace{
+				ID: 1,
+			}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
@@ -577,8 +605,9 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, errors.New("database error"))
@@ -600,8 +629,9 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, nil)
@@ -624,8 +654,9 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -658,8 +689,9 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -701,7 +733,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			err := tt.service().DeleteRunTag(context.TODO(), tt.request)
+			err := tt.service().DeleteRunTag(context.TODO(), &models.Namespace{ID: 1}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
@@ -711,8 +743,9 @@ func TestService_GetRun_Ok(t *testing.T) {
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
-		"GetByID",
+		"GetByNamespaceIDAndRunID",
 		context.TODO(),
+		uint(1),
 		"1",
 	).Return(&models.Run{
 		ID:             "1",
@@ -759,7 +792,9 @@ func TestService_GetRun_Ok(t *testing.T) {
 		&repositories.MockMetricRepositoryProvider{},
 		&repositories.MockExperimentRepositoryProvider{},
 	)
-	run, err := service.GetRun(context.TODO(), &request.GetRunRequest{RunID: "1"})
+	run, err := service.GetRun(context.TODO(), &models.Namespace{
+		ID: 1,
+	}, &request.GetRunRequest{RunID: "1"})
 
 	// compare results.
 	assert.Nil(t, err)
@@ -829,8 +864,9 @@ func TestService_GetRun_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndRunID",
 					context.TODO(),
+					uint(1),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -847,7 +883,9 @@ func TestService_GetRun_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			_, err := tt.service().GetRun(context.TODO(), tt.request)
+			_, err := tt.service().GetRun(context.TODO(), &models.Namespace{
+				ID: 1,
+			}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
@@ -857,8 +895,9 @@ func TestService_LogBatch_Ok(t *testing.T) {
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
-		"GetByIDAndLifecycleStage",
+		"GetByNamespaceIDRunIDAndLifecycleStage",
 		context.TODO(),
+		uint(1),
 		"1",
 		models.LifecycleStageActive,
 	).Return(&models.Run{
@@ -913,7 +952,9 @@ func TestService_LogBatch_Ok(t *testing.T) {
 		&metricRepository,
 		&repositories.MockExperimentRepositoryProvider{},
 	)
-	err := service.LogBatch(context.TODO(), &request.LogBatchRequest{
+	err := service.LogBatch(context.TODO(), &models.Namespace{
+		ID: 1,
+	}, &request.LogBatchRequest{
 		RunID: "1",
 		Tags: []request.TagPartialRequest{
 			{
@@ -971,8 +1012,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, errors.New("database error"))
@@ -994,8 +1036,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, nil)
@@ -1017,8 +1060,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, nil)
@@ -1046,8 +1090,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -1077,8 +1122,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -1129,8 +1175,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -1207,8 +1254,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -1277,7 +1325,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			err := tt.service().LogBatch(context.TODO(), tt.request)
+			err := tt.service().LogBatch(context.TODO(), &models.Namespace{ID: 1}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
@@ -1287,8 +1335,9 @@ func TestService_LogMetric_Ok(t *testing.T) {
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
-		"GetByID",
+		"GetByNamespaceIDAndRunID",
 		context.TODO(),
+		uint(1),
 		"1",
 	).Return(&models.Run{
 		ID:             "1",
@@ -1318,7 +1367,9 @@ func TestService_LogMetric_Ok(t *testing.T) {
 		&metricRepository,
 		&repositories.MockExperimentRepositoryProvider{},
 	)
-	err := service.LogMetric(context.TODO(), &request.LogMetricRequest{
+	err := service.LogMetric(context.TODO(), &models.Namespace{
+		ID: 1,
+	}, &request.LogMetricRequest{
 		RunID:     "1",
 		Key:       "key",
 		Value:     1.1,
@@ -1396,8 +1447,9 @@ func TestService_LogMetric_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndRunID",
 					context.TODO(),
+					uint(1),
 					"1",
 				).Return(nil, errors.New("database error"))
 				return NewService(
@@ -1421,8 +1473,9 @@ func TestService_LogMetric_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndRunID",
 					context.TODO(),
+					uint(1),
 					"1",
 				).Return(&models.Run{
 					ID: "1",
@@ -1443,14 +1496,15 @@ func TestService_LogMetric_Error(t *testing.T) {
 				RunID:     "1",
 				Key:       "key",
 				Step:      1,
-				Value:     "NaN",
+				Value:     common.NANValue,
 				Timestamp: 1234567890,
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByID",
+					"GetByNamespaceIDAndRunID",
 					context.TODO(),
+					uint(1),
 					"1",
 				).Return(&models.Run{
 					ID: "1",
@@ -1488,7 +1542,7 @@ func TestService_LogMetric_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			err := tt.service().LogMetric(context.TODO(), tt.request)
+			err := tt.service().LogMetric(context.TODO(), &models.Namespace{ID: 1}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}
@@ -1498,8 +1552,9 @@ func TestService_LogParam_Ok(t *testing.T) {
 	// init repository mocks.
 	runRepository := repositories.MockRunRepositoryProvider{}
 	runRepository.On(
-		"GetByIDAndLifecycleStage",
+		"GetByNamespaceIDRunIDAndLifecycleStage",
 		context.TODO(),
+		uint(1),
 		"1",
 		models.LifecycleStageActive,
 	).Return(&models.Run{
@@ -1527,7 +1582,9 @@ func TestService_LogParam_Ok(t *testing.T) {
 		&repositories.MockMetricRepositoryProvider{},
 		&repositories.MockExperimentRepositoryProvider{},
 	)
-	err := service.LogParam(context.TODO(), &request.LogParamRequest{
+	err := service.LogParam(context.TODO(), &models.Namespace{
+		ID: 1,
+	}, &request.LogParamRequest{
 		RunID: "1",
 		Key:   "key",
 		Value: "value",
@@ -1585,8 +1642,9 @@ func TestService_LogParam_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, errors.New("database error"))
@@ -1610,8 +1668,9 @@ func TestService_LogParam_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(nil, nil)
@@ -1635,8 +1694,9 @@ func TestService_LogParam_Error(t *testing.T) {
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
 				runRepository.On(
-					"GetByIDAndLifecycleStage",
+					"GetByNamespaceIDRunIDAndLifecycleStage",
 					context.TODO(),
+					uint(1),
 					"1",
 					models.LifecycleStageActive,
 				).Return(&models.Run{
@@ -1670,7 +1730,7 @@ func TestService_LogParam_Error(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 			// call service under testing.
-			err := tt.service().LogParam(context.TODO(), tt.request)
+			err := tt.service().LogParam(context.TODO(), &models.Namespace{ID: 1}, tt.request)
 			assert.Equal(t, tt.error, err)
 		})
 	}

@@ -4,24 +4,25 @@ package run
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type UpdateAppTestSuite struct {
 	suite.Suite
-	client      *helpers.HttpClient
-	appFixtures *fixtures.AppFixtures
-	app         *database.App
+	helpers.BaseTestSuite
 }
 
 func TestUpdateAppTestSuite(t *testing.T) {
@@ -29,21 +30,32 @@ func TestUpdateAppTestSuite(t *testing.T) {
 }
 
 func (s *UpdateAppTestSuite) SetupTest() {
-	s.client = helpers.NewAimApiClient(helpers.GetServiceUri())
-
-	appFixtures, err := fixtures.NewAppFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.appFixtures = appFixtures
-
-	apps, err := s.appFixtures.CreateApps(context.Background(), 1)
-	assert.Nil(s.T(), err)
-	s.app = apps[0]
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *UpdateAppTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
+		Base: database.Base{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+		},
+		Type:        "mpi",
+		State:       database.AppState{},
+		NamespaceID: namespace.ID,
+	})
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name        string
 		requestBody request.UpdateApp
@@ -61,12 +73,18 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.App
-			err := s.client.DoPutRequest(
-				fmt.Sprintf("/apps/%s", s.app.ID),
-				tt.requestBody,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPut,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/apps/%s", app.ID,
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), "app-type", resp.Type)
 			assert.Equal(s.T(), response.AppState{"app-state-key": "new-app-state-value"}, resp.State)
 		})
@@ -75,8 +93,27 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 
 func (s *UpdateAppTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.appFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
+		Base: database.Base{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+		},
+		Type:        "mpi",
+		State:       database.AppState{},
+		NamespaceID: namespace.ID,
+	})
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name        string
 		requestBody any
@@ -91,10 +128,17 @@ func (s *UpdateAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			err := s.client.DoPutRequest(
-				fmt.Sprintf("/apps/%s", s.app.ID),
-				tt.requestBody,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPut,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/apps/%s", app.ID,
+				),
 			)
 			assert.Nil(s.T(), err)
 			assert.Contains(s.T(), resp.Message, "cannot unmarshal")

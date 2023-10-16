@@ -16,19 +16,17 @@ func TestMakeDBProvider(t *testing.T) {
 		{
 			name:              "WithSqliteURI",
 			dsn:               "sqlite:///tmp/fasttrack.db",
-			expectedDialector: "sqlite",
+			expectedDialector: SQLiteDialectorName,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			DB = nil
-			db, err := MakeDBProvider(
+			db, err := NewDBProvider(
 				tt.dsn,
 				time.Second*2,
 				2,
 				false,
-				false,
-				"s3://somewhere",
 			)
 			assert.Nil(t, err)
 			assert.NotNil(t, db)

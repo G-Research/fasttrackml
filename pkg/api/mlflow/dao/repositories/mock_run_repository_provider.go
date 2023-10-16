@@ -113,25 +113,51 @@ func (_m *MockRunRepositoryProvider) GetByID(ctx context.Context, id string) (*m
 	return r0, r1
 }
 
-// GetByIDAndLifecycleStage provides a mock function with given fields: ctx, id, lifecycleStage
-func (_m *MockRunRepositoryProvider) GetByIDAndLifecycleStage(ctx context.Context, id string, lifecycleStage models.LifecycleStage) (*models.Run, error) {
-	ret := _m.Called(ctx, id, lifecycleStage)
+// GetByNamespaceIDAndRunID provides a mock function with given fields: ctx, namespaceID, runID
+func (_m *MockRunRepositoryProvider) GetByNamespaceIDAndRunID(ctx context.Context, namespaceID uint, runID string) (*models.Run, error) {
+	ret := _m.Called(ctx, namespaceID, runID)
 
 	var r0 *models.Run
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, models.LifecycleStage) (*models.Run, error)); ok {
-		return rf(ctx, id, lifecycleStage)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, string) (*models.Run, error)); ok {
+		return rf(ctx, namespaceID, runID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, models.LifecycleStage) *models.Run); ok {
-		r0 = rf(ctx, id, lifecycleStage)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, string) *models.Run); ok {
+		r0 = rf(ctx, namespaceID, runID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Run)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, models.LifecycleStage) error); ok {
-		r1 = rf(ctx, id, lifecycleStage)
+	if rf, ok := ret.Get(1).(func(context.Context, uint, string) error); ok {
+		r1 = rf(ctx, namespaceID, runID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetByNamespaceIDRunIDAndLifecycleStage provides a mock function with given fields: ctx, namespaceID, runID, lifecycleStage
+func (_m *MockRunRepositoryProvider) GetByNamespaceIDRunIDAndLifecycleStage(ctx context.Context, namespaceID uint, runID string, lifecycleStage models.LifecycleStage) (*models.Run, error) {
+	ret := _m.Called(ctx, namespaceID, runID, lifecycleStage)
+
+	var r0 *models.Run
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint, string, models.LifecycleStage) (*models.Run, error)); ok {
+		return rf(ctx, namespaceID, runID, lifecycleStage)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint, string, models.LifecycleStage) *models.Run); ok {
+		r0 = rf(ctx, namespaceID, runID, lifecycleStage)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Run)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uint, string, models.LifecycleStage) error); ok {
+		r1 = rf(ctx, namespaceID, runID, lifecycleStage)
 	} else {
 		r1 = ret.Error(1)
 	}

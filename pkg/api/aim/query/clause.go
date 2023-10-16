@@ -17,10 +17,10 @@ func (regexp Regexp) Build(builder clause.Builder) {
 	regexp.writeColumn(builder)
 	switch regexp.Dialector {
 	case postgres.Dialector{}.Name():
-		// #nosec G104
+		//nolint:errcheck,gosec
 		builder.WriteString(" ~ ")
 	default:
-		// #nosec G104
+		//nolint:errcheck,gosec
 		builder.WriteString(" REGEXP ")
 	}
 	builder.AddVar(builder, regexp.Value)
@@ -31,10 +31,10 @@ func (regexp Regexp) NegationBuild(builder clause.Builder) {
 	regexp.writeColumn(builder)
 	switch regexp.Dialector {
 	case postgres.Dialector{}.Name():
-		// #nosec G104
+		//nolint:errcheck,gosec
 		builder.WriteString(" !~ ")
 	default:
-		// #nosec G104
+		//nolint:errcheck,gosec
 		builder.WriteString(" NOT REGEXP ")
 	}
 	builder.AddVar(builder, regexp.Value)
@@ -43,10 +43,10 @@ func (regexp Regexp) NegationBuild(builder clause.Builder) {
 func (regexp Regexp) writeColumn(builder clause.Builder) {
 	switch regexp.Dialector {
 	case sqlite.Dialector{}.Name():
-		// #nosec G104
+		//nolint:errcheck,gosec
 		builder.WriteString("IFNULL(")
 		builder.WriteQuoted(regexp.Column)
-		// #nosec G104
+		//nolint:errcheck,gosec
 		builder.WriteString(", '')")
 	default:
 		builder.WriteQuoted(regexp.Column)

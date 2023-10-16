@@ -3,6 +3,7 @@ package namespace
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -34,7 +35,9 @@ func New(namespaceRepository repositories.NamespaceRepositoryProvider) fiber.Han
 				return c.JSON(api.NewInternalError("error getting namespace with code: %s", namespaceCode))
 			}
 			if namespace == nil {
-				return c.JSON(
+				return c.Status(
+					http.StatusNotFound,
+				).JSON(
 					api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespaceCode),
 				)
 			}
@@ -47,7 +50,9 @@ func New(namespaceRepository repositories.NamespaceRepositoryProvider) fiber.Han
 				return c.JSON(api.NewInternalError("error getting namespace with code: %s", defaultNamespaceCode))
 			}
 			if namespace == nil {
-				return c.JSON(
+				return c.Status(
+					http.StatusNotFound,
+				).JSON(
 					api.NewResourceDoesNotExistError("unable to find namespace with code: %s", defaultNamespaceCode),
 				)
 			}

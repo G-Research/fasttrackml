@@ -1,9 +1,8 @@
 package query
 
 import (
-	"fmt"
-
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm/clause"
 )
 
@@ -15,28 +14,41 @@ type Regexp struct {
 
 // Build builds positive statement.
 func (regexp Regexp) Build(builder clause.Builder) {
-	builder.WriteQuoted(regexp.Column)
+	regexp.writeColumn(builder)
 	switch regexp.Dialector {
 	case postgres.Dialector{}.Name():
 		//nolint:errcheck,gosec
 		builder.WriteString(" ~ ")
 	default:
 		//nolint:errcheck,gosec
-		builder.WriteString(" regexp ")
+		builder.WriteString(" REGEXP ")
 	}
-	builder.AddVar(builder, fmt.Sprintf("%s", regexp.Value))
+	builder.AddVar(builder, regexp.Value)
 }
 
 // NegationBuild builds negative statement.
 func (regexp Regexp) NegationBuild(builder clause.Builder) {
-	builder.WriteQuoted(regexp.Column)
+	regexp.writeColumn(builder)
 	switch regexp.Dialector {
 	case postgres.Dialector{}.Name():
 		//nolint:errcheck,gosec
 		builder.WriteString(" !~ ")
 	default:
 		//nolint:errcheck,gosec
-		builder.WriteString(" NOT regexp ")
+		builder.WriteString(" NOT REGEXP ")
 	}
 	builder.AddVar(builder, regexp.Value)
+}
+
+func (regexp Regexp) writeColumn(builder clause.Builder) {
+	switch regexp.Dialector {
+	case sqlite.Dialector{}.Name():
+		//nolint:errcheck,gosec
+		builder.WriteString("IFNULL(")
+		builder.WriteQuoted(regexp.Column)
+		//nolint:errcheck,gosec
+		builder.WriteString(", '')")
+	default:
+		builder.WriteQuoted(regexp.Column)
+	}
 }

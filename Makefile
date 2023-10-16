@@ -68,8 +68,8 @@ install-tools:
 #
 # Linter targets.
 #
-lint: ## run set of linters over the code.
-	@golangci-lint run -v --build-tags $(GO_BUILDTAGS)
+.PHONY: lint
+lint: go-lint python-lint ## run set of linters over the code.
 
 #
 # Go targets.
@@ -89,6 +89,10 @@ go-format: ## format go code.
 	@echo '>>> Formatting go code.'
 	@gofumpt -w .
 	@goimports -w -local github.com/G-Research/fasttrackml $(shell find . -type f -name '*.go' -not -name 'mock_*.go')
+
+.PHONY: go-lint
+go-lint: ## run go linters.
+	@golangci-lint run -v --build-tags $(GO_BUILDTAGS)
 
 .PHONY: go-dist
 go-dist: go-build ## archive app binary.

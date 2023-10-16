@@ -61,8 +61,8 @@ jobs:
             exit 1
           fi
 
-      - name: Check with golangci-lint
-        run: make lint
+      - name: Run Go linters
+        run: make go-lint
 
   python-lint:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

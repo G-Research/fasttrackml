@@ -86,7 +86,7 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Ok() {
 		).WithResponse(
 			&resp,
 		).WithBasePath(
-			"/ns/custom-ns",
+			"/ns/custom-ns/api/2.0/mlflow",
 		).DoRequest(
 			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
 		),
@@ -113,11 +113,27 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Ok() {
 }
 
 func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "custom-ns",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	assert.Nil(s.T(), err)
+
+	// set namespace default experiment.
+	namespace.DefaultExperimentID = experiment.ID
+	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
 	assert.Nil(s.T(), err)
 
 	tests := []struct {
@@ -127,30 +143,29 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 		request  request.CreateRunRequest
 	}{
 		{
-			name:     "CreateRunWithInvalidExperimentID",
-			basePath: "/ns/custom-ns",
+			name:     "CreateRunWithNotExistingNamespaceAndExistingExperimentID",
+			basePath: "/ns/custom-ns1/api/2.0/mlflow",
 			request: request.CreateRunRequest{
-				ExperimentID: "invalid_experiment_id",
+				ExperimentID: fmt.Sprintf("%d", *experiment.ID),
 			},
-			error: api.NewBadRequestError(
-				`unable to parse experiment id 'invalid_experiment_id': strconv.ParseInt: ` +
-					`parsing "invalid_experiment_id": invalid syntax`,
+			error: api.NewResourceDoesNotExistError(
+				`unable to find namespace with code: custom-ns1`,
 			),
 		},
 		{
-			name:     "CreateRunWithNotExistingExperiment",
-			basePath: "/ns/custom-ns",
+			name:     "CreateRunWithExistingNamespaceAndNotExistingExperiment",
+			basePath: "/ns/custom-ns/api/2.0/mlflow",
 			request: request.CreateRunRequest{
-				ExperimentID: "1",
+				ExperimentID: fmt.Sprintf("%d", *experiment.ID+int32(1)),
 			},
 			error: api.NewResourceDoesNotExistError(
-				`unable to find experiment for namespace with id '1': error getting experiment by id: 1: record not found`,
+				`unable to find experiment for namespace with id '2': error getting experiment by id: 2: record not found`,
 			),
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			var resp any
+			resp := api.ErrorResponse{}
 			assert.Nil(
 				s.T(),
 				s.MlflowClient.WithMethod(
@@ -165,7 +180,8 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.(string))
+			assert.NotNil(s.T(), resp)
+			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}
 }

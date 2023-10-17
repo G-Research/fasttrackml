@@ -1,0 +1,11 @@
+<script type="text/javascript" language="javascript">
+  $(document).ready(function () {
+    handleUpdateNamespace();
+  });
+</script>
+<h1>Update Namespace</h1>
+{{ template "partials/messages" . }}
+<form action="#" method="post" id="updateForm">
+  <input type="hidden" id="id" name="id" readonly value="{{ .Namespace.ID }}">
+  {{ template "namespaces/form" . }}
+</form>

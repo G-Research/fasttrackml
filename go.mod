@@ -12,11 +12,12 @@ require (
 	github.com/G-Research/fasttrackml-ui-aim v0.31602.15
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.6
 	github.com/apache/arrow/go/v12 v12.0.1
-	github.com/aws/aws-sdk-go-v2 v1.21.1
-	github.com/aws/aws-sdk-go-v2/config v1.18.44
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.40.1
+	github.com/aws/aws-sdk-go-v2 v1.21.2
+	github.com/aws/aws-sdk-go-v2/config v1.19.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.40.2
 	github.com/go-python/gpython v0.2.0
-	github.com/gofiber/fiber/v2 v2.49.2
+	github.com/gofiber/fiber/v2 v2.50.0
+	github.com/gofiber/template/html/v2 v2.0.5
 	github.com/google/uuid v1.3.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hetiansu5/urlquery v1.2.7
@@ -27,9 +28,9 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
-	gorm.io/driver/postgres v1.5.2
+	gorm.io/driver/postgres v1.5.3
 	gorm.io/driver/sqlite v1.4.3
-	gorm.io/gorm v1.25.4
+	gorm.io/gorm v1.25.5
 	gorm.io/plugin/dbresolver v1.4.7
 )
 
@@ -42,25 +43,27 @@ require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/apache/thrift v0.16.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.14 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.42 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.12 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.42 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.36 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.44 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.1.5 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.43 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.13 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.43 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.37 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.45 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.1.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.15 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.37 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.36 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.15.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.15.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.17.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.23.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.38 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.37 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.15.6 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.15.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.17.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.23.2 // indirect
 	github.com/aws/smithy-go v1.15.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/gofiber/template v1.8.2 // indirect
+	github.com/gofiber/utils v1.1.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/flatbuffers v2.0.8+incompatible // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
@@ -71,7 +74,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgx/v5 v5.3.1 // indirect
+	github.com/jackc/pgx/v5 v5.4.3 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/asmfmt v1.3.2 // indirect
@@ -97,7 +100,7 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.49.0 // indirect
+	github.com/valyala/fasthttp v1.50.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
@@ -109,7 +112,7 @@ require (
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect

@@ -1,23 +1,23 @@
 package database
 
 import (
-	"fmt"
 	"net/url"
 	"time"
 
 	"github.com/rotisserie/eris"
+	log "github.com/sirupsen/logrus"
 )
 
-// MakeDBProvider will create a DbProvider of the correct type from the parameters.
-func MakeDBProvider(
-	dsn string, slowThreshold time.Duration, poolMax int, reset bool, migrate bool, defaultArtifactRoot string,
+// NewDBProvider creates a DBProvider of the correct type from the parameters.
+func NewDBProvider(
+	dsn string, slowThreshold time.Duration, poolMax int, reset bool,
 ) (db DBProvider, err error) {
 	dsnURL, err := url.Parse(dsn)
 	if err != nil {
-		return nil, fmt.Errorf("invalid database URL: %w", err)
+		return nil, eris.Wrap(err, "invalid database URL")
 	}
 	switch dsnURL.Scheme {
-	case "sqlite":
+	case SQLiteSchemaName:
 		db, err = NewSqliteDBInstance(
 			*dsnURL,
 			slowThreshold,
@@ -27,7 +27,7 @@ func MakeDBProvider(
 		if err != nil {
 			return nil, eris.Wrap(err, "error creating sqlite provider")
 		}
-	case "postgres", "postgresql":
+	case PostgresSchemaName, PostgresQLSchemaName:
 		db, err = NewPostgresDBInstance(
 			*dsnURL,
 			slowThreshold,
@@ -38,26 +38,17 @@ func MakeDBProvider(
 			return nil, eris.Wrap(err, "error creating postgres provider")
 		}
 	default:
-		{
-			return nil, eris.New("unsupported database type")
-		}
+		return nil, eris.New("unsupported database type")
 	}
 
+	// TODO:DSuhinin - it shouldn't be there. NewDBProvider has to only create an instance without any hidden logic.
 	if reset {
+		log.Infof("reseting database")
 		if err := db.Reset(); err != nil {
+			//nolint:errcheck,gosec
 			db.Close()
-			return nil, err
+			return nil, eris.Wrap(err, "error resetting database")
 		}
-	}
-
-	if err := checkAndMigrate(migrate, db); err != nil {
-		db.Close()
-		return nil, err
-	}
-
-	if err := createDefaultExperiment(defaultArtifactRoot, db); err != nil {
-		db.Close()
-		return nil, err
 	}
 
 	return db, nil

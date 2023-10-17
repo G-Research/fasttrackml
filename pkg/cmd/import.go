@@ -25,10 +25,12 @@ func importCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck
 	defer inputDB.Close()
+	//nolint:errcheck
 	defer outputDB.Close()
 
-	importer := database.NewImporter(inputDB, outputDB)
+	importer := database.NewImporter(inputDB.GormDB(), outputDB.GormDB())
 	if err := importer.Import(); err != nil {
 		return err
 	}
@@ -37,31 +39,21 @@ func importCmd(cmd *cobra.Command, args []string) error {
 
 // initDBs inits the input and output DB connections.
 func initDBs() (input, output database.DBProvider, err error) {
-	databaseSlowThreshold := time.Second * 1
-	databasePoolMax := 20
-	databaseReset := false
-	databaseMigrate := false
-	defaultArtifactRoot := viper.GetString("default-artifact-root")
-	input, err = database.MakeDBProvider(
+	input, err = database.NewDBProvider(
 		viper.GetString("input-database-uri"),
-		databaseSlowThreshold,
-		databasePoolMax,
-		databaseReset,
-		databaseMigrate,
-		defaultArtifactRoot,
+		time.Second*1,
+		20,
+		false,
 	)
 	if err != nil {
 		return input, output, fmt.Errorf("error connecting to input DB: %w", err)
 	}
 
-	databaseMigrate = true
-	output, err = database.MakeDBProvider(
+	output, err = database.NewDBProvider(
 		viper.GetString("output-database-uri"),
-		databaseSlowThreshold,
-		databasePoolMax,
-		databaseReset,
-		databaseMigrate,
-		defaultArtifactRoot,
+		time.Second*1,
+		20,
+		false,
 	)
 	if err != nil {
 		return input, output, fmt.Errorf("error connecting to output DB: %w", err)
@@ -69,11 +61,16 @@ func initDBs() (input, output database.DBProvider, err error) {
 	return
 }
 
+// nolint:errcheck,gosec
 func init() {
 	RootCmd.AddCommand(ImportCmd)
 
-	ImportCmd.Flags().StringP("input-database-uri", "i", "", "Input Database URI (eg., sqlite://fasttrackml.db)")
-	ImportCmd.Flags().StringP("output-database-uri", "o", "", "Output Database URI (eg., postgres://user:psw@postgres:5432)")
+	ImportCmd.Flags().StringP(
+		"input-database-uri", "i", "", "Input Database URI (eg., sqlite://fasttrackml.db)",
+	)
+	ImportCmd.Flags().StringP(
+		"output-database-uri", "o", "", "Output Database URI (eg., postgres://user:psw@postgres:5432)",
+	)
 	ImportCmd.Flags().StringP("default-artifact-root", "a", "./artifacts", "Artifact Root")
 	ImportCmd.MarkFlagRequired("input-database-uri")
 	ImportCmd.MarkFlagRequired("output-database-uri")

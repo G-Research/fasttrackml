@@ -23,10 +23,25 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
+//nolint:lll
 var (
-	experimentOrder = regexp.MustCompile(`^(?:attr(?:ibutes?)?\.)?(\w+)(?i:\s+(ASC|DESC))?$`)
 	filterAnd       = regexp.MustCompile(`(?i)\s+AND\s+`)
 	filterCond      = regexp.MustCompile(`^(?:(\w+)\.)?("[^"]+"|` + "`[^`]+`" + `|[\w\.]+)\s+(<|<=|>|>=|=|!=|(?i:I?LIKE)|(?i:(?:NOT )?IN))\s+(\((?:'[^']+'(?:,\s*)?)+\)|"[^"]+"|'[^']+'|[\w\.]+)$`)
+	experimentOrder = regexp.MustCompile(`^(?:attr(?:ibutes?)?\.)?(\w+)(?i:\s+(ASC|DESC))?$`)
+)
+
+// supported expression list.
+const (
+	InExpression            = "IN"
+	NotInExpression         = "NOT IN"
+	LikeExpression          = "LIKE"
+	ILikeExpression         = "ILIKE"
+	EqualExpression         = "="
+	NotEqualExpression      = "!="
+	LessExpression          = "<"
+	LessOrEqualExpression   = "<="
+	GraterExpression        = ">"
+	GraterOrEqualExpression = ">="
 )
 
 // Service provides service layer to work with `metric` business logic.
@@ -49,14 +64,15 @@ func NewService(
 	}
 }
 
+// CreateExperiment creates new Experiment entity.
 func (s Service) CreateExperiment(
-	ctx context.Context, req *request.CreateExperimentRequest,
+	ctx context.Context, ns *models.Namespace, req *request.CreateExperimentRequest,
 ) (*models.Experiment, error) {
 	if err := ValidateCreateExperimentRequest(req); err != nil {
 		return nil, err
 	}
 
-	experiment, err := s.experimentRepository.GetByName(ctx, req.Name)
+	experiment, err := s.experimentRepository.GetByNamespaceIDAndName(ctx, ns.ID, req.Name)
 	if err != nil {
 		return nil, api.NewInternalError("error getting experiment with name: '%s', error: %s", req.Name, err)
 	}
@@ -68,6 +84,7 @@ func (s Service) CreateExperiment(
 	if err != nil {
 		return nil, api.NewInvalidParameterValueError("Invalid value for parameter 'artifact_location': %s", err)
 	}
+	experiment.NamespaceID = ns.ID
 
 	if err := s.experimentRepository.Create(ctx, experiment); err != nil {
 		return nil, api.NewInternalError("error inserting experiment '%s': %s", req.Name, err)
@@ -91,7 +108,10 @@ func (s Service) CreateExperiment(
 	return experiment, nil
 }
 
-func (s Service) UpdateExperiment(ctx context.Context, req *request.UpdateExperimentRequest) error {
+// UpdateExperiment updates existing Experiment entity.
+func (s Service) UpdateExperiment(
+	ctx context.Context, ns *models.Namespace, req *request.UpdateExperimentRequest,
+) error {
 	if err := ValidateUpdateExperimentRequest(req); err != nil {
 		return err
 	}
@@ -101,7 +121,7 @@ func (s Service) UpdateExperiment(ctx context.Context, req *request.UpdateExperi
 		return api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
+	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(parsedID))
 	if err != nil {
 		return api.NewResourceDoesNotExistError("unable to find experiment '%d': %s", parsedID, err)
 	}
@@ -114,7 +134,10 @@ func (s Service) UpdateExperiment(ctx context.Context, req *request.UpdateExperi
 	return nil
 }
 
-func (s Service) GetExperiment(ctx context.Context, req *request.GetExperimentRequest) (*models.Experiment, error) {
+// GetExperiment returns existing Experiment entity by ID.
+func (s Service) GetExperiment(
+	ctx context.Context, ns *models.Namespace, req *request.GetExperimentRequest,
+) (*models.Experiment, error) {
 	if err := ValidateGetExperimentByIDRequest(req); err != nil {
 		return nil, err
 	}
@@ -125,7 +148,7 @@ func (s Service) GetExperiment(ctx context.Context, req *request.GetExperimentRe
 		return nil, api.NewBadRequestError(`unable to parse experiment id '%s': %s`, req.ID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
+	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(parsedID))
 	if err != nil {
 		return nil, api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
@@ -133,14 +156,15 @@ func (s Service) GetExperiment(ctx context.Context, req *request.GetExperimentRe
 	return experiment, nil
 }
 
+// GetExperimentByName returns existing Experiment entity by Name.
 func (s Service) GetExperimentByName(
-	ctx context.Context, req *request.GetExperimentRequest,
+	ctx context.Context, ns *models.Namespace, req *request.GetExperimentRequest,
 ) (*models.Experiment, error) {
 	if err := ValidateGetExperimentByNameRequest(req); err != nil {
 		return nil, err
 	}
 
-	experiment, err := s.experimentRepository.GetByName(ctx, req.Name)
+	experiment, err := s.experimentRepository.GetByNamespaceIDAndName(ctx, ns.ID, req.Name)
 	if err != nil {
 		return nil, api.NewInternalError("unable to get experiment by name '%s': %v", req.Name, err)
 	}
@@ -151,7 +175,10 @@ func (s Service) GetExperimentByName(
 	return experiment, nil
 }
 
-func (s Service) DeleteExperiment(ctx context.Context, req *request.DeleteExperimentRequest) error {
+// DeleteExperiment deletes existing Experiment entity.
+func (s Service) DeleteExperiment(
+	ctx context.Context, ns *models.Namespace, req *request.DeleteExperimentRequest,
+) error {
 	if err := ValidateDeleteExperimentRequest(req); err != nil {
 		return err
 	}
@@ -161,7 +188,7 @@ func (s Service) DeleteExperiment(ctx context.Context, req *request.DeleteExperi
 		return api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
+	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(parsedID))
 	if err != nil {
 		return api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
@@ -179,7 +206,10 @@ func (s Service) DeleteExperiment(ctx context.Context, req *request.DeleteExperi
 	return nil
 }
 
-func (s Service) RestoreExperiment(ctx context.Context, req *request.RestoreExperimentRequest) error {
+// RestoreExperiment restores deleted Experiment entity.
+func (s Service) RestoreExperiment(
+	ctx context.Context, ns *models.Namespace, req *request.RestoreExperimentRequest,
+) error {
 	if err := ValidateRestoreExperimentRequest(req); err != nil {
 		return err
 	}
@@ -189,7 +219,7 @@ func (s Service) RestoreExperiment(ctx context.Context, req *request.RestoreExpe
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
+	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(parsedID))
 	if err != nil {
 		return api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
@@ -207,7 +237,9 @@ func (s Service) RestoreExperiment(ctx context.Context, req *request.RestoreExpe
 	return nil
 }
 
-func (s Service) SetExperimentTag(ctx context.Context, req *request.SetExperimentTagRequest) error {
+func (s Service) SetExperimentTag(
+	ctx context.Context, ns *models.Namespace, req *request.SetExperimentTagRequest,
+) error {
 	if err := ValidateSetExperimentTagRequest(req); err != nil {
 		return err
 	}
@@ -217,7 +249,7 @@ func (s Service) SetExperimentTag(ctx context.Context, req *request.SetExperimen
 		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", req.ID, err)
 	}
 
-	experiment, err := s.experimentRepository.GetByID(ctx, int32(parsedID))
+	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(parsedID))
 	if err != nil {
 		return api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
 	}
@@ -230,12 +262,18 @@ func (s Service) SetExperimentTag(ctx context.Context, req *request.SetExperimen
 	return nil
 }
 
+// nolint: gocyclo
+// TODO:get back and fix `gocyclo` problem.
 func (s Service) SearchExperiments(
-	ctx context.Context, req *request.SearchExperimentsRequest,
+	ctx context.Context, ns *models.Namespace, req *request.SearchExperimentsRequest,
 ) ([]models.Experiment, int, int, error) {
 	if err := ValidateSearchExperimentsRequest(req); err != nil {
 		return nil, 0, 0, err
 	}
+
+	query := database.DB.Where(
+		"experiments.namespace_id = ?", ns.ID,
+	)
 
 	// ViewType
 	var lifecyleStages []database.LifecycleStage
@@ -254,14 +292,14 @@ func (s Service) SearchExperiments(
 			database.LifecycleStageDeleted,
 		}
 	}
-	tx := database.DB.Where("lifecycle_stage IN ?", lifecyleStages)
+	query.Where("lifecycle_stage IN ?", lifecyleStages)
 
 	// MaxResults
 	limit := int(req.MaxResults)
 	if limit == 0 {
 		limit = 1000
 	}
-	tx.Limit(limit + 1)
+	query.Limit(limit + 1)
 
 	// PageToken
 	var offset int
@@ -277,7 +315,7 @@ func (s Service) SearchExperiments(
 		}
 		offset = int(token.Offset)
 	}
-	tx.Offset(offset)
+	query.Offset(offset)
 
 	// Filter
 	if req.Filter != "" {
@@ -297,37 +335,44 @@ func (s Service) SearchExperiments(
 				switch key {
 				case "creation_time", "last_update_time":
 					switch comparison {
-					case ">", ">=", "!=", "=", "<", "<=":
+					case GraterExpression, GraterOrEqualExpression, NotEqualExpression,
+						EqualExpression, LessExpression, LessOrEqualExpression:
 						v, err := strconv.Atoi(value.(string))
 						if err != nil {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric value '%s'", value)
 						}
 						value = v
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid numeric attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid numeric attribute comparison operator '%s'", comparison,
+						)
 					}
 				case "name":
 					switch strings.ToUpper(comparison) {
-					case "!=", "=", "LIKE", "ILIKE":
+					case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 						if strings.HasPrefix(value.(string), "(") {
 							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 						}
 						value = strings.Trim(value.(string), `"'`)
-						if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+						if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == ILikeExpression {
 							key = fmt.Sprintf("LOWER(%s)", key)
-							comparison = "LIKE"
+							comparison = LikeExpression
 							value = strings.ToLower(value.(string))
 						}
 					default:
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string attribute comparison operator '%s'", comparison)
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid string attribute comparison operator '%s'", comparison,
+						)
 					}
 				default:
-					return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['name', 'creation_time', 'last_update_time']", key)
+					return nil, 0, 0, api.NewInvalidParameterValueError(
+						"invalid attribute '%s'. Valid values are ['name', 'creation_time', 'last_update_time']", key,
+					)
 				}
-				tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
+				query.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
 			case "tag", "tags":
 				switch strings.ToUpper(comparison) {
-				case "!=", "=", "LIKE", "ILIKE":
+				case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
 					if strings.HasPrefix(value.(string), "(") {
 						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
 					}
@@ -337,16 +382,20 @@ func (s Service) SearchExperiments(
 				}
 				table := fmt.Sprintf("filter_%d", n)
 				where := fmt.Sprintf("value %s ?", comparison)
-				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == "ILIKE" {
+				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == ILikeExpression {
 					where = "LOWER(value) LIKE ?"
 					value = strings.ToLower(value.(string))
 				}
-				tx.Joins(
+				query.Joins(
 					fmt.Sprintf("JOIN (?) AS %s ON experiments.experiment_id = %s.experiment_id", table, table),
-					database.DB.Select("experiment_id", "value").Where("key = ?", key).Where(where, value).Model(&database.ExperimentTag{}),
+					database.DB.Select(
+						"experiment_id", "value",
+					).Where("key = ?", key).Where(where, value).Model(&database.ExperimentTag{}),
 				)
 			default:
-				return nil, 0, 0, api.NewInvalidParameterValueError("invalid entity type '%s'. Valid values are ['tag', 'attribute']", entity)
+				return nil, 0, 0, api.NewInvalidParameterValueError(
+					"invalid entity type '%s'. Valid values are ['tag', 'attribute']", entity,
+				)
 			}
 		}
 	}
@@ -366,25 +415,28 @@ func (s Service) SearchExperiments(
 			fallthrough
 		case "name", "creation_time", "last_update_time":
 		default:
-			return nil, 0, 0, api.NewInvalidParameterValueError("invalid attribute '%s'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']", column)
+			return nil, 0, 0, api.NewInvalidParameterValueError(
+				`invalid attribute '%s'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']`,
+				column,
+			)
 		}
-		tx.Order(clause.OrderByColumn{
+		query.Order(clause.OrderByColumn{
 			Column: clause.Column{Name: column},
 			Desc:   len(components) == 3 && strings.ToUpper(components[2]) == "DESC",
 		})
 
 	}
 	if len(req.OrderBy) == 0 {
-		tx.Order("experiments.creation_time DESC")
+		query.Order("experiments.creation_time DESC")
 	}
 	if !expOrder {
-		tx.Order("experiments.experiment_id ASC")
+		query.Order("experiments.experiment_id ASC")
 	}
 
 	// Actual query
 	var exps []models.Experiment
-	if tx.Preload("Tags").Find(&exps).Error != nil {
-		return nil, 0, 0, api.NewInternalError("unable to search runs: %s", tx.Error)
+	if err := query.Preload("Tags").Find(&exps).Error; err != nil {
+		return nil, 0, 0, api.NewInternalError("unable to search runs: %s", err)
 	}
 
 	return exps, limit, offset, nil

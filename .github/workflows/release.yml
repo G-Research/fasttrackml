@@ -1,96 +1,55 @@
 name: Release
 
 on:
-  workflow_run:
-    types: [completed]
-    workflows: [CI]
-    branches:
-      - main
-      - v*
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
-  validate:
-    name: Validate ref
-    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && !github.event.repository.fork
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # The given ref should belong to the main branch.
-      # If it's main, it shouldn't be more than 2 commits away (in case another push happened in the meantime).
-      # If it starts with 'v', it should be a tag and belong to the main branch.
-      # Anything else is invalid.
-      - name: Validate ref
-        run: |
-          ref='${{ github.event.workflow_run.head_branch }}'
-          sha='${{ github.event.workflow_run.head_sha }}'
-          case $ref in
-            main)
-              [ $(git branch --contains=$sha main | wc -l) -eq 1 ] &&
-              [ $(git rev-list --count $sha..main) -le 2 ]
-              ;;
-            v?*)
-              [[ $ref =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] &&
-              [ $(git tag --points-at $sha | grep -E "^$ref\$" | wc -l) -eq 1 ] &&
-              [ $(git branch --contains=$sha main | wc -l) -eq 1 ]
-              ;;
-            *)
-              false
-              ;;
-          esac
-          if [ $? -ne 0 ]; then
-            echo "::error ::Invalid ref $ref $sha"
-            exit 1
-          fi
-
   pypi-publish:
     name: upload release to PyPI
-    needs: validate
-    if: github.event.workflow_run.head_branch != 'main'
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     environment: release
     permissions:
       id-token: write
     steps:
       - name: Download artifact
-        run: gh run download ${{ github.event.workflow_run.id }} --repo ${{ github.event.workflow_run.repository.full_name }} --name fasttrackml-wheels --dir wheelhouse
-        env:
-          GH_TOKEN: ${{ github.token }}
+        uses: actions/download-artifact@v3
+        with:
+          name: fasttrackml-wheels
+          path: wheelhouse
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: wheelhouse/
+          packages-dir: wheelhouse
 
   github-release:
     name: Publish GitHub release
-    needs: validate
-    if: github.event.workflow_run.head_branch != 'main'
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - name: Download artifact
-        run: gh run download ${{ github.event.workflow_run.id }} --repo ${{ github.event.workflow_run.repository.full_name }} --name fasttrackml-archives --dir dist
-        env:
-          GH_TOKEN: ${{ github.token }}
+        uses: actions/download-artifact@v3
+        with:
+          name: fasttrackml-archives
+          path: dist
 
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           generate_release_notes: true
           files: dist/*
-          tag_name: ${{ github.event.workflow_run.head_branch }}
+          prerelease: ${{ contains(github.ref, '-') }}
 
   update-website:
     name: Update website
     needs: github-release
+    if: ${{ !contains(github.ref, '-') }}
     permissions:
       contents: read
       pages: write
@@ -99,35 +58,43 @@ jobs:
 
   docker-release:
     name: Publish container image to DockerHub
-    needs: validate
+    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: release
     steps:
+      # We need to checkout the repo in order to determine the latest tag.
       - name: Checkout
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-tags: 1
 
+      # The main branch is tagged as "main" and "edge".
+      # Tags are named after the version, e.g. "v0.1.0" -> "0.1.0".
+      # The latest non-prerelease version is also tagged as "latest".
+      # This is achieved by sorting the tags by version number, then filtering
+      # out prereleases and taking the last tag.
       - name: Compute tags
         id: tags
         run: |
-          ref='${{ github.event.workflow_run.head_branch }}'
+          ref='${{ github.ref }}'
           case $ref in
-            main)
+            refs/heads/main)
               tags=("main" "edge")
               ;;
-            v*)
-              tags=("${ref#v}")
-              if [ $(git describe --tags --abbrev=0) == $ref ]; then
+            refs/tags/v*)
+              tags=("${ref#refs/tags/v}")
+              if [ "$(git -c 'versionsort.suffix=-' for-each-ref --sort=version:refname --format='%(refname)' 'refs/tags/v*' | grep -v -- - | tail -n1)" == "$ref" ]; then
                 tags+=("latest")
               fi
           esac
+          echo "ref=${ref#refs/*/}" >> $GITHUB_OUTPUT
           echo "tags=${tags[@]}" >> $GITHUB_OUTPUT
 
       - name: Download artifact
-        run: gh run download ${{ github.event.workflow_run.id }} --name fasttrackml-oci-image
-        env:
-          GH_TOKEN: ${{ github.token }}
+        uses: actions/download-artifact@v3
+        with:
+          name: fasttrackml-oci-image
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -140,6 +107,6 @@ jobs:
           for tag in ${{ steps.tags.outputs.tags }}
           do
             echo "::group::Pushing image to ${{ vars.DOCKER_REPO }}:$tag"
-            skopeo copy --all oci-archive:fasttrackml-oci.tar:${{ github.event.workflow_run.head_branch }} docker://${{ vars.DOCKER_REPO }}:$tag
+            skopeo copy --all oci-archive:fasttrackml-oci.tar:${{ steps.tags.outputs.ref }} docker://${{ vars.DOCKER_REPO }}:$tag
             echo "::endgroup::"
           done

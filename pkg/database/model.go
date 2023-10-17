@@ -30,13 +30,27 @@ const (
 	LifecycleStageDeleted LifecycleStage = "deleted"
 )
 
+type Namespace struct {
+	ID                  uint   `gorm:"primaryKey;autoIncrement"`
+	Apps                []App  `gorm:"constraint:OnDelete:CASCADE"`
+	Code                string `gorm:"unique;index;not null"`
+	Description         string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	DeletedAt           gorm.DeletedAt `gorm:"index"`
+	DefaultExperimentID *int32         `gorm:"not null"`
+	Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE"`
+}
+
 type Experiment struct {
-	ID               *int32          `gorm:"column:experiment_id;not null;primaryKey"`
-	Name             string          `gorm:"type:varchar(256);not null;unique"`
-	ArtifactLocation string          `gorm:"type:varchar(256)"`
-	LifecycleStage   LifecycleStage  `gorm:"type:varchar(32);check:lifecycle_stage IN ('active', 'deleted')"`
-	CreationTime     sql.NullInt64   `gorm:"type:bigint"`
-	LastUpdateTime   sql.NullInt64   `gorm:"type:bigint"`
+	ID               *int32         `gorm:"column:experiment_id;not null;primaryKey"`
+	Name             string         `gorm:"type:varchar(256);not null;index:idx_namespace_name,unique"`
+	ArtifactLocation string         `gorm:"type:varchar(256)"`
+	LifecycleStage   LifecycleStage `gorm:"type:varchar(32);check:lifecycle_stage IN ('active', 'deleted')"`
+	CreationTime     sql.NullInt64  `gorm:"type:bigint"`
+	LastUpdateTime   sql.NullInt64  `gorm:"type:bigint"`
+	NamespaceID      uint           `gorm:"index:idx_namespace_name,unique"`
+	Namespace        Namespace
 	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
 	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
 }
@@ -47,6 +61,7 @@ type ExperimentTag struct {
 	ExperimentID int32  `gorm:"not null;primaryKey"`
 }
 
+//nolint:lll
 type Run struct {
 	ID             string         `gorm:"<-:create;column:run_uuid;type:varchar(32);not null;primaryKey"`
 	Name           string         `gorm:"type:varchar(250)"`
@@ -184,8 +199,10 @@ func (d Dashboard) MarshalJSON() ([]byte, error) {
 
 type App struct {
 	Base
-	Type  string   `gorm:"not null" json:"type"`
-	State AppState `json:"state"`
+	Type        string   `gorm:"not null" json:"type"`
+	State       AppState `json:"state"`
+	Namespace   Namespace
+	NamespaceID uint `gorm:"column:namespace_id"`
 }
 
 type AppState map[string]any
@@ -206,7 +223,6 @@ func (s *AppState) Scan(v interface{}) error {
 	if nullS.Valid {
 		return json.Unmarshal([]byte(nullS.String), s)
 	}
-	s = nil
 	return nil
 }
 

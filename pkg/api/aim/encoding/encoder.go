@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+
+	"github.com/rotisserie/eris"
 )
 
 type (
@@ -42,8 +44,7 @@ func encodeTree(w io.Writer, v any, p []any) error {
 			return err
 		}
 		for i := 0; i < rv.Len(); i++ {
-			v := rv.Index(i).Interface()
-			if err := encodeTree(w, v, append(p, i)); err != nil {
+			if err := encodeTree(w, rv.Index(i).Interface(), append(p, i)); err != nil {
 				return err
 			}
 		}
@@ -55,8 +56,7 @@ func encodeTree(w io.Writer, v any, p []any) error {
 		iter := rv.MapRange()
 		for iter.Next() {
 			k := iter.Key().Interface()
-			v := iter.Value().Interface()
-			if err := encodeTree(w, v, append(p, k)); err != nil {
+			if err := encodeTree(w, iter.Value().Interface(), append(p, k)); err != nil {
 				return err
 			}
 		}
@@ -83,7 +83,9 @@ func encodePath(w io.Writer, p []any) error {
 			buf.Write(pathSentinel)
 		case int:
 			buf.Write(pathSentinel)
-			binary.Write(buf, binary.BigEndian, int64(c))
+			if err := binary.Write(buf, binary.BigEndian, int64(c)); err != nil {
+				return eris.Wrap(err, "error writing data into buffer")
+			}
 			buf.Write(pathSentinel)
 		default:
 			return fmt.Errorf("unsupported path component %#v", c)
@@ -137,7 +139,9 @@ func encodeValue(w io.Writer, v any) error {
 	}
 
 	if bin {
-		binary.Write(buf, binary.LittleEndian, v)
+		if err := binary.Write(buf, binary.LittleEndian, v); err != nil {
+			return eris.Wrap(err, "error writing data into buffer")
+		}
 	}
 
 	if err := binary.Write(w, binary.LittleEndian, uint32(buf.Len()+1)); err != nil {

@@ -1,0 +1,20 @@
+<script type="text/javascript" language="javascript">
+  $( document ).ready(function() {
+    urlParams = new URLSearchParams(window.location.search);
+    message = urlParams.get('message');
+    status = urlParams.get('status');
+    if (status == "success") {
+      showSuccessMessage(message)
+    }
+    if (status == "error") {
+      showErrorMessage(message)
+    }
+  });
+</script>
+<div id="message"></div>
+{{ if eq .Status "error"}}
+<p class="error-message">{{ .Message }}</p>
+{{ else if eq .Status "success" }}
+<p class="success-message">{{ .Message }}</p>
+{{ end }}
+

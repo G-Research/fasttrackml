@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
-
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // ParamRepositoryProvider provides an interface to work with models.Param entity.
@@ -48,7 +48,7 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 }
 
 // removeExactMatches will return a new slice of params which excludes exact matches
-func (r ParamRepository) removeExactMatches(ctx context.Context, params []models.Param) ([]models.Param, error) {
+func (r ParamRepository) removeExactMatches(_ context.Context, params []models.Param) ([]models.Param, error) {
 	var keys []string
 	paramMap := map[string]models.Param{}
 	for _, param := range params {

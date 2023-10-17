@@ -14,44 +14,42 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
-// GCStorageName is a GCP storage name.
+// GSStorageName is a GCP storage name.
 const (
-	GCStorageName = "gc"
+	GSStorageName = "gs"
 )
 
-// GC represents GCP adapter to work with artifacts.
-type GC struct {
+// GS represents GCP adapter to work with artifacts.
+type GS struct {
 	client *storage.Client
 }
 
-// NewGC creates new GC instance.
-func NewGC(ctx context.Context, config *config.ServiceConfig) (*GC, error) {
+// NewGS creates new GC instance.
+func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "error creating GCP storage client")
 	}
-	return &GC{
+	return &GS{
 		client: client,
 	}, nil
 }
 
 // List implements ArtifactStorageProvider interface.
-func (s GC) List(ctx context.Context, artifactURI, path string) ([]ArtifactObject, error) {
+func (s GS) List(ctx context.Context, artifactURI, path string) ([]ArtifactObject, error) {
 	// 1. create s3 request input.
 	bucket, rootPrefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {
 		return nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
 	}
-	query := storage.Query{
-		Delimiter: "/",
-	}
-
-	// 2. process search `path` parameter.
 	prefix := filepath.Join(rootPrefix, path)
 	if prefix != "" {
-		query.Prefix = prefix + "/"
+		prefix = prefix + "/"
 	}
-	query.Prefix = prefix
+	query := storage.Query{
+		Prefix: prefix,
+	}
+	// 2. process search `path` parameter.
 
 	// 3. read data from gcp storage.
 	var artifactList []ArtifactObject
@@ -84,7 +82,7 @@ func (s GC) List(ctx context.Context, artifactURI, path string) ([]ArtifactObjec
 }
 
 // Get returns file content at the storage location.
-func (s GC) Get(ctx context.Context, artifactURI, path string) (io.ReadCloser, error) {
+func (s GS) Get(ctx context.Context, artifactURI, path string) (io.ReadCloser, error) {
 	// 1. create s3 request input.
 	bucketName, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {

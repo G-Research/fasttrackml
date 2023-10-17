@@ -121,12 +121,14 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 	assert.Nil(s.T(), err)
 
 	tests := []struct {
-		name    string
-		error   *api.ErrorResponse
-		request request.CreateRunRequest
+		name     string
+		error    *api.ErrorResponse
+		basePath string
+		request  request.CreateRunRequest
 	}{
 		{
-			name: "CreateRunWithInvalidExperimentID",
+			name:     "CreateRunWithInvalidExperimentID",
+			basePath: "/ns/custom-ns",
 			request: request.CreateRunRequest{
 				ExperimentID: "invalid_experiment_id",
 			},
@@ -136,7 +138,8 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 			),
 		},
 		{
-			name: "CreateRunWithNotExistingExperiment",
+			name:     "CreateRunWithNotExistingExperiment",
+			basePath: "/ns/custom-ns",
 			request: request.CreateRunRequest{
 				ExperimentID: "1",
 			},
@@ -147,7 +150,7 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			resp := api.ErrorResponse{}
+			var resp any
 			assert.Nil(
 				s.T(),
 				s.MlflowClient.WithMethod(
@@ -156,11 +159,13 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 					tt.request,
 				).WithResponse(
 					&resp,
+				).WithBasePath(
+					tt.basePath,
 				).DoRequest(
 					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			assert.Equal(s.T(), tt.error.Error(), resp.(string))
 		})
 	}
 }

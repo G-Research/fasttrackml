@@ -31,7 +31,20 @@
             ],
         },
         {
-            "name": "Launch server (sqlite file) - for integration tests",
+            "name": "Launch server (sqlite file)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/main.go",
+            "buildFlags": "-tags '${config:go.buildTags}'",
+            "args": [
+                "server",
+                "--database-uri",
+                "sqlite://fasttrackml.db"
+            ],
+        },
+        {
+            "name": "Launch server (integration tests)",
             "type": "go",
             "request": "launch",
             "mode": "auto",

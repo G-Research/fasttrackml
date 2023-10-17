@@ -11,8 +11,6 @@ __debug_bin*
 # Local database
 fasttrackml.db*
 encrypted.db*
-fasttrackml-in.*
-fasttrackml-out.*
 
 # Imported integration tests
 tests/integration/python/*/*.src

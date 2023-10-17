@@ -135,7 +135,7 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
 	assert.Nil(s.T(), err)
-	nonExistingExperimentID := int32(*experiment.ID + 1)
+	nonExistingExperimentID := *experiment.ID + 1
 
 	tests := []struct {
 		name     string

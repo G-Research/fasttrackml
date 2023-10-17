@@ -135,6 +135,7 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
 	assert.Nil(s.T(), err)
+	nonExistingExperimentID := int32(*experiment.ID + 1)
 
 	tests := []struct {
 		name     string
@@ -156,10 +157,14 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 			name:     "CreateRunWithExistingNamespaceAndNotExistingExperiment",
 			basePath: "/ns/custom-ns/api/2.0/mlflow",
 			request: request.CreateRunRequest{
-				ExperimentID: fmt.Sprintf("%d", *experiment.ID+int32(1)),
+				ExperimentID: fmt.Sprintf("%d", nonExistingExperimentID),
 			},
 			error: api.NewResourceDoesNotExistError(
-				`unable to find experiment for namespace with id '2': error getting experiment by id: 2: record not found`,
+				fmt.Sprintf(
+					`unable to find experiment for namespace with id '%d': error getting experiment by id: %d: record not found`,
+					nonExistingExperimentID,
+					nonExistingExperimentID,
+				),
 			),
 		},
 	}

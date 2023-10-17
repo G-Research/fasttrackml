@@ -1,62 +1,15 @@
-name: Create release branch or tag
+name: Create release
 
 on:
   workflow_dispatch:
     inputs:
-      type:
-        description: "What to create (branch or tag)"
-        required: true
-        type: choice
-        options:
-          - "branch"
-          - "tag"
       version:
-        description: "Version - major and minor for a branch (e.g. 0.3), semver for a tag (e.g. 0.3.1 or 0.3.1-rc.1)"
+        description: "Version - needs to adhere to Semantic Versioning (e.g. 0.3.1 or 0.3.1-rc.1)"
         required: true
 
 jobs:
   create-release:
-    name: Create release branch from main
-    if: github.event.inputs.type == 'branch'
-    environment: create-release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check version
-        id: version
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const semver = /^(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
-            const version = context.payload.inputs.version;
-            const match = version.match(semver);
-            if (match === null) {
-              core.setFailed('Invalid version format. Expected "MAJOR.MINOR".');
-            } else {
-              core.setOutput('branch', `release/${version}`);
-            }
-
-      - name: Generate an app token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
-      - name: Checkout main branch
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          token: ${{ steps.app-token.outputs.token }}
-
-      - name: Push
-        run: |
-          branch=${{ steps.version.outputs.branch }}
-          git checkout -b $branch
-          git push origin $branch
-
-  create-tag:
-    name: Create release tag from release branch
-    if: github.event.inputs.type == 'tag'
+    name: Create release ${{ github.event.inputs.version }}
     environment: create-release
     runs-on: ubuntu-latest
     steps:
@@ -83,14 +36,24 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - name: Checkout release branch
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.version.outputs.branch }}
           token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
 
       - name: Push
         run: |
+          branch=${{ steps.version.outputs.branch }}
           tag=${{ steps.version.outputs.tag }}
+          if git show-ref --verify --quiet refs/remotes/origin/$branch; then
+            echo "Checking out branch $branch"
+            git checkout --track origin/$branch
+          else
+            echo "Branch $branch does not exist, creating it"
+            git checkout -b $branch
+            git push origin $branch
+          fi
+          echo "Creating tag $tag"
           git tag $tag
           git push origin $tag

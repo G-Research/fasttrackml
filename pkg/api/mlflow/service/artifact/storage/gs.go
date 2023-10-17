@@ -25,7 +25,7 @@ type GS struct {
 }
 
 // NewGS creates new GC instance.
-func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
+func NewGS(ctx context.Context, _ *config.ServiceConfig) (*GS, error) {
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "error creating GCP storage client")
@@ -37,7 +37,7 @@ func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
 
 // List implements ArtifactStorageProvider interface.
 func (s GS) List(ctx context.Context, artifactURI, path string) ([]ArtifactObject, error) {
-	// 1. create s3 request input.
+	// 1. process input parameters.
 	bucket, rootPrefix, err := ExtractS3BucketAndPrefix(artifactURI)
 	if err != nil {
 		return nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
@@ -46,14 +46,13 @@ func (s GS) List(ctx context.Context, artifactURI, path string) ([]ArtifactObjec
 	if prefix != "" {
 		prefix = prefix + "/"
 	}
-	query := storage.Query{
-		Prefix: prefix,
-	}
-	// 2. process search `path` parameter.
 
-	// 3. read data from gcp storage.
+	// 2. read data from gs storage.
 	var artifactList []ArtifactObject
-	it := s.client.Bucket(bucket).Objects(ctx, &query)
+	it := s.client.Bucket(bucket).Objects(ctx, &storage.Query{
+		Prefix:    prefix,
+		Delimiter: "/",
+	})
 	for {
 		object, err := it.Next()
 		if errors.Is(err, iterator.Done) {
@@ -63,19 +62,25 @@ func (s GS) List(ctx context.Context, artifactURI, path string) ([]ArtifactObjec
 			return nil, eris.Wrap(err, "error getting object information")
 		}
 
-		relPath, err := filepath.Rel(rootPrefix, object.Name)
+		objectName := object.Name
+		if object.Name == "" {
+			objectName = object.Prefix
+		}
+
+		relPath, err := filepath.Rel(rootPrefix, objectName)
 		if err != nil {
 			return nil, eris.Wrapf(err, "error getting relative path for object: %s", object.Name)
 		}
-		artifactObject := ArtifactObject{
+
+		// filter current directory from the result set.
+		if relPath == path {
+			continue
+		}
+		artifactList = append(artifactList, ArtifactObject{
 			Path:  relPath,
 			Size:  object.Size,
-			IsDir: false,
-		}
-		if object.Size == 0 {
-			artifactObject.IsDir = true
-		}
-		artifactList = append(artifactList, artifactObject)
+			IsDir: object.Size == 0,
+		})
 	}
 
 	return artifactList, nil

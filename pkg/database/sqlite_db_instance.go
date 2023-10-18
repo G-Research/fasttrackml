@@ -2,9 +2,8 @@ package database
 
 import (
 	"database/sql"
-	"errors"
+	"fmt"
 	"net/url"
-	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -30,7 +29,7 @@ type SqliteDBInstance struct {
 
 // NewSqliteDBInstance creates a SqliteDBInstance.
 func NewSqliteDBInstance(
-	dsnURL url.URL, slowThreshold time.Duration, poolMax int, reset bool,
+	dsnURL url.URL, slowThreshold time.Duration, poolMax int,
 ) (*SqliteDBInstance, error) {
 	db := SqliteDBInstance{
 		DBInstance: DBInstance{dsn: dsnURL.String()},
@@ -46,17 +45,6 @@ func NewSqliteDBInstance(
 	}
 	sourceURL := dsnURL
 	sourceURL.RawQuery = query.Encode()
-
-	if reset && query.Get("mode") != "memory" {
-		file := sourceURL.Host
-		if file == "" {
-			file = sourceURL.Path
-		}
-		log.Infof("Removing database file %s", file)
-		if err := os.Remove(file); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, eris.Wrap(err, "failed to remove database file")
-		}
-	}
 
 	if !slices.Contains(sql.Drivers(), SQLiteCustomDriverName) {
 		sql.Register(SQLiteCustomDriverName, &sqlite3.SQLiteDriver{
@@ -104,6 +92,7 @@ func NewSqliteDBInstance(
 		return nil, eris.Wrap(err, "failed to connect to database")
 	}
 	db.closers = append(db.closers, replicaDB)
+	replicaDB.SetMaxOpenConns(poolMax)
 	replicaConn = sqlite.Dialector{
 		Conn: replicaDB,
 	}
@@ -142,6 +131,40 @@ func NewSqliteDBInstance(
 }
 
 // Reset resets database.
-func (f SqliteDBInstance) Reset() error {
-	return eris.New("reset for sqlite database not supported")
+func (db SqliteDBInstance) Reset() error {
+	log.Info("Resetting database schema")
+
+	var tables []string
+	if err := db.
+		Table("sqlite_schema").
+		Select("name").
+		Where("type = ?", "table").
+		Find(&tables).
+		Error; err != nil {
+		return eris.Wrap(err, "error getting tables")
+	}
+
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		tx.Exec("PRAGMA foreign_keys = OFF")
+		defer tx.Exec("PRAGMA foreign_keys = ON")
+
+		for _, table := range tables {
+			if err := tx.Exec(fmt.Sprintf("DROP TABLE %s", table)).Error; err != nil {
+				return eris.Wrapf(err, "error dropping table %q", table)
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return eris.Wrap(err, "error dropping tables")
+	}
+
+	if err := db.Exec("VACUUM").Error; err != nil {
+		return eris.Wrap(err, "error vacuuming database")
+	}
+	if err := db.Exec("PRAGMA wal_checkpoint(TRUNCATE)").Error; err != nil {
+		return eris.Wrap(err, "error checkpointing database")
+	}
+
+	return nil
 }

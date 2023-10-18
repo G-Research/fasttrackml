@@ -27,7 +27,6 @@ func TestMakeDBProvider(t *testing.T) {
 				tt.dsn,
 				time.Second*2,
 				2,
-				false,
 			)
 			assert.Nil(t, err)
 			assert.NotNil(t, db)

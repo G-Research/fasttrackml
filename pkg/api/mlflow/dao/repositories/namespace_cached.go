@@ -53,6 +53,7 @@ func NewNamespaceCachedRepository(
 	if err := db.Find(&namespaces).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting namespaces")
 	}
+	//nolint:gosec
 	for _, namespace := range namespaces {
 		cache.Add(namespace.Code, &namespace)
 	}
@@ -124,7 +125,7 @@ func (r NamespaceCachedRepository) GetByCode(ctx context.Context, code string) (
 
 // GetByID returns namespace by its ID.
 func (r NamespaceCachedRepository) GetByID(ctx context.Context, id uint) (*models.Namespace, error) {
-	return r.GetByID(ctx, id)
+	return r.namespaceRepository.GetByID(ctx, id)
 }
 
 // Delete deletes existing models.Namespace entity.
@@ -143,7 +144,7 @@ func (r NamespaceCachedRepository) Delete(ctx context.Context, namespace *models
 
 // List returns all namespaces.
 func (r NamespaceCachedRepository) List(ctx context.Context) ([]models.Namespace, error) {
-	return r.List(ctx)
+	return r.namespaceRepository.List(ctx)
 }
 
 // processEvent process incoming event from database.

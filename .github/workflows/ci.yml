@@ -43,6 +43,17 @@ jobs:
             exit 1
           fi
 
+      - name: Check module files
+        run: |
+          go mod tidy
+          modified=$(git ls-files --modified -- go.{mod,sum})
+          if [ -n "$modified" ]; then
+            for file in $modified; do
+              echo "::error file=$file::$file is not up to date (hint: run \"go mod tidy\" to fix this)"
+            done
+            exit 1
+          fi
+
       - name: Check mocks
         run: |
           make mocks-generate

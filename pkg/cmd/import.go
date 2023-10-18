@@ -43,7 +43,6 @@ func initDBs() (input, output database.DBProvider, err error) {
 		viper.GetString("input-database-uri"),
 		time.Second*1,
 		20,
-		false,
 	)
 	if err != nil {
 		return input, output, fmt.Errorf("error connecting to input DB: %w", err)
@@ -53,7 +52,6 @@ func initDBs() (input, output database.DBProvider, err error) {
 		viper.GetString("output-database-uri"),
 		time.Second*1,
 		20,
-		false,
 	)
 	if err != nil {
 		return input, output, fmt.Errorf("error connecting to output DB: %w", err)

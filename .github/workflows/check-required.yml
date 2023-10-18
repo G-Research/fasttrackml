@@ -6,7 +6,7 @@ name: Check required jobs
 # check run can be used to protect the main branch from being merged if the
 # CI is not passing. We need to use a GitHub app token to create the check
 # run because otherwise the check suite will be assigned to the first workflow
-# run for the CI, which might not be the latest one. See 
+# run for the CI, which might not be the latest one. See
 # https://github.com/orgs/community/discussions/24616#discussioncomment-6088422
 # for more details.
 
@@ -36,72 +36,62 @@ jobs:
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const name = 'All required checks succeeded';
-            const head_sha = context.payload.workflow_run.head_sha;
+            const ghaAppId = 15368;
+            const ghaName = 'All required checks done';
+            const myAppId = ${{ secrets.APP_ID }};
+            const myName = 'All required checks succeeded';
             const owner = context.payload.repository.owner.login;
             const repo = context.payload.repository.name;
-            const url = `${context.payload.workflow_run.html_url}/attempts/${context.payload.workflow_run.run_attempt}`;
-            const summary = `See [workflow run](${url}) for details.`;
-            const status = context.payload.workflow_run.status;
+            const sha = context.payload.workflow_run.head_sha;
 
-            core.info(`Workflow run ${url} has status '${status}'.`)
+            core.info(`List GitHub Actions check runs for ${sha}.`)
+            const { data: { check_runs: ghaChecks } } = await github.rest.checks.listForRef({
+              owner: owner,
+              repo: repo,
+              ref: sha,
+              app_id: ghaAppId,
+              check_name: ghaName,
+            });
 
-            if (status === 'in_progress' || status === 'queued') {
-              core.info(`Creating check run with status '${status}'.`)
-              await github.rest.checks.create({
-                owner: owner,
-                repo: repo,
-                name: name,
-                head_sha: head_sha,
-                status: status,
-                started_at: context.payload.workflow_run.started_at,
-                output: {
-                  title: name,
-                  summary: summary,
-                },
-              });  
-            } else if (status === 'completed') {
-              // list jobs for worklow run attempt
-              const { data: { jobs } } = await github.rest.actions.listJobsForWorkflowRunAttempt({
-                owner: owner,
-                repo: repo,
-                run_id: context.payload.workflow_run.id,
-                attempt_number: context.payload.workflow_run.run_attempt,
-              });
-              // check if required job was successful
-              var success = false;
-              core.info("Checking jobs");
-              jobs.forEach(job => {
-                var mark = '-'
-                if (job.name === 'All required checks done') {
-                  if (job.conclusion === 'success') {
-                    success = true;
-                    mark = '✅';
-                  } else {
-                    mark = '❌';
-                  }
-                }
-                core.info(`${mark} ${job.name}: ${job.conclusion}`);
-              });
-              // create check run if job was successful
-              if (success) {
-                core.info(`All required jobs succeeded, creating check run with status 'completed' and conclusion 'success'.`)
-                await github.rest.checks.create({
-                  owner: owner,
-                  repo: repo,
-                  name: name,
-                  head_sha: head_sha,
-                  status: 'completed',
-                  conclusion: 'success',
-                  completed_at: context.payload.workflow_run.completed_at,
-                  output: {
-                    title: name,
-                    summary: summary,
-                  },
-                });
-              } else {
-                core.warning('Not all required jobs succeeded, not creating check run.');
+            var newCheck = {
+              owner: owner,
+              repo: repo,
+              name: myName,
+              head_sha: sha,
+              status: 'in_progress',
+              started_at: context.payload.workflow_run.created_at,
+              output: {
+                title: 'Not all required checks succeeded',
+              },
+            };
+
+            core.summary.addHeading('The following required checks have been considered:', 3);
+            ghaChecks.forEach(check => {
+              core.summary
+                .addLink(check.name, check.html_url)
+                .addCodeBlock(JSON.stringify(check, ['status', 'conclusion', 'started_at', 'completed_at'], 2), 'json');
+
+              if (check.status === 'completed' && check.conclusion === 'success') {
+                newCheck.status = 'completed';
+                newCheck.conclusion = 'success';
+                newCheck.started_at = check.started_at;
+                newCheck.completed_at = check.completed_at;
+                newCheck.output.title = 'All required checks succeeded';
+              } else if (check.started_at > newCheck.started_at) {
+                newCheck.started_at = check.started_at;
               }
-            } else {
-              core.warning(`Unknown status '${status}', not creating check run.`);
+            });
+            if (ghaChecks.length === 0) {
+              core.summary.addRaw(`No check runs for ${sha} found.`);
             }
+            newCheck.output.summary = core.summary.stringify();
+            await core.summary.write();
+
+            core.info(`Create own check run for ${sha}: ${JSON.stringify(newCheck, null, 2)}.`)
+            const { data: { html_url } } = await github.rest.checks.create(newCheck);
+
+            await core.summary
+              .addHeading('Check run created:', 3)
+              .addLink(myName, html_url)
+              .addCodeBlock(JSON.stringify(newCheck, null, 2), 'json')
+              .write();

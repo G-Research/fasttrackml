@@ -1,6 +1,7 @@
 package aim
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -79,21 +80,21 @@ func GetExperiment(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("unable to parse experiment id %q: %s", p.ID, err))
 	}
 
-	if tx := database.DB.Select("ID").First(&database.Experiment{
+	if err := database.DB.Select("ID").First(&database.Experiment{
 		ID:          common.GetPointer(int32(id)),
 		NamespaceID: ns.ID,
-	}); tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
+	}).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fmt.Errorf("unable to find experiment %q: %w", p.ID, tx.Error)
+		return fmt.Errorf("unable to find experiment %q: %w", p.ID, err)
 	}
 
 	var exp struct {
 		database.Experiment
 		RunCount int
 	}
-	if tx := database.DB.Model(&database.Experiment{}).
+	if err := database.DB.Model(&database.Experiment{}).
 		Select(
 			"experiments.experiment_id",
 			"experiments.name",
@@ -105,11 +106,11 @@ func GetExperiment(c *fiber.Ctx) error {
 		Group("experiments.experiment_id").
 		Where("experiments.namespace_id = ?", ns.ID).
 		Where("experiments.experiment_id = ?", id).
-		First(&exp); tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
+		First(&exp).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fmt.Errorf("error fetching experiment %q: %w", p.ID, tx.Error)
+		return fmt.Errorf("error fetching experiment %q: %w", p.ID, err)
 	}
 
 	return c.JSON(fiber.Map{
@@ -151,14 +152,14 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("unable to parse experiment id %q: %s", p.ID, err))
 	}
 
-	if tx := database.DB.Select("ID").First(&database.Experiment{
+	if err := database.DB.Select("ID").First(&database.Experiment{
 		ID:          common.GetPointer(int32(id)),
 		NamespaceID: ns.ID,
-	}); tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
+	}).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fmt.Errorf("unable to find experiment %q: %w", p.ID, tx.Error)
+		return fmt.Errorf("unable to find experiment %q: %w", p.ID, err)
 	}
 
 	tx := database.DB.
@@ -173,7 +174,7 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 		run := &database.Run{
 			ID: q.Offset,
 		}
-		if err = database.DB.Select("row_num").First(&run).Error; err != nil && err != gorm.ErrRecordNotFound {
+		if err = database.DB.Select("row_num").First(&run).Error; err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, err)
 		}
 
@@ -181,12 +182,11 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 	}
 
 	var sqlRuns []database.Run
-	tx.Find(&sqlRuns)
-	if tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
+	if err := tx.Find(&sqlRuns).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fmt.Errorf("error fetching runs of experiment %q: %w", p.ID, tx.Error)
+		return fmt.Errorf("error fetching runs of experiment %q: %w", p.ID, err)
 	}
 
 	runs := make([]fiber.Map, len(sqlRuns))
@@ -231,16 +231,16 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("unable to parse experiment id %q: %s", p.ID, err))
 	}
 
-	if tx := database.DB.Select(
+	if err := database.DB.Select(
 		"ID",
 	).First(&database.Experiment{
 		ID:          common.GetPointer(int32(id)),
 		NamespaceID: ns.ID,
-	}); tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
+	}).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fmt.Errorf("unable to find experiment %q: %w", p.ID, tx.Error)
+		return fmt.Errorf("unable to find experiment %q: %w", p.ID, err)
 	}
 
 	var runs []database.Run
@@ -296,17 +296,17 @@ func DeleteExperiment(c *fiber.Ctx) error {
 	}
 
 	// validate that requested experiment exists.
-	if tx := database.DB.Select(
+	if err := database.DB.Select(
 		"ID",
 	).Where(
 		"experiments.namespace_id = ?", ns.ID,
 	).First(&database.Experiment{
 		ID: common.GetPointer(int32(id)),
-	}); tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
+	}).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fmt.Errorf("unable to find experiment %q: %w", params.ID, tx.Error)
+		return fmt.Errorf("unable to find experiment %q: %w", params.ID, err)
 	}
 
 	// TODO this code should move to service with injected repository

@@ -16,6 +16,7 @@ func ConvertMetricParamRequestToDBModel(runID string, req *request.LogMetricRequ
 		Timestamp: req.Timestamp,
 		Step:      req.Step,
 		RunID:     runID,
+		Context:   req.Context,
 	}
 	if v, ok := req.Value.(float64); ok {
 		metric.Value = v

@@ -4,6 +4,10 @@ import subprocess
 from setuptools import find_packages, setup
 from wheel.bdist_wheel import bdist_wheel
 
+install_requires=[
+    "mlflow",
+    # Other dependencies
+],
 
 def get_data_files():
     os = subprocess.check_output(["go", "env", "GOOS"]).strip().decode("utf-8")
@@ -26,7 +30,7 @@ def get_platform():
     elif plat == "linux_amd64":
         return "manylinux_2_17_x86_64.manylinux2014_x86_64.musllinux_1_1_x86_64"
     elif plat == "linux_arm64":
-        return "manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64"
+        return "macosx_11_0_arm64"
     elif plat == "windows_amd64":
         return "win_amd64"
     else:
@@ -54,4 +58,9 @@ setup(
     cmdclass=dict(
         bdist_wheel=custom_bdist_wheel,
     ),
+    entry_points={
+        # Define a Tracking Store plugin for tracking URIs with scheme 'file-plugin'
+        "mlflow.tracking_store": "contextsupport=mlflow_contextsupportstore."
+        "contextsupport_store:ContextsupportStore",
+    }
 )

@@ -71,12 +71,13 @@ func (s *ArtifactStorageFactory) GetStorage(
 		return nil, eris.Wrap(err, "error parsing artifact root")
 	}
 
-	if storage, ok := s.storageList.Load(GSStorageName); ok {
+	storageName := u.Scheme
+	if storage, ok := s.storageList.Load(storageName); ok {
 		return storage.(ArtifactStorageProvider), nil
 	}
 
 	var storage ArtifactStorageProvider
-	switch u.Scheme {
+	switch storageName {
 	case GSStorageName:
 		var err error
 		storage, err = NewGS(ctx, s.config)
@@ -99,6 +100,6 @@ func (s *ArtifactStorageFactory) GetStorage(
 		return nil, eris.Errorf("unsupported schema has been provided: %s", u.Scheme)
 	}
 
-	s.storageList.Store(S3StorageName, storage)
+	s.storageList.Store(storageName, storage)
 	return storage, nil
 }

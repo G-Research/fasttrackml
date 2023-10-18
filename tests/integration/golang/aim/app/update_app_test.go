@@ -159,7 +159,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					"/apps/%s", app.ID,
+					"/apps/%s", tt.ID,
 				),
 			)
 			assert.Contains(s.T(), resp.Message, tt.error)

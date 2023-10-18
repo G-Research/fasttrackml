@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
-	"net/http"
 	"testing"
 	"time"
 
@@ -81,15 +80,6 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 		).DoRequest(
 			"/experiments/%d", *experiment.ID,
 		),
-	assert.Nil(
-		s.T(),
-		s.AIMClient.WithMethod(
-			http.MethodDelete,
-		).WithResponse(
-			&resp,
-		).DoRequest(
-			"/experiments/%d", *experiment.ID,
-		),
 	)
 
 	remainingExperiments, err := s.ExperimentFixtures.GetTestExperiments(context.Background())
@@ -139,7 +129,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 					"/experiments/%s", tt.ID,
 				),
 			)
-			assert.Contains(s.T(), resp.Error(), "Not Found")
+			assert.Contains(s.T(), resp.Error(), tt.error)
 			assert.NoError(s.T(), err)
 		})
 	}

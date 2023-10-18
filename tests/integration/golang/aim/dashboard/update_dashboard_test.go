@@ -5,7 +5,6 @@ package run
 import (
 	"context"
 	"net/http"
-	"net/http"
 	"testing"
 	"time"
 
@@ -184,17 +183,13 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
 			assert.Nil(s.T(), s.AIMClient.WithMethod(
 				http.MethodPut,
 			).WithRequest(
-			assert.Nil(s.T(), s.AIMClient.WithMethod(
-				http.MethodPut,
-			).WithRequest(
 				tt.requestBody,
-			).WithResponse(
 			).WithResponse(
 				&resp,
 			).DoRequest(
-				"/dashboards/%s", dashboard.ID,
+				"/dashboards/%s", tt.ID,
 			))
-			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
+			assert.Contains(s.T(), resp.Message, tt.error)
 		})
 	}
 }

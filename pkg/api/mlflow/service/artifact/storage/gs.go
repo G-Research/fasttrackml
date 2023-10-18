@@ -14,12 +14,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
-// GSStorageName is a GCP storage name.
+// GSStorageName is a GS storage name.
 const (
 	GSStorageName = "gs"
 )
 
-// GS represents GCP adapter to work with artifacts.
+// GS represents adapter to work with GS storage artifacts.
 type GS struct {
 	client *storage.Client
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -124,7 +125,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	isRunning := make(chan struct{})
 	go func() {
 		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
 		<-sigint
 
 		log.Infof("Shutting down")

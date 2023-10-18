@@ -1,6 +1,7 @@
 package database
 
 import (
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -15,7 +16,7 @@ func TestMakeDBProvider(t *testing.T) {
 	}{
 		{
 			name:              "WithSqliteURI",
-			dsn:               "sqlite:///tmp/fasttrack.db",
+			dsn:               "sqlite://" + filepath.Join(t.TempDir(), "fasttrackml.db"),
 			expectedDialector: SQLiteDialectorName,
 		},
 	}

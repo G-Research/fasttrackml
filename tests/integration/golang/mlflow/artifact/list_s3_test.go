@@ -12,7 +12,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -42,19 +41,15 @@ func (s *ListArtifactS3TestSuite) SetupTest() {
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	assert.Nil(s.T(), err)
 
-	createBuckets(s3Client)
+	err = helpers.CreateBuckets(s3Client)
+	assert.Nil(s.T(), err)
+
 	s.s3Client = s3Client
 }
 
-func createBuckets(s3Client *s3.Client) {
-	for _, bucket := range []string{"bucket1", "bucket2", "bucket3"} {
-		// ignore error if bucket already exists, other errors will be caught by the test
-		// nolint:errcheck
-		_, _ = s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
-			Bucket:                    aws.String(bucket),
-			CreateBucketConfiguration: &types.CreateBucketConfiguration{},
-		})
-	}
+func (s *ListArtifactS3TestSuite) TearDownTest() {
+	err := helpers.RemoveBuckets(s.s3Client)
+	assert.Nil(s.T(), err)
 }
 
 func (s *ListArtifactS3TestSuite) Test_Ok() {

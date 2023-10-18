@@ -11,6 +11,7 @@ isort = "*"
 mlflow = "==2.7.1"
 boto3 = "*"
 psycopg2-binary = "*"
+google-cloud-storage = "*"
 
 [requires]
 python_version = "3.11"

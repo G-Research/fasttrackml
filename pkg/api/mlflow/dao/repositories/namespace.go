@@ -17,7 +17,7 @@ type NamespaceRepositoryProvider interface {
 	// Update modifies the existing models.Namespace entity.
 	Update(ctx context.Context, namespace *models.Namespace) error
 	// Delete removes a namespace and it's associated experiments by its ID.
-	Delete(ctx context.Context, id uint) error
+	Delete(ctx context.Context, namespace *models.Namespace) error
 	// GetByCode returns namespace by its Code.
 	GetByCode(ctx context.Context, code string) (*models.Namespace, error)
 	// GetByID returns namespace by its ID.
@@ -55,8 +55,8 @@ func (r NamespaceRepository) Update(ctx context.Context, namespace *models.Names
 }
 
 // Delete removes the  models.Namespace entity.
-func (r NamespaceRepository) Delete(ctx context.Context, id uint) error {
-	if err := r.db.WithContext(ctx).Delete(&models.Namespace{}, id).Error; err != nil {
+func (r NamespaceRepository) Delete(ctx context.Context, namespace *models.Namespace) error {
+	if err := r.db.WithContext(ctx).Delete(namespace).Error; err != nil {
 		return eris.Wrap(err, "error deleting namespace entity")
 	}
 	return nil

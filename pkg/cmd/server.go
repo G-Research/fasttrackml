@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -8,6 +9,10 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
@@ -25,6 +30,7 @@ import (
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
@@ -33,7 +39,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
-	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
@@ -65,13 +70,29 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	//nolint:errcheck
 	defer db.Close()
 
-	namespaceRepository := mlflowRepositories.NewNamespaceRepository(db.GormDB())
+	// 3. create database listeners.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	namespaceListener, err := dao.NewNamespaceListener(ctx, db.GormDB())
+	if err != nil {
+		return eris.Wrap(err, "error creating namespace notification listener")
+	}
 
-	// 3. init main HTTP server.
-	server := initServer(mlflowConfig, namespaceRepository)
+	// 4. init main HTTP server.
+	namespaceRepository, err := repositories.NewNamespaceCachedRepository(
+		db.GormDB(), namespaceListener, repositories.NewNamespaceRepository(db.GormDB()),
+	)
+	if err != nil {
+		return eris.Wrap(err, "error creating cached namespace repository")
+	}
 
-	// 4. init `aim` api and ui routes.
-	aimAPI.AddRoutes(server.Group("/aim/api/"))
+	// 5. init main HTTP server.
+	server := initServer(mlflowConfig)
+
+	// 6. init `aim` api and ui routes.
+	router := server.Group("/aim/api/")
+	router.Use(namespaceMiddleware.New(namespaceRepository))
+	aimAPI.AddRoutes(router)
 	aimUI.AddRoutes(server)
 
 	artifactStorageFactory, err := storage.NewArtifactStorageFactory(mlflowConfig)
@@ -79,7 +100,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// 5. init `mlflow` api and ui routes.
+	// 7. init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
 		mlflowController.NewController(
@@ -105,17 +126,18 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
+		namespaceRepository,
 	).Init(server)
 	mlflowUI.AddRoutes(server)
 
-	// 6. init `admin` UI routes.
+	// 8. init `admin` UI routes.
 	adminUI.NewRouter(
 		adminUIController.NewController(
 			namespace.NewService(namespaceRepository),
 		),
 	).Init(server)
 
-	// 7. init `chooser` ui routes.
+	// 9. init `chooser` ui routes.
 	chooser.NewRouter(
 		chooserController.NewController(
 			namespace.NewService(namespaceRepository),
@@ -175,10 +197,7 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 }
 
 // initServer init HTTP server with base configuration.
-func initServer(
-	config *mlflowConfig.ServiceConfig,
-	namespaceRepository mlflowRepositories.NamespaceRepositoryProvider,
-) *fiber.App {
+func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 	server := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
 		ReadBufferSize:        16384,
@@ -229,7 +248,6 @@ func initServer(
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
-	server.Use(namespaceMiddleware.New(namespaceRepository))
 
 	server.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")

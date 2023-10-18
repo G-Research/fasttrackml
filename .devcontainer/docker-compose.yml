@@ -76,5 +76,5 @@ services:
       MINIO_ROOT_USER: user
       MINIO_ROOT_PASSWORD: password
       MINIO_CONSOLE_ADDRESS: ":9001"
-    command: server /data'
+    command: server /data
     network_mode: service:db

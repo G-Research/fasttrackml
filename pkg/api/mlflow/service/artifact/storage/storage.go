@@ -71,47 +71,34 @@ func (s *ArtifactStorageFactory) GetStorage(
 		return nil, eris.Wrap(err, "error parsing artifact root")
 	}
 
+	if storage, ok := s.storageList.Load(GSStorageName); ok {
+		return storage.(ArtifactStorageProvider), nil
+	}
+
+	var storage ArtifactStorageProvider
 	switch u.Scheme {
 	case GSStorageName:
-		if storage, ok := s.storageList.Load(GSStorageName); ok {
-			if gsStorage, ok := storage.(*GS); ok {
-				return gsStorage, nil
-			}
-			return nil, eris.New("storage is not gs artifact storage")
-		}
-		storage, err := NewGS(ctx, s.config)
+		var err error
+		storage, err = NewGS(ctx, s.config)
 		if err != nil {
 			return nil, eris.Wrap(err, "error initializing gs artifact storage")
 		}
-		s.storageList.Store(GSStorageName, storage)
-		return storage, nil
 	case S3StorageName:
-		if storage, ok := s.storageList.Load(S3StorageName); ok {
-			if s3Storage, ok := storage.(*S3); ok {
-				return s3Storage, nil
-			}
-			return nil, eris.New("storage is not s3 artifact storage")
-		}
-		storage, err := NewS3(ctx, s.config)
+		var err error
+		storage, err = NewS3(ctx, s.config)
 		if err != nil {
 			return nil, eris.Wrap(err, "error initializing s3 artifact storage")
 		}
-		s.storageList.Store(S3StorageName, storage)
-		return storage, nil
 	case "", LocalStorageName:
-		if storage, ok := s.storageList.Load(LocalStorageName); ok {
-			if localStorage, ok := storage.(*Local); ok {
-				return localStorage, nil
-			}
-			return nil, eris.New("storage is not local artifact storage")
-		}
-		storage, err := NewLocal(s.config)
+		var err error
+		storage, err = NewLocal(s.config)
 		if err != nil {
 			return nil, eris.Wrap(err, "error initializing local artifact storage")
 		}
-		s.storageList.Store(LocalStorageName, storage)
-		return storage, nil
 	default:
 		return nil, eris.Errorf("unsupported schema has been provided: %s", u.Scheme)
 	}
+
+	s.storageList.Store(S3StorageName, storage)
+	return storage, nil
 }

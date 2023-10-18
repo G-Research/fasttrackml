@@ -18,7 +18,6 @@ func (regexp Regexp) Build(builder clause.Builder) {
 	switch regexp.Dialector {
 	case postgres.Dialector{}.Name():
 		//nolint:errcheck,gosec
-		//nolint:errcheck,gosec
 		builder.WriteString(" ~ ")
 	default:
 		//nolint:errcheck,gosec

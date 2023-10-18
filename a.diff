@@ -1,0 +1,530 @@
+diff --git a/pkg/api/aim/query/clause.go b/pkg/api/aim/query/clause.go
+index 63176c2..41fa37a 100644
+--- a/pkg/api/aim/query/clause.go
++++ b/pkg/api/aim/query/clause.go
+@@ -17,6 +17,7 @@ func (regexp Regexp) Build(builder clause.Builder) {
+ 	regexp.writeColumn(builder)
+ 	switch regexp.Dialector {
+ 	case postgres.Dialector{}.Name():
++		//nolint:errcheck,gosec
+ 		//nolint:errcheck,gosec
+ 		builder.WriteString(" ~ ")
+ 	default:
+diff --git a/tests/integration/golang/aim/app/update_app_test.go b/tests/integration/golang/aim/app/update_app_test.go
+index e0b79d7..2166653 100644
+--- a/tests/integration/golang/aim/app/update_app_test.go
++++ b/tests/integration/golang/aim/app/update_app_test.go
+@@ -85,6 +85,18 @@ func (s *UpdateAppTestSuite) Test_Ok() {
+ 					"/apps/%s", app.ID,
+ 				),
+ 			)
++			assert.Nil(
++				s.T(),
++				s.AIMClient.WithMethod(
++					http.MethodPut,
++				).WithRequest(
++					tt.requestBody,
++				).WithResponse(
++					&resp,
++				).DoRequest(
++					"/apps/%s", app.ID,
++				),
++			)
+ 			assert.Equal(s.T(), "app-type", resp.Type)
+ 			assert.Equal(s.T(), response.AppState{"app-state-key": "new-app-state-value"}, resp.State)
+ 		})
+@@ -116,13 +128,23 @@ func (s *UpdateAppTestSuite) Test_Error() {
+ 
+ 	tests := []struct {
+ 		name        string
++		ID          uuid.UUID
+ 		requestBody any
++		error       string
+ 	}{
+ 		{
+ 			name: "UpdateAppWithIncorrectState",
++			ID:   app.ID,
+ 			requestBody: map[string]any{
+ 				"State": "this-cannot-unmarshal",
+ 			},
++			error: "cannot unmarshal",
++		},
++		{
++			name:        "UpdateAppWithUnknownID",
++			ID:          uuid.New(),
++			requestBody: map[string]any{},
++			error:       "Not Found",
+ 		},
+ 	}
+ 	for _, tt := range tests {
+@@ -140,8 +162,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
+ 					"/apps/%s", app.ID,
+ 				),
+ 			)
+-			assert.Nil(s.T(), err)
+-			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
++			assert.Contains(s.T(), resp.Message, tt.error)
+ 		})
+ 	}
+ }
+diff --git a/tests/integration/golang/aim/dashboard/update_dashboard_test.go b/tests/integration/golang/aim/dashboard/update_dashboard_test.go
+index 119b5a4..e6e43f4 100644
+--- a/tests/integration/golang/aim/dashboard/update_dashboard_test.go
++++ b/tests/integration/golang/aim/dashboard/update_dashboard_test.go
+@@ -5,6 +5,7 @@ package run
+ import (
+ 	"context"
+ 	"net/http"
++	"net/http"
+ 	"testing"
+ 	"time"
+ 
+@@ -96,6 +97,18 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
+ 					"/dashboards/%s", dashboard.ID,
+ 				),
+ 			)
++			assert.Nil(
++				s.T(),
++				s.AIMClient.WithMethod(
++					http.MethodPut,
++				).WithRequest(
++					tt.requestBody,
++				).WithResponse(
++					&resp,
++				).DoRequest(
++					"/dashboards/%s", dashboard.ID,
++				),
++			)
+ 
+ 			actualDashboard, err := s.DashboardFixtures.GetDashboardByID(context.Background(), dashboard.ID.String())
+ 
+@@ -147,22 +160,35 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
+ 
+ 	tests := []struct {
+ 		name        string
++		ID          uuid.UUID
+ 		requestBody map[string]interface{}
++		error       string
+ 	}{
+ 		{
+ 			name: "UpdateDashboardWithIncorrectDescriptionType",
++			ID:   dashboard.ID,
+ 			requestBody: map[string]interface{}{
+ 				"Description": map[string]interface{}{"Description": "latest-description"},
+ 			},
++			error: "cannot unmarshal",
++		},
++		{
++			name:  "UpdateDashboardWithUnknownID",
++			ID:    uuid.New(),
++			error: "Not Found",
+ 		},
+ 	}
+ 	for _, tt := range tests {
+ 		s.T().Run(tt.name, func(T *testing.T) {
+ 			var resp response.Error
++			assert.Nil(s.T(), s.AIMClient.WithMethod(
++				http.MethodPut,
++			).WithRequest(
+ 			assert.Nil(s.T(), s.AIMClient.WithMethod(
+ 				http.MethodPut,
+ 			).WithRequest(
+ 				tt.requestBody,
++			).WithResponse(
+ 			).WithResponse(
+ 				&resp,
+ 			).DoRequest(
+diff --git a/tests/integration/golang/aim/experiment/delete_test.go b/tests/integration/golang/aim/experiment/delete_test.go
+index ca8ae4e..1f9d097 100644
+--- a/tests/integration/golang/aim/experiment/delete_test.go
++++ b/tests/integration/golang/aim/experiment/delete_test.go
+@@ -6,6 +6,7 @@ import (
+ 	"context"
+ 	"database/sql"
+ 	"net/http"
++	"net/http"
+ 	"testing"
+ 	"time"
+ 
+@@ -71,6 +72,15 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
+ 	length := len(experiments)
+ 
+ 	var resp response.DeleteExperiment
++	assert.Nil(
++		s.T(),
++		s.AIMClient.WithMethod(
++			http.MethodDelete,
++		).WithResponse(
++			&resp,
++		).DoRequest(
++			"/experiments/%d", *experiment.ID,
++		),
+ 	assert.Nil(
+ 		s.T(),
+ 		s.AIMClient.WithMethod(
+@@ -100,12 +110,20 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
+ 	assert.Nil(s.T(), err)
+ 
+ 	tests := []struct {
+-		name string
+-		ID   string
++		name  string
++		ID    string
++		error string
+ 	}{
+ 		{
+-			ID:   "123",
+-			name: "DeleteWithUnknownIDFails",
++			ID:    "123",
++			name:  "DeleteWithUnknownIDFails",
++			error: "Not Found",
++		},
++		{
++			name: "DeleteIncorrectExperimentID",
++			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt:` +
++				` parsing "incorrect_experiment_id": invalid syntax`,
++			ID: "incorrect_experiment_id",
+ 		},
+ 	}
+ 	for _, tt := range tests {
+diff --git a/tests/integration/golang/aim/experiment/get_experiment_activity_test.go b/tests/integration/golang/aim/experiment/get_experiment_activity_test.go
+index 01cc8c4..13a2409 100644
+--- a/tests/integration/golang/aim/experiment/get_experiment_activity_test.go
++++ b/tests/integration/golang/aim/experiment/get_experiment_activity_test.go
+@@ -80,12 +80,20 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
+ 	assert.Nil(s.T(), err)
+ 
+ 	tests := []struct {
+-		name string
+-		ID   string
++		name  string
++		ID    string
++		error string
+ 	}{
+ 		{
+-			name: "GetInvalidExperimentID",
+-			ID:   "123",
++			name:  "GetInvalidExperimentID",
++			ID:    "123",
++			error: "Not Found",
++		},
++		{
++			name: "DeleteIncorrectExperimentID",
++			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt:` +
++				` parsing "incorrect_experiment_id": invalid syntax`,
++			ID: "incorrect_experiment_id",
+ 		},
+ 	}
+ 	for _, tt := range tests {
+@@ -94,9 +102,9 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
+ 			assert.Nil(s.T(), s.AIMClient.WithQuery(map[any]any{
+ 				"limit": 4,
+ 			}).WithResponse(&resp).DoRequest(
+-				"/experiments/%s/runs", tt.ID,
++				"/experiments/%s/activity", tt.ID,
+ 			))
+-			assert.Contains(s.T(), resp.Error(), "Not Found")
++			assert.Contains(s.T(), resp.Error(), tt.error)
+ 		})
+ 	}
+ }
+diff --git a/tests/integration/golang/aim/run/update_run_test.go b/tests/integration/golang/aim/run/update_run_test.go
+index b0c7093..5780129 100644
+--- a/tests/integration/golang/aim/run/update_run_test.go
++++ b/tests/integration/golang/aim/run/update_run_test.go
+@@ -98,13 +98,23 @@ func (s *UpdateRunTestSuite) Test_Error() {
+ 	}()
+ 	tests := []struct {
+ 		name        string
++		ID          string
+ 		requestBody any
++		error       string
+ 	}{
+ 		{
+ 			name: "UpdateRunWithIncorrectArchived",
++			ID:   s.run.ID,
+ 			requestBody: map[string]any{
+ 				"Archived": "this-cannot-unmarshal",
+ 			},
++			error: "cannot unmarshal",
++		},
++		{
++			name:        "UpdateRunWithUnknownID",
++			ID:          "incorrect-ID",
++			requestBody: map[string]any{},
++			error:       "unable to find run 'incorrect-ID'",
+ 		},
+ 	}
+ 	for _, tt := range tests {
+@@ -119,10 +129,10 @@ func (s *UpdateRunTestSuite) Test_Error() {
+ 				).WithResponse(
+ 					&resp,
+ 				).DoRequest(
+-					"/runs/%s", s.run.ID,
++					"/runs/%s", tt.ID,
+ 				),
+ 			)
+-			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
++			assert.Contains(s.T(), resp.Message, tt.error)
+ 		})
+ 	}
+ }
+diff --git a/tests/integration/golang/aim/app/update_app_test.go b/tests/integration/golang/aim/app/update_app_test.go
+index e0b79d7..2166653 100644
+--- a/tests/integration/golang/aim/app/update_app_test.go
++++ b/tests/integration/golang/aim/app/update_app_test.go
+@@ -85,6 +85,18 @@ func (s *UpdateAppTestSuite) Test_Ok() {
+ 					"/apps/%s", app.ID,
+ 				),
+ 			)
++			assert.Nil(
++				s.T(),
++				s.AIMClient.WithMethod(
++					http.MethodPut,
++				).WithRequest(
++					tt.requestBody,
++				).WithResponse(
++					&resp,
++				).DoRequest(
++					"/apps/%s", app.ID,
++				),
++			)
+ 			assert.Equal(s.T(), "app-type", resp.Type)
+ 			assert.Equal(s.T(), response.AppState{"app-state-key": "new-app-state-value"}, resp.State)
+ 		})
+@@ -116,13 +128,23 @@ func (s *UpdateAppTestSuite) Test_Error() {
+ 
+ 	tests := []struct {
+ 		name        string
++		ID          uuid.UUID
+ 		requestBody any
++		error       string
+ 	}{
+ 		{
+ 			name: "UpdateAppWithIncorrectState",
++			ID:   app.ID,
+ 			requestBody: map[string]any{
+ 				"State": "this-cannot-unmarshal",
+ 			},
++			error: "cannot unmarshal",
++		},
++		{
++			name:        "UpdateAppWithUnknownID",
++			ID:          uuid.New(),
++			requestBody: map[string]any{},
++			error:       "Not Found",
+ 		},
+ 	}
+ 	for _, tt := range tests {
+@@ -140,8 +162,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
+ 					"/apps/%s", app.ID,
+ 				),
+ 			)
+-			assert.Nil(s.T(), err)
+-			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
++			assert.Contains(s.T(), resp.Message, tt.error)
+ 		})
+ 	}
+ }
+diff --git a/tests/integration/golang/aim/dashboard/update_dashboard_test.go b/tests/integration/golang/aim/dashboard/update_dashboard_test.go
+index 119b5a4..e6e43f4 100644
+--- a/tests/integration/golang/aim/dashboard/update_dashboard_test.go
++++ b/tests/integration/golang/aim/dashboard/update_dashboard_test.go
+@@ -5,6 +5,7 @@ package run
+ import (
+ 	"context"
+ 	"net/http"
++	"net/http"
+ 	"testing"
+ 	"time"
+ 
+@@ -96,6 +97,18 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
+ 					"/dashboards/%s", dashboard.ID,
+ 				),
+ 			)
++			assert.Nil(
++				s.T(),
++				s.AIMClient.WithMethod(
++					http.MethodPut,
++				).WithRequest(
++					tt.requestBody,
++				).WithResponse(
++					&resp,
++				).DoRequest(
++					"/dashboards/%s", dashboard.ID,
++				),
++			)
+ 
+ 			actualDashboard, err := s.DashboardFixtures.GetDashboardByID(context.Background(), dashboard.ID.String())
+ 
+@@ -147,22 +160,35 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
+ 
+ 	tests := []struct {
+ 		name        string
++		ID          uuid.UUID
+ 		requestBody map[string]interface{}
++		error       string
+ 	}{
+ 		{
+ 			name: "UpdateDashboardWithIncorrectDescriptionType",
++			ID:   dashboard.ID,
+ 			requestBody: map[string]interface{}{
+ 				"Description": map[string]interface{}{"Description": "latest-description"},
+ 			},
++			error: "cannot unmarshal",
++		},
++		{
++			name:  "UpdateDashboardWithUnknownID",
++			ID:    uuid.New(),
++			error: "Not Found",
+ 		},
+ 	}
+ 	for _, tt := range tests {
+ 		s.T().Run(tt.name, func(T *testing.T) {
+ 			var resp response.Error
++			assert.Nil(s.T(), s.AIMClient.WithMethod(
++				http.MethodPut,
++			).WithRequest(
+ 			assert.Nil(s.T(), s.AIMClient.WithMethod(
+ 				http.MethodPut,
+ 			).WithRequest(
+ 				tt.requestBody,
++			).WithResponse(
+ 			).WithResponse(
+ 				&resp,
+ 			).DoRequest(
+diff --git a/tests/integration/golang/aim/experiment/delete_test.go b/tests/integration/golang/aim/experiment/delete_test.go
+index ca8ae4e..1f9d097 100644
+--- a/tests/integration/golang/aim/experiment/delete_test.go
++++ b/tests/integration/golang/aim/experiment/delete_test.go
+@@ -6,6 +6,7 @@ import (
+ 	"context"
+ 	"database/sql"
+ 	"net/http"
++	"net/http"
+ 	"testing"
+ 	"time"
+ 
+@@ -71,6 +72,15 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
+ 	length := len(experiments)
+ 
+ 	var resp response.DeleteExperiment
++	assert.Nil(
++		s.T(),
++		s.AIMClient.WithMethod(
++			http.MethodDelete,
++		).WithResponse(
++			&resp,
++		).DoRequest(
++			"/experiments/%d", *experiment.ID,
++		),
+ 	assert.Nil(
+ 		s.T(),
+ 		s.AIMClient.WithMethod(
+@@ -100,12 +110,20 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
+ 	assert.Nil(s.T(), err)
+ 
+ 	tests := []struct {
+-		name string
+-		ID   string
++		name  string
++		ID    string
++		error string
+ 	}{
+ 		{
+-			ID:   "123",
+-			name: "DeleteWithUnknownIDFails",
++			ID:    "123",
++			name:  "DeleteWithUnknownIDFails",
++			error: "Not Found",
++		},
++		{
++			name: "DeleteIncorrectExperimentID",
++			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt:` +
++				` parsing "incorrect_experiment_id": invalid syntax`,
++			ID: "incorrect_experiment_id",
+ 		},
+ 	}
+ 	for _, tt := range tests {
+diff --git a/tests/integration/golang/aim/experiment/get_experiment_activity_test.go b/tests/integration/golang/aim/experiment/get_experiment_activity_test.go
+index 01cc8c4..13a2409 100644
+--- a/tests/integration/golang/aim/experiment/get_experiment_activity_test.go
++++ b/tests/integration/golang/aim/experiment/get_experiment_activity_test.go
+@@ -80,12 +80,20 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
+ 	assert.Nil(s.T(), err)
+ 
+ 	tests := []struct {
+-		name string
+-		ID   string
++		name  string
++		ID    string
++		error string
+ 	}{
+ 		{
+-			name: "GetInvalidExperimentID",
+-			ID:   "123",
++			name:  "GetInvalidExperimentID",
++			ID:    "123",
++			error: "Not Found",
++		},
++		{
++			name: "DeleteIncorrectExperimentID",
++			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt:` +
++				` parsing "incorrect_experiment_id": invalid syntax`,
++			ID: "incorrect_experiment_id",
+ 		},
+ 	}
+ 	for _, tt := range tests {
+@@ -94,9 +102,9 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
+ 			assert.Nil(s.T(), s.AIMClient.WithQuery(map[any]any{
+ 				"limit": 4,
+ 			}).WithResponse(&resp).DoRequest(
+-				"/experiments/%s/runs", tt.ID,
++				"/experiments/%s/activity", tt.ID,
+ 			))
+-			assert.Contains(s.T(), resp.Error(), "Not Found")
++			assert.Contains(s.T(), resp.Error(), tt.error)
+ 		})
+ 	}
+ }
+diff --git a/tests/integration/golang/aim/run/update_run_test.go b/tests/integration/golang/aim/run/update_run_test.go
+index b0c7093..5780129 100644
+--- a/tests/integration/golang/aim/run/update_run_test.go
++++ b/tests/integration/golang/aim/run/update_run_test.go
+@@ -98,13 +98,23 @@ func (s *UpdateRunTestSuite) Test_Error() {
+ 	}()
+ 	tests := []struct {
+ 		name        string
++		ID          string
+ 		requestBody any
++		error       string
+ 	}{
+ 		{
+ 			name: "UpdateRunWithIncorrectArchived",
++			ID:   s.run.ID,
+ 			requestBody: map[string]any{
+ 				"Archived": "this-cannot-unmarshal",
+ 			},
++			error: "cannot unmarshal",
++		},
++		{
++			name:        "UpdateRunWithUnknownID",
++			ID:          "incorrect-ID",
++			requestBody: map[string]any{},
++			error:       "unable to find run 'incorrect-ID'",
+ 		},
+ 	}
+ 	for _, tt := range tests {
+@@ -119,10 +129,10 @@ func (s *UpdateRunTestSuite) Test_Error() {
+ 				).WithResponse(
+ 					&resp,
+ 				).DoRequest(
+-					"/runs/%s", s.run.ID,
++					"/runs/%s", tt.ID,
+ 				),
+ 			)
+-			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
++			assert.Contains(s.T(), resp.Message, tt.error)
+ 		})
+ 	}
+ }

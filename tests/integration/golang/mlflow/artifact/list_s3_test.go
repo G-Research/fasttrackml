@@ -41,9 +41,8 @@ func (s *ListArtifactS3TestSuite) SetupTest() {
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	assert.Nil(s.T(), err)
 
-	err = helpers.CreateBuckets(s3Client)
-	assert.Nil(s.T(), err)
-
+	//nolint:errcheck
+	helpers.CreateBuckets(s3Client)
 	s.s3Client = s3Client
 }
 

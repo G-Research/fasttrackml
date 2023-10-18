@@ -17,3 +17,7 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 0 # keep only security updates and disable version updates
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"

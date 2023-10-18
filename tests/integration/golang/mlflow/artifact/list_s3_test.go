@@ -48,7 +48,8 @@ func (s *ListArtifactS3TestSuite) SetupTest() {
 
 func createBuckets(s3Client *s3.Client) {
 	for _, bucket := range []string{"bucket1", "bucket2", "bucket3"} {
-		// ignore error if bucket already exists.
+		// ignore error if bucket already exists, other errors will be caught by the test
+		// nolint:errcheck
 		_, _ = s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
 			Bucket:                    aws.String(bucket),
 			CreateBucketConfiguration: &types.CreateBucketConfiguration{},

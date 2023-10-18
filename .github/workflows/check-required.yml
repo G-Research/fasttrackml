@@ -53,18 +53,13 @@ jobs:
               check_name: ghaName,
             });
 
-            if (ghaChecks.length === 0) {
-              core.warning(`No GitHub Actions check run found for ${sha}.`);
-              return;
-            }
-
             var newCheck = {
               owner: owner,
               repo: repo,
               name: myName,
               head_sha: sha,
               status: 'in_progress',
-              started_at: ghaChecks[0].started_at,
+              started_at: context.payload.workflow_run.created_at,
               output: {
                 title: 'Not all required checks succeeded',
               },
@@ -86,6 +81,9 @@ jobs:
                 newCheck.started_at = check.started_at;
               }
             });
+            if (ghaChecks.length === 0) {
+              core.summary.addRaw(`No check runs for ${sha} found.`);
+            }
             newCheck.output.summary = core.summary.stringify();
             await core.summary.write();
 

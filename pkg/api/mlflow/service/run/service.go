@@ -86,8 +86,9 @@ func (s Service) CreateRun(
 	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(experimentID))
 	if err != nil {
 		return nil, api.NewResourceDoesNotExistError(
-			"unable to find experiment for namespace with id '%d': %s",
+			"unable to find experiment '%d' for namespace '%s': %s",
 			experimentID,
+			ns.Code,
 			err,
 		)
 	}

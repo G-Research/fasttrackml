@@ -105,7 +105,7 @@ func (c *HttpClient) WithResponseType(responseType ResponseType) *HttpClient {
 }
 
 // DoRequest do actual HTTP request based on provided parameters.
-// noling:gocyclo
+// nolint:gocyclo
 func (c *HttpClient) DoRequest(uri string, values ...any) error {
 	// 1. check if request object were provided. if provided then marshal it.
 	var requestBody io.Reader

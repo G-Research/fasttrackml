@@ -34,7 +34,6 @@ func (s *BaseTestSuite) SetupTest(t *testing.T) {
 			GetDatabaseUri(),
 			1*time.Second,
 			20,
-			false,
 		)
 		assert.Nil(t, err)
 		db = instance.GormDB()

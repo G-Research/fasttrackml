@@ -51,7 +51,6 @@ func (s *ImportTestSuite) SetupTest() {
 		helpers.GetInputDatabaseUri(),
 		1*time.Second,
 		20,
-		false,
 	)
 	assert.Nil(s.T(), err)
 	assert.Nil(s.T(), database.CheckAndMigrateDB(true, db.GormDB()))
@@ -119,7 +118,6 @@ func (s *ImportTestSuite) SetupTest() {
 		helpers.GetOutputDatabaseUri(),
 		1*time.Second,
 		20,
-		false,
 	)
 	assert.Nil(s.T(), err)
 	assert.Nil(s.T(), database.CheckAndMigrateDB(true, db.GormDB()))

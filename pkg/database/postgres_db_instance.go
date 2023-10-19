@@ -18,7 +18,7 @@ type PostgresDBInstance struct {
 
 // NewPostgresDBInstance constructs a Postgres DbInstance.
 func NewPostgresDBInstance(
-	dsnURL url.URL, slowThreshold time.Duration, poolMax int, reset bool,
+	dsnURL url.URL, slowThreshold time.Duration, poolMax int,
 ) (*PostgresDBInstance, error) {
 	db := PostgresDBInstance{
 		DBInstance: DBInstance{dsn: dsnURL.String()},

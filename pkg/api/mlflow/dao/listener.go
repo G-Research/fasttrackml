@@ -71,15 +71,15 @@ func NewNamespaceListener(ctx context.Context, db *gorm.DB) (*EventListener, err
 }
 
 // Listen listens for incoming database events.
-func (l EventListener) Listen() <-chan string {
+func (el EventListener) Listen() <-chan string {
 	ch := make(chan string)
 	// if listener not nil, then listen for incoming events from database.
 	// if listener is nil, then just return closed channel to do not do anything further.
-	if l.connection != nil {
+	if el.connection != nil {
 		go func() {
 			defer close(ch)
 			for {
-				notification, err := l.connection.Conn().WaitForNotification(context.Background())
+				notification, err := el.connection.Conn().WaitForNotification(context.Background())
 				if err != nil {
 					log.Errorf("error occurred while listening for the event: %+v", err)
 					return
@@ -94,6 +94,6 @@ func (l EventListener) Listen() <-chan string {
 }
 
 // GetChannelName returns current channel name.
-func (l EventListener) GetChannelName() string {
-	return l.channel
+func (el EventListener) GetChannelName() string {
+	return el.channel
 }

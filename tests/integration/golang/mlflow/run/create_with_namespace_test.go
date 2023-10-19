@@ -85,8 +85,8 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Ok() {
 			req,
 		).WithResponse(
 			&resp,
-		).WithBasePath(
-			"/ns/custom-ns/api/2.0/mlflow",
+		).WithNamespace(
+			"custom-ns",
 		).DoRequest(
 			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
 		),
@@ -138,14 +138,14 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 	nonExistingExperimentID := *experiment.ID + 1
 
 	tests := []struct {
-		name     string
-		error    *api.ErrorResponse
-		basePath string
-		request  request.CreateRunRequest
+		name      string
+		error     *api.ErrorResponse
+		namespace string
+		request   request.CreateRunRequest
 	}{
 		{
-			name:     "CreateRunWithNotExistingNamespaceAndExistingExperimentID",
-			basePath: "/ns/custom-ns1/api/2.0/mlflow",
+			name:      "CreateRunWithNotExistingNamespaceAndExistingExperimentID",
+			namespace: "custom-ns1",
 			request: request.CreateRunRequest{
 				ExperimentID: fmt.Sprintf("%d", *experiment.ID),
 			},
@@ -154,8 +154,8 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 			),
 		},
 		{
-			name:     "CreateRunWithExistingNamespaceAndNotExistingExperiment",
-			basePath: "/ns/custom-ns/api/2.0/mlflow",
+			name:      "CreateRunWithExistingNamespaceAndNotExistingExperiment",
+			namespace: "custom-ns",
 			request: request.CreateRunRequest{
 				ExperimentID: fmt.Sprintf("%d", nonExistingExperimentID),
 			},
@@ -179,8 +179,8 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 					tt.request,
 				).WithResponse(
 					&resp,
-				).WithBasePath(
-					tt.basePath,
+				).WithNamespace(
+					tt.namespace,
 				).DoRequest(
 					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
 				),

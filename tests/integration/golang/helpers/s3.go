@@ -36,12 +36,11 @@ func NewS3Client(endpoint string) (*s3.Client, error) {
 	}), nil
 }
 
-// CreateBuckets will create the test bucekts.
+// CreateBuckets creates the test bucekts.
 func CreateBuckets(s3Client *s3.Client) error {
 	for _, bucket := range testBuckets {
 		_, err := s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
-			Bucket:                    aws.String(bucket),
-			CreateBucketConfiguration: &types.CreateBucketConfiguration{},
+			Bucket: aws.String(bucket),
 		})
 		if err != nil {
 			return eris.Wrapf(err, "failed to create bucket '%s'", bucket)
@@ -50,37 +49,39 @@ func CreateBuckets(s3Client *s3.Client) error {
 	return nil
 }
 
-// RemoveBuckets will remove the test buckets.
+// RemoveBuckets removes the test buckets.
 func RemoveBuckets(s3Client *s3.Client) error {
 	for _, bucket := range testBuckets {
-		if err := RemoveBucket(s3Client, bucket); err != nil {
+		if err := removeBucket(s3Client, bucket); err != nil {
 			return eris.Wrapf(err, "failed to remove bucket '%s'", bucket)
 		}
 	}
 	return nil
 }
 
-// RemoveBucket will remove a bucket and its objects.
-func RemoveBucket(s3Client *s3.Client, bucket string) error {
+// removeBucket removes a bucket and its objects.
+func removeBucket(s3Client *s3.Client, bucket string) error {
 	// Delete all objects in the bucket
-	listObjectsOutput, err := s3Client.ListObjectsV2(context.Background(), &s3.ListObjectsV2Input{
+	var objectIDs []types.ObjectIdentifier
+	paginator := s3.NewListObjectsV2Paginator(s3Client, &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
 	})
-	if err != nil {
-		return eris.Wrapf(err, "failed to list objects in bucket '%s'", bucket)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.Background())
+		if err != nil {
+			return eris.Wrapf(err, "error paging objects in bucket '%s'", bucket)
+		}
+		for _, object := range page.Contents {
+			objectIDs = append(objectIDs, types.ObjectIdentifier{Key: object.Key})
+		}
 	}
-	var objectIds []types.ObjectIdentifier
-	for _, object := range listObjectsOutput.Contents {
-		objectIds = append(objectIds, types.ObjectIdentifier{Key: aws.String(*object.Key)})
-	}
-
-	if len(objectIds) > 0 {
-		_, err = s3Client.DeleteObjects(context.Background(), &s3.DeleteObjectsInput{
+	if len(objectIDs) > 0 {
+		_, err := s3Client.DeleteObjects(context.Background(), &s3.DeleteObjectsInput{
 			Bucket: aws.String(bucket),
-			Delete: &types.Delete{Objects: objectIds},
+			Delete: &types.Delete{Objects: objectIDs},
 		})
 		if err != nil {
-			return eris.Wrapf(err, "failed to delete objects in bucket '%s': %v", bucket, err)
+			return eris.Wrapf(err, "failed to delete objects in bucket '%s'", bucket)
 		}
 	}
 

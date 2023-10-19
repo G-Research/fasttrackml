@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/rotisserie/eris"
 	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
@@ -25,7 +27,19 @@ type GS struct {
 }
 
 // NewGS creates new GC instance.
-func NewGS(ctx context.Context, _ *config.ServiceConfig) (*GS, error) {
+func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
+	if config.GSEndpointURI != "" {
+		client, err := storage.NewClient(
+			context.TODO(), option.WithEndpoint(config.GSEndpointURI), option.WithoutAuthentication(),
+		)
+		if err != nil {
+			return nil, eris.Wrap(err, "error creating GCP storage client")
+		}
+		return &GS{
+			client: client,
+		}, nil
+	}
+
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "error creating GCP storage client")
@@ -95,8 +109,11 @@ func (s GS) Get(ctx context.Context, artifactURI, path string) (io.ReadCloser, e
 	}
 
 	// 2. get object from gcp storage.
+	fmt.Println("bucket:", bucketName)
+	fmt.Println("path:", filepath.Join(prefix, path))
 	reader, err := s.client.Bucket(bucketName).Object(filepath.Join(prefix, path)).NewReader(ctx)
 	if err != nil {
+		fmt.Println("err:", err)
 		if errors.Is(err, storage.ErrObjectNotExist) {
 			return nil, eris.Wrap(fs.ErrNotExist, "object does not exist")
 		}

@@ -15,6 +15,8 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+      google-storage:
+        condition: service_started
       postgres:
         condition: service_healthy
     environment:
@@ -24,6 +26,7 @@ services:
       FML_LOG_LEVEL: debug
       FML_DATABASE_URI: ${FML_DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
       FML_S3_ENDPOINT_URI: http://minio:9000
+      FML_GS_ENDPOINT_URI: http://google-storage:4443
       AWS_ACCESS_KEY_ID: "user"
       AWS_SECRET_ACCESS_KEY: "password"
 
@@ -49,6 +52,13 @@ services:
       MINIO_ROOT_PASSWORD: "password"
       MINIO_CONSOLE_ADDRESS: ":9001"
 
+  google-storage:
+    image: fsouza/fake-gcs-server
+    ports:
+      - 4443:4443
+    entrypoint: sh
+    command: -c 'mkdir -p /storage/bucket1 && mkdir -p /storage/bucket2 && mkdir -p /storage/bucket3 && exec fake-gcs-server -filesystem-root /storage -scheme http'
+
   integration-tests:
     image: golang:1.21
     command: make test-go-integration
@@ -60,6 +70,8 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+      google-storage:
+        condition: service_started
       postgres:
         condition: service_healthy
       service:
@@ -70,6 +82,7 @@ services:
       FML_SERVICE_URI: http://service:5000
       FML_DATABASE_URI: ${FML_DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
       FML_S3_ENDPOINT_URI: http://minio:9000
+      FML_GS_ENDPOINT_URI: http://google-storage:4443
       AWS_ACCESS_KEY_ID: "user"
       AWS_SECRET_ACCESS_KEY: "password"
 

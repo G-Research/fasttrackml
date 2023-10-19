@@ -253,6 +253,7 @@ func init() {
 	ServerCmd.Flags().StringP("listen-address", "a", "localhost:5000", "Address (host:post) to listen to")
 	ServerCmd.Flags().String("default-artifact-root", "./artifacts", "Default artifact root")
 	ServerCmd.Flags().String("s3-endpoint-uri", "", "S3 compatible storage base endpoint url")
+	ServerCmd.Flags().String("gs-endpoint-uri", "", "Google Storage base endpoint url")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")
 	ServerCmd.Flags().StringP("database-uri", "d", "sqlite://fasttrackml.db", "Database URI")

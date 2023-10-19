@@ -53,7 +53,11 @@ func GetRunInfo(c *fiber.Ctx) error {
 	tx := database.DB.
 		InnerJoins(
 			"Experiment",
-			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+			database.DB.Select(
+				"ID",
+			).Where(
+				&models.Experiment{NamespaceID: ns.ID},
+			),
 		).
 		Preload("Params").
 		Preload("Tags")
@@ -179,7 +183,11 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		Select("ID").
 		InnerJoins(
 			"Experiment",
-			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+			database.DB.Select(
+				"ID",
+			).Where(
+				&models.Experiment{NamespaceID: ns.ID},
+			),
 		).
 		Preload("Metrics", func(db *gorm.DB) *gorm.DB {
 			return db.
@@ -248,7 +256,11 @@ func GetRunsActive(c *fiber.Ctx) error {
 		Where("status = ?", database.StatusRunning).
 		InnerJoins(
 			"Experiment",
-			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+			database.DB.Select(
+				"ID",
+			).Where(
+				&models.Experiment{NamespaceID: ns.ID},
+			),
 		).
 		Preload("LatestMetrics").
 		Find(&runs); tx.Error != nil {
@@ -400,7 +412,11 @@ func SearchRuns(c *fiber.Ctx) error {
 	tx := database.DB.
 		InnerJoins(
 			"Experiment",
-			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+			database.DB.Select(
+				"ID",
+			).Where(
+				&models.Experiment{NamespaceID: ns.ID},
+			),
 		).
 		Order("row_num DESC")
 
@@ -604,7 +620,9 @@ func SearchMetrics(c *fiber.Ctx) error {
 	if tx := database.DB.
 		InnerJoins(
 			"Experiment",
-			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+			database.DB.Select(
+				"ID",
+			).Where(&models.Experiment{NamespaceID: ns.ID}),
 		).
 		Preload("Params").
 		Preload("Tags").

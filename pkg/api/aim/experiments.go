@@ -174,7 +174,11 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 		run := &database.Run{
 			ID: q.Offset,
 		}
-		if err = database.DB.Select("row_num").First(&run).Error; err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		if err = database.DB.Select(
+			"row_num",
+		).First(
+			&run,
+		).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, err)
 		}
 

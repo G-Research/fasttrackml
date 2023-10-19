@@ -165,7 +165,11 @@ func UpdateDashboard(c *fiber.Ctx) error {
 	if err := database.DB.
 		InnerJoins(
 			"App",
-			database.DB.Where(&database.App{NamespaceID: ns.ID}, "NamespaceID"),
+			database.DB.Select(
+				"NamespaceID",
+			).Where(
+				&database.App{NamespaceID: ns.ID}, "NamespaceID",
+			),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dash).
@@ -213,7 +217,11 @@ func DeleteDashboard(c *fiber.Ctx) error {
 		Select("dashboards.id").
 		InnerJoins(
 			"App",
-			database.DB.Where(&database.App{NamespaceID: ns.ID}, "NamespaceID"),
+			database.DB.Select(
+				"NamespaceID",
+			).Where(
+				&database.App{NamespaceID: ns.ID}, "NamespaceID",
+			),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dash).

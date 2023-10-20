@@ -5,12 +5,11 @@ import (
 	"time"
 
 	"github.com/rotisserie/eris"
-	log "github.com/sirupsen/logrus"
 )
 
 // NewDBProvider creates a DBProvider of the correct type from the parameters.
 func NewDBProvider(
-	dsn string, slowThreshold time.Duration, poolMax int, reset bool,
+	dsn string, slowThreshold time.Duration, poolMax int,
 ) (db DBProvider, err error) {
 	dsnURL, err := url.Parse(dsn)
 	if err != nil {
@@ -22,7 +21,6 @@ func NewDBProvider(
 			*dsnURL,
 			slowThreshold,
 			poolMax,
-			reset,
 		)
 		if err != nil {
 			return nil, eris.Wrap(err, "error creating sqlite provider")
@@ -32,23 +30,12 @@ func NewDBProvider(
 			*dsnURL,
 			slowThreshold,
 			poolMax,
-			reset,
 		)
 		if err != nil {
 			return nil, eris.Wrap(err, "error creating postgres provider")
 		}
 	default:
 		return nil, eris.New("unsupported database type")
-	}
-
-	// TODO:DSuhinin - it shouldn't be there. NewDBProvider has to only create an instance without any hidden logic.
-	if reset {
-		log.Infof("reseting database")
-		if err := db.Reset(); err != nil {
-			//nolint:errcheck,gosec
-			db.Close()
-			return nil, eris.Wrap(err, "error resetting database")
-		}
 	}
 
 	return db, nil

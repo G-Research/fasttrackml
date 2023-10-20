@@ -33,7 +33,7 @@ func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
 			ctx, option.WithEndpoint(config.GSEndpointURI), option.WithoutAuthentication(),
 		)
 		if err != nil {
-			return nil, eris.Wrap(err, "error creating GCP storage client")
+			return nil, eris.Wrap(err, "error creating GS storage client")
 		}
 		return &GS{
 			client: client,
@@ -42,7 +42,7 @@ func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
 
 	client, err := storage.NewClient(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "error creating GCP storage client")
+		return nil, eris.Wrap(err, "error creating GS storage client")
 	}
 	return &GS{
 		client: client,

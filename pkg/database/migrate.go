@@ -200,23 +200,23 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 					// types for migration
 					type Base struct {
 						ID         uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-						CreatedAt  time.Time `json:"created_at"`
-						UpdatedAt  time.Time `json:"updated_at"`
-						IsArchived bool      `json:"-"`
+						CreatedAt  time.Time
+						UpdatedAt  time.Time
+						IsArchived bool
 					}
 					type Dashboard struct {
 						Base
-						Name        string     `json:"name"`
-						Description string     `json:"description"`
-						AppID       *uuid.UUID `gorm:"type:uuid" json:"app_id"`
-						App         App        `json:"-"`
-					}
-					type App struct {
-						Base
-						Type  string   `gorm:"not null" json:"type"`
-						State AppState `json:"state"`
+						Name        string
+						Description string
+						AppID       *uuid.UUID `gorm:"type:uuid"`
+						App         App
 					}
 					type AppState map[string]any
+					type App struct {
+						Base
+						Type  string `gorm:"not null" json:"type"`
+						State AppState
+					}
 
 					// migration
 					if err := tx.AutoMigrate(

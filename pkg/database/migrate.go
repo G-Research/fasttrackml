@@ -199,7 +199,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				if err := db.Transaction(func(tx *gorm.DB) error {
 					// types for migration
 					type Base struct {
-						ID         uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+						ID         uuid.UUID `gorm:"type:uuid;primaryKey"`
 						CreatedAt  time.Time
 						UpdatedAt  time.Time
 						IsArchived bool
@@ -214,7 +214,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 					type AppState map[string]any
 					type App struct {
 						Base
-						Type  string `gorm:"not null" json:"type"`
+						Type  string `gorm:"not null"`
 						State AppState
 					}
 

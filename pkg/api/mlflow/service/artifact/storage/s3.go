@@ -63,7 +63,7 @@ func NewS3(ctx context.Context, config *config.ServiceConfig) (*S3, error) {
 // List implements ArtifactStorageProvider interface.
 func (s S3) List(ctx context.Context, artifactURI, path string) ([]ArtifactObject, error) {
 	// 1. create s3 request input.
-	bucket, rootPrefix, err := ExtractS3BucketAndPrefix(artifactURI)
+	bucket, rootPrefix, err := ExtractBucketAndPrefix(artifactURI)
 	if err != nil {
 		return nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
 	}
@@ -121,7 +121,7 @@ func (s S3) List(ctx context.Context, artifactURI, path string) ([]ArtifactObjec
 // Get returns file content at the storage location.
 func (s S3) Get(ctx context.Context, artifactURI, path string) (io.ReadCloser, error) {
 	// 1. create s3 request input.
-	bucketName, prefix, err := ExtractS3BucketAndPrefix(artifactURI)
+	bucketName, prefix, err := ExtractBucketAndPrefix(artifactURI)
 	if err != nil {
 		return nil, eris.Wrap(err, "error extracting bucket and prefix from provided uri")
 	}

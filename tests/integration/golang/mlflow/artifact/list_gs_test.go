@@ -110,7 +110,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			writer := s.gsClient.Bucket(
 				tt.bucket,
 			).Object(
-				fmt.Sprintf("1/%s/artifacts/artifact.file1", runID),
+				fmt.Sprintf("1/%s/artifacts/artifact.txt", runID),
 			).NewWriter(
 				context.Background(),
 			)
@@ -121,7 +121,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			writer = s.gsClient.Bucket(
 				tt.bucket,
 			).Object(
-				fmt.Sprintf("1/%s/artifacts/artifact.dir/artifact.file2", runID),
+				fmt.Sprintf("1/%s/artifacts/artifact/artifact.txt", runID),
 			).NewWriter(
 				context.Background(),
 			)
@@ -150,12 +150,12 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			assert.Equal(s.T(), 2, len(rootDirResp.Files))
 			assert.Equal(s.T(), []response.FilePartialResponse{
 				{
-					Path:     "artifact.dir",
+					Path:     "artifact",
 					IsDir:    true,
 					FileSize: 0,
 				},
 				{
-					Path:     "artifact.file1",
+					Path:     "artifact.txt",
 					IsDir:    false,
 					FileSize: 8,
 				},
@@ -165,7 +165,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			// 5. make actual API call for sub dir.
 			subDirQuery := request.ListArtifactsRequest{
 				RunID: run.ID,
-				Path:  "artifact.dir",
+				Path:  "artifact",
 			}
 
 			subDirResp := response.ListArtifactsResponse{}
@@ -183,7 +183,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			assert.Equal(s.T(), run.ArtifactURI, subDirResp.RootURI)
 			assert.Equal(s.T(), 1, len(subDirResp.Files))
 			assert.Equal(s.T(), response.FilePartialResponse{
-				Path:     "artifact.dir/artifact.file2",
+				Path:     "artifact/artifact.txt",
 				IsDir:    false,
 				FileSize: 9,
 			}, subDirResp.Files[0])

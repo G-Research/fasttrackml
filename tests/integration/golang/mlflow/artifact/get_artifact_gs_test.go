@@ -92,7 +92,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 
 			// upload artifact root object to GS
 			writer := s.gsClient.Bucket(tt.bucket).Object(
-				fmt.Sprintf("/1/%s/artifacts/artifact.file", runID),
+				fmt.Sprintf("/1/%s/artifacts/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("content"))
 			assert.Nil(s.T(), err)
@@ -100,7 +100,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 
 			// upload artifact subdir object to GS
 			writer = s.gsClient.Bucket(tt.bucket).Object(
-				fmt.Sprintf("/1/%s/artifacts/artifact.subdir/artifact.file", runID),
+				fmt.Sprintf("/1/%s/artifacts/artifact/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("subdir-object-content"))
 			assert.Nil(s.T(), err)
@@ -109,7 +109,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			// make API call for root object
 			query := request.GetArtifactRequest{
 				RunID: run.ID,
-				Path:  "artifact.file",
+				Path:  "artifact.txt",
 			}
 
 			resp := new(bytes.Buffer)
@@ -127,7 +127,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			// make API call for subdir object
 			query = request.GetArtifactRequest{
 				RunID: run.ID,
-				Path:  "artifact.subdir/artifact.file",
+				Path:  "artifact/artifact.txt",
 			}
 
 			resp = new(bytes.Buffer)
@@ -181,7 +181,7 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 	// upload artifact subdir object to GS
 	assert.Nil(s.T(), err)
 	writer := s.gsClient.Bucket("bucket1").Object(
-		fmt.Sprintf("1/%s/artifacts/artifact.subdir/artifact.file", runID),
+		fmt.Sprintf("1/%s/artifacts/artifact/artifact.file", runID),
 	).NewWriter(context.Background())
 	_, err = writer.Write([]byte("content"))
 	assert.Nil(s.T(), err)
@@ -240,11 +240,11 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 		{
 			name: "S3IncompletePath",
 			error: api.NewResourceDoesNotExistError(
-				fmt.Sprintf("error getting artifact object for URI: gs:/bucket1/1/%s/artifacts/artifact.subdir", runID),
+				fmt.Sprintf("error getting artifact object for URI: gs:/bucket1/1/%s/artifacts/artifact", runID),
 			),
 			request: request.GetArtifactRequest{
 				RunID: runID,
-				Path:  "artifact.subdir",
+				Path:  "artifact",
 			},
 		},
 		{

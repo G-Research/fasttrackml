@@ -26,7 +26,7 @@ services:
       FML_LOG_LEVEL: debug
       FML_DATABASE_URI: ${FML_DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
       FML_S3_ENDPOINT_URI: http://minio:9000
-      FML_GS_ENDPOINT_URI: http://google-storage:4443
+      FML_GS_ENDPOINT_URI: http://google-storage:4443/storage/v1/
       AWS_ACCESS_KEY_ID: "user"
       AWS_SECRET_ACCESS_KEY: "password"
 
@@ -57,7 +57,11 @@ services:
     ports:
       - 4443:4443
     entrypoint: sh
-    command: -c 'mkdir -p /storage/bucket1 && mkdir -p /storage/bucket2 && mkdir -p /storage/bucket3 && exec fake-gcs-server -filesystem-root /storage -scheme http'
+    command: >
+      -c 'mkdir -p /storage/bucket1 && 
+          mkdir -p /storage/bucket2 && 
+          mkdir -p /storage/bucket3 && 
+          exec fake-gcs-server -public-host=google-storage -scheme http'
 
   integration-tests:
     image: golang:1.21
@@ -82,7 +86,7 @@ services:
       FML_SERVICE_URI: http://service:5000
       FML_DATABASE_URI: ${FML_DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
       FML_S3_ENDPOINT_URI: http://minio:9000
-      FML_GS_ENDPOINT_URI: http://google-storage:4443
+      FML_GS_ENDPOINT_URI: http://google-storage:4443/storage/v1/
       AWS_ACCESS_KEY_ID: "user"
       AWS_SECRET_ACCESS_KEY: "password"
 

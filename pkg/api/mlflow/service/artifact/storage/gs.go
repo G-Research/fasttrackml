@@ -109,8 +109,6 @@ func (s GS) Get(ctx context.Context, artifactURI, path string) (io.ReadCloser, e
 	}
 
 	// 2. get object from gcp storage.
-	fmt.Println("bucket:", bucketName)
-	fmt.Println("path:", filepath.Join(prefix, path))
 	reader, err := s.client.Bucket(bucketName).Object(filepath.Join(prefix, path)).NewReader(ctx)
 	if err != nil {
 		fmt.Println("err:", err)

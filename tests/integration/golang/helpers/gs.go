@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"context"
-	"fmt"
 
 	"cloud.google.com/go/storage"
 	"github.com/rotisserie/eris"
@@ -11,7 +10,6 @@ import (
 
 // NewGSClient creates new instance of Google Storage client.
 func NewGSClient(endpoint string) (*storage.Client, error) {
-	fmt.Println(endpoint)
 	client, err := storage.NewClient(
 		context.TODO(), option.WithEndpoint(endpoint), option.WithoutAuthentication(),
 	)

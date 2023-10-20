@@ -85,6 +85,18 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 					"/apps/%s", app.ID,
 				),
 			)
+			assert.Nil(
+				s.T(),
+				s.AIMClient.WithMethod(
+					http.MethodPut,
+				).WithRequest(
+					tt.requestBody,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"/apps/%s", app.ID,
+				),
+			)
 			assert.Equal(s.T(), "app-type", resp.Type)
 			assert.Equal(s.T(), response.AppState{"app-state-key": "new-app-state-value"}, resp.State)
 		})
@@ -116,13 +128,23 @@ func (s *UpdateAppTestSuite) Test_Error() {
 
 	tests := []struct {
 		name        string
+		ID          uuid.UUID
 		requestBody any
+		error       string
 	}{
 		{
 			name: "UpdateAppWithIncorrectState",
+			ID:   app.ID,
 			requestBody: map[string]any{
 				"State": "this-cannot-unmarshal",
 			},
+			error: "cannot unmarshal",
+		},
+		{
+			name:        "UpdateAppWithUnknownID",
+			ID:          uuid.New(),
+			requestBody: map[string]any{},
+			error:       "Not Found",
 		},
 	}
 	for _, tt := range tests {
@@ -137,11 +159,10 @@ func (s *UpdateAppTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					"/apps/%s", app.ID,
+					"/apps/%s", tt.ID,
 				),
 			)
-			assert.Nil(s.T(), err)
-			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
+			assert.Contains(s.T(), resp.Message, tt.error)
 		})
 	}
 }

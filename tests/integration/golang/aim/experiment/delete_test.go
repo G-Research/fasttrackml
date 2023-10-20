@@ -100,12 +100,20 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 	assert.Nil(s.T(), err)
 
 	tests := []struct {
-		name string
-		ID   string
+		name  string
+		ID    string
+		error string
 	}{
 		{
-			ID:   "123",
-			name: "DeleteWithUnknownIDFails",
+			ID:    "123",
+			name:  "DeleteWithUnknownIDFails",
+			error: "Not Found",
+		},
+		{
+			name: "DeleteIncorrectExperimentID",
+			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt:` +
+				` parsing "incorrect_experiment_id": invalid syntax`,
+			ID: "incorrect_experiment_id",
 		},
 	}
 	for _, tt := range tests {
@@ -121,7 +129,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 					"/experiments/%s", tt.ID,
 				),
 			)
-			assert.Contains(s.T(), resp.Error(), "Not Found")
+			assert.Contains(s.T(), resp.Error(), tt.error)
 			assert.NoError(s.T(), err)
 		})
 	}

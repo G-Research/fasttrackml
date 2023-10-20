@@ -54,8 +54,6 @@ services:
 
   google-storage:
     image: fsouza/fake-gcs-server
-    ports:
-      - 4443:4443
     entrypoint: sh
     command: -c 'exec fake-gcs-server -public-host=google-storage -scheme http'
 

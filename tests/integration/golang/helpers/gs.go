@@ -3,6 +3,9 @@ package helpers
 import (
 	"context"
 	"errors"
+	"net/http"
+
+	"google.golang.org/api/googleapi"
 
 	"cloud.google.com/go/storage"
 	"github.com/rotisserie/eris"
@@ -25,24 +28,27 @@ func NewGSClient(endpoint string) (*storage.Client, error) {
 // PrepareTestBuckets prepares test buckets for further usage in tests:
 // - delete provided buckets and all the content within them.
 // - create the same empty bucket.
-// ignore error checking, because
 func PrepareTestBuckets(client *storage.Client, buckets []string) error {
 	for _, bucket := range buckets {
 		it := client.Bucket(bucket).Objects(context.Background(), &storage.Query{})
 		for {
 			object, err := it.Next()
-			if errors.Is(err, iterator.Done) || errors.Is(err, storage.ErrObjectNotExist) {
+			if errors.Is(err, iterator.Done) || errors.Is(err, storage.ErrBucketNotExist) {
 				break
 			}
-			err = client.Bucket(bucket).Object(object.Name).Delete(context.Background())
-			if errors.Is(err, storage.ErrBucketNotExist) {
+			if err := client.Bucket(bucket).Object(object.Name).Delete(context.Background()); err != nil {
 				return err
 			}
 		}
-		if err := client.Bucket(bucket).Delete(context.Background()); errors.Is(err, storage.ErrBucketNotExist) {
+		var e *googleapi.Error
+
+		if err := client.Bucket(bucket).Delete(context.Background()); errors.As(err, &e) &&
+			e.Code != http.StatusNotFound {
 			return err
 		}
-		return client.Bucket(bucket).Create(context.Background(), "", nil)
+		if err := client.Bucket(bucket).Create(context.Background(), "", nil); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -15,7 +15,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
-// GSStorageName is a GS storage name.
+// GSStorageName is a Google Storage name.
 const (
 	GSStorageName = "gs"
 )
@@ -25,7 +25,7 @@ type GS struct {
 	client *storage.Client
 }
 
-// NewGS creates new GC instance.
+// NewGS creates new Google Storage instance.
 func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
 	var options []option.ClientOption
 	if config.GSEndpointURI != "" {

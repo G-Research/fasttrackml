@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"io/fs"
 	"path/filepath"
@@ -28,19 +27,13 @@ type GS struct {
 
 // NewGS creates new GC instance.
 func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
+	var options []option.ClientOption
 	if config.GSEndpointURI != "" {
-		client, err := storage.NewClient(
-			ctx, option.WithEndpoint(config.GSEndpointURI), option.WithoutAuthentication(),
-		)
-		if err != nil {
-			return nil, eris.Wrap(err, "error creating GS storage client")
-		}
-		return &GS{
-			client: client,
-		}, nil
+		// include option.WithoutAuthentication() option, because otherwise standard GCP DSK won't work properly.
+		// make it configurable via ENV if it's really needed.
+		options = append(options, option.WithEndpoint(config.GSEndpointURI), option.WithoutAuthentication())
 	}
-
-	client, err := storage.NewClient(ctx)
+	client, err := storage.NewClient(ctx, options...)
 	if err != nil {
 		return nil, eris.Wrap(err, "error creating GS storage client")
 	}
@@ -111,7 +104,6 @@ func (s GS) Get(ctx context.Context, artifactURI, path string) (io.ReadCloser, e
 	// 2. get object from gcp storage.
 	reader, err := s.client.Bucket(bucketName).Object(filepath.Join(prefix, path)).NewReader(ctx)
 	if err != nil {
-		fmt.Println("err:", err)
 		if errors.Is(err, storage.ErrObjectNotExist) {
 			return nil, eris.Wrap(fs.ErrNotExist, "object does not exist")
 		}

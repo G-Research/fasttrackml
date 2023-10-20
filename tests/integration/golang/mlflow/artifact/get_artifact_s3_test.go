@@ -102,7 +102,10 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 
 			// upload artifact subdir object to S3
 			putObjReq = &s3.PutObjectInput{
-				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.subdir/artifact.file", runID)),
+				Key: aws.String(fmt.Sprintf(
+					"1/%s/artifacts/artifact.subdir/artifact.file",
+					runID),
+				),
 				Body:   strings.NewReader("subdir-object-content"),
 				Bucket: aws.String(tt.bucket),
 			}

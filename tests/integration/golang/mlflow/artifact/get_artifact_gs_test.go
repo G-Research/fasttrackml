@@ -10,35 +10,39 @@ import (
 	"testing"
 
 	"cloud.google.com/go/storage"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
-
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type GetArtifactGSTestSuite struct {
 	suite.Suite
 	helpers.BaseTestSuite
-	gsClient *storage.Client
+	gsClient    *storage.Client
+	testBuckets []string
 }
 
 func TestGetArtifactGSTestSuite(t *testing.T) {
-	suite.Run(t, new(GetArtifactGSTestSuite))
+	suite.Run(t, &GetArtifactGSTestSuite{
+		testBuckets: []string{"bucket1", "bucket2"},
+	})
 }
 
-func (s *GetArtifactGSTestSuite) SetupTest() {
+func (s *GetArtifactGSTestSuite) SetupSuite() {
 	s.BaseTestSuite.SetupTest(s.T())
 
 	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
 	assert.Nil(s.T(), err)
-
 	s.gsClient = gsClient
+
+	// prepare GS test buckets.
+	assert.Nil(s.T(), helpers.PrepareTestBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *GetArtifactGSTestSuite) Test_Ok() {

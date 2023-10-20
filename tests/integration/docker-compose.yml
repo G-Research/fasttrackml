@@ -57,11 +57,7 @@ services:
     ports:
       - 4443:4443
     entrypoint: sh
-    command: >
-      -c 'mkdir -p /storage/bucket1 && 
-          mkdir -p /storage/bucket2 && 
-          mkdir -p /storage/bucket3 && 
-          exec fake-gcs-server -public-host=google-storage -scheme http'
+    command: -c 'exec fake-gcs-server -public-host=google-storage -scheme http'
 
   integration-tests:
     image: golang:1.21

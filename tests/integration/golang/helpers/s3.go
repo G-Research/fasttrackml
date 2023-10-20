@@ -97,7 +97,7 @@ func removeBucket(s3Client *s3.Client, bucket string) error {
 		&s3.HeadBucketInput{
 			Bucket: aws.String(bucket),
 		},
-		time.Second,
+		time.Second*10,
 	); err != nil {
 		return eris.Wrapf(err, "error waiting for bucket '%s' deletion", bucket)
 	}

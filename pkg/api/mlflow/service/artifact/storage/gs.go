@@ -30,7 +30,7 @@ type GS struct {
 func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
 	if config.GSEndpointURI != "" {
 		client, err := storage.NewClient(
-			context.TODO(), option.WithEndpoint(config.GSEndpointURI), option.WithoutAuthentication(),
+			ctx, option.WithEndpoint(config.GSEndpointURI), option.WithoutAuthentication(),
 		)
 		if err != nil {
 			return nil, eris.Wrap(err, "error creating GCP storage client")

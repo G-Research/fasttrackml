@@ -90,7 +90,6 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			})
 			assert.Nil(s.T(), err)
 
-			s.gsClient.Bucket(tt.name).Create(context.Background(), "project_id", nil)
 			// upload artifact root object to GS
 			writer := s.gsClient.Bucket(tt.bucket).Object(
 				fmt.Sprintf("/1/%s/artifacts/artifact.file", runID),
@@ -179,7 +178,6 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 	})
 	assert.Nil(s.T(), err)
 
-	s.gsClient.Bucket("bucket1").Create(context.Background(), "project_id", nil)
 	// upload artifact subdir object to GS
 	assert.Nil(s.T(), err)
 	writer := s.gsClient.Bucket("bucket1").Object(

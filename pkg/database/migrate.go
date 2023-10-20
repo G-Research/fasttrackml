@@ -13,6 +13,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"github.com/google/uuid"
+
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 )
 
@@ -195,6 +197,28 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 			case "ac0b8b7c0014":
 				log.Info("Migrating database to FastTrackML schema 8073e7e037e5")
 				if err := db.Transaction(func(tx *gorm.DB) error {
+					// types for migration
+					type Base struct {
+						ID         uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+						CreatedAt  time.Time `json:"created_at"`
+						UpdatedAt  time.Time `json:"updated_at"`
+						IsArchived bool      `json:"-"`
+					}
+					type Dashboard struct {
+						Base
+						Name        string     `json:"name"`
+						Description string     `json:"description"`
+						AppID       *uuid.UUID `gorm:"type:uuid" json:"app_id"`
+						App         App        `json:"-"`
+					}
+					type App struct {
+						Base
+						Type  string   `gorm:"not null" json:"type"`
+						State AppState `json:"state"`
+					}
+					type AppState map[string]any
+
+					// migration
 					if err := tx.AutoMigrate(
 						&Dashboard{},
 						&App{},
@@ -326,6 +350,19 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				// the cascading delete to kick in and delete all the runs.
 				if err := runWithoutForeignKeyIfNeeded(func() error {
 					if err := db.Transaction(func(tx *gorm.DB) error {
+						// type for migration
+						type Namespace struct {
+							ID                  uint   `gorm:"primaryKey;autoIncrement"`
+							Apps                []App  `gorm:"constraint:OnDelete:CASCADE"`
+							Code                string `gorm:"unique;index;not null"`
+							Description         string
+							CreatedAt           time.Time
+							UpdatedAt           time.Time
+							DeletedAt           gorm.DeletedAt `gorm:"index"`
+							DefaultExperimentID *int32         `gorm:"not null"`
+							Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE"`
+						}
+
 						if err := tx.AutoMigrate(&Namespace{}); err != nil {
 							return err
 						}

@@ -41,8 +41,7 @@ services:
 
   minio:
     image: minio/minio:latest
-    entrypoint: sh
-    command: -c 'mkdir -p /data/{bucket1,bucket2,bucket3} && exec minio server /data'
+    command: server /data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 5s

@@ -243,7 +243,7 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 			},
 		},
 		{
-			name: "S3IncompletePath",
+			name: "GSIncompletePath",
 			error: api.NewResourceDoesNotExistError(
 				fmt.Sprintf("error getting artifact object for URI: gs:/bucket1/1/%s/artifacts/artifact", runID),
 			),

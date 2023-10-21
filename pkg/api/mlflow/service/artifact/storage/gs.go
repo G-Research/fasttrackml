@@ -29,8 +29,8 @@ type GS struct {
 func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
 	var options []option.ClientOption
 	if config.GSEndpointURI != "" {
-		// include option.WithoutAuthentication() option, because otherwise standard GCP DSK won't work properly.
-		// make it configurable via ENV if it's really needed.
+		// we use option.WithoutAuthentication() in order to make the GCS SDK work with our fake server.
+		// this should be changed if we ever need to use an alternative GCS implementation in a production setting.
 		options = append(options, option.WithEndpoint(config.GSEndpointURI), option.WithoutAuthentication())
 	}
 	client, err := storage.NewClient(ctx, options...)

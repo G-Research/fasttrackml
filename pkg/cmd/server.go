@@ -173,10 +173,15 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
 		config.DatabasePoolMax,
-		config.DatabaseReset,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to DB: %w", err)
+	}
+
+	if config.DatabaseReset {
+		if err := db.Reset(); err != nil {
+			return nil, eris.Wrap(err, "error resetting database")
+		}
 	}
 
 	if err := database.CheckAndMigrateDB(config.DatabaseMigrate, db.GormDB()); err != nil {

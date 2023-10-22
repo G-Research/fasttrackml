@@ -211,12 +211,12 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 						AppID       *uuid.UUID `gorm:"type:uuid"`
 						App         App
 					}
-					type AppState map[string]any
 					type App struct {
 						Base
 						Type  string `gorm:"not null"`
 						State AppState
 					}
+					type AppState map[string]any
 
 					// migration
 					if err := tx.AutoMigrate(

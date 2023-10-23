@@ -82,7 +82,7 @@ __all__ = [
     "log_image",
     "log_input",
     "log_metric",
-    "log_metric_wrapped",
+    "log_metric_with_context",
     "log_metrics",
     "log_param",
     "log_params",

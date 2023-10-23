@@ -16,6 +16,7 @@ module.exports = async function configCreatorAsync() {
     );
     const releaseVersion = data.tag_name.substring(1);
     const releaseUrl = data.html_url;
+    const slackUrl = 'https://join.slack.com/t/mlops-community/shared_invite/zt-258yl6ifq-zZNzBaddwlhifj56yt7ONg';
 
     /** @type {import('@docusaurus/types').Config} */
     return {
@@ -38,8 +39,7 @@ module.exports = async function configCreatorAsync() {
 
         customFields: {
             email: 'fasttrackml@gr-oss.io',
-            newIssueUrl: 'https://github.com/G-Research/fasttrackml/issues/new',
-            slackInviteUrl: 'https://join.slack.com/t/mlops-community/shared_invite/zt-258yl6ifq-zZNzBaddwlhifj56yt7ONg',
+            slackInviteUrl: slackUrl,
         },
 
         presets: [
@@ -69,7 +69,6 @@ module.exports = async function configCreatorAsync() {
                         src: 'logo/project-logo-light.svg',
                         srcDark: 'logo/project-logo-dark.svg',
                         width: 140,
-                    },
                     items: [
                         // left
                         {
@@ -88,6 +87,11 @@ module.exports = async function configCreatorAsync() {
                         {
                             href: 'https://github.com/G-Research/fasttrackml',
                             label: 'GitHub',
+                            position: 'right',
+                        },
+                        {
+                            href: slackUrl,
+                            label: 'Join our Slack',
                             position: 'right',
                         },
                         {
@@ -126,6 +130,10 @@ module.exports = async function configCreatorAsync() {
                                 {
                                     label: 'GitHub',
                                     href: 'https://github.com/G-Research/fasttrackml',
+                                },
+                                {
+                                    label: `Join our Slack`,
+                                    to: slackUrl,
                                 },
                                 {
                                     label: 'Twitter',

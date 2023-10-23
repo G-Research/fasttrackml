@@ -121,7 +121,6 @@ func GetDashboard(c *fiber.Ctx) error {
 			),
 		).
 		Where("NOT dashboards.is_archived").
-		Joins("LEFT JOIN apps ON apps.id = dashboards.app_id").
 		First(&dashboard).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

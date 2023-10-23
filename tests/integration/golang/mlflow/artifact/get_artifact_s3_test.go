@@ -26,11 +26,14 @@ import (
 type GetArtifactS3TestSuite struct {
 	suite.Suite
 	helpers.BaseTestSuite
-	s3Client *s3.Client
+	s3Client    *s3.Client
+	testBuckets []string
 }
 
 func TestGetArtifactS3TestSuite(t *testing.T) {
-	suite.Run(t, new(GetArtifactS3TestSuite))
+	suite.Run(t, &GetArtifactS3TestSuite{
+		testBuckets: []string{"bucket1", "bucket2"},
+	})
 }
 
 func (s *GetArtifactS3TestSuite) SetupTest() {

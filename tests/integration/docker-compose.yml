@@ -54,8 +54,8 @@ services:
   google-storage:
     image: fsouza/fake-gcs-server
     command:
-      -public-host=google-storage
-      -scheme=http
+      - -public-host=google-storage
+      - -scheme=http
     healthcheck:
       test: [ "CMD", "wget", "-q", "--spider", "http://localhost:4443/storage/v1/b" ]
       interval: 5s

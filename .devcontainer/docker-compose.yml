@@ -86,6 +86,6 @@ services:
     volumes:
       - google-storage-data:/storage
     command:
-      -public-host=localhost
-      -scheme=http
+      - -public-host=localhost
+      - -scheme=http
     network_mode: service:db

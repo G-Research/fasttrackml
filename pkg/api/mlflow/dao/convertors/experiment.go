@@ -15,6 +15,7 @@ import (
 
 // ConvertCreateExperimentToDBModel converts request.CreateExperimentRequest into actual models.Experiment model.
 func ConvertCreateExperimentToDBModel(req *request.CreateExperimentRequest) (*models.Experiment, error) {
+	// 2. fill the entire Experiment model.
 	ts := time.Now().UTC().UnixMilli()
 	experiment := models.Experiment{
 		Name:           req.Name,

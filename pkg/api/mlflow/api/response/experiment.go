@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // ExperimentTagPartialResponse is a partial response object for different responses.
@@ -81,14 +82,15 @@ func NewSearchExperimentsResponse(
 	}
 	// transform each models.Experiment entity.
 	for _, experiment := range experiments {
+		//nolint:gosec
 		resp.Experiments = append(resp.Experiments, NewExperimentPartialResponse(&experiment))
 	}
 
 	return &resp, nil
 }
 
-// NewExperimentPartialResponse is a helper function for NewExperimentResponse and NewSearchExperimentsResponse functions,
-// because the use almost the same response structure.
+// NewExperimentPartialResponse is a helper function for NewExperimentResponse and
+// NewSearchExperimentsResponse functions, because the use almost the same response structure.
 func NewExperimentPartialResponse(experiment *models.Experiment) *ExperimentPartialResponse {
 	tags := make([]ExperimentTagPartialResponse, len(experiment.Tags))
 	for n, t := range experiment.Tags {

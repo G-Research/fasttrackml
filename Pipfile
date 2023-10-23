@@ -5,14 +5,13 @@ name = "pypi"
 
 [packages]
 black = "*"
-boto3 = "*"
 isort = "*"
-matplotlib = "*"
-mlflow-skinny = "~=2.7.0"
-pandas = "*"
-pyarrow = "*"
 
 [dev-packages]
+mlflow = "==2.7.1"
+boto3 = "*"
+psycopg2-binary = "*"
+google-cloud-storage = "*"
 
 [requires]
 python_version = "3.11"

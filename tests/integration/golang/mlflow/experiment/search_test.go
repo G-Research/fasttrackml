@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -17,15 +16,14 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type SearchExperimentsTestSuite struct {
 	suite.Suite
-	client             *helpers.HttpClient
-	experimentFixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
 }
 
 func TestSearchExperimentsTestSuite(t *testing.T) {
@@ -33,17 +31,21 @@ func TestSearchExperimentsTestSuite(t *testing.T) {
 }
 
 func (s *SearchExperimentsTestSuite) SetupTest() {
-	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = experimentFixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *SearchExperimentsTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	// 1. prepare database with test data.
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	experiments := []models.Experiment{
 		{
 			Name: "Test Experiment 1",
@@ -98,9 +100,10 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		},
 	}
 	for _, ex := range experiments {
-		_, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-			Name: ex.Name,
-			Tags: ex.Tags,
+		_, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+			Name:        ex.Name,
+			Tags:        ex.Tags,
+			NamespaceID: namespace.ID,
 			CreationTime: sql.NullInt64{
 				Int64: time.Now().UTC().UnixMilli(),
 				Valid: true,
@@ -125,7 +128,12 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 			request: request.SearchExperimentsRequest{
 				Filter: "attribute.name != 'Test Experiment 5'",
 			},
-			expected: []string{"Test Experiment 1", "Test Experiment 2", "Test Experiment 3", "Test Experiment 4", "Default"},
+			expected: []string{
+				"Test Experiment 1",
+				"Test Experiment 2",
+				"Test Experiment 3",
+				"Test Experiment 4",
+			},
 		},
 		{
 			name: "TestViewType",
@@ -140,7 +148,6 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 				OrderBy: []string{"name ASC"},
 			},
 			expected: []string{
-				"Default",
 				"Test Experiment 1",
 				"Test Experiment 2",
 				"Test Experiment 3",
@@ -154,21 +161,23 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 				OrderBy:    []string{"name ASC"},
 				MaxResults: 3,
 			},
-			expected: []string{"Default", "Test Experiment 1", "Test Experiment 2"},
+			expected: []string{"Test Experiment 1", "Test Experiment 2", "Test Experiment 3"},
 		},
 	}
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(t, err)
-
 			resp := response.SearchExperimentsResponse{}
-			err = s.client.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query),
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithQuery(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute),
+				),
 			)
-			assert.Nil(t, err)
 
 			names := make([]string, len(resp.Experiments))
 			for i, exp := range resp.Experiments {
@@ -181,71 +190,87 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 }
 
 func (s *SearchExperimentsTestSuite) Test_Error() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
-		request *request.SearchExperimentsRequest
+		request request.SearchExperimentsRequest
 	}{
 		{
 			name:  "InvalidViewType",
 			error: api.NewInvalidParameterValueError("Invalid view_type 'invalid_ViewType'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				ViewType: "invalid_ViewType",
 			},
 		},
 		{
 			name:  "InvalidMaxResult",
 			error: api.NewInvalidParameterValueError("Invalid value for parameter 'max_results' supplied."),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				MaxResults: 10000000,
 			},
 		},
 		{
 			name:  "InvalidFilterValue",
 			error: api.NewInvalidParameterValueError("invalid numeric value 'cc'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				Filter: "attribute.creation_time > cc",
 			},
 		},
 		{
 			name:  "MalformedFilter",
 			error: api.NewInvalidParameterValueError("malformed filter 'invalid_filter'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				Filter: "invalid_filter",
 			},
 		},
 		{
 			name:  "InvalidNumericValue",
 			error: api.NewInvalidParameterValueError("invalid numeric value 'invalid_value'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				Filter: "creation_time > invalid_value",
 			},
 		},
 		{
 			name:  "InvalidStringOperator",
 			error: api.NewInvalidParameterValueError("invalid string attribute comparison operator '<'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				Filter: "attribute.name < 'value'",
 			},
 		},
 		{
 			name:  "InvalidTagOperator",
 			error: api.NewInvalidParameterValueError("invalid tag comparison operator '<'"),
-			request: &request.SearchExperimentsRequest{
+			request: request.SearchExperimentsRequest{
 				Filter: "tag.value < 'value'",
 			},
 		},
 		{
-			name:  "InvalidEntity",
-			error: api.NewInvalidParameterValueError("invalid entity type 'invalid_entity'. Valid values are ['tag', 'attribute']"),
-			request: &request.SearchExperimentsRequest{
+			name: "InvalidEntity",
+			error: api.NewInvalidParameterValueError(
+				"invalid entity type 'invalid_entity'. Valid values are ['tag', 'attribute']",
+			),
+			request: request.SearchExperimentsRequest{
 				Filter: "invalid_entity.name = value",
 			},
 		},
 		{
-			name:  "InvalidOrderByAttribute",
-			error: api.NewInvalidParameterValueError("invalid attribute 'invalid_attribute'. Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']"),
-			request: &request.SearchExperimentsRequest{
+			name: "InvalidOrderByAttribute",
+			error: api.NewInvalidParameterValueError(
+				`invalid attribute 'invalid_attribute'. ` +
+					`Valid values are ['name', 'experiment_id', 'creation_time', 'last_update_time']`,
+			),
+			request: request.SearchExperimentsRequest{
 				OrderBy: []string{"invalid_attribute"},
 			},
 		},
@@ -253,14 +278,17 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
-			err = s.client.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute, query),
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithQuery(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute),
+				),
 			)
-			assert.Nil(t, err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

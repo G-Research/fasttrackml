@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,15 +15,17 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
+	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
@@ -30,9 +33,13 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
+	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
+	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
+	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
+	chooserController "github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
 	mlflowUI "github.com/G-Research/fasttrackml/pkg/ui/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/version"
 )
@@ -55,10 +62,13 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck
 	defer db.Close()
 
+	namespaceRepository := mlflowRepositories.NewNamespaceRepository(db.GormDB())
+
 	// 3. init main HTTP server.
-	server := initServer(mlflowConfig)
+	server := initServer(mlflowConfig, namespaceRepository)
 
 	// 4. init `aim` api and ui routes.
 	aimAPI.AddRoutes(server.Group("/aim/api/"))
@@ -72,37 +82,50 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	// 5. init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
-		controller.NewController(
+		mlflowController.NewController(
 			run.NewService(
-				repositories.NewTagRepository(db.GormDB()),
-				repositories.NewRunRepository(db.GormDB()),
-				repositories.NewParamRepository(db.GormDB()),
-				repositories.NewMetricRepository(db.GormDB()),
-				repositories.NewExperimentRepository(db.GormDB()),
+				mlflowRepositories.NewTagRepository(db.GormDB()),
+				mlflowRepositories.NewRunRepository(db.GormDB()),
+				mlflowRepositories.NewParamRepository(db.GormDB()),
+				mlflowRepositories.NewMetricRepository(db.GormDB()),
+				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 			model.NewService(),
 			metric.NewService(
-				repositories.NewMetricRepository(db.GormDB()),
+				mlflowRepositories.NewRunRepository(db.GormDB()),
+				mlflowRepositories.NewMetricRepository(db.GormDB()),
 			),
 			artifact.NewService(
-				repositories.NewRunRepository(db.GormDB()),
+				mlflowRepositories.NewRunRepository(db.GormDB()),
 				artifactStorageFactory,
 			),
 			experiment.NewService(
 				mlflowConfig,
-				repositories.NewTagRepository(db.GormDB()),
-				repositories.NewExperimentRepository(db.GormDB()),
+				mlflowRepositories.NewTagRepository(db.GormDB()),
+				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
 	).Init(server)
 	mlflowUI.AddRoutes(server)
-	// TODO:DSuhinin we have to move it.
-	chooser.AddRoutes(server)
+
+	// 6. init `admin` UI routes.
+	adminUI.NewRouter(
+		adminUIController.NewController(
+			namespace.NewService(namespaceRepository),
+		),
+	).Init(server)
+
+	// 7. init `chooser` ui routes.
+	chooser.NewRouter(
+		chooserController.NewController(
+			namespace.NewService(namespaceRepository),
+		),
+	).AddRoutes(server)
 
 	isRunning := make(chan struct{})
 	go func() {
 		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
 		<-sigint
 
 		log.Infof("Shutting down")
@@ -124,24 +147,43 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 
 // initDB init DB connection.
 func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
-	db, err := database.MakeDBProvider(
+	db, err := database.NewDBProvider(
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
 		config.DatabasePoolMax,
-		config.DatabaseReset,
-		config.DatabaseMigrate,
-		config.DefaultArtifactRoot,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to DB: %w", err)
 	}
+
+	if config.DatabaseReset {
+		if err := db.Reset(); err != nil {
+			return nil, eris.Wrap(err, "error resetting database")
+		}
+	}
+
+	if err := database.CheckAndMigrateDB(config.DatabaseMigrate, db.GormDB()); err != nil {
+		return nil, eris.Wrap(err, "error running database migration")
+	}
+
+	if err := database.CreateDefaultNamespace(db.GormDB()); err != nil {
+		return nil, eris.Wrap(err, "error creating default namespace")
+	}
+
+	if err := database.CreateDefaultExperiment(db.GormDB(), config.DefaultArtifactRoot); err != nil {
+		return nil, eris.Wrap(err, "error creating default experiment")
+	}
+
 	// cache a global reference to the gorm.DB
 	database.DB = db.GormDB()
 	return db, nil
 }
 
 // initServer init HTTP server with base configuration.
-func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
+func initServer(
+	config *mlflowConfig.ServiceConfig,
+	namespaceRepository mlflowRepositories.NamespaceRepositoryProvider,
+) *fiber.App {
 	server := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
 		ReadBufferSize:        16384,
@@ -192,6 +234,7 @@ func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
+	server.Use(namespaceMiddleware.New(namespaceRepository))
 
 	server.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")
@@ -203,6 +246,7 @@ func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 	return server
 }
 
+// nolint:errcheck,gosec
 func init() {
 	RootCmd.AddCommand(ServerCmd)
 

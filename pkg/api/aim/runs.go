@@ -17,12 +17,20 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetRunInfo(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("getRunInfo namespace: %s", ns.Code)
+
 	q := struct {
 		// TODO skip_system is unused - should we keep it?
 		SkipSystem bool     `query:"skip_system"`
@@ -42,7 +50,10 @@ func GetRunInfo(c *fiber.Ctx) error {
 	}
 
 	tx := database.DB.
-		Joins("Experiment", database.DB.Select("ID", "Name")).
+		Joins(
+			"Experiment",
+			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+		).
 		Preload("Params").
 		Preload("Tags")
 
@@ -77,8 +88,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 		ID: p.ID,
 	}
 
-	tx.First(&r)
-	if tx.Error != nil {
+	if err := tx.First(&r).Error; err != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
 			return fiber.ErrNotFound
 		}
@@ -126,6 +136,12 @@ func GetRunInfo(c *fiber.Ctx) error {
 }
 
 func GetRunMetrics(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("getRunMetrics namespace: %s", ns.Code)
+
 	p := struct {
 		ID string `params:"id"`
 	}{}
@@ -160,6 +176,10 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	}
 	if tx := database.DB.
 		Select("ID").
+		Joins(
+			"Experiment",
+			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+		).
 		Preload("Metrics", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Where("key IN ?", metricKeys).
@@ -204,6 +224,12 @@ func GetRunMetrics(c *fiber.Ctx) error {
 }
 
 func GetRunsActive(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("getRunsActive namespace: %s", ns.Code)
+
 	q := struct {
 		ReportProgress bool `query:"report_progress"`
 	}{}
@@ -219,7 +245,10 @@ func GetRunsActive(c *fiber.Ctx) error {
 	var runs []database.Run
 	if tx := database.DB.
 		Where("status = ?", database.StatusRunning).
-		Joins("Experiment", database.DB.Select("ID", "Name")).
+		Joins(
+			"Experiment",
+			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+		).
 		Preload("LatestMetrics").
 		Find(&runs); tx.Error != nil {
 		return fmt.Errorf("error retrieving active runs: %w", tx.Error)
@@ -307,7 +336,16 @@ func GetRunsActive(c *fiber.Ctx) error {
 	return nil
 }
 
+// TODO:get back and fix `gocyclo` problem.
+//
+//nolint:gocyclo
 func SearchRuns(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("searchRuns namespace: %s", ns.Code)
+
 	q := struct {
 		Query  string `query:"q"`
 		Limit  int    `query:"limit"`
@@ -319,7 +357,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		ExcludeTraces  bool `query:"exclude_traces"`
 	}{}
 
-	if err := c.QueryParser(&q); err != nil {
+	if err = c.QueryParser(&q); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -359,7 +397,10 @@ func SearchRuns(c *fiber.Ctx) error {
 	log.Debugf("Total runs: %d", total)
 
 	tx := database.DB.
-		Joins("Experiment", database.DB.Select("ID", "Name")).
+		Joins(
+			"Experiment",
+			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+		).
 		Order("row_num DESC")
 
 	if q.Limit > 0 {
@@ -370,7 +411,8 @@ func SearchRuns(c *fiber.Ctx) error {
 		run := &database.Run{
 			ID: q.Offset,
 		}
-		if tx := database.DB.Select("row_num").First(&run); tx.Error != nil && tx.Error != gorm.ErrRecordNotFound {
+		// TODO:DSuhinin -> do we need `namespace` restriction? it seems like yyyyess, but ....
+		if tx = database.DB.Select("row_num").First(&run); tx.Error != nil && tx.Error != gorm.ErrRecordNotFound {
 			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, tx.Error)
 		}
 
@@ -397,7 +439,7 @@ func SearchRuns(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/octet-stream")
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		start := time.Now()
-		if err := func() error {
+		if err = func() error {
 			for i, r := range runs {
 				run := fiber.Map{
 					"props": fiber.Map{
@@ -494,7 +536,16 @@ func SearchRuns(c *fiber.Ctx) error {
 	return nil
 }
 
+// TODO:get back and fix `gocyclo` problem.
+//
+//nolint:gocyclo
 func SearchMetrics(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("searchMetrics namespace: %s", ns.Code)
+
 	q := struct {
 		Query string `query:"q"`
 		Steps int    `query:"p"`
@@ -504,7 +555,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 		ReportProgress bool `query:"report_progress"`
 	}{}
 
-	if err := c.QueryParser(&q); err != nil {
+	if err = c.QueryParser(&q); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -550,13 +601,17 @@ func SearchMetrics(c *fiber.Ctx) error {
 
 	var runs []database.Run
 	if tx := database.DB.
-		Joins("Experiment", database.DB.Select("ID", "Name")).
+		Joins(
+			"Experiment",
+			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+		).
 		Preload("Params").
 		Preload("Tags").
 		Where("run_uuid IN (?)", pq.Filter(database.DB.
 			Select("runs.run_uuid").
 			Table("runs").
 			Joins("LEFT JOIN experiments USING(experiment_id)").
+			Where("experiments.namespace_id = ?", ns.ID).
 			Joins("LEFT JOIN latest_metrics USING(run_uuid)"))).
 		Order("runs.row_num DESC").
 		Find(&runs); tx.Error != nil {
@@ -607,9 +662,15 @@ func SearchMetrics(c *fiber.Ctx) error {
 		Joins(
 			"INNER JOIN (?) runmetrics USING(run_uuid, key)",
 			pq.Filter(database.DB.
-				Select("runs.run_uuid", "runs.row_num", "latest_metrics.key", fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps))).
+				Select(
+					"runs.run_uuid",
+					"runs.row_num",
+					"latest_metrics.key",
+					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
+				).
 				Table("runs").
 				Joins("LEFT JOIN experiments USING(experiment_id)").
+				Where("experiments.namespace_id = ?", ns.ID).
 				Joins("LEFT JOIN latest_metrics USING(run_uuid)")),
 		).
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
@@ -621,7 +682,10 @@ func SearchMetrics(c *fiber.Ctx) error {
 	if q.XAxis != "" {
 		tx.
 			Select("metrics.*", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
-			Joins("LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND metrics.iter = x_axis.iter AND x_axis.key = ?", q.XAxis)
+			Joins(
+				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND metrics.iter = x_axis.iter AND x_axis.key = ?",
+				q.XAxis,
+			)
 		xAxis = true
 	}
 
@@ -629,9 +693,13 @@ func SearchMetrics(c *fiber.Ctx) error {
 	if err != nil {
 		return fmt.Errorf("error searching run metrics: %w", err)
 	}
+	if err := rows.Err(); err != nil {
+		return api.NewInternalError("error getting query result: %s", err)
+	}
 
 	c.Set("Content-Type", "application/octet-stream")
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		//nolint:errcheck
 		defer rows.Close()
 
 		start := time.Now()
@@ -773,6 +841,9 @@ func SearchMetrics(c *fiber.Ctx) error {
 	return nil
 }
 
+// TODO:get back and fix `gocyclo` problem.
+//
+//nolint:gocyclo
 func SearchAlignedMetrics(c *fiber.Ctx) error {
 	b := struct {
 		AlignBy string `json:"align_by"`
@@ -831,9 +902,13 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	if err != nil {
 		return fmt.Errorf("error searching aligned run metrics: %w", err)
 	}
+	if err := rows.Err(); err != nil {
+		return api.NewInternalError("error getting query result: %s", err)
+	}
 
 	c.Set("Content-Type", "application/octet-stream")
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		//nolint:errcheck
 		defer rows.Close()
 
 		start := time.Now()
@@ -918,21 +993,37 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 
 // DeleteRun will remove the Run from the repo
 func DeleteRun(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("deleteRun namespace: %s", ns.Code)
+
 	params := struct {
 		ID string `params:"id"`
 	}{}
 
-	if err := c.ParamsParser(&params); err != nil {
+	if err = c.ParamsParser(&params); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	// TODO this code should move to service with injected repository
-	runRepo := repositories.NewRunRepository(database.DB)
-	run := models.Run{ID: params.ID}
-	err := runRepo.Delete(c.Context(), &run)
+	// TODO this code should move to service
+	runRepository := repositories.NewRunRepository(database.DB)
+	run, err := runRepository.GetByNamespaceIDAndRunID(c.Context(), ns.ID, params.ID)
 	if err != nil {
+		return fiber.NewError(
+			fiber.StatusInternalServerError, fmt.Sprintf("unable to find run '%s': %s", params.ID, err),
+		)
+	}
+	if run == nil {
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("unable to find run '%s'", params.ID))
+	}
+
+	// TODO this code should move to service with injected repository
+	if err = runRepository.Delete(c.Context(), run); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
-			fmt.Sprintf("unable to delete run %q: %s", params.ID, err))
+			fmt.Sprintf("unable to delete run %q: %s", params.ID, err),
+		)
 	}
 
 	return c.JSON(fiber.Map{
@@ -943,46 +1034,62 @@ func DeleteRun(c *fiber.Ctx) error {
 
 // UpdateRun will update the run name, description, and lifecycle stage
 func UpdateRun(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("updateRun namespace: %s", ns.Code)
+
 	params := struct {
 		ID string `params:"id"`
 	}{}
-	if err := c.ParamsParser(&params); err != nil {
+	if err = c.ParamsParser(&params); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	var update request.UpdateRunRequest
-	if err := c.BodyParser(&update); err != nil {
+	var updateRequest request.UpdateRunRequest
+	if err = c.BodyParser(&updateRequest); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	// TODO this code should move to service
-	run := models.Run{ID: params.ID}
-	runRepo := repositories.NewRunRepository(database.DB)
-	var err error
-	if update.Archived != nil {
-		if *update.Archived {
-			err = runRepo.Archive(c.Context(), &run)
-		} else {
-			err = runRepo.Restore(c.Context(), &run)
-		}
-	}
+	runRepository := repositories.NewRunRepository(database.DB)
+	run, err := runRepository.GetByNamespaceIDAndRunID(c.Context(), ns.ID, params.ID)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError,
-			fmt.Sprintf("unable to archive/restore run %q: %s", params.ID, err))
+		return fiber.NewError(
+			fiber.StatusInternalServerError, fmt.Sprintf("unable to find run '%s': %s", params.ID, err),
+		)
+	}
+	if run == nil {
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("unable to find run '%s'", params.ID))
 	}
 
-	if update.Name != nil {
-		run.Name = *update.Name
-		err = database.DB.Transaction(func(tx *gorm.DB) error {
-			if err := runRepo.UpdateWithTransaction(c.Context(), tx, &run); err != nil {
+	if updateRequest.Archived != nil {
+		if *updateRequest.Archived {
+			if err := runRepository.Archive(c.Context(), run); err != nil {
+				return fiber.NewError(fiber.StatusInternalServerError,
+					fmt.Sprintf("unable to archive/restore run %q: %s", params.ID, err))
+			}
+		} else {
+			if err := runRepository.Restore(c.Context(), run); err != nil {
+				return fiber.NewError(fiber.StatusInternalServerError,
+					fmt.Sprintf("unable to archive/restore run %q: %s", params.ID, err))
+			}
+		}
+	}
+
+	if updateRequest.Name != nil {
+		run.Name = *updateRequest.Name
+		// TODO:DSuhinin - transaction?
+		if err := database.DB.Transaction(func(tx *gorm.DB) error {
+			if err := runRepository.UpdateWithTransaction(c.Context(), tx, run); err != nil {
 				return err
 			}
 			return nil
-		})
-	}
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError,
-			fmt.Sprintf("unable to update run %q: %s", params.ID, err))
+		}); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError,
+				fmt.Sprintf("unable to update run %q: %s", params.ID, err))
+		}
 	}
 
 	return c.JSON(fiber.Map{
@@ -999,15 +1106,16 @@ func ArchiveBatch(c *fiber.Ctx) error {
 
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB)
-	var err error
 	if c.Query("archive") == "true" {
-		err = runRepo.ArchiveBatch(c.Context(), ids)
+		if err := runRepo.ArchiveBatch(c.Context(), ids); err != nil {
+			return err
+		}
 	} else {
-		err = runRepo.RestoreBatch(c.Context(), ids)
+		if err := runRepo.RestoreBatch(c.Context(), ids); err != nil {
+			return err
+		}
 	}
-	if err != nil {
-		return err
-	}
+
 	return c.JSON(fiber.Map{
 		"status": "OK",
 	})
@@ -1032,6 +1140,13 @@ func DeleteBatch(c *fiber.Ctx) error {
 func toNumpy(values []float64) fiber.Map {
 	buf := bytes.NewBuffer(make([]byte, 0, len(values)*8))
 	for _, v := range values {
+		switch v {
+		case math.MaxFloat64:
+			v = math.Inf(1)
+		case -math.MaxFloat64:
+			v = math.Inf(-1)
+		}
+		//nolint:gosec,errcheck
 		binary.Write(buf, binary.LittleEndian, v)
 	}
 	return fiber.Map{

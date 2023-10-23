@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -17,16 +18,14 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type UpdateRunTestSuite struct {
 	suite.Suite
-	client             *helpers.HttpClient
-	runFixtures        *fixtures.RunFixtures
-	experimentFixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
 }
 
 func TestUpdateRunTestSuite(t *testing.T) {
@@ -34,29 +33,31 @@ func TestUpdateRunTestSuite(t *testing.T) {
 }
 
 func (s *UpdateRunTestSuite) SetupTest() {
-	s.client = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
-	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.experimentFixtures = experimentFixtures
+	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *UpdateRunTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create test experiment.
-	experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	assert.Nil(s.T(), err)
 
 	// create test run for the experiment
-	run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
+	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:     strings.ReplaceAll(uuid.New().String(), "-", ""),
 		Name:   "TestRun",
 		Status: models.StatusRunning,
@@ -75,18 +76,25 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
+	req := request.UpdateRunRequest{
+		RunID:   run.ID,
+		Name:    "UpdatedName",
+		Status:  string(models.StatusScheduled),
+		EndTime: 1111111111,
+	}
 	resp := response.UpdateRunResponse{}
-	err = s.client.DoPostRequest(
-		fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
-		request.UpdateRunRequest{
-			RunID:   run.ID,
-			Name:    "UpdatedName",
-			Status:  string(models.StatusScheduled),
-			EndTime: 1111111111,
-		},
-		&resp,
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
+		),
 	)
-	assert.Nil(s.T(), err)
 	assert.NotEmpty(s.T(), resp.RunInfo.ID)
 	assert.NotEmpty(s.T(), resp.RunInfo.UUID)
 	assert.Equal(s.T(), "UpdatedName", resp.RunInfo.Name)
@@ -98,7 +106,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	assert.Equal(s.T(), string(models.LifecycleStageActive), resp.RunInfo.LifecycleStage)
 
 	// check that run has been updated in database.
-	run, err = s.runFixtures.GetRun(context.Background(), run.ID)
+	run, err = s.RunFixtures.GetRun(context.Background(), run.ID)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), "UpdatedName", run.Name)
 	assert.Equal(s.T(), models.StatusScheduled, run.Status)
@@ -106,6 +114,13 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 }
 
 func (s *UpdateRunTestSuite) Test_Error() {
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -121,20 +136,24 @@ func (s *UpdateRunTestSuite) Test_Error() {
 			request: request.UpdateRunRequest{
 				RunID: "1",
 			},
-			error: api.NewResourceDoesNotExistError(
-				"unable to find run '1': error getting 'run' entity by id: 1: record not found",
-			),
+			error: api.NewResourceDoesNotExistError("unable to find run '1'"),
 		},
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			err := s.client.DoPostRequest(
-				fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
-				tt.request,
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
+				),
 			)
-			assert.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

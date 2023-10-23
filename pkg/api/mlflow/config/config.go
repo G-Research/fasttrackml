@@ -66,7 +66,7 @@ func (c *ServiceConfig) validateConfiguration() error {
 		return eris.New("incorrect format of 'default-artifact-root' flag")
 	}
 
-	if !slices.Contains([]string{"", "file", "s3"}, parsed.Scheme) {
+	if !slices.Contains([]string{"", "file", "s3", "gs"}, parsed.Scheme) {
 		return eris.New("unsupported schema of 'default-artifact-root' flag")
 	}
 

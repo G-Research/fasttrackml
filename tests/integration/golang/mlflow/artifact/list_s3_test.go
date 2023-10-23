@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
-	"github.com/hetiansu5/urlquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -21,17 +20,15 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type ListArtifactS3TestSuite struct {
 	suite.Suite
-	s3Client           *s3.Client
-	runFixtures        *fixtures.RunFixtures
-	serviceClient      *helpers.HttpClient
-	experimentFixtures *fixtures.ExperimentFixtures
+	helpers.BaseTestSuite
+	s3Client *s3.Client
 }
 
 func TestListArtifactS3TestSuite(t *testing.T) {
@@ -39,25 +36,33 @@ func TestListArtifactS3TestSuite(t *testing.T) {
 }
 
 func (s *ListArtifactS3TestSuite) SetupTest() {
+	s.BaseTestSuite.SetupTest(s.T())
+
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	assert.Nil(s.T(), err)
+
+	err = helpers.CreateBuckets(s3Client)
+	assert.Nil(s.T(), err)
+
 	s.s3Client = s3Client
+}
 
-	s.serviceClient = helpers.NewMlflowApiClient(helpers.GetServiceUri())
-
-	experimentFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
+func (s *ListArtifactS3TestSuite) TearDownTest() {
+	err := helpers.RemoveBuckets(s.s3Client)
 	assert.Nil(s.T(), err)
-	s.experimentFixtures = experimentFixtures
-
-	runFixtures, err := fixtures.NewRunFixtures(helpers.GetDatabaseUri())
-	assert.Nil(s.T(), err)
-	s.runFixtures = runFixtures
 }
 
 func (s *ListArtifactS3TestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.experimentFixtures.UnloadFixtures())
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
 
 	tests := []struct {
 		name   string
@@ -76,7 +81,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// 1. create test experiment.
-			experiment, err := s.experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name: fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
 				Tags: []models.ExperimentTag{
 					{
@@ -84,6 +89,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 						Value: "value1",
 					},
 				},
+				NamespaceID: namespace.ID,
 				CreationTime: sql.NullInt64{
 					Int64: time.Now().UTC().UnixMilli(),
 					Valid: true,
@@ -99,7 +105,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 
 			// 2. create test run.
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
-			run, err := s.runFixtures.CreateRun(context.Background(), &models.Run{
+			run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             runID,
 				Status:         models.StatusRunning,
 				SourceType:     "JOB",
@@ -124,17 +130,21 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			// 4. make actual API call for root dir.
-			rootDirQuery, err := urlquery.Marshal(request.ListArtifactsRequest{
+			rootDirQuery := request.ListArtifactsRequest{
 				RunID: run.ID,
-			})
-			assert.Nil(s.T(), err)
+			}
 
 			rootDirResp := response.ListArtifactsResponse{}
-			err = s.serviceClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, rootDirQuery),
-				&rootDirResp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithQuery(
+					rootDirQuery,
+				).WithResponse(
+					&rootDirResp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+				),
 			)
-			assert.Nil(s.T(), err)
 
 			assert.Equal(s.T(), run.ArtifactURI, rootDirResp.RootURI)
 			assert.Equal(s.T(), 2, len(rootDirResp.Files))
@@ -153,18 +163,22 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			// 5. make actual API call for sub dir.
-			subDirQuery, err := urlquery.Marshal(request.ListArtifactsRequest{
+			subDirQuery := request.ListArtifactsRequest{
 				RunID: run.ID,
 				Path:  "artifact.dir",
-			})
-			assert.Nil(s.T(), err)
+			}
 
 			subDirResp := response.ListArtifactsResponse{}
-			err = s.serviceClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, subDirQuery),
-				&subDirResp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithQuery(
+					subDirQuery,
+				).WithResponse(
+					&subDirResp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+				),
 			)
-			assert.Nil(s.T(), err)
 
 			assert.Equal(s.T(), run.ArtifactURI, subDirResp.RootURI)
 			assert.Equal(s.T(), 1, len(subDirResp.Files))
@@ -176,18 +190,23 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			assert.Nil(s.T(), err)
 
 			// 6. make actual API call for non-existing dir.
-			nonExistingDirQuery, err := urlquery.Marshal(request.ListArtifactsRequest{
+			nonExistingDirQuery := request.ListArtifactsRequest{
 				RunID: run.ID,
 				Path:  "non-existing-dir",
-			})
+			}
 			assert.Nil(s.T(), err)
 
 			nonExistingDirResp := response.ListArtifactsResponse{}
-			err = s.serviceClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, nonExistingDirQuery),
-				&nonExistingDirResp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithQuery(
+					nonExistingDirQuery,
+				).WithResponse(
+					&nonExistingDirResp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+				),
 			)
-			assert.Nil(s.T(), err)
 
 			assert.Equal(s.T(), run.ArtifactURI, nonExistingDirResp.RootURI)
 			assert.Equal(s.T(), 0, len(nonExistingDirResp.Files))
@@ -197,20 +216,31 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 }
 
 func (s *ListArtifactS3TestSuite) Test_Error() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
-		request *request.ListArtifactsRequest
+		request request.ListArtifactsRequest
 	}{
 		{
 			name:    "EmptyOrIncorrectRunIDOrRunUUID",
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
-			request: &request.ListArtifactsRequest{},
+			request: request.ListArtifactsRequest{},
 		},
 		{
 			name:  "IncorrectPathProvidedCase1",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "..",
 			},
@@ -218,7 +248,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase2",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "./..",
 			},
@@ -226,7 +256,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase3",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "./../",
 			},
@@ -234,7 +264,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase4",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo/../bar",
 			},
@@ -242,7 +272,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 		{
 			name:  "IncorrectPathProvidedCase5",
 			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
-			request: &request.ListArtifactsRequest{
+			request: request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "/foo/../bar",
 			},
@@ -251,12 +281,16 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			query, err := urlquery.Marshal(tt.request)
-			assert.Nil(s.T(), err)
 			resp := api.ErrorResponse{}
-			err = s.serviceClient.DoGetRequest(
-				fmt.Sprintf("%s%s?%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute, query),
-				&resp,
+			assert.Nil(
+				s.T(),
+				s.MlflowClient.WithQuery(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+				),
 			)
 			assert.Nil(t, err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

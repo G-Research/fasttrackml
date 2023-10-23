@@ -6,6 +6,7 @@ import (
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
@@ -22,12 +23,12 @@ func ConvertMetricParamRequestToDBModel(runID string, req *request.LogMetricRequ
 		metric.Value = v
 	} else if v, ok := req.Value.(string); ok {
 		switch v {
-		case "NaN":
+		case common.NANValue:
 			metric.Value = 0
 			metric.IsNan = true
-		case "Infinity":
+		case common.NANPositiveInfinity:
 			metric.Value = math.MaxFloat64
-		case "-Infinity":
+		case common.NANNegativeInfinity:
 			metric.Value = -math.MaxFloat64
 		default:
 			return nil, eris.Errorf("invalid metric value '%s'", v)

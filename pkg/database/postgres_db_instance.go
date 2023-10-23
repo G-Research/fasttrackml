@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/rotisserie/eris"
+
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -15,21 +16,9 @@ type PostgresDBInstance struct {
 	DBInstance
 }
 
-// Reset implementation for this type.
-func (pgdb PostgresDBInstance) Reset() error {
-	log.Info("Resetting database schema")
-	if err := pgdb.GormDB().Exec("drop schema public cascade").Error; err != nil {
-		return eris.Wrap(err, "error attempting to drop schema")
-	}
-	if err := pgdb.GormDB().Exec("create schema public").Error; err != nil {
-		return eris.Wrap(err, "error attempting to create schema")
-	}
-	return nil
-}
-
-// NewPostgresDBInstance will construct a Postgres DbInstance.
+// NewPostgresDBInstance constructs a Postgres DbInstance.
 func NewPostgresDBInstance(
-	dsnURL url.URL, slowThreshold time.Duration, poolMax int, reset bool,
+	dsnURL url.URL, slowThreshold time.Duration, poolMax int,
 ) (*PostgresDBInstance, error) {
 	db := PostgresDBInstance{
 		DBInstance: DBInstance{dsn: dsnURL.String()},
@@ -46,7 +35,6 @@ func NewPostgresDBInstance(
 		}),
 	})
 	if err != nil {
-		db.Close()
 		return nil, eris.Wrap(err, "failed to connect to database")
 	}
 	db.DB = gormDB
@@ -60,4 +48,16 @@ func NewPostgresDBInstance(
 	sqlDB.SetMaxOpenConns(poolMax)
 
 	return &db, nil
+}
+
+// Reset resets database.
+func (pgdb PostgresDBInstance) Reset() error {
+	log.Info("Resetting database schema")
+	if err := pgdb.GormDB().Exec("drop schema public cascade").Error; err != nil {
+		return eris.Wrap(err, "error attempting to drop schema")
+	}
+	if err := pgdb.GormDB().Exec("create schema public").Error; err != nil {
+		return eris.Wrap(err, "error attempting to create schema")
+	}
+	return nil
 }

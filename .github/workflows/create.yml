@@ -1,0 +1,59 @@
+name: Create release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version - needs to adhere to Semantic Versioning (e.g. 0.3.1 or 0.3.1-rc.1)"
+        required: true
+
+jobs:
+  create-release:
+    name: Create release ${{ github.event.inputs.version }}
+    environment: create-release
+    runs-on: ubuntu-latest
+    steps:
+      # Regex comes from https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
+      - name: Check version
+        id: version
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const semver = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
+            const version = context.payload.inputs.version;
+            const match = version.match(semver);
+            if (match === null) {
+              core.setFailed('Invalid version format. Expected semver compliant version.');
+            } else {
+              core.setOutput('tag', `v${version}`);
+              core.setOutput('branch', `release/${match[1]}.${match[2]}`);
+            }
+
+      - name: Generate an app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Push
+        run: |
+          branch=${{ steps.version.outputs.branch }}
+          tag=${{ steps.version.outputs.tag }}
+          if git show-ref --verify --quiet refs/remotes/origin/$branch; then
+            echo "Checking out branch $branch"
+            git checkout --track origin/$branch
+          else
+            echo "Branch $branch does not exist, creating it"
+            git checkout -b $branch
+            git push origin $branch
+          fi
+          echo "Creating tag $tag"
+          git tag $tag
+          git push origin $tag

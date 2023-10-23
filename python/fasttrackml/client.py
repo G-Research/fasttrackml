@@ -5,7 +5,7 @@ from mlflow import MlflowClient
 from mlflow.tracking._tracking_service import utils
 
 
-class MlflowClientWrapped(MlflowClient):
+class MlflowClientExtend(MlflowClient):
     def __init__(self, tracking_uri: Optional[str] = None, registry_uri: Optional[str] = None):
         super().__init__(tracking_uri, registry_uri)
         final_tracking_uri = utils._resolve_tracking_uri(tracking_uri)

@@ -44,7 +44,6 @@ type LogMetricRequest struct {
 	Value     any    `json:"value"`
 	Timestamp int64  `json:"timestamp"`
 	Step      int64  `json:"step"`
-	Context   string `json:"context"`
 }
 
 // GetRunID returns Run ID.

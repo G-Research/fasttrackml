@@ -9,7 +9,6 @@ type Metric struct {
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
 	Iter      int64   `gorm:"index"`
-	Context   string  `gorm:"type:varchar(250);not null;primaryKey"`
 }
 
 // LatestMetric represents model to work with `last_metrics` table.
@@ -21,5 +20,4 @@ type LatestMetric struct {
 	IsNan     bool   `gorm:"not null"`
 	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
 	LastIter  int64
-	Context   string `gorm:"type:varchar(250);not null;primaryKey"`
 }

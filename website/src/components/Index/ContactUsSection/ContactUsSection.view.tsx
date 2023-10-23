@@ -90,7 +90,7 @@ export default function ContactUsSection(): React.JSX.Element {
                     </div>
                 </div>
             </form>
-	    <p>Or, join the #fasttrackml channel on the MLOps.community slack!</p>
+	    <p>Or, join the <b>#fasttrackml</b> channel on the <b>MLOps.community</b> Slack!</p>
             <div className="row margin-vert--md">
 		<div className={clsx("col", styles.buttons)}>
 		    <button type="submit" className="button button--primary button--lg"

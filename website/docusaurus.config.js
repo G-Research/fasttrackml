@@ -69,6 +69,7 @@ module.exports = async function configCreatorAsync() {
                         src: 'logo/project-logo-light.svg',
                         srcDark: 'logo/project-logo-dark.svg',
                         width: 140,
+                    },
                     items: [
                         // left
                         {

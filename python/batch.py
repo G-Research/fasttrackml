@@ -107,3 +107,4 @@ def get_metric_histories(
 
     with pa.ipc.open_stream(result.raw) as reader:
         return reader.read_pandas().set_index(["run_id", "key", index])
+    

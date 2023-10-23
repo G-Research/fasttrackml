@@ -5,6 +5,7 @@ volumes:
   workspaces:
   minio-data:
   postgres-data:
+  google-storage-data:
 
 services:
   app:
@@ -82,6 +83,8 @@ services:
 
   google-storage:
     image: fsouza/fake-gcs-server
+    volumes:
+      - google-storage-data:/storage
     command:
       -public-host=localhost
       -scheme=http

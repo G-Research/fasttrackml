@@ -19,11 +19,17 @@ func TestMigrate(t *testing.T) {
 	mlflowDbPath := t.TempDir()
 	src, err := os.Open("mlflow.db")
 	assert.Nil(t, err)
-	defer src.Close()
+	defer func() {
+		err := src.Close()
+		assert.Nil(t, err)
+	}()
 
 	dst, err := os.Create(fmt.Sprintf("%s/mlflow.db", mlflowDbPath))
 	assert.Nil(t, err)
-	defer dst.Close()
+	defer func() {
+		err := dst.Close()
+		assert.Nil(t, err)
+	}()
 
 	_, err = io.Copy(dst, src)
 	assert.Nil(t, err)

@@ -5,7 +5,6 @@
 dist/
 fml
 fasttrackml
-!python/fasttrackml/
 *.exe
 __debug_bin*
 
@@ -31,3 +30,7 @@ go.work*
 python/build/
 python/*.egg-info/
 wheelhouse/
+
+# Python package
+!python/fasttrackml/
+__pycache__/

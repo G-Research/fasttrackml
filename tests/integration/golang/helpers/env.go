@@ -31,7 +31,7 @@ func GetGSEndpointUri() string {
 	if ok {
 		return uri
 	}
-	return "http://localhost:4333"
+	return "http://localhost:4333/storage/v1/"
 }
 
 func GetInputDatabaseUri() string {

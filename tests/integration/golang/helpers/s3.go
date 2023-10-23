@@ -34,7 +34,7 @@ func NewS3Client(endpoint string) (*s3.Client, error) {
 	}), nil
 }
 
-// CreateBuckets creates the test bucekts.
+// CreateS3Buckets creates the test buckets.
 func CreateS3Buckets(s3Client *s3.Client, buckets []string) error {
 	for _, bucket := range buckets {
 		_, err := s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
@@ -47,7 +47,7 @@ func CreateS3Buckets(s3Client *s3.Client, buckets []string) error {
 	return nil
 }
 
-// RemoveBuckets removes the test buckets.
+// RemoveS3Buckets removes the test buckets.
 func RemoveS3Buckets(s3Client *s3.Client, buckets []string) error {
 	for _, bucket := range buckets {
 		if err := removeBucket(s3Client, bucket); err != nil {

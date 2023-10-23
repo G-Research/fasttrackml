@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "FastTrackML"
+description = "An experiment tracking server focused on speed and scalability"
+dynamic = ["version"]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.6"
+keywords = [
+    "ai",
+    "apache-spark",
+    "data-science",
+    "data-visualization",
+    "experiment-tracking",
+    "machine-learning",
+    "metadata-tracking",
+    "metadata",
+    "metrics",
+    "ml",
+    "mlflow-tracking-server",
+    "mlflow",
+    "mlops",
+    "pytorch",
+    "tensorboard",
+    "tensorflow",
+    "visualization",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: JavaScript",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Utilities",
+]
+
+[project.urls]
+Homepage = "https://fasttrackml.io/"
+Repository = "https://github.com/G-Research/fasttrackml"
+Changelog = "https://github.com/G-Research/fasttrackml/releases"

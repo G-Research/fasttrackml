@@ -5,6 +5,7 @@
 dist/
 fml
 fasttrackml
+!python/fasttrackml/
 *.exe
 __debug_bin*
 

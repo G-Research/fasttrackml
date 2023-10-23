@@ -43,9 +43,14 @@ func (s *ListArtifactGSTestSuite) SetupSuite() {
 	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
 	assert.Nil(s.T(), err)
 	s.gsClient = gsClient
+}
 
-	// prepare GS test buckets.
-	assert.Nil(s.T(), helpers.PrepareTestBuckets(s.gsClient, s.testBuckets))
+func (s *ListArtifactGSTestSuite) SetupTest() {
+	assert.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
+}
+
+func (s *ListArtifactGSTestSuite) TearDownTest() {
+	assert.Nil(s.T(), helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *ListArtifactGSTestSuite) Test_Ok() {

@@ -82,5 +82,6 @@ services:
 
   google-storage:
     image: fsouza/fake-gcs-server
-    entrypoint: sh
-    command: -c 'exec fake-gcs-server -public-host=google-storage -scheme http'
+    command:
+      -public-host=google-storage
+      -scheme=http

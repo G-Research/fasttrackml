@@ -25,10 +25,18 @@ func NewGSClient(endpoint string) (*storage.Client, error) {
 	return client, nil
 }
 
-// PrepareTestBuckets prepares test buckets for further usage in tests:
-// - delete provided buckets and all the content within them.
-// - create the same empty bucket.
-func PrepareTestBuckets(client *storage.Client, buckets []string) error {
+// CreateGSBuckets creates tests buckets in the Google Storage.
+func CreateGSBuckets(client *storage.Client, buckets []string) error {
+	for _, bucket := range buckets {
+		if err := client.Bucket(bucket).Create(context.Background(), "", nil); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// DeleteGSBuckets deletes tests buckets from the Google Storage.
+func DeleteGSBuckets(client *storage.Client, buckets []string) error {
 	for _, bucket := range buckets {
 		it := client.Bucket(bucket).Objects(context.Background(), &storage.Query{})
 		for {
@@ -41,12 +49,8 @@ func PrepareTestBuckets(client *storage.Client, buckets []string) error {
 			}
 		}
 		var e *googleapi.Error
-
 		if err := client.Bucket(bucket).Delete(context.Background()); errors.As(err, &e) &&
 			e.Code != http.StatusNotFound {
-			return err
-		}
-		if err := client.Bucket(bucket).Create(context.Background(), "", nil); err != nil {
 			return err
 		}
 	}

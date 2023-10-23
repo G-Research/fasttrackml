@@ -91,14 +91,14 @@ export default function ContactUsSection(): React.JSX.Element {
                 </div>
             </form>
 	    <p>Or, join the <b>#fasttrackml</b> channel on the <b>MLOps.community</b> Slack!</p>
-            <div className="row margin-vert--md">
-		<div className={clsx("col", styles.buttons)}>
-		    <button type="submit" className="button button--primary button--lg"
-			    title={slackInviteUrl as string}
-			    disabled={!isValid} onClick={handleSubmit(onJoinSlack)}>
-			💬 Join our Slack
-		    </button>
-		</div>		
+        <div className="row margin-vert--md">
+            <div className={clsx("col", styles.buttons)}>
+                <button type="submit" className="button button--primary button--lg"
+                    title={slackInviteUrl as string}
+                    disabled={!isValid} onClick={handleSubmit(onJoinSlack)}>
+                💬 Join our Slack
+                </button>
+            </div>		
 	    </div>
         </div>
     </section>;

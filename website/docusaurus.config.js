@@ -133,8 +133,8 @@ module.exports = async function configCreatorAsync() {
                                     href: 'https://github.com/G-Research/fasttrackml',
                                 },
                                 {
-                                    label: `Join our Slack`,
-                                    to: slackUrl,
+                                    label: 'Join our Slack',
+                                    href: slackUrl,
                                 },
                                 {
                                     label: 'Twitter',

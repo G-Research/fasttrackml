@@ -83,6 +83,6 @@ services:
   google-storage:
     image: fsouza/fake-gcs-server
     command:
-      -public-host=google-storage
+      -public-host=localhost
       -scheme=http
     network_mode: service:db

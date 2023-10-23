@@ -57,7 +57,7 @@ services:
       -public-host=google-storage
       -scheme=http
     healthcheck:
-      test: [ "CMD", "wget", "-nv -t1 -spider", "http://google-storage:4443/storage/v1/b" ]
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:4443/storage/v1/b" ]
       interval: 5s
       timeout: 5s
 
@@ -73,7 +73,7 @@ services:
       minio:
         condition: service_healthy
       google-storage:
-        condition: service_started
+        condition: service_healthy
       postgres:
         condition: service_healthy
       service:

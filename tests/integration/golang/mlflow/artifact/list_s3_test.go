@@ -28,11 +28,14 @@ import (
 type ListArtifactS3TestSuite struct {
 	suite.Suite
 	helpers.BaseTestSuite
-	s3Client *s3.Client
+	s3Client    *s3.Client
+	testBuckets []string
 }
 
 func TestListArtifactS3TestSuite(t *testing.T) {
-	suite.Run(t, new(ListArtifactS3TestSuite))
+	suite.Run(t, &ListArtifactS3TestSuite{
+		testBuckets: []string{"bucket1", "bucket2"},
+	})
 }
 
 func (s *ListArtifactS3TestSuite) SetupTest() {
@@ -41,14 +44,14 @@ func (s *ListArtifactS3TestSuite) SetupTest() {
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	assert.Nil(s.T(), err)
 
-	err = helpers.CreateBuckets(s3Client)
+	err = helpers.CreateBuckets(s3Client, s.testBuckets)
 	assert.Nil(s.T(), err)
 
 	s.s3Client = s3Client
 }
 
 func (s *ListArtifactS3TestSuite) TearDownTest() {
-	err := helpers.RemoveBuckets(s.s3Client)
+	err := helpers.RemoveBuckets(s.s3Client, s.testBuckets)
 	assert.Nil(s.T(), err)
 }
 

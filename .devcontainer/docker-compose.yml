@@ -85,3 +85,4 @@ services:
     command:
       -public-host=google-storage
       -scheme=http
+    network_mode: service:db

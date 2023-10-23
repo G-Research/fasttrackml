@@ -28,7 +28,12 @@ func GetDashboards(c *fiber.Ctx) error {
 			database.DB.Select(
 				"ID", "Type",
 			).Where(
-				&database.App{NamespaceID: ns.ID}, "NamespaceID",
+				&database.App{
+					Base: database.Base{
+						IsArchived: false,
+					},
+					NamespaceID: ns.ID,
+				}, "NamespaceID",
 			),
 		).
 		Where("NOT dashboards.is_archived").
@@ -60,7 +65,8 @@ func CreateDashboard(c *fiber.Ctx) error {
 
 	app := database.App{
 		Base: database.Base{
-			ID: d.AppID,
+			ID:         d.AppID,
+			IsArchived: false,
 		},
 		NamespaceID: ns.ID,
 	}
@@ -117,7 +123,12 @@ func GetDashboard(c *fiber.Ctx) error {
 			database.DB.Select(
 				"ID", "Type",
 			).Where(
-				&database.App{NamespaceID: ns.ID}, "NamespaceID",
+				&database.App{
+					Base: database.Base{
+						IsArchived: false,
+					},
+					NamespaceID: ns.ID,
+				}, "NamespaceID",
 			),
 		).
 		Where("NOT dashboards.is_archived").
@@ -167,7 +178,12 @@ func UpdateDashboard(c *fiber.Ctx) error {
 			database.DB.Select(
 				"NamespaceID",
 			).Where(
-				&database.App{NamespaceID: ns.ID}, "NamespaceID",
+				&database.App{
+					Base: database.Base{
+						IsArchived: false,
+					},
+					NamespaceID: ns.ID,
+				}, "NamespaceID",
 			),
 		).
 		Where("NOT dashboards.is_archived").
@@ -219,13 +235,18 @@ func DeleteDashboard(c *fiber.Ctx) error {
 			database.DB.Select(
 				"NamespaceID",
 			).Where(
-				&database.App{NamespaceID: ns.ID}, "NamespaceID",
+				&database.App{
+					Base: database.Base{
+						IsArchived: false,
+					},
+					NamespaceID: ns.ID,
+				}, "NamespaceID",
 			),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dash).
 		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))

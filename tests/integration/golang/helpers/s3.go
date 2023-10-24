@@ -34,8 +34,8 @@ func NewS3Client(endpoint string) (*s3.Client, error) {
 	}), nil
 }
 
-// CreateBuckets creates the test bucekts.
-func CreateBuckets(s3Client *s3.Client, buckets []string) error {
+// CreateS3Buckets creates the test buckets.
+func CreateS3Buckets(s3Client *s3.Client, buckets []string) error {
 	for _, bucket := range buckets {
 		_, err := s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
 			Bucket: aws.String(bucket),
@@ -47,8 +47,8 @@ func CreateBuckets(s3Client *s3.Client, buckets []string) error {
 	return nil
 }
 
-// RemoveBuckets removes the test buckets.
-func RemoveBuckets(s3Client *s3.Client, buckets []string) error {
+// RemoveS3Buckets removes the test buckets.
+func RemoveS3Buckets(s3Client *s3.Client, buckets []string) error {
 	for _, bucket := range buckets {
 		if err := removeBucket(s3Client, bucket); err != nil {
 			return eris.Wrapf(err, "failed to remove bucket '%s'", bucket)

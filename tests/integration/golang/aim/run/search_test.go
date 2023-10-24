@@ -67,6 +67,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		Name:       "TestRun1",
 		UserID:     "1",
 		Status:     models.StatusRunning,
+		RowNum:     4,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 123456789,
@@ -109,6 +110,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		Name:       "TestRun2",
 		UserID:     "2",
 		Status:     models.StatusScheduled,
+		RowNum:     3,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 111111111,
@@ -151,6 +153,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		Name:       "TestRun3",
 		UserID:     "3",
 		Status:     models.StatusRunning,
+		RowNum:     2,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 333444444,
@@ -193,6 +196,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		Name:       "TestRun4",
 		UserID:     "4",
 		Status:     models.StatusScheduled,
+		RowNum:     1,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 111111111,
@@ -237,6 +241,24 @@ func (s *SearchTestSuite) Test_Ok() {
 		request request.SearchRunsRequest
 		runs    []*models.Run
 	}{
+		{
+			name: "SearchSecondPage",
+			request: request.SearchRunsRequest{
+				Query:  `run.archived == True or run.archived == False`,
+				Offset: run2.ID,
+			},
+			runs: []*models.Run{
+				run3,
+				run4,
+			},
+		},
+		{
+			name: "SearchThirdPage",
+			request: request.SearchRunsRequest{
+				Query:  `run.archived == True or run.archived == False`,
+				Offset: run4.ID,
+			},
+		},
 		{
 			name: "SearchArchived",
 			request: request.SearchRunsRequest{
@@ -749,9 +771,9 @@ func (s *SearchTestSuite) Test_Ok() {
 				s.T(),
 				s.AIMClient.WithResponseType(
 					helpers.ResponseTypeBuffer,
-				).WithQuery(map[any]any{
-					"q": tt.request.Query,
-				}).WithResponse(
+				).WithQuery(
+					tt.request,
+				).WithResponse(
 					resp,
 				).DoRequest("/runs/search/run"),
 			)
@@ -776,7 +798,7 @@ func (s *SearchTestSuite) Test_Ok() {
 					assert.Equal(s.T(),
 						run.Status == models.StatusRunning,
 						decodedData[activeKey])
-					assert.Equal(s.T(), (run.LifecycleStage == models.LifecycleStageDeleted), decodedData[archivedKey])
+					assert.Equal(s.T(), run.LifecycleStage == models.LifecycleStageDeleted, decodedData[archivedKey])
 					assert.Equal(s.T(),
 						run.StartTime.Int64,
 						int64(decodedData[startTimeKey].(float64)*1000))

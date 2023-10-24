@@ -10,8 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -25,37 +24,36 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type ListArtifactS3TestSuite struct {
+type ListArtifactGSTestSuite struct {
 	suite.Suite
 	helpers.BaseTestSuite
-	s3Client    *s3.Client
+	gsClient    *storage.Client
 	testBuckets []string
 }
 
-func TestListArtifactS3TestSuite(t *testing.T) {
-	suite.Run(t, &ListArtifactS3TestSuite{
+func TestListArtifactGSTestSuite(t *testing.T) {
+	suite.Run(t, &ListArtifactGSTestSuite{
 		testBuckets: []string{"bucket1", "bucket2"},
 	})
 }
 
-func (s *ListArtifactS3TestSuite) SetupTest() {
+func (s *ListArtifactGSTestSuite) SetupSuite() {
 	s.BaseTestSuite.SetupTest(s.T())
 
-	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
+	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
 	assert.Nil(s.T(), err)
-
-	err = helpers.CreateS3Buckets(s3Client, s.testBuckets)
-	assert.Nil(s.T(), err)
-
-	s.s3Client = s3Client
+	s.gsClient = gsClient
 }
 
-func (s *ListArtifactS3TestSuite) TearDownTest() {
-	err := helpers.RemoveS3Buckets(s.s3Client, s.testBuckets)
-	assert.Nil(s.T(), err)
+func (s *ListArtifactGSTestSuite) SetupTest() {
+	assert.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
 }
 
-func (s *ListArtifactS3TestSuite) Test_Ok() {
+func (s *ListArtifactGSTestSuite) TearDownTest() {
+	assert.Nil(s.T(), helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
+}
+
+func (s *ListArtifactGSTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
@@ -102,7 +100,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 					Valid: true,
 				},
 				LifecycleStage:   models.LifecycleStageActive,
-				ArtifactLocation: fmt.Sprintf("s3://%s/1", tt.bucket),
+				ArtifactLocation: fmt.Sprintf("gs://%s/1", tt.bucket),
 			})
 			assert.Nil(s.T(), err)
 
@@ -118,19 +116,28 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			})
 			assert.Nil(s.T(), err)
 
-			// 3. upload artifact objects to S3.
-			_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
-				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.file1", runID)),
-				Body:   strings.NewReader("contentX"),
-				Bucket: aws.String(tt.bucket),
-			})
+			// 3. upload artifact objects to GS.
+			writer := s.gsClient.Bucket(
+				tt.bucket,
+			).Object(
+				fmt.Sprintf("1/%s/artifacts/artifact.txt", runID),
+			).NewWriter(
+				context.Background(),
+			)
+			_, err = writer.Write([]byte("contentX"))
 			assert.Nil(s.T(), err)
-			_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
-				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.dir/artifact.file2", runID)),
-				Body:   strings.NewReader("contentXX"),
-				Bucket: aws.String(tt.bucket),
-			})
+			assert.Nil(t, writer.Close())
+
+			writer = s.gsClient.Bucket(
+				tt.bucket,
+			).Object(
+				fmt.Sprintf("1/%s/artifacts/artifact/artifact.txt", runID),
+			).NewWriter(
+				context.Background(),
+			)
+			_, err = writer.Write([]byte("contentXX"))
 			assert.Nil(s.T(), err)
+			assert.Nil(t, writer.Close())
 
 			// 4. make actual API call for root dir.
 			rootDirQuery := request.ListArtifactsRequest{
@@ -153,12 +160,12 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			assert.Equal(s.T(), 2, len(rootDirResp.Files))
 			assert.Equal(s.T(), []response.FilePartialResponse{
 				{
-					Path:     "artifact.dir",
+					Path:     "artifact",
 					IsDir:    true,
 					FileSize: 0,
 				},
 				{
-					Path:     "artifact.file1",
+					Path:     "artifact.txt",
 					IsDir:    false,
 					FileSize: 8,
 				},
@@ -168,7 +175,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			// 5. make actual API call for sub dir.
 			subDirQuery := request.ListArtifactsRequest{
 				RunID: run.ID,
-				Path:  "artifact.dir",
+				Path:  "artifact",
 			}
 
 			subDirResp := response.ListArtifactsResponse{}
@@ -186,7 +193,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			assert.Equal(s.T(), run.ArtifactURI, subDirResp.RootURI)
 			assert.Equal(s.T(), 1, len(subDirResp.Files))
 			assert.Equal(s.T(), response.FilePartialResponse{
-				Path:     "artifact.dir/artifact.file2",
+				Path:     "artifact/artifact.txt",
 				IsDir:    false,
 				FileSize: 9,
 			}, subDirResp.Files[0])
@@ -218,7 +225,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 	}
 }
 
-func (s *ListArtifactS3TestSuite) Test_Error() {
+func (s *ListArtifactGSTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()

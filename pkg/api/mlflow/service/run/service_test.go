@@ -125,7 +125,7 @@ func TestService_CreateRun_Error(t *testing.T) {
 		},
 		{
 			name:  "ExperimentNotFound",
-			error: api.NewResourceDoesNotExistError("unable to find experiment '1' for namespace 'code': database error"),
+			error: api.NewResourceDoesNotExistError("unable to find experiment with id '1': database error"),
 			request: &request.CreateRunRequest{
 				ExperimentID: "1",
 			},

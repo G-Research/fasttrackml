@@ -133,7 +133,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 				ExperimentID: "1",
 			},
 			error: api.NewResourceDoesNotExistError(
-				`unable to find experiment '1' for namespace 'default': error getting experiment by id: 1: record not found`,
+				`unable to find experiment with id '1': error getting experiment by id: 1: record not found`,
 			),
 		},
 	}

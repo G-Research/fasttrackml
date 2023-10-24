@@ -161,7 +161,7 @@ func (s *CreateRunWithNamespaceTestSuite) Test_Error() {
 			},
 			error: api.NewResourceDoesNotExistError(
 				fmt.Sprintf(
-					`unable to find experiment '%d' for namespace 'custom-ns': error getting experiment by id: %d: record not found`,
+					`unable to find experiment with id '%d': error getting experiment by id: %d: record not found`,
 					nonExistingExperimentID,
 					nonExistingExperimentID,
 				),

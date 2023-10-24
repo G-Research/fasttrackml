@@ -242,6 +242,17 @@ func (s *SearchTestSuite) Test_Ok() {
 		runs    []*models.Run
 	}{
 		{
+			name: "SearchFirstPage",
+			request: request.SearchRunsRequest{
+				Query: `run.archived == True or run.archived == False`,
+				Limit: 2,
+			},
+			runs: []*models.Run{
+				run1,
+				run2,
+			},
+		},
+		{
 			name: "SearchSecondPage",
 			request: request.SearchRunsRequest{
 				Query:  `run.archived == True or run.archived == False`,

@@ -229,10 +229,8 @@ func DeleteDashboard(c *fiber.Ctx) error {
 		},
 	}
 	if err := database.DB.
-		Joins(
-			"INNER JOIN apps ON dashboards.app_id = apps.id AND apps.namespace_id = ?",
-			ns.ID,
-		).
+		Select("dashboards.id").
+		Joins("INNER JOIN apps ON dashboards.app_id = apps.id AND apps.namespace_id = ?", ns.ID).
 		Where("NOT dashboards.is_archived").
 		First(&dash).
 		Error; err != nil {

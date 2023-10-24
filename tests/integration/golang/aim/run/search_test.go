@@ -248,8 +248,8 @@ func (s *SearchTestSuite) Test_Ok() {
 				Limit: 2,
 			},
 			runs: []*models.Run{
-				run3,
 				run4,
+				run3,
 			},
 		},
 		{

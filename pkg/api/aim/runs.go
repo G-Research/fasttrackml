@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -412,8 +413,8 @@ func SearchRuns(c *fiber.Ctx) error {
 			ID: q.Offset,
 		}
 		// TODO:DSuhinin -> do we need `namespace` restriction? it seems like yyyyess, but ....
-		if tx = database.DB.Select("row_num").First(&run); tx.Error != nil && tx.Error != gorm.ErrRecordNotFound {
-			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, tx.Error)
+		if err := database.DB.Select("row_num").First(&run).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, err)
 		}
 
 		tx.Where("row_num < ?", run.RowNum)

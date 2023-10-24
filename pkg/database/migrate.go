@@ -213,8 +213,8 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 					}
 					type App struct {
 						Base
-						Type  string `gorm:"not null"`
-						State AppState
+						Type  string         `gorm:"not null"`
+						State map[string]any `gorm:"type:text"`
 					}
 
 					// migration

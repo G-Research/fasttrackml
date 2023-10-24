@@ -67,7 +67,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		Name:       "TestRun1",
 		UserID:     "1",
 		Status:     models.StatusRunning,
-		RowNum:     4,
+		RowNum:     1,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 123456789,
@@ -110,7 +110,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		Name:       "TestRun2",
 		UserID:     "2",
 		Status:     models.StatusScheduled,
-		RowNum:     3,
+		RowNum:     2,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 111111111,
@@ -153,7 +153,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		Name:       "TestRun3",
 		UserID:     "3",
 		Status:     models.StatusRunning,
-		RowNum:     2,
+		RowNum:     3,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 333444444,
@@ -196,7 +196,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		Name:       "TestRun4",
 		UserID:     "4",
 		Status:     models.StatusScheduled,
-		RowNum:     1,
+		RowNum:     4,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 111111111,
@@ -248,26 +248,26 @@ func (s *SearchTestSuite) Test_Ok() {
 				Limit: 2,
 			},
 			runs: []*models.Run{
-				run1,
-				run2,
+				run3,
+				run4,
 			},
 		},
 		{
 			name: "SearchSecondPage",
 			request: request.SearchRunsRequest{
 				Query:  `run.archived == True or run.archived == False`,
-				Offset: run2.ID,
+				Offset: run3.ID,
 			},
 			runs: []*models.Run{
-				run3,
-				run4,
+				run2,
+				run1,
 			},
 		},
 		{
 			name: "SearchThirdPage",
 			request: request.SearchRunsRequest{
 				Query:  `run.archived == True or run.archived == False`,
-				Offset: run4.ID,
+				Offset: run1.ID,
 			},
 		},
 		{

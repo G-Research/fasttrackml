@@ -19,6 +19,7 @@ type ServiceConfig struct {
 	AuthPassword          string
 	DefaultArtifactRoot   string
 	S3EndpointURI         string
+	GSEndpointURI         string
 	DatabaseURI           string
 	DatabaseReset         bool
 	DatabasePoolMax       int
@@ -35,6 +36,7 @@ func NewServiceConfig() *ServiceConfig {
 		AuthPassword:          viper.GetString("auth-password"),
 		DefaultArtifactRoot:   viper.GetString("default-artifact-root"),
 		S3EndpointURI:         viper.GetString("s3-endpoint-uri"),
+		GSEndpointURI:         viper.GetString("gs-endpoint-uri"),
 		DatabaseURI:           viper.GetString("database-uri"),
 		DatabaseReset:         viper.GetBool("database-reset"),
 		DatabasePoolMax:       viper.GetInt("database-pool-max"),
@@ -80,7 +82,7 @@ func (c *ServiceConfig) normalizeConfiguration() error {
 		return eris.Wrap(err, "error parsing 'default-artifact-root' flag")
 	}
 	switch parsed.Scheme {
-	case "s3":
+	case "s3", "gs":
 		return nil
 	case "", "file":
 		absoluteArtifactRoot, err := filepath.Abs(path.Join(parsed.Host, parsed.Path))

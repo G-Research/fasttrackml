@@ -232,13 +232,8 @@ func DeleteDashboard(c *fiber.Ctx) error {
 		Select("dashboards.id").
 		InnerJoins(
 			"App",
-			database.DB.Select(
-				"NamespaceID",
-			).Where(
+			database.DB.Where(
 				&database.App{
-					Base: database.Base{
-						IsArchived: false,
-					},
 					NamespaceID: ns.ID,
 				}, "NamespaceID",
 			),

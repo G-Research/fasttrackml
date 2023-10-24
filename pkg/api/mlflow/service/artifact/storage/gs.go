@@ -10,11 +10,12 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/rotisserie/eris"
 	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 )
 
-// GSStorageName is a GS storage name.
+// GSStorageName is a Google Storage name.
 const (
 	GSStorageName = "gs"
 )
@@ -24,11 +25,17 @@ type GS struct {
 	client *storage.Client
 }
 
-// NewGS creates new GC instance.
-func NewGS(ctx context.Context, _ *config.ServiceConfig) (*GS, error) {
-	client, err := storage.NewClient(ctx)
+// NewGS creates new Google Storage instance.
+func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
+	var options []option.ClientOption
+	if config.GSEndpointURI != "" {
+		// we use option.WithoutAuthentication() in order to make the GCS SDK work with our fake server.
+		// this should be changed if we ever need to use an alternative GCS implementation in a production setting.
+		options = append(options, option.WithEndpoint(config.GSEndpointURI), option.WithoutAuthentication())
+	}
+	client, err := storage.NewClient(ctx, options...)
 	if err != nil {
-		return nil, eris.Wrap(err, "error creating GCP storage client")
+		return nil, eris.Wrap(err, "error creating GS storage client")
 	}
 	return &GS{
 		client: client,

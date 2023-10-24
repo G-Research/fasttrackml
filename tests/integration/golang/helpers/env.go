@@ -26,6 +26,14 @@ func GetS3EndpointUri() string {
 	return "http://localhost:9000"
 }
 
+func GetGSEndpointUri() string {
+	uri, ok := os.LookupEnv("FML_GS_ENDPOINT_URI")
+	if ok {
+		return uri
+	}
+	return "http://localhost:4443/storage/v1/"
+}
+
 func GetInputDatabaseUri() string {
 	uri, ok := os.LookupEnv("FML_INPUT_DATABASE_URI")
 	if ok {

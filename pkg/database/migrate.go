@@ -13,9 +13,9 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/google/uuid"
-
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/database/migration_5d042539be4f"
+	"github.com/G-Research/fasttrackml/pkg/database/migration_8073e7e037e5"
 )
 
 var supportedAlembicVersions = []string{
@@ -196,39 +196,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 
 			case "ac0b8b7c0014":
 				log.Info("Migrating database to FastTrackML schema 8073e7e037e5")
-				if err := db.Transaction(func(tx *gorm.DB) error {
-					// types for migration
-					type Base struct {
-						ID         uuid.UUID `gorm:"type:uuid;primaryKey"`
-						CreatedAt  time.Time
-						UpdatedAt  time.Time
-						IsArchived bool
-					}
-					type Dashboard struct {
-						Base
-						Name        string
-						Description string
-						AppID       *uuid.UUID `gorm:"type:uuid"`
-						App         App
-					}
-					type App struct {
-						Base
-						Type  string         `gorm:"not null"`
-						State map[string]any `gorm:"type:text"`
-					}
-
-					// migration
-					if err := tx.AutoMigrate(
-						&Dashboard{},
-						&App{},
-					); err != nil {
-						return err
-					}
-					return tx.Model(&SchemaVersion{}).
-						Where("1 = 1").
-						Update("Version", "8073e7e037e5").
-						Error
-				}); err != nil {
+				if err := db.Transaction(migration_8073e7e037e5.Migrate); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema 8073e7e037e5: %w", err)
 				}
 				fallthrough
@@ -348,46 +316,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				// We need to run this migration without foreign key constraints to avoid
 				// the cascading delete to kick in and delete all the runs.
 				if err := runWithoutForeignKeyIfNeeded(func() error {
-					if err := db.Transaction(func(tx *gorm.DB) error {
-						// type for migration
-						type Namespace struct {
-							ID                  uint   `gorm:"primaryKey;autoIncrement"`
-							Apps                []App  `gorm:"constraint:OnDelete:CASCADE"`
-							Code                string `gorm:"unique;index;not null"`
-							Description         string
-							CreatedAt           time.Time
-							UpdatedAt           time.Time
-							DeletedAt           gorm.DeletedAt `gorm:"index"`
-							DefaultExperimentID *int32         `gorm:"not null"`
-							Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE"`
-						}
-
-						if err := tx.AutoMigrate(&Namespace{}); err != nil {
-							return err
-						}
-						if err := tx.Migrator().AddColumn(&App{}, "NamespaceID"); err != nil {
-							return err
-						}
-						if err := tx.Migrator().CreateConstraint(&Namespace{}, "Apps"); err != nil {
-							return err
-						}
-						if err := tx.Migrator().AddColumn(&Experiment{}, "NamespaceID"); err != nil {
-							return err
-						}
-						if err := tx.Migrator().CreateConstraint(&Namespace{}, "Experiments"); err != nil {
-							return err
-						}
-						if err := tx.Migrator().AlterColumn(&Experiment{}, "Name"); err != nil {
-							return err
-						}
-						if err := tx.Migrator().CreateIndex(&Experiment{}, "idx_namespace_name"); err != nil {
-							return err
-						}
-						return tx.Model(&SchemaVersion{}).
-							Where("1 = 1").
-							Update("Version", "e0d125c68d9a").
-							Error
-					}); err != nil {
+					if err := db.Transaction(migration_5d042539be4f.Migrate); err != nil {
 						return fmt.Errorf("error migrating database to FastTrackML schema e0d125c68d9a: %w", err)
 					}
 					return nil

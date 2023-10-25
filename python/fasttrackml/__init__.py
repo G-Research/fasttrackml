@@ -1,6 +1,6 @@
 import contextlib
 
-from fasttrackml.fluent_context_support import log_metric_with_context
+from fasttrackml.fluent_context_support import log_metric_with_context as log_metric
 from mlflow import (
     ActiveRun,
     MlflowClient,
@@ -30,7 +30,6 @@ from mlflow import (
     log_figure,
     log_image,
     log_input,
-    log_metric,
     log_metrics,
     log_param,
     log_params,
@@ -82,7 +81,6 @@ __all__ = [
     "log_image",
     "log_input",
     "log_metric",
-    "log_metric_with_context",
     "log_metrics",
     "log_param",
     "log_params",

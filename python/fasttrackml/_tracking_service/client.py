@@ -9,7 +9,7 @@ from mlflow.utils.rest_utils import MlflowHostCreds
 from mlflow.utils.time import get_current_time_millis
 
 
-class TrackingServiceClientWrapped(TrackingServiceClient):
+class TrackingServiceClientExtend(TrackingServiceClient):
 
     def __init__(self, tracking_uri):
         super().__init__(tracking_uri)

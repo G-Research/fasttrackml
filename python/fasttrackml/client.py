@@ -1,6 +1,6 @@
 from typing import Dict, Optional
 
-from fasttrackml._tracking_service.client import TrackingServiceClientWrapped
+from fasttrackml._tracking_service.client import TrackingServiceClientExtend
 from mlflow import MlflowClient
 from mlflow.tracking._tracking_service import utils
 
@@ -9,7 +9,7 @@ class MlflowClientExtend(MlflowClient):
     def __init__(self, tracking_uri: Optional[str] = None, registry_uri: Optional[str] = None):
         super().__init__(tracking_uri, registry_uri)
         final_tracking_uri = utils._resolve_tracking_uri(tracking_uri)
-        self._tracking_client = TrackingServiceClientWrapped(final_tracking_uri)
+        self._tracking_client = TrackingServiceClientExtend(final_tracking_uri)
 
     def log_metric_with_context(
             self,

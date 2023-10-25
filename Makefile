@@ -107,7 +107,7 @@ python-env: ## create python virtual environment.
 .PHONY: python-dist
 python-dist: go-build python-env ## build python wheels.
 	@echo '>>> Building Python Wheels.'
-	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python --wheel-dir=wheelhouse --no-deps
+	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python/fasttrackml --wheel-dir=wheelhouse --no-deps
 
 .PHONY: python-format
 python-format: python-env ## format python code.

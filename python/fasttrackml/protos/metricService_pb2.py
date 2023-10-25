@@ -12,8 +12,8 @@ from google.protobuf.internal import builder as _builder
 _sym_db = _symbol_database.Default()
 
 
-import fasttrackml.protos.databricks_pb2 as databricks__pb2
-from fasttrackml.protos.scalapb import scalapb_pb2 as scalapb_dot_scalapb__pb2
+import mlflow.protos.databricks_pb2 as databricks__pb2
+from mlflow.protos.scalapb import scalapb_pb2 as scalapb_dot_scalapb__pb2
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13metricService.proto\x12\x06mlflow\x1a\x15scalapb/scalapb.proto\x1a\x10\x64\x61tabricks.proto\"\xe7\x01\n\x10LogMetricWrapped\x12\x0e\n\x06run_id\x18\x06 \x01(\t\x12\x10\n\x08run_uuid\x18\x01 \x01(\t\x12\x11\n\x03key\x18\x02 \x01(\tB\x04\xf8\x86\x19\x01\x12\x13\n\x05value\x18\x03 \x01(\x01\x42\x04\xf8\x86\x19\x01\x12\x17\n\ttimestamp\x18\x04 \x01(\x03\x42\x04\xf8\x86\x19\x01\x12\x0f\n\x04step\x18\x05 \x01(\x03:\x01\x30\x12&\n\x07\x63ontext\x18\x07 \x03(\x0b\x32\x15.mlflow.MetricContext\x1a\n\n\x08Response:+\xe2?(\n&com.databricks.rpc.RPC[$this.Response]\"+\n\rMetricContext\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"{\n\x11MetricWithContext\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01\x12\x11\n\ttimestamp\x18\x03 \x01(\x03\x12\x0f\n\x04step\x18\x04 \x01(\x03:\x01\x30\x12&\n\x07\x63ontext\x18\x05 \x03(\x0b\x32\x15.mlflow.MetricContext2\xab\x01\n\x14MlflowServiceWrapped\x12\x92\x01\n\x10logMetricWrapped\x12\x18.mlflow.LogMetricWrapped\x1a!.mlflow.LogMetricWrapped.Response\"A\xf2\x86\x19=\n%\n\x04POST\x12\x17/mlflow/runs/log-metric\x1a\x04\x08\x02\x10\x00\x10\x01*\x12Log Metric WrappedB\x1e\n\x14org.mlflow.api.proto\x90\x01\x01\xe2?\x02\x10\x01')
 

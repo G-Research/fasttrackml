@@ -31,7 +31,8 @@ func GetDashboards(c *fiber.Ctx) error {
 				&database.App{
 					NamespaceID: ns.ID,
 				},
-			).Where("NOT App.is_archived"),
+				"NamespaceID",
+			).Where(`NOT "App".is_archived`),
 		).
 		Where("NOT dashboards.is_archived").
 		Order("dashboards.updated_at").
@@ -123,7 +124,7 @@ func GetDashboard(c *fiber.Ctx) error {
 				&database.App{
 					NamespaceID: ns.ID,
 				},
-			).Where("NOT App.is_archived"),
+			).Where(`NOT "App".is_archived`),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dashboard).
@@ -175,7 +176,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 				&database.App{
 					NamespaceID: ns.ID,
 				},
-			).Where("NOT App.is_archived"),
+			).Where(`NOT "App".is_archived`),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dash).
@@ -230,7 +231,7 @@ func DeleteDashboard(c *fiber.Ctx) error {
 				&database.App{
 					NamespaceID: ns.ID,
 				},
-			).Where("NOT App.is_archived"),
+			).Where(`NOT "App".is_archived`),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dash).

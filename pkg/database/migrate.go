@@ -196,7 +196,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 
 			case "ac0b8b7c0014":
 				log.Info("Migrating database to FastTrackML schema 8073e7e037e5")
-				if err := db.Transaction(v_8073e7e037e5.Migrate); err != nil {
+				if err := v_8073e7e037e5.Migrate(db); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema 8073e7e037e5: %w", err)
 				}
 				fallthrough
@@ -315,13 +315,8 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				log.Info("Migrating database to FastTrackML schema e0d125c68d9a")
 				// We need to run this migration without foreign key constraints to avoid
 				// the cascading delete to kick in and delete all the runs.
-				if err := runWithoutForeignKeyIfNeeded(func() error {
-					if err := db.Transaction(v_e0d125c68d9a.Migrate); err != nil {
-						return fmt.Errorf("error migrating database to FastTrackML schema e0d125c68d9a: %w", err)
-					}
-					return nil
-				}); err != nil {
-					return err
+				if err := v_e0d125c68d9a.MigrateWithWrapper(db, runWithoutForeignKeyIfNeeded); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema e0d125c68d9a: %w", err)
 				}
 
 			default:

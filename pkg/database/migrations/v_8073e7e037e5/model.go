@@ -64,7 +64,7 @@ type Run struct {
 	ExperimentID   int32
 	Experiment     Experiment
 	DeletedTime    sql.NullInt64 `gorm:"type:bigint"`
-	RowNum         RowNum
+	RowNum         RowNum        `gorm:"index"`
 	Params         []Param
 	Tags           []Tag
 	Metrics        []Metric
@@ -111,7 +111,7 @@ type Metric struct {
 	RunID     string  `gorm:"column:run_uuid;not null;primaryKey;index"`
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
-	Iter      int64
+	Iter      int64   `gorm:"index"`
 }
 
 type LatestMetric struct {

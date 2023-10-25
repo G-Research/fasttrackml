@@ -24,17 +24,6 @@ var supportedAlembicVersions = []string{
 	"7f2a7d5fae7d",
 }
 
-// DisableForeignKeysIfNeeded disables foreign keys if needed for the migration
-func DisableForeignKeysIfNeeded(db *gorm.DB, fn func() error) error {
-	switch db.Dialector.Name() {
-	case SQLiteDialectorName:
-		//nolint:errcheck
-		migrator := db.Migrator().(sqlite.Migrator)
-		return migrator.RunWithoutForeignKey(fn)
-	}
-	return fn()
-}
-
 // CheckAndMigrateDB makes database migration.
 // nolint:gocyclo
 func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {

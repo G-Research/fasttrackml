@@ -1,12 +1,12 @@
 package v_e0d125c68d9a
 
 import (
-	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations"
 	"gorm.io/gorm"
 )
 
 func Migrate(db *gorm.DB) error {
-	return database.DisableForeignKeysIfNeeded(func() error {
+	return migrations.DisableForeignKeysIfNeeded(func() error {
 		return db.Transaction(func(tx *gorm.DB) error {
 			if err := tx.AutoMigrate(&Namespace{}); err != nil {
 				return err

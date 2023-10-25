@@ -47,7 +47,6 @@ func Migrate(db *gorm.DB) error {
 				Where("1 = 1").
 				Update("Version", "5d042539be4f").
 				Error
-
 		})
 	})
 }

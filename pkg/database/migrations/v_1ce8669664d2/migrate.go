@@ -3,6 +3,7 @@ package v_1ce8669664d2
 import (
 	"fmt"
 
+	"github.com/G-Research/fasttrackml/pkg/database/migrations"
 	"gorm.io/gorm"
 )
 

@@ -24,6 +24,17 @@ var supportedAlembicVersions = []string{
 	"7f2a7d5fae7d",
 }
 
+// DisableForeignKeysIfNeeded disables foreign keys if needed for the migration
+func DisableForeignKeysIfNeeded(db *gorm.DB, fn func() error) error {
+	switch db.Dialector.Name() {
+	case SQLiteDialectorName:
+		//nolint:errcheck
+		migrator := db.Migrator().(sqlite.Migrator)
+		return migrator.RunWithoutForeignKey(fn)
+	}
+	return fn()
+}
+
 // CheckAndMigrateDB makes database migration.
 // nolint:gocyclo
 func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
@@ -313,9 +324,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 
 			case "5d042539be4f":
 				log.Info("Migrating database to FastTrackML schema e0d125c68d9a")
-				// We need to run this migration without foreign key constraints to avoid
-				// the cascading delete to kick in and delete all the runs.
-				if err := v_e0d125c68d9a.MigrateWithWrapper(db, runWithoutForeignKeyIfNeeded); err != nil {
+				if err := v_e0d125c68d9a.Migrate(db); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema e0d125c68d9a: %w", err)
 				}
 

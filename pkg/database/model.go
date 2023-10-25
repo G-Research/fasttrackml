@@ -177,7 +177,7 @@ type Dashboard struct {
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	AppID       *uuid.UUID `gorm:"type:uuid" json:"app_id"`
-	App         App        `json:"-"`
+	App         App        `gorm:"embedded;embeddedPrefix:app_" json:"-"`
 }
 
 func (d Dashboard) MarshalJSON() ([]byte, error) {

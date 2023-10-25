@@ -3,8 +3,9 @@ package v_5d042539be4f
 import (
 	"fmt"
 
-	"github.com/G-Research/fasttrackml/pkg/database/migrations"
 	"gorm.io/gorm"
+
+	"github.com/G-Research/fasttrackml/pkg/database/migrations"
 )
 
 func Migrate(db *gorm.DB) error {

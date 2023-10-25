@@ -14,8 +14,8 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/database/migration_5d042539be4f"
-	"github.com/G-Research/fasttrackml/pkg/database/migration_8073e7e037e5"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_8073e7e037e5"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_e0d125c68d9a"
 )
 
 var supportedAlembicVersions = []string{
@@ -196,7 +196,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 
 			case "ac0b8b7c0014":
 				log.Info("Migrating database to FastTrackML schema 8073e7e037e5")
-				if err := db.Transaction(migration_8073e7e037e5.Migrate); err != nil {
+				if err := db.Transaction(v_8073e7e037e5.Migrate); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema 8073e7e037e5: %w", err)
 				}
 				fallthrough
@@ -316,7 +316,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				// We need to run this migration without foreign key constraints to avoid
 				// the cascading delete to kick in and delete all the runs.
 				if err := runWithoutForeignKeyIfNeeded(func() error {
-					if err := db.Transaction(migration_e0d125c68d9a.Migrate); err != nil {
+					if err := db.Transaction(v_e0d125c68d9a.Migrate); err != nil {
 						return fmt.Errorf("error migrating database to FastTrackML schema e0d125c68d9a: %w", err)
 					}
 					return nil

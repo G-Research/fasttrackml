@@ -1,4 +1,4 @@
-package migration_8073e7e037e5
+package v_8073e7e037e5
 
 import (
 	"gorm.io/gorm"

@@ -48,12 +48,14 @@ type ExperimentTag struct {
 }
 
 type Run struct {
-	ID             string         `gorm:"column:run_uuid;type:varchar(32);not null;primaryKey"`
-	Name           string         `gorm:"type:varchar(250)"`
-	SourceType     string         `gorm:"type:varchar(20);check:source_type IN ('NOTEBOOK', 'JOB', 'LOCAL', 'UNKNOWN', 'PROJECT')"`
-	SourceName     string         `gorm:"type:varchar(500)"`
-	EntryPointName string         `gorm:"type:varchar(50)"`
-	UserID         string         `gorm:"type:varchar(256)"`
+	ID   string `gorm:"column:run_uuid;type:varchar(32);not null;primaryKey"`
+	Name string `gorm:"type:varchar(250)"`
+	//nolint:lll
+	SourceType     string `gorm:"type:varchar(20);check:source_type IN ('NOTEBOOK', 'JOB', 'LOCAL', 'UNKNOWN', 'PROJECT')"`
+	SourceName     string `gorm:"type:varchar(500)"`
+	EntryPointName string `gorm:"type:varchar(50)"`
+	UserID         string `gorm:"type:varchar(256)"`
+	//nolint:lll
 	Status         Status         `gorm:"type:varchar(9);check:status IN ('SCHEDULED', 'FAILED', 'FINISHED', 'RUNNING', 'KILLED')"`
 	StartTime      sql.NullInt64  `gorm:"type:bigint"`
 	EndTime        sql.NullInt64  `gorm:"type:bigint"`
@@ -200,6 +202,7 @@ func (s *AppState) Scan(v interface{}) error {
 	if nullS.Valid {
 		return json.Unmarshal([]byte(nullS.String), s)
 	}
+	//nolint:ineffassign
 	s = nil
 	return nil
 }

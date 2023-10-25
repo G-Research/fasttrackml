@@ -3,8 +3,8 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
-	"io"
 	"os"
 	"testing"
 	"time"
@@ -15,28 +15,21 @@ import (
 )
 
 func TestMigrate(t *testing.T) {
-	// copy the original mlflow db to a temp file
-	mlflowDbPath := t.TempDir()
-	src, err := os.Open("mlflow.db")
-	assert.Nil(t, err)
-	defer func() {
-		err := src.Close()
-		assert.Nil(t, err)
-	}()
-
-	dst, err := os.Create(fmt.Sprintf("%s/mlflow.db", mlflowDbPath))
-	assert.Nil(t, err)
-	defer func() {
-		err := dst.Close()
-		assert.Nil(t, err)
-	}()
-
-	_, err = io.Copy(dst, src)
+	// setup sqlite MLFlow database from the schema
+	mlflowDBPath := fmt.Sprintf("%s/mlflow.db", t.TempDir())
+	mlflowDB, err := sql.Open("sqlite3", mlflowDBPath)
 	assert.Nil(t, err)
 
-	// make DbProvider using the temp copy
+	mlflowSql, err := os.ReadFile("mlflow.sql")
+	assert.Nil(t, err)
+
+	_, err = mlflowDB.Exec(string(mlflowSql))
+	assert.Nil(t, err)
+	assert.Nil(t, mlflowDB.Close())
+
+	// make DbProvider using our package
 	db, err := database.NewDBProvider(
-		fmt.Sprintf("sqlite://%s/mlflow.db", mlflowDbPath),
+		fmt.Sprintf("sqlite://%s", mlflowDBPath),
 		1*time.Second,
 		20,
 	)

@@ -29,12 +29,9 @@ func GetDashboards(c *fiber.Ctx) error {
 				"ID", "Type", "IsArchived",
 			).Where(
 				&database.App{
-					Base: database.Base{
-						IsArchived: false,
-					},
 					NamespaceID: ns.ID,
-				}, "NamespaceID",
-			),
+				},
+			).Where("NOT App.is_archived"),
 		).
 		Where("NOT dashboards.is_archived").
 		Order("dashboards.updated_at").
@@ -65,13 +62,13 @@ func CreateDashboard(c *fiber.Ctx) error {
 
 	app := database.App{
 		Base: database.Base{
-			ID:         d.AppID,
-			IsArchived: false,
+			ID: d.AppID,
 		},
 		NamespaceID: ns.ID,
 	}
 	if err := database.DB.
 		Select("ID", "Type").
+		Where("NOT is_archived").
 		First(&app).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -124,12 +121,9 @@ func GetDashboard(c *fiber.Ctx) error {
 				"ID", "Type", "IsArchived",
 			).Where(
 				&database.App{
-					Base: database.Base{
-						IsArchived: false,
-					},
 					NamespaceID: ns.ID,
-				}, "NamespaceID",
-			),
+				},
+			).Where("NOT App.is_archived"),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dashboard).
@@ -179,12 +173,9 @@ func UpdateDashboard(c *fiber.Ctx) error {
 				"NamespaceID",
 			).Where(
 				&database.App{
-					Base: database.Base{
-						IsArchived: false,
-					},
 					NamespaceID: ns.ID,
-				}, "NamespaceID",
-			),
+				},
+			).Where("NOT App.is_archived"),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dash).
@@ -196,6 +187,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 	}
 
 	if err := database.DB.
+		Omit("App").
 		Model(&dash).
 		Updates(database.Dashboard{
 			Name:        d.Name,
@@ -232,11 +224,13 @@ func DeleteDashboard(c *fiber.Ctx) error {
 		Select("dashboards.id").
 		InnerJoins(
 			"App",
-			database.DB.Where(
+			database.DB.Select(
+				"NamespaceID",
+			).Where(
 				&database.App{
 					NamespaceID: ns.ID,
-				}, "NamespaceID",
-			),
+				},
+			).Where("NOT App.is_archived"),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dash).
@@ -248,6 +242,7 @@ func DeleteDashboard(c *fiber.Ctx) error {
 	}
 
 	if err := database.DB.
+		Omit("App").
 		Model(&dash).
 		Update("IsArchived", true).
 		Error; err != nil {

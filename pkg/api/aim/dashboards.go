@@ -23,19 +23,19 @@ func GetDashboards(c *fiber.Ctx) error {
 
 	var dashboards []database.Dashboard
 	if err := database.DB.
-		Select(
-			"dashboards.id",
-			"dashboards.name",
-			"dashboards.description",
-			"dashboards.created_at",
-			"dashboards.updated_at",
-			"apps.id AS app_id",
-			"apps.is_archived AS app_is_archived",
-			"apps.type AS app_type",
-		).
-		Joins(
-			"INNER JOIN apps ON apps.id = dashboards.app_id AND apps.namespace_id = ? AND NOT apps.is_archived",
-			ns.ID,
+		InnerJoins(
+			"App",
+			database.DB.Select(
+				"ID", "Type", "IsArchived",
+			).Where(
+				&database.App{
+					Base: database.Base{
+						IsArchived: false,
+					},
+					NamespaceID: ns.ID,
+				},
+				"NamespaceID", "IsArchived",
+			),
 		).
 		Where("NOT dashboards.is_archived").
 		Order("dashboards.updated_at").
@@ -119,19 +119,19 @@ func GetDashboard(c *fiber.Ctx) error {
 		},
 	}
 	if err := database.DB.
-		Select(
-			"dashboards.id",
-			"dashboards.name",
-			"dashboards.description",
-			"dashboards.created_at",
-			"dashboards.updated_at",
-			"apps.id AS app_id",
-			"apps.is_archived AS app_is_archived",
-			"apps.type AS app_type",
-		).
-		Joins(
-			"INNER JOIN apps ON apps.id = dashboards.app_id AND apps.namespace_id = ? AND NOT apps.is_archived",
-			ns.ID,
+		InnerJoins(
+			"App",
+			database.DB.Select(
+				"ID", "Type", "IsArchived",
+			).Where(
+				&database.App{
+					Base: database.Base{
+						IsArchived: false,
+					},
+					NamespaceID: ns.ID,
+				},
+				"NamespaceID", "IsArchived",
+			),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dashboard).
@@ -175,9 +175,19 @@ func UpdateDashboard(c *fiber.Ctx) error {
 		},
 	}
 	if err := database.DB.
-		Joins(
-			"INNER JOIN apps ON apps.id = dashboards.app_id AND apps.namespace_id = ? AND NOT apps.is_archived",
-			ns.ID,
+		InnerJoins(
+			"App",
+			database.DB.Select(
+				"NamespaceID",
+			).Where(
+				&database.App{
+					Base: database.Base{
+						IsArchived: false,
+					},
+					NamespaceID: ns.ID,
+				},
+				"NamespaceID", "IsArchived",
+			),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dash).
@@ -224,9 +234,19 @@ func DeleteDashboard(c *fiber.Ctx) error {
 	}
 	if err := database.DB.
 		Select("dashboards.id").
-		Joins(
-			"INNER JOIN apps ON apps.id = dashboards.app_id AND apps.namespace_id = ? AND NOT apps.is_archived",
-			ns.ID,
+		InnerJoins(
+			"App",
+			database.DB.Select(
+				"NamespaceID",
+			).Where(
+				&database.App{
+					Base: database.Base{
+						IsArchived: false,
+					},
+					NamespaceID: ns.ID,
+				},
+				"NamespaceID", "IsArchived",
+			),
 		).
 		Where("NOT dashboards.is_archived").
 		First(&dash).

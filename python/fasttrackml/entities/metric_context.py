@@ -1,4 +1,3 @@
-from fasttrackml.protos.metricService_pb2 import MetricContext as ProtoMetricContext
 from mlflow.entities._mlflow_object import _MLflowObject
 
 
@@ -23,13 +22,3 @@ class MetricContext(_MLflowObject):
     def value(self):
         """String value of the context."""
         return self._value
-
-    def to_proto(self):
-        param = ProtoMetricContext()
-        param.key = self.key
-        param.value = self.value
-        return param
-
-    @classmethod
-    def from_proto(cls, proto):
-        return cls(proto.key, proto.value)

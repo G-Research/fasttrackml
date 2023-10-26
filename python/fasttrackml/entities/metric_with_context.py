@@ -1,4 +1,3 @@
-from fasttrackml.protos.metricService_pb2 import MetricWithContext as ProtoMetric
 from mlflow.entities._mlflow_object import _MLflowObject
 
 
@@ -38,19 +37,7 @@ class MetricWithContext(_MLflowObject):
     def context(self):
         """MetricContext metric context."""
         return self._context
-
-    def to_proto(self):
-        metric = ProtoMetric()
-        metric.key = self.key
-        metric.value = self.value
-        metric.timestamp = self.timestamp
-        metric.step = self.step
-        metric.context = self.context
-
-    @classmethod
-    def from_proto(cls, proto):
-        return cls(proto.key, proto.value, proto.timestamp, proto.step, proto.context)
-
+    
     def __eq__(self, __o):
         if isinstance(__o, self.__class__):
             return self.__dict__ == __o.__dict__

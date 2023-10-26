@@ -19,8 +19,7 @@ class TrackingServiceClientExtend(TrackingServiceClient):
         step = step if step is not None else 0
         context = context if context else {}
         metric_value = convert_metric_value_to_float_if_possible(value)
-        contextList=[MetricContext(key, value) for key, value in context.items()]
-        metric = MetricWithContext(key, metric_value, timestamp, step, contextList)
+        metric = MetricWithContext(key, metric_value, timestamp, step, context)
 
         store = ContextsupportStore(lambda: MlflowHostCreds(self.tracking_uri))
         store.log_metric_with_context(run_id, metric)

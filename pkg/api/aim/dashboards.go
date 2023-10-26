@@ -29,9 +29,6 @@ func GetDashboards(c *fiber.Ctx) error {
 				"ID", "Type", "IsArchived",
 			).Where(
 				&database.App{
-					Base: database.Base{
-						IsArchived: false,
-					},
 					NamespaceID: ns.ID,
 				},
 				"NamespaceID",
@@ -125,9 +122,6 @@ func GetDashboard(c *fiber.Ctx) error {
 				"ID", "Type", "IsArchived",
 			).Where(
 				&database.App{
-					Base: database.Base{
-						IsArchived: false,
-					},
 					NamespaceID: ns.ID,
 				},
 				"NamespaceID",
@@ -181,9 +175,6 @@ func UpdateDashboard(c *fiber.Ctx) error {
 				"NamespaceID",
 			).Where(
 				&database.App{
-					Base: database.Base{
-						IsArchived: false,
-					},
 					NamespaceID: ns.ID,
 				},
 				"NamespaceID",
@@ -240,9 +231,6 @@ func DeleteDashboard(c *fiber.Ctx) error {
 				"NamespaceID",
 			).Where(
 				&database.App{
-					Base: database.Base{
-						IsArchived: false,
-					},
 					NamespaceID: ns.ID,
 				},
 				"NamespaceID",

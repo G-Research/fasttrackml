@@ -34,7 +34,7 @@ func GetDashboards(c *fiber.Ctx) error {
 					},
 					NamespaceID: ns.ID,
 				},
-				"NamespaceID", "IsArchived",
+				"NamespaceID",
 			),
 		).
 		Where("NOT dashboards.is_archived").
@@ -130,7 +130,7 @@ func GetDashboard(c *fiber.Ctx) error {
 					},
 					NamespaceID: ns.ID,
 				},
-				"NamespaceID", "IsArchived",
+				"NamespaceID",
 			),
 		).
 		Where("NOT dashboards.is_archived").
@@ -186,7 +186,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 					},
 					NamespaceID: ns.ID,
 				},
-				"NamespaceID", "IsArchived",
+				"NamespaceID",
 			),
 		).
 		Where("NOT dashboards.is_archived").
@@ -245,7 +245,7 @@ func DeleteDashboard(c *fiber.Ctx) error {
 					},
 					NamespaceID: ns.ID,
 				},
-				"NamespaceID", "IsArchived",
+				"NamespaceID",
 			),
 		).
 		Where("NOT dashboards.is_archived").

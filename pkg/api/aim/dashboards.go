@@ -26,7 +26,7 @@ func GetDashboards(c *fiber.Ctx) error {
 		InnerJoins(
 			"App",
 			database.DB.Select(
-				"ID", "Type", "IsArchived",
+				"ID", "Type",
 			).Where(
 				&database.App{
 					NamespaceID: ns.ID,
@@ -119,7 +119,7 @@ func GetDashboard(c *fiber.Ctx) error {
 		InnerJoins(
 			"App",
 			database.DB.Select(
-				"ID", "Type", "IsArchived",
+				"ID", "Type",
 			).Where(
 				&database.App{
 					NamespaceID: ns.ID,
@@ -172,7 +172,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 		InnerJoins(
 			"App",
 			database.DB.Select(
-				"NamespaceID",
+				"ID", "Type",
 			).Where(
 				&database.App{
 					NamespaceID: ns.ID,
@@ -228,7 +228,7 @@ func DeleteDashboard(c *fiber.Ctx) error {
 		InnerJoins(
 			"App",
 			database.DB.Select(
-				"NamespaceID",
+				"ID", "Type",
 			).Where(
 				&database.App{
 					NamespaceID: ns.ID,

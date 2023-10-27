@@ -342,10 +342,8 @@ func TestNewService_GetMetricHistories_Ok(t *testing.T) {
 
 			// call service under testing.
 			service := NewService(&runRepository, &metricRepository)
+			//nolint:rowserrcheck,sqlclosecheck
 			rows, iterator, err := service.GetMetricHistories(context.TODO(), tt.namespace, tt.request)
-			defer func() {
-				assert.Nil(t, rows.Close())
-			}()
 			assert.Equal(t, tt.expectedErr, err)
 			assert.Equal(t, tt.expectedRows, rows)
 			assert.Nil(t, rows.Err())

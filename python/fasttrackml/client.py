@@ -1,7 +1,9 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Sequence
 
 from fasttrackml._tracking_service.client import TrackingServiceClientExtend
+from fasttrackml.entities.metric_with_context import MetricWithContext
 from mlflow import MlflowClient
+from mlflow.entities import Param, RunTag
 from mlflow.tracking._tracking_service import utils
 
 
@@ -21,3 +23,10 @@ class MlflowClientExtend(MlflowClient):
             context: Optional[Dict[str, str]] = None,
         ) -> None:
             self._tracking_client.log_metric_with_context(run_id, key, value, timestamp, step, context)
+    
+    def log_batch_with_context(
+            self,
+            run_id: str,
+            metrics: Sequence[MetricWithContext] = (),
+        ) -> None:
+            self._tracking_client.log_batch_witch_context(run_id, metrics)

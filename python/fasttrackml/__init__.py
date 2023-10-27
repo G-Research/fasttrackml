@@ -3,8 +3,8 @@ import contextlib
 import mlflow
 from mlflow import *
 
-del log_metric
-from fasttrackml.fluent_context_support import log_metric_with_context as log_metric
+del log_metric, log_metrics
+from fasttrackml.fluent_context_support import log_metric, log_metrics
 
 __all__ = [name for name in dir() if name in dir(mlflow)]
 

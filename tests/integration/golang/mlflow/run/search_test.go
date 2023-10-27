@@ -2950,35 +2950,24 @@ func (s *SearchTestSuite) testCases(
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := &response.SearchRunsResponse{}
+			client := s.MlflowClient.WithMethod(
+				http.MethodPost,
+			).WithRequest(
+				tt.request,
+			).WithResponse(
+				&resp,
+			)
 			if useNamespaceInRequest {
-				assert.Nil(
-					s.T(),
-					s.MlflowClient.WithMethod(
-						http.MethodPost,
-					).WithRequest(
-						tt.request,
-					).WithResponse(
-						&resp,
-					).WithNamespace(
-						namespace.Code,
-					).DoRequest(
-						fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),
-					),
-				)
-			} else {
-				assert.Nil(
-					s.T(),
-					s.MlflowClient.WithMethod(
-						http.MethodPost,
-					).WithRequest(
-						tt.request,
-					).WithResponse(
-						&resp,
-					).DoRequest(
-						fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),
-					),
+				client = client.WithNamespace(
+					namespace.Code,
 				)
 			}
+			assert.Nil(
+				s.T(),
+				client.DoRequest(
+					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),
+				),
+			)
 			assert.Equal(s.T(), len(tt.response.Runs), len(resp.Runs))
 			assert.Equal(s.T(), len(tt.response.NextPageToken), len(resp.NextPageToken))
 

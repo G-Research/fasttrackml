@@ -10,7 +10,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-func Test_AdjustSearchRunsRequestForNamespace_Ok(t *testing.T) {
+func Test_adjustSearchRunsRequestForNamespace_Ok(t *testing.T) {
 	testData := []struct {
 		name           string
 		ns             *models.Namespace
@@ -45,13 +45,13 @@ func Test_AdjustSearchRunsRequestForNamespace_Ok(t *testing.T) {
 
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
-			AdjustSearchRunsRequestForNamespace(tt.ns, tt.srr)
+			adjustSearchRunsRequestForNamespace(tt.ns, tt.srr)
 			assert.Equal(t, tt.expectedResult, tt.srr)
 		})
 	}
 }
 
-func Test_AdjustCreateRunRequestForNamespace_Ok(t *testing.T) {
+func Test_adjustCreateRunRequestForNamespace_Ok(t *testing.T) {
 	testData := []struct {
 		name           string
 		ns             *models.Namespace
@@ -86,7 +86,7 @@ func Test_AdjustCreateRunRequestForNamespace_Ok(t *testing.T) {
 
 	for _, tc := range testData {
 		t.Run(tc.name, func(t *testing.T) {
-			AdjustCreateRunRequestForNamespace(tc.ns, tc.crr)
+			adjustCreateRunRequestForNamespace(tc.ns, tc.crr)
 			assert.Equal(t, tc.expectedResult, tc.crr)
 		})
 	}

@@ -73,7 +73,7 @@ func NewService(
 func (s Service) CreateRun(
 	ctx context.Context, ns *models.Namespace, req *request.CreateRunRequest,
 ) (*models.Run, error) {
-	AdjustCreateRunRequestForNamespace(ns, req)
+	adjustCreateRunRequestForNamespace(ns, req)
 	experimentID, err := strconv.ParseInt(req.ExperimentID, 10, 32)
 	if err != nil {
 		return nil, api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ExperimentID, err)
@@ -157,7 +157,7 @@ func (s Service) GetRun(
 func (s Service) SearchRuns(
 	ctx context.Context, namespace *models.Namespace, req *request.SearchRunsRequest,
 ) ([]models.Run, int, int, error) {
-	AdjustSearchRunsRequestForNamespace(namespace, req)
+	adjustSearchRunsRequestForNamespace(namespace, req)
 	if err := ValidateSearchRunsRequest(req); err != nil {
 		return nil, 0, 0, err
 	}

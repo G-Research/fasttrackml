@@ -36,12 +36,12 @@ func (s *SearchTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest(s.T())
 }
 
-func (s *SearchTestSuite) Test_Ok() {
+func (s *SearchTestSuite) Test_DefaultNamespace_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	// create test experiment.
+	// create default namespace and experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
@@ -56,6 +56,38 @@ func (s *SearchTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
+	s.testCases(namespace, experiment, false)
+}
+
+func (s *SearchTestSuite) Test_CustomNamespace_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	// create custom namespace and experiment.
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		Code:                "custom",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	assert.Nil(s.T(), err)
+
+	// update default experiment id.
+	namespace.DefaultExperimentID = experiment.ID
+	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
+
+	assert.Nil(s.T(), err)
+
+	s.testCases(namespace, experiment, true)
+}
+
+func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *models.Experiment, useNamespaceInRequest bool) {
 	// create 3 different test runs and attach tags, metrics, params, etc.
 	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id1",
@@ -2864,18 +2896,35 @@ func (s *SearchTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := &response.SearchRunsResponse{}
-			assert.Nil(
-				s.T(),
-				s.MlflowClient.WithMethod(
-					http.MethodPost,
-				).WithRequest(
-					tt.request,
-				).WithResponse(
-					&resp,
-				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),
-				),
-			)
+			if useNamespaceInRequest {
+				assert.Nil(
+					s.T(),
+					s.MlflowClient.WithMethod(
+						http.MethodPost,
+					).WithRequest(
+						tt.request,
+					).WithResponse(
+						&resp,
+					).WithNamespace(
+						namespace.Code,
+					).DoRequest(
+						fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),
+					),
+				)
+			} else {
+				assert.Nil(
+					s.T(),
+					s.MlflowClient.WithMethod(
+						http.MethodPost,
+					).WithRequest(
+						tt.request,
+					).WithResponse(
+						&resp,
+					).DoRequest(
+						fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),
+					),
+				)
+			}
 			assert.Equal(s.T(), len(tt.response.Runs), len(resp.Runs))
 			assert.Equal(s.T(), len(tt.response.NextPageToken), len(resp.NextPageToken))
 

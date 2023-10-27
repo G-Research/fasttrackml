@@ -157,9 +157,8 @@ func (r MetricRepository) GetMetricHistories(
 		query := r.db.WithContext(ctx).Model(
 			&database.Run{},
 		).Joins(
-			"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-		).Where(
-			"experiments.namespace_id = ?", namespaceID,
+			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+			namespaceID,
 		).Where(
 			"runs.experiment_id IN ?", experimentIDs,
 		)
@@ -195,9 +194,8 @@ func (r MetricRepository) GetMetricHistories(
 	).Joins(
 		"JOIN runs on runs.run_uuid = metrics.run_uuid",
 	).Joins(
-		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
-	).Where(
-		"experiments.namespace_id = ?", namespaceID,
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+		namespaceID,
 	).Order(
 		"runs.start_time DESC",
 	).Order(
@@ -274,11 +272,10 @@ func (r MetricRepository) GetMetricHistoryBulk(
 	).Joins(
 		"LEFT JOIN runs ON runs.run_uuid = metrics.run_uuid",
 	).Joins(
-		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+		namespaceID,
 	).Where(
 		"key = ?", key,
-	).Where(
-		"experiments.namespace_id = ?", namespaceID,
 	).Order(
 		"metrics.run_uuid",
 	).Order(

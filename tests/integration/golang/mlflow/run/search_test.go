@@ -59,14 +59,15 @@ func (s *SearchTestSuite) Test_DefaultNamespace_Ok() {
 	s.testCases(namespace, experiment, false, *experiment.ID)
 }
 
-func (s *SearchTestSuite) Test_CustomNamespaceExerimentZero_Ok() {
+func (s *SearchTestSuite) Test_DefaultNamespaceExerimentZero_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	// create custom namespace and experiment.
+	// create default namespace and experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		Code:                "custom",
+		ID:                  1,
+		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
 	assert.Nil(s.T(), err)
@@ -82,9 +83,7 @@ func (s *SearchTestSuite) Test_CustomNamespaceExerimentZero_Ok() {
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
 
-	assert.Nil(s.T(), err)
-
-	s.testCases(namespace, experiment, true, int32(0))
+	s.testCases(namespace, experiment, false, int32(0))
 }
 
 func (s *SearchTestSuite) Test_CustomNamespace_Ok() {
@@ -115,7 +114,7 @@ func (s *SearchTestSuite) Test_CustomNamespace_Ok() {
 	s.testCases(namespace, experiment, true, *experiment.ID)
 }
 
-func (s *SearchTestSuite) Test_CustomNamespaceWithExperimentZero_Ok() {
+func (s *SearchTestSuite) Test_CustomNamespaceExperimentZero_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()

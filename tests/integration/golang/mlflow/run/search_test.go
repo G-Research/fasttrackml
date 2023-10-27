@@ -82,6 +82,7 @@ func (s *SearchTestSuite) Test_DefaultNamespaceExerimentZero_Ok() {
 	// update default experiment id.
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
+	assert.Nil(s.T(), err)
 
 	s.testCases(namespace, experiment, false, int32(0))
 }
@@ -103,12 +104,6 @@ func (s *SearchTestSuite) Test_CustomNamespace_Ok() {
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
-
-	// update default experiment id.
-	namespace.DefaultExperimentID = experiment.ID
-	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-
 	assert.Nil(s.T(), err)
 
 	s.testCases(namespace, experiment, true, *experiment.ID)
@@ -136,7 +131,6 @@ func (s *SearchTestSuite) Test_CustomNamespaceExperimentZero_Ok() {
 	// update default experiment id.
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-
 	assert.Nil(s.T(), err)
 
 	s.testCases(namespace, experiment, true, int32(0))

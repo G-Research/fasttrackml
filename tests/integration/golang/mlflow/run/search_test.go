@@ -56,7 +56,35 @@ func (s *SearchTestSuite) Test_DefaultNamespace_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	s.testCases(namespace, experiment, false)
+	s.testCases(namespace, experiment, false, *experiment.ID)
+}
+
+func (s *SearchTestSuite) Test_CustomNamespaceExerimentZero_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	// create custom namespace and experiment.
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		Code:                "custom",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	assert.Nil(s.T(), err)
+
+	// update default experiment id.
+	namespace.DefaultExperimentID = experiment.ID
+	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
+
+	assert.Nil(s.T(), err)
+
+	s.testCases(namespace, experiment, true, int32(0))
 }
 
 func (s *SearchTestSuite) Test_CustomNamespace_Ok() {
@@ -84,10 +112,43 @@ func (s *SearchTestSuite) Test_CustomNamespace_Ok() {
 
 	assert.Nil(s.T(), err)
 
-	s.testCases(namespace, experiment, true)
+	s.testCases(namespace, experiment, true, *experiment.ID)
 }
 
-func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *models.Experiment, useNamespaceInRequest bool) {
+func (s *SearchTestSuite) Test_CustomNamespaceWithExperimentZero_Ok() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	// create custom namespace and experiment.
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		Code:                "custom",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	assert.Nil(s.T(), err)
+
+	// update default experiment id.
+	namespace.DefaultExperimentID = experiment.ID
+	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
+
+	assert.Nil(s.T(), err)
+
+	s.testCases(namespace, experiment, true, int32(0))
+}
+
+func (s *SearchTestSuite) testCases(
+	namespace *models.Namespace,
+	experiment *models.Experiment,
+	useNamespaceInRequest bool,
+	experimentIDInRequest int32,
+) {
 	// create 3 different test runs and attach tags, metrics, params, etc.
 	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id1",
@@ -225,7 +286,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithViewTypeAllParameter3RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
 				ViewType:      request.ViewTypeAll,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -342,7 +403,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithViewTypeActiveOnlyParameter2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
 				ViewType:      request.ViewTypeActiveOnly,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -424,7 +485,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithViewTypeDeletedOnlyParameter1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				ViewType:      request.ViewTypeDeletedOnly,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -471,7 +532,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeStartTimeOperationGrater1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.start_time > 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -518,7 +579,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeStartTimeOperationGraterOrEqual2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.start_time >= 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -600,7 +661,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeStartTimeOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.start_time != 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -647,7 +708,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeStartTimeOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.start_time = 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -694,7 +755,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeStartTimeOperationLess1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.start_time < 333444444`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -741,7 +802,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeStartTimeOperationLessOrEqual2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.start_time <= 333444444`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -823,7 +884,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeEndTimeOperationGrater1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.end_time > 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -870,7 +931,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeEndTimeOperationGraterOrEqual2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.end_time >= 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -952,7 +1013,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeEndTimeOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.end_time != 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -999,7 +1060,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeEndTimeOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.end_time = 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1046,7 +1107,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeEndTimeOperationLess1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.end_time < 444555555`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1093,7 +1154,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeEndTimeOperationLessOrEqual2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.end_time <= 444555555`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1175,7 +1236,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeRunNameOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.run_name != "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1222,7 +1283,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeRunNameOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.run_name = "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1269,7 +1330,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeRunNameOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.run_name LIKE "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1316,7 +1377,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeRunNameOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.run_name ILIKE "testruntag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1363,7 +1424,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeStatusOperationNotEqualNoRunsShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.status != "RUNNING"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{},
 		},
@@ -1371,7 +1432,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeStatusOperationEqual2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.status = "RUNNING"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1453,7 +1514,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeStatusOperationLike2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.status LIKE "RUNNING"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1535,7 +1596,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeStatusOperationILike2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.status ILIKE "running"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1617,7 +1678,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeUserIDOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.user_id != 1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1664,7 +1725,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeUserIDOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.user_id = 3`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1711,7 +1772,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeUserIDOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.user_id LIKE "3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1758,7 +1819,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeUserIDOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.user_id ILIKE "3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1805,7 +1866,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeArtifactURIOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.artifact_uri != "artifact_uri1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1852,7 +1913,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeArtifactURIOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.artifact_uri = "artifact_uri3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1899,7 +1960,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeArtifactURIOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.artifact_uri LIKE "artifact_uri3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1946,7 +2007,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeArtifactURIOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `attributes.artifact_uri ILIKE "ArTiFaCt_UrI3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1993,7 +2054,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeRunIDOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        fmt.Sprintf(`attributes.run_id != "%s"`, run1.ID),
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2040,7 +2101,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeRunIDOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        fmt.Sprintf(`attributes.run_id = "%s"`, run3.ID),
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2087,7 +2148,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeRunIDOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        fmt.Sprintf(`attributes.run_id LIKE "%s"`, run3.ID),
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2134,7 +2195,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeRunIDOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        fmt.Sprintf(`attributes.run_id ILIKE "%s"`, strings.ToUpper(run3.ID)),
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2181,7 +2242,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeRunIDOperationIN1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        fmt.Sprintf(`attributes.run_id IN ('%s')`, run3.ID),
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2228,7 +2289,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeRunIDOperationIN1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        fmt.Sprintf(`attributes.run_id NOT IN ('%s')`, run1.ID),
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2275,7 +2336,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeMetricsOperationGrater1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `metrics.run3 > 1.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2322,7 +2383,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeMetricsOperationGraterOrEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `metrics.run3 >= 1.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2369,7 +2430,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeMetricsOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `metrics.run3 != 1.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2416,7 +2477,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeMetricsOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `metrics.run3 = 3.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2463,7 +2524,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeMetricsOperationLess0RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `metrics.run3 < 3.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				NextPageToken: "",
@@ -2473,7 +2534,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeMetricsOperationLessOrEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `metrics.run3 <= 3.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2520,7 +2581,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeParamsOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `params.param3 != "value1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2567,7 +2628,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeParamsOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `params.param3 = "value3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2614,7 +2675,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeParamsOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `params.param3 LIKE "value3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2661,7 +2722,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeParamsOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `params.param3 ILIKE "VaLuE3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2708,7 +2769,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeTagsOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `tags.mlflow.runName != "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2755,7 +2816,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeTagsOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `tags.mlflow.runName = "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2802,7 +2863,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeTagsOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `tags.mlflow.runName LIKE "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2849,7 +2910,7 @@ func (s *SearchTestSuite) testCases(namespace *models.Namespace, experiment *mod
 			name: "SearchWithAttributeTagsOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
 				Filter:        `tags.mlflow.runName ILIKE "TeStRuNTaG1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{

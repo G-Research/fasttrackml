@@ -7,7 +7,9 @@ import (
 )
 
 func Migrate(db *gorm.DB) error {
-	return migrations.DisableForeignKeysIfNeeded(db, func() error {
+	// We need to run this migration without foreign key constraints to avoid
+	// the cascading delete to kick in and delete all the runs.
+	return migrations.RunWithoutForeignKeyIfNeeded(db, func() error {
 		return db.Transaction(func(tx *gorm.DB) error {
 			if err := tx.AutoMigrate(&Namespace{}); err != nil {
 				return err

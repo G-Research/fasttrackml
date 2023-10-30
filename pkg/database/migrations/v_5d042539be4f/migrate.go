@@ -3,13 +3,17 @@ package v_5d042539be4f
 import (
 	"fmt"
 
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/database/migrations"
 )
 
 func Migrate(db *gorm.DB) error {
-	return migrations.DisableForeignKeysIfNeeded(db, func() error {
+	// We need to run this migration without foreign key constraints to avoid
+	// the cascading delete to kick in and delete all the run data.
+	return migrations.RunWithoutForeignKeyIfNeeded(db, func() error {
 		return db.Transaction(func(tx *gorm.DB) error {
 			elems := []struct {
 				Table      string
@@ -20,10 +24,10 @@ func Migrate(db *gorm.DB) error {
 			}
 			for _, e := range elems {
 				switch tx.Dialector.Name() {
-				case migrations.SQLiteDialectorName:
+				case sqlite.Dialector{}.Name():
 					// SQLite tables need to be recreated to add or remove constraints.
 					// By not dropping the constraint, we can avoid having to recreate the table twice.
-				case migrations.PostgresDialectorName:
+				case postgres.Dialector{}.Name():
 					// Existing MLFlow Postgres databases have foreign key constraints with their own names.
 					// We need to drop them before we can add our own.
 					fk := fmt.Sprintf("%s_experiment_id_fkey", e.Table)

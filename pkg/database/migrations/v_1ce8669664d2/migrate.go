@@ -3,9 +3,9 @@ package v_1ce8669664d2
 import (
 	"fmt"
 
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-
-	"github.com/G-Research/fasttrackml/pkg/database/migrations"
 )
 
 func Migrate(db *gorm.DB) error {
@@ -13,10 +13,10 @@ func Migrate(db *gorm.DB) error {
 		constraints := []string{"Params", "Tags", "Metrics", "LatestMetrics"}
 		for _, constraint := range constraints {
 			switch tx.Dialector.Name() {
-			case migrations.SQLiteDialectorName:
+			case sqlite.Dialector{}.Name():
 				// SQLite tables need to be recreated to add or remove constraints.
 				// By not dropping the constraint, we can avoid having to recreate the table twice.
-			case migrations.PostgresDialectorName:
+			case postgres.Dialector{}.Name():
 				// Existing MLFlow Postgres databases have foreign key constraints
 				// with their own names. We need to drop them before we can add our own.
 				table := tx.NamingStrategy.TableName(constraint)

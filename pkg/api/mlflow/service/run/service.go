@@ -157,10 +157,10 @@ func (s Service) GetRun(
 func (s Service) SearchRuns(
 	ctx context.Context, namespace *models.Namespace, req *request.SearchRunsRequest,
 ) ([]models.Run, int, int, error) {
-	adjustSearchRunsRequestForNamespace(namespace, req)
 	if err := ValidateSearchRunsRequest(req); err != nil {
 		return nil, 0, 0, err
 	}
+	adjustSearchRunsRequestForNamespace(namespace, req)
 
 	// ViewType
 	var lifecyleStages []database.LifecycleStage

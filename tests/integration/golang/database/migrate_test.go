@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"path"
 	"testing"
 	"time"
 
@@ -15,12 +16,17 @@ import (
 )
 
 func TestMigrate(t *testing.T) {
+	testMigrateWithSchema(t, "mlflow-c48cb773bb87-v1.16.0.sql")
+	testMigrateWithSchema(t, "mlflow-7f2a7d5fae7d-v2.8.0.sql")
+}
+
+func testMigrateWithSchema(t *testing.T, schema string) {
 	// setup sqlite MLFlow database from the schema
-	mlflowDBPath := fmt.Sprintf("%s/mlflow.db", t.TempDir())
+	mlflowDBPath := path.Join(t.TempDir(), "mlflow.db")
 	mlflowDB, err := sql.Open("sqlite3", mlflowDBPath)
 	assert.Nil(t, err)
 
-	mlflowSql, err := os.ReadFile("mlflow.sql")
+	mlflowSql, err := os.ReadFile(schema)
 	assert.Nil(t, err)
 
 	_, err = mlflowDB.Exec(string(mlflowSql))

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FastTrackML</title>
     <link rel="stylesheet" href="/static/chooser/css/simple.min.css">
+    <link rel="stylesheet" href="/static/aim/assets/icomoon/icomoonIcons.css">
     <link rel="icon" type="image/x-icon" href="/static/chooser/favicon.ico">
     <style>
         :root {
@@ -30,9 +31,28 @@
         
         #namespaces-list { 
              overflow:auto;
-             height:20%;
+             height:30%;
              list-style-type: none;
+             padding: 0px;
+             border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 1rem;
          }
+         .selected-namespace {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #current {
+            text-align: center;
+            margin-right: 25px; /* Aggiungi la spaziatura desiderata tra #current e #current-icon */
+        }   
+
+        #current-icon {
+            margin-right: 5px;
+        }
+         
     </style>
 </head>
 
@@ -47,7 +67,6 @@
 
     <!-- We load the UI with JS to avoid issues when an URL with embedded credentials is used -->
     <main>
-        <p >Selected Namespace: {{.CurrentNamespace.Description}}</p>
         <p>Which UI do you want to use?</p>
         <div class="ui">
             <article>
@@ -65,10 +84,16 @@
         </div>
 
         <ul id="namespaces-list">
-            {{ range .Namespaces }}
-            <li>
-                <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.Description}}</a>    
+            <li class="selected-namespace">
+                <i id="current-icon" class="Icon__container icon-long-arrow-right"></i>
+                <b id="current">{{.CurrentNamespace.Description}}</b>
             </li>
+            {{ range .Namespaces }}
+                {{ if ne .Code $.CurrentNamespace.Code }}
+                    <li>
+                        <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.Description}}</a> 
+                    </li>
+                {{ end }}
             {{ end }}
         </ul>
 

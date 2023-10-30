@@ -1,0 +1,537 @@
+//go:build integration
+
+package flows
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
+)
+
+type ExperimentFlowTestSuite struct {
+	suite.Suite
+	helpers.BaseTestSuite
+}
+
+// TestExperimentFlowTestSuite tests the full experiments flow connected with namespace functionality.
+// Flow contains next endpoints:
+// - `POST /experiments/create`
+// - `POST /experiments/update`
+// - `POST /experiments/delete`
+// - `POST /experiments/restore`
+// - `GET /experiments/search`
+// - `GET /experiments/get`
+// - `GET /experiments/list`
+// - `GET /experiments/get-by-name`
+// - `POST /experiments/set-experiment-tag`
+func TestExperimentFlowTestSuite(t *testing.T) {
+	suite.Run(t, new(ExperimentFlowTestSuite))
+}
+
+func (s *ExperimentFlowTestSuite) SetupTest() {
+	s.BaseTestSuite.SetupTest(s.T())
+}
+
+func (s *ExperimentFlowTestSuite) TearDownTest() {
+	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+}
+
+func (s *ExperimentFlowTestSuite) Test_Ok() {
+	namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "experiment-namespace-1",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+	namespace2, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  2,
+		Code:                "experiment-namespace-2",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	assert.Nil(s.T(), err)
+
+	// 1. test `POST /experiments/create` endpoint.
+	// create experiments in scope of different namespaces.
+	experiment1ID := s.createExperiment(namespace1.Code, &request.CreateExperimentRequest{
+		Name:             "ExperimentName1",
+		ArtifactLocation: "/artifact/location",
+	})
+	experiment2ID := s.createExperiment(namespace2.Code, &request.CreateExperimentRequest{
+		Name:             "ExperimentName2",
+		ArtifactLocation: "/artifact/location",
+	})
+
+	// 2. test `GET /experiments/get` endpoint.
+	// check that experiments were created in scope of difference namespaces.
+	experiment1 := s.getExperimentByID(
+		namespace1.Code,
+		experiment1ID,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:               experiment1ID,
+				Name:             "ExperimentName1",
+				Tags:             []response.ExperimentTagPartialResponse{},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageActive),
+			},
+		},
+	)
+	experiment2 := s.getExperimentByID(
+		namespace2.Code,
+		experiment2ID,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:               experiment2ID,
+				Name:             "ExperimentName2",
+				Tags:             []response.ExperimentTagPartialResponse{},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageActive),
+			},
+		},
+	)
+
+	// 3. test `GET /experiments/get` endpoint.
+	// check that there is no intersection between experiments, so when we request
+	// experiment 1 in scope of namespace 2 and experiment 2 in scope of namespace 1 API will throw an error.
+	resp := api.ErrorResponse{}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodGet,
+		).WithNamespace(
+			namespace2.Code,
+		).WithQuery(
+			request.GetExperimentRequest{
+				ID: experiment1ID,
+			},
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
+		),
+	)
+	assert.Equal(
+		s.T(),
+		fmt.Sprintf(
+			"RESOURCE_DOES_NOT_EXIST: unable to find experiment '%s': error getting experiment by id: %s: record not found",
+			experiment1ID,
+			experiment1ID,
+		),
+		resp.Error(),
+	)
+	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
+
+	resp = api.ErrorResponse{}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodGet,
+		).WithNamespace(
+			namespace1.Code,
+		).WithQuery(
+			request.GetExperimentRequest{
+				ID: experiment2ID,
+			},
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
+		),
+	)
+	assert.Equal(
+		s.T(),
+		fmt.Sprintf(
+			"RESOURCE_DOES_NOT_EXIST: unable to find experiment '%s': error getting experiment by id: %s: record not found",
+			experiment2ID,
+			experiment2ID,
+		),
+		resp.Error(),
+	)
+	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
+
+	// 4. test `GET /experiments/get-by-name` endpoint.
+	// check that experiments were created in scope of difference namespaces.
+	s.getExperimentByName(
+		namespace1.Code,
+		experiment1.Experiment.Name,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:               experiment1ID,
+				Name:             "ExperimentName1",
+				Tags:             []response.ExperimentTagPartialResponse{},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageActive),
+			},
+		},
+	)
+	s.getExperimentByName(
+		namespace2.Code,
+		experiment2.Experiment.Name,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:               experiment2ID,
+				Name:             "ExperimentName2",
+				Tags:             []response.ExperimentTagPartialResponse{},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageActive),
+			},
+		},
+	)
+
+	// 5. test `GET /experiments/search` endpoint.
+	s.searchExperiment(namespace1.Code, []*response.ExperimentPartialResponse{
+		experiment1.Experiment,
+	})
+	s.searchExperiment(namespace2.Code, []*response.ExperimentPartialResponse{
+		experiment2.Experiment,
+	})
+
+	// 6. test `POST /experiments/update` endpoint.
+	s.updateExperiment(namespace1.Code, &request.UpdateExperimentRequest{
+		ID:   experiment1.Experiment.ID,
+		Name: "UpdatedExperiment1",
+	})
+	s.updateExperiment(namespace2.Code, &request.UpdateExperimentRequest{
+		ID:   experiment2.Experiment.ID,
+		Name: "UpdatedExperiment2",
+	})
+
+	// check that experiments were updated.
+	s.getExperimentByID(
+		namespace1.Code,
+		experiment1ID,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:               experiment1ID,
+				Name:             "UpdatedExperiment1",
+				Tags:             []response.ExperimentTagPartialResponse{},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageActive),
+			},
+		},
+	)
+	s.getExperimentByID(
+		namespace2.Code,
+		experiment2ID,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:               experiment2ID,
+				Name:             "UpdatedExperiment2",
+				Tags:             []response.ExperimentTagPartialResponse{},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageActive),
+			},
+		},
+	)
+
+	// 7. test `POST /experiments/set-experiment-tag` endpoint.
+	s.setExperimentTag(namespace1.Code, &request.SetExperimentTagRequest{
+		ID:    experiment1ID,
+		Key:   "KeyTag1",
+		Value: "ValueTag1",
+	})
+	s.setExperimentTag(namespace2.Code, &request.SetExperimentTagRequest{
+		ID:    experiment2ID,
+		Key:   "KeyTag2",
+		Value: "ValueTag2",
+	})
+
+	// check that experiments tags were updated.
+	s.getExperimentByID(
+		namespace1.Code,
+		experiment1ID,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:   experiment1ID,
+				Name: "UpdatedExperiment1",
+				Tags: []response.ExperimentTagPartialResponse{
+					{
+						Key:   "KeyTag1",
+						Value: "ValueTag1",
+					},
+				},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageActive),
+			},
+		},
+	)
+	s.getExperimentByID(
+		namespace2.Code,
+		experiment2ID,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:   experiment2ID,
+				Name: "UpdatedExperiment2",
+				Tags: []response.ExperimentTagPartialResponse{
+					{
+						Key:   "KeyTag2",
+						Value: "ValueTag2",
+					},
+				},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageActive),
+			},
+		},
+	)
+
+	// 8. test `POST /experiments/delete` endpoint.
+	s.deleteExperiment(namespace1.Code, experiment1.Experiment.ID)
+	s.deleteExperiment(namespace2.Code, experiment2.Experiment.ID)
+
+	// check that experiment lifecycle has been updated.
+	s.getExperimentByID(
+		namespace1.Code,
+		experiment1ID,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:   experiment1ID,
+				Name: "UpdatedExperiment1",
+				Tags: []response.ExperimentTagPartialResponse{
+					{
+						Key:   "KeyTag1",
+						Value: "ValueTag1",
+					},
+				},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageDeleted),
+			},
+		},
+	)
+	s.getExperimentByID(
+		namespace2.Code,
+		experiment2ID,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:   experiment2ID,
+				Name: "UpdatedExperiment2",
+				Tags: []response.ExperimentTagPartialResponse{
+					{
+						Key:   "KeyTag2",
+						Value: "ValueTag2",
+					},
+				},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageDeleted),
+			},
+		},
+	)
+
+	// 9. test `POST /experiments/restore` endpoint.
+	s.restoreExperiment(namespace1.Code, experiment1ID)
+	s.restoreExperiment(namespace2.Code, experiment2ID)
+
+	// check that experiment lifecycle has been updated.
+	s.getExperimentByID(
+		namespace1.Code,
+		experiment1ID,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:   experiment1ID,
+				Name: "UpdatedExperiment1",
+				Tags: []response.ExperimentTagPartialResponse{
+					{
+						Key:   "KeyTag1",
+						Value: "ValueTag1",
+					},
+				},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageActive),
+			},
+		},
+	)
+	s.getExperimentByID(
+		namespace2.Code,
+		experiment2ID,
+		&response.GetExperimentResponse{
+			Experiment: &response.ExperimentPartialResponse{
+				ID:   experiment2ID,
+				Name: "UpdatedExperiment2",
+				Tags: []response.ExperimentTagPartialResponse{
+					{
+						Key:   "KeyTag2",
+						Value: "ValueTag2",
+					},
+				},
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   string(models.LifecycleStageActive),
+			},
+		},
+	)
+}
+
+func (s *ExperimentFlowTestSuite) createExperiment(
+	namespace string, req *request.CreateExperimentRequest,
+) string {
+	// 1. test `POST /experiments/create` endpoint.
+	// create experiments in scope of different namespaces.
+	resp := response.CreateExperimentResponse{}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithNamespace(
+			namespace,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute),
+		),
+	)
+
+	return resp.ID
+}
+
+func (s *ExperimentFlowTestSuite) updateExperiment(namespace string, req *request.UpdateExperimentRequest) {
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithNamespace(
+			namespace,
+		).WithRequest(
+			req,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute),
+		),
+	)
+}
+
+func (s *ExperimentFlowTestSuite) searchExperiment(
+	namespace string, experiments []*response.ExperimentPartialResponse,
+) {
+	searchResp := response.SearchExperimentsResponse{}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithQuery(
+			request.SearchExperimentsRequest{},
+		).WithNamespace(
+			namespace,
+		).WithResponse(
+			&searchResp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute),
+		),
+	)
+	assert.Equal(s.T(), len(experiments), len(searchResp.Experiments))
+	assert.Equal(s.T(), "", searchResp.NextPageToken)
+	assert.Equal(s.T(), experiments, searchResp.Experiments)
+}
+
+func (s *ExperimentFlowTestSuite) getExperimentByID(
+	namespace string, experimentID string, actualResponse *response.GetExperimentResponse,
+) *response.GetExperimentResponse {
+	resp := response.GetExperimentResponse{}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodGet,
+		).WithNamespace(
+			namespace,
+		).WithQuery(
+			request.GetExperimentRequest{
+				ID: experimentID,
+			},
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
+		),
+	)
+	assert.Equal(s.T(), actualResponse.Experiment.ID, resp.Experiment.ID)
+	assert.Equal(s.T(), actualResponse.Experiment.Name, resp.Experiment.Name)
+	assert.Equal(s.T(), actualResponse.Experiment.Tags, resp.Experiment.Tags)
+	assert.Equal(s.T(), actualResponse.Experiment.LifecycleStage, resp.Experiment.LifecycleStage)
+	assert.Equal(s.T(), actualResponse.Experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
+	return &resp
+}
+
+func (s *ExperimentFlowTestSuite) getExperimentByName(
+	namespace string, name string, actualResponse *response.GetExperimentResponse,
+) *response.GetExperimentResponse {
+	resp := response.GetExperimentResponse{}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodGet,
+		).WithNamespace(
+			namespace,
+		).WithQuery(
+			request.GetExperimentRequest{
+				Name: name,
+			},
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute),
+		),
+	)
+	assert.Equal(s.T(), actualResponse.Experiment.ID, resp.Experiment.ID)
+	assert.Equal(s.T(), actualResponse.Experiment.Name, resp.Experiment.Name)
+	assert.Equal(s.T(), actualResponse.Experiment.Tags, resp.Experiment.Tags)
+	assert.Equal(s.T(), actualResponse.Experiment.LifecycleStage, resp.Experiment.LifecycleStage)
+	assert.Equal(s.T(), actualResponse.Experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
+	return &resp
+}
+
+func (s *ExperimentFlowTestSuite) deleteExperiment(namespace, experiment1ID string) {
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithNamespace(
+			namespace,
+		).WithRequest(
+			request.DeleteExperimentRequest{
+				ID: experiment1ID,
+			},
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsDeleteRoute),
+		),
+	)
+}
+
+func (s *ExperimentFlowTestSuite) restoreExperiment(namespace, experiment1ID string) {
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithNamespace(
+			namespace,
+		).WithRequest(
+			request.RestoreExperimentRequest{
+				ID: experiment1ID,
+			},
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsRestoreRoute),
+		),
+	)
+}
+
+func (s *ExperimentFlowTestSuite) setExperimentTag(namespace string, req *request.SetExperimentTagRequest) {
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithNamespace(
+			namespace,
+		).WithRequest(
+			req,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
+		),
+	)
+}

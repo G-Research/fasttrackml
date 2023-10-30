@@ -29,6 +29,7 @@ type HttpClient struct {
 	client       *http.Client
 	baseURL      string
 	basePath     string
+	namespace    string
 	method       string
 	params       any
 	headers      map[string]string
@@ -79,6 +80,12 @@ func (c *HttpClient) WithRequest(request any) *HttpClient {
 	return c
 }
 
+// WithNamespace sets the namespace path.
+func (c *HttpClient) WithNamespace(namespace string) *HttpClient {
+	c.namespace = namespace
+	return c
+}
+
 // WithHeaders adds headers to the HTTP request.
 func (c *HttpClient) WithHeaders(headers map[string]string) *HttpClient {
 	c.headers = headers
@@ -109,12 +116,23 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 		requestBody = bytes.NewBuffer(data)
 	}
 
-	// 2. build actual URL.
-	u, err := url.Parse(fmt.Sprintf("%s%s%s", c.baseURL, c.basePath, fmt.Sprintf(uri, values...)))
+	// 2. build path with namespace.
+	var path []string
+	if c.namespace != "" {
+		path = append(path, "ns", c.namespace)
+	}
+
+	// 3. build actual URL.
+	urlString, err := url.JoinPath(c.baseURL, append(path, c.basePath, fmt.Sprintf(uri, values...))...)
 	if err != nil {
 		return eris.Wrap(err, "error building url")
 	}
-	// 3. if params were provided then add params to actual url.
+	u, err := url.Parse(urlString)
+	if err != nil {
+		return eris.Wrap(err, "error building url")
+	}
+
+	// 4. if params were provided then add params to actual url.
 	if c.params != nil {
 		switch reflect.ValueOf(c.params).Kind() {
 		case reflect.Struct:
@@ -134,7 +152,7 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 		}
 	}
 
-	// 4. create actual request object.
+	// 5. create actual request object.
 	// if HttpMethod was not provided, then by default use HttpMethodGet.
 	req, err := http.NewRequestWithContext(
 		context.Background(), c.method, u.String(), requestBody,
@@ -143,7 +161,7 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 		return eris.Wrap(err, "error creating request")
 	}
 
-	// 5. if headers were provided, then attach them.
+	// 6. if headers were provided, then attach them.
 	// by default attach `"Content-Type", "application/json"`
 	if c.headers != nil {
 		for key, value := range c.headers {
@@ -151,13 +169,13 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 		}
 	}
 
-	// 6. send request data.
+	// 7. send request data.
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return eris.Wrap(err, "error doing request")
 	}
 
-	// 7. read and check response data.
+	// 8. read and check response data.
 	if c.response != nil {
 		switch c.responseType {
 		case ResponseTypeJSON:

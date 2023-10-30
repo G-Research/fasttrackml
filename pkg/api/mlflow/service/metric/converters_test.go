@@ -12,20 +12,20 @@ import (
 
 func Test_adjustGetMetricHistoriesRequestForNamespace_Ok(t *testing.T) {
 	testData := []struct {
-		name           string
-		ns             *models.Namespace
-		srr            *request.GetMetricHistoriesRequest
-		expectedResult *request.GetMetricHistoriesRequest
+		name          string
+		ns            *models.Namespace
+		inputRequest  *request.GetMetricHistoriesRequest
+		resultRequest *request.GetMetricHistoriesRequest
 	}{
 		{
 			name: "DefaultExperimentIDsProvided",
 			ns: &models.Namespace{
 				DefaultExperimentID: common.GetPointer(int32(123)),
 			},
-			srr: &request.GetMetricHistoriesRequest{
+			inputRequest: &request.GetMetricHistoriesRequest{
 				ExperimentIDs: []string{"0", "456"},
 			},
-			expectedResult: &request.GetMetricHistoriesRequest{
+			resultRequest: &request.GetMetricHistoriesRequest{
 				ExperimentIDs: []string{"123", "456"},
 			},
 		},
@@ -34,10 +34,10 @@ func Test_adjustGetMetricHistoriesRequestForNamespace_Ok(t *testing.T) {
 			ns: &models.Namespace{
 				DefaultExperimentID: common.GetPointer(int32(123)),
 			},
-			srr: &request.GetMetricHistoriesRequest{
+			inputRequest: &request.GetMetricHistoriesRequest{
 				ExperimentIDs: []string{"789", "456"},
 			},
-			expectedResult: &request.GetMetricHistoriesRequest{
+			resultRequest: &request.GetMetricHistoriesRequest{
 				ExperimentIDs: []string{"789", "456"},
 			},
 		},
@@ -45,8 +45,8 @@ func Test_adjustGetMetricHistoriesRequestForNamespace_Ok(t *testing.T) {
 
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
-			adjustGetMetricHistoriesRequestForNamespace(tt.ns, tt.srr)
-			assert.Equal(t, tt.expectedResult, tt.srr)
+			adjustGetMetricHistoriesRequestForNamespace(tt.ns, tt.inputRequest)
+			assert.Equal(t, tt.resultRequest, tt.inputRequest)
 		})
 	}
 }

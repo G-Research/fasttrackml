@@ -8,17 +8,17 @@ import (
 )
 
 // adjustSearchRunsRequestForNamespace preprocesses the SearchRunRequest for the given namespace.
-func adjustSearchRunsRequestForNamespace(ns *models.Namespace, srr *request.SearchRunsRequest) {
-	for i, expID := range srr.ExperimentIDs {
+func adjustSearchRunsRequestForNamespace(ns *models.Namespace, req *request.SearchRunsRequest) {
+	for i, expID := range req.ExperimentIDs {
 		if expID == "0" {
-			srr.ExperimentIDs[i] = fmt.Sprintf("%d", *ns.DefaultExperimentID)
+			req.ExperimentIDs[i] = fmt.Sprintf("%d", *ns.DefaultExperimentID)
 		}
 	}
 }
 
 // adjustCreateRunRequestForNamespace preprocesses the CreateRunRequest for the given namespace.
-func adjustCreateRunRequestForNamespace(ns *models.Namespace, crr *request.CreateRunRequest) {
-	if crr.ExperimentID == "0" {
-		crr.ExperimentID = fmt.Sprintf("%d", *ns.DefaultExperimentID)
+func adjustCreateRunRequestForNamespace(ns *models.Namespace, req *request.CreateRunRequest) {
+	if req.ExperimentID == "0" {
+		req.ExperimentID = fmt.Sprintf("%d", *ns.DefaultExperimentID)
 	}
 }

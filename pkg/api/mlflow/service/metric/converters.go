@@ -8,10 +8,10 @@ import (
 )
 
 // adjustGetMetricHistoriesRequestForNamespace preprocesses the GetMetricHistoriesRequest for the given namespace.
-func adjustGetMetricHistoriesRequestForNamespace(ns *models.Namespace, gmhr *request.GetMetricHistoriesRequest) {
-	for i, expID := range gmhr.ExperimentIDs {
+func adjustGetMetricHistoriesRequestForNamespace(ns *models.Namespace, req *request.GetMetricHistoriesRequest) {
+	for i, expID := range req.ExperimentIDs {
 		if expID == "0" {
-			gmhr.ExperimentIDs[i] = fmt.Sprintf("%d", *ns.DefaultExperimentID)
+			req.ExperimentIDs[i] = fmt.Sprintf("%d", *ns.DefaultExperimentID)
 		}
 	}
 }

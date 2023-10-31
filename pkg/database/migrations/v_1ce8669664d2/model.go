@@ -37,8 +37,8 @@ type Experiment struct {
 	LifecycleStage   LifecycleStage  `gorm:"type:varchar(32);check:lifecycle_stage IN ('active', 'deleted')"`
 	CreationTime     sql.NullInt64   `gorm:"type:bigint"`
 	LastUpdateTime   sql.NullInt64   `gorm:"type:bigint"`
-	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
-	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
+	Tags             []ExperimentTag
+	Runs             []Run
 }
 
 type ExperimentTag struct {

@@ -51,8 +51,8 @@ type Experiment struct {
 	LastUpdateTime   sql.NullInt64  `gorm:"type:bigint"`
 	NamespaceID      uint           `gorm:"index:idx_namespace_name,unique"`
 	Namespace        Namespace
-	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
-	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
+	Tags             []ExperimentTag
+	Runs             []Run
 }
 
 type ExperimentTag struct {
@@ -79,10 +79,10 @@ type Run struct {
 	Experiment     Experiment
 	DeletedTime    sql.NullInt64  `gorm:"type:bigint"`
 	RowNum         RowNum         `gorm:"<-:create;index"`
-	Params         []Param        `gorm:"constraint:OnDelete:CASCADE"`
-	Tags           []Tag          `gorm:"constraint:OnDelete:CASCADE"`
-	Metrics        []Metric       `gorm:"constraint:OnDelete:CASCADE"`
-	LatestMetrics  []LatestMetric `gorm:"constraint:OnDelete:CASCADE"`
+	Params         []Param
+	Tags           []Tag
+	Metrics        []Metric
+	LatestMetrics  []LatestMetric
 }
 
 type RowNum int64

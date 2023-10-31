@@ -152,64 +152,6 @@ func (b *Base) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-type Dashboard struct {
-	Base
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	AppID       *uuid.UUID `gorm:"type:uuid" json:"app_id"`
-	App         App        `json:"-"`
-}
-
-func (d Dashboard) MarshalJSON() ([]byte, error) {
-	type localDashboard Dashboard
-	type jsonDashboard struct {
-		localDashboard
-		AppType *string `json:"app_type"`
-	}
-	jd := jsonDashboard{
-		localDashboard: localDashboard(d),
-	}
-	if d.App.IsArchived {
-		jd.AppID = nil
-	} else {
-		jd.AppType = &d.App.Type
-	}
-	return json.Marshal(jd)
-}
-
-type App struct {
-	Base
-	Type  string   `gorm:"not null" json:"type"`
-	State AppState `json:"state"`
-}
-
-type AppState map[string]any
-
-func (s AppState) Value() (driver.Value, error) {
-	v, err := json.Marshal(s)
-	if err != nil {
-		return nil, err
-	}
-	return string(v), nil
-}
-
-//nolint:ineffassign
-func (s *AppState) Scan(v interface{}) error {
-	var nullS sql.NullString
-	if err := nullS.Scan(v); err != nil {
-		return err
-	}
-	if nullS.Valid {
-		return json.Unmarshal([]byte(nullS.String), s)
-	}
-	s = nil
-	return nil
-}
-
-func (s AppState) GormDataType() string {
-	return "text"
-}
-
 func NewUUID() string {
 	var r [32]byte
 	u := uuid.New()

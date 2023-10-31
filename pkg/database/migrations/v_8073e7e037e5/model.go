@@ -47,7 +47,6 @@ type ExperimentTag struct {
 	ExperimentID int32  `gorm:"not null;primaryKey"`
 }
 
-//nolint:lll
 type Run struct {
 	ID             string         `gorm:"column:run_uuid;type:varchar(32);not null;primaryKey"`
 	Name           string         `gorm:"type:varchar(250)"`
@@ -64,7 +63,7 @@ type Run struct {
 	ExperimentID   int32
 	Experiment     Experiment
 	DeletedTime    sql.NullInt64 `gorm:"type:bigint"`
-	RowNum         RowNum        `gorm:"index"`
+	RowNum         RowNum
 	Params         []Param
 	Tags           []Tag
 	Metrics        []Metric
@@ -111,7 +110,7 @@ type Metric struct {
 	RunID     string  `gorm:"column:run_uuid;not null;primaryKey;index"`
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
-	Iter      int64   `gorm:"index"`
+	Iter      int64
 }
 
 type LatestMetric struct {
@@ -193,7 +192,6 @@ func (s AppState) Value() (driver.Value, error) {
 	return string(v), nil
 }
 
-//nolint:ineffassign
 func (s *AppState) Scan(v interface{}) error {
 	var nullS sql.NullString
 	if err := nullS.Scan(v); err != nil {

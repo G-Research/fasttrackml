@@ -19,7 +19,7 @@ require (
 	github.com/go-python/gpython v0.2.0
 	github.com/gofiber/fiber/v2 v2.50.0
 	github.com/gofiber/template/html/v2 v2.0.5
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.4.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hetiansu5/urlquery v1.2.7
 	github.com/mattn/go-sqlite3 v1.14.16
@@ -30,7 +30,7 @@ require (
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
 	google.golang.org/api v0.148.0
-	gorm.io/driver/postgres v1.5.3
+	gorm.io/driver/postgres v1.5.4
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.25.5
 	gorm.io/plugin/dbresolver v1.4.7

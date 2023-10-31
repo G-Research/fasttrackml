@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"encoding/hex"
 	"encoding/json"
 	"time"
 
@@ -213,4 +214,11 @@ func (s *AppState) Scan(v interface{}) error {
 
 func (s AppState) GormDataType() string {
 	return "text"
+}
+
+func NewUUID() string {
+	var r [32]byte
+	u := uuid.New()
+	hex.Encode(r[:], u[:])
+	return string(r[:])
 }

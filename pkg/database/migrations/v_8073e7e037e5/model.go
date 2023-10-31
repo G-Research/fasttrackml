@@ -47,6 +47,7 @@ type ExperimentTag struct {
 	ExperimentID int32  `gorm:"not null;primaryKey"`
 }
 
+//nolint:lll
 type Run struct {
 	ID             string         `gorm:"column:run_uuid;type:varchar(32);not null;primaryKey"`
 	Name           string         `gorm:"type:varchar(250)"`
@@ -192,6 +193,7 @@ func (s AppState) Value() (driver.Value, error) {
 	return string(v), nil
 }
 
+//noling:ineffassign
 func (s *AppState) Scan(v interface{}) error {
 	var nullS sql.NullString
 	if err := nullS.Scan(v); err != nil {

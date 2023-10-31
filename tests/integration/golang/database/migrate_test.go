@@ -26,6 +26,7 @@ func testMigrateWithSchema(t *testing.T, schema string) {
 	mlflowDB, err := sql.Open("sqlite3", mlflowDBPath)
 	assert.Nil(t, err)
 
+	//nolint:gosec
 	mlflowSql, err := os.ReadFile(schema)
 	assert.Nil(t, err)
 

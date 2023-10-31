@@ -193,7 +193,7 @@ func (s AppState) Value() (driver.Value, error) {
 	return string(v), nil
 }
 
-//noling:ineffassign
+//nolint:ineffassign
 func (s *AppState) Scan(v interface{}) error {
 	var nullS sql.NullString
 	if err := nullS.Scan(v); err != nil {

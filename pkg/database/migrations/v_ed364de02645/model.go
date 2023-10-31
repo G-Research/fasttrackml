@@ -77,8 +77,8 @@ type Run struct {
 	ArtifactURI    string         `gorm:"<-:create;type:varchar(200)"`
 	ExperimentID   int32
 	Experiment     Experiment
-	DeletedTime    sql.NullInt64  `gorm:"type:bigint"`
-	RowNum         RowNum         `gorm:"<-:create;index"`
+	DeletedTime    sql.NullInt64 `gorm:"type:bigint"`
+	RowNum         RowNum        `gorm:"<-:create;index"`
 	Params         []Param
 	Tags           []Tag
 	Metrics        []Metric

@@ -252,8 +252,10 @@ func validateTable(t *testing.T, source, dest *gorm.DB, table string) {
 	destRows, err := dest.Table(table).Rows()
 	assert.Nil(t, err)
 	assert.Nil(t, destRows.Err())
-	defer assert.Nil(t, sourceRows.Close())
-	defer assert.Nil(t, destRows.Close())
+	//nolint:errcheck
+	defer sourceRows.Close()
+	//nolint:errcheck
+	defer destRows.Close()
 
 	for sourceRows.Next() {
 		var sourceRow, destRow map[string]any

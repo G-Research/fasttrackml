@@ -25,7 +25,7 @@ type ExperimentFlowTestSuite struct {
 	helpers.BaseTestSuite
 }
 
-// TestExperimentFlowTestSuite tests the full experiments flow connected with namespace functionality.
+// TestExperimentFlowTestSuite tests the full `experiments` flow connected with namespace functionality.
 // Flow contains next endpoints:
 // - `POST /experiments/create`
 // - `POST /experiments/update`
@@ -374,8 +374,6 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 func (s *ExperimentFlowTestSuite) createExperiment(
 	namespace string, req *request.CreateExperimentRequest,
 ) string {
-	// 1. test `POST /experiments/create` endpoint.
-	// create experiments in scope of different namespaces.
 	resp := response.CreateExperimentResponse{}
 	assert.Nil(
 		s.T(),
@@ -411,7 +409,7 @@ func (s *ExperimentFlowTestSuite) updateExperiment(namespace string, req *reques
 }
 
 func (s *ExperimentFlowTestSuite) searchExperiment(
-	namespace string, experiments []*response.ExperimentPartialResponse,
+	namespace string, expectedExperiments []*response.ExperimentPartialResponse,
 ) {
 	searchResp := response.SearchExperimentsResponse{}
 	assert.Nil(
@@ -426,13 +424,13 @@ func (s *ExperimentFlowTestSuite) searchExperiment(
 			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute),
 		),
 	)
-	assert.Equal(s.T(), len(experiments), len(searchResp.Experiments))
+	assert.Equal(s.T(), len(expectedExperiments), len(searchResp.Experiments))
 	assert.Equal(s.T(), "", searchResp.NextPageToken)
-	assert.Equal(s.T(), experiments, searchResp.Experiments)
+	assert.Equal(s.T(), expectedExperiments, searchResp.Experiments)
 }
 
 func (s *ExperimentFlowTestSuite) getExperimentByID(
-	namespace string, experimentID string, actualResponse *response.GetExperimentResponse,
+	namespace string, experimentID string, expectedResponse *response.GetExperimentResponse,
 ) *response.GetExperimentResponse {
 	resp := response.GetExperimentResponse{}
 	assert.Nil(
@@ -451,16 +449,16 @@ func (s *ExperimentFlowTestSuite) getExperimentByID(
 			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
 		),
 	)
-	assert.Equal(s.T(), actualResponse.Experiment.ID, resp.Experiment.ID)
-	assert.Equal(s.T(), actualResponse.Experiment.Name, resp.Experiment.Name)
-	assert.Equal(s.T(), actualResponse.Experiment.Tags, resp.Experiment.Tags)
-	assert.Equal(s.T(), actualResponse.Experiment.LifecycleStage, resp.Experiment.LifecycleStage)
-	assert.Equal(s.T(), actualResponse.Experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
+	assert.Equal(s.T(), expectedResponse.Experiment.ID, resp.Experiment.ID)
+	assert.Equal(s.T(), expectedResponse.Experiment.Name, resp.Experiment.Name)
+	assert.Equal(s.T(), expectedResponse.Experiment.Tags, resp.Experiment.Tags)
+	assert.Equal(s.T(), expectedResponse.Experiment.LifecycleStage, resp.Experiment.LifecycleStage)
+	assert.Equal(s.T(), expectedResponse.Experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
 	return &resp
 }
 
 func (s *ExperimentFlowTestSuite) getExperimentByName(
-	namespace string, name string, actualResponse *response.GetExperimentResponse,
+	namespace string, name string, expectedResponse *response.GetExperimentResponse,
 ) *response.GetExperimentResponse {
 	resp := response.GetExperimentResponse{}
 	assert.Nil(
@@ -479,11 +477,11 @@ func (s *ExperimentFlowTestSuite) getExperimentByName(
 			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute),
 		),
 	)
-	assert.Equal(s.T(), actualResponse.Experiment.ID, resp.Experiment.ID)
-	assert.Equal(s.T(), actualResponse.Experiment.Name, resp.Experiment.Name)
-	assert.Equal(s.T(), actualResponse.Experiment.Tags, resp.Experiment.Tags)
-	assert.Equal(s.T(), actualResponse.Experiment.LifecycleStage, resp.Experiment.LifecycleStage)
-	assert.Equal(s.T(), actualResponse.Experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
+	assert.Equal(s.T(), expectedResponse.Experiment.ID, resp.Experiment.ID)
+	assert.Equal(s.T(), expectedResponse.Experiment.Name, resp.Experiment.Name)
+	assert.Equal(s.T(), expectedResponse.Experiment.Tags, resp.Experiment.Tags)
+	assert.Equal(s.T(), expectedResponse.Experiment.LifecycleStage, resp.Experiment.LifecycleStage)
+	assert.Equal(s.T(), expectedResponse.Experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
 	return &resp
 }
 

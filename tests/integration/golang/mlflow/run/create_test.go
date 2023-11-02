@@ -246,7 +246,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 			),
 		},
 		{
-			name:      "CreateRunWithNotExistingExperiment",
+			name: "CreateRunWithNotExistingExperiment",
 			request: request.CreateRunRequest{
 				ExperimentID: fmt.Sprintf("%d", nonExistingExperimentID),
 			},
@@ -259,7 +259,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 			),
 		},
 		{
-			name:      "CreateRunWithExistingNamespaceAndNotExistingExperiment",
+			name: "CreateRunWithExistingNamespaceAndNotExistingExperiment",
 			request: request.CreateRunRequest{
 				ExperimentID: fmt.Sprintf("%d", nonExistingExperimentID),
 			},

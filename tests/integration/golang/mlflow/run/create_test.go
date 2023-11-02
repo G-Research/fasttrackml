@@ -54,7 +54,7 @@ func (s *CreateRunTestSuite) Test_DefaultNamespace_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	s.testCases(namespace, experiment, false, *experiment.ID)
+	s.successCases(namespace, experiment, false, *experiment.ID)
 }
 
 func (s *CreateRunTestSuite) Test_DefaultNamespaceExperimentZero_Ok() {
@@ -82,7 +82,7 @@ func (s *CreateRunTestSuite) Test_DefaultNamespaceExperimentZero_Ok() {
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
 	assert.Nil(s.T(), err)
 
-	s.testCases(namespace, experiment, false, int32(0))
+	s.successCases(namespace, experiment, false, int32(0))
 }
 
 func (s *CreateRunTestSuite) Test_CustomNamespace_Ok() {
@@ -105,7 +105,7 @@ func (s *CreateRunTestSuite) Test_CustomNamespace_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	s.testCases(namespace, experiment, true, *experiment.ID)
+	s.successCases(namespace, experiment, true, *experiment.ID)
 }
 
 func (s *CreateRunTestSuite) Test_CustomNamespaceExperimentZero_Ok() {
@@ -133,10 +133,10 @@ func (s *CreateRunTestSuite) Test_CustomNamespaceExperimentZero_Ok() {
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
 	assert.Nil(s.T(), err)
 
-	s.testCases(namespace, experiment, true, int32(0))
+	s.successCases(namespace, experiment, true, int32(0))
 }
 
-func (s *CreateRunTestSuite) testCases(
+func (s *CreateRunTestSuite) successCases(
 	namespace *models.Namespace,
 	experiment *models.Experiment,
 	useNamespaceInRequest bool,

@@ -43,7 +43,7 @@ services:
     image: minio/minio:latest
     command: server /data
     healthcheck:
-      test: [ "CMD", "bash", "-c", ":> /dev/tcp/127.0.0.1/9000 || exit 1" ]
+      test: [ "CMD", "bash", "-c", ":> /dev/tcp/127.0.0.1/9000" ]
       interval: 5s
       timeout: 5s
     environment:

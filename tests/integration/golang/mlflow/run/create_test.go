@@ -247,7 +247,6 @@ func (s *CreateRunTestSuite) Test_Error() {
 		},
 		{
 			name:      "CreateRunWithNotExistingExperiment",
-			namespace: "default",
 			request: request.CreateRunRequest{
 				ExperimentID: fmt.Sprintf("%d", nonExistingExperimentID),
 			},
@@ -261,7 +260,6 @@ func (s *CreateRunTestSuite) Test_Error() {
 		},
 		{
 			name:      "CreateRunWithExistingNamespaceAndNotExistingExperiment",
-			namespace: "default",
 			request: request.CreateRunRequest{
 				ExperimentID: fmt.Sprintf("%d", nonExistingExperimentID),
 			},
@@ -281,14 +279,11 @@ func (s *CreateRunTestSuite) Test_Error() {
 				http.MethodPost,
 			).WithRequest(
 				tt.request,
+			).WithNamespace(
+				tt.namespace,
 			).WithResponse(
 				&resp,
 			)
-			if tt.namespace != "" {
-				client = client.WithNamespace(
-					tt.namespace,
-				)
-			}
 			assert.Nil(
 				s.T(),
 				client.DoRequest(

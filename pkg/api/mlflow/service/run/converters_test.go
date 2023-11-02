@@ -84,10 +84,10 @@ func Test_adjustCreateRunRequestForNamespace_Ok(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testData {
-		t.Run(tc.name, func(t *testing.T) {
-			adjustCreateRunRequestForNamespace(tc.ns, tc.inputRequest)
-			assert.Equal(t, tc.resultRequest, tc.inputRequest)
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			adjustCreateRunRequestForNamespace(tt.ns, tt.inputRequest)
+			assert.Equal(t, tt.resultRequest, tt.inputRequest)
 		})
 	}
 }

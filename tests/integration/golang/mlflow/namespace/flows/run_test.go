@@ -190,7 +190,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	})
 
 	// check that runs were updated.
-	run1 = s.getRunAndCompare(
+	s.getRunAndCompare(
 		namespace1.Code,
 		request.GetRunRequest{
 			RunID: run1ID,
@@ -209,7 +209,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	run2 = s.getRunAndCompare(
+	s.getRunAndCompare(
 		namespace2.Code,
 		request.GetRunRequest{
 			RunID: run2ID,
@@ -854,7 +854,7 @@ func (s *RunFlowTestSuite) getRunAndCompare(
 	return &resp
 }
 
-func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunRequest) string {
+func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunRequest) {
 	resp := response.UpdateRunResponse{}
 	assert.Nil(
 		s.T(),
@@ -870,7 +870,6 @@ func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunReq
 			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
 		),
 	)
-	return resp.RunInfo.ID
 }
 
 func (s *RunFlowTestSuite) searchRunsAndCompare(

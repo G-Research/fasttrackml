@@ -459,7 +459,7 @@ func (s *ExperimentFlowTestSuite) getExperimentByIDAndCompare(
 
 func (s *ExperimentFlowTestSuite) getExperimentByNameCompare(
 	namespace string, name string, expectedResponse *response.GetExperimentResponse,
-) *response.GetExperimentResponse {
+) {
 	resp := response.GetExperimentResponse{}
 	assert.Nil(
 		s.T(),
@@ -482,7 +482,6 @@ func (s *ExperimentFlowTestSuite) getExperimentByNameCompare(
 	assert.Equal(s.T(), expectedResponse.Experiment.Tags, resp.Experiment.Tags)
 	assert.Equal(s.T(), expectedResponse.Experiment.LifecycleStage, resp.Experiment.LifecycleStage)
 	assert.Equal(s.T(), expectedResponse.Experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
-	return &resp
 }
 
 func (s *ExperimentFlowTestSuite) deleteExperiment(namespace, experiment1ID string) {

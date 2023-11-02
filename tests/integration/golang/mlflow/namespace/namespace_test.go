@@ -127,7 +127,7 @@ func (s *NamespaceTestSuite) Test_Ok() {
 			assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.Experiment.ID)
 			assert.Equal(s.T(), experiment.Name, resp.Experiment.Name)
 			assert.Equal(s.T(), experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
-			assert.Equal(s.T(), fmt.Sprintf("%s", models.LifecycleStageActive), resp.Experiment.LifecycleStage)
+			assert.Equal(s.T(), string(models.LifecycleStageActive), resp.Experiment.LifecycleStage)
 		})
 	}
 }

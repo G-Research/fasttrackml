@@ -1,6 +1,7 @@
 package aim
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -89,7 +90,7 @@ func GetApp(c *fiber.Ctx) error {
 		Where("NOT is_archived").
 		First(&app).
 		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))
@@ -132,7 +133,7 @@ func UpdateApp(c *fiber.Ctx) error {
 		Where("NOT is_archived").
 		First(&app).
 		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))
@@ -177,7 +178,7 @@ func DeleteApp(c *fiber.Ctx) error {
 		Where("NOT is_archived").
 		First(&app).
 		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))

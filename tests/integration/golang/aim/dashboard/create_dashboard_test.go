@@ -114,7 +114,7 @@ func (s *CreateDashboardTestSuite) Test_Error() {
 		requestBody request.CreateDashboard
 	}{
 		{
-			name: "CreateDashboardWithNon-ExistentAppID",
+			name: "CreateDashboardWithNonExistentAppID",
 			requestBody: request.CreateDashboard{
 				AppID:       uuid.New(),
 				Name:        "dashboard-name",

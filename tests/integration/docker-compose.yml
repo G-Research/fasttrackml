@@ -43,7 +43,7 @@ services:
     image: minio/minio:latest
     command: server /data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "bash", "-c", ":> /dev/tcp/127.0.0.1/9000"]
       interval: 5s
       timeout: 5s
     environment:
@@ -57,7 +57,7 @@ services:
       - -public-host=google-storage
       - -scheme=http
     healthcheck:
-      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:4443/storage/v1/b" ]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:4443/storage/v1/b"]
       interval: 5s
       timeout: 5s
 

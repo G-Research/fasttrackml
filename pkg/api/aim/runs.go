@@ -51,9 +51,13 @@ func GetRunInfo(c *fiber.Ctx) error {
 	}
 
 	tx := database.DB.
-		Joins(
+		InnerJoins(
 			"Experiment",
-			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+			database.DB.Select(
+				"ID",
+			).Where(
+				&models.Experiment{NamespaceID: ns.ID},
+			),
 		).
 		Preload("Params").
 		Preload("Tags")
@@ -90,10 +94,10 @@ func GetRunInfo(c *fiber.Ctx) error {
 	}
 
 	if err := tx.First(&r).Error; err != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fmt.Errorf("error retrieving run %q: %w", p.ID, tx.Error)
+		return fmt.Errorf("error retrieving run %q: %w", p.ID, err)
 	}
 
 	props := fiber.Map{
@@ -175,22 +179,26 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	r := database.Run{
 		ID: p.ID,
 	}
-	if tx := database.DB.
+	if err := database.DB.
 		Select("ID").
-		Joins(
+		InnerJoins(
 			"Experiment",
-			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+			database.DB.Select(
+				"ID",
+			).Where(
+				&models.Experiment{NamespaceID: ns.ID},
+			),
 		).
 		Preload("Metrics", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Where("key IN ?", metricKeys).
 				Order("iter")
 		}).
-		First(&r); tx.Error != nil {
-		if tx.Error == gorm.ErrRecordNotFound {
+		First(&r).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fmt.Errorf("unable to find run %q: %w", p.ID, tx.Error)
+		return fmt.Errorf("unable to find run %q: %w", p.ID, err)
 	}
 
 	metrics := make(map[string]struct {
@@ -246,9 +254,13 @@ func GetRunsActive(c *fiber.Ctx) error {
 	var runs []database.Run
 	if tx := database.DB.
 		Where("status = ?", database.StatusRunning).
-		Joins(
+		InnerJoins(
 			"Experiment",
-			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+			database.DB.Select(
+				"ID",
+			).Where(
+				&models.Experiment{NamespaceID: ns.ID},
+			),
 		).
 		Preload("LatestMetrics").
 		Find(&runs); tx.Error != nil {
@@ -398,9 +410,13 @@ func SearchRuns(c *fiber.Ctx) error {
 	log.Debugf("Total runs: %d", total)
 
 	tx := database.DB.
-		Joins(
+		InnerJoins(
 			"Experiment",
-			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+			database.DB.Select(
+				"ID",
+			).Where(
+				&models.Experiment{NamespaceID: ns.ID},
+			),
 		).
 		Order("row_num DESC")
 
@@ -602,17 +618,21 @@ func SearchMetrics(c *fiber.Ctx) error {
 
 	var runs []database.Run
 	if tx := database.DB.
-		Joins(
+		InnerJoins(
 			"Experiment",
-			database.DB.Where(&models.Experiment{NamespaceID: ns.ID}),
+			database.DB.Select(
+				"ID",
+			).Where(&models.Experiment{NamespaceID: ns.ID}),
 		).
 		Preload("Params").
 		Preload("Tags").
 		Where("run_uuid IN (?)", pq.Filter(database.DB.
 			Select("runs.run_uuid").
 			Table("runs").
-			Joins("LEFT JOIN experiments USING(experiment_id)").
-			Where("experiments.namespace_id = ?", ns.ID).
+			Joins(
+				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+				ns.ID,
+			).
 			Joins("LEFT JOIN latest_metrics USING(run_uuid)"))).
 		Order("runs.row_num DESC").
 		Find(&runs); tx.Error != nil {
@@ -670,8 +690,10 @@ func SearchMetrics(c *fiber.Ctx) error {
 					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
 				).
 				Table("runs").
-				Joins("LEFT JOIN experiments USING(experiment_id)").
-				Where("experiments.namespace_id = ?", ns.ID).
+				Joins(
+					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+					ns.ID,
+				).
 				Joins("LEFT JOIN latest_metrics USING(run_uuid)")),
 		).
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").

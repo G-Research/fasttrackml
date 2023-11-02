@@ -199,10 +199,10 @@ func (d Dashboard) MarshalJSON() ([]byte, error) {
 
 type App struct {
 	Base
-	Type        string   `gorm:"not null" json:"type"`
-	State       AppState `json:"state"`
-	Namespace   Namespace
-	NamespaceID uint `gorm:"column:namespace_id"`
+	Type        string    `gorm:"not null" json:"type"`
+	State       AppState  `json:"state"`
+	Namespace   Namespace `json:"-"`
+	NamespaceID uint      `gorm:"column:namespace_id" json:"-"`
 }
 
 type AppState map[string]any

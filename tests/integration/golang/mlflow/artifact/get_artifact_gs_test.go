@@ -9,8 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -23,37 +22,36 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type GetArtifactS3TestSuite struct {
+type GetArtifactGSTestSuite struct {
 	suite.Suite
 	helpers.BaseTestSuite
-	s3Client    *s3.Client
+	gsClient    *storage.Client
 	testBuckets []string
 }
 
-func TestGetArtifactS3TestSuite(t *testing.T) {
-	suite.Run(t, &GetArtifactS3TestSuite{
+func TestGetArtifactGSTestSuite(t *testing.T) {
+	suite.Run(t, &GetArtifactGSTestSuite{
 		testBuckets: []string{"bucket1", "bucket2"},
 	})
 }
 
-func (s *GetArtifactS3TestSuite) SetupTest() {
+func (s *GetArtifactGSTestSuite) SetupSuite() {
 	s.BaseTestSuite.SetupTest(s.T())
 
-	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
+	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
 	assert.Nil(s.T(), err)
-
-	err = helpers.CreateS3Buckets(s3Client, s.testBuckets)
-	assert.Nil(s.T(), err)
-
-	s.s3Client = s3Client
+	s.gsClient = gsClient
 }
 
-func (s *GetArtifactS3TestSuite) TearDownTest() {
-	err := helpers.RemoveS3Buckets(s.s3Client, s.testBuckets)
-	assert.Nil(s.T(), err)
+func (s *GetArtifactGSTestSuite) SetupTest() {
+	assert.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
 }
 
-func (s *GetArtifactS3TestSuite) Test_Ok() {
+func (s *GetArtifactGSTestSuite) TearDownTest() {
+	assert.Nil(s.T(), helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
+}
+
+func (s *GetArtifactGSTestSuite) Test_Ok() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
@@ -86,7 +84,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 				Name:             fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
 				NamespaceID:      namespace.ID,
 				LifecycleStage:   models.LifecycleStageActive,
-				ArtifactLocation: fmt.Sprintf("s3://%s/1", tt.bucket),
+				ArtifactLocation: fmt.Sprintf("gs://%s/1", tt.bucket),
 			})
 			assert.Nil(s.T(), err)
 
@@ -102,31 +100,26 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			})
 			assert.Nil(s.T(), err)
 
-			// upload artifact root object to S3
-			putObjReq := &s3.PutObjectInput{
-				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.file", runID)),
-				Body:   strings.NewReader("content"),
-				Bucket: aws.String(tt.bucket),
-			}
-			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
+			// upload artifact root object to GS
+			writer := s.gsClient.Bucket(tt.bucket).Object(
+				fmt.Sprintf("/1/%s/artifacts/artifact.txt", runID),
+			).NewWriter(context.Background())
+			_, err = writer.Write([]byte("content"))
 			assert.Nil(s.T(), err)
+			assert.Nil(s.T(), writer.Close())
 
-			// upload artifact subdir object to S3
-			putObjReq = &s3.PutObjectInput{
-				Key: aws.String(fmt.Sprintf(
-					"1/%s/artifacts/artifact.subdir/artifact.file",
-					runID),
-				),
-				Body:   strings.NewReader("subdir-object-content"),
-				Bucket: aws.String(tt.bucket),
-			}
-			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
+			// upload artifact subdir object to GS
+			writer = s.gsClient.Bucket(tt.bucket).Object(
+				fmt.Sprintf("/1/%s/artifacts/artifact/artifact.txt", runID),
+			).NewWriter(context.Background())
+			_, err = writer.Write([]byte("subdir-object-content"))
 			assert.Nil(s.T(), err)
+			assert.Nil(s.T(), writer.Close())
 
 			// make API call for root object
 			query := request.GetArtifactRequest{
 				RunID: run.ID,
-				Path:  "artifact.file",
+				Path:  "artifact.txt",
 			}
 
 			resp := new(bytes.Buffer)
@@ -144,7 +137,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			// make API call for subdir object
 			query = request.GetArtifactRequest{
 				RunID: run.ID,
-				Path:  "artifact.subdir/artifact.file",
+				Path:  "artifact/artifact.txt",
 			}
 
 			resp = new(bytes.Buffer)
@@ -162,7 +155,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 	}
 }
 
-func (s *GetArtifactS3TestSuite) Test_Error() {
+func (s *GetArtifactGSTestSuite) Test_Error() {
 	defer func() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
@@ -179,7 +172,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 		Name:             "Test Experiment In Bucket bucket1",
 		NamespaceID:      namespace.ID,
 		LifecycleStage:   models.LifecycleStageActive,
-		ArtifactLocation: "s3://bucket1/1",
+		ArtifactLocation: "gs://bucket1/1",
 	})
 	assert.Nil(s.T(), err)
 
@@ -195,14 +188,14 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 	})
 	assert.Nil(s.T(), err)
 
-	// upload artifact subdir object to S3
-	putObjReq := &s3.PutObjectInput{
-		Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.subdir/artifact.file", runID)),
-		Body:   strings.NewReader("content"),
-		Bucket: aws.String("bucket1"),
-	}
-	_, err = s.s3Client.PutObject(context.Background(), putObjReq)
+	// upload artifact subdir object to GS
 	assert.Nil(s.T(), err)
+	writer := s.gsClient.Bucket("bucket1").Object(
+		fmt.Sprintf("1/%s/artifacts/artifact/artifact.file", runID),
+	).NewWriter(context.Background())
+	_, err = writer.Write([]byte("content"))
+	assert.Nil(s.T(), err)
+	assert.Nil(s.T(), writer.Close())
 
 	tests := []struct {
 		name    string
@@ -255,19 +248,19 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 			},
 		},
 		{
-			name: "S3IncompletePath",
+			name: "GSIncompletePath",
 			error: api.NewResourceDoesNotExistError(
-				fmt.Sprintf("error getting artifact object for URI: s3:/bucket1/1/%s/artifacts/artifact.subdir", runID),
+				fmt.Sprintf("error getting artifact object for URI: gs:/bucket1/1/%s/artifacts/artifact", runID),
 			),
 			request: request.GetArtifactRequest{
 				RunID: runID,
-				Path:  "artifact.subdir",
+				Path:  "artifact",
 			},
 		},
 		{
 			name: "NonExistentFile",
 			error: api.NewResourceDoesNotExistError(
-				fmt.Sprintf("error getting artifact object for URI: s3:/bucket1/1/%s/artifacts/non-existent-file", runID),
+				fmt.Sprintf("error getting artifact object for URI: gs:/bucket1/1/%s/artifacts/non-existent-file", runID),
 			),
 			request: request.GetArtifactRequest{
 				RunID: runID,

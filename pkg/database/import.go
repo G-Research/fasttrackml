@@ -32,8 +32,8 @@ func NewImporter(input, output *gorm.DB) *Importer {
 func (s *Importer) Import() error {
 	tables := []string{
 		"namespaces",
-		// "apps",
-		// "dashboards",
+		"apps",
+		"dashboards",
 		"experiments",
 		"experiment_tags",
 		"runs",

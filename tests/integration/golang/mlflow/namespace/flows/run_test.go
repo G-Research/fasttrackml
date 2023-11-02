@@ -23,11 +23,19 @@ type RunFlowTestSuite struct {
 	helpers.BaseTestSuite
 }
 
-// TestExperimentFlowTestSuite tests the full `run` flow connected with namespace functionality.
+// TestExperimentFlowTestSuite tests the full `runs` flow connected to namespace functionality.
 // Flow contains next endpoints:
 // - `POST /runs/create`
 // - `GET /runs/get`
 // - `POST /runs/update`
+// - `POST /runs/search`
+// - `POST /runs/delete`
+// - `POST /runs/restore`
+// - `POST /runs/log-metric`
+// - `POST /runs/log-parameter`
+// - `POST /runs/set-tag`
+// - `POST /runs/delete-tag`
+// - `POST /runs/log-batch`
 func TestRunFlowTestSuite(t *testing.T) {
 	suite.Run(t, new(RunFlowTestSuite))
 }
@@ -84,7 +92,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	// 2. test `GET /runs/get` endpoint.
 	// check that runs were created in scope of difference experiment namespaces.
-	run1 := s.getRun(
+	run1 := s.getRunAndCompare(
 		namespace1.Code,
 		request.GetRunRequest{
 			RunID: run1ID,
@@ -103,7 +111,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	run2 := s.getRun(
+	run2 := s.getRunAndCompare(
 		namespace2.Code,
 		request.GetRunRequest{
 			RunID: run2ID,
@@ -180,7 +188,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	})
 
 	// check that runs were updated.
-	run1 = s.getRun(
+	run1 = s.getRunAndCompare(
 		namespace1.Code,
 		request.GetRunRequest{
 			RunID: run1ID,
@@ -199,7 +207,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	run2 = s.getRun(
+	run2 = s.getRunAndCompare(
 		namespace2.Code,
 		request.GetRunRequest{
 			RunID: run2ID,
@@ -220,7 +228,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	)
 
 	// 5. test `POST /runs/search` endpoint.
-	s.searchRuns(
+	s.searchRunsAndCompare(
 		namespace1.Code,
 		request.SearchRunsRequest{
 			ExperimentIDs: []string{fmt.Sprintf("%d", *experiment1.ID)},
@@ -248,7 +256,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 
-	s.searchRuns(
+	s.searchRunsAndCompare(
 		namespace2.Code,
 		request.SearchRunsRequest{
 			ExperimentIDs: []string{fmt.Sprintf("%d", *experiment2.ID)},
@@ -281,7 +289,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	s.deleteRun(namespace2.Code, &request.DeleteRunRequest{RunID: run2ID})
 
 	// try to get deleted runs and check theirs state.
-	s.getRun(
+	s.getRunAndCompare(
 		namespace1.Code,
 		request.GetRunRequest{
 			RunID: run1ID,
@@ -300,7 +308,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	s.getRun(
+	s.getRunAndCompare(
 		namespace2.Code,
 		request.GetRunRequest{
 			RunID: run2ID,
@@ -325,7 +333,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	s.restoreRun(namespace2.Code, &request.RestoreRunRequest{RunID: run2ID})
 
 	// try to get restored runs and check theirs state.
-	s.getRun(
+	s.getRunAndCompare(
 		namespace1.Code,
 		request.GetRunRequest{
 			RunID: run1ID,
@@ -344,7 +352,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	s.getRun(
+	s.getRunAndCompare(
 		namespace2.Code,
 		request.GetRunRequest{
 			RunID: run2ID,
@@ -364,7 +372,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 
-	// 7. test `POST /runs/log-metric` endpoint.
+	// 8. test `POST /runs/log-metric` endpoint.
 	s.logRunMetric(namespace1.Code, &request.LogMetricRequest{
 		RunID:     run1ID,
 		Key:       "key1",
@@ -381,7 +389,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	})
 
 	// try to get runs information and compare it.
-	s.getRun(
+	s.getRunAndCompare(
 		namespace1.Code,
 		request.GetRunRequest{
 			RunID: run1ID,
@@ -409,7 +417,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	s.getRun(
+	s.getRunAndCompare(
 		namespace2.Code,
 		request.GetRunRequest{
 			RunID: run2ID,
@@ -438,7 +446,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 
-	// 7. test `POST /runs/log-parameter` endpoint.
+	// 9. test `POST /runs/log-parameter` endpoint.
 	s.logRunParam(namespace1.Code, &request.LogParamRequest{
 		RunID: run1ID,
 		Key:   "key1",
@@ -451,7 +459,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	})
 
 	// try to get runs information and compare it.
-	s.getRun(
+	s.getRunAndCompare(
 		namespace1.Code,
 		request.GetRunRequest{
 			RunID: run1ID,
@@ -477,7 +485,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	s.getRun(
+	s.getRunAndCompare(
 		namespace2.Code,
 		request.GetRunRequest{
 			RunID: run2ID,
@@ -504,7 +512,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 
-	// 7. test `POST /runs/set-tag` endpoint.
+	// 10. test `POST /runs/set-tag` endpoint.
 	s.setRunTag(namespace1.Code, &request.SetRunTagRequest{
 		RunID: run1ID,
 		Key:   "mlflow.user",
@@ -517,7 +525,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	})
 
 	// try to get runs information and compare it.
-	s.getRun(
+	s.getRunAndCompare(
 		namespace1.Code,
 		request.GetRunRequest{
 			RunID: run1ID,
@@ -548,7 +556,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	s.getRun(
+	s.getRunAndCompare(
 		namespace2.Code,
 		request.GetRunRequest{
 			RunID: run2ID,
@@ -580,6 +588,211 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 
+	// 11. test `POST /runs/delete-tag` endpoint.
+	s.deleteRunTag(namespace1.Code, &request.DeleteRunTagRequest{
+		RunID: run1ID,
+		Key:   "mlflow.user",
+	})
+	s.deleteRunTag(namespace2.Code, &request.DeleteRunTagRequest{
+		RunID: run2ID,
+		Key:   "mlflow.user",
+	})
+
+	// try to get runs information and compare it.
+	s.getRunAndCompare(
+		namespace1.Code,
+		request.GetRunRequest{
+			RunID: run1ID,
+		},
+		&response.GetRunResponse{
+			Run: &response.RunPartialResponse{
+				Info: response.RunInfoPartialResponse{
+					ID:             run1ID,
+					Name:           "UpdatedRun1",
+					UserID:         "1",
+					Status:         string(models.StatusScheduled),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
+					LifecycleStage: string(models.LifecycleStageActive),
+				},
+				Data: response.RunDataPartialResponse{
+					Tags: []response.RunTagPartialResponse{
+						{
+							Key:   "mlflow.runName",
+							Value: "UpdatedRun1",
+						},
+					},
+				},
+			},
+		},
+	)
+	s.getRunAndCompare(
+		namespace2.Code,
+		request.GetRunRequest{
+			RunID: run2ID,
+		},
+		&response.GetRunResponse{
+			Run: &response.RunPartialResponse{
+				Info: response.RunInfoPartialResponse{
+					ID:             run2ID,
+					Name:           "UpdatedRun2",
+					UserID:         "2",
+					Status:         string(models.StatusScheduled),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
+					LifecycleStage: string(models.LifecycleStageActive),
+				},
+				Data: response.RunDataPartialResponse{
+					Tags: []response.RunTagPartialResponse{
+						{
+							Key:   "mlflow.runName",
+							Value: "UpdatedRun2",
+						},
+					},
+				},
+			},
+		},
+	)
+
+	// 12. test `POST /runs/log-batch` endpoint.
+	s.runLogBatch(namespace1.Code, &request.LogBatchRequest{
+		RunID: run1ID,
+		Tags: []request.TagPartialRequest{
+			{
+				Key:   "mlflow.user",
+				Value: "1",
+			},
+		},
+		Params: []request.ParamPartialRequest{
+			{
+				Key:   "key1",
+				Value: "param1",
+			},
+		},
+		Metrics: []request.MetricPartialRequest{
+			{
+				Key:       "key1",
+				Value:     1.1,
+				Timestamp: 123456789,
+				Step:      1,
+			},
+		},
+	})
+	s.runLogBatch(namespace2.Code, &request.LogBatchRequest{
+		RunID: run2ID,
+		Tags: []request.TagPartialRequest{
+			{
+				Key:   "mlflow.user",
+				Value: "2",
+			},
+		},
+		Params: []request.ParamPartialRequest{
+			{
+				Key:   "key2",
+				Value: "param2",
+			},
+		},
+		Metrics: []request.MetricPartialRequest{
+			{
+				Key:       "key2",
+				Value:     2.2,
+				Timestamp: 123456789,
+				Step:      1,
+			},
+		},
+	})
+
+	// try to get runs information and compare it.
+	s.getRunAndCompare(
+		namespace1.Code,
+		request.GetRunRequest{
+			RunID: run1ID,
+		},
+		&response.GetRunResponse{
+			Run: &response.RunPartialResponse{
+				Info: response.RunInfoPartialResponse{
+					ID:             run1ID,
+					Name:           "UpdatedRun1",
+					UserID:         "1",
+					Status:         string(models.StatusScheduled),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
+					LifecycleStage: string(models.LifecycleStageActive),
+				},
+				Data: response.RunDataPartialResponse{
+					Tags: []response.RunTagPartialResponse{
+						{
+							Key:   "mlflow.runName",
+							Value: "UpdatedRun1",
+						},
+						{
+							Key:   "mlflow.user",
+							Value: "1",
+						},
+					},
+					Params: []response.RunParamPartialResponse{
+						{
+							Key:   "key1",
+							Value: "param1",
+						},
+					},
+					Metrics: []response.RunMetricPartialResponse{
+						{
+							Key:       "key1",
+							Step:      1,
+							Value:     1.1,
+							Timestamp: 123456789,
+						},
+					},
+				},
+			},
+		},
+	)
+	s.getRunAndCompare(
+		namespace2.Code,
+		request.GetRunRequest{
+			RunID: run2ID,
+		},
+		&response.GetRunResponse{
+			Run: &response.RunPartialResponse{
+				Info: response.RunInfoPartialResponse{
+					ID:             run2ID,
+					Name:           "UpdatedRun2",
+					UserID:         "2",
+					Status:         string(models.StatusScheduled),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
+					LifecycleStage: string(models.LifecycleStageActive),
+				},
+				Data: response.RunDataPartialResponse{
+					Tags: []response.RunTagPartialResponse{
+						{
+							Key:   "mlflow.runName",
+							Value: "UpdatedRun2",
+						},
+						{
+							Key:   "mlflow.user",
+							Value: "2",
+						},
+					},
+					Params: []response.RunParamPartialResponse{
+						{
+							Key:   "key2",
+							Value: "param2",
+						},
+					},
+					Metrics: []response.RunMetricPartialResponse{
+						{
+							Key:       "key2",
+							Step:      1,
+							Value:     2.2,
+							Timestamp: 123456789,
+						},
+					},
+				},
+			},
+		},
+	)
 }
 
 func (s *RunFlowTestSuite) createRun(
@@ -603,7 +816,7 @@ func (s *RunFlowTestSuite) createRun(
 	return resp.Run.Info.ID
 }
 
-func (s *RunFlowTestSuite) getRun(
+func (s *RunFlowTestSuite) getRunAndCompare(
 	namespace string, req request.GetRunRequest, expectedResponse *response.GetRunResponse,
 ) *response.GetRunResponse {
 	resp := response.GetRunResponse{}
@@ -658,7 +871,7 @@ func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunReq
 	return resp.RunInfo.ID
 }
 
-func (s *RunFlowTestSuite) searchRuns(
+func (s *RunFlowTestSuite) searchRunsAndCompare(
 	namespace string, req request.SearchRunsRequest, expectedRuns []*response.RunPartialResponse,
 ) {
 	searchResp := response.SearchRunsResponse{}
@@ -752,6 +965,36 @@ func (s *RunFlowTestSuite) setRunTag(namespace string, req *request.SetRunTagReq
 			req,
 		).DoRequest(
 			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSetTagRoute),
+		),
+	)
+}
+
+func (s *RunFlowTestSuite) deleteRunTag(namespace string, req *request.DeleteRunTagRequest) {
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithNamespace(
+			namespace,
+		).WithRequest(
+			req,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute),
+		),
+	)
+}
+
+func (s *RunFlowTestSuite) runLogBatch(namespace string, req *request.LogBatchRequest) {
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithNamespace(
+			namespace,
+		).WithRequest(
+			req,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
 		),
 	)
 }

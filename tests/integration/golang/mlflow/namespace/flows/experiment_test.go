@@ -25,7 +25,7 @@ type ExperimentFlowTestSuite struct {
 	helpers.BaseTestSuite
 }
 
-// TestExperimentFlowTestSuite tests the full `experiments` flow connected with namespace functionality.
+// TestExperimentFlowTestSuite tests the full `experiments` flow connected to namespace functionality.
 // Flow contains next endpoints:
 // - `POST /experiments/create`
 // - `POST /experiments/update`
@@ -75,7 +75,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 
 	// 2. test `GET /experiments/get` endpoint.
 	// check that experiments were created in scope of difference namespaces.
-	experiment1 := s.getExperimentByID(
+	experiment1 := s.getExperimentByIDAndCompare(
 		namespace1.Code,
 		experiment1ID,
 		&response.GetExperimentResponse{
@@ -88,7 +88,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	experiment2 := s.getExperimentByID(
+	experiment2 := s.getExperimentByIDAndCompare(
 		namespace2.Code,
 		experiment2ID,
 		&response.GetExperimentResponse{
@@ -163,7 +163,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 
 	// 4. test `GET /experiments/get-by-name` endpoint.
 	// check that experiments were created in scope of difference namespaces.
-	s.getExperimentByName(
+	s.getExperimentByNameCompare(
 		namespace1.Code,
 		experiment1.Experiment.Name,
 		&response.GetExperimentResponse{
@@ -176,7 +176,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	s.getExperimentByName(
+	s.getExperimentByNameCompare(
 		namespace2.Code,
 		experiment2.Experiment.Name,
 		&response.GetExperimentResponse{
@@ -191,10 +191,10 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	)
 
 	// 5. test `GET /experiments/search` endpoint.
-	s.searchExperiment(namespace1.Code, []*response.ExperimentPartialResponse{
+	s.searchExperimentAndCompare(namespace1.Code, []*response.ExperimentPartialResponse{
 		experiment1.Experiment,
 	})
-	s.searchExperiment(namespace2.Code, []*response.ExperimentPartialResponse{
+	s.searchExperimentAndCompare(namespace2.Code, []*response.ExperimentPartialResponse{
 		experiment2.Experiment,
 	})
 
@@ -209,7 +209,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	})
 
 	// check that experiments were updated.
-	s.getExperimentByID(
+	s.getExperimentByIDAndCompare(
 		namespace1.Code,
 		experiment1ID,
 		&response.GetExperimentResponse{
@@ -222,7 +222,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	s.getExperimentByID(
+	s.getExperimentByIDAndCompare(
 		namespace2.Code,
 		experiment2ID,
 		&response.GetExperimentResponse{
@@ -249,7 +249,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	})
 
 	// check that experiments tags were updated.
-	s.getExperimentByID(
+	s.getExperimentByIDAndCompare(
 		namespace1.Code,
 		experiment1ID,
 		&response.GetExperimentResponse{
@@ -267,7 +267,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	s.getExperimentByID(
+	s.getExperimentByIDAndCompare(
 		namespace2.Code,
 		experiment2ID,
 		&response.GetExperimentResponse{
@@ -291,7 +291,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	s.deleteExperiment(namespace2.Code, experiment2.Experiment.ID)
 
 	// check that experiment lifecycle has been updated.
-	s.getExperimentByID(
+	s.getExperimentByIDAndCompare(
 		namespace1.Code,
 		experiment1ID,
 		&response.GetExperimentResponse{
@@ -309,7 +309,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	s.getExperimentByID(
+	s.getExperimentByIDAndCompare(
 		namespace2.Code,
 		experiment2ID,
 		&response.GetExperimentResponse{
@@ -333,7 +333,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	s.restoreExperiment(namespace2.Code, experiment2ID)
 
 	// check that experiment lifecycle has been updated.
-	s.getExperimentByID(
+	s.getExperimentByIDAndCompare(
 		namespace1.Code,
 		experiment1ID,
 		&response.GetExperimentResponse{
@@ -351,7 +351,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			},
 		},
 	)
-	s.getExperimentByID(
+	s.getExperimentByIDAndCompare(
 		namespace2.Code,
 		experiment2ID,
 		&response.GetExperimentResponse{
@@ -408,7 +408,7 @@ func (s *ExperimentFlowTestSuite) updateExperiment(namespace string, req *reques
 	)
 }
 
-func (s *ExperimentFlowTestSuite) searchExperiment(
+func (s *ExperimentFlowTestSuite) searchExperimentAndCompare(
 	namespace string, expectedExperiments []*response.ExperimentPartialResponse,
 ) {
 	searchResp := response.SearchExperimentsResponse{}
@@ -429,7 +429,7 @@ func (s *ExperimentFlowTestSuite) searchExperiment(
 	assert.Equal(s.T(), expectedExperiments, searchResp.Experiments)
 }
 
-func (s *ExperimentFlowTestSuite) getExperimentByID(
+func (s *ExperimentFlowTestSuite) getExperimentByIDAndCompare(
 	namespace string, experimentID string, expectedResponse *response.GetExperimentResponse,
 ) *response.GetExperimentResponse {
 	resp := response.GetExperimentResponse{}
@@ -457,7 +457,7 @@ func (s *ExperimentFlowTestSuite) getExperimentByID(
 	return &resp
 }
 
-func (s *ExperimentFlowTestSuite) getExperimentByName(
+func (s *ExperimentFlowTestSuite) getExperimentByNameCompare(
 	namespace string, name string, expectedResponse *response.GetExperimentResponse,
 ) *response.GetExperimentResponse {
 	resp := response.GetExperimentResponse{}

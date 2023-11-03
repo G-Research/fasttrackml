@@ -13,8 +13,12 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_1ce8669664d2"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_5d042539be4f"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_8073e7e037e5"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_ac0b8b7c0014"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_e0d125c68d9a"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_ed364de02645"
 )
 
 var supportedAlembicVersions = []string{

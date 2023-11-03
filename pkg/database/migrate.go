@@ -13,12 +13,12 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_1ce8669664d2"
-	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_5d042539be4f"
-	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_8073e7e037e5"
-	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_ac0b8b7c0014"
-	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_e0d125c68d9a"
-	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_ed364de02645"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0001"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0002"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0003"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0004"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0005"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0006"
 )
 
 var supportedAlembicVersions = []string{
@@ -125,44 +125,45 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 		case "97727af70f4d", "3500859a5d39", "7f2a7d5fae7d":
 			switch schemaVersion.Version {
 			case "":
-				log.Info("Migrating database to FastTrackML schema ac0b8b7c0014")
-				if err := v_ac0b8b7c0014.Migrate(db); err != nil {
-					return fmt.Errorf("error migrating database to FastTrackML schema ac0b8b7c0014: %w", err)
+				log.Infof("Migrating database to FastTrackML schema %s", v_0001.Version)
+				if err := v_0001.Migrate(db); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0001.Version, err)
 				}
 				fallthrough
 
-			case "ac0b8b7c0014":
-				log.Info("Migrating database to FastTrackML schema 8073e7e037e5")
-				if err := v_8073e7e037e5.Migrate(db); err != nil {
-					return fmt.Errorf("error migrating database to FastTrackML schema 8073e7e037e5: %w", err)
+			case v_0001.Version:
+				log.Infof("Migrating database to FastTrackML schema %s", v_0002.Version)
+				if err := v_0002.Migrate(db); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0002.Version, err)
 				}
 				fallthrough
 
-			case "8073e7e037e5":
-				log.Info("Migrating database to FastTrackML schema ed364de02645")
-				if err := v_ed364de02645.Migrate(db); err != nil {
-					return fmt.Errorf("error migrating database to FastTrackML schema ed364de02645: %w", err)
+			case v_0002.Version:
+				log.Infof("Migrating database to FastTrackML schema %s", v_0003.Version)
+				if err := v_0003.Migrate(db); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0003.Version, err)
+				}
+
+				fallthrough
+
+			case v_0003.Version:
+				log.Infof("Migrating database to FastTrackML schema %s", v_0004.Version)
+				if err := v_0004.Migrate(db); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0004.Version, err)
 				}
 				fallthrough
 
-			case "ed364de02645":
-				log.Info("Migrating database to FastTrackML schema 1ce8669664d2")
-				if err := v_1ce8669664d2.Migrate(db); err != nil {
-					return fmt.Errorf("error migrating database to FastTrackML schema 1ce8669664d2: %w", err)
+			case v_0004.Version:
+				log.Infof("Migrating database to FastTrackML schema %s", v_0005.Version)
+				if err := v_0005.Migrate(db); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0005.Version, err)
 				}
 				fallthrough
 
-			case "1ce8669664d2":
-				log.Info("Migrating database to FastTrackML schema 5d042539be4f")
-				if err := v_5d042539be4f.Migrate(db); err != nil {
-					return fmt.Errorf("error migrating database to FastTrackML schema 5d042539be4f: %w", err)
-				}
-				fallthrough
-
-			case "5d042539be4f":
-				log.Info("Migrating database to FastTrackML schema e0d125c68d9a")
-				if err := v_e0d125c68d9a.Migrate(db); err != nil {
-					return fmt.Errorf("error migrating database to FastTrackML schema e0d125c68d9a: %w", err)
+			case v_0005.Version:
+				log.Infof("Migrating database to FastTrackML schema %s", v_0006.Version)
+				if err := v_0006.Migrate(db); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0006.Version, err)
 				}
 
 			default:
@@ -194,7 +195,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				Version: "97727af70f4d",
 			})
 			tx.Create(&SchemaVersion{
-				Version: "e0d125c68d9a",
+				Version: v_0006.Version,
 			})
 			tx.Commit()
 			if tx.Error != nil {

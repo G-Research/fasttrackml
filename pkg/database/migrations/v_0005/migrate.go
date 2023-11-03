@@ -1,4 +1,4 @@
-package v_5d042539be4f
+package v_0005
 
 import (
 	"fmt"
@@ -9,6 +9,8 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/database/migrations"
 )
+
+const Version = "5d042539be4f"
 
 func Migrate(db *gorm.DB) error {
 	// We need to run this migration without foreign key constraints to avoid
@@ -50,7 +52,7 @@ func Migrate(db *gorm.DB) error {
 			}
 			return tx.Model(&SchemaVersion{}).
 				Where("1 = 1").
-				Update("Version", "5d042539be4f").
+				Update("Version", Version).
 				Error
 		})
 	})

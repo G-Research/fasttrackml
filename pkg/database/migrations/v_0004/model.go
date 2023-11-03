@@ -1,4 +1,4 @@
-package v_ed364de02645
+package v_0004
 
 import (
 	"context"
@@ -30,27 +30,13 @@ const (
 	LifecycleStageDeleted LifecycleStage = "deleted"
 )
 
-type Namespace struct {
-	ID                  uint   `gorm:"primaryKey;autoIncrement"`
-	Apps                []App  `gorm:"constraint:OnDelete:CASCADE"`
-	Code                string `gorm:"unique;index;not null"`
-	Description         string
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
-	DeletedAt           gorm.DeletedAt `gorm:"index"`
-	DefaultExperimentID *int32         `gorm:"not null"`
-	Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE"`
-}
-
 type Experiment struct {
 	ID               *int32         `gorm:"column:experiment_id;not null;primaryKey"`
-	Name             string         `gorm:"type:varchar(256);not null;index:idx_namespace_name,unique"`
+	Name             string         `gorm:"type:varchar(256);not null;unique"`
 	ArtifactLocation string         `gorm:"type:varchar(256)"`
 	LifecycleStage   LifecycleStage `gorm:"type:varchar(32);check:lifecycle_stage IN ('active', 'deleted')"`
 	CreationTime     sql.NullInt64  `gorm:"type:bigint"`
 	LastUpdateTime   sql.NullInt64  `gorm:"type:bigint"`
-	NamespaceID      uint           `gorm:"index:idx_namespace_name,unique"`
-	Namespace        Namespace
 	Tags             []ExperimentTag
 	Runs             []Run
 }
@@ -77,12 +63,12 @@ type Run struct {
 	ArtifactURI    string         `gorm:"<-:create;type:varchar(200)"`
 	ExperimentID   int32
 	Experiment     Experiment
-	DeletedTime    sql.NullInt64 `gorm:"type:bigint"`
-	RowNum         RowNum        `gorm:"<-:create;index"`
-	Params         []Param
-	Tags           []Tag
-	Metrics        []Metric
-	LatestMetrics  []LatestMetric
+	DeletedTime    sql.NullInt64  `gorm:"type:bigint"`
+	RowNum         RowNum         `gorm:"<-:create;index"`
+	Params         []Param        `gorm:"constraint:OnDelete:CASCADE"`
+	Tags           []Tag          `gorm:"constraint:OnDelete:CASCADE"`
+	Metrics        []Metric       `gorm:"constraint:OnDelete:CASCADE"`
+	LatestMetrics  []LatestMetric `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 type RowNum int64
@@ -199,10 +185,8 @@ func (d Dashboard) MarshalJSON() ([]byte, error) {
 
 type App struct {
 	Base
-	Type        string   `gorm:"not null" json:"type"`
-	State       AppState `json:"state"`
-	Namespace   Namespace
-	NamespaceID uint `gorm:"column:namespace_id"`
+	Type  string   `gorm:"not null" json:"type"`
+	State AppState `json:"state"`
 }
 
 type AppState map[string]any
@@ -215,6 +199,7 @@ func (s AppState) Value() (driver.Value, error) {
 	return string(v), nil
 }
 
+//nolint:ineffassign
 func (s *AppState) Scan(v interface{}) error {
 	var nullS sql.NullString
 	if err := nullS.Scan(v); err != nil {
@@ -223,6 +208,7 @@ func (s *AppState) Scan(v interface{}) error {
 	if nullS.Valid {
 		return json.Unmarshal([]byte(nullS.String), s)
 	}
+	s = nil
 	return nil
 }
 

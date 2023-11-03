@@ -1,8 +1,10 @@
-package v_ac0b8b7c0014
+package v_0001
 
 import (
 	"gorm.io/gorm"
 )
+
+const Version = "ac0b8b7c0014"
 
 func Migrate(db *gorm.DB) error {
 	return db.Transaction(func(tx *gorm.DB) error {
@@ -61,7 +63,7 @@ func Migrate(db *gorm.DB) error {
 			return err
 		}
 		return tx.Create(&SchemaVersion{
-			Version: "ac0b8b7c0014",
+			Version: Version,
 		}).Error
 	})
 }

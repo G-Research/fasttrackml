@@ -49,26 +49,90 @@ func (s *ExperimentFlowTestSuite) TearDownTest() {
 }
 
 func (s *ExperimentFlowTestSuite) Test_Ok() {
-	namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "experiment-namespace-1",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-	namespace2, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  2,
-		Code:                "experiment-namespace-2",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
+	tests := []struct {
+		name           string
+		setup          func() (*models.Namespace, *models.Namespace)
+		namespace1Code string
+		namespace2Code string
+	}{
+		{
+			name: "TestInScopeOfTwoCustomNamespaces",
+			setup: func() (*models.Namespace, *models.Namespace) {
+				return &models.Namespace{
+						ID:                  1,
+						Code:                "namespace-1",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}, &models.Namespace{
+						ID:                  2,
+						Code:                "namespace-2",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}
+			},
+			namespace1Code: "namespace-1",
+			namespace2Code: "namespace-2",
+		},
+		{
+			name: "TestInScopeOfOneDefaultAndOneCustomNamespacesObviousCase",
+			setup: func() (*models.Namespace, *models.Namespace) {
+				return &models.Namespace{
+						ID:                  0,
+						Code:                "default",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}, &models.Namespace{
+						ID:                  1,
+						Code:                "namespace-1",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}
+			},
+			namespace1Code: "default",
+			namespace2Code: "namespace-1",
+		},
+		{
+			name: "TestInScopeOfOneDefaultAndOneCustomNamespacesImplicitCase",
+			setup: func() (*models.Namespace, *models.Namespace) {
+				return &models.Namespace{
+						ID:                  0,
+						Code:                "default",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}, &models.Namespace{
+						ID:                  1,
+						Code:                "namespace-1",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}
+			},
+			namespace1Code: "",
+			namespace2Code: "namespace-1",
+		},
+	}
 
+	// delete everything before the test, because when service starts under the hood we create
+	// default namespace and experiment, so it could lead to the problems with actual tests.
+	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	for _, tt := range tests {
+		s.T().Run(tt.name, func(T *testing.T) {
+			defer assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+
+			// 1. setup data under the test.
+			namespace1, namespace2 := tt.setup()
+			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
+			assert.Nil(s.T(), err)
+			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
+			assert.Nil(s.T(), err)
+
+			// 2. run actual flow test over the test data.
+			s.testExperimentFlow(tt.namespace1Code, tt.namespace2Code)
+		})
+	}
+}
+
+func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2Code string) {
 	// 1. test `POST /experiments/create` endpoint.
 	// create experiments in scope of different namespaces.
-	experiment1ID := s.createExperiment(namespace1.Code, &request.CreateExperimentRequest{
+	experiment1ID := s.createExperiment(namespace1Code, &request.CreateExperimentRequest{
 		Name:             "ExperimentName1",
 		ArtifactLocation: "/artifact/location",
 	})
-	experiment2ID := s.createExperiment(namespace2.Code, &request.CreateExperimentRequest{
+	experiment2ID := s.createExperiment(namespace2Code, &request.CreateExperimentRequest{
 		Name:             "ExperimentName2",
 		ArtifactLocation: "/artifact/location",
 	})
@@ -76,7 +140,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	// 2. test `GET /experiments/get` endpoint.
 	// check that experiments were created in scope of difference namespaces.
 	experiment1 := s.getExperimentByIDAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		experiment1ID,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{
@@ -89,7 +153,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 		},
 	)
 	experiment2 := s.getExperimentByIDAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		experiment2ID,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{
@@ -111,7 +175,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 		s.MlflowClient.WithMethod(
 			http.MethodGet,
 		).WithNamespace(
-			namespace2.Code,
+			namespace2Code,
 		).WithQuery(
 			request.GetExperimentRequest{
 				ID: experiment1ID,
@@ -139,7 +203,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 		s.MlflowClient.WithMethod(
 			http.MethodGet,
 		).WithNamespace(
-			namespace1.Code,
+			namespace1Code,
 		).WithQuery(
 			request.GetExperimentRequest{
 				ID: experiment2ID,
@@ -164,7 +228,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	// 4. test `GET /experiments/get-by-name` endpoint.
 	// check that experiments were created in scope of difference namespaces.
 	s.getExperimentByNameCompare(
-		namespace1.Code,
+		namespace1Code,
 		experiment1.Experiment.Name,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{
@@ -177,7 +241,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getExperimentByNameCompare(
-		namespace2.Code,
+		namespace2Code,
 		experiment2.Experiment.Name,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{
@@ -191,26 +255,26 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	)
 
 	// 5. test `GET /experiments/search` endpoint.
-	s.searchExperimentAndCompare(namespace1.Code, []*response.ExperimentPartialResponse{
+	s.searchExperimentAndCompare(namespace1Code, []*response.ExperimentPartialResponse{
 		experiment1.Experiment,
 	})
-	s.searchExperimentAndCompare(namespace2.Code, []*response.ExperimentPartialResponse{
+	s.searchExperimentAndCompare(namespace2Code, []*response.ExperimentPartialResponse{
 		experiment2.Experiment,
 	})
 
 	// 6. test `POST /experiments/update` endpoint.
-	s.updateExperiment(namespace1.Code, &request.UpdateExperimentRequest{
+	s.updateExperiment(namespace1Code, &request.UpdateExperimentRequest{
 		ID:   experiment1.Experiment.ID,
 		Name: "UpdatedExperiment1",
 	})
-	s.updateExperiment(namespace2.Code, &request.UpdateExperimentRequest{
+	s.updateExperiment(namespace2Code, &request.UpdateExperimentRequest{
 		ID:   experiment2.Experiment.ID,
 		Name: "UpdatedExperiment2",
 	})
 
 	// check that experiments were updated.
 	s.getExperimentByIDAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		experiment1ID,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{
@@ -223,7 +287,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getExperimentByIDAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		experiment2ID,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{
@@ -237,12 +301,12 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	)
 
 	// 7. test `POST /experiments/set-experiment-tag` endpoint.
-	s.setExperimentTag(namespace1.Code, &request.SetExperimentTagRequest{
+	s.setExperimentTag(namespace1Code, &request.SetExperimentTagRequest{
 		ID:    experiment1ID,
 		Key:   "KeyTag1",
 		Value: "ValueTag1",
 	})
-	s.setExperimentTag(namespace2.Code, &request.SetExperimentTagRequest{
+	s.setExperimentTag(namespace2Code, &request.SetExperimentTagRequest{
 		ID:    experiment2ID,
 		Key:   "KeyTag2",
 		Value: "ValueTag2",
@@ -250,7 +314,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 
 	// check that experiments tags were updated.
 	s.getExperimentByIDAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		experiment1ID,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{
@@ -268,7 +332,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getExperimentByIDAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		experiment2ID,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{
@@ -287,12 +351,12 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	)
 
 	// 8. test `POST /experiments/delete` endpoint.
-	s.deleteExperiment(namespace1.Code, experiment1.Experiment.ID)
-	s.deleteExperiment(namespace2.Code, experiment2.Experiment.ID)
+	s.deleteExperiment(namespace1Code, experiment1.Experiment.ID)
+	s.deleteExperiment(namespace2Code, experiment2.Experiment.ID)
 
 	// check that experiment lifecycle has been updated.
 	s.getExperimentByIDAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		experiment1ID,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{
@@ -310,7 +374,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getExperimentByIDAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		experiment2ID,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{
@@ -329,12 +393,12 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	)
 
 	// 9. test `POST /experiments/restore` endpoint.
-	s.restoreExperiment(namespace1.Code, experiment1ID)
-	s.restoreExperiment(namespace2.Code, experiment2ID)
+	s.restoreExperiment(namespace1Code, experiment1ID)
+	s.restoreExperiment(namespace2Code, experiment2ID)
 
 	// check that experiment lifecycle has been updated.
 	s.getExperimentByIDAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		experiment1ID,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{
@@ -352,7 +416,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getExperimentByIDAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		experiment2ID,
 		&response.GetExperimentResponse{
 			Experiment: &response.ExperimentPartialResponse{

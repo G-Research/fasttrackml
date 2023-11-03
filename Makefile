@@ -132,7 +132,7 @@ test-go-unit: ## run go unit tests.
 .PHONY: test-go-integration
 test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
-	go test -v -p 1 -count=1 -tags="integration" ./tests/integration/golang/... -run TestExperimentFlowTestSuite
+	go test -v -p 1 -count=1 -tags="integration" ./tests/integration/golang/...
 
 PHONY: test-python-integration
 test-python-integration: test-python-integration-mlflow test-python-integration-aim  ## run all the python integration tests.

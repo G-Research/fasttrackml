@@ -51,43 +51,109 @@ func (s *RunFlowTestSuite) TearDownTest() {
 }
 
 func (s *RunFlowTestSuite) Test_Ok() {
-	namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "experiment-namespace-1",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-	namespace2, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  2,
-		Code:                "experiment-namespace-2",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
+	tests := []struct {
+		name           string
+		setup          func() (*models.Namespace, *models.Namespace)
+		namespace1Code string
+		namespace2Code string
+	}{
+		{
+			name: "TestInScopeOfTwoCustomNamespaces",
+			setup: func() (*models.Namespace, *models.Namespace) {
+				return &models.Namespace{
+						ID:                  1,
+						Code:                "namespace-1",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}, &models.Namespace{
+						ID:                  2,
+						Code:                "namespace-2",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}
+			},
+			namespace1Code: "namespace-1",
+			namespace2Code: "namespace-2",
+		},
+		{
+			name: "TestInScopeOfOneDefaultAndOneCustomNamespacesObviousCase",
+			setup: func() (*models.Namespace, *models.Namespace) {
+				return &models.Namespace{
+						ID:                  0,
+						Code:                "default",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}, &models.Namespace{
+						ID:                  1,
+						Code:                "namespace-1",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}
+			},
+			namespace1Code: "default",
+			namespace2Code: "namespace-1",
+		},
+		{
+			name: "TestInScopeOfOneDefaultAndOneCustomNamespacesImplicitCase",
+			setup: func() (*models.Namespace, *models.Namespace) {
+				return &models.Namespace{
+						ID:                  0,
+						Code:                "default",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}, &models.Namespace{
+						ID:                  1,
+						Code:                "namespace-1",
+						DefaultExperimentID: common.GetPointer(int32(0)),
+					}
+			},
+			namespace1Code: "",
+			namespace2Code: "namespace-1",
+		},
+	}
 
-	experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:             "Experiment1",
-		ArtifactLocation: "/artifact/location",
-		LifecycleStage:   models.LifecycleStageActive,
-		NamespaceID:      namespace1.ID,
-	})
-	assert.Nil(s.T(), err)
+	// delete everything before the test, because when service starts under the hood we create
+	// default namespace and experiment, so it could lead to the problems with actual tests.
+	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	for _, tt := range tests {
+		s.T().Run(tt.name, func(T *testing.T) {
+			defer assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 
-	experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:             "Experiment2",
-		ArtifactLocation: "/artifact/location",
-		LifecycleStage:   models.LifecycleStageActive,
-		NamespaceID:      namespace2.ID,
-	})
-	assert.Nil(s.T(), err)
+			// 1. setup data under the test.
+			namespace1, namespace2 := tt.setup()
+			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
+			assert.Nil(s.T(), err)
+			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
+			assert.Nil(s.T(), err)
 
+			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+				Name:             "Experiment1",
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   models.LifecycleStageActive,
+				NamespaceID:      namespace1.ID,
+			})
+			assert.Nil(s.T(), err)
+
+			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+				Name:             "Experiment2",
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   models.LifecycleStageActive,
+				NamespaceID:      namespace2.ID,
+			})
+			assert.Nil(s.T(), err)
+
+			// 2. run actual flow test over the test data.
+			s.testRunFlow(tt.namespace1Code, tt.namespace2Code, experiment1, experiment2)
+		})
+	}
+}
+
+func (s *RunFlowTestSuite) testRunFlow(
+	namespace1Code, namespace2Code string, experiment1, experiment2 *models.Experiment,
+) {
 	// 1. test `POST /runs/create` endpoint.
 	// create runs in scope of different experiment namespaces.
-	run1ID := s.createRun(namespace1.Code, &request.CreateRunRequest{
+	run1ID := s.createRun(namespace1Code, &request.CreateRunRequest{
 		Name:         "Run1",
 		ExperimentID: fmt.Sprintf("%d", *experiment1.ID),
 	})
 
-	run2ID := s.createRun(namespace2.Code, &request.CreateRunRequest{
+	run2ID := s.createRun(namespace2Code, &request.CreateRunRequest{
 		Name:         "Run2",
 		ExperimentID: fmt.Sprintf("%d", *experiment2.ID),
 	})
@@ -95,7 +161,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	// 2. test `GET /runs/get` endpoint.
 	// check that runs were created in scope of difference experiment namespaces.
 	run1 := s.getRunAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		request.GetRunRequest{
 			RunID: run1ID,
 		},
@@ -114,7 +180,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 	run2 := s.getRunAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		request.GetRunRequest{
 			RunID: run2ID,
 		},
@@ -142,7 +208,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		s.MlflowClient.WithMethod(
 			http.MethodGet,
 		).WithNamespace(
-			namespace2.Code,
+			namespace2Code,
 		).WithQuery(
 			request.GetRunRequest{
 				RunID: run1.Run.Info.ID,
@@ -162,7 +228,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		s.MlflowClient.WithMethod(
 			http.MethodGet,
 		).WithNamespace(
-			namespace1.Code,
+			namespace1Code,
 		).WithQuery(
 			request.GetRunRequest{
 				RunID: run2.Run.Info.ID,
@@ -177,13 +243,13 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	// 4. test `POST /runs/update` endpoint.
-	s.updateRun(namespace1.Code, &request.UpdateRunRequest{
+	s.updateRun(namespace1Code, &request.UpdateRunRequest{
 		RunID:  run1ID,
 		Name:   "UpdatedRun1",
 		Status: string(models.StatusScheduled),
 	})
 
-	s.updateRun(namespace2.Code, &request.UpdateRunRequest{
+	s.updateRun(namespace2Code, &request.UpdateRunRequest{
 		RunID:  run2ID,
 		Name:   "UpdatedRun2",
 		Status: string(models.StatusScheduled),
@@ -191,7 +257,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	// check that runs were updated.
 	s.getRunAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		request.GetRunRequest{
 			RunID: run1ID,
 		},
@@ -210,7 +276,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getRunAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		request.GetRunRequest{
 			RunID: run2ID,
 		},
@@ -231,7 +297,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	// 5. test `POST /runs/search` endpoint.
 	s.searchRunsAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		request.SearchRunsRequest{
 			ExperimentIDs: []string{fmt.Sprintf("%d", *experiment1.ID)},
 		},
@@ -259,7 +325,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	)
 
 	s.searchRunsAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		request.SearchRunsRequest{
 			ExperimentIDs: []string{fmt.Sprintf("%d", *experiment2.ID)},
 		},
@@ -287,12 +353,12 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	)
 
 	// 6. test `POST /runs/delete` endpoint.
-	s.deleteRun(namespace1.Code, &request.DeleteRunRequest{RunID: run1ID})
-	s.deleteRun(namespace2.Code, &request.DeleteRunRequest{RunID: run2ID})
+	s.deleteRun(namespace1Code, &request.DeleteRunRequest{RunID: run1ID})
+	s.deleteRun(namespace2Code, &request.DeleteRunRequest{RunID: run2ID})
 
 	// try to get deleted runs and check theirs state.
 	s.getRunAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		request.GetRunRequest{
 			RunID: run1ID,
 		},
@@ -311,7 +377,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getRunAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		request.GetRunRequest{
 			RunID: run2ID,
 		},
@@ -331,12 +397,12 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	)
 
 	// 7. test `POST /runs/restore` endpoint.
-	s.restoreRun(namespace1.Code, &request.RestoreRunRequest{RunID: run1ID})
-	s.restoreRun(namespace2.Code, &request.RestoreRunRequest{RunID: run2ID})
+	s.restoreRun(namespace1Code, &request.RestoreRunRequest{RunID: run1ID})
+	s.restoreRun(namespace2Code, &request.RestoreRunRequest{RunID: run2ID})
 
 	// try to get restored runs and check theirs state.
 	s.getRunAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		request.GetRunRequest{
 			RunID: run1ID,
 		},
@@ -355,7 +421,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getRunAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		request.GetRunRequest{
 			RunID: run2ID,
 		},
@@ -375,14 +441,14 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	)
 
 	// 8. test `POST /runs/log-metric` endpoint.
-	s.logRunMetric(namespace1.Code, &request.LogMetricRequest{
+	s.logRunMetric(namespace1Code, &request.LogMetricRequest{
 		RunID:     run1ID,
 		Key:       "key1",
 		Value:     1.1,
 		Timestamp: 123456789,
 		Step:      1,
 	})
-	s.logRunMetric(namespace2.Code, &request.LogMetricRequest{
+	s.logRunMetric(namespace2Code, &request.LogMetricRequest{
 		RunID:     run2ID,
 		Key:       "key2",
 		Value:     2.2,
@@ -392,7 +458,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	// try to get runs information and compare it.
 	s.getRunAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		request.GetRunRequest{
 			RunID: run1ID,
 		},
@@ -420,7 +486,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getRunAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		request.GetRunRequest{
 			RunID: run2ID,
 		},
@@ -449,12 +515,12 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	)
 
 	// 9. test `POST /runs/log-parameter` endpoint.
-	s.logRunParam(namespace1.Code, &request.LogParamRequest{
+	s.logRunParam(namespace1Code, &request.LogParamRequest{
 		RunID: run1ID,
 		Key:   "key1",
 		Value: "param1",
 	})
-	s.logRunParam(namespace2.Code, &request.LogParamRequest{
+	s.logRunParam(namespace2Code, &request.LogParamRequest{
 		RunID: run2ID,
 		Key:   "key2",
 		Value: "param2",
@@ -462,7 +528,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	// try to get runs information and compare it.
 	s.getRunAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		request.GetRunRequest{
 			RunID: run1ID,
 		},
@@ -488,7 +554,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getRunAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		request.GetRunRequest{
 			RunID: run2ID,
 		},
@@ -515,12 +581,12 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	)
 
 	// 10. test `POST /runs/set-tag` endpoint.
-	s.setRunTag(namespace1.Code, &request.SetRunTagRequest{
+	s.setRunTag(namespace1Code, &request.SetRunTagRequest{
 		RunID: run1ID,
 		Key:   "mlflow.user",
 		Value: "1",
 	})
-	s.setRunTag(namespace2.Code, &request.SetRunTagRequest{
+	s.setRunTag(namespace2Code, &request.SetRunTagRequest{
 		RunID: run2ID,
 		Key:   "mlflow.user",
 		Value: "2",
@@ -528,7 +594,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	// try to get runs information and compare it.
 	s.getRunAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		request.GetRunRequest{
 			RunID: run1ID,
 		},
@@ -559,7 +625,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getRunAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		request.GetRunRequest{
 			RunID: run2ID,
 		},
@@ -591,18 +657,18 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	)
 
 	// 11. test `POST /runs/delete-tag` endpoint.
-	s.deleteRunTag(namespace1.Code, &request.DeleteRunTagRequest{
+	s.deleteRunTag(namespace1Code, &request.DeleteRunTagRequest{
 		RunID: run1ID,
 		Key:   "mlflow.user",
 	})
-	s.deleteRunTag(namespace2.Code, &request.DeleteRunTagRequest{
+	s.deleteRunTag(namespace2Code, &request.DeleteRunTagRequest{
 		RunID: run2ID,
 		Key:   "mlflow.user",
 	})
 
 	// try to get runs information and compare it.
 	s.getRunAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		request.GetRunRequest{
 			RunID: run1ID,
 		},
@@ -629,7 +695,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getRunAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		request.GetRunRequest{
 			RunID: run2ID,
 		},
@@ -657,7 +723,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	)
 
 	// 12. test `POST /runs/log-batch` endpoint.
-	s.runLogBatch(namespace1.Code, &request.LogBatchRequest{
+	s.runLogBatch(namespace1Code, &request.LogBatchRequest{
 		RunID: run1ID,
 		Tags: []request.TagPartialRequest{
 			{
@@ -680,7 +746,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			},
 		},
 	})
-	s.runLogBatch(namespace2.Code, &request.LogBatchRequest{
+	s.runLogBatch(namespace2Code, &request.LogBatchRequest{
 		RunID: run2ID,
 		Tags: []request.TagPartialRequest{
 			{
@@ -706,7 +772,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	// try to get runs information and compare it.
 	s.getRunAndCompare(
-		namespace1.Code,
+		namespace1Code,
 		request.GetRunRequest{
 			RunID: run1ID,
 		},
@@ -751,7 +817,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	)
 	s.getRunAndCompare(
-		namespace2.Code,
+		namespace2Code,
 		request.GetRunRequest{
 			RunID: run2ID,
 		},

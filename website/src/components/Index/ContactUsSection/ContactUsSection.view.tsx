@@ -2,7 +2,7 @@ import React from 'react';
 import clsx from 'clsx';
 import {useForm, SubmitHandler} from "react-hook-form";
 import styles from './ContactUsSection.module.css';
-import {openNewIssue, openNewEmail} from "@site/src/core/utils";
+import {openNewEmail} from "@site/src/core/utils";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
 
@@ -30,11 +30,7 @@ export default function ContactUsSection(): React.JSX.Element {
         siteConfig: {customFields}
     } = useDocusaurusContext();
     const email = customFields?.email;
-    const newIssueUrl = customFields?.newIssueUrl;
-
-    const onUsingGitHub: SubmitHandler<Inputs> = data => {
-        openNewIssue(newIssueUrl as string, data.subject, getMessage(data.name, data.company, data.message));
-    };
+    const slackInviteUrl = customFields?.slackInviteUrl
 
     const onSendEmail: SubmitHandler<Inputs> = data => {
         openNewEmail(email as string, data.subject, getMessage(data.name, data.company, data.message));
@@ -44,7 +40,7 @@ export default function ContactUsSection(): React.JSX.Element {
         <div className="container padding-bottom--xl text--center">
             <h1 id="contact-us" className={clsx("section__ref")}>Contact Us</h1>
             <p>We would love to hear from you! FastTrackML is a brand new project and any contribution would make a difference!</p>
-            <form onSubmit={handleSubmit(onUsingGitHub)}>
+            <form onSubmit={handleSubmit(onSendEmail)}>
                 <div className='row'>
                     <div className='col col--6'>
                         <label htmlFor="name">Your Name</label>
@@ -82,19 +78,15 @@ export default function ContactUsSection(): React.JSX.Element {
                 </div>
                 <div className="row margin-vert--md">
                     <div className={clsx("col", styles.buttons)}>
-                        <button type="button" className="button button--outline button--primary button--lg"
+                        <button type="button" className="button button--primary button--lg"
                                 title={email as string}
                                 disabled={!isValid} onClick={handleSubmit(onSendEmail)}>
-                            📨 By Email
-                        </button>
-                        <button type="submit" className="button button--primary button--lg"
-                                title={newIssueUrl as string}
-                                disabled={!isValid}>
-                            💬 Using GitHub
+                            📨 Submit
                         </button>
                     </div>
                 </div>
             </form>
+	    <p>Or, join the <a href={slackInviteUrl} target="_blank">#fasttrackml channel on the MLOps.community Slack!</a></p>
         </div>
     </section>;
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import clsx from 'clsx';
 import {useForm, SubmitHandler} from "react-hook-form";
 import styles from './ContactUsSection.module.css';
-import {openNewIssue, openNewEmail, openInNewTab} from "@site/src/core/utils";
+import {openNewEmail} from "@site/src/core/utils";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
 
@@ -34,10 +34,6 @@ export default function ContactUsSection(): React.JSX.Element {
 
     const onSendEmail: SubmitHandler<Inputs> = data => {
         openNewEmail(email as string, data.subject, getMessage(data.name, data.company, data.message));
-    };
-
-    const onJoinSlack: SubmitHandler<Inputs> = data => {
-        openInNewTab(slackInviteUrl as string);
     };
 
     return <section>
@@ -82,7 +78,7 @@ export default function ContactUsSection(): React.JSX.Element {
                 </div>
                 <div className="row margin-vert--md">
                     <div className={clsx("col", styles.buttons)}>
-                        <button type="button" className="button button--outline button--primary button--lg"
+                        <button type="button" className="button button--primary button--lg"
                                 title={email as string}
                                 disabled={!isValid} onClick={handleSubmit(onSendEmail)}>
                             📨 Submit
@@ -90,16 +86,7 @@ export default function ContactUsSection(): React.JSX.Element {
                     </div>
                 </div>
             </form>
-	    <p>Or, join the <b>#fasttrackml</b> channel on the <b>MLOps.community</b> Slack!</p>
-        <div className="row margin-vert--md">
-            <div className={clsx("col", styles.buttons)}>
-                <button type="submit" className="button button--primary button--lg"
-                    title={slackInviteUrl as string}
-                    disabled={!isValid} onClick={handleSubmit(onJoinSlack)}>
-                💬 Join our Slack
-                </button>
-            </div>		
-	    </div>
+	    <p>Or, join the <a href={slackInviteUrl} target="_blank">#fasttrackml channel on the MLOps.community Slack!</a></p>
         </div>
     </section>;
 }

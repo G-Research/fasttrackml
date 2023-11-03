@@ -1,4 +1,4 @@
-export const openInNewTab = (url: string) => {
+const openInNewTab = (url: string) => {
     window.open(url, '_blank', 'noreferrer');
 };
 

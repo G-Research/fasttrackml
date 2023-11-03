@@ -113,9 +113,9 @@ func (rn RowNum) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 }
 
 type Param struct {
-	Key   string `gorm:"type:varchar(250);not null;primaryKey"`
-	Value string `gorm:"type:varchar(500);not null"`
-	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
+	Key   string `gorm:"type:varchar(250);not null;uniqueIndex:idx_key_val_run;primaryKey"`
+	Value string `gorm:"type:varchar(500);not null;uniqueIndex:idx_key_val_run;"`
+	RunID string `gorm:"column:run_uuid;not null;primaryKey;uniqueIndex:idx_key_val_run;index"`
 }
 
 type Tag struct {

@@ -607,7 +607,8 @@ func (s Service) LogBatch(
 		return api.NewInvalidParameterValueError(err.Error())
 	}
 	if err := s.paramRepository.CreateBatch(ctx, 100, params); err != nil {
-		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
+		// if eris.Is the ON CONFLICT DO NOTHING type, send this
+		return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
 	}
 	if err := s.metricRepository.CreateBatch(ctx, run, 100, metrics); err != nil {
 		return api.NewInternalError("unable to insert metrics for run '%s': %s", run.ID, err)

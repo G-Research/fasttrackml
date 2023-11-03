@@ -114,9 +114,9 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
-			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
+			_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
 			assert.Nil(s.T(), err)
-			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
+			_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
 			assert.Nil(s.T(), err)
 
 			// 2. run actual flow test over the test data.

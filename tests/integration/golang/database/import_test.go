@@ -103,6 +103,8 @@ func (s *ImportTestSuite) SetupTest() {
 
 	dashboardFixtures, err := fixtures.NewDashboardFixtures(db.GormDB())
 	assert.Nil(s.T(), err)
+
+	// dashboard 1
 	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
 		Base: database.Base{
 			ID:        uuid.New(),
@@ -113,6 +115,16 @@ func (s *ImportTestSuite) SetupTest() {
 	})
 	assert.Nil(s.T(), err)
 
+	// dashboard 2
+	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
+		Base: database.Base{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+		},
+		AppID: &app.ID,
+		Name:  uuid.NewString(),
+	})
+	assert.Nil(s.T(), err)
 	// prepare output database.
 	db, err = database.NewDBProvider(
 		helpers.GetOutputDatabaseUri(),
@@ -138,7 +150,7 @@ func (s *ImportTestSuite) SetupTest() {
 		latestMetrics:            20,
 		tags:                     10,
 		params:                   20,
-		dashboards:               1,
+		dashboards:               2,
 		apps:                     1,
 	}
 }
@@ -173,8 +185,8 @@ func (s *ImportTestSuite) Test_Ok() {
 	// confirm row-for-row equality
 	for _, table := range []string{
 		"namespaces",
-		// "apps",
-		// "dashboards",
+		"apps",
+		"dashboards",
 		"experiment_tags",
 		"runs",
 		"tags",
@@ -223,13 +235,13 @@ func validateRowCounts(t *testing.T, db *gorm.DB, counts rowCounts) {
 	assert.Nil(t, tx.Error)
 	assert.Equal(t, counts.distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
 
-	// tx = db.DB.Model(&database.App{}).Count(&countVal)
-	// assert.Nil(t, tx.Error)
-	// assert.Equal(t, counts.apps, int(countVal), "Apps count incorrect")
+	tx = db.Model(&database.App{}).Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, counts.apps, int(countVal), "Apps count incorrect")
 
-	// tx = db.DB.Model(&database.Dashboard{}).Count(&countVal)
-	// assert.Nil(t, tx.Error)
-	// assert.Equal(t, counts.dashboards, int(countVal), "Dashboard count incorrect")
+	tx = db.Model(&database.Dashboard{}).Count(&countVal)
+	assert.Nil(t, tx.Error)
+	assert.Equal(t, counts.dashboards, int(countVal), "Dashboard count incorrect")
 }
 
 // validateTable will scan source and dest table and confirm they are identical
@@ -246,22 +258,22 @@ func validateTable(t *testing.T, source, dest *gorm.DB, table string) {
 	defer destRows.Close()
 
 	for sourceRows.Next() {
-		var sourceItem, destItem map[string]any
+		var sourceRow, destRow map[string]any
 
-		err := source.ScanRows(sourceRows, &sourceItem)
+		err := source.ScanRows(sourceRows, &sourceRow)
 		assert.Nil(t, err)
 
 		destRows.Next()
-		err = dest.ScanRows(destRows, &destItem)
+		err = dest.ScanRows(destRows, &destRow)
 		assert.Nil(t, err)
 
 		// TODO:DSuhinin delete this fields right now, because they
 		// cause comparison error when we compare `namespace` entities. Let's find smarter way to do that.
-		delete(destItem, "updated_at")
-		delete(destItem, "created_at")
-		delete(sourceItem, "updated_at")
-		delete(sourceItem, "created_at")
+		delete(destRow, "updated_at")
+		delete(destRow, "created_at")
+		delete(sourceRow, "updated_at")
+		delete(sourceRow, "created_at")
 
-		assert.Equal(t, sourceItem, destItem)
+		assert.Equal(t, sourceRow, destRow)
 	}
 }

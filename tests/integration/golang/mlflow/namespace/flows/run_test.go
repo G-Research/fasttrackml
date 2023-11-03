@@ -146,7 +146,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 func (s *RunFlowTestSuite) testRunFlow(
 	namespace1Code, namespace2Code string, experiment1, experiment2 *models.Experiment,
 ) {
-	// 1. test `POST /runs/create` endpoint.
+	// test `POST /runs/create` endpoint.
 	// create runs in scope of different experiment namespaces.
 	run1ID := s.createRun(namespace1Code, &request.CreateRunRequest{
 		Name:         "Run1",
@@ -158,7 +158,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		ExperimentID: fmt.Sprintf("%d", *experiment2.ID),
 	})
 
-	// 2. test `GET /runs/get` endpoint.
+	// test `GET /runs/get` endpoint.
 	// check that runs were created in scope of difference experiment namespaces.
 	run1 := s.getRunAndCompare(
 		namespace1Code,
@@ -199,7 +199,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 	)
 
-	// 3. test `GET /runs/get` endpoint.
+	// test `GET /runs/get` endpoint.
 	// check that there is no intersection between runs, so when we request
 	// run 1 in scope of namespace 2 and run 2 in scope of namespace 1 API will throw an error.
 	resp := api.ErrorResponse{}
@@ -242,7 +242,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
 	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
-	// 4. test `POST /runs/update` endpoint.
+	// test `POST /runs/update` endpoint.
 	s.updateRun(namespace1Code, &request.UpdateRunRequest{
 		RunID:  run1ID,
 		Name:   "UpdatedRun1",
@@ -295,7 +295,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 	)
 
-	// 5. test `POST /runs/search` endpoint.
+	// test `POST /runs/search` endpoint.
 	s.searchRunsAndCompare(
 		namespace1Code,
 		request.SearchRunsRequest{
@@ -352,7 +352,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 	)
 
-	// 6. test `POST /runs/delete` endpoint.
+	// test `POST /runs/delete` endpoint.
 	s.deleteRun(namespace1Code, &request.DeleteRunRequest{RunID: run1ID})
 	s.deleteRun(namespace2Code, &request.DeleteRunRequest{RunID: run2ID})
 
@@ -396,7 +396,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 	)
 
-	// 7. test `POST /runs/restore` endpoint.
+	// test `POST /runs/restore` endpoint.
 	s.restoreRun(namespace1Code, &request.RestoreRunRequest{RunID: run1ID})
 	s.restoreRun(namespace2Code, &request.RestoreRunRequest{RunID: run2ID})
 
@@ -440,7 +440,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 	)
 
-	// 8. test `POST /runs/log-metric` endpoint.
+	// test `POST /runs/log-metric` endpoint.
 	s.logRunMetric(namespace1Code, &request.LogMetricRequest{
 		RunID:     run1ID,
 		Key:       "key1",
@@ -514,7 +514,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 	)
 
-	// 9. test `POST /runs/log-parameter` endpoint.
+	// test `POST /runs/log-parameter` endpoint.
 	s.logRunParam(namespace1Code, &request.LogParamRequest{
 		RunID: run1ID,
 		Key:   "key1",
@@ -580,7 +580,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 	)
 
-	// 10. test `POST /runs/set-tag` endpoint.
+	// test `POST /runs/set-tag` endpoint.
 	s.setRunTag(namespace1Code, &request.SetRunTagRequest{
 		RunID: run1ID,
 		Key:   "mlflow.user",
@@ -656,7 +656,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 	)
 
-	// 11. test `POST /runs/delete-tag` endpoint.
+	// test `POST /runs/delete-tag` endpoint.
 	s.deleteRunTag(namespace1Code, &request.DeleteRunTagRequest{
 		RunID: run1ID,
 		Key:   "mlflow.user",
@@ -722,7 +722,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 	)
 
-	// 12. test `POST /runs/log-batch` endpoint.
+	// test `POST /runs/log-batch` endpoint.
 	s.runLogBatch(namespace1Code, &request.LogBatchRequest{
 		RunID: run1ID,
 		Tags: []request.TagPartialRequest{

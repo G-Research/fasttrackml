@@ -126,7 +126,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 }
 
 func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2Code string) {
-	// 1. test `POST /experiments/create` endpoint.
+	// test `POST /experiments/create` endpoint.
 	// create experiments in scope of different namespaces.
 	experiment1ID := s.createExperiment(namespace1Code, &request.CreateExperimentRequest{
 		Name:             "ExperimentName1",
@@ -137,7 +137,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 		ArtifactLocation: "/artifact/location",
 	})
 
-	// 2. test `GET /experiments/get` endpoint.
+	// test `GET /experiments/get` endpoint.
 	// check that experiments were created in scope of difference namespaces.
 	experiment1 := s.getExperimentByIDAndCompare(
 		namespace1Code,
@@ -166,7 +166,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 		},
 	)
 
-	// 3. test `GET /experiments/get` endpoint.
+	// test `GET /experiments/get` endpoint.
 	// check that there is no intersection between experiments, so when we request
 	// experiment 1 in scope of namespace 2 and experiment 2 in scope of namespace 1 API will throw an error.
 	resp := api.ErrorResponse{}
@@ -225,7 +225,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 	)
 	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
-	// 4. test `GET /experiments/get-by-name` endpoint.
+	// test `GET /experiments/get-by-name` endpoint.
 	// check that experiments were created in scope of difference namespaces.
 	s.getExperimentByNameCompare(
 		namespace1Code,
@@ -254,7 +254,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 		},
 	)
 
-	// 5. test `GET /experiments/search` endpoint.
+	// test `GET /experiments/search` endpoint.
 	s.searchExperimentAndCompare(namespace1Code, []*response.ExperimentPartialResponse{
 		experiment1.Experiment,
 	})
@@ -300,7 +300,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 		},
 	)
 
-	// 7. test `POST /experiments/set-experiment-tag` endpoint.
+	// test `POST /experiments/set-experiment-tag` endpoint.
 	s.setExperimentTag(namespace1Code, &request.SetExperimentTagRequest{
 		ID:    experiment1ID,
 		Key:   "KeyTag1",
@@ -350,7 +350,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 		},
 	)
 
-	// 8. test `POST /experiments/delete` endpoint.
+	// test `POST /experiments/delete` endpoint.
 	s.deleteExperiment(namespace1Code, experiment1.Experiment.ID)
 	s.deleteExperiment(namespace2Code, experiment2.Experiment.ID)
 
@@ -392,7 +392,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 		},
 	)
 
-	// 9. test `POST /experiments/restore` endpoint.
+	// test `POST /experiments/restore` endpoint.
 	s.restoreExperiment(namespace1Code, experiment1ID)
 	s.restoreExperiment(namespace2Code, experiment2ID)
 

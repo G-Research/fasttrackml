@@ -44,7 +44,7 @@ func (s *NamespaceTestSuite) Test_Ok() {
 		namespace string
 	}{
 		{
-			name: "RequestExperimentInScopeOfNewlyCreatedNamespace",
+			name: "RequestExperimentInScopeOfCustomNamespace",
 			setup: func() *models.Experiment {
 				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 					ID:                  1,

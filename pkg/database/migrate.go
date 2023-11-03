@@ -122,141 +122,28 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 			switch schemaVersion.Version {
 			case "":
 				log.Info("Migrating database to FastTrackML schema ac0b8b7c0014")
-				if err := db.Transaction(func(tx *gorm.DB) error {
-					for _, column := range []struct {
-						dst   any
-						field string
-					}{
-						{&Run{}, "RowNum"},
-						{&Metric{}, "Iter"},
-						{&LatestMetric{}, "LastIter"},
-					} {
-						if err := tx.Migrator().AddColumn(column.dst, column.field); err != nil {
-							return err
-						}
-					}
-					if err := tx.Exec(
-						"UPDATE runs" +
-							"  SET row_num = rows.row_num" +
-							"  FROM (" +
-							"    SELECT run_uuid, ROW_NUMBER() OVER (ORDER BY start_time, run_uuid DESC) - 1 AS row_num" +
-							"    FROM runs" +
-							"  ) AS rows" +
-							"  WHERE runs.run_uuid = rows.run_uuid").
-						Error; err != nil {
-						return err
-					}
-					if err := tx.Exec(
-						"UPDATE metrics" +
-							"  SET iter = iters.iter" +
-							"  FROM (" +
-							"    SELECT ROW_NUMBER() OVER (PARTITION BY run_uuid, key ORDER BY timestamp, step, value) - 1 AS iter," +
-							"      run_uuid, key, timestamp, step, value" +
-							"    FROM metrics" +
-							"  ) AS iters" +
-							"  WHERE" +
-							"    (metrics.run_uuid, metrics.key, metrics.timestamp, metrics.step, metrics.value) =" +
-							"    (iters.run_uuid, iters.key, iters.timestamp, iters.step, iters.value)").
-						Error; err != nil {
-						return err
-					}
-					if err := tx.Exec(
-						"UPDATE latest_metrics" +
-							"  SET last_iter = metrics.last_iter" +
-							"  FROM (" +
-							"    SELECT run_uuid, key, MAX(iter) AS last_iter" +
-							"    FROM metrics" +
-							"    GROUP BY run_uuid, key" +
-							"  ) AS metrics" +
-							"  WHERE" +
-							"    (latest_metrics.run_uuid, latest_metrics.key) =" +
-							"    (metrics.run_uuid, metrics.key)").
-						Error; err != nil {
-						return err
-					}
-					if err := tx.AutoMigrate(&SchemaVersion{}); err != nil {
-						return err
-					}
-					return tx.Create(&SchemaVersion{
-						Version: "ac0b8b7c0014",
-					}).Error
-				}); err != nil {
+				if err := v_ac0b8b7c0014.Migrate(db); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema ac0b8b7c0014: %w", err)
 				}
 				fallthrough
 
 			case "ac0b8b7c0014":
 				log.Info("Migrating database to FastTrackML schema 8073e7e037e5")
-				if err := db.Transaction(func(tx *gorm.DB) error {
-					if err := tx.AutoMigrate(
-						&Dashboard{},
-						&App{},
-					); err != nil {
-						return err
-					}
-					return tx.Model(&SchemaVersion{}).
-						Where("1 = 1").
-						Update("Version", "8073e7e037e5").
-						Error
-				}); err != nil {
+				if err := v_8073e7e037e5.Migrate(db); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema 8073e7e037e5: %w", err)
 				}
 				fallthrough
 
 			case "8073e7e037e5":
 				log.Info("Migrating database to FastTrackML schema ed364de02645")
-				if err := db.Transaction(func(tx *gorm.DB) error {
-					if err := tx.Migrator().CreateIndex(&Run{}, "RowNum"); err != nil {
-						return err
-					}
-					if err := tx.Migrator().CreateIndex(&Metric{}, "Iter"); err != nil {
-						return err
-					}
-					return tx.Model(&SchemaVersion{}).
-						Where("1 = 1").
-						Update("Version", "ed364de02645").
-						Error
-				}); err != nil {
+				if err := v_ed364de02645.Migrate(db); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema ed364de02645: %w", err)
 				}
 				fallthrough
 
 			case "ed364de02645":
 				log.Info("Migrating database to FastTrackML schema 1ce8669664d2")
-				if err := db.Transaction(func(tx *gorm.DB) error {
-					constraints := []string{"Params", "Tags", "Metrics", "LatestMetrics"}
-					for _, constraint := range constraints {
-						switch tx.Dialector.Name() {
-						case SQLiteDialectorName:
-							// SQLite tables need to be recreated to add or remove constraints.
-							// By not dropping the constraint, we can avoid having to recreate the table twice.
-						case PostgresDialectorName:
-							// Existing MLFlow Postgres databases have foreign key constraints
-							// with their own names. We need to drop them before we can add our own.
-							table := tx.NamingStrategy.TableName(constraint)
-							fk := fmt.Sprintf("%s_run_uuid_fkey", table)
-							if tx.Migrator().HasConstraint(table, fk) {
-								if err := tx.Migrator().DropConstraint(table, fk); err != nil {
-									return err
-								}
-							} else {
-								if err := tx.Migrator().DropConstraint(&Run{}, constraint); err != nil {
-									return err
-								}
-							}
-						default:
-							return fmt.Errorf("unsupported database dialect %s", tx.Dialector.Name())
-						}
-
-						if err := tx.Migrator().CreateConstraint(&Run{}, constraint); err != nil {
-							return err
-						}
-					}
-					return tx.Model(&SchemaVersion{}).
-						Where("1 = 1").
-						Update("Version", "1ce8669664d2").
-						Error
-				}); err != nil {
+				if err := v_1ce8669664d2.Migrate(db); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema 1ce8669664d2: %w", err)
 				}
 				fallthrough

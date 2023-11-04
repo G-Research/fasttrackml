@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 
@@ -9,6 +10,16 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+// ParamConflictError is returned when there is a conflict in the params (same key, different value).
+type ParamConflictError struct {
+	Message string
+}
+
+// Error returns the ParamConflictError message.
+func (e ParamConflictError) Error() string {
+	return e.Message
+}
 
 // ParamRepositoryProvider provides an interface to work with models.Param entity.
 type ParamRepositoryProvider interface {
@@ -42,32 +53,35 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 
 	// if there are conflicting params, ignore if the values are the same
 	if tx.RowsAffected != int64(len(params)) {
-		conflictingParams, err := r.conflictingParams(ctx, params)
+		conflictingParams, err := r.findConflictingParams(ctx, params)
 		if err != nil {
 			return eris.Wrap(err, "error checking for conflicting params")
 		}
 		if len(conflictingParams) > 0 {
-			return eris.Errorf("conflicting params found: %v", conflictingParams)
+			return ParamConflictError{
+				Message: fmt.Sprintf("conflicting params found: %v", conflictingParams),
+			}
 		}
 	}
 	return nil
 }
 
-// conflictingParams checks if there are conflicting values for the params.
-func (r ParamRepository) conflictingParams(ctx context.Context, params []models.Param) ([]string, error) {
-	paramsInDB := []models.Param{}
+// findConflictingParams checks if there are conflicting values for the input params. If a key does not yet exist in the db,
+// or if the same key and value already exist for the run, it is not a conflict. If the key already exists for the run but with a
+// different value, it is a conflict. Conflicting keys are returned.
+func (r ParamRepository) findConflictingParams(ctx context.Context, params []models.Param) ([]string, error) {
+	dbParams := []models.Param{}
 	paramKeysInError := []string{}
 	if err := r.db.WithContext(ctx).
 		Model(&models.Param{}).
 		Where("run_uuid = ?", params[0].RunID).
 		Where("key IN ?", r.collectKeys(params)).
-		Find(&paramsInDB).Error; err != nil {
+		Find(&dbParams).Error; err != nil {
 		return nil, eris.New("error fetching params from db")
 	}
-	paramsInDbKeyValueMap := r.collectKeyValues(paramsInDB)
-
+	dbParamsAsMap := r.collectKeyValues(dbParams)
 	for _, param := range params {
-		if value, ok := paramsInDbKeyValueMap[param.Key]; ok && value != param.Value {
+		if value, ok := dbParamsAsMap[param.Key]; ok && value != param.Value {
 			paramKeysInError = append(paramKeysInError, param.Key)
 		}
 	}
@@ -83,7 +97,7 @@ func (r ParamRepository) collectKeys(params []models.Param) []string {
 	return keys
 }
 
-// collectKeys collects the keys from the params.
+// collectKeyValues collects the keys and values as a map from the params.
 func (r ParamRepository) collectKeyValues(params []models.Param) map[string]string {
 	keyValueMap := make(map[string]string)
 	for _, param := range params {

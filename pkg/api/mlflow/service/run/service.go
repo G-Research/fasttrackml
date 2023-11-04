@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -607,8 +608,11 @@ func (s Service) LogBatch(
 		return api.NewInvalidParameterValueError(err.Error())
 	}
 	if err := s.paramRepository.CreateBatch(ctx, 100, params); err != nil {
-		// if eris.Is the ON CONFLICT DO NOTHING type, send this
-		return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
+		if eris.Is(err, repositories.ParamConflictError{}) {
+			return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
+		} else {
+			return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
+		}
 	}
 	if err := s.metricRepository.CreateBatch(ctx, run, 100, metrics); err != nil {
 		return api.NewInternalError("unable to insert metrics for run '%s': %s", run.ID, err)

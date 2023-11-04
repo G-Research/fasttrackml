@@ -47,7 +47,6 @@ func (s *NamespaceTestSuite) Test_Ok() {
 			name: "RequestExperimentInScopeOfCustomNamespace",
 			setup: func() *models.Experiment {
 				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-					ID:                  1,
 					Code:                "newly-created-namespace",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
@@ -67,7 +66,6 @@ func (s *NamespaceTestSuite) Test_Ok() {
 			name: "RequestExperimentInScopeOfDefaultNamespaceObviousCase",
 			setup: func() *models.Experiment {
 				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-					ID:                  0,
 					Code:                "default",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
@@ -87,7 +85,6 @@ func (s *NamespaceTestSuite) Test_Ok() {
 			name: "RequestExperimentInScopeOfDefaultNamespaceImplicitCase",
 			setup: func() *models.Experiment {
 				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-					ID:                  0,
 					Code:                "default",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})

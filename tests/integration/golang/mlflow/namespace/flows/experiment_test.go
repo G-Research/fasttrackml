@@ -59,11 +59,9 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			name: "TestInScopeOfTwoCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
-						ID:                  1,
 						Code:                "namespace-1",
 						DefaultExperimentID: common.GetPointer(int32(0)),
 					}, &models.Namespace{
-						ID:                  2,
 						Code:                "namespace-2",
 						DefaultExperimentID: common.GetPointer(int32(0)),
 					}
@@ -75,11 +73,9 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			name: "TestInScopeOfOneDefaultAndOneCustomNamespacesObviousCase",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
-						ID:                  0,
 						Code:                "default",
 						DefaultExperimentID: common.GetPointer(int32(0)),
 					}, &models.Namespace{
-						ID:                  1,
 						Code:                "namespace-1",
 						DefaultExperimentID: common.GetPointer(int32(0)),
 					}
@@ -91,11 +87,9 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			name: "TestInScopeOfOneDefaultAndOneCustomNamespacesImplicitCase",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
-						ID:                  0,
 						Code:                "default",
 						DefaultExperimentID: common.GetPointer(int32(0)),
 					}, &models.Namespace{
-						ID:                  1,
 						Code:                "namespace-1",
 						DefaultExperimentID: common.GetPointer(int32(0)),
 					}

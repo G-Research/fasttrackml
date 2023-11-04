@@ -33,14 +33,61 @@ func NewParamRepository(db *gorm.DB) *ParamRepository {
 // CreateBatch creates []models.Param entities in batch.
 func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params []models.Param) error {
 	tx := r.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "run_uuid"}, {Name: "key"}, {Name: "value"}},
+		Columns:   []clause.Column{{Name: "run_uuid"}, {Name: "key"}},
 		DoNothing: true,
 	}).CreateInBatches(params, batchSize)
 	if tx.Error != nil {
 		return eris.Wrap(tx.Error, "error creating params in batch")
 	}
+
+	// if there are conflicting params, ignore if the values are the same
 	if tx.RowsAffected != int64(len(params)) {
-		return eris.New("error inserting params (duplicate key/different value?)")
+		conflictingParams, err := r.conflictingParams(ctx, params)
+		if err != nil {
+			return eris.Wrap(err, "error checking for conflicting params")
+		}
+		if len(conflictingParams) > 0 {
+			return eris.Errorf("conflicting params found: %v", conflictingParams)
+		}
 	}
 	return nil
+}
+
+// conflictingParams checks if there are conflicting values for the params.
+func (r ParamRepository) conflictingParams(ctx context.Context, params []models.Param) ([]string, error) {
+	paramsInDB := []models.Param{}
+	paramKeysInError := []string{}
+	if err := r.db.WithContext(ctx).
+		Model(&models.Param{}).
+		Where("run_uuid = ?", params[0].RunID).
+		Where("key IN ?", r.collectKeys(params)).
+		Find(&paramsInDB).Error; err != nil {
+		return nil, eris.New("error fetching params from db")
+	}
+	paramsInDbKeyValueMap := r.collectKeyValues(paramsInDB)
+
+	for _, param := range params {
+		if value, ok := paramsInDbKeyValueMap[param.Key]; ok && value != param.Value {
+			paramKeysInError = append(paramKeysInError, param.Key)
+		}
+	}
+	return paramKeysInError, nil
+}
+
+// collectKeys collects the keys from the params.
+func (r ParamRepository) collectKeys(params []models.Param) []string {
+	keys := make([]string, len(params))
+	for i, param := range params {
+		keys[i] = param.Key
+	}
+	return keys
+}
+
+// collectKeys collects the keys from the params.
+func (r ParamRepository) collectKeyValues(params []models.Param) map[string]string {
+	keyValueMap := make(map[string]string)
+	for _, param := range params {
+		keyValueMap[param.Key] = param.Value
+	}
+	return keyValueMap
 }

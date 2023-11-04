@@ -144,7 +144,19 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 			},
 		},
 		{
-			name: "LogDuplicate",
+			name: "LogDuplicateSeparateBatch",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key1",
+						Value: "value1",
+					},
+				},
+			},
+		},
+		{
+			name: "LogDuplicateSameBatch",
 			request: &request.LogBatchRequest{
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{

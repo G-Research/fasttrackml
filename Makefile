@@ -44,21 +44,21 @@ COMPOSE_FILE=tests/integration/docker-compose.yml
 COMPOSE_PROJECT_NAME=$(APP)-integration-tests
 
 #
-# Default target (help)
+# Default target (help).
 #
 .PHONY: help
-help: ## display this help
+help: ## display this help.
 	@echo "Please use \`make <target>' where <target> is one of:"
 	@echo
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-24s\033[0m - %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-30s\033[0m - %s\n", $$1, $$2}'
 	@echo
 
 #
 # Tools targets.
 # This needs to be kept in sync with .devcontainer/Dockerfile.
 #
-.PHONY: install-tools ## install tools.
-install-tools:
+.PHONY: install-tools
+install-tools: ## install tools.
 	@echo '>>> Installing tools.'
 	@go install github.com/vektra/mockery/v2@v2.34.0
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.2
@@ -92,6 +92,7 @@ go-format: ## format go code.
 
 .PHONY: go-lint
 go-lint: ## run go linters.
+	@echo '>>> Running go linters.'
 	@golangci-lint run -v --build-tags $(GO_BUILDTAGS)
 
 .PHONY: go-dist
@@ -132,28 +133,28 @@ python-lint: python-env ## check python code formatting.
 .PHONY: test-go-unit
 test-go-unit: ## run go unit tests.
 	@echo ">>> Running unit tests."
-	go test -v ./...
+	@go test -v ./...
 
 .PHONY: test-go-integration
 test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
-	go test -v -p 1 -count=1 -tags="integration" ./tests/integration/golang/...
+	@go test -v -p 1 -count=1 -tags="integration" ./tests/integration/golang/...
 
-PHONY: test-python-integration
+.PHONY: test-python-integration
 test-python-integration: test-python-integration-mlflow test-python-integration-aim  ## run all the python integration tests.
 
-PHONY: test-python-integration-mlflow
+.PHONY: test-python-integration-mlflow
 test-python-integration-mlflow: build ## run the MLFlow python integration tests.
 	@echo ">>> Running MLFlow python integration tests."
-	tests/integration/python/mlflow/test.sh
+	@tests/integration/python/mlflow/test.sh
 
-PHONY: test-python-integration-aim
+.PHONY: test-python-integration-aim
 test-python-integration-aim: build ## run the Aim python integration tests.
 	@echo ">>> Running Aim python integration tests."
-	tests/integration/python/aim/test.sh
+	@tests/integration/python/aim/test.sh
 
 #
-# Service test targets
+# Service test targets.
 #
 .PHONY: service-start
 service-start: ## start service in container.
@@ -196,23 +197,23 @@ mocks-generate: mocks-clean ## generate mock based on all project interfaces.
 	@mockery
 
 #
-# Build targets
+# Build targets.
 # 
-PHONY: clean
-clean: ## clean the go build artifacts
-	@echo ">>> Cleaning go build artifacts."
-	rm -Rf $(APP)
+.PHONY: clean
+clean: ## clean build artifacts.
+	@echo ">>> Cleaning build artifacts."
+	@rm -rf $(APP) dist wheelhouse
 
-PHONY: build
-build: go-build ## build the go components
+.PHONY: build
+build: go-build ## build the app.
 
-PHONY: dist
-dist: go-dist python-dist ## build the software archives
+.PHONY: dist
+dist: go-dist python-dist ## build the software archives.
 
-PHONY: format
-format: go-format python-format ## format the code
+.PHONY: format
+format: go-format python-format ## format the code.
 
-PHONY: run
-run: build ## run the FastTrackML server
+.PHONY: run
+run: build ## run the FastTrackML server.
 	@echo ">>> Running the FasttrackML server."
-	./$(APP) server
+	@./$(APP) server

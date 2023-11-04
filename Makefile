@@ -141,17 +141,19 @@ test-go-integration: ## run go integration tests.
 	@go test -v -p 1 -count=1 -tags="integration" ./tests/integration/golang/...
 
 .PHONY: test-python-integration
-test-python-integration: test-python-integration-mlflow test-python-integration-aim  ## run all the python integration tests.
+test-python-integration: ## run all the python integration tests.
+	@echo ">>> Running all python integration tests."
+	@go run tests/integration/python/main.go
 
 .PHONY: test-python-integration-mlflow
-test-python-integration-mlflow: build ## run the MLFlow python integration tests.
+test-python-integration-mlflow: ## run the MLFlow python integration tests.
 	@echo ">>> Running MLFlow python integration tests."
-	@tests/integration/python/mlflow/test.sh
+	@go run tests/integration/python/main.go -targets mlflow
 
 .PHONY: test-python-integration-aim
-test-python-integration-aim: build ## run the Aim python integration tests.
+test-python-integration-aim: ## run the Aim python integration tests.
 	@echo ">>> Running Aim python integration tests."
-	@tests/integration/python/aim/test.sh
+	@go run tests/integration/python/main.go -targets aim
 
 #
 # Service test targets.

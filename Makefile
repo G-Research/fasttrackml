@@ -130,6 +130,9 @@ python-lint: python-env ## check python code formatting.
 #
 # Tests targets.
 #
+.PHONY: test
+test: test-go-unit service-test test-python-integration ## run all the tests.
+
 .PHONY: test-go-unit
 test-go-unit: ## run go unit tests.
 	@echo ">>> Running unit tests."

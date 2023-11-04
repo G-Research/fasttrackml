@@ -66,9 +66,9 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 	return nil
 }
 
-// findConflictingParams checks if there are conflicting values for the input params. If a key does not yet exist in the db,
-// or if the same key and value already exist for the run, it is not a conflict. If the key already exists for the run but with a
-// different value, it is a conflict. Conflicting keys are returned.
+// findConflictingParams checks if there are conflicting values for the input params. If a key does not
+// yet exist in the db, or if the same key and value already exist for the run, it is not a conflict.
+// If the key already exists for the run but with a different value, it is a conflict. Conflicting keys are returned.
 func (r ParamRepository) findConflictingParams(ctx context.Context, params []models.Param) ([]string, error) {
 	dbParams := []models.Param{}
 	paramKeysInError := []string{}

@@ -203,7 +203,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),

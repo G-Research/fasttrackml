@@ -202,5 +202,4 @@ func (s *LogParamTestSuite) Test_Error() {
 		).Error(),
 		resp.Error(),
 	)
-
 }

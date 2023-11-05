@@ -83,22 +83,82 @@ func (s *LogParamTestSuite) Test_Ok() {
 		),
 	)
 	assert.Empty(s.T(), resp)
+
+	// log duplicate, which is OK
+	req = request.LogParamRequest{
+		RunID: run.ID,
+		Key:   "key1",
+		Value: "value1",
+	}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
+		),
+	)
+	assert.Empty(s.T(), resp)
 }
 
 func (s *LogParamTestSuite) Test_Error() {
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
 	assert.Nil(s.T(), err)
 
-	// missing run_id
+	experiment := &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	}
+	_, err = s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
+	assert.Nil(s.T(), err)
+
+	run := &models.Run{
+		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
+		ExperimentID:   *experiment.ID,
+		SourceType:     "JOB",
+		LifecycleStage: models.LifecycleStageActive,
+		Status:         models.StatusRunning,
+	}
+	run, err = s.RunFixtures.CreateRun(context.Background(), run)
+	assert.Nil(s.T(), err)
+
+	// setup param OK
 	req := request.LogParamRequest{
+		RunID: run.ID,
 		Key:   "key1",
 		Value: "value1",
 	}
 	resp := api.ErrorResponse{}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
+		),
+	)
+	assert.Empty(s.T(), resp)
+
+	// error conditions
+
+	// missing run_id
+	req = request.LogParamRequest{
+		Key:   "key1",
+		Value: "value1",
+	}
 	assert.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
@@ -116,4 +176,31 @@ func (s *LogParamTestSuite) Test_Error() {
 		api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'").Error(),
 		resp.Error(),
 	)
+
+	// conflicting param
+	req = request.LogParamRequest{
+		RunID: run.ID,
+		Key:   "key1",
+		Value: "value2",
+	}
+	assert.Nil(
+		s.T(),
+		s.MlflowClient.WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
+		),
+	)
+	assert.Equal(
+		s.T(),
+		api.NewInvalidParameterValueError(
+			fmt.Sprintf("unable to insert params for run '%s': conflicting params found: %v", run.ID, []string{"key1"}),
+		).Error(),
+		resp.Error(),
+	)
+
 }

@@ -520,7 +520,11 @@ func (s Service) LogParam(
 
 	param := convertors.ConvertLogParamRequestToDBModel(run.ID, req)
 	if err := s.paramRepository.CreateBatch(ctx, 1, []models.Param{*param}); err != nil {
-		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
+		if _, ok := err.(repositories.ParamConflictError); ok {
+			return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
+		} else {
+			return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
+		}
 	}
 
 	return nil

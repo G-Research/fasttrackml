@@ -1725,6 +1725,48 @@ func TestService_LogParam_Error(t *testing.T) {
 				)
 			},
 		},
+		{
+			name:  "LogParamConflictError",
+			error: api.NewInvalidParameterValueError(`unable to insert params for run '1': conflict!`),
+			request: &request.LogParamRequest{
+				RunID: "1",
+				Key:   "key",
+				Value: "value",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByNamespaceIDRunIDAndLifecycleStage",
+					context.TODO(),
+					uint(1),
+					"1",
+					models.LifecycleStageActive,
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
+				paramRepository := repositories.MockParamRepositoryProvider{}
+				paramRepository.On(
+					"CreateBatch",
+					context.TODO(),
+					1,
+					mock.MatchedBy(func(params []models.Param) bool {
+						assert.Equal(t, 1, len(params))
+						assert.Equal(t, "key", params[0].Key)
+						assert.Equal(t, "value", params[0].Value)
+						assert.Equal(t, "1", params[0].RunID)
+						return true
+					}),
+				).Return(repositories.ParamConflictError{Message: "conflict!"})
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&paramRepository,
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
 	}
 
 	for _, tt := range testData {

@@ -72,8 +72,12 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 
 // findConflictingParams checks if there are conflicting values for the input params. If a key does not
 // yet exist in the db, or if the same key and value already exist for the run, it is not a conflict.
-// If the key already exists for the run but with a different value, it is a conflict. Conflicting keys are returned.
-func (r ParamRepository) findConflictingParams(ctx context.Context, params []models.Param) ([]map[string]string, error) {
+// If the key already exists for the run but with a different value, it is a conflict. Conflicting keys
+// are returned.
+func (r ParamRepository) findConflictingParams(
+	ctx context.Context,
+	params []models.Param,
+) ([]map[string]string, error) {
 	var paramsInError []map[string]string
 	if err := r.db.WithContext(ctx).
 		Raw(fmt.Sprintf(`
@@ -96,13 +100,4 @@ func prepareSqlValues(params []models.Param) string {
 		valuesArray[i] = fmt.Sprintf("(%s, %s, %s)", param.Key, param.Value, param.RunID)
 	}
 	return strings.Join(valuesArray, ",")
-}
-
-// collectKeyValues collects the keys and values as a map from the params.
-func collectKeyValues(params []models.Param) map[string]string {
-	keyValueMap := make(map[string]string)
-	for _, param := range params {
-		keyValueMap[param.Key] = param.Value
-	}
-	return keyValueMap
 }

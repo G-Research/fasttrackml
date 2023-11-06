@@ -44,6 +44,7 @@ func (f NamespaceFixtures) GetNamespaces(
 		return nil, eris.Wrapf(err, "error getting 'namespaces' entities")
 	}
 	return namespaces, nil
+}
 
 // UpdateNamespace updates an existing test Namespace.
 func (f NamespaceFixtures) UpdateNamespace(

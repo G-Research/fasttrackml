@@ -40,25 +40,17 @@ func (s *CreateNamespaceTestSuite) Test_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
-	testNamespaces := []models.Namespace{
+	requests := []request.Namespace{
 		{
-			ID:                  2,
-			Code:                "test2",
-			Description:         "test namespace 2 description",
-			DefaultExperimentID: common.GetPointer(int32(0)),
+			Code:        "test2",
+			Description: "test namespace 2 description",
 		},
 		{
-			ID:                  3,
-			Code:                "test3",
-			Description:         "test namespace 3 description",
-			DefaultExperimentID: common.GetPointer(int32(0)),
+			Code:        "test3",
+			Description: "test namespace 3 description",
 		},
 	}
-	for _, namespace := range testNamespaces {
-		request := request.Namespace{
-			Code:        namespace.Code,
-			Description: namespace.Description,
-		}
+	for _, request := range requests {
 		assert.Nil(
 			s.T(),
 			s.AdminClient.WithMethod(
@@ -69,12 +61,12 @@ func (s *CreateNamespaceTestSuite) Test_Ok() {
 		)
 	}
 
-	namespaces, err := s.NamespaceFixtures.GetTestNamespaces(context.Background())
+	namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
 	assert.Nil(s.T(), err)
 
 	// Check that the namespace has been created
 	for _, namespace := range namespaces {
-		for _, testNamespace := range testNamespaces {
+		for _, testNamespace := range requests {
 			if namespace.Code == testNamespace.Code {
 				assert.Equal(s.T(), testNamespace.Description, namespace.Description)
 			}
@@ -82,7 +74,7 @@ func (s *CreateNamespaceTestSuite) Test_Ok() {
 	}
 
 	// Check the length of the namespaces considering the default namespace
-	assert.Equal(s.T(), len(testNamespaces)+1, len(namespaces))
+	assert.Equal(s.T(), len(requests)+1, len(namespaces))
 }
 
 func (s *CreateNamespaceTestSuite) Test_Error() {
@@ -146,7 +138,7 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 					tt.request,
 				).DoRequest("/namespaces"),
 			)
-			namespaces, err := s.NamespaceFixtures.GetTestNamespaces(context.Background())
+			namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
 			assert.Nil(s.T(), err)
 			// Check that creation failed, only the default namespace is present
 			assert.Equal(s.T(), 1, len(namespaces))

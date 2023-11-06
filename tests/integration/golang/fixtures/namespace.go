@@ -34,8 +34,8 @@ func (f NamespaceFixtures) CreateNamespace(
 	return namespace, nil
 }
 
-// GetTestNamespaces fetches all namespaces.
-func (f NamespaceFixtures) GetTestNamespaces(
+// GetNamespaces fetches all namespaces.
+func (f NamespaceFixtures) GetNamespaces(
 	ctx context.Context,
 ) ([]models.Namespace, error) {
 	var namespaces []models.Namespace

@@ -12,6 +12,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // NamespaceEventAction represents Event action.
@@ -171,7 +172,7 @@ func (r NamespaceCachedRepository) processEvent(data string) error {
 // sendEvent sends database event.
 func (r NamespaceCachedRepository) sendEvent(action NamespaceEventAction, namespace *models.Namespace) error {
 	// skip event processing if current database is not a `postgres`.
-	if r.db.Dialector.Name() != "postgres" {
+	if r.db.Dialector.Name() != database.PostgresDialectorName {
 		return nil
 	}
 

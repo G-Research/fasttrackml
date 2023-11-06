@@ -76,6 +76,7 @@ func (s Service) GetMetricHistoryBulk(
 func (s Service) GetMetricHistories(
 	ctx context.Context, namespace *models.Namespace, req *request.GetMetricHistoriesRequest,
 ) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
+	adjustGetMetricHistoriesRequestForNamespace(namespace, req)
 	if err := ValidateGetMetricHistoriesRequest(req); err != nil {
 		return nil, nil, err
 	}

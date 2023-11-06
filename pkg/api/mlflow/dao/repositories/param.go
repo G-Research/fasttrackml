@@ -75,11 +75,11 @@ func (r ParamRepository) findConflictingParams(ctx context.Context, params []mod
 	if err := r.db.WithContext(ctx).
 		Model(&models.Param{}).
 		Where("run_uuid = ?", params[0].RunID).
-		Where("key IN ?", r.collectKeys(params)).
+		Where("key IN ?", collectKeys(params)).
 		Find(&dbParams).Error; err != nil {
 		return nil, eris.New("error fetching params from db")
 	}
-	dbParamsAsMap := r.collectKeyValues(dbParams)
+	dbParamsAsMap := collectKeyValues(dbParams)
 	for _, param := range params {
 		if value, ok := dbParamsAsMap[param.Key]; ok && value != param.Value {
 			paramKeysInError = append(paramKeysInError, param.Key)
@@ -89,7 +89,7 @@ func (r ParamRepository) findConflictingParams(ctx context.Context, params []mod
 }
 
 // collectKeys collects the keys from the params.
-func (r ParamRepository) collectKeys(params []models.Param) []string {
+func collectKeys(params []models.Param) []string {
 	keys := make([]string, len(params))
 	for i, param := range params {
 		keys[i] = param.Key
@@ -98,7 +98,7 @@ func (r ParamRepository) collectKeys(params []models.Param) []string {
 }
 
 // collectKeyValues collects the keys and values as a map from the params.
-func (r ParamRepository) collectKeyValues(params []models.Param) map[string]string {
+func collectKeyValues(params []models.Param) map[string]string {
 	keyValueMap := make(map[string]string)
 	for _, param := range params {
 		keyValueMap[param.Key] = param.Value

@@ -142,6 +142,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		chooserController.NewController(
 			namespace.NewService(namespaceRepository),
 		),
+		namespaceRepository,
 	).AddRoutes(server)
 
 	isRunning := make(chan struct{})

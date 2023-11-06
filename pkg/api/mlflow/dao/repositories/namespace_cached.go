@@ -170,6 +170,11 @@ func (r NamespaceCachedRepository) processEvent(data string) error {
 
 // sendEvent sends database event.
 func (r NamespaceCachedRepository) sendEvent(action NamespaceEventAction, namespace *models.Namespace) error {
+	// skip event processing if current database is not a `postgres`.
+	if r.db.Dialector.Name() != "postgres" {
+		return nil
+	}
+
 	data, err := json.Marshal(NamespaceEvent{
 		Action:    action,
 		Namespace: namespace,

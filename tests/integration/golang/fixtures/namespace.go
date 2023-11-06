@@ -33,3 +33,15 @@ func (f NamespaceFixtures) CreateNamespace(
 	}
 	return namespace, nil
 }
+
+// GetTestNamespaces fetches all namespaces.
+func (f NamespaceFixtures) GetTestNamespaces(
+	ctx context.Context,
+) ([]models.Namespace, error) {
+	var namespaces []models.Namespace
+	if err := f.db.WithContext(ctx).
+		Find(&namespaces).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting 'namespaces' entities")
+	}
+	return namespaces, nil
+}

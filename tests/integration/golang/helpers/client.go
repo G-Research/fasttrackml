@@ -61,6 +61,11 @@ func NewAimApiClient(baseURL string) *HttpClient {
 	return NewClient(baseURL, "/aim/api")
 }
 
+// NewAdminApiClient creates new HTTP client for the admin api
+func NewAdminApiClient(baseURL string) *HttpClient {
+	return NewClient(baseURL, "/admin")
+}
+
 // WithMethod sets the HTTP method.
 func (c *HttpClient) WithMethod(method string) *HttpClient {
 	c.method = method

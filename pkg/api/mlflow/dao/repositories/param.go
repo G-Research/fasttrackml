@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 
@@ -43,25 +44,28 @@ func NewParamRepository(db *gorm.DB) *ParamRepository {
 
 // CreateBatch creates []models.Param entities in batch.
 func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params []models.Param) error {
-	tx := r.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "run_uuid"}, {Name: "key"}},
-		DoNothing: true,
-	}).CreateInBatches(params, batchSize)
-	if tx.Error != nil {
-		return eris.Wrap(tx.Error, "error creating params in batch")
-	}
-
-	// if there are conflicting params, ignore if the values are the same
-	if tx.RowsAffected != int64(len(params)) {
-		conflictingParams, err := r.findConflictingParams(ctx, params)
-		if err != nil {
-			return eris.Wrap(err, "error checking for conflicting params")
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.WithContext(ctx).Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "run_uuid"}, {Name: "key"}},
+			DoNothing: true,
+		}).CreateInBatches(params, batchSize).Error; err != nil {
+			return eris.Wrap(tx.Error, "error creating params in batch")
 		}
-		if len(conflictingParams) > 0 {
-			return ParamConflictError{
-				Message: fmt.Sprintf("conflicting params found: %v", conflictingParams),
+		// if there are conflicting params, ignore if the values are the same
+		if tx.RowsAffected != int64(len(params)) {
+			conflictingParams, err := r.findConflictingParams(ctx, params)
+			if err != nil {
+				return eris.Wrap(err, "error checking for conflicting params")
+			}
+			if len(conflictingParams) > 0 {
+				return ParamConflictError{
+					Message: fmt.Sprintf("conflicting params found: %v", conflictingParams),
+				}
 			}
 		}
+		return nil
+	}); err != nil {
+		return err
 	}
 	return nil
 }
@@ -69,32 +73,29 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 // findConflictingParams checks if there are conflicting values for the input params. If a key does not
 // yet exist in the db, or if the same key and value already exist for the run, it is not a conflict.
 // If the key already exists for the run but with a different value, it is a conflict. Conflicting keys are returned.
-func (r ParamRepository) findConflictingParams(ctx context.Context, params []models.Param) ([]string, error) {
-	dbParams := []models.Param{}
-	paramKeysInError := []string{}
+func (r ParamRepository) findConflictingParams(ctx context.Context, params []models.Param) ([]map[string]string, error) {
+	var paramsInError []map[string]string
 	if err := r.db.WithContext(ctx).
-		Model(&models.Param{}).
-		Where("run_uuid = ?", params[0].RunID).
-		Where("key IN ?", collectKeys(params)).
-		Find(&dbParams).Error; err != nil {
+		Raw(fmt.Sprintf(`
+		    WITH new(key, value, run_uuid) AS (VALUES %s)
+		    SELECT current.key as key, current.value as old_value, new.value as new_value
+		    FROM params AS current
+		    INNER JOIN new ON new.run_uuid = current.run_uuid AND new.key = current.key
+		    WHERE new.value != current.value
+                `, prepareSqlValues(params))).
+		Scan(&paramsInError).Error; err != nil {
 		return nil, eris.New("error fetching params from db")
 	}
-	dbParamsAsMap := collectKeyValues(dbParams)
-	for _, param := range params {
-		if value, ok := dbParamsAsMap[param.Key]; ok && value != param.Value {
-			paramKeysInError = append(paramKeysInError, param.Key)
-		}
-	}
-	return paramKeysInError, nil
+	return paramsInError, nil
 }
 
-// collectKeys collects the keys from the params.
-func collectKeys(params []models.Param) []string {
-	keys := make([]string, len(params))
+// prepareSqlValues collects a string of (key, value), (key, value), etc, from the params.
+func prepareSqlValues(params []models.Param) string {
+	valuesArray := make([]string, len(params))
 	for i, param := range params {
-		keys[i] = param.Key
+		valuesArray[i] = fmt.Sprintf("(%s, %s, %s)", param.Key, param.Value, param.RunID)
 	}
-	return keys
+	return strings.Join(valuesArray, ",")
 }
 
 // collectKeyValues collects the keys and values as a map from the params.

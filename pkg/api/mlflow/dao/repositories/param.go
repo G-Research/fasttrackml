@@ -64,7 +64,7 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 		}).CreateInBatches(params, batchSize).Error; err != nil {
 			return eris.Wrap(tx.Error, "error creating params in batch")
 		}
-		// if there are conflicting params, ignore if the values are the same
+		// if there were ignored conflicts, verify to be exact duplicates
 		if tx.RowsAffected != int64(len(params)) {
 			conflictingParams, err := findConflictingParams(tx, params)
 			if err != nil {

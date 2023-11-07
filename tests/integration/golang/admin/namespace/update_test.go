@@ -125,10 +125,8 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 				Description: "test namespace updated",
 			},
 			response: map[string]any{
-				"message": `An unexepected error was encountered: error updating namespace:` +
-					` error updating namespace entity: ERROR: duplicate key value violates unique constraint` +
-					` "namespaces_code_key" (SQLSTATE 23505)`,
-				"status": "error",
+				"message": "The namespace code is already in use.",
+				"status":  "error",
 			},
 		},
 	}

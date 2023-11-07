@@ -11,7 +11,6 @@ import (
 	"github.com/gofiber/template/html/v2"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
 )
 
@@ -25,13 +24,9 @@ type Router struct {
 }
 
 // NewRouter creates new instance of `chooser` router.
-func NewRouter(
-	controller *controller.Controller,
-	namespaceRepository repositories.NamespaceRepositoryProvider,
-) *Router {
+func NewRouter(controller *controller.Controller) *Router {
 	return &Router{
-		controller:          controller,
-		namespaceRepository: namespaceRepository,
+		controller: controller,
 	}
 }
 
@@ -51,5 +46,5 @@ func (r Router) AddRoutes(fr fiber.Router) {
 	fr.Mount("/", app)
 
 	// specific routes
-	app.Get("/", namespaceMiddleware.New(r.namespaceRepository), r.controller.GetNamespaces)
+	app.Get("/", r.controller.GetNamespaces)
 }

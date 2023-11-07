@@ -10,10 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
-
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/compress"
@@ -30,6 +26,7 @@ import (
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
@@ -39,6 +36,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
+	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
@@ -87,11 +85,10 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// 5. init main HTTP server.
-	server := initServer(mlflowConfig)
+	server := initServer(mlflowConfig, namespaceRepository)
 
 	// 6. init `aim` api and ui routes.
 	router := server.Group("/aim/api/")
-	router.Use(namespaceMiddleware.New(namespaceRepository))
 	aimAPI.AddRoutes(router)
 	aimUI.AddRoutes(server)
 
@@ -126,7 +123,6 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
-		namespaceRepository,
 	).Init(server)
 	mlflowUI.AddRoutes(server)
 
@@ -142,7 +138,6 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		chooserController.NewController(
 			namespace.NewService(namespaceRepository),
 		),
-		namespaceRepository,
 	).AddRoutes(server)
 
 	isRunning := make(chan struct{})
@@ -203,7 +198,10 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 }
 
 // initServer init HTTP server with base configuration.
-func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
+func initServer(
+	config *mlflowConfig.ServiceConfig,
+	namespaceRepository repositories.NamespaceRepositoryProvider,
+) *fiber.App {
 	server := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
 		ReadBufferSize:        16384,
@@ -254,6 +252,8 @@ func initServer(config *mlflowConfig.ServiceConfig) *fiber.App {
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
+
+	server.Use(namespaceMiddleware.New(namespaceRepository))
 
 	server.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")

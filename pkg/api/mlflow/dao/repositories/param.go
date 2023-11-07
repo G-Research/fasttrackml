@@ -24,13 +24,15 @@ func (e ParamConflictError) Error() string {
 
 // ParamConflict represents a conflicting parameter.
 type ParamConflict struct {
-	Key              string
-	PreviousValue    string
-	ConflictingValue string
+	RunID    string `gorm:"column:run_uuid"`
+	Key      string
+	OldValue string
+	NewValue string
 }
 
+// String renders the ParamConflict for error messages.
 func (pc ParamConflict) String() string {
-	return fmt.Sprintf("key: %s, previous value: %s, conflicting value: %s", pc.Key, pc.PreviousValue, pc.ConflictingValue)
+	return fmt.Sprintf("{run_id: %s, key: %s, old_value: %s, new_value: %s}", pc.RunID, pc.Key, pc.OldValue, pc.NewValue)
 }
 
 // ParamRepositoryProvider provides an interface to work with models.Param entity.
@@ -85,29 +87,41 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 // yet exist in the db, or if the same key and value already exist for the run, it is not a conflict.
 // If the key already exists for the run but with a different value, it is a conflict. Conflicting keys
 // are returned.
-func findConflictingParams(
-	tx *gorm.DB,
-	params []models.Param,
-) ([]ParamConflict, error) {
+func findConflictingParams(tx *gorm.DB, params []models.Param) ([]ParamConflict, error) {
 	var conflicts []ParamConflict
-	if err := tx.Raw(fmt.Sprintf(`
-		    WITH new(key, value, run_uuid) AS (VALUES %s)
-		    SELECT current.key as key, current.value as old_value, new.value as new_value
-		    FROM params AS current
-		    INNER JOIN new ON new.run_uuid = current.run_uuid AND new.key = current.key
-		    WHERE new.value != current.value;`,
-		makeSqlValues(params))).
+	if err := tx.Raw(
+		`WITH new(key, value, run_uuid) AS (VALUES `+makeSqlPlaceholders(params)+`)
+		     SELECT current.run_uuid, current.key, current.value as old_value, new.value as new_value
+		     FROM params AS current
+		     INNER JOIN new USING (run_uuid, key)
+		     WHERE new.value != current.value`,
+		makeSqlValues(params)...).
 		Find(&conflicts).Error; err != nil {
 		return nil, eris.Wrap(err, "error fetching params from db")
 	}
 	return conflicts, nil
 }
 
-// makeSqlValues collects a string of (key, value, run_uuid), (key, value, run_uuid), etc, from the params.
-func makeSqlValues(params []models.Param) string {
+// makeSqlPlaceholders collects a string of (?,?,?), (?,?,?), etc, to the length of the params.
+func makeSqlPlaceholders(params []models.Param) string {
 	valuesArray := make([]string, len(params))
-	for i, param := range params {
-		valuesArray[i] = fmt.Sprintf("('%s', '%s', '%s')", param.Key, param.Value, param.RunID)
+	for i := range params {
+		valuesArray[i] = "(?,?,?)"
 	}
 	return strings.Join(valuesArray, ",")
+}
+
+// makeSqlValues collects a string of 'key', 'value', 'run_uuid', 'key', 'value', 'run_uuid', etc, from the params.
+// for use in sql values replacement
+func makeSqlValues(params []models.Param) []interface{} {
+	// values array is params * 3 in length since using 3 fields from each
+	valuesArray := make([]interface{}, len(params)*3)
+	index := 0
+	for _, param := range params {
+		valuesArray[index] = param.Key
+		valuesArray[index+1] = param.Value
+		valuesArray[index+2] = param.RunID
+		index = index + 3
+	}
+	return valuesArray
 }

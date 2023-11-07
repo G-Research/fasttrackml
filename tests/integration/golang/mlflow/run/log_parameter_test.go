@@ -198,7 +198,13 @@ func (s *LogParamTestSuite) Test_Error() {
 	assert.Equal(
 		s.T(),
 		api.NewInvalidParameterValueError(
-			fmt.Sprintf("unable to insert params for run '%s': conflicting params found: %v", run.ID, []string{"key1"}),
+			fmt.Sprintf("unable to insert params for run '%s': conflicting params found: [{run_id: %s, key: %s, old_value: %s, new_value: %s}]",
+				req.RunID,
+				req.RunID,
+				req.Key,
+				"value1",
+				req.Value,
+			),
 		).Error(),
 		resp.Error(),
 	)

@@ -60,16 +60,11 @@ func (s *UpdateNamespaceTestSuite) Test_Ok() {
 		).DoRequest("/namespaces/%d", ns.ID),
 	)
 
-	namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
+	namespace, err := s.NamespaceFixtures.GetNamespaceByID(context.Background(), ns.ID)
 	assert.Nil(s.T(), err)
 
-	// Check that the namespace has been updated
-	for _, namespace := range namespaces {
-		if namespace.ID == ns.ID {
-			assert.Equal(s.T(), namespace.Code, request.Code)
-			assert.Equal(s.T(), namespace.Description, request.Description)
-		}
-	}
+	assert.Equal(s.T(), namespace.Code, request.Code)
+	assert.Equal(s.T(), namespace.Description, request.Description)
 }
 
 func (s *UpdateNamespaceTestSuite) Test_Error() {
@@ -89,7 +84,7 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
 	assert.Nil(s.T(), err)
-	namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
+	expectedNamespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
 	assert.Nil(s.T(), err)
 
 	testData := []struct {
@@ -143,8 +138,8 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 				),
 			)
 		})
-		updatedNamespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
+		actualNamespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
 		assert.Nil(s.T(), err)
-		assert.Equal(s.T(), namespaces, updatedNamespaces)
+		assert.Equal(s.T(), expectedNamespaces, actualNamespaces)
 	}
 }

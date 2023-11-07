@@ -46,6 +46,19 @@ func (f NamespaceFixtures) GetNamespaces(
 	return namespaces, nil
 }
 
+// GetNamespaceByID fetches a namespace by ID.
+func (f NamespaceFixtures) GetNamespaceByID(
+	ctx context.Context, id uint,
+) (*models.Namespace, error) {
+	var namespace models.Namespace
+	if err := f.db.WithContext(ctx).
+		Where("id = ?", id).
+		First(&namespace).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting namespace with ID %d", id)
+	}
+	return &namespace, nil
+}
+
 // UpdateNamespace updates an existing test Namespace.
 func (f NamespaceFixtures) UpdateNamespace(
 	ctx context.Context, namespace *models.Namespace,

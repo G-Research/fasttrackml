@@ -87,6 +87,10 @@ func (s *Importer) importExperiments() error {
 				CreationTime:     scannedItem.CreationTime,
 				LastUpdateTime:   scannedItem.LastUpdateTime,
 			}
+			// keep default experiment ID, but otherwise draw new one
+			if *scannedItem.ID == int32(0) {
+				newItem.ID = scannedItem.ID
+			}
 			if err := destTX.
 				Where(Experiment{Name: scannedItem.Name}).
 				FirstOrCreate(&newItem).Error; err != nil {
@@ -179,26 +183,30 @@ func (s *Importer) translateFields(item map[string]any) (map[string]any, error) 
 		}
 	}
 	// items with experiment_id fk need to reference the new ID
-	if expID, ok := item["experiment_id"]; ok {
-		id, ok := expID.(int64)
-		if !ok {
-			return nil, eris.Errorf("unable to assert experiment_id as int64: %d", expID)
-		}
-		for _, expInfo := range s.experimentInfos {
-			if expInfo.sourceID == id {
-				item["experiment_id"] = expInfo.destID
+	experimentFields := []string{"experiment_id", "default_experiment_id"}
+	for _, field := range experimentFields {
+		if expID, ok := item[field]; ok {
+			id, ok := expID.(int64)
+			if !ok {
+				return nil, eris.Errorf("unable to assert %s as int64: %d", field, expID)
+			}
+			for _, expInfo := range s.experimentInfos {
+				if expInfo.sourceID == id {
+					item[field] = expInfo.destID
+				}
 			}
 		}
 	}
 	// items with string uuid need to translate to UUID native type
 	uuidFields := []string{"id", "app_id"}
 	for _, field := range uuidFields {
-		if srcID, ok := item[field]; ok {
-			stringID := fmt.Sprintf("%v", reflect.Indirect(reflect.ValueOf(srcID)))
-			if uuidRegexp.MatchString(stringID) {
-				binID, err := uuid.Parse(stringID)
+		if srcUUID, ok := item[field]; ok {
+			// when uuid, this field will be pointer to interface{} and requires some reflection
+			stringUUID := fmt.Sprintf("%v", reflect.Indirect(reflect.ValueOf(srcUUID)))
+			if uuidRegexp.MatchString(stringUUID) {
+				binID, err := uuid.Parse(stringUUID)
 				if err != nil {
-					return nil, eris.Errorf("unable to create binary UUID field from string: %s", stringID)
+					return nil, eris.Errorf("unable to create binary UUID field from string: %s", stringUUID)
 				}
 				item[field] = binID
 			}

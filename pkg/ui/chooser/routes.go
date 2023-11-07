@@ -10,7 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/template/html/v2"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
 )
 
@@ -19,8 +18,7 @@ var content embed.FS
 
 // Router represents `chooser` router.
 type Router struct {
-	controller          *controller.Controller
-	namespaceRepository repositories.NamespaceRepositoryProvider
+	controller *controller.Controller
 }
 
 // NewRouter creates new instance of `chooser` router.

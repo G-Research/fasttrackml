@@ -85,8 +85,7 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 
 // findConflictingParams checks if there are conflicting values for the input params. If a key does not
 // yet exist in the db, or if the same key and value already exist for the run, it is not a conflict.
-// If the key already exists for the run but with a different value, it is a conflict. Conflicting keys
-// are returned.
+// If the key already exists for the run but with a different value, it is a conflict. Conflicts are returned.
 func findConflictingParams(tx *gorm.DB, params []models.Param) ([]paramConflict, error) {
 	var conflicts []paramConflict
 	if err := tx.Raw(
@@ -111,8 +110,7 @@ func makeSqlPlaceholders(params []models.Param) string {
 	return strings.Join(valuesArray, ",")
 }
 
-// makeSqlValues collects a string of 'key', 'value', 'run_uuid', 'key', 'value', 'run_uuid', etc, from the params.
-// for use in sql values replacement
+// makeSqlValues concatenates Key, Value, RunID from each input Param for use in sql values replacement
 func makeSqlValues(params []models.Param) []interface{} {
 	// values array is params * 3 in length since using 3 fields from each
 	valuesArray := make([]interface{}, len(params)*3)

@@ -1,6 +1,11 @@
 package database
 
 import (
+	"fmt"
+	"reflect"
+	"regexp"
+
+	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -11,6 +16,8 @@ type experimentInfo struct {
 	destID   int64
 	sourceID int64
 }
+
+var uuidRegexp = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 
 // Importer will handle transport of data from source to destination db.
 type Importer struct {
@@ -159,13 +166,16 @@ func (s *Importer) saveExperimentInfo(source, dest Experiment) {
 
 // translateFields alters row before creation as needed (especially, replacing old experiment_id with new).
 func (s *Importer) translateFields(item map[string]any) (map[string]any, error) {
-	// boolean is numeric when coming from sqlite
-	if isNaN, ok := item["is_nan"]; ok {
-		switch v := isNaN.(type) {
-		case bool:
-			break
-		default:
-			item["is_nan"] = v != 0.0
+	// boolean fields are numeric when coming from sqlite
+	booleanFields := []string{"is_nan", "is_archived"}
+	for _, field := range booleanFields {
+		if fieldVal, ok := item[field]; ok {
+			switch v := fieldVal.(type) {
+			case bool:
+				break
+			default:
+				item[field] = v != 0.0
+			}
 		}
 	}
 	// items with experiment_id fk need to reference the new ID
@@ -177,6 +187,20 @@ func (s *Importer) translateFields(item map[string]any) (map[string]any, error) 
 		for _, expInfo := range s.experimentInfos {
 			if expInfo.sourceID == id {
 				item["experiment_id"] = expInfo.destID
+			}
+		}
+	}
+	// items with string uuid need to translate to UUID native type
+	uuidFields := []string{"id", "app_id"}
+	for _, field := range uuidFields {
+		if srcID, ok := item[field]; ok {
+			stringID := fmt.Sprintf("%v", reflect.Indirect(reflect.ValueOf(srcID)))
+			if uuidRegexp.MatchString(stringID) {
+				binID, err := uuid.Parse(stringID)
+				if err != nil {
+					return nil, eris.Errorf("unable to create binary UUID field from string: %s", stringID)
+				}
+				item[field] = binID
 			}
 		}
 	}

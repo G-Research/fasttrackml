@@ -88,9 +88,10 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 	assert.Nil(s.T(), err)
 
 	testData := []struct {
-		name    string
-		ID      string
-		request *request.Namespace
+		name     string
+		ID       string
+		request  *request.Namespace
+		response map[string]any
 	}{
 		{
 			name: "UpdateNamespaceWithNotFoundID",
@@ -99,21 +100,21 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 				Code:        "testUpdated",
 				Description: "test namespace updated",
 			},
-		},
-		{
-			name: "UpdateNamespaceWithEmptyID",
-			ID:   "",
-			request: &request.Namespace{
-				Code:        "testUpdated",
-				Description: "test namespace updated",
+			response: map[string]any{
+				"message": "An unexepected error was encountered: namespace not found by id: 10",
+				"status":  "error",
 			},
 		},
 		{
-			name: "UpdateNamespaceWithInvalidID",
-			ID:   "InvalidID",
+			name: "UpdateNamespaceWithEmptyCode",
+			ID:   "2",
 			request: &request.Namespace{
-				Code:        "testUpdated",
+				Code:        "",
 				Description: "test namespace updated",
+			},
+			response: map[string]any{
+				"message": "The namespace code is invalid.",
+				"status":  "error",
 			},
 		},
 		{
@@ -123,20 +124,30 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 				Code:        "default",
 				Description: "test namespace updated",
 			},
+			response: map[string]any{
+				"message": `An unexepected error was encountered: error updating namespace:` +
+					` error updating namespace entity: ERROR: duplicate key value violates unique constraint` +
+					` "namespaces_code_key" (SQLSTATE 23505)`,
+				"status": "error",
+			},
 		},
 	}
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
+			var resp any
 			assert.Nil(
 				s.T(),
 				s.AdminClient.WithMethod(
 					http.MethodPut,
 				).WithRequest(
 					tt.request,
+				).WithResponse(
+					&resp,
 				).DoRequest(
 					"/namespaces/%s", tt.ID,
 				),
 			)
+			assert.Equal(s.T(), resp, tt.response)
 		})
 		actualNamespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
 		assert.Nil(s.T(), err)

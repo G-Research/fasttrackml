@@ -63,15 +63,7 @@ func (s *CreateNamespaceTestSuite) Test_Ok() {
 
 	namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
 	assert.Nil(s.T(), err)
-
-	// Check that the namespace has been created
-	for _, namespace := range namespaces {
-		for _, testNamespace := range requests {
-			if namespace.Code == testNamespace.Code {
-				assert.Equal(s.T(), testNamespace.Description, namespace.Description)
-			}
-		}
-	}
+	assert.True(s.T(), helpers.CheckNamespaces(namespaces, requests))
 
 	// Check the length of the namespaces considering the default namespace
 	assert.Equal(s.T(), len(requests)+1, len(namespaces))

@@ -22,16 +22,16 @@ func (e ParamConflictError) Error() string {
 	return e.Message
 }
 
-// ParamConflict represents a conflicting parameter.
-type ParamConflict struct {
+// paramConflict represents a conflicting parameter.
+type paramConflict struct {
 	RunID    string `gorm:"column:run_uuid"`
 	Key      string
 	OldValue string
 	NewValue string
 }
 
-// String renders the ParamConflict for error messages.
-func (pc ParamConflict) String() string {
+// String renders the paramConflict for error messages.
+func (pc paramConflict) String() string {
 	return fmt.Sprintf("{run_id: %s, key: %s, old_value: %s, new_value: %s}", pc.RunID, pc.Key, pc.OldValue, pc.NewValue)
 }
 
@@ -87,8 +87,8 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 // yet exist in the db, or if the same key and value already exist for the run, it is not a conflict.
 // If the key already exists for the run but with a different value, it is a conflict. Conflicting keys
 // are returned.
-func findConflictingParams(tx *gorm.DB, params []models.Param) ([]ParamConflict, error) {
-	var conflicts []ParamConflict
+func findConflictingParams(tx *gorm.DB, params []models.Param) ([]paramConflict, error) {
+	var conflicts []paramConflict
 	if err := tx.Raw(
 		`WITH new(key, value, run_uuid) AS (VALUES `+makeSqlPlaceholders(params)+`)
 		     SELECT current.run_uuid, current.key, current.value as old_value, new.value as new_value

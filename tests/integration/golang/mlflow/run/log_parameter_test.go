@@ -195,6 +195,7 @@ func (s *LogParamTestSuite) Test_Error() {
 			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
 		),
 	)
+	//nolint:lll
 	assert.Equal(
 		s.T(),
 		api.NewInvalidParameterValueError(

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -83,6 +84,7 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 	testData := []struct {
 		name    string
 		request *request.Namespace
+		error   string
 	}{
 		{
 			name: "EmptyCode",
@@ -90,6 +92,7 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 				Code:        "",
 				Description: "description",
 			},
+			error: "The namespace code is invalid.",
 		},
 		{
 			name: "CodeLenghtLessThan2",
@@ -97,6 +100,7 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 				Code:        "a",
 				Description: "description",
 			},
+			error: "The namespace code is invalid.",
 		},
 		{
 			name: "CodeLenghtGreaterThan12",
@@ -104,6 +108,7 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 				Code:        "TooLongNamespaceCode",
 				Description: "description",
 			},
+			error: "The namespace code is invalid.",
 		},
 		{
 			name: "InvalidCode",
@@ -111,6 +116,7 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 				Code:        "test#",
 				Description: "description",
 			},
+			error: "The namespace code is invalid.",
 		},
 		{
 			name: "CodeAlreadyExists",
@@ -118,18 +124,27 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 				Code:        "default",
 				Description: "description",
 			},
+			error: "The namespace code is already in use.",
 		},
 	}
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
+			var resp goquery.Document
 			assert.Nil(
 				s.T(),
 				s.AdminClient.WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
+				).WithResponseType(
+					helpers.ResponseTypeHTML,
+				).WithResponse(
+					&resp,
 				).DoRequest("/namespaces"),
 			)
+
+			msg := resp.Find(".error-message").Text()
+			assert.Equal(s.T(), tt.error, msg)
 			namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
 			assert.Nil(s.T(), err)
 			// Check that creation failed, only the default namespace is present

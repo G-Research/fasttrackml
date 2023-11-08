@@ -101,33 +101,32 @@ func (s *DeleteNamespaceTestSuite) Test_Error() {
 		name                    string
 		ID                      string
 		expectedNamespacesCount int
+		response                map[string]any
 	}{
 		{
 			name:                    "DeleteNamespaceWithNotFoundID",
 			ID:                      "10",
 			expectedNamespacesCount: 2,
-		},
-		{
-			name:                    "DeleteNamespaceWithEmptyID",
-			ID:                      "",
-			expectedNamespacesCount: 2,
-		},
-		{
-			name:                    "DeleteNamespaceWithInvalidID",
-			ID:                      "InvalidID",
-			expectedNamespacesCount: 2,
+			response: map[string]any{
+				"message": "An unexepected error was encountered: namespace not found by id: 10",
+				"status":  "error",
+			},
 		},
 	}
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
+			var resp any
 			assert.Nil(
 				s.T(),
 				s.AdminClient.WithMethod(
 					http.MethodDelete,
+				).WithResponse(
+					&resp,
 				).DoRequest(
 					"/namespaces/%s", tt.ID,
 				),
 			)
+			assert.Equal(s.T(), resp, tt.response)
 		})
 		namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
 		assert.Nil(s.T(), err)

@@ -145,8 +145,10 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 
 			msg := resp.Find(".error-message").Text()
 			assert.Equal(s.T(), tt.error, msg)
+
 			namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
 			assert.Nil(s.T(), err)
+
 			// Check that creation failed, only the default namespace is present
 			assert.Equal(s.T(), 1, len(namespaces))
 		})

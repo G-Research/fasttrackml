@@ -10,6 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 )
 
 type experimentInfo struct {
@@ -53,6 +55,9 @@ func (s *Importer) Import() error {
 		if err := s.importTable(table); err != nil {
 			return eris.Wrapf(err, "error importing table %s", table)
 		}
+	}
+	if err := s.updateNamespaceDefaultExperiment(); err != nil {
+		return eris.Wrap(err, "error updating namespace default experiment")
 	}
 	return nil
 }
@@ -182,18 +187,15 @@ func (s *Importer) translateFields(item map[string]any) (map[string]any, error) 
 			}
 		}
 	}
-	// items with experiment_id fk need to reference the new ID
-	experimentFields := []string{"experiment_id", "default_experiment_id"}
-	for _, field := range experimentFields {
-		if expID, ok := item[field]; ok {
-			id, ok := expID.(int64)
-			if !ok {
-				return nil, eris.Errorf("unable to assert %s as int64: %d", field, expID)
-			}
-			for _, expInfo := range s.experimentInfos {
-				if expInfo.sourceID == id {
-					item[field] = expInfo.destID
-				}
+	// items with experiment_id need to reference the new ID
+	if expID, ok := item["experiment_id"]; ok {
+		id, ok := expID.(int64)
+		if !ok {
+			return nil, eris.Errorf("unable to assert %s as int64: %d", "experiment_id", expID)
+		}
+		for _, expInfo := range s.experimentInfos {
+			if expInfo.sourceID == id {
+				item["experiment_id"] = expInfo.destID
 			}
 		}
 	}
@@ -213,4 +215,35 @@ func (s *Importer) translateFields(item map[string]any) (map[string]any, error) 
 		}
 	}
 	return item, nil
+}
+
+// updateNamespaceDefaultExperiment updates the default_experiment_id for all namespaces
+// when its related experiment received a new id.
+func (s Importer) updateNamespaceDefaultExperiment() error {
+	// Start transaction in the destDB
+	err := s.destDB.Transaction(func(destTX *gorm.DB) error {
+		// Get namespaces
+		var namespaces []Namespace
+		if err := destTX.Model(Namespace{}).Find(&namespaces).Error; err != nil {
+			return eris.Wrap(err, "error creating Rows instance from source")
+		}
+		for _, ns := range namespaces {
+			updatedExperimentID := ns.DefaultExperimentID
+			for _, expInfo := range s.experimentInfos {
+				if ns.DefaultExperimentID != nil && expInfo.sourceID == int64(*ns.DefaultExperimentID) {
+					updatedExperimentID = common.GetPointer[int32](int32(expInfo.destID))
+					break
+				}
+			}
+			if err := destTX.
+				Model(Namespace{}).
+				Where(Namespace{ID: ns.ID}).
+				Update("default_experiment_id", updatedExperimentID).Error; err != nil {
+				return eris.Wrap(err, "error updating destination row")
+			}
+		}
+		log.Infof("Updating namespaces - found %d records", len(namespaces))
+		return nil
+	})
+	return err
 }

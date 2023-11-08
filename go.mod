@@ -12,6 +12,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/G-Research/fasttrackml-ui-aim v0.31602.15
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.6
+	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/apache/arrow/go/v12 v12.0.1
 	github.com/aws/aws-sdk-go-v2 v1.22.1
 	github.com/aws/aws-sdk-go-v2/config v1.22.1
@@ -41,7 +42,6 @@ require (
 	cloud.google.com/go/compute v1.23.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.3 // indirect
-	github.com/PuerkitoBio/goquery v1.8.1 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/apache/thrift v0.16.0 // indirect

@@ -225,7 +225,7 @@ func (s Importer) updateNamespaceDefaultExperiment() error {
 		// Get namespaces
 		var namespaces []Namespace
 		if err := destTX.Model(Namespace{}).Find(&namespaces).Error; err != nil {
-			return eris.Wrap(err, "error creating Rows instance from source")
+			return eris.Wrap(err, "error reading namespaces in destination")
 		}
 		for _, ns := range namespaces {
 			updatedExperimentID := ns.DefaultExperimentID
@@ -239,10 +239,10 @@ func (s Importer) updateNamespaceDefaultExperiment() error {
 				Model(Namespace{}).
 				Where(Namespace{ID: ns.ID}).
 				Update("default_experiment_id", updatedExperimentID).Error; err != nil {
-				return eris.Wrap(err, "error updating destination row")
+				return eris.Wrap(err, "error updating destination namespace row")
 			}
 		}
-		log.Infof("Updating namespaces - found %d records", len(namespaces))
+		log.Infof("Updating namespaces - processed %d records", len(namespaces))
 		return nil
 	})
 	return err

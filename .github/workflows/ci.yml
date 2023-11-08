@@ -125,6 +125,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_URI: ${{ matrix.database-uri }}
+          FML_OUTPUT_DATABASE_URI: ${{ matrix.database-uri }}
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

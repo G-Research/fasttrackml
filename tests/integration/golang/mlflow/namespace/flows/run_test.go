@@ -101,9 +101,6 @@ func (s *RunFlowTestSuite) Test_Ok() {
 		},
 	}
 
-	// delete everything before the test, because when service starts under the hood we create
-	// default namespace and experiment, so it could lead to the problems with actual tests.
-	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			defer assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())

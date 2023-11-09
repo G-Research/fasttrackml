@@ -41,16 +41,13 @@ func (s *GetArtifactS3TestSuite) SetupTest() {
 
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	assert.Nil(s.T(), err)
-
-	err = helpers.CreateS3Buckets(s3Client, s.testBuckets)
-	assert.Nil(s.T(), err)
+	assert.Nil(s.T(), helpers.CreateS3Buckets(s3Client, s.testBuckets))
 
 	s.s3Client = s3Client
 }
 
 func (s *GetArtifactS3TestSuite) TearDownTest() {
-	err := helpers.RemoveS3Buckets(s.s3Client, s.testBuckets)
-	assert.Nil(s.T(), err)
+	assert.Nil(s.T(), helpers.RemoveS3Buckets(s.s3Client, s.testBuckets))
 }
 
 func (s *GetArtifactS3TestSuite) Test_Ok() {

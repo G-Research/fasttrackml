@@ -177,3 +177,6 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 		})
 	}
 }
+
+func TestService_GetArtifact_Ok(t *testing.T)    {}
+func TestService_GetArtifact_Error(t *testing.T) {}

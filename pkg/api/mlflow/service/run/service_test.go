@@ -1153,6 +1153,51 @@ func TestService_LogBatch_Error(t *testing.T) {
 			},
 		},
 		{
+			name:  "CreateBatchParamsConflictError",
+			error: api.NewInvalidParameterValueError(`unable to insert params for run '1': param conflict!`),
+			request: &request.LogBatchRequest{
+				RunID: "1",
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByNamespaceIDRunIDAndLifecycleStage",
+					context.TODO(),
+					uint(1),
+					"1",
+					models.LifecycleStageActive,
+				).Return(&models.Run{
+					ID: "1",
+				}, nil)
+				paramRepository := repositories.MockParamRepositoryProvider{}
+				paramRepository.On(
+					"CreateBatch",
+					context.TODO(),
+					100,
+					[]models.Param{
+						{
+							Key:   "key",
+							Value: "value",
+							RunID: "1",
+						},
+					},
+				).Return(repositories.ParamConflictError{Message: "param conflict!"})
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&paramRepository,
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
 			name:  "CreateBatchMetricsDatabaseError",
 			error: api.NewInternalError(`unable to insert metrics for run '1': database error`),
 			request: &request.LogBatchRequest{

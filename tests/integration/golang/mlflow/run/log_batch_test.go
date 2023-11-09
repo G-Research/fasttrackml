@@ -127,6 +127,14 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
+	// create preexisting param (other batch) for conflict testing
+	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
+		RunID: run.ID,
+		Key:   "key1",
+		Value: "value1",
+	})
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name    string
 		request *request.LogBatchRequest

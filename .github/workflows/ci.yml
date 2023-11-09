@@ -21,11 +21,29 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        id: setup-go
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.21"
+          cache-prefix: go-lint
+
+      - name: Compute tools cache info
+        id: tools-cache-info
+        run: |
+          echo path=$(go env GOPATH)/bin >> $GITHUB_OUTPUT
+          echo make-hash=$(make -n install-tools | sha256sum | cut -d' ' -f1) >> $GITHUB_OUTPUT
+
+      - name: Setup tools cache
+        uses: actions/cache@v3
+        id: tools-cache
+        with:
+          path: ${{ steps.tools-cache-info.outputs.path }}
+          key: tools-go-${{ steps.setup-go.outputs.go-version }}-make-${{ steps.tools-cache-info.outputs.make-hash }}
 
       - name: Install tools
+        if: steps.tools-cache.outputs.cache-hit != 'true'
+        env:
+          GOCACHE: /tmp/tools/go-build
+          GOMODCACHE: /tmp/tools/go-mod
         run: make install-tools
 
       - name: Check formatting
@@ -92,9 +110,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.21"
+          cache-prefix: go-unit-tests
 
       - name: Run Go Unit Tests
         run: make test-go-unit
@@ -120,11 +138,32 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Compute cache info
+        id: cache-info
+        run: |
+          image=$(yq .services.service.image < tests/integration/docker-compose.yml)
+          echo go-version=$(skopeo inspect docker://${image} | jq -r .Digest | cut -d: -f2) >> $GITHUB_OUTPUT
+
+      - name: Setup cache
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: /tmp/go-cache/go-build.tar
+          key: go-integration-tests-image-${{ steps.cache-info.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
+
+      - name: Restore cache
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: docker run --rm -v fml-integration-tests_go-cache:/cache -v /tmp/go-cache:/src alpine tar xf /src/go-build.tar -C /cache
+
       - name: Run Integration Tests
         run: make service-test
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_URI: ${{ matrix.database-uri }}
+
+      - name: Save cache
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: docker run --rm -v fml-integration-tests_go-cache:/cache -v /tmp/go-cache:/dst alpine tar cf /dst/go-build.tar -C /cache go-build
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
@@ -153,16 +192,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        id: setup-go
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.21"
+          cache-prefix: python-integration-tests
 
       - name: Run ${{ matrix.api }} integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
 
   build:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Build software distribution for ${{ matrix.os }}/${{ matrix.arch }}
+    name: Build (${{ matrix.os }}/${{ matrix.arch }})
     strategy:
       matrix:
         os: [darwin, linux, windows]
@@ -187,9 +227,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.21"
+          cache-prefix: build-${{ matrix.os }}-${{ matrix.arch }}
 
       - name: Setup Python
         uses: actions/setup-python@v4

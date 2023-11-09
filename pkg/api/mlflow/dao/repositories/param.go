@@ -3,13 +3,12 @@ package repositories
 import (
 	"context"
 	"fmt"
-	"strings"
-
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // ParamConflictError is returned when there is a conflict in the params (same key, different value).
@@ -62,7 +61,7 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 			Columns:   []clause.Column{{Name: "run_uuid"}, {Name: "key"}},
 			DoNothing: true,
 		}).CreateInBatches(params, batchSize).Error; err != nil {
-			return eris.Wrap(tx.Error, "error creating params in batch")
+			return eris.Wrap(err, "error creating params in batch")
 		}
 		// if there were ignored conflicts, verify to be exact duplicates
 		if tx.RowsAffected != int64(len(params)) {
@@ -92,33 +91,10 @@ func findConflictingParams(tx *gorm.DB, params []models.Param) ([]paramConflict,
 		     SELECT current.run_uuid, current.key, current.value as old_value, new.value as new_value
 		     FROM params AS current
 		     INNER JOIN new USING (run_uuid, key)
-		     WHERE new.value != current.value`, makeSqlPlaceholders(params))
-	if err := tx.Raw(sql, makeSqlValues(params)...).
+		     WHERE new.value != current.value`, makeSqlPlaceholders(3, len(params)))
+	if err := tx.Raw(sql, makeParamSqlValues(params)...).
 		Find(&conflicts).Error; err != nil {
 		return nil, eris.Wrap(err, "error fetching params from db")
 	}
 	return conflicts, nil
-}
-
-// makeSqlPlaceholders collects a string of (?,?,?), (?,?,?), etc, to the length of the params.
-func makeSqlPlaceholders(params []models.Param) string {
-	valuesArray := make([]string, len(params))
-	for i := range params {
-		valuesArray[i] = "(?,?,?)"
-	}
-	return strings.Join(valuesArray, ",")
-}
-
-// makeSqlValues concatenates Key, Value, RunID from each input Param for use in sql values replacement
-func makeSqlValues(params []models.Param) []interface{} {
-	// values array is params * 3 in length since using 3 fields from each
-	valuesArray := make([]interface{}, len(params)*3)
-	index := 0
-	for _, param := range params {
-		valuesArray[index] = param.Key
-		valuesArray[index+1] = param.Value
-		valuesArray[index+2] = param.RunID
-		index = index + 3
-	}
-	return valuesArray
 }

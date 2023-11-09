@@ -31,7 +31,7 @@ type ArtifactFlowTestSuite struct {
 	s3Client    *s3.Client
 }
 
-// TestExperimentFlowTestSuite tests the full `artifact` flow connected to namespace functionality.
+// TestArtifactFlowTestSuite tests the full `artifact` flow connected to namespace functionality.
 // Flow contains next endpoints:
 // - `GET /artifacts/get`
 // - `GET /artifacts/list`

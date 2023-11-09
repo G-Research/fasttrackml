@@ -25,7 +25,7 @@ type RunFlowTestSuite struct {
 	helpers.BaseTestSuite
 }
 
-// TestExperimentFlowTestSuite tests the full `runs` flow connected to namespace functionality.
+// TestRunFlowTestSuite tests the full `runs` flow connected to namespace functionality.
 // Flow contains next endpoints:
 // - `POST /runs/create`
 // - `GET /runs/get`

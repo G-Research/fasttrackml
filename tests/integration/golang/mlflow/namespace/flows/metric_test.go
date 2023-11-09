@@ -350,7 +350,7 @@ func (s *MetricFlowTestSuite) createRun(
 
 func (s *MetricFlowTestSuite) getRunAndCompare(
 	namespace string, req request.GetRunRequest, expectedResponse *response.GetRunResponse,
-) *response.GetRunResponse {
+) {
 	resp := response.GetRunResponse{}
 	assert.Nil(
 		s.T(),
@@ -381,7 +381,6 @@ func (s *MetricFlowTestSuite) getRunAndCompare(
 	if expectedResponse.Run.Data.Metrics != nil {
 		assert.Equal(s.T(), expectedResponse.Run.Data.Metrics, resp.Run.Data.Metrics)
 	}
-	return &resp
 }
 
 func (s *MetricFlowTestSuite) logRunMetric(namespace string, req *request.LogMetricRequest) {

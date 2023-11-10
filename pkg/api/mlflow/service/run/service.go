@@ -522,9 +522,8 @@ func (s Service) LogParam(
 	if err := s.paramRepository.CreateBatch(ctx, 1, []models.Param{*param}); err != nil {
 		if _, ok := err.(repositories.ParamConflictError); ok {
 			return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
-		} else {
-			return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 		}
+		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 	}
 
 	return nil
@@ -613,9 +612,8 @@ func (s Service) LogBatch(
 	if err := s.paramRepository.CreateBatch(ctx, 100, params); err != nil {
 		if _, ok := err.(repositories.ParamConflictError); ok {
 			return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
-		} else {
-			return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 		}
+		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 	}
 	if err := s.metricRepository.CreateBatch(ctx, run, 100, metrics); err != nil {
 		return api.NewInternalError("unable to insert metrics for run '%s': %s", run.ID, err)

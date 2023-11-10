@@ -87,12 +87,13 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 // If the key already exists for the run but with a different value, it is a conflict. Conflicts are returned.
 func findConflictingParams(tx *gorm.DB, params []models.Param) ([]paramConflict, error) {
 	var conflicts []paramConflict
+	placeholders, values := makeParamConflictPlaceholdersAndValues(params)
 	sql := fmt.Sprintf(`WITH new(key, value, run_uuid) AS (VALUES %s)
 		     SELECT current.run_uuid, current.key, current.value as old_value, new.value as new_value
 		     FROM params AS current
 		     INNER JOIN new USING (run_uuid, key)
-		     WHERE new.value != current.value`, makeSqlPlaceholders(3, len(params)))
-	if err := tx.Raw(sql, makeParamSqlValues(params)...).
+		     WHERE new.value != current.value`, placeholders)
+	if err := tx.Raw(sql, values...).
 		Find(&conflicts).Error; err != nil {
 		return nil, eris.Wrap(err, "error fetching params from db")
 	}

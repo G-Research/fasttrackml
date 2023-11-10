@@ -26,26 +26,30 @@ func Test_makeSqlPlaceholders(t *testing.T) {
 	}
 }
 
-func Test_makeParamSqlValues(t *testing.T) {
+func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 	tests := []struct {
-		params         []models.Param
-		expectedResult []interface{}
+		params               []models.Param
+		expectedPlaceholders string
+		expectedValues       []interface{}
 	}{
 		{
-			params:         []models.Param{{Key: "key1", Value: "value1", RunID: "run1"}},
-			expectedResult: []interface{}{"key1", "value1", "run1"},
+			params:               []models.Param{{Key: "key1", Value: "value1", RunID: "run1"}},
+			expectedPlaceholders: "(?,?,?)",
+			expectedValues:       []interface{}{"key1", "value1", "run1"},
 		},
 		{
 			params: []models.Param{
 				{Key: "key1", Value: "value1", RunID: "run1"},
 				{Key: "key2", Value: "value2", RunID: "run2"},
 			},
-			expectedResult: []interface{}{"key1", "value1", "run1", "key2", "value2", "run2"},
+			expectedPlaceholders: "(?,?,?),(?,?,?)",
+			expectedValues:       []interface{}{"key1", "value1", "run1", "key2", "value2", "run2"},
 		},
 	}
 
 	for _, tt := range tests {
-		result := makeParamSqlValues(tt.params)
-		assert.Equal(t, tt.expectedResult, result)
+		placeholders, values := makeParamConflictPlaceholdersAndValues(tt.params)
+		assert.Equal(t, tt.expectedPlaceholders, placeholders)
+		assert.Equal(t, tt.expectedValues, values)
 	}
 }

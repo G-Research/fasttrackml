@@ -17,6 +17,7 @@ var db *gorm.DB
 type BaseTestSuite struct {
 	AIMClient          *HttpClient
 	MlflowClient       *HttpClient
+	AdminClient        *HttpClient
 	AppFixtures        *fixtures.AppFixtures
 	DashboardFixtures  *fixtures.DashboardFixtures
 	ExperimentFixtures *fixtures.ExperimentFixtures
@@ -41,6 +42,7 @@ func (s *BaseTestSuite) SetupTest(t *testing.T) {
 
 	s.AIMClient = NewAimApiClient(GetServiceUri())
 	s.MlflowClient = NewMlflowApiClient(GetServiceUri())
+	s.AdminClient = NewAdminApiClient(GetServiceUri())
 
 	appFixtures, err := fixtures.NewAppFixtures(db)
 	assert.Nil(t, err)

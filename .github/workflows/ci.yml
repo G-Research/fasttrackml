@@ -270,11 +270,29 @@ jobs:
           sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64-win32
           echo CC=x86_64-w64-mingw32-gcc >> $GITHUB_ENV
 
+      - name: Set up Docker Buildx
+        if: matrix.os == 'linux'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker metadata
+        if: matrix.os == 'linux'
+        id: docker-metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: fasttrackml
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=edge
+
       - name: Build software distribution
         run: make dist
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
+          DOCKER_METADATA: ${{ steps.docker-metadata.outputs.json }}
+          DOCKER_OUTPUT: type=oci,dest=fasttrackml-oci-${{ matrix.arch }}.tar
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v3
@@ -288,59 +306,12 @@ jobs:
           name: fasttrackml-wheels
           path: wheelhouse/*.whl
 
-  build-image:
-    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Build container image
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Compute build args
-        id: build-args
-        run: |
-          echo version=$(git describe --tags --always --match='v*' | sed 's/^v//') >> $GITHUB_OUTPUT
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: fasttrackml
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=ref,event=pr
-            type=edge
-
-      - name: Build container image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          build-args: |
-            version=${{ steps.build-args.outputs.version }}
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          sbom: false
-          outputs: type=oci,dest=fasttrackml-oci.tar
-
-      - name: Upload artifact
+      - name: Upload Docker artifact
+        if: matrix.os == 'linux'
         uses: actions/upload-artifact@v3
         with:
-          name: fasttrackml-oci-image
-          path: fasttrackml-oci.tar
+          name: fasttrackml-oci-images
+          path: fasttrackml-oci-*.tar
 
   # Virtual job that can be configured as a required check before a PR can be merged.
   # As GitHub considers a check as successful if it is skipped, we need to check its status in
@@ -354,7 +325,6 @@ jobs:
       - go-integration-tests
       - python-integration-tests
       - build
-      - build-image
     runs-on: ubuntu-latest
     steps:
       - run: echo "All required checks done"
@@ -372,7 +342,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: fasttrackml-oci-image
+          name: fasttrackml-oci-images
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -383,17 +353,25 @@ jobs:
 
       - name: Compute repo name
         id: repo
-        run: echo name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_OUTPUT
+        run: echo name=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_OUTPUT
 
       - name: Push to GitHub Container Registry
         run: |
-          tags=$(tar -xOf fasttrackml-oci.tar index.json | jq -r '.manifests[].annotations."org.opencontainers.image.ref.name"')
-          for tag in $tags
+          repo=${{ steps.repo.outputs.name }}
+          tags=($(tar -xOf $(ls fasttrackml-oci-*.tar | head -n1) index.json | jq -r '.manifests[].annotations."org.opencontainers.image.ref.name"'))
+          for image in fasttrackml-oci-*.tar
           do
-            echo "::group::Pushing image to ghcr.io/${{ steps.repo.outputs.name }}:$tag"
-            skopeo copy --all oci-archive:fasttrackml-oci.tar:$tag docker://ghcr.io/${{ steps.repo.outputs.name }}:$tag
+            digest=$(tar -xOf $image index.json | jq -r '.manifests[0].digest')
+            digests+=($digest)
+            echo "::group::Pushing $image to $repo@$digest"
+            skopeo copy oci-archive:$image:${tags[0]} docker://$repo@$digest
             echo "::endgroup::"
           done
+          echo "::group::Pushing merged manifest to $repo for tags: ${tags[@]}"
+          docker buildx imagetools create \
+            $(printf -- "--tag $repo:%s " ${tags[@]}) \
+            $(printf "$repo@%s " ${digests[@]})
+          echo "::endgroup::"
 
   release:
     name: Release

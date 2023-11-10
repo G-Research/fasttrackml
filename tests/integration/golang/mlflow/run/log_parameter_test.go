@@ -195,11 +195,11 @@ func (s *LogParamTestSuite) Test_Error() {
 			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
 		),
 	)
-	//nolint:lll
 	assert.Equal(
 		s.T(),
 		api.NewInvalidParameterValueError(
-			fmt.Sprintf("unable to insert params for run '%s': conflicting params found: [{run_id: %s, key: %s, old_value: %s, new_value: %s}]",
+			fmt.Sprintf(`unable to insert params for run '%s': conflicting params found: `+
+				`[{run_id: %s, key: %s, old_value: %s, new_value: %s}]`,
 				req.RunID,
 				req.RunID,
 				req.Key,

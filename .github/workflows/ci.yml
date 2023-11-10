@@ -79,7 +79,24 @@ jobs:
             exit 1
           fi
 
-      - name: Run Go linters
+      - name: Compute golangci-lint cache info
+        id: golangci-lint-cache-info
+        run: |
+          version_regex=" v([0-9]+\.[0-9]+\.[0-9]+) "
+          [[ "$(golangci-lint version)" =~ $version_regex ]]
+          echo version=${BASH_REMATCH[1]} >> $GITHUB_OUTPUT
+          cache_regex="Dir: (.*)
+          "
+          [[ "$(golangci-lint cache status)" =~ $cache_regex ]]
+          echo path=${BASH_REMATCH[1]} >> $GITHUB_OUTPUT
+
+      - name: Setup golangci-lint cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.golangci-lint-cache-info.outputs.path }}
+          key: golangci-lint-${{ steps.golangci-lint-cache-info.outputs.version }}-go-${{ steps.setup-go.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
+
+      - name: Run golangci-lint
         run: make go-lint
 
   python-lint:

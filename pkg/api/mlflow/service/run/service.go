@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -520,7 +521,7 @@ func (s Service) LogParam(
 
 	param := convertors.ConvertLogParamRequestToDBModel(run.ID, req)
 	if err := s.paramRepository.CreateBatch(ctx, 1, []models.Param{*param}); err != nil {
-		if _, ok := err.(repositories.ParamConflictError); ok {
+		if errors.As(err, &repositories.ParamConflictError{}) {
 			return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
 		}
 		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
@@ -610,7 +611,7 @@ func (s Service) LogBatch(
 		return api.NewInvalidParameterValueError(err.Error())
 	}
 	if err := s.paramRepository.CreateBatch(ctx, 100, params); err != nil {
-		if _, ok := err.(repositories.ParamConflictError); ok {
+		if errors.As(err, &repositories.ParamConflictError{}) {
 			return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
 		}
 		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)

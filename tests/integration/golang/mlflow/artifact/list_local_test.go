@@ -28,16 +28,11 @@ import (
 )
 
 type ListArtifactLocalTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestListArtifactLocalTestSuite(t *testing.T) {
 	suite.Run(t, new(ListArtifactLocalTestSuite))
-}
-
-func (s *ListArtifactLocalTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *ListArtifactLocalTestSuite) Test_Ok() {

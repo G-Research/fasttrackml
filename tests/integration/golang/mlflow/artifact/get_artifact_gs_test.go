@@ -24,7 +24,6 @@ import (
 )
 
 type GetArtifactGSTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 	gsClient    *storage.Client
 	testBuckets []string
@@ -37,14 +36,13 @@ func TestGetArtifactGSTestSuite(t *testing.T) {
 }
 
 func (s *GetArtifactGSTestSuite) SetupSuite() {
-	s.BaseTestSuite.SetupTest(s.T())
-
 	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
 	require.Nil(s.T(), err)
 	s.gsClient = gsClient
 }
 
 func (s *GetArtifactGSTestSuite) SetupTest() {
+	s.BaseTestSuite.SetupTest()
 	require.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
 }
 

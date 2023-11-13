@@ -24,16 +24,11 @@ import (
 )
 
 type LogMetricTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestLogMetricTestSuite(t *testing.T) {
 	suite.Run(t, new(LogMetricTestSuite))
-}
-
-func (s *LogMetricTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *LogMetricTestSuite) Test_Ok() {

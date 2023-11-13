@@ -20,17 +20,12 @@ import (
 )
 
 type GetRunsActiveTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 	runs []*models.Run
 }
 
 func TestGetRunsActiveTestSuite(t *testing.T) {
 	suite.Run(t, new(GetRunsActiveTestSuite))
-}
-
-func (s *GetRunsActiveTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetRunsActiveTestSuite) Test_Ok() {

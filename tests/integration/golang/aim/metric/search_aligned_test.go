@@ -23,16 +23,11 @@ import (
 )
 
 type SearchAlignedMetricsTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestSearchAlignedMetricsTestSuite(t *testing.T) {
 	suite.Run(t, new(SearchAlignedMetricsTestSuite))
-}
-
-func (s *SearchAlignedMetricsTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *SearchAlignedMetricsTestSuite) Test_Ok() {

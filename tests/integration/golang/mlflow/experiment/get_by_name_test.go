@@ -23,16 +23,11 @@ import (
 )
 
 type GetExperimentByNameTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestGetExperimentByNameTestSuite(t *testing.T) {
 	suite.Run(t, new(GetExperimentByNameTestSuite))
-}
-
-func (s *GetExperimentByNameTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetExperimentByNameTestSuite) Test_Ok() {

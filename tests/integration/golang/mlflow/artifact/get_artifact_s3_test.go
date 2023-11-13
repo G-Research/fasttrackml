@@ -25,7 +25,6 @@ import (
 )
 
 type GetArtifactS3TestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 	s3Client    *s3.Client
 	testBuckets []string
@@ -38,7 +37,7 @@ func TestGetArtifactS3TestSuite(t *testing.T) {
 }
 
 func (s *GetArtifactS3TestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.BaseTestSuite.SetupTest()
 
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	require.Nil(s.T(), err)

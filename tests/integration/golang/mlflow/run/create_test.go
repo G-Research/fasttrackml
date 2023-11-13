@@ -23,16 +23,11 @@ import (
 )
 
 type CreateRunTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestCreateRunTestSuite(t *testing.T) {
 	suite.Run(t, new(CreateRunTestSuite))
-}
-
-func (s *CreateRunTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *CreateRunTestSuite) Test_DefaultNamespace_Ok() {

@@ -21,16 +21,11 @@ import (
 )
 
 type DeleteDashboardTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestDeleteDashboardTestSuite(t *testing.T) {
 	suite.Run(t, new(DeleteDashboardTestSuite))
-}
-
-func (s *DeleteDashboardTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *DeleteDashboardTestSuite) Test_Ok() {

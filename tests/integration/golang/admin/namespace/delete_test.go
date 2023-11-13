@@ -17,16 +17,11 @@ import (
 )
 
 type DeleteNamespaceTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestDeleteNamespaceTestSuite(t *testing.T) {
 	suite.Run(t, new(DeleteNamespaceTestSuite))
-}
-
-func (s *DeleteNamespaceTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *DeleteNamespaceTestSuite) Test_Ok() {

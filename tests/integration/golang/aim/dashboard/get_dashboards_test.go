@@ -20,16 +20,11 @@ import (
 )
 
 type GetDashboardsTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestGetDashboardsTestSuite(t *testing.T) {
 	suite.Run(t, new(GetDashboardsTestSuite))
-}
-
-func (s *GetDashboardsTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetDashboardsTestSuite) Test_Ok() {

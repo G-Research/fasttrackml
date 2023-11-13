@@ -18,16 +18,11 @@ import (
 )
 
 type UpdateNamespaceTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestUpdateNamespaceTestSuite(t *testing.T) {
 	suite.Run(t, new(UpdateNamespaceTestSuite))
-}
-
-func (s *UpdateNamespaceTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *UpdateNamespaceTestSuite) Test_Ok() {

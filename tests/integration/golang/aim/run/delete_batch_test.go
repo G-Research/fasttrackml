@@ -20,7 +20,6 @@ import (
 )
 
 type DeleteBatchTestSuite struct {
-	suite.Suite
 	runs []*models.Run
 	helpers.BaseTestSuite
 }
@@ -30,7 +29,7 @@ func TestDeleteBatchTestSuite(t *testing.T) {
 }
 
 func (s *DeleteBatchTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.BaseTestSuite.SetupTest()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,

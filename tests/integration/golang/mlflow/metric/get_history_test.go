@@ -21,16 +21,11 @@ import (
 )
 
 type GetHistoryTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestGetHistoryTestSuite(t *testing.T) {
 	suite.Run(t, new(GetHistoryTestSuite))
-}
-
-func (s *GetHistoryTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetHistoryTestSuite) Test_Ok() {

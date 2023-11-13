@@ -5,6 +5,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -47,7 +48,7 @@ func Test_renumberRows(t *testing.T) {
 		DriverName: "postgres",
 	})
 	db, err := gorm.Open(dialector, &gorm.Config{})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	repo := NewRunRepository(db)
 

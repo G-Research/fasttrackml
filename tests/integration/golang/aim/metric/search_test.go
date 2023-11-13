@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -35,7 +36,7 @@ func (s *SearchMetricsTestSuite) SetupTest() {
 
 func (s *SearchMetricsTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -43,7 +44,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// create test experiments.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -51,14 +52,14 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 		NamespaceID:    namespace.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 		NamespaceID:    namespace.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// create different test runs and attach tags, metrics, params, etc.
 	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -79,7 +80,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri1",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric1",
 		Value:     1.1,
@@ -89,7 +90,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		Iter:      1,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	metric1Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric1",
 		Value:     1.1,
@@ -99,7 +100,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		LastIter:  1,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric2",
 		Value:     2.1,
@@ -109,7 +110,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		Iter:      2,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	metric2Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric2",
 		Value:     2.1,
@@ -119,7 +120,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		LastIter:  2,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric3",
 		Value:     3.1,
@@ -129,7 +130,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		Iter:      3,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	metric3Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric3",
 		Value:     3.1,
@@ -139,19 +140,19 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		LastIter:  3,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param1",
 		Value: "value1",
 		RunID: run1.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag1",
 		RunID: run1.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id2",
@@ -171,7 +172,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri2",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric1",
 		Value:     0.5,
@@ -181,7 +182,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		Iter:      3,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	metric1Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric1",
 		Value:     0.5,
@@ -191,7 +192,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  3,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric2",
 		Value:     2.1,
@@ -201,7 +202,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		Iter:      2,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	metric2Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric2",
 		Value:     2.1,
@@ -211,7 +212,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  2,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric3",
 		Value:     3.1,
@@ -221,7 +222,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		Iter:      3,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	metric3Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric3",
 		Value:     3.1,
@@ -231,19 +232,19 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  3,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param2",
 		Value: "value2",
 		RunID: run2.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag2",
 		RunID: run2.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	run3, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id3",
@@ -263,7 +264,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri3",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric1",
 		Value:     1.2,
@@ -273,7 +274,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		Iter:      3,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	metric1Run3, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric1",
 		Value:     1.2,
@@ -283,7 +284,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		LastIter:  3,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric2",
 		Value:     1.6,
@@ -293,7 +294,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		Iter:      4,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	metric2Run3, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric2",
 		Value:     1.6,
@@ -303,20 +304,20 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		LastIter:  4,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param3",
 		Value: "value3",
 		RunID: run3.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag3",
 		RunID: run3.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	runs := []*models.Run{run1, run2, run3}
 	tests := []struct {
@@ -5884,7 +5885,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := new(bytes.Buffer)
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithQuery(
 					tt.request,
@@ -5895,7 +5896,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				).DoRequest("/runs/search/metric"),
 			)
 			decodedData, err := encoding.Decode(resp)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			var decodedMetrics []*models.LatestMetric
 			for _, run := range runs {

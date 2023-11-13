@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"gorm.io/gorm"
 
@@ -36,7 +36,7 @@ func (s *BaseTestSuite) SetupTest(t *testing.T) {
 			1*time.Second,
 			20,
 		)
-		assert.Nil(t, err)
+		require.Nil(t, err)
 		db = instance.GormDB()
 	}
 
@@ -45,41 +45,41 @@ func (s *BaseTestSuite) SetupTest(t *testing.T) {
 	s.AdminClient = NewAdminApiClient(GetServiceUri())
 
 	appFixtures, err := fixtures.NewAppFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	s.AppFixtures = appFixtures
 
 	dashboardFixtures, err := fixtures.NewDashboardFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	s.DashboardFixtures = dashboardFixtures
 
 	experimentFixtures, err := fixtures.NewExperimentFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	s.ExperimentFixtures = experimentFixtures
 
 	metricFixtures, err := fixtures.NewMetricFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	s.MetricFixtures = metricFixtures
 
 	namespaceFixtures, err := fixtures.NewNamespaceFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	s.NamespaceFixtures = namespaceFixtures
 
 	projectFixtures, err := fixtures.NewProjectFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	s.ProjectFixtures = projectFixtures
 
 	paramFixtures, err := fixtures.NewParamFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	s.ParamFixtures = paramFixtures
 
 	runFixtures, err := fixtures.NewRunFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	s.RunFixtures = runFixtures
 
 	tagFixtures, err := fixtures.NewTagFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	s.TagFixtures = tagFixtures
 
 	// by default, unload everything.
-	assert.Nil(t, s.NamespaceFixtures.UnloadFixtures())
+	require.Nil(t, s.NamespaceFixtures.UnloadFixtures())
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -35,7 +36,7 @@ func (s *CreateDashboardTestSuite) SetupTest() {
 
 func (s *CreateDashboardTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -43,7 +44,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
@@ -55,7 +56,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 		State:       database.AppState{},
 		NamespaceID: namespace.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name        string
@@ -73,7 +74,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Dashboard
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithMethod(
 					http.MethodPost,
@@ -85,7 +86,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 			)
 
 			dashboards, err := s.DashboardFixtures.GetDashboards(context.Background())
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.requestBody.Name, resp.Name)
 			assert.Equal(s.T(), tt.requestBody.Description, resp.Description)
 			assert.Equal(s.T(), dashboards[0].Name, resp.Name)
@@ -99,7 +100,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 
 func (s *CreateDashboardTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -107,7 +108,7 @@ func (s *CreateDashboardTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name        string
@@ -125,7 +126,7 @@ func (s *CreateDashboardTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithMethod(
 					http.MethodPost,

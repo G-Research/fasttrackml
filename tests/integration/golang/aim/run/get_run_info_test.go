@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -35,22 +36,22 @@ func (s *GetRunInfoTestSuite) SetupTest() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), experiment)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 }
 
 func (s *GetRunInfoTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name  string
@@ -64,7 +65,7 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.GetRunInfo
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID),
 			)
@@ -84,7 +85,7 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 
 func (s *GetRunInfoTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name  string
@@ -98,7 +99,7 @@ func (s *GetRunInfoTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID))
+			require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID))
 			assert.Equal(s.T(), "Not Found", resp.Message)
 		})
 	}

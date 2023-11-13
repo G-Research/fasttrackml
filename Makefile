@@ -197,6 +197,39 @@ mocks-generate: mocks-clean ## generate mock based on all project interfaces.
 	@mockery
 
 #
+# Docker targets (Only available on Linux).
+#
+ifeq ($(shell go env GOOS),linux)
+# Load into the Docker daemon by default.
+DOCKER_OUTPUT?=type=docker
+ifneq ($(origin DOCKER_METADATA), undefined)
+  # If DOCKER_METADATA is defined, use it to set the tags and labels.
+  # DOCKER_METADATA should be a JSON object with the following structure:
+  # {
+  #   "tags": ["image:tag1", "image:tag2"],
+  #   "labels": {
+  #     "label1": "value1",
+  #     "label2": "value2"
+  #   }
+  # }
+  DOCKER_TAGS=$(shell echo $$DOCKER_METADATA | jq -r '.tags | map("--tag \(.)") | join(" ")')
+  DOCKER_LABELS=$(shell echo $$DOCKER_METADATA | jq -r '.labels | to_entries | map("--label \(.key)=\"\(.value)\"") | join(" ")')
+else
+  # Otherwise, use DOCKER_TAGS if defined, otherwise use the default.
+  # DOCKER_TAGS should be a space-separated list of tags.
+  # e.g. DOCKER_TAGS="image:tag1 image:tag2"
+  # We do not set DOCKER_LABELS because of the way make handles spaces
+  # in variable values. Use DOCKER_METADATA if you need to set labels.
+  DOCKER_TAGS?=fasttrackml:$(VERSION) fasttrackml:latest
+  DOCKER_TAGS:=$(addprefix --tag ,$(DOCKER_TAGS))
+endif
+.PHONY: docker-dist
+docker-dist: go-build ## build docker image.
+	@echo ">>> Building Docker image."
+	@docker buildx build --provenance false --sbom false --platform linux/$(shell go env GOARCH) --output $(DOCKER_OUTPUT) $(DOCKER_TAGS) $(DOCKER_LABELS) .
+endif
+
+#
 # Build targets.
 # 
 .PHONY: clean
@@ -209,6 +242,9 @@ build: go-build ## build the app.
 
 .PHONY: dist
 dist: go-dist python-dist ## build the software archives.
+ifeq ($(shell go env GOOS),linux)
+dist: docker-dist
+endif
 
 .PHONY: format
 format: go-format python-format ## format the code.

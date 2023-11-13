@@ -100,7 +100,6 @@ func GetExperiment(c *fiber.Ctx) error {
 		RunCount    int
 		Description string `gorm:"column:description"`
 	}
-
 	if err := database.DB.Model(&database.Experiment{}).
 		Select(
 			"experiments.experiment_id",
@@ -357,7 +356,9 @@ func UpdateExperiment(c *fiber.Ctx) error {
 	}
 
 	id, err := strconv.ParseInt(params.ID, 10, 32)
-	// TODO this code should move to service
+	if err != nil {
+		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", params.ID, err)
+	}
 	experimentRepository := repositories.NewExperimentRepository(database.DB)
 	tagRepository := repositories.NewTagRepository(database.DB)
 	experiment, err := experimentRepository.GetByNamespaceIDAndExperimentID(c.Context(), ns.ID, int32(id))

@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -34,7 +35,7 @@ func (s *GetRunsActiveTestSuite) SetupTest() {
 
 func (s *GetRunsActiveTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -42,7 +43,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name         string
@@ -62,10 +63,10 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 					NamespaceID:    namespace.ID,
 					LifecycleStage: models.LifecycleStageActive,
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 
 				s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 3)
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 			},
 		},
 		{
@@ -74,7 +75,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			beforeRunFn: func() {
 				// set 3rd run to status = StatusFinished
 				s.runs[2].Status = models.StatusFinished
-				assert.Nil(s.T(), s.RunFixtures.UpdateRun(context.Background(), s.runs[2]))
+				require.Nil(s.T(), s.RunFixtures.UpdateRun(context.Background(), s.runs[2]))
 			},
 		},
 	}
@@ -84,7 +85,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 				tt.beforeRunFn()
 			}
 			resp := new(bytes.Buffer)
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithResponseType(
 					helpers.ResponseTypeBuffer,
@@ -93,7 +94,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 				).DoRequest("/runs/active"),
 			)
 			decodedData, err := encoding.Decode(resp)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			responseCount := 0
 			for _, run := range s.runs {

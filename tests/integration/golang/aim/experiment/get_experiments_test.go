@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -33,7 +34,7 @@ func (s *GetExperimentsTestSuite) SetupTest() {
 
 func (s *GetExperimentsTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -41,7 +42,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiments := map[int32]*models.Experiment{}
 	for i := 0; i < 5; i++ {
@@ -66,12 +67,12 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 			ArtifactLocation: "/artifact/location",
 		}
 		experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
-		assert.Nil(s.T(), err)
+		require.Nil(s.T(), err)
 		experiments[*experiment.ID] = experiment
 	}
 
 	var resp response.Experiments
-	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/experiments/"))
+	require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/experiments/"))
 	assert.Equal(s.T(), len(experiments), len(resp))
 	for _, actualExperiment := range resp {
 		expectedExperiment := experiments[actualExperiment.ID]

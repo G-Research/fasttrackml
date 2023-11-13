@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -34,7 +35,7 @@ func (s *DeleteAppTestSuite) SetupTest() {
 
 func (s *DeleteAppTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -42,7 +43,7 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
@@ -53,7 +54,7 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 		State:       database.AppState{},
 		NamespaceID: namespace.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name             string
@@ -66,7 +67,7 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithMethod(
 					http.MethodDelete,
@@ -75,7 +76,7 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 				),
 			)
 			apps, err := s.AppFixtures.GetApps(context.Background())
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedAppCount, len(apps))
 		})
 	}
@@ -83,7 +84,7 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 
 func (s *DeleteAppTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -91,7 +92,7 @@ func (s *DeleteAppTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	_, err = s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
@@ -102,7 +103,7 @@ func (s *DeleteAppTestSuite) Test_Error() {
 		State:       database.AppState{},
 		NamespaceID: namespace.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name             string
@@ -118,7 +119,7 @@ func (s *DeleteAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithMethod(
 					http.MethodDelete,
@@ -131,7 +132,7 @@ func (s *DeleteAppTestSuite) Test_Error() {
 			assert.Contains(s.T(), resp.Message, "Not Found")
 
 			apps, err := s.AppFixtures.GetApps(context.Background())
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedAppCount, len(apps))
 		})
 	}

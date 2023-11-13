@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
@@ -30,28 +31,28 @@ func (s *DeleteNamespaceTestSuite) SetupTest() {
 
 func (s *DeleteNamespaceTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
 		Code:                "test2",
 		Description:         "test namespace 2 description",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	ns2, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  3,
 		Code:                "test3",
 		Description:         "test namespace 3 description",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name                   string
@@ -64,7 +65,7 @@ func (s *DeleteNamespaceTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AdminClient.WithMethod(
 					http.MethodDelete,
@@ -73,7 +74,7 @@ func (s *DeleteNamespaceTestSuite) Test_Ok() {
 				),
 			)
 			namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.expectedNamespaceCount, len(namespaces))
 		})
 	}
@@ -81,21 +82,21 @@ func (s *DeleteNamespaceTestSuite) Test_Ok() {
 
 func (s *DeleteNamespaceTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
 		Code:                "test2",
 		Description:         "test namespace 2 description",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	testData := []struct {
 		name                    string
@@ -116,7 +117,7 @@ func (s *DeleteNamespaceTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			var resp any
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AdminClient.WithMethod(
 					http.MethodDelete,
@@ -129,7 +130,7 @@ func (s *DeleteNamespaceTestSuite) Test_Error() {
 			assert.Equal(s.T(), resp, tt.response)
 		})
 		namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
-		assert.Nil(s.T(), err)
+		require.Nil(s.T(), err)
 		// Check that deletion failed and the namespace is still there
 		assert.Equal(s.T(), tt.expectedNamespacesCount, len(namespaces))
 	}

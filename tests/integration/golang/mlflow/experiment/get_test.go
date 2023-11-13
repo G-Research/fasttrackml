@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -36,7 +37,7 @@ func (s *GetExperimentTestSuite) SetupTest() {
 
 func (s *GetExperimentTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// 1. prepare database with test data.
@@ -45,7 +46,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
@@ -67,7 +68,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "/artifact/location",
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// 2. make actual API call.
 	request := request.GetExperimentRequest{
@@ -75,7 +76,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	}
 
 	resp := response.GetExperimentResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithQuery(
 			request,
@@ -101,7 +102,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 
 func (s *GetExperimentTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -109,7 +110,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	testData := []struct {
 		name    string
@@ -140,7 +141,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					tt.request,

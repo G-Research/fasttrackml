@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -34,14 +35,14 @@ func (s *GetHistoryTestSuite) SetupTest() {
 
 func (s *GetHistoryTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:             "Test Experiment",
@@ -49,7 +50,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "/artifact/location",
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "id",
@@ -59,7 +60,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 		ExperimentID:   *experiment.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key1",
@@ -70,7 +71,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 		IsNan:     false,
 		Iter:      1,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	req := request.GetMetricHistoryRequest{
 		RunID:     run.ID,
@@ -78,7 +79,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 	}
 
 	resp := response.GetMetricHistoryResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithQuery(
 			req,
@@ -106,7 +107,7 @@ func (s *GetHistoryTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -129,7 +130,7 @@ func (s *GetHistoryTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					tt.request,

@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -38,7 +39,7 @@ func (s *SearchTestSuite) SetupTest() {
 
 func (s *SearchTestSuite) Test_DefaultNamespace_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create default namespace and experiment.
@@ -47,21 +48,21 @@ func (s *SearchTestSuite) Test_DefaultNamespace_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	s.testCases(namespace, experiment, false, *experiment.ID)
 }
 
 func (s *SearchTestSuite) Test_DefaultNamespaceExerimentZero_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create default namespace and experiment.
@@ -70,26 +71,26 @@ func (s *SearchTestSuite) Test_DefaultNamespaceExerimentZero_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// update default experiment id.
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	s.testCases(namespace, experiment, false, int32(0))
 }
 
 func (s *SearchTestSuite) Test_CustomNamespace_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create custom namespace and experiment.
@@ -97,21 +98,21 @@ func (s *SearchTestSuite) Test_CustomNamespace_Ok() {
 		Code:                "custom",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	s.testCases(namespace, experiment, true, *experiment.ID)
 }
 
 func (s *SearchTestSuite) Test_CustomNamespaceExperimentZero_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create custom namespace and experiment.
@@ -119,19 +120,19 @@ func (s *SearchTestSuite) Test_CustomNamespaceExperimentZero_Ok() {
 		Code:                "custom",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// update default experiment id.
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	s.testCases(namespace, experiment, true, int32(0))
 }
@@ -161,13 +162,13 @@ func (s *SearchTestSuite) testCases(
 		ArtifactURI:    "artifact_uri1",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag1",
 		RunID: run1.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "run1",
 		Value:     1.1,
@@ -177,13 +178,13 @@ func (s *SearchTestSuite) testCases(
 		RunID:     run1.ID,
 		LastIter:  1,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param1",
 		Value: "value1",
 		RunID: run1.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id2",
@@ -203,13 +204,13 @@ func (s *SearchTestSuite) testCases(
 		ArtifactURI:    "artifact_uri2",
 		LifecycleStage: models.LifecycleStageDeleted,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag2",
 		RunID: run2.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "run2",
 		Value:     2.1,
@@ -219,13 +220,13 @@ func (s *SearchTestSuite) testCases(
 		RunID:     run2.ID,
 		LastIter:  1,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param2",
 		Value: "value2",
 		RunID: run2.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	run3, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id3",
@@ -245,13 +246,13 @@ func (s *SearchTestSuite) testCases(
 		ArtifactURI:    "artifact_uri3",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag3",
 		RunID: run3.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "run3",
 		Value:     3.1,
@@ -261,13 +262,13 @@ func (s *SearchTestSuite) testCases(
 		RunID:     run3.ID,
 		LastIter:  1,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param3",
 		Value: "value3",
 		RunID: run3.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name     string
@@ -2962,7 +2963,7 @@ func (s *SearchTestSuite) testCases(
 					namespace.Code,
 				)
 			}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				client.DoRequest(
 					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),

@@ -13,6 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -38,7 +39,7 @@ func (s *SetRunTagTestSuite) SetupTest() {
 
 func (s *SetRunTagTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create test experiment.
@@ -47,14 +48,14 @@ func (s *SetRunTagTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// create test run for the experiment
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -74,7 +75,7 @@ func (s *SetRunTagTestSuite) Test_Ok() {
 		ExperimentID:   *experiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	req := request.SetRunTagRequest{
 		RunID: run.ID,
@@ -82,7 +83,7 @@ func (s *SetRunTagTestSuite) Test_Ok() {
 		Value: "value1",
 	}
 	resp := fiber.Map{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -98,7 +99,7 @@ func (s *SetRunTagTestSuite) Test_Ok() {
 
 	// make sure that new tag has been created.
 	tags, err := s.TagFixtures.GetByRunID(context.Background(), run.ID)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	assert.Equal(s.T(), 1, len(tags))
 	assert.Equal(s.T(), []models.Tag{
 		{
@@ -115,7 +116,7 @@ func (s *SetRunTagTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -148,7 +149,7 @@ func (s *SetRunTagTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithMethod(
 					http.MethodPost,

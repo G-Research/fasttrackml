@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -15,7 +16,7 @@ func TestValidateGetMetricHistoryRequest_Ok(t *testing.T) {
 		RunUUID:   "uuid",
 		MetricKey: "key",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateGetMetricHistoryRequest_Error(t *testing.T) {
@@ -52,7 +53,7 @@ func TestValidateGetMetricHistoryBulkRequest_Ok(t *testing.T) {
 		MetricKey:  "key",
 		MaxResults: 10,
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateGetMetricHistoryBulkRequest_Error(t *testing.T) {
@@ -98,7 +99,7 @@ func TestValidateGetMetricHistoriesRequest_Ok(t *testing.T) {
 		ViewType:   "",
 		MaxResults: 10,
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateGetMetricHistoriesRequest_Error(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -37,7 +38,7 @@ func (s *LogMetricTestSuite) SetupTest() {
 
 func (s *LogMetricTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -45,7 +46,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment := &models.Experiment{
 		Name:           uuid.New().String(),
@@ -53,7 +54,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 	}
 	_, err = s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	run := &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
@@ -63,7 +64,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 		Status:         models.StatusRunning,
 	}
 	run, err = s.RunFixtures.CreateRun(context.Background(), run)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	req := request.LogMetricRequest{
 		RunID:     run.ID,
@@ -73,7 +74,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 		Step:      1,
 	}
 	resp := fiber.Map{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -89,7 +90,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 
 	// makes user that records has been created correctly in database.
 	metric, err := s.MetricFixtures.GetLatestMetricByRunID(context.Background(), run.ID)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	assert.Equal(s.T(), &models.LatestMetric{
 		Key:       "key1",
 		Value:     1.1,
@@ -119,11 +120,11 @@ func (s *LogMetricTestSuite) Test_Error() {
 					Code:                "default",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				return ""
 			},
 			cleanDatabase: func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 			},
 		},
 		{
@@ -138,11 +139,11 @@ func (s *LogMetricTestSuite) Test_Error() {
 					Code:                "default",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				return ""
 			},
 			cleanDatabase: func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 			},
 		},
 		{
@@ -159,11 +160,11 @@ func (s *LogMetricTestSuite) Test_Error() {
 					Code:                "default",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				return ""
 			},
 			cleanDatabase: func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 			},
 		},
 		{
@@ -180,7 +181,7 @@ func (s *LogMetricTestSuite) Test_Error() {
 					Code:                "default",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 
 				experiment := &models.Experiment{
 					Name:           uuid.New().String(),
@@ -188,7 +189,7 @@ func (s *LogMetricTestSuite) Test_Error() {
 					LifecycleStage: models.LifecycleStageActive,
 				}
 				_, err = s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 
 				run := &models.Run{
 					ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
@@ -198,11 +199,11 @@ func (s *LogMetricTestSuite) Test_Error() {
 					Status:         models.StatusRunning,
 				}
 				run, err = s.RunFixtures.CreateRun(context.Background(), run)
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				return run.ID
 			},
 			cleanDatabase: func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 			},
 		},
 	}
@@ -216,7 +217,7 @@ func (s *LogMetricTestSuite) Test_Error() {
 			}
 
 			resp := api.ErrorResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithMethod(
 					http.MethodPost,

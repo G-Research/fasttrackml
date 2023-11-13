@@ -125,17 +125,13 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 	}
 
 	// 2. build path with namespace.
-	var path []string
+	path := c.basePath
 	if c.namespace != "" {
-		path = append(path, "ns", c.namespace)
+		path = fmt.Sprintf("/ns/%s%s", c.namespace, c.basePath)
 	}
 
 	// 3. build actual URL.
-	urlString, err := url.JoinPath(c.baseURL, append(path, c.basePath, fmt.Sprintf(uri, values...))...)
-	if err != nil {
-		return eris.Wrap(err, "error building url")
-	}
-	u, err := url.Parse(urlString)
+	u, err := url.Parse(fmt.Sprintf("%s%s%s", c.baseURL, path, fmt.Sprintf(uri, values...)))
 	if err != nil {
 		return eris.Wrap(err, "error building url")
 	}

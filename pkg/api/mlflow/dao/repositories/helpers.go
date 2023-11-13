@@ -7,15 +7,17 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-// makeSqlPlaceholders collects a string of (?,?,?), (?,?,?), etc
+// makeSqlPlaceholders collects a string of "(?,?,?), (?,?,?)" and so on,
+// for use as sql parameters
 func makeSqlPlaceholders(numberInEachSet, numberOfSets int) string {
 	placeholderArray := make([]string, numberInEachSet)
 	for i := 0; i < numberInEachSet; i++ {
 		placeholderArray[i] = "?"
 	}
+	placeholderTemplate := strings.Join(placeholderArray, ",")
 	setsArray := make([]string, numberOfSets)
 	for i := 0; i < numberOfSets; i++ {
-		setsArray[i] = fmt.Sprintf("(%s)", strings.Join(placeholderArray, ","))
+		setsArray[i] = fmt.Sprintf("(%s)", placeholderTemplate)
 	}
 	return strings.Join(setsArray, ",")
 }

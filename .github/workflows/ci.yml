@@ -184,7 +184,7 @@ jobs:
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Python Integration Tests
+    name: Python Integration Tests (${{ matrix.api }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -214,7 +214,7 @@ jobs:
         with:
           cache-prefix: python-integration-tests
 
-      - name: Run ${{ matrix.api }} integration tests
+      - name: Run Python integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
 
   build:

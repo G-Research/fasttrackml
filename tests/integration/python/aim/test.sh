@@ -31,7 +31,7 @@ if [ ! -d ${venv} ]
 then
   python -mvenv ${venv}
   . ${venv}/bin/activate
-  pip install -r tests/requirements.txt 
+  pip install httpx parameterized pytest pytz 
   deactivate
 fi
 
@@ -48,5 +48,4 @@ EOF
 # Run tests
 . ${venv}/bin/activate
 export PATH=".:${PATH}"
-pytest tests/api/test_dashboards_api.py  -k "SQliteKeyTest or SQliteMemoryTest or SQliteFileTest or PostgresTest"
-pytest tests/api/test_project_api.py -k "SQliteKeyTest or SQliteMemoryTest or SQliteFileTest or PostgresTest"
+pytest tests/api/test_dashboards_api.py tests/api/test_project_api.py

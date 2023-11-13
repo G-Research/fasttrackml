@@ -138,6 +138,10 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 }
 
 func (s *GetHistoriesTestSuite) Test_Error() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",

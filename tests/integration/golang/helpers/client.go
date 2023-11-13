@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"reflect"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/hetiansu5/urlquery"
 	"github.com/rotisserie/eris"
 )
@@ -22,6 +23,7 @@ type ResponseType string
 const (
 	ResponseTypeJSON   ResponseType = "json"
 	ResponseTypeBuffer ResponseType = "buffer"
+	ResponseTypeHTML   ResponseType = "html"
 )
 
 // HttpClient represents HTTP client.
@@ -60,6 +62,11 @@ func NewMlflowApiClient(baseURL string) *HttpClient {
 // NewAimApiClient creates new HTTP client for the aim api
 func NewAimApiClient(baseURL string) *HttpClient {
 	return NewClient(baseURL, "/aim/api")
+}
+
+// NewAdminApiClient creates new HTTP client for the admin api
+func NewAdminApiClient(baseURL string) *HttpClient {
+	return NewClient(baseURL, "/admin")
 }
 
 // WithMethod sets the HTTP method.
@@ -200,6 +207,24 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 			if err != nil {
 				return eris.Wrap(err, "error reading streaming response")
 			}
+		case ResponseTypeHTML:
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return eris.Wrap(err, "error reading response data")
+			}
+			//nolint:errcheck
+			defer resp.Body.Close()
+			response, ok := c.response.(*goquery.Document)
+			if !ok {
+				return eris.New("response object is not a *goquery.Document")
+			}
+			doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
+			if err != nil {
+				return eris.Wrap(err, "error creating goquery document")
+			}
+
+			*response = *doc
+
 		}
 	}
 

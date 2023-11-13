@@ -221,7 +221,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 
 	// test `GET /experiments/get-by-name` endpoint.
 	// check that experiments were created in scope of difference namespaces.
-	s.getExperimentByNameCompare(
+	s.getExperimentByNameAndCompare(
 		namespace1Code,
 		experiment1.Experiment.Name,
 		&response.GetExperimentResponse{
@@ -234,7 +234,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 			},
 		},
 	)
-	s.getExperimentByNameCompare(
+	s.getExperimentByNameAndCompare(
 		namespace2Code,
 		experiment2.Experiment.Name,
 		&response.GetExperimentResponse{
@@ -515,7 +515,7 @@ func (s *ExperimentFlowTestSuite) getExperimentByIDAndCompare(
 	return &resp
 }
 
-func (s *ExperimentFlowTestSuite) getExperimentByNameCompare(
+func (s *ExperimentFlowTestSuite) getExperimentByNameAndCompare(
 	namespace string, name string, expectedResponse *response.GetExperimentResponse,
 ) {
 	resp := response.GetExperimentResponse{}

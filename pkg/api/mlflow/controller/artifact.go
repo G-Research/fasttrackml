@@ -26,13 +26,7 @@ func (c Controller) ListArtifacts(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("listArtifacts request: %#v", req)
 
-	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("listArtifacts namespace: %s", ns.Code)
-
-	rootURI, artifacts, err := c.artifactService.ListArtifacts(ctx.Context(), ns, &req)
+	rootURI, artifacts, err := c.artifactService.ListArtifacts(ctx.Context(), &req)
 	if err != nil {
 		return err
 	}

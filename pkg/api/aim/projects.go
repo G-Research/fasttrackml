@@ -205,7 +205,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 
 			resp[s] = metrics
 		default:
-			return fmt.Errorf("%q is not a valid Sequence", s)
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("%q is not a valid Sequence", s))
 		}
 	}
 

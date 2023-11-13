@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -94,6 +95,7 @@ func GetExperiment(c *fiber.Ctx) error {
 		database.Experiment
 		RunCount int
 	}
+
 	if err := database.DB.Model(&database.Experiment{}).
 		Select(
 			"experiments.experiment_id",
@@ -103,20 +105,27 @@ func GetExperiment(c *fiber.Ctx) error {
 			"COUNT(runs.run_uuid) AS run_count",
 		).
 		Joins("LEFT JOIN runs USING(experiment_id)").
-		Group("experiments.experiment_id").
+		Preload("Tags"). // Preload the tags for the experiment
 		Where("experiments.namespace_id = ?", ns.ID).
 		Where("experiments.experiment_id = ?", id).
+		Group("experiments.experiment_id").
 		First(&exp).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fmt.Errorf("error fetching experiment %q: %w", p.ID, err)
 	}
-
+	var description string
+	for _, tag := range exp.Tags {
+		if tag.Key == "mlflow.note.content" {
+			description = tag.Value
+			break
+		}
+	}
 	return c.JSON(fiber.Map{
 		"id":            id,
 		"name":          exp.Name,
-		"description":   nil,
+		"description":   description,
 		"archived":      exp.LifecycleStage == database.LifecycleStageDeleted,
 		"run_count":     exp.RunCount,
 		"creation_time": float64(exp.CreationTime.Int64) / 1000,
@@ -320,6 +329,83 @@ func DeleteExperiment(c *fiber.Ctx) error {
 	}); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
 			fmt.Sprintf("unable to delete experiment %q: %s", params.ID, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"id":     params.ID,
+		"status": "OK",
+	})
+}
+
+func UpdateExperiment(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("updateExperiment namespace: %s", ns.Code)
+
+	params := struct {
+		ID string `params:"id"`
+	}{}
+	if err = c.ParamsParser(&params); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	var updateRequest request.UpdateExperimentRequest
+	if err = c.BodyParser(&updateRequest); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	id, err := strconv.ParseInt(params.ID, 10, 32)
+	// TODO this code should move to service
+	experimentRepository := repositories.NewExperimentRepository(database.DB)
+	tagRepository := repositories.NewTagRepository(database.DB)
+	experiment, err := experimentRepository.GetByNamespaceIDAndExperimentID(c.Context(), ns.ID, int32(id))
+	if err != nil {
+		return fiber.NewError(
+			fiber.StatusInternalServerError, fmt.Sprintf("unable to find experiment '%s': %s", params.ID, err),
+		)
+	}
+	if experiment == nil {
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("unable to find experiment '%s'", params.ID))
+	}
+	/*
+		if updateRequest.Archived != nil {
+			if *updateRequest.Archived {
+				if err := experimentRepository.Archive(c.Context(), experiment); err != nil {
+					return fiber.NewError(fiber.StatusInternalServerError,
+						fmt.Sprintf("unable to archive/restore experimeny %q: %s", params.ID, err))
+				}
+			} else {
+				if err := experimentRepository.Restore(c.Context(), experiment); err != nil {
+					return fiber.NewError(fiber.StatusInternalServerError,
+						fmt.Sprintf("unable to archive/restore experiment %q: %s", params.ID, err))
+				}
+			}
+		}
+	*/
+
+	if updateRequest.Name != nil {
+		experiment.Name = *updateRequest.Name
+		if err := database.DB.Transaction(func(tx *gorm.DB) error {
+			if err := experimentRepository.UpdateWithTransaction(c.Context(), tx, experiment); err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError,
+				fmt.Sprintf("unable to update experiment %q: %s", params.ID, err))
+		}
+	}
+	if updateRequest.Description != nil {
+		description := models.ExperimentTag{
+			Key:          "mlflow.note.content",
+			Value:        *updateRequest.Description,
+			ExperimentID: *experiment.ID,
+		}
+		if err := tagRepository.CreateExperimentTag(c.Context(), &description); err != nil {
+			return err
+		}
 	}
 
 	return c.JSON(fiber.Map{

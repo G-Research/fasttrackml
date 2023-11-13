@@ -23,16 +23,11 @@ import (
 )
 
 type LogBatchTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestLogBatchTestSuite(t *testing.T) {
 	suite.Run(t, new(LogBatchTestSuite))
-}
-
-func (s *LogBatchTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *LogBatchTestSuite) TestTags_Ok() {

@@ -19,7 +19,6 @@ import (
 )
 
 type GetRunInfoTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 	run *models.Run
 }
@@ -29,7 +28,7 @@ func TestGetRunInfoTestSuite(t *testing.T) {
 }
 
 func (s *GetRunInfoTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.BaseTestSuite.SetupTest()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,

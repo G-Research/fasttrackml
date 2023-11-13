@@ -21,16 +21,11 @@ import (
 )
 
 type DeleteAppTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestDeleteAppTestSuite(t *testing.T) {
 	suite.Run(t, new(DeleteAppTestSuite))
-}
-
-func (s *DeleteAppTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *DeleteAppTestSuite) Test_Ok() {

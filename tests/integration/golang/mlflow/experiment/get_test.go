@@ -23,16 +23,11 @@ import (
 )
 
 type GetExperimentTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestGetExperimentTestSuite(t *testing.T) {
 	suite.Run(t, new(GetExperimentTestSuite))
-}
-
-func (s *GetExperimentTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetExperimentTestSuite) Test_Ok() {

@@ -20,7 +20,6 @@ import (
 )
 
 type GetRunMetricsTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 	run *models.Run
 }
@@ -30,7 +29,7 @@ func TestGetRunMetricsTestSuite(t *testing.T) {
 }
 
 func (s *GetRunMetricsTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.BaseTestSuite.SetupTest()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,

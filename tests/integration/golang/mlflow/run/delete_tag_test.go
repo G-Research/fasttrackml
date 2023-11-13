@@ -25,16 +25,11 @@ import (
 )
 
 type DeleteRunTagTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestDeleteRunTagTestSuite(t *testing.T) {
 	suite.Run(t, new(DeleteRunTagTestSuite))
-}
-
-func (s *DeleteRunTagTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *DeleteRunTagTestSuite) Test_Ok() {

@@ -19,7 +19,6 @@ import (
 )
 
 type ArchiveBatchTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 	runs []*models.Run
 }
@@ -29,7 +28,7 @@ func TestArchiveBatchTestSuite(t *testing.T) {
 }
 
 func (s *ArchiveBatchTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.BaseTestSuite.SetupTest()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,

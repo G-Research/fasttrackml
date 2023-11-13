@@ -21,7 +21,6 @@ import (
 )
 
 type DeleteRunTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 	runs []*models.Run
 }
@@ -31,7 +30,7 @@ func TestDeleteRunTestSuite(t *testing.T) {
 }
 
 func (s *DeleteRunTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.BaseTestSuite.SetupTest()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,

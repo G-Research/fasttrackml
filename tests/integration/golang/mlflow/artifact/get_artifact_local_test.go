@@ -26,16 +26,11 @@ import (
 )
 
 type GetArtifactLocalTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestGetArtifactLocalTestSuite(t *testing.T) {
 	suite.Run(t, new(GetArtifactLocalTestSuite))
-}
-
-func (s *GetArtifactLocalTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetArtifactLocalTestSuite) Test_Ok() {

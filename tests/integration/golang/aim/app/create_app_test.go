@@ -19,16 +19,11 @@ import (
 )
 
 type CreateAppTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestCreateAppTestSuite(t *testing.T) {
 	suite.Run(t, new(CreateAppTestSuite))
-}
-
-func (s *CreateAppTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *CreateAppTestSuite) Test_Ok() {

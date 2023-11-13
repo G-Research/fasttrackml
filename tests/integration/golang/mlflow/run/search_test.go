@@ -25,16 +25,11 @@ import (
 )
 
 type SearchTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestSearchTestSuite(t *testing.T) {
 	suite.Run(t, new(SearchTestSuite))
-}
-
-func (s *SearchTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *SearchTestSuite) Test_DefaultNamespace_Ok() {

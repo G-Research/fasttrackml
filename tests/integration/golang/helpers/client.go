@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"reflect"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/hetiansu5/urlquery"
 	"github.com/rotisserie/eris"
 )
@@ -22,6 +23,7 @@ type ResponseType string
 const (
 	ResponseTypeJSON   ResponseType = "json"
 	ResponseTypeBuffer ResponseType = "buffer"
+	ResponseTypeHTML   ResponseType = "html"
 )
 
 // HttpClient represents HTTP client.
@@ -29,6 +31,7 @@ type HttpClient struct {
 	client       *http.Client
 	baseURL      string
 	basePath     string
+	namespace    string
 	method       string
 	params       any
 	headers      map[string]string
@@ -61,6 +64,11 @@ func NewAimApiClient(baseURL string) *HttpClient {
 	return NewClient(baseURL, "/aim/api")
 }
 
+// NewAdminApiClient creates new HTTP client for the admin api
+func NewAdminApiClient(baseURL string) *HttpClient {
+	return NewClient(baseURL, "/admin")
+}
+
 // WithMethod sets the HTTP method.
 func (c *HttpClient) WithMethod(method string) *HttpClient {
 	c.method = method
@@ -76,6 +84,12 @@ func (c *HttpClient) WithQuery(params any) *HttpClient {
 // WithRequest sets request object.
 func (c *HttpClient) WithRequest(request any) *HttpClient {
 	c.request = request
+	return c
+}
+
+// WithNamespace sets the namespace path.
+func (c *HttpClient) WithNamespace(namespace string) *HttpClient {
+	c.namespace = namespace
 	return c
 }
 
@@ -98,6 +112,7 @@ func (c *HttpClient) WithResponseType(responseType ResponseType) *HttpClient {
 }
 
 // DoRequest do actual HTTP request based on provided parameters.
+// nolint:gocyclo
 func (c *HttpClient) DoRequest(uri string, values ...any) error {
 	// 1. check if request object were provided. if provided then marshal it.
 	var requestBody io.Reader
@@ -109,12 +124,18 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 		requestBody = bytes.NewBuffer(data)
 	}
 
-	// 2. build actual URL.
-	u, err := url.Parse(fmt.Sprintf("%s%s%s", c.baseURL, c.basePath, fmt.Sprintf(uri, values...)))
+	// 2. build path with namespace.
+	path := c.basePath
+	if c.namespace != "" {
+		path = fmt.Sprintf("/ns/%s%s", c.namespace, c.basePath)
+	}
+
+	// 3. build actual URL.
+	u, err := url.Parse(fmt.Sprintf("%s%s%s", c.baseURL, path, fmt.Sprintf(uri, values...)))
 	if err != nil {
 		return eris.Wrap(err, "error building url")
 	}
-	// 3. if params were provided then add params to actual url.
+	// 4. if params were provided then add params to actual url.
 	if c.params != nil {
 		switch reflect.ValueOf(c.params).Kind() {
 		case reflect.Struct:
@@ -134,7 +155,7 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 		}
 	}
 
-	// 4. create actual request object.
+	// 5. create actual request object.
 	// if HttpMethod was not provided, then by default use HttpMethodGet.
 	req, err := http.NewRequestWithContext(
 		context.Background(), c.method, u.String(), requestBody,
@@ -143,7 +164,7 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 		return eris.Wrap(err, "error creating request")
 	}
 
-	// 5. if headers were provided, then attach them.
+	// 6. if headers were provided, then attach them.
 	// by default attach `"Content-Type", "application/json"`
 	if c.headers != nil {
 		for key, value := range c.headers {
@@ -151,13 +172,13 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 		}
 	}
 
-	// 6. send request data.
+	// 7. send request data.
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return eris.Wrap(err, "error doing request")
 	}
 
-	// 7. read and check response data.
+	// 8. read and check response data.
 	if c.response != nil {
 		switch c.responseType {
 		case ResponseTypeJSON:
@@ -181,6 +202,24 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 			if err != nil {
 				return eris.Wrap(err, "error reading streaming response")
 			}
+		case ResponseTypeHTML:
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return eris.Wrap(err, "error reading response data")
+			}
+			//nolint:errcheck
+			defer resp.Body.Close()
+			response, ok := c.response.(*goquery.Document)
+			if !ok {
+				return eris.New("response object is not a *goquery.Document")
+			}
+			doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
+			if err != nil {
+				return eris.Wrap(err, "error creating goquery document")
+			}
+
+			*response = *doc
+
 		}
 	}
 

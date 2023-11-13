@@ -33,3 +33,38 @@ func (f NamespaceFixtures) CreateNamespace(
 	}
 	return namespace, nil
 }
+
+// GetNamespaces fetches all namespaces.
+func (f NamespaceFixtures) GetNamespaces(
+	ctx context.Context,
+) ([]models.Namespace, error) {
+	var namespaces []models.Namespace
+	if err := f.db.WithContext(ctx).
+		Find(&namespaces).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting 'namespaces' entities")
+	}
+	return namespaces, nil
+}
+
+// GetNamespaceByID fetches a namespace by ID.
+func (f NamespaceFixtures) GetNamespaceByID(
+	ctx context.Context, id uint,
+) (*models.Namespace, error) {
+	var namespace models.Namespace
+	if err := f.db.WithContext(ctx).
+		Where("id = ?", id).
+		First(&namespace).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting namespace with ID %d", id)
+	}
+	return &namespace, nil
+}
+
+// UpdateNamespace updates an existing test Namespace.
+func (f NamespaceFixtures) UpdateNamespace(
+	ctx context.Context, namespace *models.Namespace,
+) (*models.Namespace, error) {
+	if err := f.namespaceRepository.Update(ctx, namespace); err != nil {
+		return nil, eris.Wrap(err, "error updating test namespace")
+	}
+	return namespace, nil
+}

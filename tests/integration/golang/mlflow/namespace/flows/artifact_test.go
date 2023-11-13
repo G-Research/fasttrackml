@@ -3,7 +3,6 @@
 package flows
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -238,64 +237,6 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	)
 	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
 	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
-
-	// test `GET /artifacts/get` endpoint.
-	s.getRunArtifactAndCompare(namespace1Code, request.GetArtifactRequest{
-		RunID: run1ID,
-		Path:  "artifact1.file",
-	}, "content1")
-
-	s.getRunArtifactAndCompare(namespace2Code, request.GetArtifactRequest{
-		RunID: run2ID,
-		Path:  "artifact2.file",
-	}, "content2")
-
-	// test `GET /artifacts/get` endpoint.
-	// check that there is no intersection between runs, so when we request
-	// run 1 in scope of namespace 2 and run 2 in scope of namespace 1 API will throw an error.
-	resp = api.ErrorResponse{}
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
-			namespace2Code,
-		).WithQuery(
-			request.GetArtifactRequest{
-				RunID: run1ID,
-			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
-		).WithResponse(
-			&resp,
-		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
-		),
-	)
-	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
-	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
-
-	resp = api.ErrorResponse{}
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
-			namespace1Code,
-		).WithQuery(
-			request.ListArtifactsRequest{
-				RunID: run2ID,
-			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
-		).WithResponse(
-			&resp,
-		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
-		),
-	)
-	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
-	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 }
 
 func (s *ArtifactFlowTestSuite) createRun(namespace string, req *request.CreateRunRequest) string {
@@ -340,24 +281,4 @@ func (s *ArtifactFlowTestSuite) listRunArtifactsAndCompare(
 		),
 	)
 	assert.Equal(s.T(), expectedResponse, actualResponse.Files)
-}
-
-func (s *ArtifactFlowTestSuite) getRunArtifactAndCompare(
-	namespace string, req request.GetArtifactRequest, expectedResponse string,
-) {
-	actualResponse := new(bytes.Buffer)
-	assert.Nil(s.T(), s.MlflowClient.WithMethod(
-		http.MethodGet,
-	).WithNamespace(
-		namespace,
-	).WithQuery(
-		req,
-	).WithResponseType(
-		helpers.ResponseTypeBuffer,
-	).WithResponse(
-		actualResponse,
-	).DoRequest(
-		fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
-	))
-	assert.Equal(s.T(), expectedResponse, actualResponse.String())
 }

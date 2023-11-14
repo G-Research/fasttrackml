@@ -60,7 +60,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 		namespace2Code string
 	}{
 		{
-			name: "TestInScopeOfTwoCustomNamespaces",
+			name: "TestCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "namespace-1",
@@ -74,7 +74,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 			namespace2Code: "namespace-2",
 		},
 		{
-			name: "TestInScopeOfOneDefaultAndOneCustomNamespacesObviousCase",
+			name: "TestObviousDefaultCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
@@ -88,7 +88,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 			namespace2Code: "namespace-1",
 		},
 		{
-			name: "TestInScopeOfOneDefaultAndOneCustomNamespacesImplicitCase",
+			name: "TestImplicitDefaultCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",

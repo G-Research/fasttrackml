@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -26,7 +27,6 @@ import (
 )
 
 type ListArtifactS3TestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 	s3Client    *s3.Client
 	testBuckets []string
@@ -39,25 +39,25 @@ func TestListArtifactS3TestSuite(t *testing.T) {
 }
 
 func (s *ListArtifactS3TestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.BaseTestSuite.SetupTest()
 
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	err = helpers.CreateS3Buckets(s3Client, s.testBuckets)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	s.s3Client = s3Client
 }
 
 func (s *ListArtifactS3TestSuite) TearDownTest() {
 	err := helpers.RemoveS3Buckets(s.s3Client, s.testBuckets)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 }
 
 func (s *ListArtifactS3TestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -65,7 +65,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name   string
@@ -104,7 +104,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("s3://%s/1", tt.bucket),
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 2. create test run.
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -116,7 +116,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 				ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 3. upload artifact objects to S3.
 			_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
@@ -124,13 +124,13 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 				Body:   strings.NewReader("contentX"),
 				Bucket: aws.String(tt.bucket),
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
 				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.dir/artifact.file2", runID)),
 				Body:   strings.NewReader("contentXX"),
 				Bucket: aws.String(tt.bucket),
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 4. make actual API call for root dir.
 			rootDirQuery := request.ListArtifactsRequest{
@@ -138,7 +138,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			}
 
 			rootDirResp := response.ListArtifactsResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					rootDirQuery,
@@ -163,7 +163,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 					FileSize: 8,
 				},
 			}, rootDirResp.Files)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 5. make actual API call for sub dir.
 			subDirQuery := request.ListArtifactsRequest{
@@ -172,7 +172,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			}
 
 			subDirResp := response.ListArtifactsResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					subDirQuery,
@@ -190,17 +190,17 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 				IsDir:    false,
 				FileSize: 9,
 			}, subDirResp.Files[0])
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 6. make actual API call for non-existing dir.
 			nonExistingDirQuery := request.ListArtifactsRequest{
 				RunID: run.ID,
 				Path:  "non-existing-dir",
 			}
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			nonExistingDirResp := response.ListArtifactsResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					nonExistingDirQuery,
@@ -213,14 +213,14 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 
 			assert.Equal(s.T(), run.ArtifactURI, nonExistingDirResp.RootURI)
 			assert.Equal(s.T(), 0, len(nonExistingDirResp.Files))
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 		})
 	}
 }
 
 func (s *ListArtifactS3TestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -228,7 +228,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -285,7 +285,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					tt.request,
@@ -295,7 +295,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
 				),
 			)
-			assert.Nil(t, err)
+			require.Nil(t, err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

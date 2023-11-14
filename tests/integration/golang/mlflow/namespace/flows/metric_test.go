@@ -33,10 +33,6 @@ func TestMetricFlowTestSuite(t *testing.T) {
 	suite.Run(t, new(MetricFlowTestSuite))
 }
 
-func (s *MetricFlowTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *MetricFlowTestSuite) TearDownTest() {
 	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }

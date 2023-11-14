@@ -29,10 +29,6 @@ func TestNamespaceTestSuite(t *testing.T) {
 	suite.Run(t, new(NamespaceTestSuite))
 }
 
-func (s *NamespaceTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *NamespaceTestSuite) TearDownTest() {
 	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }

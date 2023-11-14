@@ -40,10 +40,6 @@ func TestExperimentFlowTestSuite(t *testing.T) {
 	suite.Run(t, new(ExperimentFlowTestSuite))
 }
 
-func (s *ExperimentFlowTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *ExperimentFlowTestSuite) TearDownTest() {
 	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }

@@ -41,8 +41,6 @@ func TestArtifactFlowTestSuite(t *testing.T) {
 }
 
 func (s *ArtifactFlowTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	assert.Nil(s.T(), err)
 	s.s3Client = s3Client

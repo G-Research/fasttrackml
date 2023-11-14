@@ -45,7 +45,6 @@ func (s *ArtifactFlowTestSuite) TearDownTest() {
 }
 
 func (s *ArtifactFlowTestSuite) Test_Ok() {
-
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	require.Nil(s.T(), err)
 	s.s3Client = s3Client

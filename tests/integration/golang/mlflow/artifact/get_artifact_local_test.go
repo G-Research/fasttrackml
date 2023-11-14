@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -25,7 +26,6 @@ import (
 )
 
 type GetArtifactLocalTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -33,13 +33,9 @@ func TestGetArtifactLocalTestSuite(t *testing.T) {
 	suite.Run(t, new(GetArtifactLocalTestSuite))
 }
 
-func (s *GetArtifactLocalTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *GetArtifactLocalTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -47,7 +43,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name   string
@@ -73,7 +69,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("%s%s", tt.prefix, experimentArtifactDir),
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 2. create test run.
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -86,17 +82,17 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 				ArtifactURI:    fmt.Sprintf("%s%s", tt.prefix, runArtifactDir),
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 3. create artifacts.
 			err = os.MkdirAll(runArtifactDir, fs.ModePerm)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			err = os.WriteFile(filepath.Join(runArtifactDir, "artifact.file1"), []byte("contentX"), fs.ModePerm)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			err = os.Mkdir(filepath.Join(runArtifactDir, "artifact.dir"), fs.ModePerm)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			err = os.WriteFile(filepath.Join(runArtifactDir, "artifact.dir", "artifact.file2"), []byte("contentXX"), fs.ModePerm)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 4. make actual API call for root dir file
 			rootFileQuery := request.GetArtifactRequest{
@@ -105,7 +101,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			}
 
 			resp := new(bytes.Buffer)
-			assert.Nil(s.T(), s.MlflowClient.WithQuery(
+			require.Nil(s.T(), s.MlflowClient.WithQuery(
 				rootFileQuery,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -123,7 +119,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			}
 
 			resp = new(bytes.Buffer)
-			assert.Nil(s.T(), s.MlflowClient.WithQuery(
+			require.Nil(s.T(), s.MlflowClient.WithQuery(
 				subDirQuery,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -139,7 +135,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 
 func (s *GetArtifactLocalTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -147,7 +143,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// create test experiment
 	experimentArtifactDir := s.T().TempDir()
@@ -157,7 +153,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: experimentArtifactDir,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// create test run
 	runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -170,10 +166,10 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 		ArtifactURI:    runArtifactDir,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	err = os.MkdirAll(filepath.Join(runArtifactDir, "subdir"), fs.ModePerm)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -258,7 +254,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(t, s.MlflowClient.WithQuery(
+			require.Nil(t, s.MlflowClient.WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,

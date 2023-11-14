@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -21,7 +22,7 @@ func TestConvertCreateExperimentToDBModel_Ok(t *testing.T) {
 		ArtifactLocation: "s3://location",
 	}
 	result, err := ConvertCreateExperimentToDBModel(&req)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, "name", result.Name)
 	assert.Equal(t, models.LifecycleStageActive, result.LifecycleStage)
 	assert.Equal(t, "s3://location", result.ArtifactLocation)

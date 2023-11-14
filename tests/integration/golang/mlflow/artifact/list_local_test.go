@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -27,7 +28,6 @@ import (
 )
 
 type ListArtifactLocalTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -35,13 +35,9 @@ func TestListArtifactLocalTestSuite(t *testing.T) {
 	suite.Run(t, new(ListArtifactLocalTestSuite))
 }
 
-func (s *ListArtifactLocalTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *ListArtifactLocalTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -49,7 +45,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name   string
@@ -89,7 +85,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("%s%s", tt.prefix, experimentArtifactDir),
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 2. create test run.
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -102,19 +98,19 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 				ArtifactURI:    fmt.Sprintf("%s%s", tt.prefix, runArtifactDir),
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 3. create artifacts.
 			err = os.MkdirAll(runArtifactDir, fs.ModePerm)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			err = os.WriteFile(filepath.Join(runArtifactDir, "artifact.file1"), []byte("contentX"), fs.ModePerm)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			err = os.Mkdir(filepath.Join(runArtifactDir, "artifact.dir"), fs.ModePerm)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			err = os.WriteFile(
 				filepath.Join(runArtifactDir, "artifact.dir", "artifact.file2"), []byte("contentXX"), fs.ModePerm,
 			)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 4. make actual API call for root dir.
 			rootDirQuery := request.ListArtifactsRequest{
@@ -122,7 +118,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 			}
 
 			rootDirResp := response.ListArtifactsResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					rootDirQuery,
@@ -147,7 +143,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 					FileSize: 8,
 				},
 			}, rootDirResp.Files)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 5. make actual API call for sub dir.
 			subDirQuery := request.ListArtifactsRequest{
@@ -156,7 +152,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 			}
 
 			subDirResp := response.ListArtifactsResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					subDirQuery,
@@ -174,7 +170,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 				IsDir:    false,
 				FileSize: 9,
 			}, subDirResp.Files[0])
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 6. make actual API call for non-existing dir.
 			nonExistingDirQuery := request.ListArtifactsRequest{
@@ -183,7 +179,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 			}
 
 			nonExistingDirResp := response.ListArtifactsResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					nonExistingDirQuery,
@@ -196,14 +192,14 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 
 			assert.Equal(s.T(), run.ArtifactURI, nonExistingDirResp.RootURI)
 			assert.Equal(s.T(), 0, len(nonExistingDirResp.Files))
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 		})
 	}
 }
 
 func (s *ListArtifactLocalTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -211,7 +207,7 @@ func (s *ListArtifactLocalTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -268,7 +264,7 @@ func (s *ListArtifactLocalTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(s.T(), s.MlflowClient.WithQuery(
+			require.Nil(s.T(), s.MlflowClient.WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,

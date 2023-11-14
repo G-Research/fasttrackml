@@ -100,7 +100,7 @@ func (s Service) DeleteNamespace(ctx context.Context, id uint) error {
 	if namespace == nil {
 		return eris.Errorf("namespace not found by id: %d", id)
 	}
-	if err := s.namespaceRepository.Delete(ctx, id); err != nil {
+	if err := s.namespaceRepository.Delete(ctx, namespace); err != nil {
 		return eris.Wrap(err, "error deleting namespace")
 	}
 	return nil

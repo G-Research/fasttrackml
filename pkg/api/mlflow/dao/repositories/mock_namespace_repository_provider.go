@@ -28,13 +28,13 @@ func (_m *MockNamespaceRepositoryProvider) Create(ctx context.Context, namespace
 	return r0
 }
 
-// Delete provides a mock function with given fields: ctx, id
-func (_m *MockNamespaceRepositoryProvider) Delete(ctx context.Context, id uint) error {
-	ret := _m.Called(ctx, id)
+// Delete provides a mock function with given fields: ctx, namespace
+func (_m *MockNamespaceRepositoryProvider) Delete(ctx context.Context, namespace *models.Namespace) error {
+	ret := _m.Called(ctx, namespace)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint) error); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Namespace) error); ok {
+		r0 = rf(ctx, namespace)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -42,25 +42,25 @@ func (_m *MockNamespaceRepositoryProvider) Delete(ctx context.Context, id uint) 
 	return r0
 }
 
-// GetByCode provides a mock function with given fields: ctx, code
-func (_m *MockNamespaceRepositoryProvider) GetByCode(ctx context.Context, code string) (*models.Namespace, error) {
-	ret := _m.Called(ctx, code)
+// GetByCode provides a mock function with given fields: ctx, noCache, code
+func (_m *MockNamespaceRepositoryProvider) GetByCode(ctx context.Context, noCache bool, code string) (*models.Namespace, error) {
+	ret := _m.Called(ctx, noCache, code)
 
 	var r0 *models.Namespace
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.Namespace, error)); ok {
-		return rf(ctx, code)
+	if rf, ok := ret.Get(0).(func(context.Context, bool, string) (*models.Namespace, error)); ok {
+		return rf(ctx, noCache, code)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *models.Namespace); ok {
-		r0 = rf(ctx, code)
+	if rf, ok := ret.Get(0).(func(context.Context, bool, string) *models.Namespace); ok {
+		r0 = rf(ctx, noCache, code)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Namespace)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, code)
+	if rf, ok := ret.Get(1).(func(context.Context, bool, string) error); ok {
+		r1 = rf(ctx, noCache, code)
 	} else {
 		r1 = ret.Error(1)
 	}

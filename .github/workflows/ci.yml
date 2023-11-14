@@ -21,11 +21,29 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        id: setup-go
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.21"
+          cache-prefix: go-lint
+
+      - name: Compute tools cache info
+        id: tools-cache-info
+        run: |
+          echo path=$(go env GOPATH)/bin >> $GITHUB_OUTPUT
+          echo make-hash=$(make -n install-tools | sha256sum | cut -d' ' -f1) >> $GITHUB_OUTPUT
+
+      - name: Setup tools cache
+        uses: actions/cache@v3
+        id: tools-cache
+        with:
+          path: ${{ steps.tools-cache-info.outputs.path }}
+          key: tools-go-${{ steps.setup-go.outputs.go-version }}-make-${{ steps.tools-cache-info.outputs.make-hash }}
 
       - name: Install tools
+        if: steps.tools-cache.outputs.cache-hit != 'true'
+        env:
+          GOCACHE: /tmp/tools/go-build
+          GOMODCACHE: /tmp/tools/go-mod
         run: make install-tools
 
       - name: Check formatting
@@ -61,7 +79,24 @@ jobs:
             exit 1
           fi
 
-      - name: Run Go linters
+      - name: Compute golangci-lint cache info
+        id: golangci-lint-cache-info
+        run: |
+          version_regex=" v([0-9]+\.[0-9]+\.[0-9]+) "
+          [[ "$(golangci-lint version)" =~ $version_regex ]]
+          echo version=${BASH_REMATCH[1]} >> $GITHUB_OUTPUT
+          cache_regex="Dir: (.*)
+          "
+          [[ "$(golangci-lint cache status)" =~ $cache_regex ]]
+          echo path=${BASH_REMATCH[1]} >> $GITHUB_OUTPUT
+
+      - name: Setup golangci-lint cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.golangci-lint-cache-info.outputs.path }}
+          key: golangci-lint-${{ steps.golangci-lint-cache-info.outputs.version }}-go-${{ steps.setup-go.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
+
+      - name: Run golangci-lint
         run: make go-lint
 
   python-lint:
@@ -92,9 +127,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.21"
+          cache-prefix: go-unit-tests
 
       - name: Run Go Unit Tests
         run: make test-go-unit
@@ -120,15 +155,36 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Compute cache info
+        id: cache-info
+        run: |
+          image=$(yq .services.service.image < tests/integration/docker-compose.yml)
+          echo go-version=$(skopeo inspect docker://${image} | jq -r .Digest | cut -d: -f2) >> $GITHUB_OUTPUT
+
+      - name: Setup cache
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: /tmp/go-cache/go-build.tar
+          key: go-integration-tests-image-${{ steps.cache-info.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
+
+      - name: Restore cache
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: docker run --rm -v fml-integration-tests_go-cache:/cache -v /tmp/go-cache:/src alpine tar xf /src/go-build.tar -C /cache
+
       - name: Run Integration Tests
         run: make service-test
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_URI: ${{ matrix.database-uri }}
 
+      - name: Save cache
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: docker run --rm -v fml-integration-tests_go-cache:/cache -v /tmp/go-cache:/dst alpine tar cf /dst/go-build.tar -C /cache go-build
+
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Python Integration Tests
+    name: Python Integration Tests (${{ matrix.api }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -153,16 +209,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        id: setup-go
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.21"
+          cache-prefix: python-integration-tests
 
-      - name: Run ${{ matrix.api }} integration tests
+      - name: Run Python integration tests
         run: ./tests/integration/python/${{ matrix.api }}/test.sh
 
   build:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Build software distribution for ${{ matrix.os }}/${{ matrix.arch }}
+    name: Build (${{ matrix.os }}/${{ matrix.arch }})
     strategy:
       matrix:
         os: [darwin, linux, windows]
@@ -187,9 +244,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.21"
+          cache-prefix: build-${{ matrix.os }}-${{ matrix.arch }}
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -213,11 +270,29 @@ jobs:
           sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64-win32
           echo CC=x86_64-w64-mingw32-gcc >> $GITHUB_ENV
 
+      - name: Set up Docker Buildx
+        if: matrix.os == 'linux'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker metadata
+        if: matrix.os == 'linux'
+        id: docker-metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: fasttrackml
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=edge
+
       - name: Build software distribution
         run: make dist
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
+          DOCKER_METADATA: ${{ steps.docker-metadata.outputs.json }}
+          DOCKER_OUTPUT: type=oci,dest=fasttrackml-oci-${{ matrix.arch }}.tar
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v3
@@ -231,59 +306,12 @@ jobs:
           name: fasttrackml-wheels
           path: wheelhouse/*.whl
 
-  build-image:
-    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Build container image
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Compute build args
-        id: build-args
-        run: |
-          echo version=$(git describe --tags --always --match='v*' | sed 's/^v//') >> $GITHUB_OUTPUT
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: fasttrackml
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=ref,event=pr
-            type=edge
-
-      - name: Build container image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          build-args: |
-            version=${{ steps.build-args.outputs.version }}
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          sbom: false
-          outputs: type=oci,dest=fasttrackml-oci.tar
-
-      - name: Upload artifact
+      - name: Upload Docker artifact
+        if: matrix.os == 'linux'
         uses: actions/upload-artifact@v3
         with:
-          name: fasttrackml-oci-image
-          path: fasttrackml-oci.tar
+          name: fasttrackml-oci-images
+          path: fasttrackml-oci-*.tar
 
   # Virtual job that can be configured as a required check before a PR can be merged.
   # As GitHub considers a check as successful if it is skipped, we need to check its status in
@@ -297,7 +325,6 @@ jobs:
       - go-integration-tests
       - python-integration-tests
       - build
-      - build-image
     runs-on: ubuntu-latest
     steps:
       - run: echo "All required checks done"
@@ -315,7 +342,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: fasttrackml-oci-image
+          name: fasttrackml-oci-images
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -326,17 +353,25 @@ jobs:
 
       - name: Compute repo name
         id: repo
-        run: echo name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_OUTPUT
+        run: echo name=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_OUTPUT
 
       - name: Push to GitHub Container Registry
         run: |
-          tags=$(tar -xOf fasttrackml-oci.tar index.json | jq -r '.manifests[].annotations."org.opencontainers.image.ref.name"')
-          for tag in $tags
+          repo=${{ steps.repo.outputs.name }}
+          tags=($(tar -xOf $(ls fasttrackml-oci-*.tar | head -n1) index.json | jq -r '.manifests[].annotations."org.opencontainers.image.ref.name"'))
+          for image in fasttrackml-oci-*.tar
           do
-            echo "::group::Pushing image to ghcr.io/${{ steps.repo.outputs.name }}:$tag"
-            skopeo copy --all oci-archive:fasttrackml-oci.tar:$tag docker://ghcr.io/${{ steps.repo.outputs.name }}:$tag
+            digest=$(tar -xOf $image index.json | jq -r '.manifests[0].digest')
+            digests+=($digest)
+            echo "::group::Pushing $image to $repo@$digest"
+            skopeo copy oci-archive:$image:${tags[0]} docker://$repo@$digest
             echo "::endgroup::"
           done
+          echo "::group::Pushing merged manifest to $repo for tags: ${tags[@]}"
+          docker buildx imagetools create \
+            $(printf -- "--tag $repo:%s " ${tags[@]}) \
+            $(printf "$repo@%s " ${digests[@]})
+          echo "::endgroup::"
 
   release:
     name: Release

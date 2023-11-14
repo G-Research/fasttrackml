@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -19,16 +20,11 @@ import (
 )
 
 type GetDashboardsTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestGetDashboardsTestSuite(t *testing.T) {
 	suite.Run(t, new(GetDashboardsTestSuite))
-}
-
-func (s *GetDashboardsTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetDashboardsTestSuite) Test_Ok() {
@@ -48,7 +44,7 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			defer func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 			}()
 
 			namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -56,7 +52,7 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 				Code:                "default",
 				DefaultExperimentID: common.GetPointer(int32(0)),
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 				Base: database.Base{
@@ -68,15 +64,15 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 				State:       database.AppState{},
 				NamespaceID: namespace.ID,
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			dashboards, err := s.DashboardFixtures.CreateDashboards(
 				context.Background(), tt.expectedDashboardCount, &app.ID,
 			)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			var resp []response.Dashboard
-			assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/dashboards"))
+			require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/dashboards"))
 			assert.Equal(s.T(), tt.expectedDashboardCount, len(resp))
 			for idx := 0; idx < tt.expectedDashboardCount; idx++ {
 				assert.Equal(s.T(), dashboards[idx].ID.String(), resp[idx].ID)

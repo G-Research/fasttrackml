@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -24,7 +25,6 @@ import (
 )
 
 type ArtifactFlowTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 	testBuckets []string
 	s3Client    *s3.Client
@@ -40,17 +40,16 @@ func TestArtifactFlowTestSuite(t *testing.T) {
 	})
 }
 
-func (s *ArtifactFlowTestSuite) SetupTest() {
-	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
-	assert.Nil(s.T(), err)
-	s.s3Client = s3Client
-}
-
 func (s *ArtifactFlowTestSuite) TearDownTest() {
 	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *ArtifactFlowTestSuite) Test_Ok() {
+
+	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
+	require.Nil(s.T(), err)
+	s.s3Client = s3Client
+
 	tests := []struct {
 		name           string
 		setup          func() (*models.Namespace, *models.Namespace)
@@ -111,9 +110,9 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 			// setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment1",
@@ -121,7 +120,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace1.ID,
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment2",
@@ -129,7 +128,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace2.ID,
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// create test buckets.
 			assert.Nil(s.T(), helpers.CreateS3Buckets(s.s3Client, s.testBuckets))
@@ -154,7 +153,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		Body:   strings.NewReader("content1"),
 		Bucket: aws.String("bucket1"),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	run2ID := s.createRun(namespace2Code, &request.CreateRunRequest{
 		Name:         "Run2",
@@ -166,7 +165,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		Body:   strings.NewReader("content2"),
 		Bucket: aws.String("bucket2"),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// test `GET /artifacts/list` endpoint.
 	s.listRunArtifactsAndCompare(namespace1Code, request.ListArtifactsRequest{

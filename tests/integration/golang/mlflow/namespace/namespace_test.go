@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -21,7 +22,6 @@ import (
 )
 
 type NamespaceTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -46,14 +46,14 @@ func (s *NamespaceTestSuite) Test_Ok() {
 					Code:                "newly-created-namespace",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 					Name:             "Test Experiment",
 					NamespaceID:      namespace.ID,
 					LifecycleStage:   models.LifecycleStageActive,
 					ArtifactLocation: "/artifact/location",
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				return experiment
 			},
 			namespace: "newly-created-namespace",
@@ -65,14 +65,14 @@ func (s *NamespaceTestSuite) Test_Ok() {
 					Code:                "default",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 					Name:             "Test Experiment",
 					NamespaceID:      namespace.ID,
 					LifecycleStage:   models.LifecycleStageActive,
 					ArtifactLocation: "/artifact/location",
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				return experiment
 			},
 			namespace: "default",
@@ -84,14 +84,14 @@ func (s *NamespaceTestSuite) Test_Ok() {
 					Code:                "default",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 					Name:             "Test Experiment",
 					NamespaceID:      namespace.ID,
 					LifecycleStage:   models.LifecycleStageActive,
 					ArtifactLocation: "/artifact/location",
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				return experiment
 			},
 		},

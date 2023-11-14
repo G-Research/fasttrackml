@@ -21,7 +21,6 @@ import (
 )
 
 type ExperimentFlowTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 

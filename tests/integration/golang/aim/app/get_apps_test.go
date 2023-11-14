@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -17,16 +18,11 @@ import (
 )
 
 type GetAppsTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestGetAppsTestSuite(t *testing.T) {
 	suite.Run(t, new(GetAppsTestSuite))
-}
-
-func (s *GetAppsTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *GetAppsTestSuite) Test_Ok() {
@@ -46,7 +42,7 @@ func (s *GetAppsTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			defer func() {
-				assert.Nil(s.T(), s.AppFixtures.UnloadFixtures())
+				require.Nil(s.T(), s.AppFixtures.UnloadFixtures())
 			}()
 
 			namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -54,13 +50,13 @@ func (s *GetAppsTestSuite) Test_Ok() {
 				Code:                "default",
 				DefaultExperimentID: common.GetPointer(int32(0)),
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			apps, err := s.AppFixtures.CreateApps(context.Background(), namespace, tt.expectedAppCount)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			var resp []response.App
-			assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/apps"))
+			require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/apps"))
 			assert.Equal(s.T(), tt.expectedAppCount, len(resp))
 			for idx := 0; idx < tt.expectedAppCount; idx++ {
 				assert.Equal(s.T(), apps[idx].ID.String(), resp[idx].ID)

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -14,7 +15,7 @@ func TestValidateCreateExperimentRequest_Ok(t *testing.T) {
 		Name:             "name",
 		ArtifactLocation: "location.com",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateCreateExperimentRequest_Error(t *testing.T) {
@@ -43,7 +44,7 @@ func TestValidateUpdateExperimentRequest_Ok(t *testing.T) {
 		ID:   "id",
 		Name: "name",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateUpdateExperimentRequest_Error(t *testing.T) {
@@ -78,7 +79,7 @@ func TestValidateGetExperimentByIDRequest_Ok(t *testing.T) {
 	err := ValidateGetExperimentByIDRequest(&request.GetExperimentRequest{
 		ID: "id",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateGetExperimentByIDRequest_Error(t *testing.T) {
@@ -113,7 +114,7 @@ func TestValidateGetExperimentByNameRequest_Ok(t *testing.T) {
 	err := ValidateGetExperimentByNameRequest(&request.GetExperimentRequest{
 		Name: "name",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateGetExperimentByNameRequest_Error(t *testing.T) {
@@ -141,7 +142,7 @@ func TestValidateDeleteExperimentRequest_Ok(t *testing.T) {
 	err := ValidateDeleteExperimentRequest(&request.DeleteExperimentRequest{
 		ID: "id",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateDeleteExperimentRequest_Error(t *testing.T) {
@@ -169,7 +170,7 @@ func TestValidateRestoreExperimentRequest_Ok(t *testing.T) {
 	err := ValidateRestoreExperimentRequest(&request.RestoreExperimentRequest{
 		ID: "id",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateRestoreExperimentRequest_Error(t *testing.T) {
@@ -198,7 +199,7 @@ func TestValidateSearchExperimentsRequest_Ok(t *testing.T) {
 		MaxResults: 10,
 		ViewType:   request.ViewTypeAll,
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateSearchExperimentsRequest_Error(t *testing.T) {
@@ -237,7 +238,7 @@ func TestValidateSetExperimentTagRequest_Ok(t *testing.T) {
 		ID:  "id",
 		Key: "key",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateSetExperimentTagRequest_Error(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -24,13 +25,13 @@ func TestQueryTestSuite(t *testing.T) {
 
 func (s *QueryTestSuite) SetupTest() {
 	mockedDB, _, err := sqlmock.New()
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		Conn:       mockedDB,
 		DriverName: "postgres",
 	}), &gorm.Config{})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	s.db = db
 }
 
@@ -136,11 +137,11 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				Dialector: postgres.Dialector{}.Name(),
 			}
 			parsedQuery, err := pq.Parse(tt.query)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			result := parsedQuery.Filter(
 				s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
 			).Select("ID").Find(&models.Run{})
-			assert.Nil(s.T(), result.Error)
+			require.Nil(s.T(), result.Error)
 			assert.Equal(s.T(), tt.expectedSQL, result.Statement.SQL.String())
 			assert.Equal(s.T(), tt.expectedVars, result.Statement.Vars)
 		})
@@ -249,11 +250,11 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				Dialector: sqlite.Dialector{}.Name(),
 			}
 			parsedQuery, err := pq.Parse(tt.query)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			result := parsedQuery.Filter(
 				s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
 			).Select("ID").Find(&models.Run{})
-			assert.Nil(s.T(), result.Error)
+			require.Nil(s.T(), result.Error)
 			assert.Equal(s.T(), tt.expectedSQL, result.Statement.SQL.String())
 			assert.Equal(s.T(), tt.expectedVars, result.Statement.Vars)
 		})

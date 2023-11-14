@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -57,7 +58,7 @@ func TestService_GetMetricHistory_Ok(t *testing.T) {
 	)
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, []models.Metric{
 		{
 			Key:       "key",
@@ -175,7 +176,7 @@ func TestService_GetMetricHistoryBulk_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, []models.Metric{
 		{
 			Key:       "key",
@@ -346,7 +347,7 @@ func TestNewService_GetMetricHistories_Ok(t *testing.T) {
 			rows, iterator, err := service.GetMetricHistories(context.TODO(), tt.namespace, tt.request)
 			assert.Equal(t, tt.expectedErr, err)
 			assert.Equal(t, tt.expectedRows, rows)
-			assert.Nil(t, rows.Err())
+			require.Nil(t, rows.Err())
 			assert.NotNil(t, iterator)
 		})
 	}

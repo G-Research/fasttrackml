@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMakeDBProvider(t *testing.T) {
@@ -28,13 +29,13 @@ func TestMakeDBProvider(t *testing.T) {
 				time.Second*2,
 				2,
 			)
-			assert.Nil(t, err)
+			require.Nil(t, err)
 			assert.NotNil(t, db)
 			assert.Equal(t, tt.expectedDialector, db.GormDB().Dialector.Name())
 
 			// expecting the global 'DB' not to be set
 			assert.Nil(t, DB)
-			assert.Nil(t, db.Close())
+			require.Nil(t, db.Close())
 		})
 	}
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
@@ -18,7 +19,6 @@ import (
 )
 
 type CreateNamespaceTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -26,20 +26,16 @@ func TestCreateNamespaceTestSuite(t *testing.T) {
 	suite.Run(t, new(CreateNamespaceTestSuite))
 }
 
-func (s *CreateNamespaceTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *CreateNamespaceTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	requests := []request.Namespace{
 		{
@@ -52,7 +48,7 @@ func (s *CreateNamespaceTestSuite) Test_Ok() {
 		},
 	}
 	for _, request := range requests {
-		assert.Nil(
+		require.Nil(
 			s.T(),
 			s.AdminClient.WithMethod(
 				http.MethodPost,
@@ -63,7 +59,7 @@ func (s *CreateNamespaceTestSuite) Test_Ok() {
 	}
 
 	namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	assert.True(s.T(), helpers.CheckNamespaces(namespaces, requests))
 
 	// Check the length of the namespaces considering the default namespace
@@ -72,14 +68,14 @@ func (s *CreateNamespaceTestSuite) Test_Ok() {
 
 func (s *CreateNamespaceTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	testData := []struct {
 		name    string
@@ -130,7 +126,7 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			var resp goquery.Document
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AdminClient.WithMethod(
 					http.MethodPost,
@@ -147,7 +143,7 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 			assert.Equal(s.T(), tt.error, msg)
 
 			namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// Check that creation failed, only the default namespace is present
 			assert.Equal(s.T(), 1, len(namespaces))

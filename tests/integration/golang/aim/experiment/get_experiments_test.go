@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -24,7 +25,7 @@ type GetExperimentsTestSuite struct {
 }
 
 func TestGetExperimentsTestSuite(t *testing.T) {
-	suite.Run(t, new(GetExperimentTestSuite))
+	suite.Run(t, new(GetExperimentsTestSuite))
 }
 
 func (s *GetExperimentsTestSuite) SetupTest() {
@@ -74,9 +75,12 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/experiments/"))
 	assert.Equal(s.T(), len(experiments), len(resp))
 	for _, actualExperiment := range resp {
-		expectedExperiment := experiments[actualExperiment.ID]
+		id, err := strconv.ParseInt(actualExperiment.ID, 10, 32)
+		assert.Nil(s.T(), err)
+		expectedExperiment := experiments[int32(id)]
 		assert.Equal(s.T(), fmt.Sprintf("%d", *expectedExperiment.ID), actualExperiment.ID)
 		assert.Equal(s.T(), expectedExperiment.Name, actualExperiment.Name)
+		assert.Equal(s.T(), helpers.GetDescriptionFromExperiment(*expectedExperiment), actualExperiment.Description)
 		assert.Equal(s.T(), float64(expectedExperiment.CreationTime.Int64)/1000, actualExperiment.CreationTime)
 		assert.Equal(s.T(), expectedExperiment.LifecycleStage == models.LifecycleStageDeleted, actualExperiment.Archived)
 		assert.Equal(s.T(), len(expectedExperiment.Runs), actualExperiment.RunCount)

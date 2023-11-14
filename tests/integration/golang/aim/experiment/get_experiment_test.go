@@ -5,6 +5,7 @@ package experiment
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -47,7 +48,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
-				Key:   "key1",
+				Key:   "mlflow.note.content",
 				Value: "value1",
 			},
 		},
@@ -67,10 +68,9 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 
 	var resp response.GetExperiment
 	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
-
-	assert.Equal(s.T(), *experiment.ID, resp.ID)
+	assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.ID)
 	assert.Equal(s.T(), experiment.Name, resp.Name)
-	assert.Equal(s.T(), "", resp.Description)
+	assert.Equal(s.T(), helpers.GetDescriptionFromExperiment(*experiment), resp.Description)
 	assert.Equal(s.T(), float64(experiment.CreationTime.Int64)/1000, resp.CreationTime)
 	assert.Equal(s.T(), false, resp.Archived)
 	assert.Equal(s.T(), len(experiment.Runs), resp.RunCount)

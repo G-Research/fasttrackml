@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -22,7 +23,6 @@ import (
 )
 
 type SearchTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -30,13 +30,9 @@ func TestSearchTestSuite(t *testing.T) {
 	suite.Run(t, new(SearchTestSuite))
 }
 
-func (s *SearchTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *SearchTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -44,7 +40,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// create test experiments.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -52,14 +48,14 @@ func (s *SearchTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 		NamespaceID:    namespace.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 		NamespaceID:    namespace.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// create 3 different test runs and attach tags, metrics, params, etc.
 	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -67,6 +63,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		Name:       "TestRun1",
 		UserID:     "1",
 		Status:     models.StatusRunning,
+		RowNum:     1,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 123456789,
@@ -80,13 +77,13 @@ func (s *SearchTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri1",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag1",
 		RunID: run1.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric",
 		Value:     1.1,
@@ -96,19 +93,20 @@ func (s *SearchTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		LastIter:  1,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param1",
 		Value: "value1",
 		RunID: run1.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id2",
 		Name:       "TestRun2",
 		UserID:     "2",
 		Status:     models.StatusScheduled,
+		RowNum:     2,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 111111111,
@@ -122,13 +120,13 @@ func (s *SearchTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri2",
 		LifecycleStage: models.LifecycleStageDeleted,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag2",
 		RunID: run2.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric",
 		Value:     2.1,
@@ -138,19 +136,20 @@ func (s *SearchTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  1,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param2",
 		Value: "value2",
 		RunID: run2.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	run3, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id3",
 		Name:       "TestRun3",
 		UserID:     "3",
 		Status:     models.StatusRunning,
+		RowNum:     3,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 333444444,
@@ -164,13 +163,13 @@ func (s *SearchTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri3",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag3",
 		RunID: run3.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric",
 		Value:     3.1,
@@ -180,19 +179,20 @@ func (s *SearchTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		LastIter:  3,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param3",
 		Value: "value3",
 		RunID: run3.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	run4, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id4",
 		Name:       "TestRun4",
 		UserID:     "4",
 		Status:     models.StatusScheduled,
+		RowNum:     4,
 		SourceType: "JOB",
 		StartTime: sql.NullInt64{
 			Int64: 111111111,
@@ -206,13 +206,13 @@ func (s *SearchTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri4",
 		LifecycleStage: models.LifecycleStageDeleted,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag4",
 		RunID: run4.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric",
 		Value:     4.1,
@@ -222,13 +222,13 @@ func (s *SearchTestSuite) Test_Ok() {
 		RunID:     run4.ID,
 		LastIter:  1,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param4",
 		Value: "value4",
 		RunID: run4.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	runs := []*models.Run{run1, run2, run3, run4}
 
@@ -237,6 +237,35 @@ func (s *SearchTestSuite) Test_Ok() {
 		request request.SearchRunsRequest
 		runs    []*models.Run
 	}{
+		{
+			name: "SearchFirstPage",
+			request: request.SearchRunsRequest{
+				Query: `run.archived == True or run.archived == False`,
+				Limit: 2,
+			},
+			runs: []*models.Run{
+				run4,
+				run3,
+			},
+		},
+		{
+			name: "SearchSecondPage",
+			request: request.SearchRunsRequest{
+				Query:  `run.archived == True or run.archived == False`,
+				Offset: run3.ID,
+			},
+			runs: []*models.Run{
+				run2,
+				run1,
+			},
+		},
+		{
+			name: "SearchThirdPage",
+			request: request.SearchRunsRequest{
+				Query:  `run.archived == True or run.archived == False`,
+				Offset: run1.ID,
+			},
+		},
 		{
 			name: "SearchArchived",
 			request: request.SearchRunsRequest{
@@ -745,19 +774,19 @@ func (s *SearchTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := new(bytes.Buffer)
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithResponseType(
 					helpers.ResponseTypeBuffer,
-				).WithQuery(map[any]any{
-					"q": tt.request.Query,
-				}).WithResponse(
+				).WithQuery(
+					tt.request,
+				).WithResponse(
 					resp,
 				).DoRequest("/runs/search/run"),
 			)
 
 			decodedData, err := encoding.Decode(resp)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			for _, run := range runs {
 				respNameKey := fmt.Sprintf("%v.props.name", run.ID)
@@ -776,7 +805,7 @@ func (s *SearchTestSuite) Test_Ok() {
 					assert.Equal(s.T(),
 						run.Status == models.StatusRunning,
 						decodedData[activeKey])
-					assert.Equal(s.T(), (run.LifecycleStage == models.LifecycleStageDeleted), decodedData[archivedKey])
+					assert.Equal(s.T(), run.LifecycleStage == models.LifecycleStageDeleted, decodedData[archivedKey])
 					assert.Equal(s.T(),
 						run.StartTime.Int64,
 						int64(decodedData[startTimeKey].(float64)*1000))

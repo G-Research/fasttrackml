@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -19,7 +20,6 @@ import (
 )
 
 type GetExperimentTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -27,13 +27,9 @@ func TestGetExperimentTestSuite(t *testing.T) {
 	suite.Run(t, new(GetExperimentTestSuite))
 }
 
-func (s *GetExperimentTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *GetExperimentTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -41,7 +37,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
@@ -63,10 +59,10 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "/artifact/location",
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	var resp response.GetExperiment
-	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
+	require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
 
 	assert.Equal(s.T(), *experiment.ID, resp.ID)
 	assert.Equal(s.T(), experiment.Name, resp.Name)
@@ -78,7 +74,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 
 func (s *GetExperimentTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -86,7 +82,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name  string
@@ -109,7 +105,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			var resp api.ErrorResponse
-			assert.Nil(t, s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
+			require.Nil(t, s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
 			assert.Equal(s.T(), tt.error, resp.Error())
 		})
 	}

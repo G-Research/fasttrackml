@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -20,7 +21,6 @@ import (
 )
 
 type MetricFlowTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -31,10 +31,6 @@ type MetricFlowTestSuite struct {
 // - `POST /metrics/get-histories` - TODO:dsuhinin we need firstly to create proper decoder.
 func TestMetricFlowTestSuite(t *testing.T) {
 	suite.Run(t, new(MetricFlowTestSuite))
-}
-
-func (s *MetricFlowTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *MetricFlowTestSuite) TearDownTest() {
@@ -49,7 +45,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 		namespace2Code string
 	}{
 		{
-			name: "TestInScopeOfTwoCustomNamespaces",
+			name: "TestCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "namespace-1",
@@ -63,7 +59,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 			namespace2Code: "namespace-2",
 		},
 		{
-			name: "TestInScopeOfOneDefaultAndOneCustomNamespacesObviousCase",
+			name: "TestObviousDefaultCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
@@ -77,7 +73,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 			namespace2Code: "namespace-1",
 		},
 		{
-			name: "TestInScopeOfOneDefaultAndOneCustomNamespacesImplicitCase",
+			name: "TestImplicitDefaultCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
@@ -99,9 +95,9 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment1",
@@ -109,7 +105,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace1.ID,
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment2",
@@ -117,7 +113,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace2.ID,
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 2. run actual flow test over the test data.
 			s.testRunMetricFlow(tt.namespace1Code, tt.namespace2Code, experiment1, experiment2)

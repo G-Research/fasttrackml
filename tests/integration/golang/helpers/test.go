@@ -1,11 +1,10 @@
 package helpers
 
 import (
-	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/database"
@@ -15,6 +14,7 @@ import (
 var db *gorm.DB
 
 type BaseTestSuite struct {
+	suite.Suite
 	AIMClient          *HttpClient
 	MlflowClient       *HttpClient
 	AdminClient        *HttpClient
@@ -29,14 +29,14 @@ type BaseTestSuite struct {
 	TagFixtures        *fixtures.TagFixtures
 }
 
-func (s *BaseTestSuite) SetupTest(t *testing.T) {
+func (s *BaseTestSuite) SetupTest() {
 	if db == nil {
 		instance, err := database.NewDBProvider(
 			GetDatabaseUri(),
 			1*time.Second,
 			20,
 		)
-		assert.Nil(t, err)
+		require.Nil(s.T(), err)
 		db = instance.GormDB()
 	}
 
@@ -45,41 +45,41 @@ func (s *BaseTestSuite) SetupTest(t *testing.T) {
 	s.AdminClient = NewAdminApiClient(GetServiceUri())
 
 	appFixtures, err := fixtures.NewAppFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(s.T(), err)
 	s.AppFixtures = appFixtures
 
 	dashboardFixtures, err := fixtures.NewDashboardFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(s.T(), err)
 	s.DashboardFixtures = dashboardFixtures
 
 	experimentFixtures, err := fixtures.NewExperimentFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(s.T(), err)
 	s.ExperimentFixtures = experimentFixtures
 
 	metricFixtures, err := fixtures.NewMetricFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(s.T(), err)
 	s.MetricFixtures = metricFixtures
 
 	namespaceFixtures, err := fixtures.NewNamespaceFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(s.T(), err)
 	s.NamespaceFixtures = namespaceFixtures
 
 	projectFixtures, err := fixtures.NewProjectFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(s.T(), err)
 	s.ProjectFixtures = projectFixtures
 
 	paramFixtures, err := fixtures.NewParamFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(s.T(), err)
 	s.ParamFixtures = paramFixtures
 
 	runFixtures, err := fixtures.NewRunFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(s.T(), err)
 	s.RunFixtures = runFixtures
 
 	tagFixtures, err := fixtures.NewTagFixtures(db)
-	assert.Nil(t, err)
+	require.Nil(s.T(), err)
 	s.TagFixtures = tagFixtures
 
 	// by default, unload everything.
-	assert.Nil(t, s.NamespaceFixtures.UnloadFixtures())
+	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }

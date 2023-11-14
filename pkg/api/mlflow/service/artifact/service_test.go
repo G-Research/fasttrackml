@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -65,7 +66,7 @@ func TestService_ListArtifacts_Ok(t *testing.T) {
 		},
 	)
 
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, "/artifact/uri", rootURI)
 	assert.Equal(t, []storage.ArtifactObject{
 		{

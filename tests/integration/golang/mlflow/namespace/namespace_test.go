@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -21,16 +22,11 @@ import (
 )
 
 type NamespaceTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestNamespaceTestSuite(t *testing.T) {
 	suite.Run(t, new(NamespaceTestSuite))
-}
-
-func (s *NamespaceTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
 }
 
 func (s *NamespaceTestSuite) TearDownTest() {
@@ -44,58 +40,58 @@ func (s *NamespaceTestSuite) Test_Ok() {
 		namespace string
 	}{
 		{
-			name: "RequestExperimentInScopeOfCustomNamespace",
+			name: "TestCustomNamespaces",
 			setup: func() *models.Experiment {
 				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 					Code:                "newly-created-namespace",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 					Name:             "Test Experiment",
 					NamespaceID:      namespace.ID,
 					LifecycleStage:   models.LifecycleStageActive,
 					ArtifactLocation: "/artifact/location",
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				return experiment
 			},
 			namespace: "newly-created-namespace",
 		},
 		{
-			name: "RequestExperimentInScopeOfDefaultNamespaceObviousCase",
+			name: "TestObviousDefaultCustomNamespaces",
 			setup: func() *models.Experiment {
 				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 					Code:                "default",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 					Name:             "Test Experiment",
 					NamespaceID:      namespace.ID,
 					LifecycleStage:   models.LifecycleStageActive,
 					ArtifactLocation: "/artifact/location",
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				return experiment
 			},
 			namespace: "default",
 		},
 		{
-			name: "RequestExperimentInScopeOfDefaultNamespaceImplicitCase",
+			name: "TestImplicitDefaultCustomNamespaces",
 			setup: func() *models.Experiment {
 				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 					Code:                "default",
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 					Name:             "Test Experiment",
 					NamespaceID:      namespace.ID,
 					LifecycleStage:   models.LifecycleStageActive,
 					ArtifactLocation: "/artifact/location",
 				})
-				assert.Nil(s.T(), err)
+				require.Nil(s.T(), err)
 				return experiment
 			},
 		},

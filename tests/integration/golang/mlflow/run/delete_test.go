@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -22,7 +23,6 @@ import (
 )
 
 type DeleteRunTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -30,13 +30,9 @@ func TestDeleteRunTestSuite(t *testing.T) {
 	suite.Run(t, new(DeleteRunTestSuite))
 }
 
-func (s *DeleteRunTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *DeleteRunTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create experiment
@@ -45,14 +41,14 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// create run for the experiment
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -63,7 +59,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 		ExperimentID:   *experiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -77,7 +73,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := map[string]any{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithMethod(
 					http.MethodPost,
@@ -93,7 +89,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 
 			archivedRuns, err := s.RunFixtures.GetRuns(context.Background(), run.ExperimentID)
 
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			assert.Equal(T, 1, len(archivedRuns))
 			assert.Equal(s.T(), run.ID, archivedRuns[0].ID)
 			assert.Equal(s.T(), models.LifecycleStageDeleted, archivedRuns[0].LifecycleStage)
@@ -111,7 +107,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -125,7 +121,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithMethod(
 					http.MethodPost,
@@ -137,7 +133,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute),
 				),
 			)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			assert.Equal(s.T(), api.NewResourceDoesNotExistError("unable to find run 'not-an-id'").Error(), resp.Error())
 		})
 	}

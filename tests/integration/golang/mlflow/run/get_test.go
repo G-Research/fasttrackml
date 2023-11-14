@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -23,7 +24,6 @@ import (
 )
 
 type GetRunTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -31,13 +31,9 @@ func TestGetRunTestSuite(t *testing.T) {
 	suite.Run(t, new(GetRunTestSuite))
 }
 
-func (s *GetRunTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *GetRunTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create test experiment.
@@ -46,14 +42,14 @@ func (s *GetRunTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// create test run for the experiment
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -73,7 +69,7 @@ func (s *GetRunTestSuite) Test_Ok() {
 		ExperimentID:   *experiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// create tags, metrics, params.
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
@@ -81,7 +77,7 @@ func (s *GetRunTestSuite) Test_Ok() {
 		Value: "value1",
 		RunID: run.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "metric1",
@@ -91,21 +87,21 @@ func (s *GetRunTestSuite) Test_Ok() {
 		Step:      1,
 		IsNan:     false,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param1",
 		Value: "value1",
 		RunID: run.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	query := request.GetRunRequest{
 		RunID: run.ID,
 	}
 
 	resp := response.GetRunResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithQuery(
 			query,
@@ -157,7 +153,7 @@ func (s *GetRunTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -182,7 +178,7 @@ func (s *GetRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					tt.request,
@@ -192,7 +188,7 @@ func (s *GetRunTestSuite) Test_Error() {
 					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
 				),
 			)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

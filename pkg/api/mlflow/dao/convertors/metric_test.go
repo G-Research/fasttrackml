@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 )
@@ -17,7 +18,7 @@ func TestConvertMetricParamRequestToDBModel(t *testing.T) {
 		Timestamp: 1234567890,
 	}
 	result, err := ConvertMetricParamRequestToDBModel("run_id", &req)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, "key", result.Key)
 	assert.Equal(t, int64(1), result.Step)
 	assert.Equal(t, 1.1, result.Value)

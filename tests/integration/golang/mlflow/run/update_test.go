@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -24,7 +25,6 @@ import (
 )
 
 type UpdateRunTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -32,13 +32,9 @@ func TestUpdateRunTestSuite(t *testing.T) {
 	suite.Run(t, new(UpdateRunTestSuite))
 }
 
-func (s *UpdateRunTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *UpdateRunTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create test experiment.
@@ -47,14 +43,14 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// create test run for the experiment
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -74,7 +70,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 		ExperimentID:   *experiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	req := request.UpdateRunRequest{
 		RunID:   run.ID,
@@ -83,7 +79,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 		EndTime: 1111111111,
 	}
 	resp := response.UpdateRunResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -107,7 +103,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 
 	// check that run has been updated in database.
 	run, err = s.RunFixtures.GetRun(context.Background(), run.ID)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	assert.Equal(s.T(), "UpdatedName", run.Name)
 	assert.Equal(s.T(), models.StatusScheduled, run.Status)
 	assert.Equal(s.T(), int64(1111111111), run.EndTime.Int64)
@@ -123,7 +119,7 @@ func (s *UpdateRunTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -146,7 +142,7 @@ func (s *UpdateRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithMethod(
 					http.MethodPost,

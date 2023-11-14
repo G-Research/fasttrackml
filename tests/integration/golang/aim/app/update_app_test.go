@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -21,7 +22,6 @@ import (
 )
 
 type UpdateAppTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -29,13 +29,9 @@ func TestUpdateAppTestSuite(t *testing.T) {
 	suite.Run(t, new(UpdateAppTestSuite))
 }
 
-func (s *UpdateAppTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *UpdateAppTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -43,7 +39,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
@@ -54,7 +50,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 		State:       database.AppState{},
 		NamespaceID: namespace.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name        string
@@ -73,7 +69,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.App
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithMethod(
 					http.MethodPut,
@@ -85,7 +81,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 					"/apps/%s", app.ID,
 				),
 			)
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithMethod(
 					http.MethodPut,
@@ -105,7 +101,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 
 func (s *UpdateAppTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -113,7 +109,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
@@ -124,7 +120,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 		State:       database.AppState{},
 		NamespaceID: namespace.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name        string
@@ -150,7 +146,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithMethod(
 					http.MethodPut,

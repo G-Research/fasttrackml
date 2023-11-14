@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -42,7 +43,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 		},
 	}
 	metrics, params, tags, err := ConvertLogBatchRequestToDBModel("run_id", &req)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, []models.Tag{
 		{
 			RunID: "run_id",

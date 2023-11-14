@@ -59,74 +59,11 @@ func (s *ImportTestSuite) SetupTest() {
 	require.Nil(s.T(), database.CreateDefaultExperiment(db.GormDB(), "s3://fasttrackml"))
 	s.inputDB = db.GormDB()
 
-	inputExperimentFixtures, err := fixtures.NewExperimentFixtures(db.GormDB())
-	require.Nil(s.T(), err)
 	inputRunFixtures, err := fixtures.NewRunFixtures(db.GormDB())
 	require.Nil(s.T(), err)
 	s.inputRunFixtures = inputRunFixtures
 	s.populateDB(s.inputDB)
 
-	// experiment 1
-	experiment, err := inputExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    1,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	require.Nil(s.T(), err)
-
-	runs, err := inputRunFixtures.CreateExampleRuns(context.Background(), experiment, 5)
-	require.Nil(s.T(), err)
-	s.runs = runs
-
-	// experiment 2
-	experiment, err = inputExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    1,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	require.Nil(s.T(), err)
-
-	runs, err = inputRunFixtures.CreateExampleRuns(context.Background(), experiment, 5)
-	require.Nil(s.T(), err)
-	s.runs = runs
-
-	appFixtures, err := fixtures.NewAppFixtures(db.GormDB())
-	require.Nil(s.T(), err)
-	app, err := appFixtures.CreateApp(context.Background(), &database.App{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-		},
-		NamespaceID: 1,
-		Type:        "mpi",
-		State:       database.AppState{},
-	})
-	require.Nil(s.T(), err)
-
-	dashboardFixtures, err := fixtures.NewDashboardFixtures(db.GormDB())
-	require.Nil(s.T(), err)
-
-	// dashboard 1
-	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-		},
-		AppID: &app.ID,
-		Name:  uuid.NewString(),
-	})
-	require.Nil(s.T(), err)
-
-	// dashboard 2
-	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-		},
-		AppID: &app.ID,
-		Name:  uuid.NewString(),
-	})
-	require.Nil(s.T(), err)
 	// prepare output database.
 	db, err = database.NewDBProvider(
 		helpers.GetOutputDatabaseUri(),
@@ -159,9 +96,10 @@ func (s *ImportTestSuite) SetupTest() {
 
 func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 	experimentFixtures, err := fixtures.NewExperimentFixtures(db)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
+
 	runFixtures, err := fixtures.NewRunFixtures(db)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// experiment 1
 	experiment, err := experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -169,10 +107,10 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 		NamespaceID:    1,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	runs, err := runFixtures.CreateExampleRuns(context.Background(), experiment, 5)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	s.runs = runs
 
 	// experiment 2
@@ -181,14 +119,14 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 		NamespaceID:    1,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	runs, err = runFixtures.CreateExampleRuns(context.Background(), experiment, 5)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	s.runs = runs
 
 	appFixtures, err := fixtures.NewAppFixtures(db)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	app, err := appFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
 			ID:        uuid.New(),
@@ -198,10 +136,10 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 		Type:        "mpi",
 		State:       database.AppState{},
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	dashboardFixtures, err := fixtures.NewDashboardFixtures(db)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// dashboard 1
 	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
@@ -212,7 +150,7 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 		AppID: &app.ID,
 		Name:  uuid.NewString(),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// dashboard 2
 	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
@@ -223,7 +161,7 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 		AppID: &app.ID,
 		Name:  uuid.NewString(),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 }
 
 func (s *ImportTestSuite) Test_Ok() {

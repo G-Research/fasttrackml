@@ -129,7 +129,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 		Key:   "key1",
 		Value: "value1",
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -195,7 +195,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 
 			// verify params are inserted
 			params, err := s.ParamFixtures.GetParamsByRunID(context.Background(), run.ID)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			for _, param := range tt.request.Params {
 				assert.Contains(s.T(), params, models.Param{Key: param.Key, Value: param.Value, RunID: run.ID})
 			}
@@ -463,7 +463,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 
 			// there should be no params inserted when error occurs.
 			params, err := s.ParamFixtures.GetParamsByRunID(context.Background(), run.ID)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			assert.Empty(s.T(), params)
 		})
 	}

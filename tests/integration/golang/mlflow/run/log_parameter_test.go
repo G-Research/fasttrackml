@@ -115,7 +115,7 @@ func (s *LogParamTestSuite) Test_Error() {
 		LifecycleStage: models.LifecycleStageActive,
 	}
 	_, err = s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	run := &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
@@ -125,7 +125,7 @@ func (s *LogParamTestSuite) Test_Error() {
 		Status:         models.StatusRunning,
 	}
 	run, err = s.RunFixtures.CreateRun(context.Background(), run)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// setup param OK
 	req := request.LogParamRequest{

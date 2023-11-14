@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -14,7 +15,7 @@ func TestValidateUpdateRunRequest_Ok(t *testing.T) {
 		RunID:   "id",
 		RunUUID: "uuid",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateUpdateRunRequest_Error(t *testing.T) {
@@ -42,7 +43,7 @@ func TestValidateGetRunRequest_Ok(t *testing.T) {
 	err := ValidateGetRunRequest(&request.GetRunRequest{
 		RunID: "id",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateGetRunRequest_Error(t *testing.T) {
@@ -70,7 +71,7 @@ func TestValidateDeleteRunRequest_Ok(t *testing.T) {
 	err := ValidateDeleteRunRequest(&request.DeleteRunRequest{
 		RunID: "id",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateDeleteRunRequest_Error(t *testing.T) {
@@ -98,7 +99,7 @@ func TestValidateRestoreRunRequest_Ok(t *testing.T) {
 	err := ValidateRestoreRunRequest(&request.RestoreRunRequest{
 		RunID: "id",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateRestoreRunRequest_Error(t *testing.T) {
@@ -129,7 +130,7 @@ func TestValidateLogMetricRequest_Ok(t *testing.T) {
 		Key:       "key",
 		Timestamp: 123,
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateLogMetricRequest_Error(t *testing.T) {
@@ -174,7 +175,7 @@ func TestValidateLogParamRequest_Ok(t *testing.T) {
 		RunUUID: "uuid",
 		Key:     "key",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateLogParamRequest_Error(t *testing.T) {
@@ -211,7 +212,7 @@ func TestValidateSetRunTagRequest_Ok(t *testing.T) {
 		RunUUID: "uuid",
 		Key:     "key",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateSetRunTagRequest_Error(t *testing.T) {
@@ -246,7 +247,7 @@ func TestValidateDeleteRunTagRequest_Ok(t *testing.T) {
 	err := ValidateDeleteRunTagRequest(&request.DeleteRunTagRequest{
 		RunID: "id",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateDeleteRunTagRequest_Error(t *testing.T) {
@@ -274,7 +275,7 @@ func TestValidateLogBatchRequest_Ok(t *testing.T) {
 	err := ValidateLogBatchRequest(&request.LogBatchRequest{
 		RunID: "id",
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateLogBatchRequest_Error(t *testing.T) {
@@ -303,7 +304,7 @@ func TestValidateSearchRunsRequest_Ok(t *testing.T) {
 		ViewType:   request.ViewTypeAll,
 		MaxResults: 10,
 	})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateSearchRunsRequest_Error(t *testing.T) {

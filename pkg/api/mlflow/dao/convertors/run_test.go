@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -184,7 +185,7 @@ func TestConvertCreateRunRequestToDBModel(t *testing.T) {
 				ID:               &experimentID,
 				ArtifactLocation: "artifact_location",
 			}, tt.req)
-			assert.Nil(t, err)
+			require.Nil(t, err)
 			tt.result(result)
 		})
 	}

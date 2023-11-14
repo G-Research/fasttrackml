@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 )
 
 func TestValidateUpdateRunRequest_Ok(t *testing.T) {
 	err := ValidateNamespace("legit-123_ns")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestValidateUpdateRunRequest_Error(t *testing.T) {

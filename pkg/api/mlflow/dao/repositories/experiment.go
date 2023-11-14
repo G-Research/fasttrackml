@@ -179,7 +179,11 @@ func (r ExperimentRepository) DeleteBatch(ctx context.Context, ids []*int32) err
 }
 
 // UpdateWithTransaction updates existing models.Experiment entity in scope of transaction.
-func (r ExperimentRepository) UpdateWithTransaction(ctx context.Context, tx *gorm.DB, experiment *models.Experiment) error {
+func (r ExperimentRepository) UpdateWithTransaction(
+	ctx context.Context,
+	tx *gorm.DB,
+	experiment *models.Experiment,
+) error {
 	if err := tx.WithContext(ctx).Model(&experiment).Updates(experiment).Error; err != nil {
 		return eris.Wrapf(err, "error updating existing experiment with id: %d", experiment.ID)
 	}

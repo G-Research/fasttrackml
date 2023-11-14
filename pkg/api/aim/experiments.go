@@ -43,7 +43,8 @@ func GetExperiments(c *fiber.Ctx) error {
 		Where("experiments.namespace_id = ?", ns.ID).
 		Where("experiments.lifecycle_stage = ?", database.LifecycleStageActive).
 		Joins("LEFT JOIN runs USING(experiment_id)").
-		Joins("LEFT JOIN experiment_tags ON experiments.experiment_id = experiment_tags.experiment_id AND experiment_tags.key = 'mlflow.note.content'").
+		Joins("LEFT JOIN experiment_tags ON experiments.experiment_id = experiment_tags.experiment_id AND" +
+			" experiment_tags.key = 'mlflow.note.content'").
 		Group("experiments.experiment_id").
 		Find(&experiments); tx.Error != nil {
 		return fmt.Errorf("error fetching experiments: %w", tx.Error)
@@ -109,7 +110,8 @@ func GetExperiment(c *fiber.Ctx) error {
 			"COALESCE(MAX(experiment_tags.value), '') AS description",
 		).
 		Joins("LEFT JOIN runs USING(experiment_id)").
-		Joins("LEFT JOIN experiment_tags ON experiments.experiment_id = experiment_tags.experiment_id AND experiment_tags.key = 'mlflow.note.content'").
+		Joins("LEFT JOIN experiment_tags ON experiments.experiment_id = experiment_tags.experiment_id AND"+
+			" experiment_tags.key = 'mlflow.note.content'").
 		Where("experiments.namespace_id = ?", ns.ID).
 		Where("experiments.experiment_id = ?", id).
 		Group("experiments.experiment_id").

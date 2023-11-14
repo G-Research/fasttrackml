@@ -5,6 +5,7 @@ volumes:
   workspaces:
   minio-data:
   postgres-data:
+  google-storage-data:
 
 services:
   app:
@@ -61,6 +62,7 @@ services:
     # ports:
     #   - "5000:5000"
     #   - "5432:5432"
+    #   - "4443:4443"
     #   - "9000:9000"
     #   - "9001:9001"
 
@@ -77,4 +79,13 @@ services:
       MINIO_ROOT_PASSWORD: password
       MINIO_CONSOLE_ADDRESS: ":9001"
     command: server /data
+    network_mode: service:db
+
+  google-storage:
+    image: fsouza/fake-gcs-server
+    volumes:
+      - google-storage-data:/storage
+    command:
+      - -public-host=localhost
+      - -scheme=http
     network_mode: service:db

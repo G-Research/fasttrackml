@@ -47,7 +47,7 @@ func (f onlyRootFS) Open(name string) (fs.File, error) {
 
 // ErrorMessageForUI returns the error message of an error, rewritten for simplicity in the UI.
 func ErrorMessageForUI(field, errMsg string) string {
-	uniqueError := regexp.MustCompile("UNIQUE")
+	uniqueError := regexp.MustCompile("(?i)unique")
 	validationError := regexp.MustCompile("INVALID_PARAMETER_VALUE")
 	msg := []byte(errMsg)
 	switch {

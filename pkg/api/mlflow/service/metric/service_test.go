@@ -8,9 +8,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 )
@@ -56,7 +58,7 @@ func TestService_GetMetricHistory_Ok(t *testing.T) {
 	)
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, []models.Metric{
 		{
 			Key:       "key",
@@ -174,7 +176,7 @@ func TestService_GetMetricHistoryBulk_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, []models.Metric{
 		{
 			Key:       "key",
@@ -266,48 +268,89 @@ func TestService_GetMetricHistoryBulk_Error(t *testing.T) {
 }
 
 func TestNewService_GetMetricHistories_Ok(t *testing.T) {
-	// init repository mocks.
-	runRepository := repositories.MockRunRepositoryProvider{}
-	runRepository.On(
-		"GetByNamespaceIDAndRunID",
-		context.TODO(),
-		uint(1),
-		"id",
-	).Return(nil, &models.Run{ID: "1"})
-
-	metricRepository := repositories.MockMetricRepositoryProvider{}
-	metricRepository.On(
-		"GetMetricHistories",
-		context.TODO(),
-		uint(1),
-		[]string{"1", "2"},
-		mock.Anything,
-		[]string{"key1", "key2"},
-		request.ViewTypeActiveOnly,
-		int32(1),
-	).Return(
-		&sql.Rows{},
-		func(*sql.Rows, interface{}) error {
-			return nil
+	testData := []struct {
+		name         string
+		namespace    *models.Namespace
+		request      *request.GetMetricHistoriesRequest
+		expectedRows *sql.Rows
+		expectedErr  error
+		expectedIter func(*sql.Rows, interface{}) error
+	}{
+		{
+			name: "WithExplicitExperimentIDs",
+			namespace: &models.Namespace{
+				ID:                  1,
+				DefaultExperimentID: common.GetPointer(int32(1)),
+			},
+			request: &request.GetMetricHistoriesRequest{
+				ExperimentIDs: []string{"1"},
+				MetricKeys:    []string{"key1", "key2"},
+				ViewType:      request.ViewTypeActiveOnly,
+				MaxResults:    1,
+			},
+			expectedRows: &sql.Rows{},
+			expectedIter: func(*sql.Rows, interface{}) error {
+				return nil
+			},
+			expectedErr: nil,
 		},
-		nil,
-	)
+		{
+			name: "WithDefaultExperimentID",
+			namespace: &models.Namespace{
+				ID:                  1,
+				DefaultExperimentID: common.GetPointer(int32(1)),
+			},
+			request: &request.GetMetricHistoriesRequest{
+				ExperimentIDs: []string{"0"},
+				MetricKeys:    []string{"key1", "key2"},
+				ViewType:      request.ViewTypeActiveOnly,
+				MaxResults:    1,
+			},
+			expectedRows: &sql.Rows{},
+			expectedIter: func(*sql.Rows, interface{}) error {
+				return nil
+			},
+			expectedErr: nil,
+		},
+	}
 
-	// call service under testing.
-	service := NewService(&runRepository, &metricRepository)
-	//nolint:sqlclosecheck
-	rows, iterator, err := service.GetMetricHistories(context.TODO(), &models.Namespace{
-		ID: 1,
-	}, &request.GetMetricHistoriesRequest{
-		ExperimentIDs: []string{"1", "2"},
-		MetricKeys:    []string{"key1", "key2"},
-		ViewType:      request.ViewTypeActiveOnly,
-		MaxResults:    1,
-	})
-	assert.Nil(t, err)
-	assert.NotNil(t, rows)
-	assert.Nil(t, rows.Err())
-	assert.NotNil(t, iterator)
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			// init repository mocks.
+			runRepository := repositories.MockRunRepositoryProvider{}
+			runRepository.On(
+				"GetByNamespaceIDAndRunID",
+				context.TODO(),
+				uint(1),
+				"id",
+			).Return(nil, &models.Run{ID: "1"})
+
+			metricRepository := repositories.MockMetricRepositoryProvider{}
+			metricRepository.On(
+				"GetMetricHistories",
+				context.TODO(),
+				uint(1),
+				[]string{"1"},
+				mock.Anything,
+				[]string{"key1", "key2"},
+				request.ViewTypeActiveOnly,
+				int32(1),
+			).Return(
+				tt.expectedRows,
+				tt.expectedIter,
+				nil,
+			)
+
+			// call service under testing.
+			service := NewService(&runRepository, &metricRepository)
+			//nolint:rowserrcheck,sqlclosecheck
+			rows, iterator, err := service.GetMetricHistories(context.TODO(), tt.namespace, tt.request)
+			assert.Equal(t, tt.expectedErr, err)
+			assert.Equal(t, tt.expectedRows, rows)
+			require.Nil(t, rows.Err())
+			assert.NotNil(t, iterator)
+		})
+	}
 }
 
 func TestNewService_GetMetricHistories_Error(t *testing.T) {

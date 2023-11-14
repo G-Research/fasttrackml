@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -22,7 +23,6 @@ import (
 )
 
 type SetExperimentTagTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -30,13 +30,9 @@ func TestSetExperimentTagTestSuite(t *testing.T) {
 	suite.Run(t, new(SetExperimentTagTestSuite))
 }
 
-func (s *SetExperimentTagTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *SetExperimentTagTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 	// 1. prepare database with test data.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -44,7 +40,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:        "Test Experiment",
@@ -60,7 +56,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "/artifact/location",
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:        "Test Experiment2",
 		NamespaceID: namespace.ID,
@@ -75,7 +71,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "/artifact/location",
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	// Set tag on experiment1
 	req := request.SetExperimentTagRequest{
@@ -83,7 +79,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		Key:   "KeyTag1",
 		Value: "ValueTag1",
 	}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -97,7 +93,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
 		context.Background(), namespace.ID, *experiment1.ID,
 	)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	assert.True(s.T(), helpers.CheckTagExists(
 		experiment1.Tags, "KeyTag1", "ValueTag1"), "Expected 'experiment.tags' to contain 'KeyTag1' with value 'ValueTag1'",
 	)
@@ -108,7 +104,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		Key:   "KeyTag1",
 		Value: "ValueTag2",
 	}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -122,7 +118,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
 		context.Background(), namespace.ID, *experiment1.ID,
 	)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	assert.True(
 		s.T(),
 		helpers.CheckTagExists(experiment1.Tags, "KeyTag1", "ValueTag2"),
@@ -133,7 +129,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	experiment2, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
 		context.Background(), namespace.ID, *experiment2.ID,
 	)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	assert.Equal(s.T(), len(experiment2.Tags), 0)
 
 	// test that setting a tag on different experiments maintain different values across experiments
@@ -142,7 +138,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		Key:   "KeyTag1",
 		Value: "ValueTag3",
 	}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -155,7 +151,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
 		context.Background(), namespace.ID, *experiment1.ID,
 	)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	assert.True(
 		s.T(), helpers.CheckTagExists(experiment1.Tags, "KeyTag1", "ValueTag2"),
 		"Expected 'experiment1.tags' to contain 'KeyTag1' with value 'ValueTag2'",
@@ -164,7 +160,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	experiment2, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
 		context.Background(), namespace.ID, *experiment2.ID,
 	)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	assert.True(
 		s.T(),
 		helpers.CheckTagExists(experiment2.Tags, "KeyTag1", "ValueTag3"),
@@ -174,7 +170,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 
 func (s *SetExperimentTagTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -182,7 +178,7 @@ func (s *SetExperimentTagTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	testData := []struct {
 		name    string
@@ -230,7 +226,7 @@ func (s *SetExperimentTagTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithMethod(
 					http.MethodPost,

@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -19,8 +20,9 @@ import (
 func TestService_CreateRun_Ok(t *testing.T) {
 	// initialise namespace to which experiment under the test belongs to.
 	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
+		ID:                  1,
+		Code:                "code",
+		DefaultExperimentID: common.GetPointer(int32(1)),
 	}
 
 	// init repository mocks.
@@ -67,7 +69,7 @@ func TestService_CreateRun_Ok(t *testing.T) {
 		&experimentRepository,
 	)
 	run, err := service.CreateRun(context.TODO(), &ns, &request.CreateRunRequest{
-		ExperimentID: "1",
+		ExperimentID: "0", // default experiment id provided by the client is "0"
 		UserID:       "1",
 		Name:         "name",
 		StartTime:    12345,
@@ -80,11 +82,11 @@ func TestService_CreateRun_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.NotEmpty(t, run.ID)
 	assert.Equal(t, "name", run.Name)
 	assert.Equal(t, "1", run.UserID)
-	assert.Equal(t, int32(1), run.ExperimentID)
+	assert.Equal(t, int32(1), run.ExperimentID) // default experiment id "0" is translated to namespace default.
 	assert.Equal(t, models.StatusRunning, run.Status)
 	assert.Equal(t, int64(12345), run.StartTime.Int64)
 	assert.Equal(t, models.LifecycleStageActive, run.LifecycleStage)
@@ -298,7 +300,7 @@ func TestService_RestoreRun_Ok(t *testing.T) {
 	err := service.RestoreRun(context.TODO(), &models.Namespace{ID: 1}, &request.RestoreRunRequest{RunID: "1"})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_RestoreRun_Error(t *testing.T) {
@@ -428,7 +430,7 @@ func TestService_SetRunTag_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 func TestService_SetRunTag_Error(t *testing.T) {}
 
@@ -458,7 +460,7 @@ func TestService_DeleteRun_Ok(t *testing.T) {
 	err := service.DeleteRun(context.TODO(), &models.Namespace{ID: 1}, &request.DeleteRunRequest{RunID: "1"})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_DeleteRun_Error(t *testing.T) {
@@ -797,7 +799,7 @@ func TestService_GetRun_Ok(t *testing.T) {
 	}, &request.GetRunRequest{RunID: "1"})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, "1", run.ID)
 	assert.Equal(t, "name", run.Name)
 	assert.Equal(t, "source_type", run.SourceType)
@@ -979,7 +981,7 @@ func TestService_LogBatch_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_LogBatch_Error(t *testing.T) {
@@ -1378,7 +1380,7 @@ func TestService_LogMetric_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_LogMetric_Error(t *testing.T) {
@@ -1591,7 +1593,7 @@ func TestService_LogParam_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_LogParam_Error(t *testing.T) {

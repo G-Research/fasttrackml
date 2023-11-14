@@ -86,7 +86,7 @@ func (s *LogParamTestSuite) Test_Ok() {
 		Key:   "key1",
 		Value: "value1",
 	}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -155,7 +155,7 @@ func (s *LogParamTestSuite) Test_Error() {
 		Key:   "key1",
 		Value: "value1",
 	}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -179,7 +179,7 @@ func (s *LogParamTestSuite) Test_Error() {
 		Key:   "key1",
 		Value: "value2",
 	}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,

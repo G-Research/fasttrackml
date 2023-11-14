@@ -85,7 +85,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 				return db.Select("RunID", "Key")
 			})
 		default:
-			return fmt.Errorf("%q is not a valid Sequence", s)
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("%q is not a valid Sequence", s))
 		}
 	}
 

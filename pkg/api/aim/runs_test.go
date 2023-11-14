@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
 )
@@ -92,7 +93,7 @@ func Test_isMetricSelected(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				pq, err := qp.Parse(tt.query)
-				assert.Nil(t, err)
+				require.Nil(t, err)
 				assert.Equal(t, tt.wantResult, pq.IsMetricSelected())
 			})
 		}

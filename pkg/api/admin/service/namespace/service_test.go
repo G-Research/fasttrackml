@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -39,7 +40,7 @@ func TestService_CreateNamespace_Ok(t *testing.T) {
 	_, err := service.CreateNamespace(context.TODO(), "code", "description")
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_CreateNamespace_Error(t *testing.T) {
@@ -83,7 +84,7 @@ func TestService_GetNamespace_Ok(t *testing.T) {
 	namespace, err := service.GetNamespace(context.TODO(), uint(0))
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, &ns, namespace)
 }
 
@@ -127,7 +128,7 @@ func TestService_ListNamespace_Ok(t *testing.T) {
 	namespaces, err := service.ListNamespaces(context.TODO())
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, testNamespaces, namespaces)
 }
 
@@ -158,7 +159,7 @@ func TestService_DeleteNamespace_Ok(t *testing.T) {
 		Code: "code",
 	}
 	namespaceRepository.On(
-		"Delete", context.TODO(), uint(0),
+		"Delete", context.TODO(), &ns,
 	).Return(nil).On(
 		"GetByID", context.TODO(), uint(0),
 	).Return(&ns, nil)
@@ -170,7 +171,7 @@ func TestService_DeleteNamespace_Ok(t *testing.T) {
 	err := service.DeleteNamespace(context.TODO(), uint(0))
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_DeleteNamespace_Error(t *testing.T) {
@@ -215,7 +216,7 @@ func TestService_UpdateNamespace_Ok(t *testing.T) {
 	_, err := service.UpdateNamespace(context.TODO(), uint(1), "code", "description")
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_UpdateNamespace_Error(t *testing.T) {

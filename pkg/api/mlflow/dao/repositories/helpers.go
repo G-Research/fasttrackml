@@ -10,16 +10,8 @@ import (
 // makeSqlPlaceholders collects a string of "(?,?,?), (?,?,?)" and so on,
 // for use as sql parameters
 func makeSqlPlaceholders(numberInEachSet, numberOfSets int) string {
-	placeholderArray := make([]string, numberInEachSet)
-	for i := 0; i < numberInEachSet; i++ {
-		placeholderArray[i] = "?"
-	}
-	placeholderTemplate := strings.Join(placeholderArray, ",")
-	setsArray := make([]string, numberOfSets)
-	for i := 0; i < numberOfSets; i++ {
-		setsArray[i] = fmt.Sprintf("(%s)", placeholderTemplate)
-	}
-	return strings.Join(setsArray, ",")
+	set := fmt.Sprintf("(%s)", strings.Repeat("?,", numberInEachSet-1)+"?")
+	return strings.Repeat(set+",", numberOfSets-1) + set
 }
 
 // makeParamConflictPlaceholdersAndValues provides sql placeholders and concatenates

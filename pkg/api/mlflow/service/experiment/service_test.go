@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -51,7 +52,7 @@ func TestService_CreateExperiment_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, "name", experiment.Name)
 	assert.Equal(t, []models.ExperimentTag{
 		{
@@ -244,7 +245,7 @@ func TestService_DeleteExperiment_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_DeleteExperiment_Error(t *testing.T) {
@@ -381,7 +382,7 @@ func TestService_GetExperiment_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, int32(1), *experiment.ID)
 	assert.Equal(t, "name", experiment.Name)
 	assert.Equal(t, []models.ExperimentTag{
@@ -517,7 +518,7 @@ func TestService_GetExperimentByName_Ok(t *testing.T) {
 	)
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, int32(1), *experiment.ID)
 	assert.Equal(t, "name", experiment.Name)
 	assert.Equal(t, []models.ExperimentTag{
@@ -644,7 +645,7 @@ func TestService_RestoreExperiment_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_RestoreExperiment_Error(t *testing.T) {
@@ -778,7 +779,7 @@ func TestService_SetExperimentTag_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_SetExperimentTag_Error(t *testing.T) {
@@ -930,7 +931,7 @@ func TestService_UpdateExperiment_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_UpdateExperiment_Error(t *testing.T) {

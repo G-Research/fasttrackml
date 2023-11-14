@@ -13,6 +13,7 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -25,7 +26,6 @@ import (
 )
 
 type ListArtifactGSTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 	gsClient    *storage.Client
 	testBuckets []string
@@ -38,24 +38,23 @@ func TestListArtifactGSTestSuite(t *testing.T) {
 }
 
 func (s *ListArtifactGSTestSuite) SetupSuite() {
-	s.BaseTestSuite.SetupTest(s.T())
-
 	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	s.gsClient = gsClient
 }
 
 func (s *ListArtifactGSTestSuite) SetupTest() {
-	assert.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
+	s.BaseTestSuite.SetupTest()
+	require.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *ListArtifactGSTestSuite) TearDownTest() {
-	assert.Nil(s.T(), helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
+	require.Nil(s.T(), helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *ListArtifactGSTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -63,7 +62,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name   string
@@ -102,7 +101,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("gs://%s/1", tt.bucket),
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 2. create test run.
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -114,7 +113,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 3. upload artifact objects to GS.
 			writer := s.gsClient.Bucket(
@@ -125,8 +124,8 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				context.Background(),
 			)
 			_, err = writer.Write([]byte("contentX"))
-			assert.Nil(s.T(), err)
-			assert.Nil(t, writer.Close())
+			require.Nil(s.T(), err)
+			require.Nil(t, writer.Close())
 
 			writer = s.gsClient.Bucket(
 				tt.bucket,
@@ -136,8 +135,8 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				context.Background(),
 			)
 			_, err = writer.Write([]byte("contentXX"))
-			assert.Nil(s.T(), err)
-			assert.Nil(t, writer.Close())
+			require.Nil(s.T(), err)
+			require.Nil(t, writer.Close())
 
 			// 4. make actual API call for root dir.
 			rootDirQuery := request.ListArtifactsRequest{
@@ -145,7 +144,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			}
 
 			rootDirResp := response.ListArtifactsResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					rootDirQuery,
@@ -170,7 +169,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 					FileSize: 8,
 				},
 			}, rootDirResp.Files)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 5. make actual API call for sub dir.
 			subDirQuery := request.ListArtifactsRequest{
@@ -179,7 +178,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			}
 
 			subDirResp := response.ListArtifactsResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					subDirQuery,
@@ -197,17 +196,17 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				IsDir:    false,
 				FileSize: 9,
 			}, subDirResp.Files[0])
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 6. make actual API call for non-existing dir.
 			nonExistingDirQuery := request.ListArtifactsRequest{
 				RunID: run.ID,
 				Path:  "non-existing-dir",
 			}
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			nonExistingDirResp := response.ListArtifactsResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					nonExistingDirQuery,
@@ -220,14 +219,14 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 
 			assert.Equal(s.T(), run.ArtifactURI, nonExistingDirResp.RootURI)
 			assert.Equal(s.T(), 0, len(nonExistingDirResp.Files))
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 		})
 	}
 }
 
 func (s *ListArtifactGSTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -235,7 +234,7 @@ func (s *ListArtifactGSTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -292,7 +291,7 @@ func (s *ListArtifactGSTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithQuery(
 					tt.request,
@@ -302,7 +301,7 @@ func (s *ListArtifactGSTestSuite) Test_Error() {
 					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
 				),
 			)
-			assert.Nil(t, err)
+			require.Nil(t, err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

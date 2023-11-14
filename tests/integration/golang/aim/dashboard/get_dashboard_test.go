@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -19,7 +20,6 @@ import (
 )
 
 type GetDashboardTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -27,13 +27,9 @@ func TestGetDashboardTestSuite(t *testing.T) {
 	suite.Run(t, new(GetDashboardTestSuite))
 }
 
-func (s *GetDashboardTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *GetDashboardTestSuite) Test_Ok() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -41,7 +37,7 @@ func (s *GetDashboardTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
@@ -53,7 +49,7 @@ func (s *GetDashboardTestSuite) Test_Ok() {
 		State:       database.AppState{},
 		NamespaceID: namespace.ID,
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	dashboard, err := s.DashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
 		Base: database.Base{
@@ -65,10 +61,10 @@ func (s *GetDashboardTestSuite) Test_Ok() {
 		AppID:       &app.ID,
 		Description: "dashboard for experiment",
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	var resp database.Dashboard
-	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/dashboards/%s", dashboard.ID))
+	require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/dashboards/%s", dashboard.ID))
 	assert.Equal(s.T(), dashboard.ID, resp.ID)
 	assert.Equal(s.T(), &app.ID, resp.AppID)
 	assert.Equal(s.T(), dashboard.Name, resp.Name)
@@ -79,7 +75,7 @@ func (s *GetDashboardTestSuite) Test_Ok() {
 
 func (s *GetDashboardTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -87,7 +83,7 @@ func (s *GetDashboardTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -101,7 +97,7 @@ func (s *GetDashboardTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.AIMClient.WithResponse(&resp).DoRequest("/dashboards/%s", tt.idParam),
 			)

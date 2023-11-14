@@ -6,6 +6,7 @@ import (
 
 	"github.com/rotisserie/eris"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestServiceConfig_Validate_Ok(t *testing.T) {
@@ -31,7 +32,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 			expectedConfig: &ServiceConfig{
 				DefaultArtifactRoot: (func() string {
 					path, err := filepath.Abs("path1/path2/path3")
-					assert.Nil(t, err)
+					require.Nil(t, err)
 					return path
 				})(),
 			},
@@ -62,7 +63,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 			expectedConfig: &ServiceConfig{
 				DefaultArtifactRoot: (func() string {
 					path, err := filepath.Abs("path1/path2/path3")
-					assert.Nil(t, err)
+					require.Nil(t, err)
 					return path
 				})(),
 			},
@@ -71,7 +72,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Nil(t, tt.providedConfig.Validate())
+			require.Nil(t, tt.providedConfig.Validate())
 			assert.Equal(t, tt.providedConfig.DefaultArtifactRoot, tt.expectedConfig.DefaultArtifactRoot)
 		})
 	}

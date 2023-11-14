@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -74,7 +75,7 @@ func TestValidateListArtifactsRequest_Ok(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Nil(t, ValidateListArtifactsRequest(tt.request))
+			require.Nil(t, ValidateListArtifactsRequest(tt.request))
 		})
 	}
 }
@@ -226,7 +227,7 @@ func TestValidateGetArtifactRequest_Ok(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Nil(t, ValidateGetArtifactRequest(tt.request))
+			require.Nil(t, ValidateGetArtifactRequest(tt.request))
 		})
 	}
 }

@@ -25,6 +25,7 @@ type LogBatchTestSuite struct {
 	client             *helpers.HttpClient
 	runFixtures        *fixtures.RunFixtures
 	metricFixtures     *fixtures.MetricFixtures
+	paramFixtures      *fixtures.ParamFixtures
 	experimentFixtures *fixtures.ExperimentFixtures
 }
 
@@ -40,6 +41,9 @@ func (s *LogBatchTestSuite) SetupTest() {
 	metricFixtures, err := fixtures.NewMetricFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.metricFixtures = metricFixtures
+	paramFixtures, err := fixtures.NewParamFixtures(helpers.GetDatabaseUri())
+	assert.Nil(s.T(), err)
+	s.paramFixtures = paramFixtures
 	expFixtures, err := fixtures.NewExperimentFixtures(helpers.GetDatabaseUri())
 	assert.Nil(s.T(), err)
 	s.experimentFixtures = expFixtures
@@ -116,6 +120,14 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 	})
 	assert.Nil(s.T(), err)
 
+	// create preexisting param (other batch) for conflict testing
+	_, err = s.paramFixtures.CreateParam(context.Background(), &models.Param{
+		RunID: run.ID,
+		Key:   "key1",
+		Value: "value1",
+	})
+	assert.Nil(s.T(), err)
+
 	tests := []struct {
 		name    string
 		request *request.LogBatchRequest
@@ -133,7 +145,19 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 			},
 		},
 		{
-			name: "LogDuplicate",
+			name: "LogDuplicateSeparateBatch",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key1",
+						Value: "value1",
+					},
+				},
+			},
+		},
+		{
+			name: "LogDuplicateSameBatch",
 			request: &request.LogBatchRequest{
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
@@ -159,6 +183,13 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 			)
 			assert.Nil(s.T(), err)
 			assert.Empty(s.T(), resp)
+
+			// verify params are inserted
+			params, err := s.paramFixtures.GetParamsByRunID(context.Background(), run.ID)
+			assert.Nil(s.T(), err)
+			for _, param := range tt.request.Params {
+				assert.Contains(s.T(), params, models.Param{Key: param.Key, Value: param.Value, RunID: run.ID})
+			}
 		})
 	}
 }
@@ -360,7 +391,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 		},
 		{
 			name:  "DuplicateKeyDifferentValueFails",
-			error: api.NewInternalError("unable to insert params for run"),
+			error: api.NewInvalidParameterValueError("unable to insert params for run"),
 			request: &request.LogBatchRequest{
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
@@ -370,6 +401,10 @@ func (s *LogBatchTestSuite) Test_Error() {
 					},
 					{
 						Key:   "key1",
+						Value: "value2",
+					},
+					{
+						Key:   "key2",
 						Value: "value2",
 					},
 				},
@@ -388,6 +423,11 @@ func (s *LogBatchTestSuite) Test_Error() {
 			assert.Nil(t, err)
 			assert.Equal(s.T(), tt.error.ErrorCode, resp.ErrorCode)
 			assert.Contains(s.T(), resp.Error(), tt.error.Message)
+
+			// there should be no params inserted when error occurs.
+			params, err := s.paramFixtures.GetParamsByRunID(context.Background(), run.ID)
+			assert.Nil(s.T(), err)
+			assert.Empty(s.T(), params)
 		})
 	}
 }

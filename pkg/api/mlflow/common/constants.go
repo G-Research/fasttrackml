@@ -9,5 +9,5 @@ const (
 
 // Constants for experiment tags keys.
 const (
-	DescriptionKeyTag = "mlflow.note.content"
+	DescriptionTagKey = "mlflow.note.content"
 )

@@ -44,7 +44,7 @@ func GetExperiments(c *fiber.Ctx) error {
 		Where("experiments.lifecycle_stage = ?", database.LifecycleStageActive).
 		Joins("LEFT JOIN runs USING(experiment_id)").
 		Joins("LEFT JOIN experiment_tags ON experiments.experiment_id = experiment_tags.experiment_id AND"+
-			" experiment_tags.key = ?", common.DescriptionKeyTag).
+			" experiment_tags.key = ?", common.DescriptionTagKey).
 		Group("experiments.experiment_id").
 		Find(&experiments); tx.Error != nil {
 		return fmt.Errorf("error fetching experiments: %w", tx.Error)
@@ -111,7 +111,7 @@ func GetExperiment(c *fiber.Ctx) error {
 		).
 		Joins("LEFT JOIN runs USING(experiment_id)").
 		Joins("LEFT JOIN experiment_tags ON experiments.experiment_id = experiment_tags.experiment_id AND"+
-			" experiment_tags.key = ?", common.DescriptionKeyTag).
+			" experiment_tags.key = ?", common.DescriptionTagKey).
 		Where("experiments.namespace_id = ?", ns.ID).
 		Where("experiments.experiment_id = ?", id).
 		Group("experiments.experiment_id").
@@ -395,7 +395,7 @@ func UpdateExperiment(c *fiber.Ctx) error {
 	}
 	if updateRequest.Description != nil {
 		description := models.ExperimentTag{
-			Key:          common.DescriptionKeyTag,
+			Key:          common.DescriptionTagKey,
 			Value:        *updateRequest.Description,
 			ExperimentID: *experiment.ID,
 		}

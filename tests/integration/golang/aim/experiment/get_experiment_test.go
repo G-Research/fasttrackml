@@ -44,7 +44,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
-				Key:   common.DescriptionKeyTag,
+				Key:   common.DescriptionTagKey,
 				Value: "value1",
 			},
 		},

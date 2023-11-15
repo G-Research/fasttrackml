@@ -8,7 +8,7 @@ import (
 // GetDescriptionFromexperiment returns the description of a given experiment.
 func GetDescriptionFromExperiment(experiment models.Experiment) string {
 	for _, tag := range experiment.Tags {
-		if tag.Key == common.DescriptionKeyTag {
+		if tag.Key == common.DescriptionTagKey {
 			return tag.Value
 		}
 	}

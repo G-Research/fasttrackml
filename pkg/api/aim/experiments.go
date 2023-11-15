@@ -349,16 +349,16 @@ func UpdateExperiment(c *fiber.Ctx) error {
 	if err = c.ParamsParser(&params); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
+	id, err := strconv.ParseInt(params.ID, 10, 32)
+	if err != nil {
+		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", params.ID, err)
+	}
 
 	var updateRequest request.UpdateExperimentRequest
 	if err = c.BodyParser(&updateRequest); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	id, err := strconv.ParseInt(params.ID, 10, 32)
-	if err != nil {
-		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", params.ID, err)
-	}
 	experimentRepository := repositories.NewExperimentRepository(database.DB)
 	tagRepository := repositories.NewTagRepository(database.DB)
 	experiment, err := experimentRepository.GetByNamespaceIDAndExperimentID(c.Context(), ns.ID, int32(id))

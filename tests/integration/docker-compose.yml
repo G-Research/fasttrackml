@@ -41,7 +41,7 @@ services:
     entrypoint: sh
     command: -c 'mkdir -p /data/{bucket1,bucket2,bucket3} && exec minio server /data'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "bash", "-c", ":> /dev/tcp/127.0.0.1/9000"]
       interval: 5s
       timeout: 5s
     environment:

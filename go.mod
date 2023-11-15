@@ -16,7 +16,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/apache/arrow/go/v12 v12.0.1
 	github.com/aws/aws-sdk-go-v2 v1.22.2
-	github.com/aws/aws-sdk-go-v2/config v1.24.0
+	github.com/aws/aws-sdk-go-v2/config v1.25.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.42.1
 	github.com/go-python/gpython v0.2.0
 	github.com/gofiber/fiber/v2 v2.51.0
@@ -51,7 +51,7 @@ require (
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/apache/thrift v0.16.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.0 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.15.2 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.16.0 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.2 // indirect

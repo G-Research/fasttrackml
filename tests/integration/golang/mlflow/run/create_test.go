@@ -195,6 +195,10 @@ func (s *CreateRunTestSuite) successCases(
 }
 
 func (s *CreateRunTestSuite) Test_Error() {
+	defer func() {
+		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
@@ -212,8 +216,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 	// set namespace default experiment.
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-	require.Nil(s.T(), err)
-	nonExistingExperimentID := *experiment.ID + 1
+	assert.Nil(s.T(), err)
 
 	tests := []struct {
 		name      string
@@ -244,26 +247,26 @@ func (s *CreateRunTestSuite) Test_Error() {
 		{
 			name: "CreateRunWithNotExistingExperiment",
 			request: request.CreateRunRequest{
-				ExperimentID: fmt.Sprintf("%d", nonExistingExperimentID),
+				ExperimentID: fmt.Sprintf("%d", -1),
 			},
 			error: api.NewResourceDoesNotExistError(
 				fmt.Sprintf(
 					`unable to find experiment with id '%d': error getting experiment by id: %d: record not found`,
-					nonExistingExperimentID,
-					nonExistingExperimentID,
+					-1,
+					-1,
 				),
 			),
 		},
 		{
 			name: "CreateRunWithExistingNamespaceAndNotExistingExperiment",
 			request: request.CreateRunRequest{
-				ExperimentID: fmt.Sprintf("%d", nonExistingExperimentID),
+				ExperimentID: fmt.Sprintf("%d", -1),
 			},
 			error: api.NewResourceDoesNotExistError(
 				fmt.Sprintf(
 					`unable to find experiment with id '%d': error getting experiment by id: %d: record not found`,
-					nonExistingExperimentID,
-					nonExistingExperimentID,
+					-1,
+					-1,
 				),
 			),
 		},

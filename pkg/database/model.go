@@ -44,12 +44,12 @@ type Namespace struct {
 
 type Experiment struct {
 	ID               *int32         `gorm:"column:experiment_id;not null;primaryKey"`
-	Name             string         `gorm:"type:varchar(256);not null;index:idx_namespace_name,unique"`
+	Name             string         `gorm:"type:varchar(256);not null;index:,unique,composite:name"`
 	ArtifactLocation string         `gorm:"type:varchar(256)"`
 	LifecycleStage   LifecycleStage `gorm:"type:varchar(32);check:lifecycle_stage IN ('active', 'deleted')"`
 	CreationTime     sql.NullInt64  `gorm:"type:bigint"`
 	LastUpdateTime   sql.NullInt64  `gorm:"type:bigint"`
-	NamespaceID      uint           `gorm:"index:idx_namespace_name,unique"`
+	NamespaceID      uint           `gorm:"index:,unique,composite:name"`
 	Namespace        Namespace
 	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
 	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`

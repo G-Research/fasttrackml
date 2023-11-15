@@ -44,7 +44,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
-				Key:   "mlflow.note.content",
+				Key:   common.DescriptionKeyTag,
 				Value: "value1",
 			},
 		},

@@ -34,7 +34,7 @@ func TestMetricFlowTestSuite(t *testing.T) {
 }
 
 func (s *MetricFlowTestSuite) TearDownTest() {
-	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *MetricFlowTestSuite) Test_Ok() {
@@ -90,7 +90,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			defer assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
@@ -327,7 +327,7 @@ func (s *MetricFlowTestSuite) createRun(
 	namespace string, req *request.CreateRunRequest,
 ) string {
 	resp := response.CreateRunResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -348,7 +348,7 @@ func (s *MetricFlowTestSuite) getRunAndCompare(
 	namespace string, req request.GetRunRequest, expectedResponse *response.GetRunResponse,
 ) {
 	resp := response.GetRunResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodGet,
@@ -380,7 +380,7 @@ func (s *MetricFlowTestSuite) getRunAndCompare(
 }
 
 func (s *MetricFlowTestSuite) logRunMetric(namespace string, req *request.LogMetricRequest) {
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -398,7 +398,7 @@ func (s *MetricFlowTestSuite) getMetricHistoryBulkAndCompare(
 	namespace string, req request.GetMetricHistoryBulkRequest, expectedResponse response.GetMetricHistoryResponse,
 ) {
 	actualResponse := response.GetMetricHistoryResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithNamespace(
 			namespace,
@@ -419,7 +419,7 @@ func (s *MetricFlowTestSuite) getMetricHistoryAndCompare(
 	namespace string, req request.GetMetricHistoryRequest, expectedResponse response.GetMetricHistoryResponse,
 ) {
 	actualResponse := response.GetMetricHistoryResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodGet,

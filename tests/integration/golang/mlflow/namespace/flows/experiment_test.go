@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -40,7 +41,7 @@ func TestExperimentFlowTestSuite(t *testing.T) {
 }
 
 func (s *ExperimentFlowTestSuite) TearDownTest() {
-	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *ExperimentFlowTestSuite) Test_Ok() {
@@ -96,17 +97,17 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 
 	// delete everything before the test, because when service starts under the hood we create
 	// default namespace and experiment, so it could lead to the problems with actual tests.
-	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			defer assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 			_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			assert.Nil(s.T(), err)
+			require.Nil(s.T(), err)
 
 			// 2. run actual flow test over the test data.
 			s.testExperimentFlow(tt.namespace1Code, tt.namespace2Code)
@@ -159,7 +160,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 	// check that there is no intersection between experiments, so when we request
 	// experiment 1 in scope of namespace 2 and experiment 2 in scope of namespace 1 API will throw an error.
 	resp := api.ErrorResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodGet,
@@ -187,7 +188,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	resp = api.ErrorResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodGet,
@@ -428,7 +429,7 @@ func (s *ExperimentFlowTestSuite) createExperiment(
 	namespace string, req *request.CreateExperimentRequest,
 ) string {
 	resp := response.CreateExperimentResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -447,7 +448,7 @@ func (s *ExperimentFlowTestSuite) createExperiment(
 }
 
 func (s *ExperimentFlowTestSuite) updateExperiment(namespace string, req *request.UpdateExperimentRequest) {
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -465,7 +466,7 @@ func (s *ExperimentFlowTestSuite) searchExperimentAndCompare(
 	namespace string, expectedExperiments []*response.ExperimentPartialResponse,
 ) {
 	searchResp := response.SearchExperimentsResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithQuery(
 			request.SearchExperimentsRequest{},
@@ -486,7 +487,7 @@ func (s *ExperimentFlowTestSuite) getExperimentByIDAndCompare(
 	namespace string, experimentID string, expectedResponse *response.GetExperimentResponse,
 ) *response.GetExperimentResponse {
 	resp := response.GetExperimentResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodGet,
@@ -514,7 +515,7 @@ func (s *ExperimentFlowTestSuite) getExperimentByNameAndCompare(
 	namespace string, name string, expectedResponse *response.GetExperimentResponse,
 ) {
 	resp := response.GetExperimentResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodGet,
@@ -538,7 +539,7 @@ func (s *ExperimentFlowTestSuite) getExperimentByNameAndCompare(
 }
 
 func (s *ExperimentFlowTestSuite) deleteExperiment(namespace, experiment1ID string) {
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -555,7 +556,7 @@ func (s *ExperimentFlowTestSuite) deleteExperiment(namespace, experiment1ID stri
 }
 
 func (s *ExperimentFlowTestSuite) restoreExperiment(namespace, experiment1ID string) {
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,
@@ -572,7 +573,7 @@ func (s *ExperimentFlowTestSuite) restoreExperiment(namespace, experiment1ID str
 }
 
 func (s *ExperimentFlowTestSuite) setExperimentTag(namespace string, req *request.SetExperimentTagRequest) {
-	assert.Nil(
+	require.Nil(
 		s.T(),
 		s.MlflowClient.WithMethod(
 			http.MethodPost,

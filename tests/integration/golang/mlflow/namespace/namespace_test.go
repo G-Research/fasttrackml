@@ -30,7 +30,7 @@ func TestNamespaceTestSuite(t *testing.T) {
 }
 
 func (s *NamespaceTestSuite) TearDownTest() {
-	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *NamespaceTestSuite) Test_Ok() {
@@ -98,10 +98,10 @@ func (s *NamespaceTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
-			defer assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 			experiment := tt.setup()
 			resp := response.GetExperimentResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithMethod(
 					http.MethodGet,
@@ -149,7 +149,7 @@ func (s *NamespaceTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			assert.Nil(
+			require.Nil(
 				s.T(),
 				s.MlflowClient.WithMethod(
 					http.MethodGet,

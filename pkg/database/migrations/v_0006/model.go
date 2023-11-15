@@ -31,15 +31,15 @@ const (
 )
 
 type Namespace struct {
-	ID                  uint   `gorm:"primaryKey;autoIncrement"`
-	Apps                []App  `gorm:"constraint:OnDelete:CASCADE"`
-	Code                string `gorm:"unique;index;not null"`
-	Description         string
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
-	DeletedAt           gorm.DeletedAt `gorm:"index"`
-	DefaultExperimentID *int32         `gorm:"not null"`
-	Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE"`
+	ID                  uint           `gorm:"primaryKey;autoIncrement" json:"id"`
+	Apps                []App          `gorm:"constraint:OnDelete:CASCADE" json:"apps"`
+	Code                string         `gorm:"unique;index;not null" json:"code"`
+	Description         string         `json:"description"`
+	CreatedAt           time.Time      `json:"created_at"`
+	UpdatedAt           time.Time      `json:"updated_at"`
+	DeletedAt           gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	DefaultExperimentID *int32         `gorm:"not null" json:"default_experiment_id"`
+	Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE" json:"experiments"`
 }
 
 type Experiment struct {
@@ -199,10 +199,10 @@ func (d Dashboard) MarshalJSON() ([]byte, error) {
 
 type App struct {
 	Base
-	Type        string   `gorm:"not null" json:"type"`
-	State       AppState `json:"state"`
-	Namespace   Namespace
-	NamespaceID uint `gorm:"column:namespace_id"`
+	Type        string    `gorm:"not null" json:"type"`
+	State       AppState  `json:"state"`
+	Namespace   Namespace `json:"-"`
+	NamespaceID uint      `gorm:"column:namespace_id" json:"-"`
 }
 
 type AppState map[string]any

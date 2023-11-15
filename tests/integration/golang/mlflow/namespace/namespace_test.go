@@ -137,7 +137,7 @@ func (s *NamespaceTestSuite) Test_Error() {
 			namespace: "not-existing-namespace",
 		},
 		{
-			name:      "RequestNotExistingDefaultNamespaceObviously",
+			name:      "RequestNotExistingDefaultNamespaceExplicitly",
 			error:     api.NewResourceDoesNotExistError("unable to find namespace with code: default"),
 			namespace: "default",
 		},

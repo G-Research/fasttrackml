@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/database"

@@ -48,7 +48,7 @@ index 45ee41e..3afdfcb 100644
 +    elif request.param == "sqlite+key":
 +        backend_uri = f"sqlite://{tmp_path.joinpath('sqlalchemy.db')}?_key=passphrase&_journal_mode=WAL"
 +    elif request.param == "postgres":
-+        backend_uri = "postgres://postgres:postgres@localhost/test"
++        backend_uri = "postgres://postgres:postgres@postgres/postgres"
  
      url, process = _init_server(backend_uri, root_artifact_uri=tmp_path.as_uri())
      yield MlflowClient(url)

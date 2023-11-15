@@ -191,20 +191,6 @@ jobs:
       matrix:
         api: [aim, mlflow]
       fail-fast: false
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test
-          LC_COLLATE: POSIX
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -215,8 +201,26 @@ jobs:
         with:
           cache-prefix: python-integration-tests
 
+      - name: Compute cache info
+        id: cache-info
+        run: |
+          echo go-version=$(skopeo inspect docker://golang:${{ steps.setup-go.outputs.go-version }} | jq -r .Digest | cut -d: -f2) >> $GITHUB_OUTPUT
+
+      - name: Setup cache
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: /tmp/go-cache
+          key: python-integration-tests-image-${{ steps.cache-info.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
+
       - name: Run Python integration tests
-        run: ./tests/integration/python/${{ matrix.api }}/test.sh
+        run: |
+          if [ "${{ steps.cache.outputs.cache-hit }}" == "true" ]; then
+            cache=-cache-from=/tmp/go-cache
+          else
+            cache=-cache-to=/tmp/go-cache
+          fi
+          go run tests/integration/python/main.go $cache -targets ${{ matrix.api }}
 
   build:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

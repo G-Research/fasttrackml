@@ -277,7 +277,7 @@ index 0000000..099cab0
 +        elif cls.db == "sqlite+key":
 +            db_path = f"sqlite://{dir_name}/fml.db?_key=passphrase"
 +        elif cls.db == "postgres":
-+            db_path = "postgres://postgres:postgres@localhost/test"
++            db_path = "postgres://postgres:postgres@postgres/postgres"
 +        else:
 +            raise ValueError(f"Database '{cls.db}' not supported.")
 +

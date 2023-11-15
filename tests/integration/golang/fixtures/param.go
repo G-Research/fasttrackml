@@ -31,3 +31,12 @@ func (f ParamFixtures) CreateParam(ctx context.Context, param *models.Param) (*m
 	}
 	return param, nil
 }
+
+// GetParamsByRunID returns all params for a given run.
+func (f ParamFixtures) GetParamsByRunID(ctx context.Context, runID string) ([]models.Param, error) {
+	var params []models.Param
+	if err := f.baseFixtures.db.WithContext(ctx).Where("run_uuid = ?", runID).Find(&params).Error; err != nil {
+		return nil, eris.Wrap(err, "error getting params by run id")
+	}
+	return params, nil
+}

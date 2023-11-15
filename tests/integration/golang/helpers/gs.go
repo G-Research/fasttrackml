@@ -9,9 +9,38 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/rotisserie/eris"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
+
+type BaseArtifactGSTestSuite struct {
+	BaseTestSuite
+	GsClient    *storage.Client
+	TestBuckets []string
+}
+
+func NewBaseArtifactGSTestSuite(testBuckets ...string) BaseArtifactGSTestSuite {
+	return BaseArtifactGSTestSuite{
+		TestBuckets: testBuckets,
+	}
+}
+
+func (s *BaseArtifactGSTestSuite) SetupSuite() {
+	s.BaseTestSuite.SetupSuite()
+	gsClient, err := NewGSClient(GetGSEndpointUri())
+	require.Nil(s.T(), err)
+	s.GsClient = gsClient
+}
+
+func (s *BaseArtifactGSTestSuite) SetupTest() {
+	s.BaseTestSuite.SetupTest()
+	require.Nil(s.T(), CreateGSBuckets(s.GsClient, s.TestBuckets))
+}
+
+func (s *BaseArtifactGSTestSuite) TearDownTest() {
+	require.Nil(s.T(), DeleteGSBuckets(s.GsClient, s.TestBuckets))
+}
 
 // NewGSClient creates new instance of Google Storage client.
 func NewGSClient(endpoint string) (*storage.Client, error) {

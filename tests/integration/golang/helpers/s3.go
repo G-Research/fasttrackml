@@ -9,7 +9,36 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/rotisserie/eris"
+	"github.com/stretchr/testify/require"
 )
+
+type BaseArtifactS3TestSuite struct {
+	BaseTestSuite
+	S3Client    *s3.Client
+	TestBuckets []string
+}
+
+func NewBaseArtifactS3TestSuite(testBuckets ...string) BaseArtifactS3TestSuite {
+	return BaseArtifactS3TestSuite{
+		TestBuckets: testBuckets,
+	}
+}
+
+func (s *BaseArtifactS3TestSuite) SetupSuite() {
+	s.BaseTestSuite.SetupSuite()
+	gsClient, err := NewS3Client(GetS3EndpointUri())
+	require.Nil(s.T(), err)
+	s.S3Client = gsClient
+}
+
+func (s *BaseArtifactS3TestSuite) SetupTest() {
+	s.BaseTestSuite.SetupTest()
+	require.Nil(s.T(), CreateS3Buckets(s.S3Client, s.TestBuckets))
+}
+
+func (s *BaseArtifactS3TestSuite) TearDownTest() {
+	require.Nil(s.T(), DeleteS3Buckets(s.S3Client, s.TestBuckets))
+}
 
 // NewS3Client creates new instance of S3 client.
 func NewS3Client(endpoint string) (*s3.Client, error) {
@@ -47,8 +76,8 @@ func CreateS3Buckets(s3Client *s3.Client, buckets []string) error {
 	return nil
 }
 
-// RemoveS3Buckets removes the test buckets.
-func RemoveS3Buckets(s3Client *s3.Client, buckets []string) error {
+// DeleteS3Buckets removes the test buckets.
+func DeleteS3Buckets(s3Client *s3.Client, buckets []string) error {
 	for _, bucket := range buckets {
 		if err := removeBucket(s3Client, bucket); err != nil {
 			return eris.Wrapf(err, "failed to remove bucket '%s'", bucket)

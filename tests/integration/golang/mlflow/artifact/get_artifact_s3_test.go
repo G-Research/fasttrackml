@@ -25,29 +25,13 @@ import (
 )
 
 type GetArtifactS3TestSuite struct {
-	helpers.BaseTestSuite
-	s3Client    *s3.Client
-	testBuckets []string
+	helpers.BaseArtifactS3TestSuite
 }
 
 func TestGetArtifactS3TestSuite(t *testing.T) {
 	suite.Run(t, &GetArtifactS3TestSuite{
-		testBuckets: []string{"bucket1", "bucket2"},
+		helpers.NewBaseArtifactS3TestSuite("bucket1", "bucket2"),
 	})
-}
-
-func (s *GetArtifactS3TestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest()
-
-	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
-	require.Nil(s.T(), err)
-	require.Nil(s.T(), helpers.CreateS3Buckets(s3Client, s.testBuckets))
-
-	s.s3Client = s3Client
-}
-
-func (s *GetArtifactS3TestSuite) TearDownTest() {
-	require.Nil(s.T(), helpers.RemoveS3Buckets(s.s3Client, s.testBuckets))
 }
 
 func (s *GetArtifactS3TestSuite) Test_Ok() {
@@ -105,7 +89,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 				Body:   strings.NewReader("content"),
 				Bucket: aws.String(tt.bucket),
 			}
-			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
+			_, err = s.S3Client.PutObject(context.Background(), putObjReq)
 			require.Nil(s.T(), err)
 
 			// upload artifact subdir object to S3
@@ -117,7 +101,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 				Body:   strings.NewReader("subdir-object-content"),
 				Bucket: aws.String(tt.bucket),
 			}
-			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
+			_, err = s.S3Client.PutObject(context.Background(), putObjReq)
 			require.Nil(s.T(), err)
 
 			// make API call for root object
@@ -198,7 +182,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 		Body:   strings.NewReader("content"),
 		Bucket: aws.String("bucket1"),
 	}
-	_, err = s.s3Client.PutObject(context.Background(), putObjReq)
+	_, err = s.S3Client.PutObject(context.Background(), putObjReq)
 	require.Nil(s.T(), err)
 
 	tests := []struct {

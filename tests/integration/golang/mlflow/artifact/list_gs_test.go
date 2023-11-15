@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,30 +25,13 @@ import (
 )
 
 type ListArtifactGSTestSuite struct {
-	helpers.BaseTestSuite
-	gsClient    *storage.Client
-	testBuckets []string
+	helpers.BaseArtifactGSTestSuite
 }
 
 func TestListArtifactGSTestSuite(t *testing.T) {
 	suite.Run(t, &ListArtifactGSTestSuite{
-		testBuckets: []string{"bucket1", "bucket2"},
+		helpers.NewBaseArtifactGSTestSuite("bucket1", "bucket2"),
 	})
-}
-
-func (s *ListArtifactGSTestSuite) SetupSuite() {
-	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
-	require.Nil(s.T(), err)
-	s.gsClient = gsClient
-}
-
-func (s *ListArtifactGSTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest()
-	require.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
-}
-
-func (s *ListArtifactGSTestSuite) TearDownTest() {
-	require.Nil(s.T(), helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *ListArtifactGSTestSuite) Test_Ok() {
@@ -116,7 +98,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			require.Nil(s.T(), err)
 
 			// 3. upload artifact objects to GS.
-			writer := s.gsClient.Bucket(
+			writer := s.GsClient.Bucket(
 				tt.bucket,
 			).Object(
 				fmt.Sprintf("1/%s/artifacts/artifact.txt", runID),
@@ -127,7 +109,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			require.Nil(s.T(), err)
 			require.Nil(t, writer.Close())
 
-			writer = s.gsClient.Bucket(
+			writer = s.GsClient.Bucket(
 				tt.bucket,
 			).Object(
 				fmt.Sprintf("1/%s/artifacts/artifact/artifact.txt", runID),

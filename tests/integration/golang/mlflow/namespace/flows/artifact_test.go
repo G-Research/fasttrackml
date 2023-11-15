@@ -104,7 +104,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 		s.T().Run(tt.name, func(T *testing.T) {
 			defer func() {
 				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-				require.Nil(s.T(), helpers.RemoveS3Buckets(s.s3Client, s.testBuckets))
+				require.Nil(s.T(), helpers.DeleteS3Buckets(s.s3Client, s.testBuckets))
 			}()
 
 			// setup data under the test.

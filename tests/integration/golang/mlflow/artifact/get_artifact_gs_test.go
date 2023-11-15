@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,30 +23,13 @@ import (
 )
 
 type GetArtifactGSTestSuite struct {
-	helpers.BaseTestSuite
-	gsClient    *storage.Client
-	testBuckets []string
+	helpers.BaseArtifactGSTestSuite
 }
 
 func TestGetArtifactGSTestSuite(t *testing.T) {
 	suite.Run(t, &GetArtifactGSTestSuite{
-		testBuckets: []string{"bucket1", "bucket2"},
+		helpers.NewBaseArtifactGSTestSuite("bucket1", "bucket2"),
 	})
-}
-
-func (s *GetArtifactGSTestSuite) SetupSuite() {
-	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
-	require.Nil(s.T(), err)
-	s.gsClient = gsClient
-}
-
-func (s *GetArtifactGSTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest()
-	require.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
-}
-
-func (s *GetArtifactGSTestSuite) TearDownTest() {
-	require.Nil(s.T(), helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *GetArtifactGSTestSuite) Test_Ok() {
@@ -100,7 +82,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			require.Nil(s.T(), err)
 
 			// upload artifact root object to GS
-			writer := s.gsClient.Bucket(tt.bucket).Object(
+			writer := s.GsClient.Bucket(tt.bucket).Object(
 				fmt.Sprintf("/1/%s/artifacts/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("content"))
@@ -108,7 +90,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			require.Nil(s.T(), writer.Close())
 
 			// upload artifact subdir object to GS
-			writer = s.gsClient.Bucket(tt.bucket).Object(
+			writer = s.GsClient.Bucket(tt.bucket).Object(
 				fmt.Sprintf("/1/%s/artifacts/artifact/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("subdir-object-content"))
@@ -189,7 +171,7 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 
 	// upload artifact subdir object to GS
 	require.Nil(s.T(), err)
-	writer := s.gsClient.Bucket("bucket1").Object(
+	writer := s.GsClient.Bucket("bucket1").Object(
 		fmt.Sprintf("1/%s/artifacts/artifact/artifact.file", runID),
 	).NewWriter(context.Background())
 	_, err = writer.Write([]byte("content"))

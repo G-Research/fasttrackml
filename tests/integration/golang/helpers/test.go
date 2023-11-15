@@ -29,7 +29,7 @@ type BaseTestSuite struct {
 	NamespaceFixtures  *fixtures.NamespaceFixtures
 }
 
-func (s *BaseTestSuite) SetupTest() {
+func (s *BaseTestSuite) SetupSuite() {
 	if db == nil {
 		instance, err := database.NewDBProvider(
 			GetDatabaseUri(),
@@ -85,7 +85,9 @@ func (s *BaseTestSuite) SetupTest() {
 	tagFixtures, err := fixtures.NewTagFixtures(db)
 	require.Nil(s.T(), err)
 	s.TagFixtures = tagFixtures
+}
 
+func (s *BaseTestSuite) SetupTest() {
 	// by default, unload everything.
 	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }

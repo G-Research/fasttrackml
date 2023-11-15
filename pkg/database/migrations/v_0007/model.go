@@ -1,4 +1,4 @@
-package database
+package v_0007
 
 import (
 	"context"
@@ -202,10 +202,10 @@ func (d Dashboard) MarshalJSON() ([]byte, error) {
 
 type App struct {
 	Base
-	Type        string    `gorm:"not null" json:"type"`
-	State       AppState  `json:"state"`
-	Namespace   Namespace `json:"-"`
-	NamespaceID uint      `gorm:"column:namespace_id" json:"-"`
+	Type        string   `gorm:"not null" json:"type"`
+	State       AppState `json:"state"`
+	Namespace   Namespace
+	NamespaceID uint `gorm:"column:namespace_id"`
 }
 
 type AppState map[string]any

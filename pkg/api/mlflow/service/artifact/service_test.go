@@ -219,10 +219,10 @@ func TestService_GetArtifact_Ok(t *testing.T) {
 		},
 	)
 
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	result := new(bytes.Buffer)
 	_, err = result.ReadFrom(data)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, "content", result.String())
 }
 

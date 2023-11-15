@@ -78,7 +78,7 @@ func (s *DeleteDashboardTestSuite) Test_Ok() {
 			var resp response.Error
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodDelete,
 				).WithResponse(
 					&resp,
@@ -145,7 +145,7 @@ func (s *DeleteDashboardTestSuite) Test_Error() {
 			var resp response.Error
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodDelete,
 				).WithResponse(
 					&resp,

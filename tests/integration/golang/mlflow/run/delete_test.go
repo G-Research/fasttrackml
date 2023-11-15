@@ -75,7 +75,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			resp := map[string]any{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
@@ -123,7 +123,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,

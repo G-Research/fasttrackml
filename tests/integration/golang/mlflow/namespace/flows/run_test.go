@@ -192,9 +192,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 	resp := api.ErrorResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
 			request.GetRunRequest{
@@ -212,9 +210,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 	resp = api.ErrorResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
 			request.GetRunRequest{
@@ -856,7 +852,7 @@ func (s *RunFlowTestSuite) createRun(
 	resp := response.CreateRunResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -877,9 +873,7 @@ func (s *RunFlowTestSuite) getRunAndCompare(
 	resp := response.GetRunResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
 			req,
@@ -911,7 +905,7 @@ func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunReq
 	resp := response.UpdateRunResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -931,7 +925,7 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 	searchResp := response.SearchRunsResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -951,7 +945,7 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 func (s *RunFlowTestSuite) deleteRun(namespace string, req *request.DeleteRunRequest) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -966,7 +960,7 @@ func (s *RunFlowTestSuite) deleteRun(namespace string, req *request.DeleteRunReq
 func (s *RunFlowTestSuite) restoreRun(namespace string, req *request.RestoreRunRequest) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -981,7 +975,7 @@ func (s *RunFlowTestSuite) restoreRun(namespace string, req *request.RestoreRunR
 func (s *RunFlowTestSuite) logRunMetric(namespace string, req *request.LogMetricRequest) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -996,7 +990,7 @@ func (s *RunFlowTestSuite) logRunMetric(namespace string, req *request.LogMetric
 func (s *RunFlowTestSuite) logRunParam(namespace string, req *request.LogParamRequest) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -1011,7 +1005,7 @@ func (s *RunFlowTestSuite) logRunParam(namespace string, req *request.LogParamRe
 func (s *RunFlowTestSuite) setRunTag(namespace string, req *request.SetRunTagRequest) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -1026,7 +1020,7 @@ func (s *RunFlowTestSuite) setRunTag(namespace string, req *request.SetRunTagReq
 func (s *RunFlowTestSuite) deleteRunTag(namespace string, req *request.DeleteRunTagRequest) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -1041,7 +1035,7 @@ func (s *RunFlowTestSuite) deleteRunTag(namespace string, req *request.DeleteRun
 func (s *RunFlowTestSuite) runLogBatch(namespace string, req *request.LogBatchRequest) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,

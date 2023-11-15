@@ -103,7 +103,7 @@ func (s *GetRunTestSuite) Test_Ok() {
 	resp := response.GetRunResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithQuery(
+		s.MlflowClient().WithQuery(
 			query,
 		).WithResponse(
 			&resp,
@@ -180,7 +180,7 @@ func (s *GetRunTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
 					&resp,

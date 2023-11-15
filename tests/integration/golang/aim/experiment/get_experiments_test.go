@@ -67,7 +67,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 	}
 
 	var resp response.Experiments
-	require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/experiments/"))
+	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/experiments/"))
 	assert.Equal(s.T(), len(experiments), len(resp))
 	for _, actualExperiment := range resp {
 		expectedExperiment := experiments[actualExperiment.ID]

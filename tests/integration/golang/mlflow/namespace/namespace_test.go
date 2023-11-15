@@ -59,7 +59,7 @@ func (s *NamespaceTestSuite) Test_Ok() {
 			namespace: "newly-created-namespace",
 		},
 		{
-			name: "TestObviousDefaultCustomNamespaces",
+			name: "TestObviousDefaultAndCustomNamespaces",
 			setup: func() *models.Experiment {
 				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 					Code:                "default",
@@ -78,7 +78,7 @@ func (s *NamespaceTestSuite) Test_Ok() {
 			namespace: "default",
 		},
 		{
-			name: "TestImplicitDefaultCustomNamespaces",
+			name: "TestImplicitDefaultAndCustomNamespaces",
 			setup: func() *models.Experiment {
 				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 					Code:                "default",
@@ -137,7 +137,7 @@ func (s *NamespaceTestSuite) Test_Error() {
 			namespace: "not-existing-namespace",
 		},
 		{
-			name:      "RequestNotExistingDefaultNamespaceObviously",
+			name:      "RequestNotExistingDefaultNamespaceExplicitly",
 			error:     api.NewResourceDoesNotExistError("unable to find namespace with code: default"),
 			namespace: "default",
 		},

@@ -78,8 +78,8 @@ github.com/apache/arrow/go/v12 v12.0.1/go.mod h1:weuTY7JvTG/HDPtMQxEUp7pU73vkLWM
 github.com/apache/thrift v0.16.0 h1:qEy6UW60iVOlUy+b9ZR0d5WzUWYGOo4HfopoyBaNmoY=
 github.com/apache/thrift v0.16.0/go.mod h1:PHK3hniurgQaNMZYaCLEqXKsYK8upmhPbmdP2FXSqgU=
 github.com/arbovm/levenshtein v0.0.0-20160628152529-48b4e1c0c4d0/go.mod h1:t2tdKJDJF9BV14lnkjHmOQgcvEKgtqs5a1N3LNdJhGE=
-github.com/aws/aws-sdk-go-v2 v1.22.2 h1:lV0U8fnhAnPz8YcdmZVV60+tr6CakHzqA6P8T46ExJI=
-github.com/aws/aws-sdk-go-v2 v1.22.2/go.mod h1:Kd0OJtkW3Q0M0lUWGszapWjEvrXDzRW+D21JNsroB+c=
+github.com/aws/aws-sdk-go-v2 v1.23.0 h1:PiHAzmiQQr6JULBUdvR8fKlA+UPKLT/8KbiqpFBWiAo=
+github.com/aws/aws-sdk-go-v2 v1.23.0/go.mod h1:i1XDttT4rnf6vxc9AuskLc6s7XBee8rlLilKlc03uAA=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.0 h1:hHgLiIrTRtddC0AKcJr5s7i/hLgcpTt+q/FKxf1Zayk=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.0/go.mod h1:w4I/v3NOWgD+qvs1NPEwhd++1h3XPHFaVxasfY6HlYQ=
 github.com/aws/aws-sdk-go-v2/config v1.25.0 h1:WCwAqyrM/kqYi6pHjVpq/w2pLydeGKv8Af9vdtO3ciM=
@@ -112,8 +112,8 @@ github.com/aws/aws-sdk-go-v2/service/ssooidc v1.19.1 h1:iRFNqZH4a67IqPvK8xxtyQYn
 github.com/aws/aws-sdk-go-v2/service/ssooidc v1.19.1/go.mod h1:pTy5WM+6sNv2tB24JNKFtn6EvciQ5k40ZJ0pq/Iaxj0=
 github.com/aws/aws-sdk-go-v2/service/sts v1.25.1 h1:txgVXIXWPXyqdiVn92BV6a/rgtpX31HYdsOYj0sVQQQ=
 github.com/aws/aws-sdk-go-v2/service/sts v1.25.1/go.mod h1:VAiJiNaoP1L89STFlEMgmHX1bKixY+FaP+TpRFrmyZ4=
-github.com/aws/smithy-go v1.16.0 h1:gJZEH/Fqh+RsvlJ1Zt4tVAtV6bKkp3cC+R6FCZMNzik=
-github.com/aws/smithy-go v1.16.0/go.mod h1:NukqUGpCZIILqqiV0NIjeFh24kd/FAa4beRb6nbIUPE=
+github.com/aws/smithy-go v1.17.0 h1:wWJD7LX6PBV6etBUwO0zElG0nWN9rUhp0WdYeHSHAaI=
+github.com/aws/smithy-go v1.17.0/go.mod h1:NukqUGpCZIILqqiV0NIjeFh24kd/FAa4beRb6nbIUPE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=

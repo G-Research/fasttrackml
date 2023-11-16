@@ -127,7 +127,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			}
 
 			resp := new(bytes.Buffer)
-			require.Nil(s.T(), s.MlflowClient.WithQuery(
+			require.Nil(s.T(), s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -145,7 +145,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			}
 
 			resp = new(bytes.Buffer)
-			require.Nil(s.T(), s.MlflowClient.WithQuery(
+			require.Nil(s.T(), s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -276,7 +276,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			require.Nil(t, s.MlflowClient.WithQuery(
+			require.Nil(t, s.MlflowClient().WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,

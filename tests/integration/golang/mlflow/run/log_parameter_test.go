@@ -68,7 +68,7 @@ func (s *LogParamTestSuite) Test_Ok() {
 	resp := map[string]any{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
 			req,
@@ -88,7 +88,7 @@ func (s *LogParamTestSuite) Test_Ok() {
 	}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
 			req,
@@ -140,7 +140,7 @@ func (s *LogParamTestSuite) Test_Error() {
 	resp := api.ErrorResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
 			req,
@@ -161,7 +161,7 @@ func (s *LogParamTestSuite) Test_Error() {
 	}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
 			req,
@@ -185,7 +185,7 @@ func (s *LogParamTestSuite) Test_Error() {
 	}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
 			req,

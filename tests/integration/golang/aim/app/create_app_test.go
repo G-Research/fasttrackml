@@ -57,7 +57,7 @@ func (s *CreateAppTestSuite) Test_Ok() {
 			var resp response.App
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.requestBody,
@@ -105,7 +105,7 @@ func (s *CreateAppTestSuite) Test_Error() {
 			var resp response.Error
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.requestBody,

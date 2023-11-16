@@ -58,7 +58,7 @@ func (s *CreateExperimentTestSuite) Test_Ok() {
 	resp := response.CreateExperimentResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
 			req,
@@ -111,7 +111,7 @@ func (s *CreateExperimentTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,

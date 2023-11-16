@@ -155,7 +155,7 @@ func (s *CreateRunTestSuite) successCases(
 	}
 
 	resp := response.CreateRunResponse{}
-	client := s.MlflowClient.WithMethod(
+	client := s.MlflowClient().WithMethod(
 		http.MethodPost,
 	).WithRequest(
 		req,
@@ -274,7 +274,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			client := s.MlflowClient.WithMethod(
+			client := s.MlflowClient().WithMethod(
 				http.MethodPost,
 			).WithRequest(
 				tt.request,

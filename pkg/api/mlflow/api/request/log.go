@@ -38,12 +38,13 @@ func (r LogParamRequest) GetRunID() string {
 
 // LogMetricRequest is a request object for `POST mlflow/runs/log-metric` endpoint.
 type LogMetricRequest struct {
-	RunID     string `json:"run_id"`
-	RunUUID   string `json:"run_uuid"`
-	Key       string `json:"key"`
-	Value     any    `json:"value"`
-	Timestamp int64  `json:"timestamp"`
-	Step      int64  `json:"step"`
+	RunID     string         `json:"run_id"`
+	RunUUID   string         `json:"run_uuid"`
+	Key       string         `json:"key"`
+	Value     any            `json:"value"`
+	Timestamp int64          `json:"timestamp"`
+	Step      int64          `json:"step"`
+	Context   map[string]any `json:"context"`
 }
 
 // GetRunID returns Run ID.

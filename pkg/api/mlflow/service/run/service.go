@@ -491,6 +491,15 @@ func (s Service) LogMetric(
 		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
+	context, err := convertors.ConvertMetricContextParamRequestToDBModel(req)
+	if err != nil {
+		return api.NewInvalidParameterValueError(err.Error())
+	}
+
+	if err := s.metricRepository.CreateContext(ctx, *context); err != nil {
+		return api.NewInternalError("unable to log metric '%s' for run '%s': %s", req.Key, req.GetRunID(), err)
+	}
+
 	metric, err := convertors.ConvertMetricParamRequestToDBModel(run.ID, req)
 	if err != nil {
 		return api.NewInvalidParameterValueError(err.Error())

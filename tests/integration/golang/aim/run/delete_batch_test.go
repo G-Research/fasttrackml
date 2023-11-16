@@ -79,7 +79,7 @@ func (s *DeleteBatchTestSuite) Test_Ok() {
 			resp := fiber.Map{}
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(http.MethodPost).WithRequest(
+				s.AIMClient().WithMethod(http.MethodPost).WithRequest(
 					tt.runIDs,
 				).WithResponse(
 					&resp,
@@ -128,7 +128,7 @@ func (s *DeleteBatchTestSuite) Test_Error() {
 			var resp api.ErrorResponse
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(http.MethodPost).WithRequest(
+				s.AIMClient().WithMethod(http.MethodPost).WithRequest(
 					tt.request,
 				).WithResponse(
 					&resp,

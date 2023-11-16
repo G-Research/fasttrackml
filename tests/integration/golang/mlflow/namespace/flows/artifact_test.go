@@ -194,16 +194,12 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	resp := api.ErrorResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
 			request.ListArtifactsRequest{
 				RunID: run1ID,
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -216,16 +212,12 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	resp = api.ErrorResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
 			request.ListArtifactsRequest{
 				RunID: run2ID,
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -252,16 +244,12 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	resp = api.ErrorResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
 			request.GetArtifactRequest{
 				RunID: run1ID,
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -274,16 +262,12 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	resp = api.ErrorResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
 			request.ListArtifactsRequest{
 				RunID: run2ID,
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -298,14 +282,12 @@ func (s *ArtifactFlowTestSuite) createRun(namespace string, req *request.CreateR
 	resp := response.CreateRunResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
 		).WithRequest(
 			req,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -321,14 +303,10 @@ func (s *ArtifactFlowTestSuite) listRunArtifactsAndCompare(
 	actualResponse := response.ListArtifactsResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
 			req,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&actualResponse,
 		).DoRequest(
@@ -342,9 +320,7 @@ func (s *ArtifactFlowTestSuite) getRunArtifactAndCompare(
 	namespace string, req request.GetArtifactRequest, expectedResponse string,
 ) {
 	actualResponse := new(bytes.Buffer)
-	require.Nil(s.T(), s.MlflowClient.WithMethod(
-		http.MethodGet,
-	).WithNamespace(
+	require.Nil(s.T(), s.MlflowClient().WithNamespace(
 		namespace,
 	).WithQuery(
 		req,

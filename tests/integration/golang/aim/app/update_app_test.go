@@ -71,7 +71,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 			var resp response.App
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
 					tt.requestBody,
@@ -83,7 +83,7 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 			)
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
 					tt.requestBody,
@@ -148,7 +148,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 			var resp response.Error
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
 					tt.requestBody,

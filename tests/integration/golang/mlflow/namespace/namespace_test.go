@@ -5,7 +5,6 @@ package namespace
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -103,9 +102,7 @@ func (s *NamespaceTestSuite) Test_Ok() {
 			resp := response.GetExperimentResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
-					http.MethodGet,
-				).WithNamespace(
+				s.MlflowClient().WithNamespace(
 					tt.namespace,
 				).WithQuery(
 					request.GetExperimentRequest{
@@ -151,9 +148,7 @@ func (s *NamespaceTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
-					http.MethodGet,
-				).WithNamespace(
+				s.MlflowClient().WithNamespace(
 					tt.namespace,
 				).WithQuery(
 					request.GetExperimentRequest{},

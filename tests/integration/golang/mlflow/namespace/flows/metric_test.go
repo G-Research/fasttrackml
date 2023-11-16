@@ -329,7 +329,7 @@ func (s *MetricFlowTestSuite) createRun(
 	resp := response.CreateRunResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -350,9 +350,7 @@ func (s *MetricFlowTestSuite) getRunAndCompare(
 	resp := response.GetRunResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
 			req,
@@ -382,7 +380,7 @@ func (s *MetricFlowTestSuite) getRunAndCompare(
 func (s *MetricFlowTestSuite) logRunMetric(namespace string, req *request.LogMetricRequest) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -400,10 +398,8 @@ func (s *MetricFlowTestSuite) getMetricHistoryBulkAndCompare(
 	actualResponse := response.GetMetricHistoryResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace,
-		).WithMethod(
-			http.MethodGet,
 		).WithQuery(
 			req,
 		).WithResponse(
@@ -421,9 +417,7 @@ func (s *MetricFlowTestSuite) getMetricHistoryAndCompare(
 	actualResponse := response.GetMetricHistoryResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
 			req,

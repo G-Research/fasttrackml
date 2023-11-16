@@ -15,18 +15,18 @@ var db *gorm.DB
 
 type BaseTestSuite struct {
 	suite.Suite
-	AIMClient          *HttpClient
-	MlflowClient       *HttpClient
-	AdminClient        *HttpClient
+	AIMClient          func() *HttpClient
+	MlflowClient       func() *HttpClient
+	AdminClient        func() *HttpClient
 	AppFixtures        *fixtures.AppFixtures
-	DashboardFixtures  *fixtures.DashboardFixtures
-	ExperimentFixtures *fixtures.ExperimentFixtures
-	MetricFixtures     *fixtures.MetricFixtures
-	NamespaceFixtures  *fixtures.NamespaceFixtures
-	ParamFixtures      *fixtures.ParamFixtures
-	ProjectFixtures    *fixtures.ProjectFixtures
 	RunFixtures        *fixtures.RunFixtures
 	TagFixtures        *fixtures.TagFixtures
+	MetricFixtures     *fixtures.MetricFixtures
+	ParamFixtures      *fixtures.ParamFixtures
+	ProjectFixtures    *fixtures.ProjectFixtures
+	DashboardFixtures  *fixtures.DashboardFixtures
+	ExperimentFixtures *fixtures.ExperimentFixtures
+	NamespaceFixtures  *fixtures.NamespaceFixtures
 }
 
 func (s *BaseTestSuite) SetupTest() {
@@ -40,9 +40,15 @@ func (s *BaseTestSuite) SetupTest() {
 		db = instance.GormDB()
 	}
 
-	s.AIMClient = NewAimApiClient(GetServiceUri())
-	s.MlflowClient = NewMlflowApiClient(GetServiceUri())
-	s.AdminClient = NewAdminApiClient(GetServiceUri())
+	s.AIMClient = func() *HttpClient {
+		return NewAimApiClient(GetServiceUri())
+	}
+	s.MlflowClient = func() *HttpClient {
+		return NewMlflowApiClient(GetServiceUri())
+	}
+	s.AdminClient = func() *HttpClient {
+		return NewAdminApiClient(GetServiceUri())
+	}
 
 	appFixtures, err := fixtures.NewAppFixtures(db)
 	require.Nil(s.T(), err)

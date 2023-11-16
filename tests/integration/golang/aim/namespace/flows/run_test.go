@@ -173,7 +173,6 @@ func (s *RunFlowTestSuite) Test_Ok() {
 func (s *RunFlowTestSuite) testRunFlow(
 	namespace1Code, namespace2Code string, experiment1, experiment2 *models.Experiment, run1, run2 *models.Run,
 ) {
-
 	// test `PUT /runs/:id` endpoint.
 	s.updateRun(namespace1Code, &request.UpdateRunRequest{
 		RunID: common.GetPointer(run1.ID),

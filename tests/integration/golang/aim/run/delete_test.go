@@ -86,7 +86,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			var resp fiber.Map
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(http.MethodDelete).WithRequest(
+				s.AIMClient().WithMethod(http.MethodDelete).WithRequest(
 					tt.request,
 				).WithResponse(
 					&resp,
@@ -132,7 +132,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 			var resp api.ErrorResponse
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(http.MethodDelete).WithRequest(
+				s.AIMClient().WithMethod(http.MethodDelete).WithRequest(
 					tt.request.RunID,
 				).WithResponse(
 					&resp,

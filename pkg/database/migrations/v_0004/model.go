@@ -199,7 +199,6 @@ func (s AppState) Value() (driver.Value, error) {
 	return string(v), nil
 }
 
-//nolint:ineffassign
 func (s *AppState) Scan(v interface{}) error {
 	var nullS sql.NullString
 	if err := nullS.Scan(v); err != nil {
@@ -208,7 +207,6 @@ func (s *AppState) Scan(v interface{}) error {
 	if nullS.Valid {
 		return json.Unmarshal([]byte(nullS.String), s)
 	}
-	s = nil
 	return nil
 }
 

@@ -103,7 +103,7 @@ func (s *GetRunTestSuite) Test_Ok() {
 	resp := response.GetRunResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithQuery(
+		s.MlflowClient().WithQuery(
 			query,
 		).WithResponse(
 			&resp,
@@ -145,7 +145,7 @@ func (s *GetRunTestSuite) Test_Ok() {
 
 func (s *GetRunTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -180,7 +180,7 @@ func (s *GetRunTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
 					&resp,

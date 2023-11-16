@@ -187,6 +187,7 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 		switch c.responseType {
 		case ResponseTypeJSON:
 			body, err := io.ReadAll(resp.Body)
+			fmt.Println("body:", string(body))
 			if err != nil {
 				return eris.Wrap(err, "error reading response data")
 			}

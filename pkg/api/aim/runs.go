@@ -1043,7 +1043,7 @@ func DeleteRun(c *fiber.Ctx) error {
 	}
 
 	// TODO this code should move to service with injected repository
-	if err = runRepository.Delete(c.Context(), run); err != nil {
+	if err = runRepository.Delete(c.Context(), ns.ID, run); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
 			fmt.Sprintf("unable to delete run %q: %s", params.ID, err),
 		)
@@ -1122,6 +1122,12 @@ func UpdateRun(c *fiber.Ctx) error {
 }
 
 func ArchiveBatch(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("archiveBatch namespace: %s", ns.Code)
+
 	var ids []string
 	if err := c.BodyParser(&ids); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
@@ -1130,11 +1136,11 @@ func ArchiveBatch(c *fiber.Ctx) error {
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB)
 	if c.Query("archive") == "true" {
-		if err := runRepo.ArchiveBatch(c.Context(), ids); err != nil {
+		if err := runRepo.ArchiveBatch(c.Context(), ns.ID, ids); err != nil {
 			return err
 		}
 	} else {
-		if err := runRepo.RestoreBatch(c.Context(), ids); err != nil {
+		if err := runRepo.RestoreBatch(c.Context(), ns.ID, ids); err != nil {
 			return err
 		}
 	}
@@ -1145,6 +1151,12 @@ func ArchiveBatch(c *fiber.Ctx) error {
 }
 
 func DeleteBatch(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("deleteBatch namespace: %s", ns.Code)
+
 	var ids []string
 	if err := c.BodyParser(&ids); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
@@ -1152,7 +1164,7 @@ func DeleteBatch(c *fiber.Ctx) error {
 
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB)
-	if err := runRepo.DeleteBatch(c.Context(), ids); err != nil {
+	if err := runRepo.DeleteBatch(c.Context(), ns.ID, ids); err != nil {
 		return err
 	}
 	return c.JSON(fiber.Map{

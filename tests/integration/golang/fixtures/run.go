@@ -43,8 +43,8 @@ func (f RunFixtures) CreateRun(
 }
 
 // ArchiveRun archive existing runs by their ids.
-func (f RunFixtures) ArchiveRun(ctx context.Context, ids []string) error {
-	return f.runRepository.ArchiveBatch(ctx, ids)
+func (f RunFixtures) ArchiveRun(ctx context.Context, namespaceID uint, ids []string) error {
+	return f.runRepository.ArchiveBatch(ctx, namespaceID, ids)
 }
 
 // UpdateRun updates existing Run.
@@ -59,9 +59,9 @@ func (f RunFixtures) UpdateRun(
 
 // ArchiveRuns soft-deletes existing Runs.
 func (f RunFixtures) ArchiveRuns(
-	ctx context.Context, runIDs []string,
+	ctx context.Context, namespaceID uint, runIDs []string,
 ) error {
-	if err := f.runRepository.ArchiveBatch(ctx, runIDs); err != nil {
+	if err := f.runRepository.ArchiveBatch(ctx, namespaceID, runIDs); err != nil {
 		return eris.Wrap(err, "error archiving runs")
 	}
 	return nil

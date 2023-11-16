@@ -9,12 +9,12 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
-
+	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
@@ -273,15 +273,143 @@ func (s *RunFlowTestSuite) testRunFlow(
 			},
 		},
 	)
+
+	// test `POST /runs/archive-batch` endpoint.
+	// check that run has been actually archived.
+	s.archiveRunsBatch(namespace1Code, []string{run1.ID}, true)
+	s.getRunAndCompare(namespace1Code, run1.ID, &response.GetRunInfo{
+		Props: response.GetRunInfoProps{
+			Name:     "TestRun1Updated",
+			Archived: true,
+		},
+	})
+
+	s.archiveRunsBatch(namespace2Code, []string{run2.ID}, true)
+	s.getRunAndCompare(namespace2Code, run2.ID, &response.GetRunInfo{
+		Props: response.GetRunInfoProps{
+			Name:     "TestRun2Updated",
+			Archived: true,
+		},
+	})
+
+	// test `POST /runs/archive-batch` endpoint.
+	// when we call it second time, run has to be unarchived.
+	s.archiveRunsBatch(namespace1Code, []string{run1.ID}, false)
+	s.getRunAndCompare(namespace1Code, run1.ID, &response.GetRunInfo{
+		Props: response.GetRunInfoProps{
+			Name:     "TestRun1Updated",
+			Archived: false,
+		},
+	})
+
+	s.archiveRunsBatch(namespace2Code, []string{run2.ID}, false)
+	s.getRunAndCompare(namespace2Code, run2.ID, &response.GetRunInfo{
+		Props: response.GetRunInfoProps{
+			Name:     "TestRun2Updated",
+			Archived: false,
+		},
+	})
+
+	// test `DELETE /runs/:id` endpoint.
+	// check that run has been actually deleted.
+	s.deleteRun(namespace1Code, run1.ID)
+	var resp response.Error
+	require.Nil(
+		s.T(),
+		s.AIMClient().WithNamespace(
+			namespace1Code,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"/runs/%s/info", run1.ID,
+		),
+	)
+	assert.Equal(s.T(), "Not Found", resp.Message)
+
+	s.deleteRun(namespace2Code, run2.ID)
+	require.Nil(
+		s.T(),
+		s.AIMClient().WithNamespace(
+			namespace2Code,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"/runs/%s/info", run1.ID,
+		),
+	)
+	assert.Equal(s.T(), "Not Found", resp.Message)
+
+	// test `DELETE /runs/delete-batch` endpoint.
+	// recreate deleted runs.
+	// check via API that newly created runs exists.
+	// delete via batch newly created runs.
+	// check that all runs were deleted.
+	run3, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:             "id3",
+		Name:           "TestRun3",
+		UserID:         "2",
+		Status:         models.StatusRunning,
+		SourceType:     "JOB",
+		ExperimentID:   *experiment1.ID,
+		ArtifactURI:    "artifact_uri3",
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	require.Nil(s.T(), err)
+	s.getRunAndCompare(namespace1Code, run3.ID, &response.GetRunInfo{
+		Props: response.GetRunInfoProps{
+			Name:     "TestRun3",
+			Archived: false,
+		},
+	})
+	s.deleteRunBatch(namespace1Code, []string{run3.ID})
+	require.Nil(
+		s.T(),
+		s.AIMClient().WithNamespace(
+			namespace1Code,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"/runs/%s/info", run3.ID,
+		),
+	)
+	assert.Equal(s.T(), "Not Found", resp.Message)
+
+	run4, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:             "id4",
+		Name:           "TestRun4",
+		UserID:         "2",
+		Status:         models.StatusRunning,
+		SourceType:     "JOB",
+		ExperimentID:   *experiment2.ID,
+		ArtifactURI:    "artifact_uri4",
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	require.Nil(s.T(), err)
+	s.getRunAndCompare(namespace2Code, run4.ID, &response.GetRunInfo{
+		Props: response.GetRunInfoProps{
+			Name:     "TestRun4",
+			Archived: false,
+		},
+	})
+	s.deleteRunBatch(namespace2Code, []string{run4.ID})
+	require.Nil(
+		s.T(),
+		s.AIMClient().WithNamespace(
+			namespace2Code,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"/runs/%s/info", run4.ID,
+		),
+	)
+	assert.Equal(s.T(), "Not Found", resp.Message)
 }
 
 func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunRequest) {
 	require.Nil(
 		s.T(),
-		s.AIMClient.WithMethod(
+		s.AIMClient().WithMethod(
 			http.MethodPut,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithNamespace(
 			namespace,
 		).WithRequest(
@@ -298,11 +426,7 @@ func (s *RunFlowTestSuite) getRunAndCompare(
 	var resp response.GetRunInfo
 	require.Nil(
 		s.T(),
-		s.AIMClient.WithMethod(
-			http.MethodGet,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
-		).WithNamespace(
+		s.AIMClient().WithNamespace(
 			namespace,
 		).WithResponse(
 			&resp,
@@ -318,9 +442,7 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 	resp := new(bytes.Buffer)
 	require.Nil(
 		s.T(),
-		s.AIMClient.WithMethod(
-			http.MethodGet,
-		).WithResponseType(
+		s.AIMClient().WithResponseType(
 			helpers.ResponseTypeBuffer,
 		).WithQuery(
 			request,
@@ -361,9 +483,7 @@ func (s *RunFlowTestSuite) getActiveRunsAndCompare(namespace string, expectedRun
 	resp := new(bytes.Buffer)
 	require.Nil(
 		s.T(),
-		s.AIMClient.WithMethod(
-			http.MethodGet,
-		).WithResponseType(
+		s.AIMClient().WithResponseType(
 			helpers.ResponseTypeBuffer,
 		).WithNamespace(
 			namespace,
@@ -404,10 +524,8 @@ func (s *RunFlowTestSuite) getRunMetricsAndCompare(
 	var resp response.GetRunMetrics
 	require.Nil(
 		s.T(),
-		s.AIMClient.WithMethod(
+		s.AIMClient().WithMethod(
 			http.MethodPost,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithRequest(
 			request,
 		).WithNamespace(
@@ -419,4 +537,61 @@ func (s *RunFlowTestSuite) getRunMetricsAndCompare(
 		),
 	)
 	assert.ElementsMatch(s.T(), expectedMetrics, resp)
+}
+
+func (s *RunFlowTestSuite) archiveRunsBatch(namespace string, runIDs []string, archive bool) {
+	resp := map[string]any{}
+	require.Nil(
+		s.T(),
+		s.AIMClient().WithMethod(
+			http.MethodPost,
+		).WithNamespace(
+			namespace,
+		).WithQuery(map[any]any{
+			"archive": archive,
+		}).WithRequest(
+			runIDs,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"/runs/archive-batch",
+		),
+	)
+	assert.Equal(s.T(), map[string]interface{}{"status": "OK"}, resp)
+}
+
+func (s *RunFlowTestSuite) deleteRun(namespace, runID string) {
+	var resp fiber.Map
+	require.Nil(
+		s.T(),
+		s.AIMClient().WithMethod(
+			http.MethodDelete,
+		).WithNamespace(
+			namespace,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"/runs/%s", runID,
+		),
+	)
+	assert.Equal(s.T(), fiber.Map{"id": runID, "status": "OK"}, resp)
+}
+
+func (s *RunFlowTestSuite) deleteRunBatch(namespace string, runIDs []string) {
+	resp := fiber.Map{}
+	require.Nil(
+		s.T(),
+		s.AIMClient().WithMethod(
+			http.MethodPost,
+		).WithNamespace(
+			namespace,
+		).WithRequest(
+			runIDs,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"/runs/delete-batch",
+		),
+	)
+	assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
 }

@@ -49,7 +49,7 @@ func (s *UpdateNamespaceTestSuite) Test_Ok() {
 	}
 	require.Nil(
 		s.T(),
-		s.AdminClient.WithMethod(
+		s.AdminClient().WithMethod(
 			http.MethodPut,
 		).WithRequest(
 			request,
@@ -131,7 +131,7 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 			var resp any
 			require.Nil(
 				s.T(),
-				s.AdminClient.WithMethod(
+				s.AdminClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
 					tt.request,

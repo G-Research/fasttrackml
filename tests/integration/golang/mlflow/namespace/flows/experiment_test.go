@@ -162,9 +162,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 	resp := api.ErrorResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
 			request.GetExperimentRequest{
@@ -190,9 +188,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 	resp = api.ErrorResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
 			request.GetExperimentRequest{
@@ -431,7 +427,7 @@ func (s *ExperimentFlowTestSuite) createExperiment(
 	resp := response.CreateExperimentResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -450,7 +446,7 @@ func (s *ExperimentFlowTestSuite) createExperiment(
 func (s *ExperimentFlowTestSuite) updateExperiment(namespace string, req *request.UpdateExperimentRequest) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -468,7 +464,7 @@ func (s *ExperimentFlowTestSuite) searchExperimentAndCompare(
 	searchResp := response.SearchExperimentsResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithQuery(
+		s.MlflowClient().WithQuery(
 			request.SearchExperimentsRequest{},
 		).WithNamespace(
 			namespace,
@@ -489,9 +485,7 @@ func (s *ExperimentFlowTestSuite) getExperimentByIDAndCompare(
 	resp := response.GetExperimentResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
 			request.GetExperimentRequest{
@@ -517,9 +511,7 @@ func (s *ExperimentFlowTestSuite) getExperimentByNameAndCompare(
 	resp := response.GetExperimentResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
 			request.GetExperimentRequest{
@@ -541,7 +533,7 @@ func (s *ExperimentFlowTestSuite) getExperimentByNameAndCompare(
 func (s *ExperimentFlowTestSuite) deleteExperiment(namespace, experiment1ID string) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -558,7 +550,7 @@ func (s *ExperimentFlowTestSuite) deleteExperiment(namespace, experiment1ID stri
 func (s *ExperimentFlowTestSuite) restoreExperiment(namespace, experiment1ID string) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -575,7 +567,7 @@ func (s *ExperimentFlowTestSuite) restoreExperiment(namespace, experiment1ID str
 func (s *ExperimentFlowTestSuite) setExperimentTag(namespace string, req *request.SetExperimentTagRequest) {
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,

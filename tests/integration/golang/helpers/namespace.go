@@ -5,7 +5,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/request"
 )
 
-// CheckExperiments checks if the requested namespaces are present in the expected namespaces.
+// CheckNamespaces checks if the requested namespaces are present in the expected namespaces.
 func CheckNamespaces(expectedNamespaces []models.Namespace, requestedNamespaces []request.Namespace) bool {
 	for _, testNamespace := range requestedNamespaces {
 		found := false

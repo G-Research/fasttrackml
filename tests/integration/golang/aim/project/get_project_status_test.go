@@ -36,6 +36,6 @@ func (s *GetProjectStatusTestSuite) Test_Ok() {
 	require.Nil(s.T(), err)
 
 	var resp string
-	require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/projects/status"))
+	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/projects/status"))
 	assert.Equal(s.T(), "up-to-date", resp)
 }

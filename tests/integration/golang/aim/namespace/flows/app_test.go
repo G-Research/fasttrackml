@@ -9,11 +9,11 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
@@ -100,9 +100,9 @@ func (s *AppFlowTestSuite) Test_Ok() {
 
 			// setup data under the test.
 			namespace1, namespace2 := tt.setup()
-			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
+			_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
 			require.Nil(s.T(), err)
-			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
+			_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
 			require.Nil(s.T(), err)
 
 			// run actual flow test over the test data.
@@ -133,7 +133,7 @@ func (s *AppFlowTestSuite) testAppFlow(
 	resp := []response.App{}
 	require.Nil(
 		s.T(),
-		s.AimClient().WithMethod(
+		s.AIMClient().WithMethod(
 			http.MethodGet,
 		).WithNamespace(
 			namespace1Code,
@@ -147,12 +147,12 @@ func (s *AppFlowTestSuite) testAppFlow(
 	)
 	// only app 1 should be present
 	assert.Equal(s.T(), 1, len(resp))
-	assert.Equal(s.T(), app1ID, resp[0].ID) 
+	assert.Equal(s.T(), app1ID, resp[0].ID)
 
 	// test `GET /apps` endpoint with namespace 2
 	require.Nil(
 		s.T(),
-		s.AimClient().WithMethod(
+		s.AIMClient().WithMethod(
 			http.MethodGet,
 		).WithNamespace(
 			namespace2Code,
@@ -166,47 +166,49 @@ func (s *AppFlowTestSuite) testAppFlow(
 	)
 	// only app 2 should be present
 	assert.Equal(s.T(), 1, len(resp))
-	assert.Equal(s.T(), app2ID, resp[0].ID) 
+	assert.Equal(s.T(), app2ID, resp[0].ID)
 
 	// IDs from other namespace cannot be fetched
-	resp = response.Error{}
+	errResp := response.Error{}
+	client := s.AIMClient()
 	require.Nil(
 		s.T(),
-		s.AimClient().WithMethod(
+		client.WithMethod(
 			http.MethodGet,
 		).WithNamespace(
 			namespace1Code,
 		).WithResponseType(
 			helpers.ResponseTypeJSON,
 		).WithResponse(
-			&resp,
+			&errResp,
 		).DoRequest(
 			fmt.Sprintf("/apps/%s", app2ID),
 		),
 	)
-	assert.Equal(s.T(), "Not Found", resp.Message)
+	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
 
+	client = s.AIMClient()
 	require.Nil(
 		s.T(),
-		s.AimClient().WithMethod(
+		client.WithMethod(
 			http.MethodGet,
 		).WithNamespace(
 			namespace2Code,
 		).WithResponseType(
 			helpers.ResponseTypeJSON,
 		).WithResponse(
-			&resp,
+			&errResp,
 		).DoRequest(
 			fmt.Sprintf("/apps/%s", app1ID),
 		),
 	)
-	assert.Equal(s.T(), "Not Found", resp.Message)
+	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
 
 	// IDs from active namespace can be fetched
 	appResp := response.App{}
 	require.Nil(
 		s.T(),
-		s.AimClient().WithMethod(
+		s.AIMClient().WithMethod(
 			http.MethodGet,
 		).WithNamespace(
 			namespace1Code,
@@ -218,11 +220,11 @@ func (s *AppFlowTestSuite) testAppFlow(
 			fmt.Sprintf("/apps/%s", app1ID),
 		),
 	)
-	assert.Equal(s.T(), app1ID, appResp[0].ID)
+	assert.Equal(s.T(), app1ID, appResp.ID)
 
 	require.Nil(
 		s.T(),
-		s.AimClient().WithMethod(
+		s.AIMClient().WithMethod(
 			http.MethodGet,
 		).WithNamespace(
 			namespace2Code,
@@ -234,7 +236,7 @@ func (s *AppFlowTestSuite) testAppFlow(
 			fmt.Sprintf("/apps/%s", app2ID),
 		),
 	)
-	assert.Equal(s.T(), app1ID, appResp[0].ID)
+	assert.Equal(s.T(), app2ID, appResp.ID)
 }
 
 func (s *AppFlowTestSuite) createApp(namespace string, req *request.CreateApp) string {
@@ -243,6 +245,8 @@ func (s *AppFlowTestSuite) createApp(namespace string, req *request.CreateApp) s
 		s.T(),
 		s.AIMClient().WithMethod(
 			http.MethodPost,
+		).WithNamespace(
+			namespace,
 		).WithRequest(
 			req,
 		).WithResponse(
@@ -256,4 +260,3 @@ func (s *AppFlowTestSuite) createApp(namespace string, req *request.CreateApp) s
 	assert.NotEmpty(s.T(), resp.ID)
 	return resp.ID
 }
-

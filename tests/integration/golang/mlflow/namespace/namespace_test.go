@@ -59,7 +59,7 @@ func (s *NamespaceTestSuite) Test_Ok() {
 			namespace: "newly-created-namespace",
 		},
 		{
-			name: "TestObviousDefaultAndCustomNamespaces",
+			name: "TestExplicitDefaultAndCustomNamespaces",
 			setup: func() *models.Experiment {
 				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 					Code:                "default",

@@ -28,9 +28,7 @@ type AppFlowTestSuite struct {
 }
 
 func TestAppFlowTestSuite(t *testing.T) {
-	suite.Run(t, &AppFlowTestSuite{
-		testBuckets: []string{"bucket1", "bucket2"},
-	})
+	suite.Run(t, &AppFlowTestSuite{})
 }
 
 func (s *AppFlowTestSuite) TearDownTest() {
@@ -44,49 +42,21 @@ func (s *AppFlowTestSuite) Test_Ok() {
 
 	tests := []struct {
 		name           string
-		setup          func() (*models.Namespace, *models.Namespace)
 		namespace1Code string
 		namespace2Code string
 	}{
 		{
-			name: "TestCustomNamespaces",
-			setup: func() (*models.Namespace, *models.Namespace) {
-				return &models.Namespace{
-						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
-					}, &models.Namespace{
-						Code:                "namespace-2",
-						DefaultExperimentID: common.GetPointer(int32(0)),
-					}
-			},
+			name:           "TestCustomNamespaces",
 			namespace1Code: "namespace-1",
 			namespace2Code: "namespace-2",
 		},
 		{
-			name: "TestExplicitDefaultAndCustomNamespaces",
-			setup: func() (*models.Namespace, *models.Namespace) {
-				return &models.Namespace{
-						Code:                "default",
-						DefaultExperimentID: common.GetPointer(int32(0)),
-					}, &models.Namespace{
-						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
-					}
-			},
+			name:           "TestExplicitDefaultAndCustomNamespaces",
 			namespace1Code: "default",
 			namespace2Code: "namespace-1",
 		},
 		{
-			name: "TestImplicitDefaultAndCustomNamespaces",
-			setup: func() (*models.Namespace, *models.Namespace) {
-				return &models.Namespace{
-						Code:                "default",
-						DefaultExperimentID: common.GetPointer(int32(0)),
-					}, &models.Namespace{
-						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
-					}
-			},
+			name:           "TestImplicitDefaultAndCustomNamespaces",
 			namespace1Code: "",
 			namespace2Code: "namespace-1",
 		},
@@ -98,12 +68,15 @@ func (s *AppFlowTestSuite) Test_Ok() {
 				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 			}()
 
-			// setup data under the test.
-			namespace1, namespace2 := tt.setup()
-			_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			require.Nil(s.T(), err)
-			_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			require.Nil(s.T(), err)
+			// setup namespaces
+			for _, nsCode := range []string{"default", tt.namespace1Code, tt.namespace2Code} {
+				// ignore errors here since default exists on first run
+				//nolint:errcheck
+				s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+					Code:                nsCode,
+					DefaultExperimentID: common.GetPointer(int32(0)),
+				})
+			}
 
 			// run actual flow test over the test data.
 			s.testAppFlow(tt.namespace1Code, tt.namespace2Code)

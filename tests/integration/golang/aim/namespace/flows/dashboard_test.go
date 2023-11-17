@@ -21,21 +21,21 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type AppFlowTestSuite struct {
+type DashboardFlowTestSuite struct {
 	helpers.BaseTestSuite
 	testBuckets []string
 	s3Client    *s3.Client
 }
 
-func TestAppFlowTestSuite(t *testing.T) {
-	suite.Run(t, &AppFlowTestSuite{})
+func TestDashboardFlowTestSuite(t *testing.T) {
+	suite.Run(t, &DashboardFlowTestSuite{})
 }
 
-func (s *AppFlowTestSuite) TearDownTest() {
+func (s *DashboardFlowTestSuite) TearDownTest() {
 	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }
 
-func (s *AppFlowTestSuite) Test_Ok() {
+func (s *DashboardFlowTestSuite) Test_Ok() {
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	require.Nil(s.T(), err)
 	s.s3Client = s3Client
@@ -79,31 +79,31 @@ func (s *AppFlowTestSuite) Test_Ok() {
 			}
 
 			// run actual flow test over the test data.
-			s.testAppFlow(tt.namespace1Code, tt.namespace2Code)
+			s.testDashboardFlow(tt.namespace1Code, tt.namespace2Code)
 		})
 	}
 }
 
-func (s *AppFlowTestSuite) testAppFlow(
+func (s *DashboardFlowTestSuite) testDashboardFlow(
 	namespace1Code, namespace2Code string,
 ) {
-	// create Apps
-	app1ID := s.createApp(namespace1Code, &request.CreateApp{
+	// create Dashboards
+	Dashboard1ID := s.createDashboard(namespace1Code, &request.CreateDashboard{
 		Type: "tf",
-		State: request.AppState{
-			"app-state-key": "app-state-value1",
+		State: request.DashboardState{
+			"Dashboard-state-key": "Dashboard-state-value1",
 		},
 	})
 
-	app2ID := s.createApp(namespace2Code, &request.CreateApp{
+	Dashboard2ID := s.createDashboard(namespace2Code, &request.CreateDashboard{
 		Type: "mpi",
-		State: request.AppState{
-			"app-state-key": "app-state-value2",
+		State: request.DashboardState{
+			"Dashboard-state-key": "Dashboard-state-value2",
 		},
 	})
 
-	// test `GET /apps` endpoint with namespace 1
-	resp := []response.App{}
+	// test `GET /Dashboards` endpoint with namespace 1
+	resp := []response.Dashboard{}
 	require.Nil(
 		s.T(),
 		s.AIMClient().WithMethod(
@@ -115,14 +115,14 @@ func (s *AppFlowTestSuite) testAppFlow(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			"/apps",
+			"/Dashboards",
 		),
 	)
-	// only app 1 should be present
+	// only Dashboard 1 should be present
 	assert.Equal(s.T(), 1, len(resp))
-	assert.Equal(s.T(), app1ID, resp[0].ID)
+	assert.Equal(s.T(), Dashboard1ID, resp[0].ID)
 
-	// test `GET /apps` endpoint with namespace 2
+	// test `GET /Dashboards` endpoint with namespace 2
 	require.Nil(
 		s.T(),
 		s.AIMClient().WithMethod(
@@ -134,12 +134,12 @@ func (s *AppFlowTestSuite) testAppFlow(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			"/apps",
+			"/Dashboards",
 		),
 	)
-	// only app 2 should be present
+	// only Dashboard 2 should be present
 	assert.Equal(s.T(), 1, len(resp))
-	assert.Equal(s.T(), app2ID, resp[0].ID)
+	assert.Equal(s.T(), Dashboard2ID, resp[0].ID)
 
 	// IDs from other namespace cannot be fetched, updated, or deleted
 	errResp := response.Error{}
@@ -155,7 +155,7 @@ func (s *AppFlowTestSuite) testAppFlow(
 		).WithResponse(
 			&errResp,
 		).DoRequest(
-			fmt.Sprintf("/apps/%s", app2ID),
+			fmt.Sprintf("/Dashboards/%s", Dashboard2ID),
 		),
 	)
 	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
@@ -168,10 +168,10 @@ func (s *AppFlowTestSuite) testAppFlow(
 		).WithNamespace(
 			namespace2Code,
 		).WithRequest(
-			request.UpdateApp{
-				Type: "app-type",
-				State: request.AppState{
-					"app-state-key": "new-app-state-value",
+			request.UpdateDashboard{
+				Type: "Dashboard-type",
+				State: request.DashboardState{
+					"Dashboard-state-key": "new-Dashboard-state-value",
 				},
 			},
 		).WithResponseType(
@@ -179,7 +179,7 @@ func (s *AppFlowTestSuite) testAppFlow(
 		).WithResponse(
 			&errResp,
 		).DoRequest(
-			fmt.Sprintf("/apps/%s", app1ID),
+			fmt.Sprintf("/Dashboards/%s", Dashboard1ID),
 		),
 	)
 	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
@@ -196,13 +196,13 @@ func (s *AppFlowTestSuite) testAppFlow(
 		).WithResponse(
 			&errResp,
 		).DoRequest(
-			fmt.Sprintf("/apps/%s", app1ID),
+			fmt.Sprintf("/Dashboards/%s", Dashboard1ID),
 		),
 	)
 	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
 
 	// IDs from active namespace can be fetched, updated, and deleted
-	appResp := response.App{}
+	DashboardResp := response.Dashboard{}
 	client = s.AIMClient()
 	require.Nil(
 		s.T(),
@@ -213,12 +213,12 @@ func (s *AppFlowTestSuite) testAppFlow(
 		).WithResponseType(
 			helpers.ResponseTypeJSON,
 		).WithResponse(
-			&appResp,
+			&DashboardResp,
 		).DoRequest(
-			fmt.Sprintf("/apps/%s", app1ID),
+			fmt.Sprintf("/Dashboards/%s", Dashboard1ID),
 		),
 	)
-	assert.Equal(s.T(), app1ID, appResp.ID)
+	assert.Equal(s.T(), Dashboard1ID, DashboardResp.ID)
 	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
 
 	client = s.AIMClient()
@@ -229,21 +229,21 @@ func (s *AppFlowTestSuite) testAppFlow(
 		).WithNamespace(
 			namespace1Code,
 		).WithRequest(
-			request.UpdateApp{
-				Type: "app-type",
-				State: request.AppState{
-					"app-state-key": "new-app-state-value",
+			request.UpdateDashboard{
+				Type: "Dashboard-type",
+				State: request.DashboardState{
+					"Dashboard-state-key": "new-Dashboard-state-value",
 				},
 			},
 		).WithResponseType(
 			helpers.ResponseTypeJSON,
 		).WithResponse(
-			&appResp,
+			&DashboardResp,
 		).DoRequest(
-			fmt.Sprintf("/apps/%s", app1ID),
+			fmt.Sprintf("/Dashboards/%s", Dashboard1ID),
 		),
 	)
-	assert.Equal(s.T(), app1ID, appResp.ID)
+	assert.Equal(s.T(), Dashboard1ID, DashboardResp.ID)
 	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
 
 	client = s.AIMClient()
@@ -256,16 +256,16 @@ func (s *AppFlowTestSuite) testAppFlow(
 		).WithResponseType(
 			helpers.ResponseTypeJSON,
 		).WithResponse(
-			&appResp,
+			&DashboardResp,
 		).DoRequest(
-			fmt.Sprintf("/apps/%s", app2ID),
+			fmt.Sprintf("/Dashboards/%s", Dashboard2ID),
 		),
 	)
 	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
 }
 
-func (s *AppFlowTestSuite) createApp(namespace string, req *request.CreateApp) string {
-	var resp response.App
+func (s *DashboardFlowTestSuite) createDashboard(namespace string, req *request.CreateDashboard) string {
+	var resp response.Dashboard
 	require.Nil(
 		s.T(),
 		s.AIMClient().WithMethod(
@@ -277,11 +277,10 @@ func (s *AppFlowTestSuite) createApp(namespace string, req *request.CreateApp) s
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			"/apps",
+			"/Dashboards",
 		),
 	)
-	assert.Equal(s.T(), req.Type, resp.Type)
-	assert.Equal(s.T(), req.State["app-state-key"], resp.State["app-state-key"])
+	assert.Equal(s.T(), req.Name, resp.Name)
 	assert.NotEmpty(s.T(), resp.ID)
 	return resp.ID
 }

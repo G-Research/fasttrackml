@@ -496,7 +496,7 @@ func (s Service) LogMetric(
 		return api.NewInvalidParameterValueError(err.Error())
 	}
 
-	if err := s.metricRepository.CreateContext(ctx, *context); err != nil {
+	if err := s.metricRepository.CreateContext(ctx, context); err != nil {
 		return api.NewInternalError("unable to log metric '%s' for run '%s': %s", req.Key, req.GetRunID(), err)
 	}
 

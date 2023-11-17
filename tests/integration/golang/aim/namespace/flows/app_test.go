@@ -141,7 +141,7 @@ func (s *AppFlowTestSuite) testAppFlow(
 	assert.Equal(s.T(), 1, len(resp))
 	assert.Equal(s.T(), app2ID, resp[0].ID)
 
-	// IDs from other namespace cannot be fetched
+	// IDs from other namespace cannot be fetched, updated, or deleted
 	errResp := response.Error{}
 	client := s.AIMClient()
 	require.Nil(
@@ -164,7 +164,31 @@ func (s *AppFlowTestSuite) testAppFlow(
 	require.Nil(
 		s.T(),
 		client.WithMethod(
-			http.MethodGet,
+			http.MethodPut,
+		).WithNamespace(
+			namespace2Code,
+		).WithRequest(
+			request.UpdateApp{
+				Type: "app-type",
+				State: request.AppState{
+					"app-state-key": "new-app-state-value",
+				},
+			},
+		).WithResponseType(
+			helpers.ResponseTypeJSON,
+		).WithResponse(
+			&errResp,
+		).DoRequest(
+			fmt.Sprintf("/apps/%s", app1ID),
+		),
+	)
+	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
+
+	client = s.AIMClient()
+	require.Nil(
+		s.T(),
+		client.WithMethod(
+			http.MethodDelete,
 		).WithNamespace(
 			namespace2Code,
 		).WithResponseType(
@@ -177,11 +201,12 @@ func (s *AppFlowTestSuite) testAppFlow(
 	)
 	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
 
-	// IDs from active namespace can be fetched
+	// IDs from active namespace can be fetched, updated, and deleted
 	appResp := response.App{}
+	client = s.AIMClient()
 	require.Nil(
 		s.T(),
-		s.AIMClient().WithMethod(
+		client.WithMethod(
 			http.MethodGet,
 		).WithNamespace(
 			namespace1Code,
@@ -194,11 +219,38 @@ func (s *AppFlowTestSuite) testAppFlow(
 		),
 	)
 	assert.Equal(s.T(), app1ID, appResp.ID)
+	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
 
+	client = s.AIMClient()
 	require.Nil(
 		s.T(),
-		s.AIMClient().WithMethod(
-			http.MethodGet,
+		client.WithMethod(
+			http.MethodPut,
+		).WithNamespace(
+			namespace1Code,
+		).WithRequest(
+			request.UpdateApp{
+				Type: "app-type",
+				State: request.AppState{
+					"app-state-key": "new-app-state-value",
+				},
+			},
+		).WithResponseType(
+			helpers.ResponseTypeJSON,
+		).WithResponse(
+			&appResp,
+		).DoRequest(
+			fmt.Sprintf("/apps/%s", app1ID),
+		),
+	)
+	assert.Equal(s.T(), app1ID, appResp.ID)
+	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+
+	client = s.AIMClient()
+	require.Nil(
+		s.T(),
+		client.WithMethod(
+			http.MethodDelete,
 		).WithNamespace(
 			namespace2Code,
 		).WithResponseType(
@@ -209,7 +261,7 @@ func (s *AppFlowTestSuite) testAppFlow(
 			fmt.Sprintf("/apps/%s", app2ID),
 		),
 	)
-	assert.Equal(s.T(), app2ID, appResp.ID)
+	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
 }
 
 func (s *AppFlowTestSuite) createApp(namespace string, req *request.CreateApp) string {

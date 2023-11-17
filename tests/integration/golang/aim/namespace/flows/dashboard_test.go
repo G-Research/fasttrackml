@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -24,8 +23,6 @@ import (
 
 type DashboardFlowTestSuite struct {
 	helpers.BaseTestSuite
-	testBuckets []string
-	s3Client    *s3.Client
 }
 
 func TestDashboardFlowTestSuite(t *testing.T) {
@@ -37,10 +34,6 @@ func (s *DashboardFlowTestSuite) TearDownTest() {
 }
 
 func (s *DashboardFlowTestSuite) Test_Ok() {
-	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
-	require.Nil(s.T(), err)
-	s.s3Client = s3Client
-
 	tests := []struct {
 		name           string
 		namespace1Code string
@@ -73,7 +66,7 @@ func (s *DashboardFlowTestSuite) Test_Ok() {
 			for _, nsCode := range []string{"default", tt.namespace1Code, tt.namespace2Code} {
 				// ignore errors here since default exists on first run
 				//nolint:errcheck
-				s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+				_, _ = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 					Code:                nsCode,
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})

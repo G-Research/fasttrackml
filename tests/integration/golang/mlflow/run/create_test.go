@@ -155,7 +155,7 @@ func (s *CreateRunTestSuite) successCases(
 	}
 
 	resp := response.CreateRunResponse{}
-	client := s.MlflowClient.WithMethod(
+	client := s.MlflowClient().WithMethod(
 		http.MethodPost,
 	).WithRequest(
 		req,
@@ -195,6 +195,10 @@ func (s *CreateRunTestSuite) successCases(
 }
 
 func (s *CreateRunTestSuite) Test_Error() {
+	defer func() {
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
@@ -213,7 +217,6 @@ func (s *CreateRunTestSuite) Test_Error() {
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
 	require.Nil(s.T(), err)
-	nonExistingExperimentID := *experiment.ID + 1
 
 	tests := []struct {
 		name      string
@@ -244,26 +247,26 @@ func (s *CreateRunTestSuite) Test_Error() {
 		{
 			name: "CreateRunWithNotExistingExperiment",
 			request: request.CreateRunRequest{
-				ExperimentID: fmt.Sprintf("%d", nonExistingExperimentID),
+				ExperimentID: fmt.Sprintf("%d", -1),
 			},
 			error: api.NewResourceDoesNotExistError(
 				fmt.Sprintf(
 					`unable to find experiment with id '%d': error getting experiment by id: %d: record not found`,
-					nonExistingExperimentID,
-					nonExistingExperimentID,
+					-1,
+					-1,
 				),
 			),
 		},
 		{
 			name: "CreateRunWithExistingNamespaceAndNotExistingExperiment",
 			request: request.CreateRunRequest{
-				ExperimentID: fmt.Sprintf("%d", nonExistingExperimentID),
+				ExperimentID: fmt.Sprintf("%d", -1),
 			},
 			error: api.NewResourceDoesNotExistError(
 				fmt.Sprintf(
 					`unable to find experiment with id '%d': error getting experiment by id: %d: record not found`,
-					nonExistingExperimentID,
-					nonExistingExperimentID,
+					-1,
+					-1,
 				),
 			),
 		},
@@ -271,7 +274,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			resp := api.ErrorResponse{}
-			client := s.MlflowClient.WithMethod(
+			client := s.MlflowClient().WithMethod(
 				http.MethodPost,
 			).WithRequest(
 				tt.request,

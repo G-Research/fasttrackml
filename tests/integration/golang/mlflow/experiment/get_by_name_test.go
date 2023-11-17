@@ -72,7 +72,7 @@ func (s *GetExperimentByNameTestSuite) Test_Ok() {
 	resp := response.GetExperimentResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithQuery(
+		s.MlflowClient().WithQuery(
 			request,
 		).WithResponse(
 			&resp,
@@ -133,7 +133,7 @@ func (s *GetExperimentByNameTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
 					&resp,

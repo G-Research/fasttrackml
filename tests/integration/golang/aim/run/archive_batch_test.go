@@ -88,7 +88,7 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 			resp := map[string]any{}
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(http.MethodPost).WithQuery(map[any]any{
+				s.AIMClient().WithMethod(http.MethodPost).WithQuery(map[any]any{
 					"archive": tt.archiveParam,
 				}).WithRequest(
 					tt.runIDs,
@@ -146,7 +146,7 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 			var resp fiber.Map
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(http.MethodPost).WithQuery(map[any]any{
+				s.AIMClient().WithMethod(http.MethodPost).WithQuery(map[any]any{
 					"archive": true,
 				}).WithRequest(
 					tt.request,

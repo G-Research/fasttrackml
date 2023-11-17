@@ -159,7 +159,7 @@ func TestService_DeleteNamespace_Ok(t *testing.T) {
 		Code: "code",
 	}
 	namespaceRepository.On(
-		"Delete", context.TODO(), uint(0),
+		"Delete", context.TODO(), &ns,
 	).Return(nil).On(
 		"GetByID", context.TODO(), uint(0),
 	).Return(&ns, nil)

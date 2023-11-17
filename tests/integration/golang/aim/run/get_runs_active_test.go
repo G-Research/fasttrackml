@@ -82,7 +82,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			resp := new(bytes.Buffer)
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithResponseType(
+				s.AIMClient().WithResponseType(
 					helpers.ResponseTypeBuffer,
 				).WithResponse(
 					resp,

@@ -135,6 +135,7 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 	if err != nil {
 		return eris.Wrap(err, "error building url")
 	}
+
 	// 4. if params were provided then add params to actual url.
 	if c.params != nil {
 		switch reflect.ValueOf(c.params).Kind() {
@@ -171,6 +172,9 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 			req.Header.Set(key, value)
 		}
 	}
+	// TODO:dsuhinin - right now set `no-cache` for all the requests to avoid any
+	// problem related to namespace caching logic. Remove it a bit later.
+	req.Header.Set("no-cache", "true")
 
 	// 7. send request data.
 	resp, err := c.client.Do(req)

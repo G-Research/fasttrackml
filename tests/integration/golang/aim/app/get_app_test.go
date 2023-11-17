@@ -51,7 +51,7 @@ func (s *GetAppTestSuite) Test_Ok() {
 	require.Nil(s.T(), err)
 
 	var resp database.App
-	require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/apps/%s", app.ID.String()))
+	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/apps/%s", app.ID.String()))
 	assert.Equal(s.T(), app.ID, resp.ID)
 	assert.Equal(s.T(), app.Type, resp.Type)
 	assert.Equal(s.T(), app.State, resp.State)
@@ -83,7 +83,7 @@ func (s *GetAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			var resp response.Error
-			require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/apps/%v", tt.idParam))
+			require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/apps/%v", tt.idParam))
 			assert.Equal(s.T(), "Not Found", resp.Message)
 		})
 	}

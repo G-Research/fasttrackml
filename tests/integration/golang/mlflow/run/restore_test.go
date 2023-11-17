@@ -96,7 +96,7 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 	resp := fiber.Map{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
 			req,
@@ -115,6 +115,10 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 }
 
 func (s *RestoreRunTestSuite) Test_Error() {
+	defer func() {
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
@@ -147,7 +151,7 @@ func (s *RestoreRunTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,

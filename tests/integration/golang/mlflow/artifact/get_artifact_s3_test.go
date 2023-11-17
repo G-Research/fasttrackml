@@ -41,16 +41,13 @@ func (s *GetArtifactS3TestSuite) SetupTest() {
 
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
 	require.Nil(s.T(), err)
-
-	err = helpers.CreateS3Buckets(s3Client, s.testBuckets)
-	require.Nil(s.T(), err)
+	require.Nil(s.T(), helpers.CreateS3Buckets(s3Client, s.testBuckets))
 
 	s.s3Client = s3Client
 }
 
 func (s *GetArtifactS3TestSuite) TearDownTest() {
-	err := helpers.RemoveS3Buckets(s.s3Client, s.testBuckets)
-	require.Nil(s.T(), err)
+	require.Nil(s.T(), helpers.RemoveS3Buckets(s.s3Client, s.testBuckets))
 }
 
 func (s *GetArtifactS3TestSuite) Test_Ok() {
@@ -130,7 +127,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			}
 
 			resp := new(bytes.Buffer)
-			require.Nil(s.T(), s.MlflowClient.WithQuery(
+			require.Nil(s.T(), s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -148,7 +145,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			}
 
 			resp = new(bytes.Buffer)
-			require.Nil(s.T(), s.MlflowClient.WithQuery(
+			require.Nil(s.T(), s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -279,7 +276,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			require.Nil(t, s.MlflowClient.WithQuery(
+			require.Nil(t, s.MlflowClient().WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,

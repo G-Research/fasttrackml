@@ -64,7 +64,7 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 		s.T().Run(tt.name, func(T *testing.T) {
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodDelete,
 				).DoRequest(
 					"/apps/%s", app.ID,
@@ -116,7 +116,7 @@ func (s *DeleteAppTestSuite) Test_Error() {
 			var resp response.Error
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodDelete,
 				).WithResponse(
 					&resp,

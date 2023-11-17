@@ -17,9 +17,9 @@ type NamespaceRepositoryProvider interface {
 	// Update modifies the existing models.Namespace entity.
 	Update(ctx context.Context, namespace *models.Namespace) error
 	// Delete removes a namespace and it's associated experiments by its ID.
-	Delete(ctx context.Context, id uint) error
+	Delete(ctx context.Context, namespace *models.Namespace) error
 	// GetByCode returns namespace by its Code.
-	GetByCode(ctx context.Context, code string) (*models.Namespace, error)
+	GetByCode(ctx context.Context, noCache bool, code string) (*models.Namespace, error)
 	// GetByID returns namespace by its ID.
 	GetByID(ctx context.Context, id uint) (*models.Namespace, error)
 	// List returns all namespaces.
@@ -46,7 +46,7 @@ func (r NamespaceRepository) Create(ctx context.Context, namespace *models.Names
 	return nil
 }
 
-// Update persists modifications to models.Namespace entity.
+// Update modifies the existing models.Namespace entity.
 func (r NamespaceRepository) Update(ctx context.Context, namespace *models.Namespace) error {
 	if err := r.db.WithContext(ctx).Updates(namespace).Error; err != nil {
 		return eris.Wrap(err, "error updating namespace entity")
@@ -54,16 +54,16 @@ func (r NamespaceRepository) Update(ctx context.Context, namespace *models.Names
 	return nil
 }
 
-// Delete removes the  models.Namespace entity.
-func (r NamespaceRepository) Delete(ctx context.Context, id uint) error {
-	if err := r.db.WithContext(ctx).Delete(&models.Namespace{}, id).Error; err != nil {
+// Delete removes a namespace and it's associated experiments by its ID.
+func (r NamespaceRepository) Delete(ctx context.Context, namespace *models.Namespace) error {
+	if err := r.db.WithContext(ctx).Delete(namespace).Error; err != nil {
 		return eris.Wrap(err, "error deleting namespace entity")
 	}
 	return nil
 }
 
 // GetByCode returns namespace by its Code.
-func (r NamespaceRepository) GetByCode(ctx context.Context, code string) (*models.Namespace, error) {
+func (r NamespaceRepository) GetByCode(ctx context.Context, _ bool, code string) (*models.Namespace, error) {
 	var namespace models.Namespace
 	if err := r.db.WithContext(ctx).Where(
 		"code = ?", code,

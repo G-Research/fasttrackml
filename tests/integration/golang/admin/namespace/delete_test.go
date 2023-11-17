@@ -62,7 +62,7 @@ func (s *DeleteNamespaceTestSuite) Test_Ok() {
 		s.T().Run(tt.name, func(T *testing.T) {
 			require.Nil(
 				s.T(),
-				s.AdminClient.WithMethod(
+				s.AdminClient().WithMethod(
 					http.MethodDelete,
 				).DoRequest(
 					"/namespaces/%d", ns2.ID,
@@ -114,7 +114,7 @@ func (s *DeleteNamespaceTestSuite) Test_Error() {
 			var resp any
 			require.Nil(
 				s.T(),
-				s.AdminClient.WithMethod(
+				s.AdminClient().WithMethod(
 					http.MethodDelete,
 				).WithResponse(
 					&resp,

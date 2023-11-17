@@ -76,7 +76,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 	resp := response.GetMetricHistoryResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithQuery(
+		s.MlflowClient().WithQuery(
 			req,
 		).WithResponse(
 			&resp,
@@ -97,6 +97,10 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 }
 
 func (s *GetHistoryTestSuite) Test_Error() {
+	defer func() {
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	}()
+
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
@@ -127,7 +131,7 @@ func (s *GetHistoryTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
 					&resp,

@@ -120,7 +120,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 			rootDirResp := response.ListArtifactsResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					rootDirQuery,
 				).WithResponse(
 					&rootDirResp,
@@ -154,7 +154,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 			subDirResp := response.ListArtifactsResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					subDirQuery,
 				).WithResponse(
 					&subDirResp,
@@ -181,7 +181,7 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 			nonExistingDirResp := response.ListArtifactsResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					nonExistingDirQuery,
 				).WithResponse(
 					&nonExistingDirResp,
@@ -264,7 +264,7 @@ func (s *ListArtifactLocalTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			resp := api.ErrorResponse{}
-			require.Nil(s.T(), s.MlflowClient.WithQuery(
+			require.Nil(s.T(), s.MlflowClient().WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,

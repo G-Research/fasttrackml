@@ -776,7 +776,7 @@ func (s *SearchTestSuite) Test_Ok() {
 			resp := new(bytes.Buffer)
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithResponseType(
+				s.AIMClient().WithResponseType(
 					helpers.ResponseTypeBuffer,
 				).WithQuery(
 					tt.request,

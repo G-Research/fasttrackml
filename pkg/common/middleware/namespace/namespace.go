@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -26,11 +27,15 @@ var namespaceRegexp = regexp.MustCompile(`^/ns/([^/]+)/`)
 // New creates new Middleware instance
 func New(namespaceRepository repositories.NamespaceRepositoryProvider) fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
-		log.Debugf("checking namespace for path: %s", c.Path())
+		noCache, err := strconv.ParseBool(string(c.Request().Header.Peek("no-cache")))
+		if err != nil {
+			noCache = false
+		}
+		log.Debugf("checking namespace for path: %s. no-cache: %t", c.Path(), noCache)
 		// if namespace exists in the request then try to process it, otherwise fallback to default namespace.
 		if matches := namespaceRegexp.FindStringSubmatch(c.Path()); matches != nil {
 			namespaceCode := strings.Clone(matches[1])
-			namespace, err := namespaceRepository.GetByCode(c.Context(), namespaceCode)
+			namespace, err := namespaceRepository.GetByCode(c.Context(), noCache, namespaceCode)
 			if err != nil {
 				return c.JSON(api.NewInternalError("error getting namespace with code: %s", namespaceCode))
 			}
@@ -45,7 +50,7 @@ func New(namespaceRepository repositories.NamespaceRepositoryProvider) fiber.Han
 			c.Locals(namespaceContextKey, namespace)
 			c.Path(strings.TrimPrefix(c.Path(), fmt.Sprintf("/ns/%s", namespaceCode)))
 		} else {
-			namespace, err := namespaceRepository.GetByCode(c.Context(), defaultNamespaceCode)
+			namespace, err := namespaceRepository.GetByCode(c.Context(), noCache, defaultNamespaceCode)
 			if err != nil {
 				return c.JSON(api.NewInternalError("error getting namespace with code: %s", defaultNamespaceCode))
 			}

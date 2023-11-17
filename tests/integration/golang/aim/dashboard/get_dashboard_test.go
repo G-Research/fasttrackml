@@ -64,7 +64,7 @@ func (s *GetDashboardTestSuite) Test_Ok() {
 	require.Nil(s.T(), err)
 
 	var resp database.Dashboard
-	require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/dashboards/%s", dashboard.ID))
+	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/dashboards/%s", dashboard.ID))
 	assert.Equal(s.T(), dashboard.ID, resp.ID)
 	assert.Equal(s.T(), &app.ID, resp.AppID)
 	assert.Equal(s.T(), dashboard.Name, resp.Name)
@@ -99,7 +99,7 @@ func (s *GetDashboardTestSuite) Test_Error() {
 			var resp response.Error
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithResponse(&resp).DoRequest("/dashboards/%s", tt.idParam),
+				s.AIMClient().WithResponse(&resp).DoRequest("/dashboards/%s", tt.idParam),
 			)
 			assert.Equal(s.T(), "Not Found", resp.Message)
 		})

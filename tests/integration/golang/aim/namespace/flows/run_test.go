@@ -26,6 +26,16 @@ type RunFlowTestSuite struct {
 	helpers.BaseTestSuite
 }
 
+// TestRunFlowTestSuite tests the full `runs` flow connected to namespace functionality.
+// Flow contains next endpoints:
+// - `PUT /runs/:id`
+// - `GET /runs/:id/info`
+// - `GET /runs/search/run`
+// - `GET /runs/active`
+// - `GET /runs/:id/metric/get-batch`
+// - `POST /runs/archive-batch`
+// - `DELETE /runs/:id`
+// - `DELETE /runs/delete-batch`
 func TestRunFlowTestSuite(t *testing.T) {
 	suite.Run(t, new(RunFlowTestSuite))
 }
@@ -104,14 +114,6 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			})
 			require.Nil(s.T(), err)
 
-			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:             "Experiment2",
-				ArtifactLocation: "/artifact/location",
-				LifecycleStage:   models.LifecycleStageActive,
-				NamespaceID:      namespace2.ID,
-			})
-			require.Nil(s.T(), err)
-
 			run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             "id1",
 				Name:           "TestRun1",
@@ -137,6 +139,14 @@ func (s *RunFlowTestSuite) Test_Ok() {
 					},
 				),
 			)
+
+			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+				Name:             "Experiment2",
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   models.LifecycleStageActive,
+				NamespaceID:      namespace2.ID,
+			})
+			require.Nil(s.T(), err)
 
 			run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             "id2",

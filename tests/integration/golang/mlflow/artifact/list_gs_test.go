@@ -25,13 +25,16 @@ import (
 )
 
 type ListArtifactGSTestSuite struct {
-	helpers.BaseArtifactGSTestSuite
+	*helpers.GSBucketStorageTestSuite
 }
 
 func TestListArtifactGSTestSuite(t *testing.T) {
-	suite.Run(t, &ListArtifactGSTestSuite{
-		helpers.NewBaseArtifactGSTestSuite("bucket1", "bucket2"),
-	})
+	gsSuite, err := helpers.NewGSBucketStorageSuite(
+		helpers.GetGSEndpointUri(),
+		[]string{"bucket1", "bucket2"},
+	)
+	require.Nil(t, err)
+	suite.Run(t, &ListArtifactGSTestSuite{gsSuite})
 }
 
 func (s *ListArtifactGSTestSuite) Test_Ok() {
@@ -98,7 +101,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			require.Nil(s.T(), err)
 
 			// 3. upload artifact objects to GS.
-			writer := s.GsClient.Bucket(
+			writer := s.Client.Bucket(
 				tt.bucket,
 			).Object(
 				fmt.Sprintf("1/%s/artifacts/artifact.txt", runID),
@@ -109,7 +112,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			require.Nil(s.T(), err)
 			require.Nil(t, writer.Close())
 
-			writer = s.GsClient.Bucket(
+			writer = s.Client.Bucket(
 				tt.bucket,
 			).Object(
 				fmt.Sprintf("1/%s/artifacts/artifact/artifact.txt", runID),

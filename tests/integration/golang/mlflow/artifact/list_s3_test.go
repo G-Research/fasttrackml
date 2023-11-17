@@ -27,13 +27,16 @@ import (
 )
 
 type ListArtifactS3TestSuite struct {
-	helpers.BaseArtifactS3TestSuite
+	*helpers.S3BucketStorageTestSuite
 }
 
 func TestListArtifactS3TestSuite(t *testing.T) {
-	suite.Run(t, &ListArtifactS3TestSuite{
-		helpers.NewBaseArtifactS3TestSuite("bucket1", "bucket2"),
-	})
+	s3Suite, err := helpers.NewS3BucketStorageSuite(
+		helpers.GetS3EndpointUri(),
+		[]string{"bucket1", "bucket2"},
+	)
+	require.Nil(t, err)
+	suite.Run(t, &ListArtifactS3TestSuite{s3Suite})
 }
 
 func (s *ListArtifactS3TestSuite) Test_Ok() {
@@ -100,13 +103,13 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 			require.Nil(s.T(), err)
 
 			// 3. upload artifact objects to S3.
-			_, err = s.S3Client.PutObject(context.Background(), &s3.PutObjectInput{
+			_, err = s.Client.PutObject(context.Background(), &s3.PutObjectInput{
 				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.file1", runID)),
 				Body:   strings.NewReader("contentX"),
 				Bucket: aws.String(tt.bucket),
 			})
 			require.Nil(s.T(), err)
-			_, err = s.S3Client.PutObject(context.Background(), &s3.PutObjectInput{
+			_, err = s.Client.PutObject(context.Background(), &s3.PutObjectInput{
 				Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact.dir/artifact.file2", runID)),
 				Body:   strings.NewReader("contentXX"),
 				Bucket: aws.String(tt.bucket),

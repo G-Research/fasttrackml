@@ -23,13 +23,16 @@ import (
 )
 
 type GetArtifactGSTestSuite struct {
-	helpers.BaseArtifactGSTestSuite
+	*helpers.GSBucketStorageTestSuite
 }
 
 func TestGetArtifactGSTestSuite(t *testing.T) {
-	suite.Run(t, &GetArtifactGSTestSuite{
-		helpers.NewBaseArtifactGSTestSuite("bucket1", "bucket2"),
-	})
+	gsSuite, err := helpers.NewGSBucketStorageSuite(
+		helpers.GetGSEndpointUri(),
+		[]string{"bucket1", "bucket2"},
+	)
+	require.Nil(t, err)
+	suite.Run(t, &GetArtifactGSTestSuite{gsSuite})
 }
 
 func (s *GetArtifactGSTestSuite) Test_Ok() {
@@ -82,7 +85,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			require.Nil(s.T(), err)
 
 			// upload artifact root object to GS
-			writer := s.GsClient.Bucket(tt.bucket).Object(
+			writer := s.Client.Bucket(tt.bucket).Object(
 				fmt.Sprintf("/1/%s/artifacts/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("content"))
@@ -90,7 +93,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			require.Nil(s.T(), writer.Close())
 
 			// upload artifact subdir object to GS
-			writer = s.GsClient.Bucket(tt.bucket).Object(
+			writer = s.Client.Bucket(tt.bucket).Object(
 				fmt.Sprintf("/1/%s/artifacts/artifact/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("subdir-object-content"))
@@ -171,7 +174,7 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 
 	// upload artifact subdir object to GS
 	require.Nil(s.T(), err)
-	writer := s.GsClient.Bucket("bucket1").Object(
+	writer := s.Client.Bucket("bucket1").Object(
 		fmt.Sprintf("1/%s/artifacts/artifact/artifact.file", runID),
 	).NewWriter(context.Background())
 	_, err = writer.Write([]byte("content"))

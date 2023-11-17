@@ -91,3 +91,6 @@ func (s *BaseTestSuite) SetupTest() {
 	// by default, unload everything.
 	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }
+
+func (s *BaseTestSuite) TearDownTest() {
+}

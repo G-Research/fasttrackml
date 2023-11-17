@@ -9,39 +9,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/rotisserie/eris"
-	"github.com/stretchr/testify/require"
 )
 
-type BaseArtifactS3TestSuite struct {
-	BaseTestSuite
-	S3Client    *s3.Client
-	TestBuckets []string
+// S3BucketStorageTestSuite is a test suite for S3 bucket storage.
+type S3BucketStorageTestSuite struct {
+	*BucketStorageTestSuite
+	Client *s3.Client
 }
 
-func NewBaseArtifactS3TestSuite(testBuckets ...string) BaseArtifactS3TestSuite {
-	return BaseArtifactS3TestSuite{
-		TestBuckets: testBuckets,
-	}
-}
-
-func (s *BaseArtifactS3TestSuite) SetupSuite() {
-	s.BaseTestSuite.SetupSuite()
-	gsClient, err := NewS3Client(GetS3EndpointUri())
-	require.Nil(s.T(), err)
-	s.S3Client = gsClient
-}
-
-func (s *BaseArtifactS3TestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest()
-	require.Nil(s.T(), CreateS3Buckets(s.S3Client, s.TestBuckets))
-}
-
-func (s *BaseArtifactS3TestSuite) TearDownTest() {
-	require.Nil(s.T(), DeleteS3Buckets(s.S3Client, s.TestBuckets))
-}
-
-// NewS3Client creates new instance of S3 client.
-func NewS3Client(endpoint string) (*s3.Client, error) {
+// NewS3BucketStorageSuite creates a new S3 bucket storage test suite.
+func NewS3BucketStorageSuite(endpoint string, testBuckets []string) (*S3BucketStorageTestSuite, error) {
 	cfg, err := awsConfig.LoadDefaultConfig(context.Background(), awsConfig.WithEndpointResolverWithOptions(
 		aws.EndpointResolverWithOptionsFunc(
 			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
@@ -58,15 +35,24 @@ func NewS3Client(endpoint string) (*s3.Client, error) {
 	if err != nil {
 		return nil, eris.Wrap(err, "error loading configuration for S3 client")
 	}
-	return s3.NewFromConfig(cfg, func(o *s3.Options) {
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.UsePathStyle = true
-	}), nil
+	})
+	return &S3BucketStorageTestSuite{
+		BucketStorageTestSuite: NewBucketStorageTestSuite(&S3BucketStorageClient{client}, testBuckets),
+		Client:                 client,
+	}, nil
 }
 
-// CreateS3Buckets creates the test buckets.
-func CreateS3Buckets(s3Client *s3.Client, buckets []string) error {
+// S3BucketStorageClient implements BucketStorageClient for S3.
+type S3BucketStorageClient struct {
+	*s3.Client
+}
+
+// CreateBuckets creates the test buckets.
+func (c *S3BucketStorageClient) CreateBuckets(buckets []string) error {
 	for _, bucket := range buckets {
-		_, err := s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
+		_, err := c.CreateBucket(context.Background(), &s3.CreateBucketInput{
 			Bucket: aws.String(bucket),
 		})
 		if err != nil {
@@ -76,21 +62,21 @@ func CreateS3Buckets(s3Client *s3.Client, buckets []string) error {
 	return nil
 }
 
-// DeleteS3Buckets removes the test buckets.
-func DeleteS3Buckets(s3Client *s3.Client, buckets []string) error {
+// DeleteBuckets deletes the test buckets.
+func (c *S3BucketStorageClient) DeleteBuckets(buckets []string) error {
 	for _, bucket := range buckets {
-		if err := removeBucket(s3Client, bucket); err != nil {
+		if err := c.deleteBucket(bucket); err != nil {
 			return eris.Wrapf(err, "failed to remove bucket '%s'", bucket)
 		}
 	}
 	return nil
 }
 
-// removeBucket removes a bucket and its objects.
-func removeBucket(s3Client *s3.Client, bucket string) error {
+// deleteBucket deletes a bucket and its objects.
+func (c *S3BucketStorageClient) deleteBucket(bucket string) error {
 	// Delete all objects in the bucket
 	var objectIDs []types.ObjectIdentifier
-	paginator := s3.NewListObjectsV2Paginator(s3Client, &s3.ListObjectsV2Input{
+	paginator := s3.NewListObjectsV2Paginator(c, &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
 	})
 	for paginator.HasMorePages() {
@@ -103,7 +89,7 @@ func removeBucket(s3Client *s3.Client, bucket string) error {
 		}
 	}
 	if len(objectIDs) > 0 {
-		_, err := s3Client.DeleteObjects(context.Background(), &s3.DeleteObjectsInput{
+		_, err := c.DeleteObjects(context.Background(), &s3.DeleteObjectsInput{
 			Bucket: aws.String(bucket),
 			Delete: &types.Delete{Objects: objectIDs},
 		})
@@ -113,12 +99,12 @@ func removeBucket(s3Client *s3.Client, bucket string) error {
 	}
 
 	// Delete the bucket
-	if _, err := s3Client.DeleteBucket(context.Background(), &s3.DeleteBucketInput{
+	if _, err := c.DeleteBucket(context.Background(), &s3.DeleteBucketInput{
 		Bucket: aws.String(bucket),
 	}); err != nil {
 		return eris.Wrapf(err, "failed to delete bucket '%s'", bucket)
 	}
-	waiter := s3.NewBucketNotExistsWaiter(s3Client)
+	waiter := s3.NewBucketNotExistsWaiter(c)
 	if err := waiter.Wait(
 		context.Background(),
 		&s3.HeadBucketInput{

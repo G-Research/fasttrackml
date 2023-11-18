@@ -58,17 +58,16 @@ func (s *AppFlowTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			defer func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 			}()
 
 			// setup namespaces
 			for _, nsCode := range []string{"default", tt.namespace1Code, tt.namespace2Code} {
-				// ignore errors here since default exists on first run
-				//nolint:errcheck
-				_, _ = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+				_, err := s.NamespaceFixtures.UpsertNamespace(context.Background(), &models.Namespace{
 					Code:                nsCode,
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
+				require.Nil(s.T(), err)
 			}
 
 			// run actual flow test over the test data.

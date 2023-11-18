@@ -108,7 +108,7 @@ func (s *GetRunTestSuite) Test_Ok() {
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
 
@@ -185,7 +185,7 @@ func (s *GetRunTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 				),
 			)
 			require.Nil(s.T(), err)

@@ -86,7 +86,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
 		),
 	)
 
@@ -111,7 +111,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
 		),
 	)
 
@@ -145,7 +145,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
 		),
 	)
 	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
@@ -235,7 +235,7 @@ func (s *SetExperimentTagTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

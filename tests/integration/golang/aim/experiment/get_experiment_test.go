@@ -5,6 +5,7 @@ package experiment
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -64,7 +65,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	var resp response.GetExperiment
 	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
 
-	assert.Equal(s.T(), *experiment.ID, resp.ID)
+	assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.ID)
 	assert.Equal(s.T(), experiment.Name, resp.Name)
 	assert.Equal(s.T(), "", resp.Description)
 	assert.Equal(s.T(), float64(experiment.CreationTime.Int64)/1000, resp.CreationTime)
@@ -103,9 +104,9 @@ func (s *GetExperimentTestSuite) Test_Error() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
-			require.Nil(t, s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
+			require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
 			assert.Equal(s.T(), tt.error, resp.Error())
 		})
 	}

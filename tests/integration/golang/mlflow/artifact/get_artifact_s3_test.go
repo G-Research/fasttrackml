@@ -77,7 +77,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			// create test experiment
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
@@ -134,7 +134,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			).WithResponse(
 				resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
 			assert.Equal(s.T(), "content", resp.String())
 
@@ -152,7 +152,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			).WithResponse(
 				resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
 			assert.Equal(s.T(), "subdir-object-content", resp.String())
 		})
@@ -274,14 +274,14 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(t, s.MlflowClient().WithQuery(
+			require.Nil(s.T(), s.MlflowClient().WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})

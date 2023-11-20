@@ -2944,7 +2944,7 @@ func (s *SearchTestSuite) testCases(
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := &response.SearchRunsResponse{}
 			client := s.MlflowClient().WithMethod(
 				http.MethodPost,
@@ -2961,7 +2961,7 @@ func (s *SearchTestSuite) testCases(
 			require.Nil(
 				s.T(),
 				client.DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute,
 				),
 			)
 			assert.Equal(s.T(), len(tt.response.Runs), len(resp.Runs))

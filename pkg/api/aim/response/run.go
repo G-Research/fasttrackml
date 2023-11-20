@@ -22,13 +22,12 @@ type GetRunInfoTraces struct {
 
 // GetRunInfoProps run properties
 type GetRunInfoProps struct {
-	ID           string               `json:"id"`
 	Name         string               `json:"name"`
 	Description  string               `json:"description"`
 	Experiment   GetRunInfoExperiment `json:"experiment"`
 	Tags         []string             `json:"tags"`
-	CreationTime int64                `json:"creation_time"`
-	EndTime      int64                `json:"end_time"`
+	CreationTime float64              `json:"creation_time"`
+	EndTime      float64              `json:"end_time"`
 	Archived     bool                 `json:"archived"`
 	Active       bool                 `json:"active"`
 }

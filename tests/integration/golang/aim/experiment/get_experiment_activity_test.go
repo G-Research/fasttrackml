@@ -49,7 +49,7 @@ func (s *GetExperimentActivityTestSuite) Test_Ok() {
 	require.Nil(s.T(), err)
 
 	archivedRunsIds := []string{runs[0].ID, runs[1].ID}
-	err = s.RunFixtures.ArchiveRuns(context.Background(), archivedRunsIds)
+	err = s.RunFixtures.ArchiveRuns(context.Background(), namespace.ID, archivedRunsIds)
 	require.Nil(s.T(), err)
 
 	var resp response.GetExperimentActivity
@@ -93,7 +93,7 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
 			require.Nil(s.T(), s.AIMClient().WithQuery(map[any]any{
 				"limit": 4,

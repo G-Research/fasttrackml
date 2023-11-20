@@ -4,7 +4,6 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -78,7 +77,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute,
 		),
 	)
 	assert.Empty(s.T(), resp)
@@ -203,7 +202,7 @@ func (s *LogMetricTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			// if setupDatabase has been provided then configure database with test data.
 			if tt.setupDatabase != nil {
 				if runID := tt.setupDatabase(); runID != "" {
@@ -221,7 +220,7 @@ func (s *LogMetricTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

@@ -80,7 +80,7 @@ func (s *RestoreExperimentTestSuite) Test_Ok() {
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsRestoreRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsRestoreRoute,
 		),
 	)
 
@@ -137,7 +137,7 @@ func (s *RestoreExperimentTestSuite) Test_Error() {
 	}
 
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
@@ -148,7 +148,7 @@ func (s *RestoreExperimentTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsRestoreRoute),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsRestoreRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

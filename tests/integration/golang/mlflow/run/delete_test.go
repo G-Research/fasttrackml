@@ -4,7 +4,6 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -71,7 +70,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := map[string]any{}
 			require.Nil(
 				s.T(),
@@ -82,7 +81,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute,
 				),
 			)
 			assert.Empty(s.T(), resp)
@@ -90,7 +89,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			archivedRuns, err := s.RunFixtures.GetRuns(context.Background(), run.ExperimentID)
 
 			require.Nil(s.T(), err)
-			assert.Equal(T, 1, len(archivedRuns))
+			assert.Equal(s.T(), 1, len(archivedRuns))
 			assert.Equal(s.T(), run.ID, archivedRuns[0].ID)
 			assert.Equal(s.T(), models.LifecycleStageDeleted, archivedRuns[0].LifecycleStage)
 		})
@@ -119,7 +118,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
@@ -130,7 +129,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute,
 				),
 			)
 			require.Nil(s.T(), err)

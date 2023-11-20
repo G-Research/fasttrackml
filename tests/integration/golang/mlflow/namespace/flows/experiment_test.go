@@ -99,7 +99,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	// default namespace and experiment, so it could lead to the problems with actual tests.
 	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 
 			// 1. setup data under the test.
@@ -171,7 +171,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute,
 		),
 	)
 	assert.Equal(
@@ -197,7 +197,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute,
 		),
 	)
 	assert.Equal(
@@ -436,7 +436,7 @@ func (s *ExperimentFlowTestSuite) createExperiment(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute,
 		),
 	)
 
@@ -453,7 +453,7 @@ func (s *ExperimentFlowTestSuite) updateExperiment(namespace string, req *reques
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute,
 		),
 	)
 }
@@ -471,7 +471,7 @@ func (s *ExperimentFlowTestSuite) searchExperimentAndCompare(
 		).WithResponse(
 			&searchResp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute,
 		),
 	)
 	assert.Equal(s.T(), len(expectedExperiments), len(searchResp.Experiments))
@@ -494,7 +494,7 @@ func (s *ExperimentFlowTestSuite) getExperimentByIDAndCompare(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute,
 		),
 	)
 	assert.Equal(s.T(), expectedResponse.Experiment.ID, resp.Experiment.ID)
@@ -520,7 +520,7 @@ func (s *ExperimentFlowTestSuite) getExperimentByNameAndCompare(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute,
 		),
 	)
 	assert.Equal(s.T(), expectedResponse.Experiment.ID, resp.Experiment.ID)
@@ -542,7 +542,7 @@ func (s *ExperimentFlowTestSuite) deleteExperiment(namespace, experiment1ID stri
 				ID: experiment1ID,
 			},
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsDeleteRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsDeleteRoute,
 		),
 	)
 }
@@ -559,7 +559,7 @@ func (s *ExperimentFlowTestSuite) restoreExperiment(namespace, experiment1ID str
 				ID: experiment1ID,
 			},
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsRestoreRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsRestoreRoute,
 		),
 	)
 }
@@ -574,7 +574,7 @@ func (s *ExperimentFlowTestSuite) setExperimentTag(namespace string, req *reques
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSetExperimentTag,
 		),
 	)
 }

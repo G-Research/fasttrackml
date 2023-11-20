@@ -72,7 +72,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 	assert.Equal(s.T(), len(experiments), len(resp))
 	for _, actualExperiment := range resp {
 		id, err := strconv.ParseInt(actualExperiment.ID, 10, 32)
-		assert.Nil(s.T(), err)
+		require.Nil(s.T(), err)
 		expectedExperiment := experiments[int32(id)]
 		assert.Equal(s.T(), fmt.Sprintf("%d", *expectedExperiment.ID), actualExperiment.ID)
 		assert.Equal(s.T(), expectedExperiment.Name, actualExperiment.Name)

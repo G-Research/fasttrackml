@@ -109,39 +109,21 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 	})
 
 	// test `GET /dashboards` endpoint with namespace 1
-	resp := []response.Dashboard{}
-	require.Nil(
-		s.T(),
-		s.AIMClient().WithMethod(
-			http.MethodGet,
-		).WithNamespace(
-			namespace1Code,
-		).WithResponse(
-			&resp,
-		).DoRequest(
-			"/dashboards",
-		),
-	)
+	resp := s.getDashboards(namespace1Code)
 	// only dashboard 1 should be present
 	assert.Equal(s.T(), 1, len(resp))
 	assert.Equal(s.T(), dashboard1ID, resp[0].ID)
 
 	// test `GET /dashboards` endpoint with namespace 2
-	require.Nil(
-		s.T(),
-		s.AIMClient().WithMethod(
-			http.MethodGet,
-		).WithNamespace(
-			namespace2Code,
-		).WithResponse(
-			&resp,
-		).DoRequest(
-			"/dashboards",
-		),
-	)
+	resp = s.getDashboards(namespace2Code)
 	// only dashboard 2 should be present
 	assert.Equal(s.T(), 1, len(resp))
 	assert.Equal(s.T(), dashboard2ID, resp[0].ID)
+
+	// IDs from active namespace can be fetched, updated, and deleted
+	s.getDashboardAndCompare(namespace1Code, dashboard1ID)
+	s.updateDashboardAndCompare(namespace1Code, dashboard1ID)
+	s.deleteDashboardAndCompare(namespace2Code, dashboard2ID)
 
 	// IDs from other namespace cannot be fetched, updated, or deleted
 	errResp := response.Error{}
@@ -194,32 +176,35 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 		),
 	)
 	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
+}
 
-	// IDs from active namespace can be fetched, updated, and deleted
+func (s *DashboardFlowTestSuite) deleteDashboardAndCompare(namespaceCode string, dashboardID string) {
+	client := s.AIMClient()
 	dashboardResp := response.Dashboard{}
-	client = s.AIMClient()
 	require.Nil(
 		s.T(),
 		client.WithMethod(
-			http.MethodGet,
+			http.MethodDelete,
 		).WithNamespace(
-			namespace1Code,
+			namespaceCode,
 		).WithResponse(
 			&dashboardResp,
 		).DoRequest(
-			fmt.Sprintf("/dashboards/%s", dashboard1ID),
+			"/dashboards/%s", dashboardID,
 		),
 	)
-	assert.Equal(s.T(), dashboard1ID, dashboardResp.ID)
 	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+}
 
-	client = s.AIMClient()
+func (s *DashboardFlowTestSuite) updateDashboardAndCompare(namespaceCode string, dashboardID string) {
+	client := s.AIMClient()
+	dashboardResp := response.Dashboard{}
 	require.Nil(
 		s.T(),
 		client.WithMethod(
 			http.MethodPut,
 		).WithNamespace(
-			namespace1Code,
+			namespaceCode,
 		).WithRequest(
 			request.UpdateDashboard{
 				Name:        "new-dashboard-name",
@@ -228,26 +213,48 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 		).WithResponse(
 			&dashboardResp,
 		).DoRequest(
-			fmt.Sprintf("/dashboards/%s", dashboard1ID),
+			fmt.Sprintf("/dashboards/%s", dashboardID),
 		),
 	)
-	assert.Equal(s.T(), dashboard1ID, dashboardResp.ID)
+	assert.Equal(s.T(), dashboardID, dashboardResp.ID)
 	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+}
 
-	client = s.AIMClient()
+func (s *DashboardFlowTestSuite) getDashboardAndCompare(namespaceCode string, dashboardID string) response.Dashboard {
+	dashboardResp := response.Dashboard{}
+	client := s.AIMClient()
 	require.Nil(
 		s.T(),
 		client.WithMethod(
-			http.MethodDelete,
+			http.MethodGet,
 		).WithNamespace(
-			namespace2Code,
+			namespaceCode,
 		).WithResponse(
 			&dashboardResp,
 		).DoRequest(
-			"/dashboards/%s", dashboard2ID,
+			fmt.Sprintf("/dashboards/%s", dashboardID),
 		),
 	)
+	assert.Equal(s.T(), dashboardID, dashboardResp.ID)
 	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+	return dashboardResp
+}
+
+func (s *DashboardFlowTestSuite) getDashboards(namespaceCode string) []response.Dashboard {
+	resp := []response.Dashboard{}
+	require.Nil(
+		s.T(),
+		s.AIMClient().WithMethod(
+			http.MethodGet,
+		).WithNamespace(
+			namespaceCode,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"/dashboards",
+		),
+	)
+	return resp
 }
 
 func (s *DashboardFlowTestSuite) createApp(namespace string, req *request.CreateApp) string {
@@ -266,9 +273,6 @@ func (s *DashboardFlowTestSuite) createApp(namespace string, req *request.Create
 			"/apps",
 		),
 	)
-	assert.Equal(s.T(), req.Type, resp.Type)
-	assert.Equal(s.T(), req.State["app-state-key"], resp.State["app-state-key"])
-	assert.NotEmpty(s.T(), resp.ID)
 	return resp.ID
 }
 

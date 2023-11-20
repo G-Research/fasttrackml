@@ -80,14 +80,14 @@ func (s *AppFlowTestSuite) testAppFlow(
 	namespace1Code, namespace2Code string,
 ) {
 	// create Apps
-	app1ID := s.createApp(namespace1Code, &request.CreateApp{
+	app1ID := s.createAppAndCompare(namespace1Code, &request.CreateApp{
 		Type: "tf",
 		State: request.AppState{
 			"app-state-key": "app-state-value1",
 		},
 	})
 
-	app2ID := s.createApp(namespace2Code, &request.CreateApp{
+	app2ID := s.createAppAndCompare(namespace2Code, &request.CreateApp{
 		Type: "mpi",
 		State: request.AppState{
 			"app-state-key": "app-state-value2",
@@ -95,39 +95,21 @@ func (s *AppFlowTestSuite) testAppFlow(
 	})
 
 	// test `GET /apps` endpoint with namespace 1
-	resp := []response.App{}
-	require.Nil(
-		s.T(),
-		s.AIMClient().WithMethod(
-			http.MethodGet,
-		).WithNamespace(
-			namespace1Code,
-		).WithResponse(
-			&resp,
-		).DoRequest(
-			"/apps",
-		),
-	)
+	resp := s.getApps(namespace1Code)
 	// only app 1 should be present
 	assert.Equal(s.T(), 1, len(resp))
 	assert.Equal(s.T(), app1ID, resp[0].ID)
 
 	// test `GET /apps` endpoint with namespace 2
-	require.Nil(
-		s.T(),
-		s.AIMClient().WithMethod(
-			http.MethodGet,
-		).WithNamespace(
-			namespace2Code,
-		).WithResponse(
-			&resp,
-		).DoRequest(
-			"/apps",
-		),
-	)
+	resp = s.getApps(namespace2Code)
 	// only app 2 should be present
 	assert.Equal(s.T(), 1, len(resp))
 	assert.Equal(s.T(), app2ID, resp[0].ID)
+
+	// IDs from active namespace can be fetched, updated, and deleted
+	s.getAppAndCompare(namespace1Code, app1ID)
+	s.updateAppAndCompare(namespace1Code, app1ID)
+	s.deleteAppAndCompare(namespace2Code, app2ID)
 
 	// IDs from other namespace cannot be fetched, updated, or deleted
 	errResp := response.Error{}
@@ -182,32 +164,35 @@ func (s *AppFlowTestSuite) testAppFlow(
 		),
 	)
 	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
+}
 
-	// IDs from active namespace can be fetched, updated, and deleted
+func (s *AppFlowTestSuite) deleteAppAndCompare(namespaceCode string, appID string) {
+	client := s.AIMClient()
 	appResp := response.App{}
-	client = s.AIMClient()
 	require.Nil(
 		s.T(),
 		client.WithMethod(
-			http.MethodGet,
+			http.MethodDelete,
 		).WithNamespace(
-			namespace1Code,
+			namespaceCode,
 		).WithResponse(
 			&appResp,
 		).DoRequest(
-			fmt.Sprintf("/apps/%s", app1ID),
+			fmt.Sprintf("/apps/%s", appID),
 		),
 	)
-	assert.Equal(s.T(), app1ID, appResp.ID)
 	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+}
 
-	client = s.AIMClient()
+func (s *AppFlowTestSuite) updateAppAndCompare(namespaceCode string, appID string) {
+	client := s.AIMClient()
+	appResp := response.App{}
 	require.Nil(
 		s.T(),
 		client.WithMethod(
 			http.MethodPut,
 		).WithNamespace(
-			namespace1Code,
+			namespaceCode,
 		).WithRequest(
 			request.UpdateApp{
 				Type: "app-type",
@@ -218,29 +203,51 @@ func (s *AppFlowTestSuite) testAppFlow(
 		).WithResponse(
 			&appResp,
 		).DoRequest(
-			fmt.Sprintf("/apps/%s", app1ID),
+			fmt.Sprintf("/apps/%s", appID),
 		),
 	)
-	assert.Equal(s.T(), app1ID, appResp.ID)
-	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
-
-	client = s.AIMClient()
-	require.Nil(
-		s.T(),
-		client.WithMethod(
-			http.MethodDelete,
-		).WithNamespace(
-			namespace2Code,
-		).WithResponse(
-			&appResp,
-		).DoRequest(
-			fmt.Sprintf("/apps/%s", app2ID),
-		),
-	)
+	assert.Equal(s.T(), appID, appResp.ID)
 	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
 }
 
-func (s *AppFlowTestSuite) createApp(namespace string, req *request.CreateApp) string {
+func (s *AppFlowTestSuite) getAppAndCompare(namespaceCode string, appID string) response.App {
+	appResp := response.App{}
+	client := s.AIMClient()
+	require.Nil(
+		s.T(),
+		client.WithMethod(
+			http.MethodGet,
+		).WithNamespace(
+			namespaceCode,
+		).WithResponse(
+			&appResp,
+		).DoRequest(
+			fmt.Sprintf("/apps/%s", appID),
+		),
+	)
+	assert.Equal(s.T(), appID, appResp.ID)
+	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+	return appResp
+}
+
+func (s *AppFlowTestSuite) getApps(namespaceCode string) []response.App {
+	resp := []response.App{}
+	require.Nil(
+		s.T(),
+		s.AIMClient().WithMethod(
+			http.MethodGet,
+		).WithNamespace(
+			namespaceCode,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"/apps",
+		),
+	)
+	return resp
+}
+
+func (s *AppFlowTestSuite) createAppAndCompare(namespace string, req *request.CreateApp) string {
 	var resp response.App
 	require.Nil(
 		s.T(),

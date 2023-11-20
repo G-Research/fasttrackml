@@ -29,13 +29,22 @@
             margin-bottom: -50px;
         }
         
-        #namespaces-list { 
+        #namespace-list-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             overflow:auto;
             height:30%;
-            list-style-type: none;
             border: 1px solid var(--border);
             border-radius: 5px;
             padding: 1rem;
+        }
+
+        #namespaces-list { 
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+            list-style-type: none;
          }
 
         #current-namespace {
@@ -78,27 +87,26 @@
         </div>
         <p>Selected namespace: 
             <b>
-                <u>{{.CurrentNamespace.Code}}</u>
-                {{ if ne "" .CurrentNamespace.Description }}
-                    - {{ .CurrentNamespace.Description }}
-                {{ end }}
+                <u>{{.CurrentNamespace.DisplayName}}</u>
             </b>
         </p>
         
-        <ul id="namespaces-list">
-            {{ range .Namespaces }}
-                {{ if ne .Code $.CurrentNamespace.Code }}
-                    <li>
-                        <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.Code}}</a> 
-                    </li>
-                {{ else }}
-                    <li class="selected-namespace">
-                        <i id="current-icon" class="Icon__container icon-long-arrow-right"></i>
-                        <b id="current-namespace">{{$.CurrentNamespace.Code}}</b>
-                    </li>
+        <div id="namespace-list-container">
+            <ul id="namespaces-list">
+                {{ range .Namespaces }}
+                    {{ if ne .DisplayName $.CurrentNamespace.DisplayName }}
+                        <li>
+                            <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.DisplayName}}</a> 
+                        </li>
+                    {{ else }}
+                        <li class="selected-namespace">
+                            <i id="current-icon" class="Icon__container icon-long-arrow-right"></i>
+                            <b id="current-namespace">{{$.CurrentNamespace.DisplayName}}</b>
+                        </li>
+                    {{ end }}
                 {{ end }}
-            {{ end }}
-        </ul>
+            </ul>
+        </div>
 
 	<p><a href="#" onclick="window.location = window.location.origin + '/admin/namespaces/'">Manage namespaces</a></p>
 

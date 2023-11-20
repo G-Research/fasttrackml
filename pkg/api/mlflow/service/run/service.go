@@ -491,7 +491,7 @@ func (s Service) LogMetric(
 		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
-	context, err := convertors.ConvertMetricContextParamRequestToDBModel(req)
+	context, err := convertors.ConvertLogMetricRequestToContextDBModel(req)
 	if err != nil {
 		return api.NewInvalidParameterValueError(err.Error())
 	}
@@ -617,7 +617,7 @@ func (s Service) LogBatch(
 		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
 	}
 
-	contexts, err := convertors.ConvertMetricBatchContextRequestToDBModel(req)
+	contexts, err := convertors.ConvertLogBatchRequestToContextDBModel(req)
 	if err != nil {
 		return api.NewInvalidParameterValueError(err.Error())
 	}

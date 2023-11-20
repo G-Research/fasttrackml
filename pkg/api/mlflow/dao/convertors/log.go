@@ -79,8 +79,8 @@ func ConvertLogBatchRequestToDBModel(
 	return metrics, params, tags, nil
 }
 
-// ConvertMetricContextParamRequestToDBModel converts request.LogBatchRequest into actual []*models.Context model.
-func ConvertMetricBatchContextRequestToDBModel(req *request.LogBatchRequest) ([]*models.Context, error) {
+// ConvertLogBatchRequestToContextDBModel converts request.LogBatchRequest into []*models.Context model.
+func ConvertLogBatchRequestToContextDBModel(req *request.LogBatchRequest) ([]*models.Context, error) {
 	contexts := make([]*models.Context, len(req.Metrics))
 	for n, metric := range req.Metrics {
 		if metric.Context != nil {

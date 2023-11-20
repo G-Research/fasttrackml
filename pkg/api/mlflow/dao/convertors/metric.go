@@ -43,8 +43,8 @@ func ConvertMetricParamRequestToDBModel(runID string, context *models.Context, r
 	return &metric, nil
 }
 
-// ConvertMetricContextParamRequestToDBModel converts request.LogMetricRequest into actual models.Context model.
-func ConvertMetricContextParamRequestToDBModel(req *request.LogMetricRequest) (*models.Context, error) {
+// ConvertLogMetricRequestToContextDBModel converts request.LogMetricRequest into actual models.Context model.
+func ConvertLogMetricRequestToContextDBModel(req *request.LogMetricRequest) (*models.Context, error) {
 	if req.Context != nil {
 		contextJSON, err := json.Marshal(req.Context)
 		if err != nil {

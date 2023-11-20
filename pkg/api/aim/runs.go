@@ -240,7 +240,6 @@ func GetRunsActive(c *fiber.Ctx) error {
 	log.Debugf("getRunsActive namespace: %s", ns.Code)
 
 	q := struct {
-		Limit          int  `query:"limit"`
 		ReportProgress bool `query:"report_progress"`
 	}{}
 
@@ -250,11 +249,6 @@ func GetRunsActive(c *fiber.Ctx) error {
 
 	if c.Query("report_progress") == "" {
 		q.ReportProgress = true
-	}
-
-	limit := 100
-	if q.Limit > 0 {
-		limit = q.Limit
 	}
 
 	var runs []database.Run
@@ -269,7 +263,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 			),
 		).
 		Preload("LatestMetrics").
-		Limit(limit).
+		Limit(100).
 		Order("start_time DESC").
 		Find(&runs).Error; err != nil {
 		return fmt.Errorf("error retrieving active runs: %w", err)

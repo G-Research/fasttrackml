@@ -16,10 +16,6 @@ func TestConvertMetricParamRequestToDBModel(t *testing.T) {
 		Value:     1.1,
 		RunID:     "run_id",
 		Timestamp: 1234567890,
-		Context: map[string]interface{}{
-			"key":   "testKey",
-			"value": "testValue",
-		},
 	}
 	result, err := ConvertMetricParamRequestToDBModel("run_id", nil, &req)
 	require.Nil(t, err)

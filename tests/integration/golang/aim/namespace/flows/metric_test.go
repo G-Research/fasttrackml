@@ -275,7 +275,10 @@ func (s *MetricFlowTestSuite) testRunFlow(
 }
 
 func (s *MetricFlowTestSuite) searchMetricsAndCompare(
-	namespace string, request request.SearchMetricsRequest, expectedRuns []*models.Run, expectedMetrics []*models.LatestMetric,
+	namespace string,
+	request request.SearchMetricsRequest,
+	expectedRuns []*models.Run,
+	expectedMetrics []*models.LatestMetric,
 ) {
 	resp := new(bytes.Buffer)
 	require.Nil(

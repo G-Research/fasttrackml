@@ -116,8 +116,6 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 			http.MethodGet,
 		).WithNamespace(
 			namespace1Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -135,8 +133,6 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 			http.MethodGet,
 		).WithNamespace(
 			namespace2Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -156,8 +152,6 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 			http.MethodGet,
 		).WithNamespace(
 			namespace1Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&errResp,
 		).DoRequest(
@@ -178,8 +172,6 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 				Name:        "new-dashboard-name",
 				Description: "new-dashboard-description",
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&errResp,
 		).DoRequest(
@@ -195,8 +187,6 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 			http.MethodDelete,
 		).WithNamespace(
 			namespace2Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&errResp,
 		).DoRequest(
@@ -214,8 +204,6 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 			http.MethodGet,
 		).WithNamespace(
 			namespace1Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&dashboardResp,
 		).DoRequest(
@@ -237,8 +225,6 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 				Name:        "new-dashboard-name",
 				Description: "new-dashboard-description",
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&dashboardResp,
 		).DoRequest(
@@ -255,12 +241,10 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 			http.MethodDelete,
 		).WithNamespace(
 			namespace2Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&dashboardResp,
 		).DoRequest(
-			fmt.Sprintf("/dashboards/%s", dashboard2ID),
+			"/dashboards/%s", dashboard2ID,
 		),
 	)
 	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())

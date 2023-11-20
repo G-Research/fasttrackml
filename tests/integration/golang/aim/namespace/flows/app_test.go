@@ -29,7 +29,7 @@ func TestAppFlowTestSuite(t *testing.T) {
 }
 
 func (s *AppFlowTestSuite) TearDownTest() {
-	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *AppFlowTestSuite) Test_Ok() {
@@ -102,8 +102,6 @@ func (s *AppFlowTestSuite) testAppFlow(
 			http.MethodGet,
 		).WithNamespace(
 			namespace1Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -121,8 +119,6 @@ func (s *AppFlowTestSuite) testAppFlow(
 			http.MethodGet,
 		).WithNamespace(
 			namespace2Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -142,8 +138,6 @@ func (s *AppFlowTestSuite) testAppFlow(
 			http.MethodGet,
 		).WithNamespace(
 			namespace1Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&errResp,
 		).DoRequest(
@@ -166,8 +160,6 @@ func (s *AppFlowTestSuite) testAppFlow(
 					"app-state-key": "new-app-state-value",
 				},
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&errResp,
 		).DoRequest(
@@ -183,8 +175,6 @@ func (s *AppFlowTestSuite) testAppFlow(
 			http.MethodDelete,
 		).WithNamespace(
 			namespace2Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&errResp,
 		).DoRequest(
@@ -202,8 +192,6 @@ func (s *AppFlowTestSuite) testAppFlow(
 			http.MethodGet,
 		).WithNamespace(
 			namespace1Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&appResp,
 		).DoRequest(
@@ -227,8 +215,6 @@ func (s *AppFlowTestSuite) testAppFlow(
 					"app-state-key": "new-app-state-value",
 				},
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&appResp,
 		).DoRequest(
@@ -245,8 +231,6 @@ func (s *AppFlowTestSuite) testAppFlow(
 			http.MethodDelete,
 		).WithNamespace(
 			namespace2Code,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&appResp,
 		).DoRequest(

@@ -252,7 +252,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 	}
 
 	var runs []database.Run
-	if tx := database.DB.
+	if err := database.DB.
 		Where("status = ?", database.StatusRunning).
 		InnerJoins(
 			"Experiment",
@@ -263,8 +263,10 @@ func GetRunsActive(c *fiber.Ctx) error {
 			),
 		).
 		Preload("LatestMetrics").
-		Find(&runs); tx.Error != nil {
-		return fmt.Errorf("error retrieving active runs: %w", tx.Error)
+		Limit(50).
+		Order("start_time DESC").
+		Find(&runs).Error; err != nil {
+		return fmt.Errorf("error retrieving active runs: %w", err)
 	}
 
 	c.Set("Content-Type", "application/octet-stream")

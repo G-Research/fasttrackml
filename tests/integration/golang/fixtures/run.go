@@ -43,9 +43,8 @@ func (f RunFixtures) CreateRun(
 }
 
 // ArchiveRun archive existing runs by their ids.
-func (f RunFixtures) ArchiveRun(ctx context.Context, ids []string) error {
-	err := f.runRepository.ArchiveBatch(ctx, ids)
-	return err
+func (f RunFixtures) ArchiveRun(ctx context.Context, namespaceID uint, ids []string) error {
+	return f.runRepository.ArchiveBatch(ctx, namespaceID, ids)
 }
 
 // UpdateRun updates existing Run.
@@ -60,9 +59,9 @@ func (f RunFixtures) UpdateRun(
 
 // ArchiveRuns soft-deletes existing Runs.
 func (f RunFixtures) ArchiveRuns(
-	ctx context.Context, runIDs []string,
+	ctx context.Context, namespaceID uint, runIDs []string,
 ) error {
-	if err := f.runRepository.ArchiveBatch(ctx, runIDs); err != nil {
+	if err := f.runRepository.ArchiveBatch(ctx, namespaceID, runIDs); err != nil {
 		return eris.Wrap(err, "error archiving runs")
 	}
 	return nil
@@ -181,6 +180,14 @@ func (f RunFixtures) CreateTag(
 	return nil
 }
 
+// CreateMetric creates a new test Metric.
+func (f RunFixtures) CreateMetric(ctx context.Context, metric *models.Metric) error {
+	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
+		return eris.Wrap(err, "error creating test metric")
+	}
+	return nil
+}
+
 // CreateMetrics creates some example metrics for a Run, up to count.
 func (f RunFixtures) CreateMetrics(
 	ctx context.Context, run *models.Run, count int,
@@ -189,7 +196,7 @@ func (f RunFixtures) CreateMetrics(
 		// create test `metric` and test `latest metric` and connect to run.
 
 		for iter := 1; iter <= count; iter++ {
-			err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
+			if err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
 				Key:       fmt.Sprintf("key%d", i),
 				Value:     123.1 + float64(iter),
 				Timestamp: 1234567890 + int64(iter),
@@ -197,8 +204,7 @@ func (f RunFixtures) CreateMetrics(
 				Step:      int64(iter),
 				IsNan:     false,
 				Iter:      int64(iter),
-			}).Error
-			if err != nil {
+			}).Error; err != nil {
 				return err
 			}
 		}

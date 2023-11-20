@@ -224,7 +224,7 @@ func (s *SetExperimentTagTestSuite) Test_Error() {
 	}
 
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),

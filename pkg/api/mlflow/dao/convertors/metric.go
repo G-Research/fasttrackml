@@ -18,8 +18,10 @@ func ConvertMetricParamRequestToDBModel(runID string, context *models.Context, r
 		Timestamp: req.Timestamp,
 		Step:      req.Step,
 		RunID:     runID,
-		Context:   context,
-		ContextID: &context.ID,
+	}
+	if context != nil {
+		metric.Context = context
+		metric.ContextID = &context.ID
 	}
 	if v, ok := req.Value.(float64); ok {
 		metric.Value = v
@@ -43,12 +45,16 @@ func ConvertMetricParamRequestToDBModel(runID string, context *models.Context, r
 
 // ConvertMetricContextParamRequestToDBModel converts request.LogMetricRequest into actual models.Context model.
 func ConvertMetricContextParamRequestToDBModel(req *request.LogMetricRequest) (*models.Context, error) {
-	contextJSON, err := json.Marshal(req.Context)
-	if err != nil {
-		return nil, err
-	}
+	if req.Context != nil {
+		contextJSON, err := json.Marshal(req.Context)
+		if err != nil {
+			return nil, err
+		}
 
-	return &models.Context{
-		Json: contextJSON,
-	}, nil
+		return &models.Context{
+			Json: contextJSON,
+		}, nil
+	} else {
+		return nil, nil
+	}
 }

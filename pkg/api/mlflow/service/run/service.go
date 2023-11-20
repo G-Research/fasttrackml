@@ -495,11 +495,11 @@ func (s Service) LogMetric(
 	if err != nil {
 		return api.NewInvalidParameterValueError(err.Error())
 	}
-
-	if err := s.metricRepository.CreateContext(ctx, context); err != nil {
-		return api.NewInternalError("unable to log context '%s' for metric '%s': %s", req.Context, req.Key, err)
+	if context != nil {
+		if err := s.metricRepository.CreateContext(ctx, context); err != nil {
+			return api.NewInternalError("unable to log context '%s' for metric '%s': %s", req.Context, req.Key, err)
+		}
 	}
-
 	metric, err := convertors.ConvertMetricParamRequestToDBModel(run.ID, context, req)
 	if err != nil {
 		return api.NewInvalidParameterValueError(err.Error())

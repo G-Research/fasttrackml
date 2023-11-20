@@ -57,7 +57,7 @@ func (s *DashboardFlowTestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			defer func() {
 				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 			}()

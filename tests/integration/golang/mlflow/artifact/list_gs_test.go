@@ -79,7 +79,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			// 1. create test experiment.
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name: fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
@@ -125,7 +125,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			)
 			_, err = writer.Write([]byte("contentX"))
 			require.Nil(s.T(), err)
-			require.Nil(t, writer.Close())
+			require.Nil(s.T(), writer.Close())
 
 			writer = s.gsClient.Bucket(
 				tt.bucket,
@@ -136,7 +136,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			)
 			_, err = writer.Write([]byte("contentXX"))
 			require.Nil(s.T(), err)
-			require.Nil(t, writer.Close())
+			require.Nil(s.T(), writer.Close())
 
 			// 4. make actual API call for root dir.
 			rootDirQuery := request.ListArtifactsRequest{
@@ -289,7 +289,7 @@ func (s *ListArtifactGSTestSuite) Test_Error() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
@@ -301,7 +301,7 @@ func (s *ListArtifactGSTestSuite) Test_Error() {
 					"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 				),
 			)
-			require.Nil(t, err)
+			require.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

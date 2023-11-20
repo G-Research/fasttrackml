@@ -82,7 +82,7 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			// 1. create test experiment.
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name: fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
@@ -282,7 +282,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
@@ -294,7 +294,7 @@ func (s *ListArtifactS3TestSuite) Test_Error() {
 					"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 				),
 			)
-			require.Nil(t, err)
+			require.Nil(s.T(), err)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})
 	}

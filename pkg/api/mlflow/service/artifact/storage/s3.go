@@ -109,7 +109,7 @@ func (s S3) List(ctx context.Context, artifactURI, path string) ([]ArtifactObjec
 			}
 			artifactList = append(artifactList, ArtifactObject{
 				Path:  relPath,
-				Size:  object.Size,
+				Size:  *object.Size,
 				IsDir: false,
 			})
 		}

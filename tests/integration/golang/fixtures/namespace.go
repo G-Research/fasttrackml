@@ -5,6 +5,7 @@ import (
 
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -29,6 +30,23 @@ func (f NamespaceFixtures) CreateNamespace(
 	ctx context.Context, namespace *models.Namespace,
 ) (*models.Namespace, error) {
 	if err := f.namespaceRepository.Create(ctx, namespace); err != nil {
+		return nil, eris.Wrap(err, "error creating test namespace")
+	}
+	return namespace, nil
+}
+
+// UpsertNamespace creates a new test Namespace or updates existing.
+func (f NamespaceFixtures) UpsertNamespace(
+	ctx context.Context, namespace *models.Namespace,
+) (*models.Namespace, error) {
+	if err := f.db.
+		Clauses(
+			clause.OnConflict{
+				Columns:   []clause.Column{{Name: "code"}},
+				UpdateAll: true,
+			}).
+		Model(models.Namespace{}).
+		Create(namespace).Error; err != nil {
 		return nil, eris.Wrap(err, "error creating test namespace")
 	}
 	return namespace, nil

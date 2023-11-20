@@ -76,18 +76,25 @@
                 <p>This is the modern Aim UI, much faster than MLFlow.</p>
             </article>
         </div>
-        <p>Selected namespace: <b><u>{{.CurrentNamespace.Description}}</u></b></p>
+        <p>Selected namespace: 
+            <b>
+                <u>{{.CurrentNamespace.Code}}</u>
+                {{ if ne "" .CurrentNamespace.Description }}
+                    - {{ .CurrentNamespace.Description }}
+                {{ end }}
+            </b>
+        </p>
         
         <ul id="namespaces-list">
             {{ range .Namespaces }}
                 {{ if ne .Code $.CurrentNamespace.Code }}
                     <li>
-                        <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.Description}}</a> 
+                        <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.Code}}</a> 
                     </li>
                 {{ else }}
                     <li class="selected-namespace">
                         <i id="current-icon" class="Icon__container icon-long-arrow-right"></i>
-                        <b id="current-namespace">{{$.CurrentNamespace.Description}}</b>
+                        <b id="current-namespace">{{$.CurrentNamespace.Code}}</b>
                     </li>
                 {{ end }}
             {{ end }}

@@ -19,7 +19,7 @@ func ConvertMetricParamRequestToDBModel(runID string, context *models.Context, r
 		Step:      req.Step,
 		RunID:     runID,
 		Context:   context,
-		ContentID: &context.ID,
+		ContextID: &context.ID,
 	}
 	if v, ok := req.Value.(float64); ok {
 		metric.Value = v

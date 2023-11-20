@@ -14,10 +14,11 @@ type TagPartialRequest struct {
 
 // MetricPartialRequest is a partial request object for different requests.
 type MetricPartialRequest struct {
-	Key       string `json:"key"`
-	Value     any    `json:"value"`
-	Timestamp int64  `json:"timestamp"`
-	Step      int64  `json:"step"`
+	Key       string         `json:"key"`
+	Value     any            `json:"value"`
+	Timestamp int64          `json:"timestamp"`
+	Step      int64          `json:"step"`
+	Context   map[string]any `json:"context"`
 }
 
 // LogParamRequest is a request object for `POST mlflow/runs/log-parameter` endpoint.

@@ -303,10 +303,8 @@ func (r MetricRepository) GetMetricHistoryBulk(
 
 // CreateContext creates new models.Context entity.
 func (r MetricRepository) CreateContext(ctx context.Context, context *models.Context) error {
-	if err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
-		UpdateAll: true,
-	}).Create(context).Error; err != nil {
-		return eris.Wrapf(err, "error creating context.")
+	if err := r.db.WithContext(ctx).Where(context).FirstOrCreate(context).Error; err != nil {
+		return eris.Wrapf(err, "error creating or retrieving context.")
 	}
 	return nil
 }

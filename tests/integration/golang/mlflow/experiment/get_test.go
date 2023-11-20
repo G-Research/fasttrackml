@@ -78,7 +78,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute,
 		),
 	)
 	// 3. check actual API response.
@@ -143,7 +143,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

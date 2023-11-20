@@ -9,9 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -53,14 +51,12 @@ func (s *NamespaceTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient().WithNamespace(
+				s.AIMClient().WithNamespace(
 					tt.namespace,
-				).WithQuery(
-					request.GetExperimentRequest{},
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute,
+					"/experiments",
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

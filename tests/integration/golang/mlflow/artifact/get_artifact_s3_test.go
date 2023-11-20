@@ -134,7 +134,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			).WithResponse(
 				resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
 			assert.Equal(s.T(), "content", resp.String())
 
@@ -152,7 +152,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			).WithResponse(
 				resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
 			assert.Equal(s.T(), "subdir-object-content", resp.String())
 		})
@@ -281,7 +281,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 			).WithResponse(
 				&resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})

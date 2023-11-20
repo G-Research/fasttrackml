@@ -5,6 +5,7 @@ package experiment
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -64,7 +65,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	var resp response.GetExperiment
 	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
 
-	assert.Equal(s.T(), *experiment.ID, resp.ID)
+	assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.ID)
 	assert.Equal(s.T(), experiment.Name, resp.Name)
 	assert.Equal(s.T(), "", resp.Description)
 	assert.Equal(s.T(), float64(experiment.CreationTime.Int64)/1000, resp.CreationTime)

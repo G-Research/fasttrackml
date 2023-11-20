@@ -88,7 +88,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute,
 		),
 	)
 	assert.NotEmpty(s.T(), resp.RunInfo.ID)
@@ -151,7 +151,7 @@ func (s *UpdateRunTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

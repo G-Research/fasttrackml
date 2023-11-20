@@ -71,7 +71,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 			namespace2Code: "namespace-2",
 		},
 		{
-			name: "TestObviousDefaultAndCustomNamespaces",
+			name: "TestExplicitDefaultAndCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
@@ -203,7 +203,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+			"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 		),
 	)
 	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
@@ -221,7 +221,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+			"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 		),
 	)
 	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
@@ -253,7 +253,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+			"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 		),
 	)
 	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
@@ -271,7 +271,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+			"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 		),
 	)
 	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
@@ -291,7 +291,7 @@ func (s *ArtifactFlowTestSuite) createRun(namespace string, req *request.CreateR
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 		),
 	)
 	return resp.Run.Info.ID
@@ -310,7 +310,7 @@ func (s *ArtifactFlowTestSuite) listRunArtifactsAndCompare(
 		).WithResponse(
 			&actualResponse,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+			"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 		),
 	)
 	assert.Equal(s.T(), expectedResponse, actualResponse.Files)
@@ -329,7 +329,7 @@ func (s *ArtifactFlowTestSuite) getRunArtifactAndCompare(
 	).WithResponse(
 		actualResponse,
 	).DoRequest(
-		fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+		"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 	))
 	assert.Equal(s.T(), expectedResponse, actualResponse.String())
 }

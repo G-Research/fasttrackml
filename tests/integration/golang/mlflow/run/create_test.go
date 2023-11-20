@@ -170,7 +170,7 @@ func (s *CreateRunTestSuite) successCases(
 	require.Nil(
 		s.T(),
 		client.DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 		),
 	)
 	assert.NotEmpty(s.T(), resp.Run.Info.ID)
@@ -286,7 +286,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 			require.Nil(
 				s.T(),
 				client.DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

@@ -70,9 +70,8 @@ func (s *CreateAppTestSuite) Test_Ok() {
 			assert.Equal(s.T(), tt.requestBody.Type, resp.Type)
 			assert.Equal(s.T(), tt.requestBody.State["app-state-key"], resp.State["app-state-key"])
 			assert.NotEmpty(s.T(), resp.ID)
-			// TODO these timestamps are not set by the create endpoint
-			// assert.NotEmpty(s.T(), resp.CreatedAt)
-			// assert.NotEmpty(s.T(), resp.UpdatedAt)
+			assert.NotEmpty(s.T(), resp.CreatedAt)
+			assert.NotEmpty(s.T(), resp.UpdatedAt)
 		})
 	}
 }

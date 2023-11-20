@@ -68,16 +68,12 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 				s.T(),
 				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID),
 			)
-			// TODO this assertion fails because ID is not rendered by the endpoint
-			// assert.Equal(s.T(), s.run.ID, resp.Props.ID)
 			assert.Equal(s.T(), s.run.Name, resp.Props.Name)
 			assert.Equal(s.T(), fmt.Sprintf("%v", s.run.ExperimentID), resp.Props.Experiment.ID)
-			assert.Equal(s.T(), s.run.StartTime.Int64, resp.Props.CreationTime)
-			assert.Equal(s.T(), s.run.EndTime.Int64, resp.Props.EndTime)
+			assert.Equal(s.T(), float64(s.run.StartTime.Int64)/1000, resp.Props.CreationTime)
+			assert.Equal(s.T(), float64(s.run.EndTime.Int64)/1000, resp.Props.EndTime)
 			// TODO this assertion fails because tags are not rendered by endpoint
 			// assert.Equal(s.T(), s.run.Tags[0].Key, resp.Props.Tags[0])
-			// TODO this assertion fails so maybe the endpoint is not populating correctly
-			// assert.NotEmpty(s.T(), resp.Props.CreationTime)
 		})
 	}
 }

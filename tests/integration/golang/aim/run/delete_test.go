@@ -76,7 +76,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			originalMinRowNum, originalMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(),
 				s.runs[0].ExperimentID,
@@ -86,7 +86,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			var resp fiber.Map
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(http.MethodDelete).WithRequest(
+				s.AIMClient().WithMethod(http.MethodDelete).WithRequest(
 					tt.request,
 				).WithResponse(
 					&resp,
@@ -123,7 +123,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			originalMinRowNum, originalMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
@@ -132,7 +132,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 			var resp api.ErrorResponse
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(http.MethodDelete).WithRequest(
+				s.AIMClient().WithMethod(http.MethodDelete).WithRequest(
 					tt.request.RunID,
 				).WithResponse(
 					&resp,

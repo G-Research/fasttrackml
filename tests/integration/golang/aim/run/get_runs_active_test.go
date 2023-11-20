@@ -75,14 +75,14 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			if tt.beforeRunFn != nil {
 				tt.beforeRunFn()
 			}
 			resp := new(bytes.Buffer)
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithResponseType(
+				s.AIMClient().WithResponseType(
 					helpers.ResponseTypeBuffer,
 				).WithResponse(
 					resp,
@@ -105,8 +105,8 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 					assert.Equal(s.T(), fmt.Sprintf("%v", run.ExperimentID), decodedData[expIdKey])
 					assert.Equal(s.T(), run.Status == models.StatusRunning, decodedData[activeKey])
 					assert.Equal(s.T(), false, decodedData[archivedKey])
-					assert.Equal(s.T(), run.StartTime.Int64, int64(decodedData[startTimeKey].(float64)))
-					assert.Equal(s.T(), run.EndTime.Int64, int64(decodedData[endTimeKey].(float64)))
+					assert.Equal(s.T(), float64(run.StartTime.Int64)/1000, decodedData[startTimeKey])
+					assert.Equal(s.T(), float64(run.EndTime.Int64)/1000, decodedData[endTimeKey])
 					responseCount++
 				} else {
 					assert.Nil(s.T(), decodedData[respNameKey])

@@ -51,7 +51,7 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	var resp response.GetExperimentRuns
 	require.Nil(
 		s.T(),
-		s.AIMClient.WithQuery(map[any]any{
+		s.AIMClient().WithQuery(map[any]any{
 			"limit":  4,
 			"offset": runs[8].ID,
 		}).WithResponse(&resp).DoRequest(
@@ -101,9 +101,9 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
-			require.Nil(t, s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%s/runs", tt.ID))
+			require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s/runs", tt.ID))
 			assert.Equal(s.T(), tt.error, resp.Error())
 		})
 	}

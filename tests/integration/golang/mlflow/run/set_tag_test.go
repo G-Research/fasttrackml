@@ -5,7 +5,6 @@ package run
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -80,14 +79,14 @@ func (s *SetRunTagTestSuite) Test_Ok() {
 	resp := fiber.Map{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
 			req,
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSetTagRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSetTagRoute,
 		),
 	)
 	assert.Equal(s.T(), fiber.Map{}, resp)
@@ -107,7 +106,7 @@ func (s *SetRunTagTestSuite) Test_Ok() {
 
 func (s *SetRunTagTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -146,18 +145,18 @@ func (s *SetRunTagTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSetTagRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSetTagRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

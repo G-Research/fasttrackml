@@ -40,7 +40,7 @@ func (s *GetAppsTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			defer func() {
 				require.Nil(s.T(), s.AppFixtures.UnloadFixtures())
 			}()
@@ -56,15 +56,14 @@ func (s *GetAppsTestSuite) Test_Ok() {
 			require.Nil(s.T(), err)
 
 			var resp []response.App
-			require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/apps"))
+			require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/apps"))
 			assert.Equal(s.T(), tt.expectedAppCount, len(resp))
 			for idx := 0; idx < tt.expectedAppCount; idx++ {
 				assert.Equal(s.T(), apps[idx].ID.String(), resp[idx].ID)
 				assert.Equal(s.T(), apps[idx].Type, resp[idx].Type)
 				assert.Equal(s.T(), apps[idx].State, database.AppState(resp[idx].State))
-				// TODO these timestamps are not populated by the endpoint -- should they be?
-				// assert.NotEmpty(s.T(), resp[idx].CreatedAt)
-				// assert.NotEmpty(s.T(), resp[idx].UpdatedAt)
+				assert.NotEmpty(s.T(), resp[idx].CreatedAt)
+				assert.NotEmpty(s.T(), resp[idx].UpdatedAt)
 			}
 		})
 	}

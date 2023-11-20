@@ -89,11 +89,11 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp response.GetRunMetrics
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
@@ -124,11 +124,11 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp response.Error
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithResponse(&resp).DoRequest("/runs/%s/metric/get-batch", tt.runID),
+				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/metric/get-batch", tt.runID),
 			)
 			assert.Equal(s.T(), tt.error, resp.Message)
 		})

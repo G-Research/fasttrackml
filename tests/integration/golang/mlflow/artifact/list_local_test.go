@@ -62,9 +62,9 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			// 1. create test experiment.
-			experimentArtifactDir := t.TempDir()
+			experimentArtifactDir := s.T().TempDir()
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name: fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
 				Tags: []models.ExperimentTag{
@@ -120,12 +120,12 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 			rootDirResp := response.ListArtifactsResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					rootDirQuery,
 				).WithResponse(
 					&rootDirResp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+					"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 				),
 			)
 
@@ -154,12 +154,12 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 			subDirResp := response.ListArtifactsResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					subDirQuery,
 				).WithResponse(
 					&subDirResp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+					"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 				),
 			)
 
@@ -181,12 +181,12 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 			nonExistingDirResp := response.ListArtifactsResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					nonExistingDirQuery,
 				).WithResponse(
 					&nonExistingDirResp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+					"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 				),
 			)
 
@@ -262,14 +262,14 @@ func (s *ListArtifactLocalTestSuite) Test_Error() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(s.T(), s.MlflowClient.WithQuery(
+			require.Nil(s.T(), s.MlflowClient().WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute)),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})

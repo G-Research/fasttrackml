@@ -72,12 +72,12 @@ func (s *GetExperimentByNameTestSuite) Test_Ok() {
 	resp := response.GetExperimentResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithQuery(
+		s.MlflowClient().WithQuery(
 			request,
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute,
 		),
 	)
 
@@ -129,16 +129,16 @@ func (s *GetExperimentByNameTestSuite) Test_Error() {
 	}
 
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetByNameRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

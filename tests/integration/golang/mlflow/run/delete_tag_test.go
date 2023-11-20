@@ -5,7 +5,6 @@ package run
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -97,7 +96,7 @@ func (s *DeleteRunTagTestSuite) Test_Ok() {
 	resp := fiber.Map{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithQuery(
 			query,
@@ -106,7 +105,7 @@ func (s *DeleteRunTagTestSuite) Test_Ok() {
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute,
 		),
 	)
 	assert.Equal(s.T(), fiber.Map{}, resp)
@@ -195,18 +194,18 @@ func (s *DeleteRunTagTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

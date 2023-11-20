@@ -73,12 +73,12 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	resp := response.GetExperimentResponse{}
 	require.Nil(
 		s.T(),
-		s.MlflowClient.WithQuery(
+		s.MlflowClient().WithQuery(
 			request,
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute,
 		),
 	)
 	// 3. check actual API response.
@@ -134,16 +134,16 @@ func (s *GetExperimentTestSuite) Test_Error() {
 	}
 
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

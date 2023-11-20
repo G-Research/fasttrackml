@@ -78,11 +78,11 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp response.Dashboard
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
 					tt.requestBody,
@@ -94,7 +94,7 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 			)
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
 					tt.requestBody,
@@ -174,9 +174,9 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp response.Error
-			require.Nil(s.T(), s.AIMClient.WithMethod(
+			require.Nil(s.T(), s.AIMClient().WithMethod(
 				http.MethodPut,
 			).WithRequest(
 				tt.requestBody,

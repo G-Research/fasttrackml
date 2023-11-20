@@ -155,7 +155,7 @@ func (s *CreateRunTestSuite) successCases(
 	}
 
 	resp := response.CreateRunResponse{}
-	client := s.MlflowClient.WithMethod(
+	client := s.MlflowClient().WithMethod(
 		http.MethodPost,
 	).WithRequest(
 		req,
@@ -170,7 +170,7 @@ func (s *CreateRunTestSuite) successCases(
 	require.Nil(
 		s.T(),
 		client.DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 		),
 	)
 	assert.NotEmpty(s.T(), resp.Run.Info.ID)
@@ -196,7 +196,7 @@ func (s *CreateRunTestSuite) successCases(
 
 func (s *CreateRunTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -216,7 +216,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 	// set namespace default experiment.
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	tests := []struct {
 		name      string
@@ -272,9 +272,9 @@ func (s *CreateRunTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			client := s.MlflowClient.WithMethod(
+			client := s.MlflowClient().WithMethod(
 				http.MethodPost,
 			).WithRequest(
 				tt.request,
@@ -286,7 +286,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 			require.Nil(
 				s.T(),
 				client.DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

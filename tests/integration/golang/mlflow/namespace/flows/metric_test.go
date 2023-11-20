@@ -34,7 +34,7 @@ func TestMetricFlowTestSuite(t *testing.T) {
 }
 
 func (s *MetricFlowTestSuite) TearDownTest() {
-	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *MetricFlowTestSuite) Test_Ok() {
@@ -59,7 +59,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 			namespace2Code: "namespace-2",
 		},
 		{
-			name: "TestObviousDefaultAndCustomNamespaces",
+			name: "TestExplicitDefaultAndCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
@@ -89,8 +89,8 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
-			defer assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Run(tt.name, func() {
+			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
@@ -327,9 +327,9 @@ func (s *MetricFlowTestSuite) createRun(
 	namespace string, req *request.CreateRunRequest,
 ) string {
 	resp := response.CreateRunResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -338,7 +338,7 @@ func (s *MetricFlowTestSuite) createRun(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 		),
 	)
 	return resp.Run.Info.ID
@@ -348,18 +348,16 @@ func (s *MetricFlowTestSuite) getRunAndCompare(
 	namespace string, req request.GetRunRequest, expectedResponse *response.GetRunResponse,
 ) {
 	resp := response.GetRunResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
 			req,
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
 	assert.Equal(s.T(), expectedResponse.Run.Info.ID, resp.Run.Info.ID)
@@ -380,16 +378,16 @@ func (s *MetricFlowTestSuite) getRunAndCompare(
 }
 
 func (s *MetricFlowTestSuite) logRunMetric(namespace string, req *request.LogMetricRequest) {
-	assert.Nil(
+	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute,
 		),
 	)
 }
@@ -398,18 +396,16 @@ func (s *MetricFlowTestSuite) getMetricHistoryBulkAndCompare(
 	namespace string, req request.GetMetricHistoryBulkRequest, expectedResponse response.GetMetricHistoryResponse,
 ) {
 	actualResponse := response.GetMetricHistoryResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
-		s.MlflowClient.WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace,
-		).WithMethod(
-			http.MethodGet,
 		).WithQuery(
 			req,
 		).WithResponse(
 			&actualResponse,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryBulkRoute),
+			"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryBulkRoute,
 		),
 	)
 	assert.Equal(s.T(), expectedResponse, actualResponse)
@@ -419,18 +415,16 @@ func (s *MetricFlowTestSuite) getMetricHistoryAndCompare(
 	namespace string, req request.GetMetricHistoryRequest, expectedResponse response.GetMetricHistoryResponse,
 ) {
 	actualResponse := response.GetMetricHistoryResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
 			req,
 		).WithResponse(
 			&actualResponse,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute),
+			"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute,
 		),
 	)
 	assert.Equal(s.T(), expectedResponse, actualResponse)

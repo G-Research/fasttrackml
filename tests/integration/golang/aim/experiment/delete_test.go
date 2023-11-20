@@ -69,7 +69,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 	var resp response.DeleteExperiment
 	require.Nil(
 		s.T(),
-		s.AIMClient.WithMethod(
+		s.AIMClient().WithMethod(
 			http.MethodDelete,
 		).WithResponse(
 			&resp,
@@ -113,11 +113,11 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodDelete,
 				).WithResponse(
 					&resp,

@@ -31,13 +31,13 @@ func (_m *MockRunRepositoryProvider) Archive(ctx context.Context, run *models.Ru
 	return r0
 }
 
-// ArchiveBatch provides a mock function with given fields: ctx, ids
-func (_m *MockRunRepositoryProvider) ArchiveBatch(ctx context.Context, ids []string) error {
-	ret := _m.Called(ctx, ids)
+// ArchiveBatch provides a mock function with given fields: ctx, namespaceID, ids
+func (_m *MockRunRepositoryProvider) ArchiveBatch(ctx context.Context, namespaceID uint, ids []string) error {
+	ret := _m.Called(ctx, namespaceID, ids)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []string) error); ok {
-		r0 = rf(ctx, ids)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, []string) error); ok {
+		r0 = rf(ctx, namespaceID, ids)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -59,13 +59,13 @@ func (_m *MockRunRepositoryProvider) Create(ctx context.Context, run *models.Run
 	return r0
 }
 
-// Delete provides a mock function with given fields: ctx, run
-func (_m *MockRunRepositoryProvider) Delete(ctx context.Context, run *models.Run) error {
-	ret := _m.Called(ctx, run)
+// Delete provides a mock function with given fields: ctx, namespaceID, run
+func (_m *MockRunRepositoryProvider) Delete(ctx context.Context, namespaceID uint, run *models.Run) error {
+	ret := _m.Called(ctx, namespaceID, run)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Run) error); ok {
-		r0 = rf(ctx, run)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, *models.Run) error); ok {
+		r0 = rf(ctx, namespaceID, run)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -73,13 +73,13 @@ func (_m *MockRunRepositoryProvider) Delete(ctx context.Context, run *models.Run
 	return r0
 }
 
-// DeleteBatch provides a mock function with given fields: ctx, ids
-func (_m *MockRunRepositoryProvider) DeleteBatch(ctx context.Context, ids []string) error {
-	ret := _m.Called(ctx, ids)
+// DeleteBatch provides a mock function with given fields: ctx, namespaceID, ids
+func (_m *MockRunRepositoryProvider) DeleteBatch(ctx context.Context, namespaceID uint, ids []string) error {
+	ret := _m.Called(ctx, namespaceID, ids)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []string) error); ok {
-		r0 = rf(ctx, ids)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, []string) error); ok {
+		r0 = rf(ctx, namespaceID, ids)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -195,13 +195,13 @@ func (_m *MockRunRepositoryProvider) Restore(ctx context.Context, run *models.Ru
 	return r0
 }
 
-// RestoreBatch provides a mock function with given fields: ctx, ids
-func (_m *MockRunRepositoryProvider) RestoreBatch(ctx context.Context, ids []string) error {
-	ret := _m.Called(ctx, ids)
+// RestoreBatch provides a mock function with given fields: ctx, namespaceID, ids
+func (_m *MockRunRepositoryProvider) RestoreBatch(ctx context.Context, namespaceID uint, ids []string) error {
+	ret := _m.Called(ctx, namespaceID, ids)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []string) error); ok {
-		r0 = rf(ctx, ids)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, []string) error); ok {
+		r0 = rf(ctx, namespaceID, ids)
 	} else {
 		r0 = ret.Error(0)
 	}

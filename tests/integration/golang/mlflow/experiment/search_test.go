@@ -5,7 +5,6 @@ package experiment
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"testing"
 	"time"
 
@@ -162,16 +161,16 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := response.SearchExperimentsResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute,
 				),
 			)
 
@@ -180,7 +179,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 				names[i] = exp.Name
 			}
 
-			assert.ElementsMatch(t, tt.expected, names)
+			assert.ElementsMatch(s.T(), tt.expected, names)
 		})
 	}
 }
@@ -273,16 +272,16 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 	}
 
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

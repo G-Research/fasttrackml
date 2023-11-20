@@ -76,18 +76,18 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := map[string]any{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
 			assert.Empty(s.T(), resp)
@@ -177,18 +177,18 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := map[string]any{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
 			assert.Empty(s.T(), resp)
@@ -355,19 +355,19 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			// do actual call to API.
 			resp := map[string]any{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
 			assert.Empty(s.T(), resp)
@@ -444,18 +444,18 @@ func (s *LogBatchTestSuite) Test_Error() {
 	}
 
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.ErrorCode, resp.ErrorCode)

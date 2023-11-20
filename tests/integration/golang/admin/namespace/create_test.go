@@ -50,7 +50,7 @@ func (s *CreateNamespaceTestSuite) Test_Ok() {
 	for _, request := range requests {
 		require.Nil(
 			s.T(),
-			s.AdminClient.WithMethod(
+			s.AdminClient().WithMethod(
 				http.MethodPost,
 			).WithRequest(
 				request,
@@ -124,11 +124,11 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			var resp goquery.Document
 			require.Nil(
 				s.T(),
-				s.AdminClient.WithMethod(
+				s.AdminClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,

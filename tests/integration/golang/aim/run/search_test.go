@@ -772,11 +772,11 @@ func (s *SearchTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := new(bytes.Buffer)
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithResponseType(
+				s.AIMClient().WithResponseType(
 					helpers.ResponseTypeBuffer,
 				).WithQuery(
 					tt.request,

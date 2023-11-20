@@ -59,10 +59,10 @@ func (s *DeleteNamespaceTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			require.Nil(
 				s.T(),
-				s.AdminClient.WithMethod(
+				s.AdminClient().WithMethod(
 					http.MethodDelete,
 				).DoRequest(
 					"/namespaces/%d", ns2.ID,
@@ -110,11 +110,11 @@ func (s *DeleteNamespaceTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			var resp any
 			require.Nil(
 				s.T(),
-				s.AdminClient.WithMethod(
+				s.AdminClient().WithMethod(
 					http.MethodDelete,
 				).WithResponse(
 					&resp,

@@ -42,7 +42,7 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			defer func() {
 				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 			}()
@@ -72,7 +72,7 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 			require.Nil(s.T(), err)
 
 			var resp []response.Dashboard
-			require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/dashboards"))
+			require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/dashboards"))
 			assert.Equal(s.T(), tt.expectedDashboardCount, len(resp))
 			for idx := 0; idx < tt.expectedDashboardCount; idx++ {
 				assert.Equal(s.T(), dashboards[idx].ID.String(), resp[idx].ID)

@@ -53,11 +53,11 @@ func (s *CreateAppTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp response.App
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.requestBody,
@@ -70,9 +70,8 @@ func (s *CreateAppTestSuite) Test_Ok() {
 			assert.Equal(s.T(), tt.requestBody.Type, resp.Type)
 			assert.Equal(s.T(), tt.requestBody.State["app-state-key"], resp.State["app-state-key"])
 			assert.NotEmpty(s.T(), resp.ID)
-			// TODO these timestamps are not set by the create endpoint
-			// assert.NotEmpty(s.T(), resp.CreatedAt)
-			// assert.NotEmpty(s.T(), resp.UpdatedAt)
+			assert.NotEmpty(s.T(), resp.CreatedAt)
+			assert.NotEmpty(s.T(), resp.UpdatedAt)
 		})
 	}
 }
@@ -101,11 +100,11 @@ func (s *CreateAppTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp response.Error
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.requestBody,

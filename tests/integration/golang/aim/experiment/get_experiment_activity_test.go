@@ -49,13 +49,13 @@ func (s *GetExperimentActivityTestSuite) Test_Ok() {
 	require.Nil(s.T(), err)
 
 	archivedRunsIds := []string{runs[0].ID, runs[1].ID}
-	err = s.RunFixtures.ArchiveRuns(context.Background(), archivedRunsIds)
+	err = s.RunFixtures.ArchiveRuns(context.Background(), namespace.ID, archivedRunsIds)
 	require.Nil(s.T(), err)
 
 	var resp response.GetExperimentActivity
 	require.Nil(
 		s.T(),
-		s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%d/activity", *experiment.ID),
+		s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d/activity", *experiment.ID),
 	)
 	assert.Equal(s.T(), resp.NumRuns, len(runs))
 	assert.Equal(s.T(), resp.NumArchivedRuns, len(archivedRunsIds))
@@ -93,9 +93,9 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
-			require.Nil(s.T(), s.AIMClient.WithQuery(map[any]any{
+			require.Nil(s.T(), s.AIMClient().WithQuery(map[any]any{
 				"limit": 4,
 			}).WithResponse(&resp).DoRequest(
 				"/experiments/%s/activity", tt.ID,

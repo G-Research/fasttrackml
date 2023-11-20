@@ -263,7 +263,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 			),
 		).
 		Preload("LatestMetrics").
-		Limit(100).
+		Limit(50).
 		Order("start_time DESC").
 		Find(&runs).Error; err != nil {
 		return fmt.Errorf("error retrieving active runs: %w", err)

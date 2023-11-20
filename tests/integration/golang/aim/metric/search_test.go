@@ -5882,7 +5882,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			resp := new(bytes.Buffer)
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithQuery(
+				s.AIMClient().WithQuery(
 					tt.request,
 				).WithResponseType(
 					helpers.ResponseTypeBuffer,

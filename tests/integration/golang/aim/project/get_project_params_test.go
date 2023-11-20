@@ -87,7 +87,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	resp := response.ProjectParamsResponse{}
 	require.Nil(
 		s.T(),
-		s.AIMClient.WithQuery(
+		s.AIMClient().WithQuery(
 			map[any]any{"sequence": "metric"},
 		).WithResponse(
 			&resp,
@@ -116,7 +116,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	resp = response.ProjectParamsResponse{}
 	require.Nil(
 		s.T(),
-		s.AIMClient.WithQuery(
+		s.AIMClient().WithQuery(
 			map[any]any{"sequence": "metric"},
 		).WithResponse(
 			&resp,

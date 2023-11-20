@@ -31,7 +31,7 @@ func Migrate(db *gorm.DB) error {
 			if err := tx.Migrator().AlterColumn(&Experiment{}, "Name"); err != nil {
 				return err
 			}
-			if err := tx.Migrator().CreateIndex(&Experiment{}, "idx_namespace_name"); err != nil {
+			if err := tx.Migrator().CreateIndex(&Experiment{}, "Name"); err != nil {
 				return err
 			}
 			return tx.Model(&SchemaVersion{}).

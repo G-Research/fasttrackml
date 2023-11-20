@@ -49,22 +49,22 @@ type ExperimentTag struct {
 
 //nolint:lll
 type Run struct {
-	ID             string         `gorm:"column:run_uuid;type:varchar(32);not null;primaryKey"`
+	ID             string         `gorm:"<-:create;column:run_uuid;type:varchar(32);not null;primaryKey"`
 	Name           string         `gorm:"type:varchar(250)"`
-	SourceType     string         `gorm:"type:varchar(20);check:source_type IN ('NOTEBOOK', 'JOB', 'LOCAL', 'UNKNOWN', 'PROJECT')"`
-	SourceName     string         `gorm:"type:varchar(500)"`
-	EntryPointName string         `gorm:"type:varchar(50)"`
-	UserID         string         `gorm:"type:varchar(256)"`
+	SourceType     string         `gorm:"<-:create;type:varchar(20);check:source_type IN ('NOTEBOOK', 'JOB', 'LOCAL', 'UNKNOWN', 'PROJECT')"`
+	SourceName     string         `gorm:"<-:create;type:varchar(500)"`
+	EntryPointName string         `gorm:"<-:create;type:varchar(50)"`
+	UserID         string         `gorm:"<-:create;type:varchar(256)"`
 	Status         Status         `gorm:"type:varchar(9);check:status IN ('SCHEDULED', 'FAILED', 'FINISHED', 'RUNNING', 'KILLED')"`
-	StartTime      sql.NullInt64  `gorm:"type:bigint"`
+	StartTime      sql.NullInt64  `gorm:"<-:create;type:bigint"`
 	EndTime        sql.NullInt64  `gorm:"type:bigint"`
-	SourceVersion  string         `gorm:"type:varchar(50)"`
+	SourceVersion  string         `gorm:"<-:create;type:varchar(50)"`
 	LifecycleStage LifecycleStage `gorm:"type:varchar(20);check:lifecycle_stage IN ('active', 'deleted')"`
-	ArtifactURI    string         `gorm:"type:varchar(200)"`
+	ArtifactURI    string         `gorm:"<-:create;type:varchar(200)"`
 	ExperimentID   int32
 	Experiment     Experiment
 	DeletedTime    sql.NullInt64 `gorm:"type:bigint"`
-	RowNum         RowNum
+	RowNum         RowNum        `gorm:"<-:create"`
 	Params         []Param
 	Tags           []Tag
 	Metrics        []Metric
@@ -87,8 +87,14 @@ func (rn RowNum) GormDataType() string {
 }
 
 func (rn RowNum) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
+	if rn == 0 {
+		return clause.Expr{
+			SQL: "(SELECT COALESCE(MAX(row_num), -1) FROM runs) + 1",
+		}
+	}
 	return clause.Expr{
-		SQL: "(SELECT COALESCE(MAX(row_num), -1) FROM runs) + 1",
+		SQL:  "?",
+		Vars: []interface{}{int64(rn)},
 	}
 }
 
@@ -193,7 +199,6 @@ func (s AppState) Value() (driver.Value, error) {
 	return string(v), nil
 }
 
-//nolint:ineffassign
 func (s *AppState) Scan(v interface{}) error {
 	var nullS sql.NullString
 	if err := nullS.Scan(v); err != nil {
@@ -202,7 +207,6 @@ func (s *AppState) Scan(v interface{}) error {
 	if nullS.Valid {
 		return json.Unmarshal([]byte(nullS.String), s)
 	}
-	s = nil
 	return nil
 }
 

@@ -75,7 +75,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			resp := map[string]any{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
@@ -99,7 +99,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 
 func (s *DeleteRunTestSuite) Test_Error() {
 	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -123,7 +123,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,

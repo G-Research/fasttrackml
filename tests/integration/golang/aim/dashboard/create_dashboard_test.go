@@ -71,7 +71,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 			var resp response.Dashboard
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.requestBody,
@@ -123,7 +123,7 @@ func (s *CreateDashboardTestSuite) Test_Error() {
 			var resp response.Error
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.requestBody,

@@ -166,7 +166,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 			resp := response.SearchExperimentsResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
 					&resp,
@@ -277,7 +277,7 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithQuery(
+				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
 					&resp,

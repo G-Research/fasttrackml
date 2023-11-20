@@ -80,7 +80,7 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 			resp := map[string]any{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
@@ -181,7 +181,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 			resp := map[string]any{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
@@ -360,7 +360,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 			resp := map[string]any{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
@@ -448,7 +448,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
-				s.MlflowClient.WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,

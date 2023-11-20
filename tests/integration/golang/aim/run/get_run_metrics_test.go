@@ -93,7 +93,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 			var resp response.GetRunMetrics
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithMethod(
+				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
@@ -128,7 +128,7 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 			var resp response.Error
 			require.Nil(
 				s.T(),
-				s.AIMClient.WithResponse(&resp).DoRequest("/runs/%s/metric/get-batch", tt.runID),
+				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/metric/get-batch", tt.runID),
 			)
 			assert.Equal(s.T(), tt.error, resp.Message)
 		})

@@ -42,7 +42,7 @@ func TestArtifactFlowTestSuite(t *testing.T) {
 }
 
 func (s *ArtifactFlowTestSuite) TearDownTest() {
-	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *ArtifactFlowTestSuite) Test_Ok() {
@@ -71,7 +71,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 			namespace2Code: "namespace-2",
 		},
 		{
-			name: "TestObviousDefaultAndCustomNamespaces",
+			name: "TestExplicitDefaultAndCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
@@ -103,8 +103,8 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(T *testing.T) {
 			defer func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-				assert.Nil(s.T(), helpers.RemoveS3Buckets(s.s3Client, s.testBuckets))
+				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+				require.Nil(s.T(), helpers.RemoveS3Buckets(s.s3Client, s.testBuckets))
 			}()
 
 			// setup data under the test.
@@ -131,7 +131,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 			require.Nil(s.T(), err)
 
 			// create test buckets.
-			assert.Nil(s.T(), helpers.CreateS3Buckets(s.s3Client, s.testBuckets))
+			require.Nil(s.T(), helpers.CreateS3Buckets(s.s3Client, s.testBuckets))
 
 			// run actual flow test over the test data.
 			s.testRunArtifactFlow(tt.namespace1Code, tt.namespace2Code, experiment1, experiment2)
@@ -192,18 +192,14 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	// check that there is no intersection between runs, so when we request
 	// run 1 in scope of namespace 2 and run 2 in scope of namespace 1 API will throw an error.
 	resp := api.ErrorResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
 			request.ListArtifactsRequest{
 				RunID: run1ID,
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -214,18 +210,14 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	resp = api.ErrorResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
 			request.ListArtifactsRequest{
 				RunID: run2ID,
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -250,18 +242,14 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	// check that there is no intersection between runs, so when we request
 	// run 1 in scope of namespace 2 and run 2 in scope of namespace 1 API will throw an error.
 	resp = api.ErrorResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
 			request.GetArtifactRequest{
 				RunID: run1ID,
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -272,18 +260,14 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	resp = api.ErrorResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
 			request.ListArtifactsRequest{
 				RunID: run2ID,
 			},
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -296,16 +280,14 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 
 func (s *ArtifactFlowTestSuite) createRun(namespace string, req *request.CreateRunRequest) string {
 	resp := response.CreateRunResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
 		).WithRequest(
 			req,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&resp,
 		).DoRequest(
@@ -319,16 +301,12 @@ func (s *ArtifactFlowTestSuite) listRunArtifactsAndCompare(
 	namespace string, req request.ListArtifactsRequest, expectedResponse []response.FilePartialResponse,
 ) {
 	actualResponse := response.ListArtifactsResponse{}
-	assert.Nil(
+	require.Nil(
 		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
 			req,
-		).WithResponseType(
-			helpers.ResponseTypeJSON,
 		).WithResponse(
 			&actualResponse,
 		).DoRequest(
@@ -342,9 +320,7 @@ func (s *ArtifactFlowTestSuite) getRunArtifactAndCompare(
 	namespace string, req request.GetArtifactRequest, expectedResponse string,
 ) {
 	actualResponse := new(bytes.Buffer)
-	assert.Nil(s.T(), s.MlflowClient.WithMethod(
-		http.MethodGet,
-	).WithNamespace(
+	require.Nil(s.T(), s.MlflowClient().WithNamespace(
 		namespace,
 	).WithQuery(
 		req,

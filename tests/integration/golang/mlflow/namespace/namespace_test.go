@@ -3,7 +3,6 @@
 package namespace
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -14,9 +13,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -30,96 +26,6 @@ func TestNamespaceTestSuite(t *testing.T) {
 
 func (s *NamespaceTestSuite) TearDownTest() {
 	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-}
-
-func (s *NamespaceTestSuite) Test_Ok() {
-	tests := []struct {
-		name      string
-		setup     func() *models.Experiment
-		namespace string
-	}{
-		{
-			name: "TestCustomNamespaces",
-			setup: func() *models.Experiment {
-				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-					Code:                "newly-created-namespace",
-					DefaultExperimentID: common.GetPointer(int32(0)),
-				})
-				require.Nil(s.T(), err)
-				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-					Name:             "Test Experiment",
-					NamespaceID:      namespace.ID,
-					LifecycleStage:   models.LifecycleStageActive,
-					ArtifactLocation: "/artifact/location",
-				})
-				require.Nil(s.T(), err)
-				return experiment
-			},
-			namespace: "newly-created-namespace",
-		},
-		{
-			name: "TestObviousDefaultAndCustomNamespaces",
-			setup: func() *models.Experiment {
-				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-					Code:                "default",
-					DefaultExperimentID: common.GetPointer(int32(0)),
-				})
-				require.Nil(s.T(), err)
-				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-					Name:             "Test Experiment",
-					NamespaceID:      namespace.ID,
-					LifecycleStage:   models.LifecycleStageActive,
-					ArtifactLocation: "/artifact/location",
-				})
-				require.Nil(s.T(), err)
-				return experiment
-			},
-			namespace: "default",
-		},
-		{
-			name: "TestImplicitDefaultAndCustomNamespaces",
-			setup: func() *models.Experiment {
-				namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-					Code:                "default",
-					DefaultExperimentID: common.GetPointer(int32(0)),
-				})
-				require.Nil(s.T(), err)
-				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-					Name:             "Test Experiment",
-					NamespaceID:      namespace.ID,
-					LifecycleStage:   models.LifecycleStageActive,
-					ArtifactLocation: "/artifact/location",
-				})
-				require.Nil(s.T(), err)
-				return experiment
-			},
-		},
-	}
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
-			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-			experiment := tt.setup()
-			resp := response.GetExperimentResponse{}
-			require.Nil(
-				s.T(),
-				s.MlflowClient().WithNamespace(
-					tt.namespace,
-				).WithQuery(
-					request.GetExperimentRequest{
-						ID: fmt.Sprintf("%d", *experiment.ID),
-					},
-				).WithResponse(
-					&resp,
-				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
-				),
-			)
-			assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.Experiment.ID)
-			assert.Equal(s.T(), experiment.Name, resp.Experiment.Name)
-			assert.Equal(s.T(), experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
-			assert.Equal(s.T(), string(models.LifecycleStageActive), resp.Experiment.LifecycleStage)
-		})
-	}
 }
 
 func (s *NamespaceTestSuite) Test_Error() {

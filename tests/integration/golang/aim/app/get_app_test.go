@@ -81,7 +81,7 @@ func (s *GetAppTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp response.Error
 			require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/apps/%v", tt.idParam))
 			assert.Equal(s.T(), "Not Found", resp.Message)

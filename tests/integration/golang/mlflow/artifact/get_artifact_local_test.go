@@ -60,9 +60,9 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			// 1. create test experiment.
-			experimentArtifactDir := t.TempDir()
+			experimentArtifactDir := s.T().TempDir()
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
 				NamespaceID:      namespace.ID,
@@ -252,9 +252,9 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(t, s.MlflowClient().WithQuery(
+			require.Nil(s.T(), s.MlflowClient().WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,

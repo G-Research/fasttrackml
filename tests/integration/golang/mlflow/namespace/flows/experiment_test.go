@@ -99,7 +99,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 	// default namespace and experiment, so it could lead to the problems with actual tests.
 	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 
 			// 1. setup data under the test.

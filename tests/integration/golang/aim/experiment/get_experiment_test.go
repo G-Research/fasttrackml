@@ -104,9 +104,9 @@ func (s *GetExperimentTestSuite) Test_Error() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
-			require.Nil(t, s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
+			require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
 			assert.Equal(s.T(), tt.error, resp.Error())
 		})
 	}

@@ -75,7 +75,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			if tt.beforeRunFn != nil {
 				tt.beforeRunFn()
 			}

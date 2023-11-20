@@ -40,7 +40,7 @@ func (s *GetAppsTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			defer func() {
 				require.Nil(s.T(), s.AppFixtures.UnloadFixtures())
 			}()

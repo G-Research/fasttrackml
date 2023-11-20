@@ -124,7 +124,7 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			var resp goquery.Document
 			require.Nil(
 				s.T(),

@@ -93,7 +93,7 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
 			require.Nil(s.T(), s.AIMClient().WithQuery(map[any]any{
 				"limit": 4,

@@ -3,7 +3,6 @@
 package namespace
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,7 +26,6 @@ func TestNamespaceTestSuite(t *testing.T) {
 func (s *NamespaceTestSuite) TearDownTest() {
 	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }
-
 
 func (s *NamespaceTestSuite) Test_Error() {
 	tests := []struct {

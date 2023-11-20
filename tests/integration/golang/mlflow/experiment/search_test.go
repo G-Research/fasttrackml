@@ -5,7 +5,6 @@ package experiment
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"testing"
 	"time"
 
@@ -171,7 +170,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute,
 				),
 			)
 
@@ -282,7 +281,7 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

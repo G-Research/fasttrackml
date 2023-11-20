@@ -151,7 +151,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				).WithResponse(
 					&rootDirResp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+					"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 				),
 			)
 
@@ -185,7 +185,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				).WithResponse(
 					&subDirResp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+					"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 				),
 			)
 
@@ -213,7 +213,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				).WithResponse(
 					&nonExistingDirResp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+					"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 				),
 			)
 
@@ -298,7 +298,7 @@ func (s *ListArtifactGSTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute),
+					"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 				),
 			)
 			require.Nil(t, err)

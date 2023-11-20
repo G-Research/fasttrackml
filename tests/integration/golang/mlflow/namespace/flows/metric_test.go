@@ -338,7 +338,7 @@ func (s *MetricFlowTestSuite) createRun(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 		),
 	)
 	return resp.Run.Info.ID
@@ -357,7 +357,7 @@ func (s *MetricFlowTestSuite) getRunAndCompare(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
 	assert.Equal(s.T(), expectedResponse.Run.Info.ID, resp.Run.Info.ID)
@@ -387,7 +387,7 @@ func (s *MetricFlowTestSuite) logRunMetric(namespace string, req *request.LogMet
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute,
 		),
 	)
 }
@@ -405,7 +405,7 @@ func (s *MetricFlowTestSuite) getMetricHistoryBulkAndCompare(
 		).WithResponse(
 			&actualResponse,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryBulkRoute),
+			"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryBulkRoute,
 		),
 	)
 	assert.Equal(s.T(), expectedResponse, actualResponse)
@@ -424,7 +424,7 @@ func (s *MetricFlowTestSuite) getMetricHistoryAndCompare(
 		).WithResponse(
 			&actualResponse,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute),
+			"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute,
 		),
 	)
 	assert.Equal(s.T(), expectedResponse, actualResponse)

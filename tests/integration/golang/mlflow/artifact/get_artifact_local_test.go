@@ -108,7 +108,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			).WithResponse(
 				resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
 			assert.Equal(s.T(), "contentX", resp.String())
 
@@ -126,7 +126,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			).WithResponse(
 				resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
 			assert.Equal(s.T(), "contentXX", resp.String())
 		})
@@ -259,7 +259,7 @@ func (s *GetArtifactLocalTestSuite) Test_Error() {
 			).WithResponse(
 				&resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())
 		})

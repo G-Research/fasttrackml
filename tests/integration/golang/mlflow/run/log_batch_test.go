@@ -87,7 +87,7 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
 			assert.Empty(s.T(), resp)
@@ -188,7 +188,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
 			assert.Empty(s.T(), resp)
@@ -367,7 +367,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
 			assert.Empty(s.T(), resp)
@@ -455,7 +455,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.ErrorCode, resp.ErrorCode)

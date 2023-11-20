@@ -28,6 +28,7 @@ func (s *NamespaceTestSuite) TearDownTest() {
 	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 }
 
+
 func (s *NamespaceTestSuite) Test_Error() {
 	tests := []struct {
 		name      string
@@ -61,7 +62,7 @@ func (s *NamespaceTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

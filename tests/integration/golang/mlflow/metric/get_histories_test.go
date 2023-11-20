@@ -122,7 +122,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 				).WithResponse(
 					resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoriesRoute),
+					"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoriesRoute,
 				),
 			)
 
@@ -190,7 +190,7 @@ func (s *GetHistoriesTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoriesRoute),
+					"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoriesRoute,
 				),
 			)
 			require.Nil(s.T(), err)

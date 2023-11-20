@@ -2961,7 +2961,7 @@ func (s *SearchTestSuite) testCases(
 			require.Nil(
 				s.T(),
 				client.DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute,
 				),
 			)
 			assert.Equal(s.T(), len(tt.response.Runs), len(resp.Runs))

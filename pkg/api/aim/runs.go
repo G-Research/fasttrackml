@@ -868,6 +868,12 @@ func SearchMetrics(c *fiber.Ctx) error {
 //
 //nolint:gocyclo
 func SearchAlignedMetrics(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("searchAlignedMetrics namespace: %s", ns.Code)
+
 	b := struct {
 		AlignBy string `json:"align_by"`
 		Runs    []struct {
@@ -907,7 +913,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 
 	// TODO this should probably be batched
 
-	values = append(values, b.AlignBy)
+	values = append(values, ns.ID, b.AlignBy)
 	rows, err := database.DB.Raw(
 		fmt.Sprintf("WITH params(run_uuid, key, steps) AS (VALUES %s)", &valuesStmt)+
 			"        SELECT m.run_uuid, rm.key, m.iter, m.value, m.is_nan FROM metrics AS m"+
@@ -916,6 +922,8 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			"          FROM params AS p"+
 			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key)"+
 			"        ) rm USING(run_uuid)"+
+			"		 INNER JOIN runs AS r ON m.run_uuid = r.run_uuid"+
+			"		 INNER JOIN experiments AS e ON r.experiment_id = e.experiment_id AND e.namespace_id = ?"+
 			"        WHERE m.key = ?"+
 			"          AND m.iter <= rm.max"+
 			"          AND MOD(m.iter + 1 + rm.interval / 2, rm.interval) < 1"+

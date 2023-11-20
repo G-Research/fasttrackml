@@ -206,6 +206,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				RunID:     run2.ID,
 				LastIter:  3,
 			})
+			require.Nil(s.T(), err)
 			_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 				Key:   "param2",
 				Value: "value2",

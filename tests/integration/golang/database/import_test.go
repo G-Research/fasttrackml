@@ -163,25 +163,23 @@ func (s *ImportTestSuite) Test_Ok() {
 	}()
 
 	// source DB should have expected
-	validateRowCounts(s.T(), s.inputDB, s.populatedRowCounts)
+	s.validateRowCounts(s.inputDB, s.populatedRowCounts)
 
 	// initially, dest DB is empty
-	validateRowCounts(s.T(), s.outputDB, rowCounts{namespaces: 1, experiments: 1})
+	s.validateRowCounts(s.outputDB, rowCounts{namespaces: 1, experiments: 1})
 
 	// invoke the Importer.Import() method
 	importer := database.NewImporter(s.inputDB, s.outputDB)
-	err := importer.Import()
-	require.Nil(s.T(), err)
+	require.Nil(s.T(), importer.Import())
 
 	// dest DB should now have the expected
-	validateRowCounts(s.T(), s.outputDB, s.populatedRowCounts)
+	s.validateRowCounts(s.outputDB, s.populatedRowCounts)
 
 	// invoke the Importer.Import method a 2nd time
-	err = importer.Import()
-	require.Nil(s.T(), err)
+	require.Nil(s.T(), importer.Import())
 
 	// dest DB should still only have the expected
-	validateRowCounts(s.T(), s.outputDB, s.populatedRowCounts)
+	s.validateRowCounts(s.outputDB, s.populatedRowCounts)
 
 	// confirm row-for-row equality
 	for _, table := range []string{
@@ -195,78 +193,66 @@ func (s *ImportTestSuite) Test_Ok() {
 		"metrics",
 		"latest_metrics",
 	} {
-		validateTable(s.T(), s.inputDB, s.outputDB, table)
+		s.validateTable(s.inputDB, s.outputDB, table)
 	}
 }
 
 // validateRowCounts will make assertions about the db based on the test setup.
 // a db imported from the test setup db should also pass these
 // assertions.
-func validateRowCounts(t *testing.T, db *gorm.DB, counts rowCounts) {
+func (s *ImportTestSuite) validateRowCounts(db *gorm.DB, counts rowCounts) {
 	var countVal int64
-	tx := db.Model(&models.Namespace{}).Count(&countVal)
-	require.Nil(t, tx.Error)
-	assert.Equal(t, counts.namespaces, int(countVal), "Namespaces count incorrect")
+	require.Nil(s.T(), db.Model(&models.Namespace{}).Count(&countVal).Error)
+	assert.Equal(s.T(), counts.namespaces, int(countVal), "Namespaces count incorrect")
 
-	tx = db.Model(&models.Experiment{}).Count(&countVal)
-	require.Nil(t, tx.Error)
-	assert.Equal(t, counts.experiments, int(countVal), "Experiments count incorrect")
+	require.Nil(s.T(), db.Model(&models.Experiment{}).Count(&countVal).Error)
+	assert.Equal(s.T(), counts.experiments, int(countVal), "Experiments count incorrect")
 
-	tx = db.Model(&models.Run{}).Count(&countVal)
-	require.Nil(t, tx.Error)
-	assert.Equal(t, counts.runs, int(countVal), "Runs count incorrect")
+	require.Nil(s.T(), db.Model(&models.Run{}).Count(&countVal).Error)
+	assert.Equal(s.T(), counts.runs, int(countVal), "Runs count incorrect")
 
-	tx = db.Model(&models.Metric{}).Count(&countVal)
-	require.Nil(t, tx.Error)
-	assert.Equal(t, counts.metrics, int(countVal), "Metrics count incorrect")
+	require.Nil(s.T(), db.Model(&models.Metric{}).Count(&countVal).Error)
+	assert.Equal(s.T(), counts.metrics, int(countVal), "Metrics count incorrect")
 
-	tx = db.Model(&models.LatestMetric{}).Count(&countVal)
-	require.Nil(t, tx.Error)
-	assert.Equal(t, counts.latestMetrics, int(countVal), "Latest metrics count incorrect")
+	require.Nil(s.T(), db.Model(&models.LatestMetric{}).Count(&countVal).Error)
+	assert.Equal(s.T(), counts.latestMetrics, int(countVal), "Latest metrics count incorrect")
 
-	tx = db.Model(&models.Tag{}).Count(&countVal)
-	require.Nil(t, tx.Error)
-	assert.Equal(t, counts.tags, int(countVal), "Run tags count incorrect")
+	require.Nil(s.T(), db.Model(&models.Tag{}).Count(&countVal).Error)
+	assert.Equal(s.T(), counts.tags, int(countVal), "Run tags count incorrect")
 
-	tx = db.Model(&models.Param{}).Count(&countVal)
-	require.Nil(t, tx.Error)
-	assert.Equal(t, counts.params, int(countVal), "Run params count incorrect")
+	require.Nil(s.T(), db.Model(&models.Param{}).Count(&countVal).Error)
+	assert.Equal(s.T(), counts.params, int(countVal), "Run params count incorrect")
 
-	tx = db.Model(&models.Run{}).Distinct("experiment_id").Count(&countVal)
-	require.Nil(t, tx.Error)
-	assert.Equal(t, counts.distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
+	require.Nil(s.T(), db.Model(&models.Run{}).Distinct("experiment_id").Count(&countVal).Error)
+	assert.Equal(s.T(), counts.distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
 
-	tx = db.Model(&database.App{}).Count(&countVal)
-	require.Nil(t, tx.Error)
-	assert.Equal(t, counts.apps, int(countVal), "Apps count incorrect")
+	require.Nil(s.T(), db.Model(&database.App{}).Count(&countVal).Error)
+	assert.Equal(s.T(), counts.apps, int(countVal), "Apps count incorrect")
 
-	tx = db.Model(&database.Dashboard{}).Count(&countVal)
-	require.Nil(t, tx.Error)
-	assert.Equal(t, counts.dashboards, int(countVal), "Dashboard count incorrect")
+	require.Nil(s.T(), db.Model(&database.Dashboard{}).Count(&countVal).Error)
+	assert.Equal(s.T(), counts.dashboards, int(countVal), "Dashboard count incorrect")
 }
 
 // validateTable will scan source and dest table and confirm they are identical
-func validateTable(t *testing.T, source, dest *gorm.DB, table string) {
+func (s *ImportTestSuite) validateTable(source, dest *gorm.DB, table string) {
 	sourceRows, err := source.Table(table).Rows()
-	require.Nil(t, err)
-	require.Nil(t, sourceRows.Err())
+	require.Nil(s.T(), err)
+	require.Nil(s.T(), sourceRows.Err())
 	destRows, err := dest.Table(table).Rows()
-	require.Nil(t, err)
-	require.Nil(t, destRows.Err())
+	require.Nil(s.T(), err)
+	require.Nil(s.T(), destRows.Err())
 	//nolint:errcheck
 	defer sourceRows.Close()
 	//nolint:errcheck
 	defer destRows.Close()
 
 	for sourceRows.Next() {
+		// dest should have the same number of rows as source
+		require.True(s.T(), destRows.Next())
+
 		var sourceRow, destRow map[string]any
-
-		err := source.ScanRows(sourceRows, &sourceRow)
-		require.Nil(t, err)
-
-		destRows.Next()
-		err = dest.ScanRows(destRows, &destRow)
-		require.Nil(t, err)
+		require.Nil(s.T(), source.ScanRows(sourceRows, &sourceRow))
+		require.Nil(s.T(), dest.ScanRows(destRows, &destRow))
 
 		// TODO:DSuhinin delete this fields right now, because they
 		// cause comparison error when we compare `namespace` entities. Let's find smarter way to do that.
@@ -275,6 +261,8 @@ func validateTable(t *testing.T, source, dest *gorm.DB, table string) {
 		delete(sourceRow, "updated_at")
 		delete(sourceRow, "created_at")
 
-		assert.Equal(t, sourceRow, destRow)
+		assert.Equal(s.T(), sourceRow, destRow)
 	}
+	// dest should have the same number of rows as source
+	require.False(s.T(), destRows.Next())
 }

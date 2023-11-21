@@ -6,8 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -26,7 +24,7 @@ func TestGetProjectTestSuite(t *testing.T) {
 
 func (s *GetProjectTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -34,12 +32,12 @@ func (s *GetProjectTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	var resp response.GetProjectResponse
-	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/projects"))
-	assert.Equal(s.T(), "FastTrackML", resp.Name)
-	// assert.Equal(s.T(), "", resp.Path)
-	assert.Equal(s.T(), "", resp.Description)
-	assert.Equal(s.T(), 0, resp.TelemetryEnabled)
+	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/projects"))
+	s.Equal("FastTrackML", resp.Name)
+	// s.Equal( "", resp.Path)
+	s.Equal("", resp.Description)
+	s.Equal(0, resp.TelemetryEnabled)
 }

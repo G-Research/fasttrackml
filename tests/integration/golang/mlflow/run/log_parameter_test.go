@@ -10,8 +10,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -32,7 +30,7 @@ func TestLogParamTestSuite(t *testing.T) {
 
 func (s *LogParamTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -40,7 +38,7 @@ func (s *LogParamTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment := &models.Experiment{
 		Name:           uuid.New().String(),
@@ -48,7 +46,7 @@ func (s *LogParamTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 	}
 	_, err = s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run := &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
@@ -58,7 +56,7 @@ func (s *LogParamTestSuite) Test_Ok() {
 		Status:         models.StatusRunning,
 	}
 	run, err = s.RunFixtures.CreateRun(context.Background(), run)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	req := request.LogParamRequest{
 		RunID: run.ID,
@@ -66,8 +64,7 @@ func (s *LogParamTestSuite) Test_Ok() {
 		Value: "value1",
 	}
 	resp := map[string]any{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
@@ -78,7 +75,7 @@ func (s *LogParamTestSuite) Test_Ok() {
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
 		),
 	)
-	assert.Empty(s.T(), resp)
+	s.Empty(resp)
 
 	// log duplicate, which is OK
 	req = request.LogParamRequest{
@@ -86,8 +83,7 @@ func (s *LogParamTestSuite) Test_Ok() {
 		Key:   "key1",
 		Value: "value1",
 	}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
@@ -98,12 +94,12 @@ func (s *LogParamTestSuite) Test_Ok() {
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
 		),
 	)
-	assert.Empty(s.T(), resp)
+	s.Empty(resp)
 }
 
 func (s *LogParamTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -111,7 +107,7 @@ func (s *LogParamTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment := &models.Experiment{
 		Name:           uuid.New().String(),
@@ -119,7 +115,7 @@ func (s *LogParamTestSuite) Test_Error() {
 		LifecycleStage: models.LifecycleStageActive,
 	}
 	_, err = s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run := &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
@@ -129,7 +125,7 @@ func (s *LogParamTestSuite) Test_Error() {
 		Status:         models.StatusRunning,
 	}
 	run, err = s.RunFixtures.CreateRun(context.Background(), run)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// setup param OK
 	req := request.LogParamRequest{
@@ -138,8 +134,7 @@ func (s *LogParamTestSuite) Test_Error() {
 		Value: "value1",
 	}
 	resp := api.ErrorResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
@@ -150,7 +145,7 @@ func (s *LogParamTestSuite) Test_Error() {
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
 		),
 	)
-	assert.Empty(s.T(), resp)
+	s.Empty(resp)
 
 	// error conditions
 
@@ -159,8 +154,7 @@ func (s *LogParamTestSuite) Test_Error() {
 		Key:   "key1",
 		Value: "value1",
 	}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
@@ -171,8 +165,7 @@ func (s *LogParamTestSuite) Test_Error() {
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
 		),
 	)
-	assert.Equal(
-		s.T(),
+	s.Equal(
 		api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'").Error(),
 		resp.Error(),
 	)
@@ -183,8 +176,7 @@ func (s *LogParamTestSuite) Test_Error() {
 		Key:   "key1",
 		Value: "value2",
 	}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
@@ -195,8 +187,7 @@ func (s *LogParamTestSuite) Test_Error() {
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
 		),
 	)
-	assert.Equal(
-		s.T(),
+	s.Equal(
 		api.NewInvalidParameterValueError(
 			fmt.Sprintf(`unable to insert params for run '%s': conflicting params found: `+
 				`[{run_id: %s, key: %s, old_value: %s, new_value: %s}]`,

@@ -4,7 +4,6 @@ package metric
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -81,7 +80,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute),
+			"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute,
 		),
 	)
 	assert.Equal(s.T(), response.GetMetricHistoryResponse{
@@ -127,7 +126,7 @@ func (s *GetHistoryTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
@@ -136,7 +135,7 @@ func (s *GetHistoryTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute),
+					"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

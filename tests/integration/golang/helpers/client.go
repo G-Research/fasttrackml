@@ -38,6 +38,7 @@ type HttpClient struct {
 	request      any
 	response     any
 	responseType ResponseType
+	statusCode   int
 }
 
 // NewClient creates new preconfigured HTTP client.
@@ -111,6 +112,11 @@ func (c *HttpClient) WithResponseType(responseType ResponseType) *HttpClient {
 	return c
 }
 
+// GetStatusCode returns HTTP status code of the last response, if available.
+func (c *HttpClient) GetStatusCode() int {
+	return c.statusCode
+}
+
 // DoRequest do actual HTTP request based on provided parameters.
 // nolint:gocyclo
 func (c *HttpClient) DoRequest(uri string, values ...any) error {
@@ -181,6 +187,8 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 	if err != nil {
 		return eris.Wrap(err, "error doing request")
 	}
+
+	c.statusCode = resp.StatusCode
 
 	// 8. read and check response data.
 	if c.response != nil {

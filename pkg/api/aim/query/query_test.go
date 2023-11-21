@@ -124,7 +124,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			pq := QueryParser{
 				Default: DefaultExpression{
 					Contains:   "run.archived",
@@ -237,7 +237,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			pq := QueryParser{
 				Default: DefaultExpression{
 					Contains:   "run.archived",

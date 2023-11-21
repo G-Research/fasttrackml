@@ -71,7 +71,7 @@ func (s *UpdateExperimentTestSuite) Test_Ok() {
 		).WithResponse(
 			&struct{}{},
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute,
 		),
 	)
 
@@ -127,7 +127,7 @@ func (s *UpdateExperimentTestSuite) Test_Error() {
 	}
 
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
@@ -138,7 +138,7 @@ func (s *UpdateExperimentTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsUpdateRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

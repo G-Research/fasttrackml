@@ -68,7 +68,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			namespace2Code: "namespace-2",
 		},
 		{
-			name: "TestObviousDefaultAndCustomNamespaces",
+			name: "TestExplicitDefaultAndCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
@@ -98,7 +98,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 
 			// 1. setup data under the test.
@@ -201,7 +201,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
 	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
@@ -219,7 +219,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
 	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
@@ -861,7 +861,7 @@ func (s *RunFlowTestSuite) createRun(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 		),
 	)
 	return resp.Run.Info.ID
@@ -880,7 +880,7 @@ func (s *RunFlowTestSuite) getRunAndCompare(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
 	assert.Equal(s.T(), expectedResponse.Run.Info.ID, resp.Run.Info.ID)
@@ -914,7 +914,7 @@ func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunReq
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute,
 		),
 	)
 }
@@ -934,7 +934,7 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 		).WithResponse(
 			&searchResp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute,
 		),
 	)
 	assert.Equal(s.T(), len(expectedRuns), len(searchResp.Runs))
@@ -952,7 +952,7 @@ func (s *RunFlowTestSuite) deleteRun(namespace string, req *request.DeleteRunReq
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute,
 		),
 	)
 }
@@ -967,7 +967,7 @@ func (s *RunFlowTestSuite) restoreRun(namespace string, req *request.RestoreRunR
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute,
 		),
 	)
 }
@@ -982,7 +982,7 @@ func (s *RunFlowTestSuite) logRunMetric(namespace string, req *request.LogMetric
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute,
 		),
 	)
 }
@@ -997,7 +997,7 @@ func (s *RunFlowTestSuite) logRunParam(namespace string, req *request.LogParamRe
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
 		),
 	)
 }
@@ -1012,7 +1012,7 @@ func (s *RunFlowTestSuite) setRunTag(namespace string, req *request.SetRunTagReq
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSetTagRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSetTagRoute,
 		),
 	)
 }
@@ -1027,7 +1027,7 @@ func (s *RunFlowTestSuite) deleteRunTag(namespace string, req *request.DeleteRun
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute,
 		),
 	)
 }
@@ -1042,7 +1042,7 @@ func (s *RunFlowTestSuite) runLogBatch(namespace string, req *request.LogBatchRe
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 		),
 	)
 }

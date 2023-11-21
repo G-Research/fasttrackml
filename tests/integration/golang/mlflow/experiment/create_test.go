@@ -4,7 +4,6 @@ package experiment
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -65,7 +64,7 @@ func (s *CreateExperimentTestSuite) Test_Ok() {
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute),
+			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute,
 		),
 	)
 	assert.NotEmpty(s.T(), resp.ID)
@@ -107,7 +106,7 @@ func (s *CreateExperimentTestSuite) Test_Error() {
 	}
 
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
 			require.Nil(
 				s.T(),
@@ -118,7 +117,7 @@ func (s *CreateExperimentTestSuite) Test_Error() {
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute),
+					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute,
 				),
 			)
 			assert.Equal(s.T(), tt.error.Error(), resp.Error())

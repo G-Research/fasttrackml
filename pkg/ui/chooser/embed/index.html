@@ -32,9 +32,7 @@
         #namespace-list-container {
             display: flex;
             align-items: center;
-            justify-content: center;
             overflow:auto;
-            height:30%;
             border: 1px solid var(--border);
             border-radius: 5px;
             padding: 1rem;
@@ -42,18 +40,21 @@
 
         #namespaces-list { 
             flex-direction: column;
-            align-items: flex-start;
+            align-items: first baseline;
             text-align: left;
             list-style-type: none;
+            margin-left: auto;
+            margin-right: auto;
          }
 
         #current-namespace {
-            text-align: center;
-            margin-right: 25px;
+            margin-left: -1.3em;
+	        position: relative;
         }   
 
         #current-icon {
-            margin-right: 5px;
+    	    position: relative;
+	        left: -1.5em;
         }
          
     </style>

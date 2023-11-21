@@ -21,7 +21,7 @@ type Namespace struct {
 
 func (ns Namespace) DisplayName() string {
 	if ns.Description != "" {
-		return fmt.Sprintf("%s - %s", ns.Code, ns.Description)
+		return fmt.Sprintf("%s (%s)", ns.Code, ns.Description)
 	}
 	return ns.Code
 }

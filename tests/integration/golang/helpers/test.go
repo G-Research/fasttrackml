@@ -21,8 +21,9 @@ type BaseTestSuite struct {
 	AppFixtures        *fixtures.AppFixtures
 	RunFixtures        *fixtures.RunFixtures
 	TagFixtures        *fixtures.TagFixtures
-	MetricFixtures     *fixtures.MetricFixtures
 	ParamFixtures      *fixtures.ParamFixtures
+	MetricFixtures     *fixtures.MetricFixtures
+	ContextFixtures    *fixtures.ContextFixtures
 	ProjectFixtures    *fixtures.ProjectFixtures
 	DashboardFixtures  *fixtures.DashboardFixtures
 	ExperimentFixtures *fixtures.ExperimentFixtures
@@ -85,6 +86,10 @@ func (s *BaseTestSuite) SetupTest() {
 	tagFixtures, err := fixtures.NewTagFixtures(db)
 	require.Nil(s.T(), err)
 	s.TagFixtures = tagFixtures
+
+	contextFixtures, err := fixtures.NewContextFixtures(db)
+	require.Nil(s.T(), err)
+	s.ContextFixtures = contextFixtures
 
 	// by default, unload everything.
 	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())

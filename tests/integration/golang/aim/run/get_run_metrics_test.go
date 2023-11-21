@@ -21,7 +21,7 @@ import (
 
 type GetRunMetricsTestSuite struct {
 	helpers.BaseTestSuite
-	run *models.Run
+	namespaceID uint
 }
 
 func TestGetRunMetricsTestSuite(t *testing.T) {
@@ -37,22 +37,25 @@ func (s *GetRunMetricsTestSuite) SetupTest() {
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
 	require.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	require.Nil(s.T(), err)
-
-	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), experiment)
-	require.Nil(s.T(), err)
+	s.namespaceID = namespace.ID
 }
 
 func (s *GetRunMetricsTestSuite) Test_Ok() {
 	defer func() {
 		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
 	}()
+
+	// create test data
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    s.namespaceID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	require.Nil(s.T(), err)
+
+	run, err := s.RunFixtures.CreateExampleRun(context.Background(), experiment)
+	require.Nil(s.T(), err)
+
 	tests := []struct {
 		name             string
 		runID            string
@@ -61,29 +64,29 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	}{
 		{
 			name:  "GetOneRun",
-			runID: s.run.ID,
+			runID: run.ID,
 			request: request.GetRunMetrics{
 				{
-					Context: map[string]string{},
 					Name:    "key1",
+					Context: map[string]string{},
 				},
 				{
-					Context: map[string]string{},
 					Name:    "key2",
+					Context: map[string]string{},
 				},
 			},
 			expectedResponse: response.GetRunMetrics{
 				response.RunMetrics{
 					Name:    "key1",
-					Context: map[string]interface{}{},
-					Values:  []float64{124.1, 125.1},
 					Iters:   []int64{1, 2},
+					Values:  []float64{124.1, 125.1},
+					Context: []byte(`{"key_1":"value_1"}`),
 				},
 				response.RunMetrics{
 					Name:    "key2",
-					Context: map[string]interface{}{},
-					Values:  []float64{124.1, 125.1},
 					Iters:   []int64{1, 2},
+					Values:  []float64{124.1, 125.1},
+					Context: []byte(`{"key_3":"value_3"}`),
 				},
 			},
 		},

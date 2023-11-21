@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -82,8 +83,8 @@ func GetRunInfo(c *fiber.Ctx) error {
 			traces[s] = []fiber.Map{}
 		case "metric":
 			tx.Preload("LatestMetrics", func(db *gorm.DB) *gorm.DB {
-				return db.Select("RunID", "Key")
-			})
+				return db.Select("RunID", "Key", "ContextID")
+			}).Preload("LatestMetrics.Context")
 		default:
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("%q is not a valid Sequence", s))
 		}
@@ -125,11 +126,16 @@ func GetRunInfo(c *fiber.Ctx) error {
 
 	metrics := make([]fiber.Map, len(r.LatestMetrics))
 	for i, m := range r.LatestMetrics {
-		metrics[i] = fiber.Map{
+		metric := fiber.Map{
 			"name":       m.Key,
 			"last_value": 0.1,
-			"context":    fiber.Map{},
 		}
+		if m.Context != nil {
+			metric["context"] = json.RawMessage(m.Context.Json)
+		} else {
+			metric["context"] = fiber.Map{}
+		}
+		metrics[i] = metric
 	}
 	traces["metric"] = metrics
 
@@ -156,8 +162,8 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	}
 
 	b := []struct {
-		Context fiber.Map `json:"context"`
 		Name    string    `json:"name"`
+		Context fiber.Map `json:"context"`
 	}{}
 
 	if err := c.BodyParser(&b); err != nil {
@@ -194,6 +200,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 				Where("key IN ?", metricKeys).
 				Order("iter")
 		}).
+		Preload("Metrics.Context").
 		First(&r).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
@@ -202,8 +209,9 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	}
 
 	metrics := make(map[string]struct {
-		values []*float64
-		iters  []int
+		iters   []int
+		values  []*float64
+		context json.RawMessage
 	}, len(metricKeys))
 	for _, m := range r.Metrics {
 		k := metrics[m.Key]
@@ -214,8 +222,11 @@ func GetRunMetrics(c *fiber.Ctx) error {
 			pv = nil
 		}
 
-		k.values = append(k.values, pv)
 		k.iters = append(k.iters, int(m.Iter))
+		k.values = append(k.values, pv)
+		if m.Context != nil {
+			k.context = json.RawMessage(m.Context.Json)
+		}
 		metrics[m.Key] = k
 	}
 
@@ -223,9 +234,9 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	for i, k := range metricKeys {
 		resp[i] = fiber.Map{
 			"name":    k,
-			"context": fiber.Map{},
-			"values":  metrics[k].values,
 			"iters":   metrics[k].iters,
+			"values":  metrics[k].values,
+			"context": metrics[k].context,
 		}
 	}
 
@@ -262,7 +273,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 				&models.Experiment{NamespaceID: ns.ID},
 			),
 		).
-		Preload("LatestMetrics").
+		Preload("LatestMetrics.Context").
 		Limit(50).
 		Order("start_time DESC").
 		Find(&runs).Error; err != nil {
@@ -294,9 +305,8 @@ func GetRunsActive(c *fiber.Ctx) error {
 					if m.IsNan {
 						v = math.NaN()
 					}
-					metrics[i] = fiber.Map{
-						"context": fiber.Map{},
-						"name":    m.Key,
+					data := fiber.Map{
+						"name": m.Key,
 						"last_value": fiber.Map{
 							"dtype":      "float",
 							"first_step": 0,
@@ -305,6 +315,10 @@ func GetRunsActive(c *fiber.Ctx) error {
 							"version":    2,
 						},
 					}
+					if m.Context != nil {
+						data["context"] = json.RawMessage(m.Context.Json)
+					}
+					metrics[i] = data
 				}
 
 				if err := encoding.EncodeTree(w, fiber.Map{

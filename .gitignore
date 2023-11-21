@@ -27,5 +27,9 @@ python/build/
 python/*.egg-info/
 wheelhouse/
 
+.aim
+mlruns
+.pytest_cache
+
 # Python package
 __pycache__/

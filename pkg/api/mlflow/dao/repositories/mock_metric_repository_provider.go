@@ -51,34 +51,34 @@ func (_m *MockMetricRepositoryProvider) GetDB() *gorm.DB {
 	return r0
 }
 
-// GetMetricHistories provides a mock function with given fields: ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit
-func (_m *MockMetricRepositoryProvider) GetMetricHistories(ctx context.Context, namespaceID uint, experimentIDs []string, runIDs []string, metricKeys []string, viewType request.ViewType, limit int32) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
-	ret := _m.Called(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit)
+// GetMetricHistories provides a mock function with given fields: ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, metricContext
+func (_m *MockMetricRepositoryProvider) GetMetricHistories(ctx context.Context, namespaceID uint, experimentIDs []string, runIDs []string, metricKeys []string, viewType request.ViewType, limit int32, metricContext map[string]interface{}) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
+	ret := _m.Called(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, metricContext)
 
 	var r0 *sql.Rows
 	var r1 func(*sql.Rows, interface{}) error
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32) (*sql.Rows, func(*sql.Rows, interface{}) error, error)); ok {
-		return rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]interface{}) (*sql.Rows, func(*sql.Rows, interface{}) error, error)); ok {
+		return rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, metricContext)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32) *sql.Rows); ok {
-		r0 = rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit)
+	if rf, ok := ret.Get(0).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]interface{}) *sql.Rows); ok {
+		r0 = rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, metricContext)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*sql.Rows)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32) func(*sql.Rows, interface{}) error); ok {
-		r1 = rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit)
+	if rf, ok := ret.Get(1).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]interface{}) func(*sql.Rows, interface{}) error); ok {
+		r1 = rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, metricContext)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(func(*sql.Rows, interface{}) error)
 		}
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32) error); ok {
-		r2 = rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit)
+	if rf, ok := ret.Get(2).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]interface{}) error); ok {
+		r2 = rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, metricContext)
 	} else {
 		r2 = ret.Error(2)
 	}

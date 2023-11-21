@@ -38,7 +38,7 @@ func GetExperiments(c *fiber.Ctx) error {
 			"experiments.lifecycle_stage",
 			"experiments.creation_time",
 			"COUNT(runs.run_uuid) AS run_count",
-			"COALESCE(MAX(experiment_tags.value), '') AS description",
+			"COALESCE(experiment_tags.value, '') AS description",
 		).
 		Where("experiments.namespace_id = ?", ns.ID).
 		Where("experiments.lifecycle_stage = ?", database.LifecycleStageActive).
@@ -107,7 +107,7 @@ func GetExperiment(c *fiber.Ctx) error {
 			"experiments.lifecycle_stage",
 			"experiments.creation_time",
 			"COUNT(runs.run_uuid) AS run_count",
-			"COALESCE(MAX(experiment_tags.value), '') AS description",
+			"COALESCE(experiment_tags.value, '') AS description",
 		).
 		Joins("LEFT JOIN runs USING(experiment_id)").
 		Joins("LEFT JOIN experiment_tags ON experiments.experiment_id = experiment_tags.experiment_id AND"+

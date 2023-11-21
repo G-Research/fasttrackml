@@ -1,0 +1,27 @@
+services:
+  fasttrackml:
+    image: gresearch/fasttrackml
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+    #   interval: 2s
+    #   timeout: 5s
+    #   start_period: 5m
+    ports:
+      - "8000:5000"
+
+    networks:
+      - shared_network
+
+  performance-tests:
+    build: .
+    volumes:
+      - .:/src
+    depends_on:
+      - fasttrackml
+
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
+    driver: bridge

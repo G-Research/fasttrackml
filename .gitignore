@@ -30,3 +30,7 @@ go.work*
 python/build/
 python/*.egg-info/
 wheelhouse/
+
+.aim
+mlruns
+.pytest_cache

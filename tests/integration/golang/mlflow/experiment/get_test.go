@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -32,7 +30,7 @@ func TestGetExperimentTestSuite(t *testing.T) {
 
 func (s *GetExperimentTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// 1. prepare database with test data.
@@ -41,7 +39,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
@@ -63,7 +61,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "/artifact/location",
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// 2. make actual API call.
 	request := request.GetExperimentRequest{
@@ -71,8 +69,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	}
 
 	resp := response.GetExperimentResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithQuery(
 			request,
 		).WithResponse(
@@ -82,11 +79,11 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		),
 	)
 	// 3. check actual API response.
-	assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.Experiment.ID)
-	assert.Equal(s.T(), experiment.Name, resp.Experiment.Name)
-	assert.Equal(s.T(), string(experiment.LifecycleStage), resp.Experiment.LifecycleStage)
-	assert.Equal(s.T(), experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
-	assert.Equal(s.T(), []models.ExperimentTag{
+	s.Equal(fmt.Sprintf("%d", *experiment.ID), resp.Experiment.ID)
+	s.Equal(experiment.Name, resp.Experiment.Name)
+	s.Equal(string(experiment.LifecycleStage), resp.Experiment.LifecycleStage)
+	s.Equal(experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
+	s.Equal([]models.ExperimentTag{
 		{
 			Key:          "key1",
 			Value:        "value1",
@@ -97,7 +94,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 
 func (s *GetExperimentTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -105,7 +102,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	testData := []struct {
 		name    string
@@ -136,8 +133,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
@@ -146,7 +142,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsGetRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

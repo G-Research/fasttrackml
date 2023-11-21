@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
@@ -27,28 +25,27 @@ func TestUpdateNamespaceTestSuite(t *testing.T) {
 
 func (s *UpdateNamespaceTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	ns, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
 		Code:                "test2",
 		Description:         "test namespace 2 description",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	request := request.Namespace{
 		Code:        "test2Updated",
 		Description: "test namespace 2 description updated",
 	}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AdminClient().WithMethod(
 			http.MethodPut,
 		).WithRequest(
@@ -57,31 +54,31 @@ func (s *UpdateNamespaceTestSuite) Test_Ok() {
 	)
 
 	namespace, err := s.NamespaceFixtures.GetNamespaceByID(context.Background(), ns.ID)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
-	assert.Equal(s.T(), namespace.Code, request.Code)
-	assert.Equal(s.T(), namespace.Description, request.Description)
+	s.Equal(namespace.Code, request.Code)
+	s.Equal(namespace.Description, request.Description)
 }
 
 func (s *UpdateNamespaceTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
 		Code:                "test2",
 		Description:         "test namespace 2 description",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	expectedNamespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	testData := []struct {
 		name     string
@@ -129,8 +126,7 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.Run(tt.name, func() {
 			var resp any
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AdminClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
@@ -141,10 +137,10 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 					"/namespaces/%s", tt.ID,
 				),
 			)
-			assert.Equal(s.T(), resp, tt.response)
+			s.Equal(resp, tt.response)
 		})
 		actualNamespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
-		require.Nil(s.T(), err)
-		assert.Equal(s.T(), expectedNamespaces, actualNamespaces)
+		s.Require().Nil(err)
+		s.Equal(expectedNamespaces, actualNamespaces)
 	}
 }

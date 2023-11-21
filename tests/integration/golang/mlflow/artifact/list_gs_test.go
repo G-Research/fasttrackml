@@ -12,8 +12,6 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -39,22 +37,22 @@ func TestListArtifactGSTestSuite(t *testing.T) {
 
 func (s *ListArtifactGSTestSuite) SetupSuite() {
 	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.gsClient = gsClient
 }
 
 func (s *ListArtifactGSTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest()
-	require.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
+	s.Require().Nil(helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *ListArtifactGSTestSuite) TearDownTest() {
-	require.Nil(s.T(), helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
+	s.Require().Nil(helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *ListArtifactGSTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -62,7 +60,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name   string
@@ -101,7 +99,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("gs://%s/1", tt.bucket),
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// 2. create test run.
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -113,7 +111,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// 3. upload artifact objects to GS.
 			writer := s.gsClient.Bucket(
@@ -124,8 +122,8 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				context.Background(),
 			)
 			_, err = writer.Write([]byte("contentX"))
-			require.Nil(s.T(), err)
-			require.Nil(s.T(), writer.Close())
+			s.Require().Nil(err)
+			s.Require().Nil(writer.Close())
 
 			writer = s.gsClient.Bucket(
 				tt.bucket,
@@ -135,8 +133,8 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				context.Background(),
 			)
 			_, err = writer.Write([]byte("contentXX"))
-			require.Nil(s.T(), err)
-			require.Nil(s.T(), writer.Close())
+			s.Require().Nil(err)
+			s.Require().Nil(writer.Close())
 
 			// 4. make actual API call for root dir.
 			rootDirQuery := request.ListArtifactsRequest{
@@ -144,8 +142,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			}
 
 			rootDirResp := response.ListArtifactsResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithQuery(
 					rootDirQuery,
 				).WithResponse(
@@ -155,9 +152,9 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				),
 			)
 
-			assert.Equal(s.T(), run.ArtifactURI, rootDirResp.RootURI)
-			assert.Equal(s.T(), 2, len(rootDirResp.Files))
-			assert.Equal(s.T(), []response.FilePartialResponse{
+			s.Equal(run.ArtifactURI, rootDirResp.RootURI)
+			s.Equal(2, len(rootDirResp.Files))
+			s.Equal([]response.FilePartialResponse{
 				{
 					Path:     "artifact",
 					IsDir:    true,
@@ -169,7 +166,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 					FileSize: 8,
 				},
 			}, rootDirResp.Files)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// 5. make actual API call for sub dir.
 			subDirQuery := request.ListArtifactsRequest{
@@ -178,8 +175,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			}
 
 			subDirResp := response.ListArtifactsResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithQuery(
 					subDirQuery,
 				).WithResponse(
@@ -189,25 +185,24 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				),
 			)
 
-			assert.Equal(s.T(), run.ArtifactURI, subDirResp.RootURI)
-			assert.Equal(s.T(), 1, len(subDirResp.Files))
-			assert.Equal(s.T(), response.FilePartialResponse{
+			s.Equal(run.ArtifactURI, subDirResp.RootURI)
+			s.Equal(1, len(subDirResp.Files))
+			s.Equal(response.FilePartialResponse{
 				Path:     "artifact/artifact.txt",
 				IsDir:    false,
 				FileSize: 9,
 			}, subDirResp.Files[0])
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// 6. make actual API call for non-existing dir.
 			nonExistingDirQuery := request.ListArtifactsRequest{
 				RunID: run.ID,
 				Path:  "non-existing-dir",
 			}
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			nonExistingDirResp := response.ListArtifactsResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithQuery(
 					nonExistingDirQuery,
 				).WithResponse(
@@ -217,16 +212,16 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 				),
 			)
 
-			assert.Equal(s.T(), run.ArtifactURI, nonExistingDirResp.RootURI)
-			assert.Equal(s.T(), 0, len(nonExistingDirResp.Files))
-			require.Nil(s.T(), err)
+			s.Equal(run.ArtifactURI, nonExistingDirResp.RootURI)
+			s.Equal(0, len(nonExistingDirResp.Files))
+			s.Require().Nil(err)
 		})
 	}
 }
 
 func (s *ListArtifactGSTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -234,7 +229,7 @@ func (s *ListArtifactGSTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name    string
@@ -291,8 +286,7 @@ func (s *ListArtifactGSTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
@@ -301,8 +295,8 @@ func (s *ListArtifactGSTestSuite) Test_Error() {
 					"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 				),
 			)
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Require().Nil(err)
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

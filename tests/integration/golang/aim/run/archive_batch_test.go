@@ -9,8 +9,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
@@ -35,22 +33,22 @@ func (s *ArchiveBatchTestSuite) SetupTest() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 10)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 }
 
 func (s *ArchiveBatchTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	tests := []struct {
@@ -83,11 +81,10 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 			originalMinRowNum, originalMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			resp := map[string]any{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(http.MethodPost).WithQuery(map[any]any{
 					"archive": tt.archiveParam,
 				}).WithRequest(
@@ -98,32 +95,32 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 					"/runs/archive-batch",
 				),
 			)
-			assert.Equal(s.T(), map[string]interface{}{"status": "OK"}, resp)
+			s.Equal(map[string]interface{}{"status": "OK"}, resp)
 
 			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), 10, len(runs))
+			s.Require().Nil(err)
+			s.Equal(10, len(runs))
 			archiveCount := 0
 			for _, run := range runs {
 				if run.LifecycleStage == models.LifecycleStageDeleted {
 					archiveCount++
 				}
 			}
-			assert.Equal(s.T(), tt.expectedArchiveCount, archiveCount)
+			s.Equal(tt.expectedArchiveCount, archiveCount)
 
 			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
-			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
+			s.Require().Nil(err)
+			s.Equal(originalMinRowNum, newMinRowNum)
+			s.Equal(originalMaxRowNum, newMaxRowNum)
 		})
 	}
 }
 
 func (s *ArchiveBatchTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string
@@ -141,11 +138,10 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 			originalMinRowNum, originalMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			var resp fiber.Map
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(http.MethodPost).WithQuery(map[any]any{
 					"archive": true,
 				}).WithRequest(
@@ -156,18 +152,18 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 					"/runs/archive-batch",
 				),
 			)
-			assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
+			s.Equal(fiber.Map{"status": "OK"}, resp)
 
 			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
+			s.Require().Nil(err)
+			s.Equal(tt.expectedRunCount, len(runs))
 
 			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
-			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
+			s.Require().Nil(err)
+			s.Equal(originalMinRowNum, newMinRowNum)
+			s.Equal(originalMaxRowNum, newMaxRowNum)
 		})
 	}
 }

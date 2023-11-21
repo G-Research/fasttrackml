@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/database"
@@ -43,15 +42,15 @@ func (s *MigrateTestSuite) TestMigrate() {
 			// setup sqlite MLFlow database from the schema
 			mlflowDBPath := path.Join(s.T().TempDir(), "mlflow.db")
 			mlflowDB, err := sql.Open("sqlite3", mlflowDBPath)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			//nolint:gosec
 			mlflowSql, err := os.ReadFile(tt.schema)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			_, err = mlflowDB.Exec(string(mlflowSql))
-			require.Nil(s.T(), err)
-			require.Nil(s.T(), mlflowDB.Close())
+			s.Require().Nil(err)
+			s.Require().Nil(mlflowDB.Close())
 
 			// make DbProvider using our package
 			db, err := database.NewDBProvider(
@@ -59,10 +58,10 @@ func (s *MigrateTestSuite) TestMigrate() {
 				1*time.Second,
 				20,
 			)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// run migrations
-			require.Nil(s.T(), database.CheckAndMigrateDB(true, db.GormDB()))
+			s.Require().Nil(database.CheckAndMigrateDB(true, db.GormDB()))
 		})
 	}
 }

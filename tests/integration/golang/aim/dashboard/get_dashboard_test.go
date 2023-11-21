@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -29,7 +27,7 @@ func TestGetDashboardTestSuite(t *testing.T) {
 
 func (s *GetDashboardTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -37,7 +35,7 @@ func (s *GetDashboardTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
@@ -49,7 +47,7 @@ func (s *GetDashboardTestSuite) Test_Ok() {
 		State:       database.AppState{},
 		NamespaceID: namespace.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	dashboard, err := s.DashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
 		Base: database.Base{
@@ -61,21 +59,21 @@ func (s *GetDashboardTestSuite) Test_Ok() {
 		AppID:       &app.ID,
 		Description: "dashboard for experiment",
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	var resp database.Dashboard
-	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/dashboards/%s", dashboard.ID))
-	assert.Equal(s.T(), dashboard.ID, resp.ID)
-	assert.Equal(s.T(), &app.ID, resp.AppID)
-	assert.Equal(s.T(), dashboard.Name, resp.Name)
-	assert.Equal(s.T(), dashboard.Description, resp.Description)
-	assert.NotEmpty(s.T(), resp.CreatedAt)
-	assert.NotEmpty(s.T(), resp.UpdatedAt)
+	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/dashboards/%s", dashboard.ID))
+	s.Equal(dashboard.ID, resp.ID)
+	s.Equal(&app.ID, resp.AppID)
+	s.Equal(dashboard.Name, resp.Name)
+	s.Equal(dashboard.Description, resp.Description)
+	s.NotEmpty(resp.CreatedAt)
+	s.NotEmpty(resp.UpdatedAt)
 }
 
 func (s *GetDashboardTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -83,7 +81,7 @@ func (s *GetDashboardTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name    string
@@ -97,11 +95,10 @@ func (s *GetDashboardTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.Error
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithResponse(&resp).DoRequest("/dashboards/%s", tt.idParam),
 			)
-			assert.Equal(s.T(), "Not Found", resp.Message)
+			s.Equal("Not Found", resp.Message)
 		})
 	}
 }

@@ -12,8 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -40,19 +38,19 @@ func (s *GetArtifactS3TestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest()
 
 	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
-	require.Nil(s.T(), err)
-	require.Nil(s.T(), helpers.CreateS3Buckets(s3Client, s.testBuckets))
+	s.Require().Nil(err)
+	s.Require().Nil(helpers.CreateS3Buckets(s3Client, s.testBuckets))
 
 	s.s3Client = s3Client
 }
 
 func (s *GetArtifactS3TestSuite) TearDownTest() {
-	require.Nil(s.T(), helpers.RemoveS3Buckets(s.s3Client, s.testBuckets))
+	s.Require().Nil(helpers.RemoveS3Buckets(s.s3Client, s.testBuckets))
 }
 
 func (s *GetArtifactS3TestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -60,7 +58,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name   string
@@ -85,7 +83,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("s3://%s/1", tt.bucket),
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// create test run
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -97,7 +95,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 				ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// upload artifact root object to S3
 			putObjReq := &s3.PutObjectInput{
@@ -106,7 +104,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 				Bucket: aws.String(tt.bucket),
 			}
 			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// upload artifact subdir object to S3
 			putObjReq = &s3.PutObjectInput{
@@ -118,7 +116,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 				Bucket: aws.String(tt.bucket),
 			}
 			_, err = s.s3Client.PutObject(context.Background(), putObjReq)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// make API call for root object
 			query := request.GetArtifactRequest{
@@ -127,7 +125,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			}
 
 			resp := new(bytes.Buffer)
-			require.Nil(s.T(), s.MlflowClient().WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -136,7 +134,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			).DoRequest(
 				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
-			assert.Equal(s.T(), "content", resp.String())
+			s.Equal("content", resp.String())
 
 			// make API call for subdir object
 			query = request.GetArtifactRequest{
@@ -145,7 +143,7 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			}
 
 			resp = new(bytes.Buffer)
-			require.Nil(s.T(), s.MlflowClient().WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -154,14 +152,14 @@ func (s *GetArtifactS3TestSuite) Test_Ok() {
 			).DoRequest(
 				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
-			assert.Equal(s.T(), "subdir-object-content", resp.String())
+			s.Equal("subdir-object-content", resp.String())
 		})
 	}
 }
 
 func (s *GetArtifactS3TestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -169,7 +167,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create test experiment
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -178,7 +176,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "s3://bucket1/1",
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create test run
 	runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -190,7 +188,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 		ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// upload artifact subdir object to S3
 	putObjReq := &s3.PutObjectInput{
@@ -199,7 +197,7 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 		Bucket: aws.String("bucket1"),
 	}
 	_, err = s.s3Client.PutObject(context.Background(), putObjReq)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name    string
@@ -276,14 +274,14 @@ func (s *GetArtifactS3TestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(s.T(), s.MlflowClient().WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,
 			).DoRequest(
 				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

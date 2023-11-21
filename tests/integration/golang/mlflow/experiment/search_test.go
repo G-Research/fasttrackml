@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -31,7 +29,7 @@ func TestSearchExperimentsTestSuite(t *testing.T) {
 
 func (s *SearchExperimentsTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	// 1. prepare database with test data.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -39,7 +37,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiments := []models.Experiment{
 		{
@@ -110,7 +108,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 			LifecycleStage:   ex.LifecycleStage,
 			ArtifactLocation: "/artifact/location",
 		})
-		require.Nil(s.T(), err)
+		s.Require().Nil(err)
 	}
 
 	tests := []struct {
@@ -163,8 +161,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := response.SearchExperimentsResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
@@ -179,14 +176,14 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 				names[i] = exp.Name
 			}
 
-			assert.ElementsMatch(s.T(), tt.expected, names)
+			s.ElementsMatch(tt.expected, names)
 		})
 	}
 }
 
 func (s *SearchExperimentsTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -194,7 +191,7 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	testData := []struct {
 		name    string
@@ -274,8 +271,7 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
@@ -284,7 +280,7 @@ func (s *SearchExperimentsTestSuite) Test_Error() {
 					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsSearchRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

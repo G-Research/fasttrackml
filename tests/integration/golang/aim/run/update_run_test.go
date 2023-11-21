@@ -9,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -36,22 +34,22 @@ func (s *UpdateRunTestSuite) SetupTest() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), experiment)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 }
 
 func (s *UpdateRunTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name    string
@@ -70,8 +68,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.Success
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
@@ -83,18 +80,18 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 				),
 			)
 			run, err := s.RunFixtures.GetRun(context.Background(), s.run.ID)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			// TODO the PUT endpoint only updates LifecycleStage
-			// assert.Equal(t, newName, run.Name)
-			// assert.Equal(t, models.Status(newStatus), run.Status)
-			assert.Equal(s.T(), models.LifecycleStageDeleted, run.LifecycleStage)
+			// s.Equal(newName, run.Name)
+			// s.Equal(models.Status(newStatus), run.Status)
+			s.Equal(models.LifecycleStageDeleted, run.LifecycleStage)
 		})
 	}
 }
 
 func (s *UpdateRunTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name        string
@@ -120,8 +117,7 @@ func (s *UpdateRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.Error
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
@@ -132,7 +128,7 @@ func (s *UpdateRunTestSuite) Test_Error() {
 					"/runs/%s", tt.ID,
 				),
 			)
-			assert.Contains(s.T(), resp.Message, tt.error)
+			s.Contains(resp.Message, tt.error)
 		})
 	}
 }

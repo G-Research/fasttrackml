@@ -11,8 +11,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -32,14 +30,14 @@ func TestSearchAlignedMetricsTestSuite(t *testing.T) {
 
 func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create test experiments.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -47,14 +45,14 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 		NamespaceID:    namespace.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		LifecycleStage: models.LifecycleStageActive,
 		NamespaceID:    namespace.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create different test runs and attach, metrics.
 	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -75,7 +73,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri1",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric1",
 		Value:     1.1,
@@ -85,7 +83,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		Iter:      1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	metric1Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric1",
 		Value:     1.1,
@@ -95,7 +93,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric2",
 		Value:     2.1,
@@ -105,7 +103,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		Iter:      1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	metric2Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric2",
 		Value:     2.1,
@@ -115,7 +113,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric3",
 		Value:     3.1,
@@ -125,7 +123,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		Iter:      1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	metric3Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric3",
 		Value:     3.1,
@@ -135,7 +133,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id2",
 		Name:       "TestRun2",
@@ -154,7 +152,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri2",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric1",
 		Value:     0.5,
@@ -164,7 +162,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		Iter:      1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	metric1Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric1",
 		Value:     0.5,
@@ -174,7 +172,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric2",
 		Value:     2.1,
@@ -184,7 +182,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		Iter:      1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	metric2Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric2",
 		Value:     2.1,
@@ -194,7 +192,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric3",
 		Value:     3.1,
@@ -204,7 +202,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		Iter:      1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	metric3Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric3",
 		Value:     3.1,
@@ -214,7 +212,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	run3, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id3",
 		Name:       "TestRun3",
@@ -233,7 +231,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri3",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric1",
 		Value:     1.2,
@@ -243,7 +241,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		Iter:      1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	metric1Run3, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric1",
 		Value:     1.2,
@@ -253,7 +251,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric2",
 		Value:     1.6,
@@ -263,7 +261,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		Iter:      1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	metric2Run3, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric2",
 		Value:     1.6,
@@ -273,7 +271,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "TestMetric3",
 		Value:     2.6,
@@ -283,7 +281,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		Iter:      1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	metric3Run3, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric3",
 		Value:     2.6,
@@ -293,7 +291,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	runs := []*models.Run{run1, run2, run3}
 
@@ -738,7 +736,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := new(bytes.Buffer)
-			require.Nil(s.T(), s.AIMClient().WithMethod(
+			s.Require().Nil(s.AIMClient().WithMethod(
 				http.MethodPost,
 			).WithRequest(
 				tt.request,
@@ -751,7 +749,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 			))
 
 			decodedData, err := encoding.Decode(resp)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			xValues := make(map[int][]float64)
 
@@ -767,7 +765,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 
 			// Check if the received values for each metric match the expected ones
 			for _, metricValues := range xValues {
-				assert.Equal(s.T(), tt.response, metricValues)
+				s.Equal(tt.response, metricValues)
 			}
 		})
 	}

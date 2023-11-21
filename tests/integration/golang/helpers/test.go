@@ -3,7 +3,6 @@ package helpers
 import (
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 
@@ -36,7 +35,7 @@ func (s *BaseTestSuite) SetupTest() {
 			1*time.Second,
 			20,
 		)
-		require.Nil(s.T(), err)
+		s.Require().Nil(err)
 		db = instance.GormDB()
 	}
 
@@ -51,41 +50,41 @@ func (s *BaseTestSuite) SetupTest() {
 	}
 
 	appFixtures, err := fixtures.NewAppFixtures(db)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.AppFixtures = appFixtures
 
 	dashboardFixtures, err := fixtures.NewDashboardFixtures(db)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.DashboardFixtures = dashboardFixtures
 
 	experimentFixtures, err := fixtures.NewExperimentFixtures(db)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.ExperimentFixtures = experimentFixtures
 
 	metricFixtures, err := fixtures.NewMetricFixtures(db)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.MetricFixtures = metricFixtures
 
 	namespaceFixtures, err := fixtures.NewNamespaceFixtures(db)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.NamespaceFixtures = namespaceFixtures
 
 	projectFixtures, err := fixtures.NewProjectFixtures(db)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.ProjectFixtures = projectFixtures
 
 	paramFixtures, err := fixtures.NewParamFixtures(db)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.ParamFixtures = paramFixtures
 
 	runFixtures, err := fixtures.NewRunFixtures(db)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.RunFixtures = runFixtures
 
 	tagFixtures, err := fixtures.NewTagFixtures(db)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.TagFixtures = tagFixtures
 
 	// by default, unload everything.
-	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 }

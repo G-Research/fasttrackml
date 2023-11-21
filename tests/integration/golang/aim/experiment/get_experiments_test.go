@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -29,7 +27,7 @@ func TestGetExperimentsTestSuite(t *testing.T) {
 
 func (s *GetExperimentsTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -37,7 +35,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiments := map[string]*models.Experiment{}
 	for i := 0; i < 5; i++ {
@@ -62,19 +60,19 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 			ArtifactLocation: "/artifact/location",
 		}
 		experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
-		require.Nil(s.T(), err)
+		s.Require().Nil(err)
 		experiments[fmt.Sprintf("%d", *experiment.ID)] = experiment
 	}
 
 	var resp response.Experiments
-	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/experiments/"))
-	assert.Equal(s.T(), len(experiments), len(resp))
+	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/"))
+	s.Equal(len(experiments), len(resp))
 	for _, actualExperiment := range resp {
 		expectedExperiment := experiments[actualExperiment.ID]
-		assert.Equal(s.T(), fmt.Sprintf("%d", *expectedExperiment.ID), actualExperiment.ID)
-		assert.Equal(s.T(), expectedExperiment.Name, actualExperiment.Name)
-		assert.Equal(s.T(), float64(expectedExperiment.CreationTime.Int64)/1000, actualExperiment.CreationTime)
-		assert.Equal(s.T(), expectedExperiment.LifecycleStage == models.LifecycleStageDeleted, actualExperiment.Archived)
-		assert.Equal(s.T(), len(expectedExperiment.Runs), actualExperiment.RunCount)
+		s.Equal(fmt.Sprintf("%d", *expectedExperiment.ID), actualExperiment.ID)
+		s.Equal(expectedExperiment.Name, actualExperiment.Name)
+		s.Equal(float64(expectedExperiment.CreationTime.Int64)/1000, actualExperiment.CreationTime)
+		s.Equal(expectedExperiment.LifecycleStage == models.LifecycleStageDeleted, actualExperiment.Archived)
+		s.Equal(len(expectedExperiment.Runs), actualExperiment.RunCount)
 	}
 }

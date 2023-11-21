@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -27,7 +25,7 @@ func TestGetProjectParamsTestSuite(t *testing.T) {
 
 func (s *GetProjectParamsTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// 1. create test `namespace` and connect test `run`.
@@ -36,7 +34,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// 2. create test `experiment` and connect test `run`.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -44,7 +42,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "id",
@@ -54,7 +52,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 		ExperimentID:   *experiment.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// 3. create latest metric.
 	metric, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -66,7 +64,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		RunID:     run.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// 4. create test param and tag.
 	tag, err := s.TagFixtures.CreateTag(context.Background(), &models.Tag{
@@ -74,19 +72,18 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		Value: "value1",
 		RunID: run.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	param, err := s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param1",
 		Value: "value1",
 		RunID: run.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// 5. check that response contains metric from previous step.
 	resp := response.ProjectParamsResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithQuery(
 			map[any]any{"sequence": "metric"},
 		).WithResponse(
@@ -94,10 +91,10 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		).DoRequest("/projects/params"),
 	)
 
-	assert.Equal(s.T(), 1, len(resp.Metric))
+	s.Equal(1, len(resp.Metric))
 	_, ok := resp.Metric[metric.Key]
-	assert.True(s.T(), ok)
-	assert.Equal(s.T(), map[string]interface{}{
+	s.True(ok)
+	s.Equal(map[string]interface{}{
 		param.Key: map[string]interface{}{
 			"__example_type__": "<class 'str'>",
 		},
@@ -110,26 +107,25 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 
 	// 6. mark run as `deleted`.
 	run.LifecycleStage = models.LifecycleStageDeleted
-	require.Nil(s.T(), s.RunFixtures.UpdateRun(context.Background(), run))
+	s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), run))
 
 	// 7. check that endpoint returns an empty response.
 	resp = response.ProjectParamsResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithQuery(
 			map[any]any{"sequence": "metric"},
 		).WithResponse(
 			&resp,
 		).DoRequest("/projects/params"),
 	)
-	assert.Equal(s.T(), 0, len(resp.Metric))
+	s.Equal(0, len(resp.Metric))
 	_, ok = resp.Metric[metric.Key]
-	assert.False(s.T(), ok)
-	assert.Equal(s.T(), map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
+	s.False(ok)
+	s.Equal(map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
 }
 
 func (s *GetProjectParamsTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 }

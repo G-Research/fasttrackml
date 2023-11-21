@@ -6,8 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
@@ -25,7 +23,7 @@ func TestGetProjectStatusTestSuite(t *testing.T) {
 
 func (s *GetProjectStatusTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -33,9 +31,9 @@ func (s *GetProjectStatusTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	var resp string
-	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/projects/status"))
-	assert.Equal(s.T(), "up-to-date", resp)
+	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/projects/status"))
+	s.Equal("up-to-date", resp)
 }

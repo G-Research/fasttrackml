@@ -11,8 +11,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -33,7 +31,7 @@ func TestRestoreRunTestSuite(t *testing.T) {
 
 func (s *RestoreRunTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create test experiment.
@@ -42,14 +40,14 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create test run for the experiment
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -69,7 +67,7 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 		ExperimentID:   *experiment.ID,
 		LifecycleStage: models.LifecycleStageDeleted,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create tags, metrics, params.
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
@@ -77,7 +75,7 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 		Value: "value1",
 		RunID: run.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "metric1",
@@ -87,14 +85,13 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 		Step:      1,
 		IsNan:     false,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	req := request.RestoreRunRequest{
 		RunID: run.ID,
 	}
 	resp := fiber.Map{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
@@ -105,17 +102,17 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute,
 		),
 	)
-	assert.Equal(s.T(), fiber.Map{}, resp)
+	s.Equal(fiber.Map{}, resp)
 
 	// check that run has been updated in database.
 	run, err = s.RunFixtures.GetRun(context.Background(), run.ID)
-	require.Nil(s.T(), err)
-	assert.Equal(s.T(), models.LifecycleStageActive, run.LifecycleStage)
+	s.Require().Nil(err)
+	s.Equal(models.LifecycleStageActive, run.LifecycleStage)
 }
 
 func (s *RestoreRunTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -123,7 +120,7 @@ func (s *RestoreRunTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name    string
@@ -148,8 +145,7 @@ func (s *RestoreRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -160,7 +156,7 @@ func (s *RestoreRunTestSuite) Test_Error() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -29,7 +27,7 @@ func TestGetAppTestSuite(t *testing.T) {
 
 func (s *GetAppTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -37,7 +35,7 @@ func (s *GetAppTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
@@ -48,20 +46,20 @@ func (s *GetAppTestSuite) Test_Ok() {
 		State:       database.AppState{},
 		NamespaceID: namespace.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	var resp database.App
-	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/apps/%s", app.ID.String()))
-	assert.Equal(s.T(), app.ID, resp.ID)
-	assert.Equal(s.T(), app.Type, resp.Type)
-	assert.Equal(s.T(), app.State, resp.State)
-	assert.NotEmpty(s.T(), resp.CreatedAt)
-	assert.NotEmpty(s.T(), resp.UpdatedAt)
+	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/apps/%s", app.ID.String()))
+	s.Equal(app.ID, resp.ID)
+	s.Equal(app.Type, resp.Type)
+	s.Equal(app.State, resp.State)
+	s.NotEmpty(resp.CreatedAt)
+	s.NotEmpty(resp.UpdatedAt)
 }
 
 func (s *GetAppTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -69,7 +67,7 @@ func (s *GetAppTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name    string
@@ -83,8 +81,8 @@ func (s *GetAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.Error
-			require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/apps/%v", tt.idParam))
-			assert.Equal(s.T(), "Not Found", resp.Message)
+			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/apps/%v", tt.idParam))
+			s.Equal("Not Found", resp.Message)
 		})
 	}
 }

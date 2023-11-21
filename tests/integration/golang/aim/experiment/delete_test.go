@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -30,7 +28,7 @@ func TestDeleteExperimentTestSuite(t *testing.T) {
 
 func (s *DeleteExperimentTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -38,7 +36,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
@@ -60,15 +58,14 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "/artifact/location",
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiments, err := s.ExperimentFixtures.GetTestExperiments(context.Background())
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	length := len(experiments)
 
 	var resp response.DeleteExperiment
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodDelete,
 		).WithResponse(
@@ -79,13 +76,13 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 	)
 
 	remainingExperiments, err := s.ExperimentFixtures.GetTestExperiments(context.Background())
-	require.Nil(s.T(), err)
-	assert.Equal(s.T(), length-1, len(remainingExperiments))
+	s.Require().Nil(err)
+	s.Equal(length-1, len(remainingExperiments))
 }
 
 func (s *DeleteExperimentTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -93,7 +90,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name  string
@@ -115,8 +112,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodDelete,
 				).WithResponse(
@@ -125,8 +121,8 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 					"/experiments/%s", tt.ID,
 				),
 			)
-			assert.Contains(s.T(), resp.Error(), tt.error)
-			assert.NoError(s.T(), err)
+			s.Contains(resp.Error(), tt.error)
+			s.NoError(err)
 		})
 	}
 }

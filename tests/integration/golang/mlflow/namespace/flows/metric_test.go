@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -34,7 +32,7 @@ func TestMetricFlowTestSuite(t *testing.T) {
 }
 
 func (s *MetricFlowTestSuite) TearDownTest() {
-	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *MetricFlowTestSuite) Test_Ok() {
@@ -90,14 +88,14 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment1",
@@ -105,7 +103,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment2",
@@ -113,7 +111,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace2.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// 2. run actual flow test over the test data.
 			s.testRunMetricFlow(tt.namespace1Code, tt.namespace2Code, experiment1, experiment2)
@@ -327,8 +325,7 @@ func (s *MetricFlowTestSuite) createRun(
 	namespace string, req *request.CreateRunRequest,
 ) string {
 	resp := response.CreateRunResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -348,8 +345,7 @@ func (s *MetricFlowTestSuite) getRunAndCompare(
 	namespace string, req request.GetRunRequest, expectedResponse *response.GetRunResponse,
 ) {
 	resp := response.GetRunResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
@@ -360,26 +356,25 @@ func (s *MetricFlowTestSuite) getRunAndCompare(
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
-	assert.Equal(s.T(), expectedResponse.Run.Info.ID, resp.Run.Info.ID)
-	assert.Equal(s.T(), expectedResponse.Run.Info.Name, resp.Run.Info.Name)
-	assert.Equal(s.T(), expectedResponse.Run.Info.Status, resp.Run.Info.Status)
-	assert.Equal(s.T(), expectedResponse.Run.Info.ArtifactURI, resp.Run.Info.ArtifactURI)
-	assert.Equal(s.T(), expectedResponse.Run.Info.ExperimentID, resp.Run.Info.ExperimentID)
-	assert.Equal(s.T(), expectedResponse.Run.Info.LifecycleStage, resp.Run.Info.LifecycleStage)
+	s.Equal(expectedResponse.Run.Info.ID, resp.Run.Info.ID)
+	s.Equal(expectedResponse.Run.Info.Name, resp.Run.Info.Name)
+	s.Equal(expectedResponse.Run.Info.Status, resp.Run.Info.Status)
+	s.Equal(expectedResponse.Run.Info.ArtifactURI, resp.Run.Info.ArtifactURI)
+	s.Equal(expectedResponse.Run.Info.ExperimentID, resp.Run.Info.ExperimentID)
+	s.Equal(expectedResponse.Run.Info.LifecycleStage, resp.Run.Info.LifecycleStage)
 	if expectedResponse.Run.Data.Tags != nil {
-		assert.Equal(s.T(), expectedResponse.Run.Data.Tags, resp.Run.Data.Tags)
+		s.Equal(expectedResponse.Run.Data.Tags, resp.Run.Data.Tags)
 	}
 	if expectedResponse.Run.Data.Params != nil {
-		assert.Equal(s.T(), expectedResponse.Run.Data.Params, resp.Run.Data.Params)
+		s.Equal(expectedResponse.Run.Data.Params, resp.Run.Data.Params)
 	}
 	if expectedResponse.Run.Data.Metrics != nil {
-		assert.Equal(s.T(), expectedResponse.Run.Data.Metrics, resp.Run.Data.Metrics)
+		s.Equal(expectedResponse.Run.Data.Metrics, resp.Run.Data.Metrics)
 	}
 }
 
 func (s *MetricFlowTestSuite) logRunMetric(namespace string, req *request.LogMetricRequest) {
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -396,8 +391,7 @@ func (s *MetricFlowTestSuite) getMetricHistoryBulkAndCompare(
 	namespace string, req request.GetMetricHistoryBulkRequest, expectedResponse response.GetMetricHistoryResponse,
 ) {
 	actualResponse := response.GetMetricHistoryResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
@@ -408,15 +402,14 @@ func (s *MetricFlowTestSuite) getMetricHistoryBulkAndCompare(
 			"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryBulkRoute,
 		),
 	)
-	assert.Equal(s.T(), expectedResponse, actualResponse)
+	s.Equal(expectedResponse, actualResponse)
 }
 
 func (s *MetricFlowTestSuite) getMetricHistoryAndCompare(
 	namespace string, req request.GetMetricHistoryRequest, expectedResponse response.GetMetricHistoryResponse,
 ) {
 	actualResponse := response.GetMetricHistoryResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
@@ -427,5 +420,5 @@ func (s *MetricFlowTestSuite) getMetricHistoryAndCompare(
 			"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryRoute,
 		),
 	)
-	assert.Equal(s.T(), expectedResponse, actualResponse)
+	s.Equal(expectedResponse, actualResponse)
 }

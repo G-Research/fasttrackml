@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
 	"testing"
 	"time"
 
@@ -69,10 +68,9 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/"))
 	s.Equal(len(experiments), len(resp))
 	for _, actualExperiment := range resp {
-		id, err := strconv.ParseInt(actualExperiment.ID, 10, 32)
-    s.Require().Nil(s.T(), err)
-		expectedExperiment := experiments[int32(id)]
-    s.Equal(fmt.Sprintf("%d", *expectedExperiment.ID), actualExperiment.ID)
+		s.Require().Nil(s.T(), err)
+		expectedExperiment := experiments[actualExperiment.ID]
+		s.Equal(fmt.Sprintf("%d", *expectedExperiment.ID), actualExperiment.ID)
 		s.Equal(expectedExperiment.Name, actualExperiment.Name)
 		s.Equal(float64(expectedExperiment.CreationTime.Int64)/1000, actualExperiment.CreationTime)
 		s.Equal(expectedExperiment.LifecycleStage == models.LifecycleStageDeleted, actualExperiment.Archived)

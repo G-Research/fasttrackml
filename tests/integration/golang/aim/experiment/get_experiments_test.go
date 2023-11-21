@@ -68,7 +68,6 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/"))
 	s.Equal(len(experiments), len(resp))
 	for _, actualExperiment := range resp {
-		s.Require().Nil(s.T(), err)
 		expectedExperiment := experiments[actualExperiment.ID]
 		s.Equal(fmt.Sprintf("%d", *expectedExperiment.ID), actualExperiment.ID)
 		s.Equal(expectedExperiment.Name, actualExperiment.Name)

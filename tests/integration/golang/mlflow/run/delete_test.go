@@ -9,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -31,7 +29,7 @@ func TestDeleteRunTestSuite(t *testing.T) {
 
 func (s *DeleteRunTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create experiment
@@ -40,14 +38,14 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create run for the experiment
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -58,7 +56,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 		ExperimentID:   *experiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name    string
@@ -72,8 +70,7 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := map[string]any{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -84,21 +81,21 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute,
 				),
 			)
-			assert.Empty(s.T(), resp)
+			s.Empty(resp)
 
 			archivedRuns, err := s.RunFixtures.GetRuns(context.Background(), run.ExperimentID)
 
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), 1, len(archivedRuns))
-			assert.Equal(s.T(), run.ID, archivedRuns[0].ID)
-			assert.Equal(s.T(), models.LifecycleStageDeleted, archivedRuns[0].LifecycleStage)
+			s.Require().Nil(err)
+			s.Equal(1, len(archivedRuns))
+			s.Equal(run.ID, archivedRuns[0].ID)
+			s.Equal(models.LifecycleStageDeleted, archivedRuns[0].LifecycleStage)
 		})
 	}
 }
 
 func (s *DeleteRunTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -106,7 +103,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name    string
@@ -120,8 +117,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -132,8 +128,8 @@ func (s *DeleteRunTestSuite) Test_Error() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute,
 				),
 			)
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), api.NewResourceDoesNotExistError("unable to find run 'not-an-id'").Error(), resp.Error())
+			s.Require().Nil(err)
+			s.Equal(api.NewResourceDoesNotExistError("unable to find run 'not-an-id'").Error(), resp.Error())
 		})
 	}
 }

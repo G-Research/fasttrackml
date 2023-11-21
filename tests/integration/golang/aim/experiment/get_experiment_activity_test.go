@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -28,7 +26,7 @@ func TestGetExperimentActivityTestSuite(t *testing.T) {
 
 func (s *GetExperimentActivityTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -36,36 +34,35 @@ func (s *GetExperimentActivityTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	runs, err := s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 10)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	archivedRunsIds := []string{runs[0].ID, runs[1].ID}
 	err = s.RunFixtures.ArchiveRuns(context.Background(), namespace.ID, archivedRunsIds)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	var resp response.GetExperimentActivity
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d/activity", *experiment.ID),
 	)
-	assert.Equal(s.T(), resp.NumRuns, len(runs))
-	assert.Equal(s.T(), resp.NumArchivedRuns, len(archivedRunsIds))
-	assert.Equal(s.T(), resp.NumActiveRuns, len(runs)-len(archivedRunsIds))
-	assert.Equal(s.T(), resp.ActivityMap, helpers.TransformRunsToActivityMap(runs))
+	s.Equal(resp.NumRuns, len(runs))
+	s.Equal(resp.NumArchivedRuns, len(archivedRunsIds))
+	s.Equal(resp.NumActiveRuns, len(runs)-len(archivedRunsIds))
+	s.Equal(resp.ActivityMap, helpers.TransformRunsToActivityMap(runs))
 }
 
 func (s *GetExperimentActivityTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -73,7 +70,7 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name  string
@@ -95,12 +92,12 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
-			require.Nil(s.T(), s.AIMClient().WithQuery(map[any]any{
+			s.Require().Nil(s.AIMClient().WithQuery(map[any]any{
 				"limit": 4,
 			}).WithResponse(&resp).DoRequest(
 				"/experiments/%s/activity", tt.ID,
 			))
-			assert.Contains(s.T(), resp.Error(), tt.error)
+			s.Contains(resp.Error(), tt.error)
 		})
 	}
 }

@@ -11,8 +11,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -33,7 +31,7 @@ func TestSetRunTagTestSuite(t *testing.T) {
 
 func (s *SetRunTagTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create test experiment.
@@ -42,14 +40,14 @@ func (s *SetRunTagTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create test run for the experiment
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -69,7 +67,7 @@ func (s *SetRunTagTestSuite) Test_Ok() {
 		ExperimentID:   *experiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	req := request.SetRunTagRequest{
 		RunID: run.ID,
@@ -77,8 +75,7 @@ func (s *SetRunTagTestSuite) Test_Ok() {
 		Value: "value1",
 	}
 	resp := fiber.Map{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
@@ -89,13 +86,13 @@ func (s *SetRunTagTestSuite) Test_Ok() {
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSetTagRoute,
 		),
 	)
-	assert.Equal(s.T(), fiber.Map{}, resp)
+	s.Equal(fiber.Map{}, resp)
 
 	// make sure that new tag has been created.
 	tags, err := s.TagFixtures.GetByRunID(context.Background(), run.ID)
-	require.Nil(s.T(), err)
-	assert.Equal(s.T(), 1, len(tags))
-	assert.Equal(s.T(), []models.Tag{
+	s.Require().Nil(err)
+	s.Equal(1, len(tags))
+	s.Equal([]models.Tag{
 		{
 			RunID: run.ID,
 			Key:   "tag1",
@@ -106,7 +103,7 @@ func (s *SetRunTagTestSuite) Test_Ok() {
 
 func (s *SetRunTagTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -114,7 +111,7 @@ func (s *SetRunTagTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name    string
@@ -147,8 +144,7 @@ func (s *SetRunTagTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -159,7 +155,7 @@ func (s *SetRunTagTestSuite) Test_Error() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSetTagRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

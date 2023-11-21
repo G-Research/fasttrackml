@@ -10,8 +10,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -30,7 +28,7 @@ func TestDashboardFlowTestSuite(t *testing.T) {
 }
 
 func (s *DashboardFlowTestSuite) TearDownTest() {
-	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	s.Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *DashboardFlowTestSuite) Test_Ok() {
@@ -59,7 +57,7 @@ func (s *DashboardFlowTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			defer func() {
-				assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+				s.Nil(s.NamespaceFixtures.UnloadFixtures())
 			}()
 
 			// setup namespaces
@@ -68,7 +66,7 @@ func (s *DashboardFlowTestSuite) Test_Ok() {
 					Code:                nsCode,
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				require.Nil(s.T(), err)
+				s.Require().Nil(err)
 			}
 
 			// run actual flow test over the test data.
@@ -111,14 +109,14 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 	// test `GET /dashboards` endpoint with namespace 1
 	resp := s.getDashboards(namespace1Code)
 	// only dashboard 1 should be present
-	assert.Equal(s.T(), 1, len(resp))
-	assert.Equal(s.T(), dashboard1ID, resp[0].ID)
+	s.Equal(1, len(resp))
+	s.Equal(dashboard1ID, resp[0].ID)
 
 	// test `GET /dashboards` endpoint with namespace 2
 	resp = s.getDashboards(namespace2Code)
 	// only dashboard 2 should be present
-	assert.Equal(s.T(), 1, len(resp))
-	assert.Equal(s.T(), dashboard2ID, resp[0].ID)
+	s.Equal(1, len(resp))
+	s.Equal(dashboard2ID, resp[0].ID)
 
 	// IDs from active namespace can be fetched, updated, and deleted
 	s.getDashboardAndCompare(namespace1Code, dashboard1ID)
@@ -128,8 +126,7 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 	// IDs from other namespace cannot be fetched, updated, or deleted
 	errResp := response.Error{}
 	client := s.AIMClient()
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodGet,
 		).WithNamespace(
@@ -140,11 +137,10 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 			fmt.Sprintf("/dashboards/%s", dashboard2ID),
 		),
 	)
-	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
+	s.Equal(fiber.ErrNotFound.Code, client.GetStatusCode())
 
 	client = s.AIMClient()
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodPut,
 		).WithNamespace(
@@ -160,11 +156,10 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 			fmt.Sprintf("/dashboards/%s", dashboard1ID),
 		),
 	)
-	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
+	s.Equal(fiber.ErrNotFound.Code, client.GetStatusCode())
 
 	client = s.AIMClient()
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodDelete,
 		).WithNamespace(
@@ -175,14 +170,13 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 			fmt.Sprintf("/dashboards/%s", dashboard1ID),
 		),
 	)
-	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
+	s.Equal(fiber.ErrNotFound.Code, client.GetStatusCode())
 }
 
 func (s *DashboardFlowTestSuite) deleteDashboardAndCompare(namespaceCode string, dashboardID string) {
 	client := s.AIMClient()
 	dashboardResp := response.Dashboard{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodDelete,
 		).WithNamespace(
@@ -193,14 +187,13 @@ func (s *DashboardFlowTestSuite) deleteDashboardAndCompare(namespaceCode string,
 			"/dashboards/%s", dashboardID,
 		),
 	)
-	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+	s.Equal(fiber.StatusOK, client.GetStatusCode())
 }
 
 func (s *DashboardFlowTestSuite) updateDashboardAndCompare(namespaceCode string, dashboardID string) {
 	client := s.AIMClient()
 	dashboardResp := response.Dashboard{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodPut,
 		).WithNamespace(
@@ -216,15 +209,14 @@ func (s *DashboardFlowTestSuite) updateDashboardAndCompare(namespaceCode string,
 			fmt.Sprintf("/dashboards/%s", dashboardID),
 		),
 	)
-	assert.Equal(s.T(), dashboardID, dashboardResp.ID)
-	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+	s.Equal(dashboardID, dashboardResp.ID)
+	s.Equal(fiber.StatusOK, client.GetStatusCode())
 }
 
 func (s *DashboardFlowTestSuite) getDashboardAndCompare(namespaceCode string, dashboardID string) response.Dashboard {
 	dashboardResp := response.Dashboard{}
 	client := s.AIMClient()
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodGet,
 		).WithNamespace(
@@ -235,15 +227,14 @@ func (s *DashboardFlowTestSuite) getDashboardAndCompare(namespaceCode string, da
 			fmt.Sprintf("/dashboards/%s", dashboardID),
 		),
 	)
-	assert.Equal(s.T(), dashboardID, dashboardResp.ID)
-	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+	s.Equal(dashboardID, dashboardResp.ID)
+	s.Equal(fiber.StatusOK, client.GetStatusCode())
 	return dashboardResp
 }
 
 func (s *DashboardFlowTestSuite) getDashboards(namespaceCode string) []response.Dashboard {
 	resp := []response.Dashboard{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodGet,
 		).WithNamespace(
@@ -259,8 +250,7 @@ func (s *DashboardFlowTestSuite) getDashboards(namespaceCode string) []response.
 
 func (s *DashboardFlowTestSuite) createApp(namespace string, req *request.CreateApp) string {
 	var resp response.App
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -278,8 +268,7 @@ func (s *DashboardFlowTestSuite) createApp(namespace string, req *request.Create
 
 func (s *DashboardFlowTestSuite) createDashboard(namespace string, req *request.CreateDashboard) string {
 	var resp response.Dashboard
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -292,7 +281,7 @@ func (s *DashboardFlowTestSuite) createDashboard(namespace string, req *request.
 			"/dashboards",
 		),
 	)
-	assert.Equal(s.T(), req.Name, resp.Name)
-	assert.NotEmpty(s.T(), resp.ID)
+	s.Equal(req.Name, resp.Name)
+	s.NotEmpty(resp.ID)
 	return resp.ID
 }

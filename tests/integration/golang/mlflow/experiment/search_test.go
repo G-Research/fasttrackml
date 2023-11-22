@@ -4,9 +4,7 @@ package experiment
 
 import (
 	"context"
-	"database/sql"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -41,72 +39,35 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 
 	experiments := []models.Experiment{
 		{
-			Name: "Test Experiment 1",
-			Tags: []models.ExperimentTag{
-				{
-					Key:   "key2",
-					Value: "value2",
-				},
-			},
-
+			Name:           "Test Experiment 1",
 			LifecycleStage: models.LifecycleStageActive,
 		},
 		{
-			Name: "Test Experiment 2",
-			Tags: []models.ExperimentTag{
-				{
-					Key:   "key1",
-					Value: "value1",
-				},
-			},
+			Name:           "Test Experiment 2",
 			LifecycleStage: models.LifecycleStageActive,
 		},
 		{
-			Name: "Test Experiment 3",
-			Tags: []models.ExperimentTag{
-				{
-					Key:   "key3",
-					Value: "value3",
-				},
-			},
+			Name:           "Test Experiment 3",
 			LifecycleStage: models.LifecycleStageActive,
 		},
 		{
-			Name: "Test Experiment 4",
-			Tags: []models.ExperimentTag{
-				{
-					Key:   "key4",
-					Value: "value4",
-				},
-			},
+			Name:           "Test Experiment 4",
 			LifecycleStage: models.LifecycleStageActive,
 		},
 		{
 			Name:           "Test Experiment 5",
-			Tags:           nil,
 			LifecycleStage: models.LifecycleStageActive,
 		},
 		{
 			Name:           "Test Experiment 6",
-			Tags:           nil,
 			LifecycleStage: models.LifecycleStageDeleted,
 		},
 	}
 	for _, ex := range experiments {
 		_, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-			Name:        ex.Name,
-			Tags:        ex.Tags,
-			NamespaceID: namespace.ID,
-			CreationTime: sql.NullInt64{
-				Int64: time.Now().UTC().UnixMilli(),
-				Valid: true,
-			},
-			LastUpdateTime: sql.NullInt64{
-				Int64: time.Now().UTC().UnixMilli(),
-				Valid: true,
-			},
-			LifecycleStage:   ex.LifecycleStage,
-			ArtifactLocation: "/artifact/location",
+			Name:           ex.Name,
+			NamespaceID:    namespace.ID,
+			LifecycleStage: ex.LifecycleStage,
 		})
 		s.Require().Nil(err)
 	}

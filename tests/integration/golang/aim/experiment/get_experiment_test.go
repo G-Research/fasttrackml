@@ -50,13 +50,8 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
 		},
-		NamespaceID: namespace.ID,
-		LastUpdateTime: sql.NullInt64{
-			Int64: time.Now().UTC().UnixMilli(),
-			Valid: true,
-		},
-		LifecycleStage:   models.LifecycleStageActive,
-		ArtifactLocation: "/artifact/location",
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
 

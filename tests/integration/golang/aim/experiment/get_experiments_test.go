@@ -40,24 +40,13 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 	experiments := map[string]*models.Experiment{}
 	for i := 0; i < 5; i++ {
 		experiment := &models.Experiment{
-			Name: fmt.Sprintf("Test Experiment %d", i),
-			Tags: []models.ExperimentTag{
-				{
-					Key:   "key1",
-					Value: "value1",
-				},
-			},
+			Name:        fmt.Sprintf("Test Experiment %d", i),
 			NamespaceID: namespace.ID,
 			CreationTime: sql.NullInt64{
 				Int64: time.Now().UTC().UnixMilli(),
 				Valid: true,
 			},
-			LastUpdateTime: sql.NullInt64{
-				Int64: time.Now().UTC().UnixMilli(),
-				Valid: true,
-			},
-			LifecycleStage:   models.LifecycleStageActive,
-			ArtifactLocation: "/artifact/location",
+			LifecycleStage: models.LifecycleStageActive,
 		}
 		experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
 		s.Require().Nil(err)

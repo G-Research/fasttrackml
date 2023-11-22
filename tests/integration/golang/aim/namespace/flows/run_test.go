@@ -105,10 +105,9 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			s.Require().Nil(err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:             "Experiment1",
-				ArtifactLocation: "/artifact/location",
-				LifecycleStage:   models.LifecycleStageActive,
-				NamespaceID:      namespace1.ID,
+				Name:           "Experiment1",
+				LifecycleStage: models.LifecycleStageActive,
+				NamespaceID:    namespace1.ID,
 			})
 			s.Require().Nil(err)
 
@@ -139,10 +138,9 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:             "Experiment2",
-				ArtifactLocation: "/artifact/location",
-				LifecycleStage:   models.LifecycleStageActive,
-				NamespaceID:      namespace2.ID,
+				Name:           "Experiment2",
+				LifecycleStage: models.LifecycleStageActive,
+				NamespaceID:    namespace2.ID,
 			})
 			s.Require().Nil(err)
 

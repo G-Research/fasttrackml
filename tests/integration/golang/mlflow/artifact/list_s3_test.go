@@ -4,11 +4,9 @@ package artifact
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -83,22 +81,8 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 		s.Run(tt.name, func() {
 			// 1. create test experiment.
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name: fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
-				Tags: []models.ExperimentTag{
-					{
-						Key:   "key1",
-						Value: "value1",
-					},
-				},
-				NamespaceID: namespace.ID,
-				CreationTime: sql.NullInt64{
-					Int64: time.Now().UTC().UnixMilli(),
-					Valid: true,
-				},
-				LastUpdateTime: sql.NullInt64{
-					Int64: time.Now().UTC().UnixMilli(),
-					Valid: true,
-				},
+				Name:             fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
+				NamespaceID:      namespace.ID,
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("s3://%s/1", tt.bucket),
 			})

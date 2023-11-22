@@ -18,11 +18,11 @@ func (f baseFixtures) UnloadFixtures() error {
 	for _, table := range []interface{}{
 		database.Dashboard{}, // TODO update to models when available
 		database.App{},       // TODO update to models when available
-		models.Context{},
 		models.Tag{},
 		models.Param{},
 		models.LatestMetric{},
 		models.Metric{},
+		models.Context{},
 		models.Run{},
 		models.ExperimentTag{},
 		models.Experiment{},

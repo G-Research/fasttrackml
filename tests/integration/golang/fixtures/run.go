@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
-	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -194,17 +191,9 @@ func (f RunFixtures) CreateMetric(ctx context.Context, metric *models.Metric) er
 func (f RunFixtures) CreateMetrics(
 	ctx context.Context, run *models.Run, count int,
 ) error {
-	counter := 0
 	for i := 1; i <= count; i++ {
 		// create test `metric` and test `latest metric` and connect to run.
 		for iter := 1; iter <= count; iter++ {
-			metricContext := models.Context{
-				Json: datatypes.JSON(fmt.Sprintf(`{"key_%d": "value_%d"}`, counter, counter)),
-			}
-			if err := f.baseFixtures.db.WithContext(ctx).Create(&metricContext).Error; err != nil {
-				return eris.Wrap(err, "error creating metric context")
-			}
-
 			if err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
 				Key:       fmt.Sprintf("key%d", i),
 				Value:     123.1 + float64(iter),
@@ -213,19 +202,10 @@ func (f RunFixtures) CreateMetrics(
 				Step:      int64(iter),
 				IsNan:     false,
 				Iter:      int64(iter),
-				ContextID: common.GetPointer(metricContext.ID),
 			}).Error; err != nil {
 				return err
 			}
-			counter++
 		}
-		lastMetricContext := models.Context{
-			Json: datatypes.JSON(fmt.Sprintf(`{"key": "key", "value": "value_%d"}`, i)),
-		}
-		if err := f.baseFixtures.db.WithContext(ctx).Create(&lastMetricContext).Error; err != nil {
-			return eris.Wrap(err, "error creating metric context")
-		}
-
 		if err := f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
 			Key:       fmt.Sprintf("key%d", i),
 			Value:     123.1 + float64(count),
@@ -234,7 +214,6 @@ func (f RunFixtures) CreateMetrics(
 			IsNan:     false,
 			RunID:     run.ID,
 			LastIter:  int64(count),
-			ContextID: common.GetPointer(lastMetricContext.ID),
 		}).Error; err != nil {
 			return err
 		}

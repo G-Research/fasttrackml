@@ -209,35 +209,43 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	}
 
 	metrics := make(map[string]struct {
+		name    string
 		iters   []int
 		values  []*float64
-		context json.RawMessage
+		context []byte
 	}, len(metricKeys))
 	for _, m := range r.Metrics {
-		k := metrics[m.Key]
-
 		v := m.Value
 		pv := &v
 		if m.IsNan {
 			pv = nil
 		}
 
+		key := m.Key
+		if m.ContextID != nil {
+			key = fmt.Sprintf("%s%d", m.Key, *m.ContextID)
+		}
+		k := metrics[key]
+		k.name = m.Key
 		k.iters = append(k.iters, int(m.Iter))
 		k.values = append(k.values, pv)
 		if m.Context != nil {
-			k.context = json.RawMessage(m.Context.Json)
+			k.context = m.Context.Json
+		} else {
+			k.context = []byte(`{}`)
 		}
-		metrics[m.Key] = k
+		metrics[key] = k
 	}
 
-	resp := make([]fiber.Map, len(metrics))
-	for i, k := range metricKeys {
-		resp[i] = fiber.Map{
-			"name":    k,
-			"iters":   metrics[k].iters,
-			"values":  metrics[k].values,
-			"context": metrics[k].context,
+	resp := make([]fiber.Map, 0, len(metrics))
+	for _, m := range metrics {
+		data := fiber.Map{
+			"name":    m.name,
+			"iters":   m.iters,
+			"values":  m.values,
+			"context": json.RawMessage(m.context),
 		}
+		resp = append(resp, data)
 	}
 
 	return c.JSON(resp)

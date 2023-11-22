@@ -259,9 +259,9 @@ func (s *RunFlowTestSuite) testRunFlow(
 		response.GetRunMetrics{
 			response.RunMetrics{
 				Name:    "key1",
-				Context: map[string]interface{}{},
 				Values:  []float64{1111.1},
 				Iters:   []int64{1},
+				Context: []byte(`{}`),
 			},
 		},
 	)
@@ -276,9 +276,9 @@ func (s *RunFlowTestSuite) testRunFlow(
 		response.GetRunMetrics{
 			response.RunMetrics{
 				Name:    "key2",
-				Context: map[string]interface{}{},
 				Values:  []float64{2222.2},
 				Iters:   []int64{2},
+				Context: []byte(`{}`),
 			},
 		},
 	)

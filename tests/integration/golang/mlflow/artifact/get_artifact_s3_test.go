@@ -45,7 +45,7 @@ func (s *GetArtifactS3TestSuite) SetupTest() {
 }
 
 func (s *GetArtifactS3TestSuite) TearDownTest() {
-	s.Require().Nil(helpers.RemoveS3Buckets(s.s3Client, s.testBuckets))
+	s.Require().Nil(helpers.DeleteS3Buckets(s.s3Client, s.testBuckets))
 }
 
 func (s *GetArtifactS3TestSuite) Test_Ok() {

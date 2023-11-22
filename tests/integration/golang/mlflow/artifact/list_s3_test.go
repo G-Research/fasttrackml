@@ -49,7 +49,7 @@ func (s *ListArtifactS3TestSuite) SetupTest() {
 }
 
 func (s *ListArtifactS3TestSuite) TearDownTest() {
-	err := helpers.RemoveS3Buckets(s.s3Client, s.testBuckets)
+	err := helpers.DeleteS3Buckets(s.s3Client, s.testBuckets)
 	s.Require().Nil(err)
 }
 

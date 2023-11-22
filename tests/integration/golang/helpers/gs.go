@@ -25,33 +25,36 @@ func NewGSClient(endpoint string) (*storage.Client, error) {
 	return client, nil
 }
 
-// CreateGSBuckets creates tests buckets in the Google Storage.
+// CreateGSBuckets creates the tests buckets.
 func CreateGSBuckets(client *storage.Client, buckets []string) error {
 	for _, bucket := range buckets {
 		if err := client.Bucket(bucket).Create(context.Background(), "", nil); err != nil {
-			return err
+			return eris.Wrapf(err, "failed to create bucket %q", bucket)
 		}
 	}
 	return nil
 }
 
-// DeleteGSBuckets deletes tests buckets from the Google Storage.
+// DeleteGSBuckets deletes the tests buckets.
 func DeleteGSBuckets(client *storage.Client, buckets []string) error {
 	for _, bucket := range buckets {
 		it := client.Bucket(bucket).Objects(context.Background(), &storage.Query{})
 		for {
 			object, err := it.Next()
-			if errors.Is(err, iterator.Done) || errors.Is(err, storage.ErrBucketNotExist) {
-				break
+			if err != nil {
+				if errors.Is(err, iterator.Done) || errors.Is(err, storage.ErrBucketNotExist) {
+					break
+				}
+				return eris.Wrapf(err, "failed to list objects in bucket %q", bucket)
 			}
 			if err := client.Bucket(bucket).Object(object.Name).Delete(context.Background()); err != nil {
-				return err
+				return eris.Wrapf(err, "failed to delete objects in bucket %q", bucket)
 			}
 		}
 		var e *googleapi.Error
 		if err := client.Bucket(bucket).Delete(context.Background()); errors.As(err, &e) &&
 			e.Code != http.StatusNotFound {
-			return err
+			return eris.Wrapf(err, "failed to delete bucket %q", bucket)
 		}
 	}
 	return nil

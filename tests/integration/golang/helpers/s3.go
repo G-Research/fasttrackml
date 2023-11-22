@@ -41,24 +41,24 @@ func CreateS3Buckets(s3Client *s3.Client, buckets []string) error {
 			Bucket: aws.String(bucket),
 		})
 		if err != nil {
-			return eris.Wrapf(err, "failed to create bucket '%s'", bucket)
+			return eris.Wrapf(err, "failed to create bucket %q", bucket)
 		}
 	}
 	return nil
 }
 
-// RemoveS3Buckets removes the test buckets.
-func RemoveS3Buckets(s3Client *s3.Client, buckets []string) error {
+// DeleteS3Buckets deletes the test buckets.
+func DeleteS3Buckets(s3Client *s3.Client, buckets []string) error {
 	for _, bucket := range buckets {
-		if err := removeBucket(s3Client, bucket); err != nil {
-			return eris.Wrapf(err, "failed to remove bucket '%s'", bucket)
+		if err := deleteBucket(s3Client, bucket); err != nil {
+			return eris.Wrapf(err, "failed to delete bucket %q", bucket)
 		}
 	}
 	return nil
 }
 
-// removeBucket removes a bucket and its objects.
-func removeBucket(s3Client *s3.Client, bucket string) error {
+// deleteBucket deletes a bucket and its objects.
+func deleteBucket(s3Client *s3.Client, bucket string) error {
 	// Delete all objects in the bucket
 	var objectIDs []types.ObjectIdentifier
 	paginator := s3.NewListObjectsV2Paginator(s3Client, &s3.ListObjectsV2Input{
@@ -67,7 +67,7 @@ func removeBucket(s3Client *s3.Client, bucket string) error {
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(context.Background())
 		if err != nil {
-			return eris.Wrapf(err, "error paging objects in bucket '%s'", bucket)
+			return eris.Wrapf(err, "failed to list objects in bucket %q", bucket)
 		}
 		for _, object := range page.Contents {
 			objectIDs = append(objectIDs, types.ObjectIdentifier{Key: object.Key})
@@ -79,7 +79,7 @@ func removeBucket(s3Client *s3.Client, bucket string) error {
 			Delete: &types.Delete{Objects: objectIDs},
 		})
 		if err != nil {
-			return eris.Wrapf(err, "failed to delete objects in bucket '%s'", bucket)
+			return eris.Wrapf(err, "failed to delete objects in bucket %q", bucket)
 		}
 	}
 
@@ -87,7 +87,7 @@ func removeBucket(s3Client *s3.Client, bucket string) error {
 	if _, err := s3Client.DeleteBucket(context.Background(), &s3.DeleteBucketInput{
 		Bucket: aws.String(bucket),
 	}); err != nil {
-		return eris.Wrapf(err, "failed to delete bucket '%s'", bucket)
+		return eris.Wrapf(err, "failed to delete bucket %q", bucket)
 	}
 	waiter := s3.NewBucketNotExistsWaiter(s3Client)
 	if err := waiter.Wait(
@@ -97,7 +97,7 @@ func removeBucket(s3Client *s3.Client, bucket string) error {
 		},
 		time.Second*10,
 	); err != nil {
-		return eris.Wrapf(err, "error waiting for bucket '%s' deletion", bucket)
+		return eris.Wrapf(err, "failed to wait for bucket %q deletion", bucket)
 	}
 	return nil
 }

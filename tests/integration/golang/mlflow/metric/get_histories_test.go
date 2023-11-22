@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -59,16 +60,32 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	})
 	require.Nil(s.T(), err)
 
-	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+	m, err := s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key1",
 		Value:     1.1,
 		Timestamp: 1234567890,
 		RunID:     run1.ID,
 		Step:      1,
-		IsNan:     false,
 		Iter:      1,
 	})
 	require.Nil(s.T(), err)
+	require.Nil(s.T(), m.ContextID)
+	require.Nil(s.T(), m.Context)
+
+	m, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+		Key:       "key2",
+		Value:     1.1,
+		Timestamp: 1234567890,
+		RunID:     run1.ID,
+		Step:      1,
+		Iter:      1,
+		Context: &models.Context{
+			Json: datatypes.JSON([]byte(`{"metrickey1": "metricvalue1", "metrickey2": "metricvalue2"}`)),
+		},
+	})
+	require.Nil(s.T(), err)
+	require.NotNil(s.T(), m.ContextID)
+	require.NotNil(s.T(), m.Context)
 
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "run2",
@@ -105,6 +122,12 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 			name: "GetMetricHistoriesByExperimentIDs",
 			request: &request.GetMetricHistoriesRequest{
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+		},
+		{
+			name: "GetMetricHistoriesByPartialContext",
+			request: &request.GetMetricHistoriesRequest{
+				Context: map[string]any{"metrickey1": "metricvalue1"},
 			},
 		},
 	}

@@ -26,18 +26,41 @@ func NewMetricFixtures(db *gorm.DB) (*MetricFixtures, error) {
 
 // CreateMetric creates new test Metric.
 func (f MetricFixtures) CreateMetric(ctx context.Context, metric *models.Metric) (*models.Metric, error) {
+	if metric.Context != nil {
+		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&metric.Context).Error; err != nil {
+			return nil, eris.Wrap(err, "error creating metric context")
+		}
+		metric.ContextID = &metric.Context.ID
+	}
 	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
-		return nil, eris.Wrap(err, "error creating test metric")
+		return nil, eris.Wrap(err, "error creating metric")
 	}
 	return metric, nil
+}
+
+// GetMetricsByRunID returns the metrics by Run ID.
+func (f MetricFixtures) GetMetricsByRunID(ctx context.Context, runID string) ([]*models.Metric, error) {
+	var metrics []*models.Metric
+	if err := f.db.WithContext(ctx).Where(
+		"run_uuid = ?", runID,
+	).Find(&metrics).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting metric by run_uuid: %v", runID)
+	}
+	return metrics, nil
 }
 
 // CreateLatestMetric creates new test Latest Metric.
 func (f MetricFixtures) CreateLatestMetric(
 	ctx context.Context, metric *models.LatestMetric,
 ) (*models.LatestMetric, error) {
+	if metric.Context != nil {
+		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&metric.Context).Error; err != nil {
+			return nil, eris.Wrap(err, "error creating latest metric context")
+		}
+		metric.ContextID = &metric.Context.ID
+	}
 	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
-		return nil, eris.Wrap(err, "error creating test latest metric")
+		return nil, eris.Wrap(err, "error creating latest metric")
 	}
 	return metric, nil
 }

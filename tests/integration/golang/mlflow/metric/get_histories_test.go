@@ -73,7 +73,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	m, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key2",
 		Value:     1.1,
-		Timestamp: 1234567890,
+		Timestamp: 2234567890,
 		RunID:     run1.ID,
 		Step:      1,
 		Iter:      1,
@@ -84,6 +84,12 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 	s.Require().NotNil(m.ContextID)
 	s.Require().NotNil(m.Context)
+
+	// verify metric contexts are persisting
+	metrics, err := s.MetricFixtures.GetMetricsByRunID(context.Background(), run1.ID)
+	s.Require().Nil(err)
+	s.Require().Nil(metrics[0].ContextID)
+	s.Require().NotNil(metrics[1].ContextID)
 
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "run2",

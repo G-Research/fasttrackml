@@ -22,6 +22,7 @@ func (f baseFixtures) UnloadFixtures() error {
 		models.Param{},
 		models.LatestMetric{},
 		models.Metric{},
+		models.Context{},
 		models.Run{},
 		models.ExperimentTag{},
 		models.Experiment{},

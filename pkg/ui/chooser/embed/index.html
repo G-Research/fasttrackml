@@ -29,7 +29,7 @@
             margin-bottom: -50px;
         }
         
-        #namespace-list-container {
+        #namespaces-list-container {
             display: flex;
             align-items: center;
             overflow:auto;
@@ -49,12 +49,12 @@
 
         #current-namespace {
             margin-left: -1.3em;
-	        position: relative;
+            position: relative;
         }   
 
         #current-icon {
-    	    position: relative;
-	        left: -1.5em;
+            position: relative;
+            left: -1.5em;
         }
          
     </style>
@@ -92,7 +92,7 @@
             </b>
         </p>
         
-        <div id="namespace-list-container">
+        <div id="namespaces-list-container">
             <ul id="namespaces-list">
                 {{ range .Namespaces }}
                     {{ if ne .DisplayName $.CurrentNamespace.DisplayName }}

@@ -9,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -29,7 +27,7 @@ func TestAppFlowTestSuite(t *testing.T) {
 }
 
 func (s *AppFlowTestSuite) TearDownTest() {
-	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *AppFlowTestSuite) Test_Ok() {
@@ -58,7 +56,7 @@ func (s *AppFlowTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			defer func() {
-				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+				s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 			}()
 
 			// setup namespaces
@@ -67,7 +65,7 @@ func (s *AppFlowTestSuite) Test_Ok() {
 					Code:                nsCode,
 					DefaultExperimentID: common.GetPointer(int32(0)),
 				})
-				require.Nil(s.T(), err)
+				s.Require().Nil(err)
 			}
 
 			// run actual flow test over the test data.
@@ -97,14 +95,14 @@ func (s *AppFlowTestSuite) testAppFlow(
 	// test `GET /apps` endpoint with namespace 1
 	resp := s.getApps(namespace1Code)
 	// only app 1 should be present
-	assert.Equal(s.T(), 1, len(resp))
-	assert.Equal(s.T(), app1ID, resp[0].ID)
+	s.Equal(1, len(resp))
+	s.Equal(app1ID, resp[0].ID)
 
 	// test `GET /apps` endpoint with namespace 2
 	resp = s.getApps(namespace2Code)
 	// only app 2 should be present
-	assert.Equal(s.T(), 1, len(resp))
-	assert.Equal(s.T(), app2ID, resp[0].ID)
+	s.Equal(1, len(resp))
+	s.Equal(app2ID, resp[0].ID)
 
 	// IDs from active namespace can be fetched, updated, and deleted
 	s.getAppAndCompare(namespace1Code, app1ID)
@@ -114,8 +112,7 @@ func (s *AppFlowTestSuite) testAppFlow(
 	// IDs from other namespace cannot be fetched, updated, or deleted
 	errResp := response.Error{}
 	client := s.AIMClient()
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodGet,
 		).WithNamespace(
@@ -126,11 +123,10 @@ func (s *AppFlowTestSuite) testAppFlow(
 			fmt.Sprintf("/apps/%s", app2ID),
 		),
 	)
-	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
+	s.Equal(fiber.ErrNotFound.Code, client.GetStatusCode())
 
 	client = s.AIMClient()
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodPut,
 		).WithNamespace(
@@ -148,11 +144,10 @@ func (s *AppFlowTestSuite) testAppFlow(
 			fmt.Sprintf("/apps/%s", app1ID),
 		),
 	)
-	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
+	s.Equal(fiber.ErrNotFound.Code, client.GetStatusCode())
 
 	client = s.AIMClient()
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodDelete,
 		).WithNamespace(
@@ -163,14 +158,13 @@ func (s *AppFlowTestSuite) testAppFlow(
 			fmt.Sprintf("/apps/%s", app1ID),
 		),
 	)
-	assert.Equal(s.T(), fiber.ErrNotFound.Code, client.GetStatusCode())
+	s.Equal(fiber.ErrNotFound.Code, client.GetStatusCode())
 }
 
 func (s *AppFlowTestSuite) deleteAppAndCompare(namespaceCode string, appID string) {
 	client := s.AIMClient()
 	appResp := response.App{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodDelete,
 		).WithNamespace(
@@ -181,14 +175,13 @@ func (s *AppFlowTestSuite) deleteAppAndCompare(namespaceCode string, appID strin
 			fmt.Sprintf("/apps/%s", appID),
 		),
 	)
-	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+	s.Equal(fiber.StatusOK, client.GetStatusCode())
 }
 
 func (s *AppFlowTestSuite) updateAppAndCompare(namespaceCode string, appID string) {
 	client := s.AIMClient()
 	appResp := response.App{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodPut,
 		).WithNamespace(
@@ -206,15 +199,14 @@ func (s *AppFlowTestSuite) updateAppAndCompare(namespaceCode string, appID strin
 			fmt.Sprintf("/apps/%s", appID),
 		),
 	)
-	assert.Equal(s.T(), appID, appResp.ID)
-	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+	s.Equal(appID, appResp.ID)
+	s.Equal(fiber.StatusOK, client.GetStatusCode())
 }
 
 func (s *AppFlowTestSuite) getAppAndCompare(namespaceCode string, appID string) response.App {
 	appResp := response.App{}
 	client := s.AIMClient()
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.WithMethod(
 			http.MethodGet,
 		).WithNamespace(
@@ -225,15 +217,14 @@ func (s *AppFlowTestSuite) getAppAndCompare(namespaceCode string, appID string) 
 			fmt.Sprintf("/apps/%s", appID),
 		),
 	)
-	assert.Equal(s.T(), appID, appResp.ID)
-	assert.Equal(s.T(), fiber.StatusOK, client.GetStatusCode())
+	s.Equal(appID, appResp.ID)
+	s.Equal(fiber.StatusOK, client.GetStatusCode())
 	return appResp
 }
 
 func (s *AppFlowTestSuite) getApps(namespaceCode string) []response.App {
 	resp := []response.App{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodGet,
 		).WithNamespace(
@@ -249,8 +240,7 @@ func (s *AppFlowTestSuite) getApps(namespaceCode string) []response.App {
 
 func (s *AppFlowTestSuite) createAppAndCompare(namespace string, req *request.CreateApp) string {
 	var resp response.App
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -263,8 +253,8 @@ func (s *AppFlowTestSuite) createAppAndCompare(namespace string, req *request.Cr
 			"/apps",
 		),
 	)
-	assert.Equal(s.T(), req.Type, resp.Type)
-	assert.Equal(s.T(), req.State["app-state-key"], resp.State["app-state-key"])
-	assert.NotEmpty(s.T(), resp.ID)
+	s.Equal(req.Type, resp.Type)
+	s.Equal(req.State["app-state-key"], resp.State["app-state-key"])
+	s.NotEmpty(resp.ID)
 	return resp.ID
 }

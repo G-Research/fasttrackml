@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -30,7 +28,7 @@ func TestGetExperimentTestSuite(t *testing.T) {
 
 func (s *GetExperimentTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -38,7 +36,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
@@ -60,22 +58,22 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "/artifact/location",
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	var resp response.GetExperiment
-	require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
+	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
 
-	assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.ID)
-	assert.Equal(s.T(), experiment.Name, resp.Name)
-	assert.Equal(s.T(), "", resp.Description)
-	assert.Equal(s.T(), float64(experiment.CreationTime.Int64)/1000, resp.CreationTime)
-	assert.Equal(s.T(), false, resp.Archived)
-	assert.Equal(s.T(), len(experiment.Runs), resp.RunCount)
+	s.Equal(fmt.Sprintf("%d", *experiment.ID), resp.ID)
+	s.Equal(experiment.Name, resp.Name)
+	s.Equal("", resp.Description)
+	s.Equal(float64(experiment.CreationTime.Int64)/1000, resp.CreationTime)
+	s.Equal(false, resp.Archived)
+	s.Equal(len(experiment.Runs), resp.RunCount)
 }
 
 func (s *GetExperimentTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -83,7 +81,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name  string
@@ -106,8 +104,8 @@ func (s *GetExperimentTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
-			require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
-			assert.Equal(s.T(), tt.error, resp.Error())
+			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
+			s.Equal(tt.error, resp.Error())
 		})
 	}
 }

@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -28,7 +26,7 @@ func TestCreateAppTestSuite(t *testing.T) {
 
 func (s *CreateAppTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -36,7 +34,7 @@ func (s *CreateAppTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name        string
@@ -55,8 +53,7 @@ func (s *CreateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.App
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -67,18 +64,18 @@ func (s *CreateAppTestSuite) Test_Ok() {
 					"/apps",
 				),
 			)
-			assert.Equal(s.T(), tt.requestBody.Type, resp.Type)
-			assert.Equal(s.T(), tt.requestBody.State["app-state-key"], resp.State["app-state-key"])
-			assert.NotEmpty(s.T(), resp.ID)
-			assert.NotEmpty(s.T(), resp.CreatedAt)
-			assert.NotEmpty(s.T(), resp.UpdatedAt)
+			s.Equal(tt.requestBody.Type, resp.Type)
+			s.Equal(tt.requestBody.State["app-state-key"], resp.State["app-state-key"])
+			s.NotEmpty(resp.ID)
+			s.NotEmpty(resp.CreatedAt)
+			s.NotEmpty(resp.UpdatedAt)
 		})
 	}
 }
 
 func (s *CreateAppTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -86,7 +83,7 @@ func (s *CreateAppTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name        string
@@ -102,8 +99,7 @@ func (s *CreateAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.Error
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -112,7 +108,7 @@ func (s *CreateAppTestSuite) Test_Error() {
 					&resp,
 				).DoRequest("/apps"),
 			)
-			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
+			s.Contains(resp.Message, "cannot unmarshal")
 		})
 	}
 }

@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -33,7 +31,7 @@ func TestDeleteExperimentTestSuite(t *testing.T) {
 
 func (s *DeleteExperimentTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	// 1. prepare database with test data.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -41,7 +39,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
@@ -63,18 +61,17 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "/artifact/location",
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// check that the experiment lifecycle is active
-	assert.Equal(s.T(), models.LifecycleStageActive, experiment.LifecycleStage)
+	s.Equal(models.LifecycleStageActive, experiment.LifecycleStage)
 
 	// 2. make actual API call.
 	req := request.DeleteExperimentRequest{
 		ID: fmt.Sprintf("%d", *experiment.ID),
 	}
 	resp := fiber.Map{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
@@ -90,13 +87,13 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 	exp, err := s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
 		context.Background(), namespace.ID, *experiment.ID,
 	)
-	require.Nil(s.T(), err)
-	assert.Equal(s.T(), models.LifecycleStageDeleted, exp.LifecycleStage)
+	s.Require().Nil(err)
+	s.Equal(models.LifecycleStageDeleted, exp.LifecycleStage)
 }
 
 func (s *DeleteExperimentTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -104,7 +101,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	testData := []struct {
 		name    string
@@ -141,8 +138,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -153,7 +149,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsDeleteRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

@@ -10,8 +10,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -32,7 +30,7 @@ func TestLogBatchTestSuite(t *testing.T) {
 
 func (s *LogBatchTestSuite) TestTags_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -40,14 +38,14 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
@@ -56,7 +54,7 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name    string
@@ -78,8 +76,7 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := map[string]any{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -90,14 +87,14 @@ func (s *LogBatchTestSuite) TestTags_Ok() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
-			assert.Empty(s.T(), resp)
+			s.Empty(resp)
 		})
 	}
 }
 
 func (s *LogBatchTestSuite) TestParams_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -105,14 +102,14 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
@@ -121,7 +118,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create preexisting param (other batch) for conflict testing
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
@@ -129,7 +126,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 		Key:   "key1",
 		Value: "value1",
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name    string
@@ -179,8 +176,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := map[string]any{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -191,13 +187,13 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
-			assert.Empty(s.T(), resp)
+			s.Empty(resp)
 
 			// verify params are inserted
 			params, err := s.ParamFixtures.GetParamsByRunID(context.Background(), run.ID)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			for _, param := range tt.request.Params {
-				assert.Contains(s.T(), params, models.Param{Key: param.Key, Value: param.Value, RunID: run.ID})
+				s.Contains(params, models.Param{Key: param.Key, Value: param.Value, RunID: run.ID})
 			}
 		})
 	}
@@ -205,7 +201,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 
 func (s *LogBatchTestSuite) TestMetrics_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -213,14 +209,14 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
@@ -229,7 +225,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name                  string
@@ -358,8 +354,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 		s.Run(tt.name, func() {
 			// do actual call to API.
 			resp := map[string]any{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -370,13 +365,13 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
-			assert.Empty(s.T(), resp)
+			s.Empty(resp)
 
 			// make sure that `iter` and `last_iter` for each metric has been updated correctly.
 			for key, iteration := range tt.latestMetricIteration {
 				lastMetric, err := s.MetricFixtures.GetLatestMetricByKey(context.Background(), key)
-				require.Nil(s.T(), err)
-				assert.Equal(s.T(), iteration, lastMetric.LastIter)
+				s.Require().Nil(err)
+				s.Equal(iteration, lastMetric.LastIter)
 			}
 		})
 	}
@@ -384,7 +379,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 
 func (s *LogBatchTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -392,14 +387,14 @@ func (s *LogBatchTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
@@ -408,7 +403,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	testData := []struct {
 		name    string
@@ -446,8 +441,7 @@ func (s *LogBatchTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -458,13 +452,13 @@ func (s *LogBatchTestSuite) Test_Error() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.ErrorCode, resp.ErrorCode)
-			assert.Contains(s.T(), resp.Error(), tt.error.Message)
+			s.Equal(tt.error.ErrorCode, resp.ErrorCode)
+			s.Contains(resp.Error(), tt.error.Message)
 
 			// there should be no params inserted when error occurs.
 			params, err := s.ParamFixtures.GetParamsByRunID(context.Background(), run.ID)
-			require.Nil(s.T(), err)
-			assert.Empty(s.T(), params)
+			s.Require().Nil(err)
+			s.Empty(params)
 		})
 	}
 }

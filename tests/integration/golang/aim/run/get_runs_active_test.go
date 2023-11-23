@@ -12,8 +12,6 @@ import (
 	"gorm.io/datatypes"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -32,7 +30,7 @@ func TestGetRunsActiveTestSuite(t *testing.T) {
 
 func (s *GetRunsActiveTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	runToMetricContextMap := map[string]*models.Context{}
@@ -43,7 +41,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
@@ -183,18 +181,15 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 				tt.beforeRunFn()
 			}
 			resp := new(bytes.Buffer)
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithResponseType(
 					helpers.ResponseTypeBuffer,
 				).WithResponse(
 					resp,
 				).DoRequest("/runs/active"),
 			)
-			fmt.Println("encoded_data", resp.String())
 			decodedData, err := encoding.Decode(resp)
 			require.Nil(s.T(), err)
-			fmt.Println("decoded_data", decodedData)
 
 			responseCount := 0
 			for _, run := range []*models.Run{run1, run2, run3} {
@@ -215,15 +210,15 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 					//assert.Equal(s.T(), runToMetricContextMap[run.ID].Json.String(), decodedData[contextKey])
 					responseCount++
 				} else {
-					assert.Nil(s.T(), decodedData[respNameKey])
-					assert.Nil(s.T(), decodedData[expIdKey])
-					assert.Nil(s.T(), decodedData[activeKey])
-					assert.Nil(s.T(), decodedData[archivedKey])
-					assert.Nil(s.T(), decodedData[startTimeKey])
-					assert.Nil(s.T(), decodedData[endTimeKey])
+					s.Nil(decodedData[respNameKey])
+					s.Nil(decodedData[expIdKey])
+					s.Nil(decodedData[activeKey])
+					s.Nil(decodedData[archivedKey])
+					s.Nil(decodedData[startTimeKey])
+					s.Nil(decodedData[endTimeKey])
 				}
 			}
-			assert.Equal(s.T(), tt.wantRunCount, responseCount)
+			s.Equal(tt.wantRunCount, responseCount)
 		})
 	}
 }

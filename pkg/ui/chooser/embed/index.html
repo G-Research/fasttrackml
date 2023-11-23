@@ -29,22 +29,32 @@
             margin-bottom: -50px;
         }
         
-        #namespaces-list { 
+        #namespaces-list-container {
+            display: flex;
+            align-items: center;
             overflow:auto;
-            height:30%;
-            list-style-type: none;
             border: 1px solid var(--border);
             border-radius: 5px;
             padding: 1rem;
+        }
+
+        #namespaces-list { 
+            flex-direction: column;
+            align-items: first baseline;
+            text-align: left;
+            list-style-type: none;
+            margin-left: auto;
+            margin-right: auto;
          }
 
         #current-namespace {
-            text-align: center;
-            margin-right: 25px;
+            margin-left: -1.3em;
+            position: relative;
         }   
 
         #current-icon {
-            margin-right: 5px;
+            position: relative;
+            left: -1.5em;
         }
          
     </style>
@@ -76,22 +86,28 @@
                 <p>This is the modern Aim UI, much faster than MLFlow.</p>
             </article>
         </div>
-        <p>Selected namespace: <b><u>{{.CurrentNamespace.Description}}</u></b></p>
+        <p>Selected namespace: 
+            <b>
+                <u>{{.CurrentNamespace.DisplayName}}</u>
+            </b>
+        </p>
         
-        <ul id="namespaces-list">
-            {{ range .Namespaces }}
-                {{ if ne .Code $.CurrentNamespace.Code }}
-                    <li>
-                        <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.Description}}</a> 
-                    </li>
-                {{ else }}
-                    <li class="selected-namespace">
-                        <i id="current-icon" class="Icon__container icon-long-arrow-right"></i>
-                        <b id="current-namespace">{{$.CurrentNamespace.Description}}</b>
-                    </li>
+        <div id="namespaces-list-container">
+            <ul id="namespaces-list">
+                {{ range .Namespaces }}
+                    {{ if ne .DisplayName $.CurrentNamespace.DisplayName }}
+                        <li>
+                            <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.DisplayName}}</a> 
+                        </li>
+                    {{ else }}
+                        <li class="selected-namespace">
+                            <i id="current-icon" class="Icon__container icon-long-arrow-right"></i>
+                            <b id="current-namespace">{{$.CurrentNamespace.DisplayName}}</b>
+                        </li>
+                    {{ end }}
                 {{ end }}
-            {{ end }}
-        </ul>
+            </ul>
+        </div>
 
 	<p><a href="#" onclick="window.location = window.location.origin + '/admin/namespaces/'">Manage namespaces</a></p>
 

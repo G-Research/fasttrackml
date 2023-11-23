@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -43,7 +41,7 @@ func TestRunFlowTestSuite(t *testing.T) {
 }
 
 func (s *RunFlowTestSuite) TearDownTest() {
-	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *RunFlowTestSuite) Test_Ok() {
@@ -99,14 +97,14 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment1",
@@ -114,7 +112,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment2",
@@ -122,7 +120,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace2.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// 2. run actual flow test over the test data.
 			s.testRunFlow(tt.namespace1Code, tt.namespace2Code, experiment1, experiment2)
@@ -190,8 +188,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 	// check that there is no intersection between runs, so when we request
 	// run 1 in scope of namespace 2 and run 2 in scope of namespace 1 API will throw an error.
 	resp := api.ErrorResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
@@ -204,12 +201,11 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
-	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
-	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
+	s.Equal(fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
+	s.Equal(api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	resp = api.ErrorResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
@@ -222,8 +218,8 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
-	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
-	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
+	s.Equal(fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
+	s.Equal(api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	// test `POST /runs/update` endpoint.
 	s.updateRun(namespace1Code, &request.UpdateRunRequest{
@@ -850,8 +846,7 @@ func (s *RunFlowTestSuite) createRun(
 	namespace string, req *request.CreateRunRequest,
 ) string {
 	resp := response.CreateRunResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -871,8 +866,7 @@ func (s *RunFlowTestSuite) getRunAndCompare(
 	namespace string, req request.GetRunRequest, expectedResponse *response.GetRunResponse,
 ) *response.GetRunResponse {
 	resp := response.GetRunResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
@@ -883,28 +877,27 @@ func (s *RunFlowTestSuite) getRunAndCompare(
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
-	assert.Equal(s.T(), expectedResponse.Run.Info.ID, resp.Run.Info.ID)
-	assert.Equal(s.T(), expectedResponse.Run.Info.Name, resp.Run.Info.Name)
-	assert.Equal(s.T(), expectedResponse.Run.Info.Status, resp.Run.Info.Status)
-	assert.Equal(s.T(), expectedResponse.Run.Info.ArtifactURI, resp.Run.Info.ArtifactURI)
-	assert.Equal(s.T(), expectedResponse.Run.Info.ExperimentID, resp.Run.Info.ExperimentID)
-	assert.Equal(s.T(), expectedResponse.Run.Info.LifecycleStage, resp.Run.Info.LifecycleStage)
+	s.Equal(expectedResponse.Run.Info.ID, resp.Run.Info.ID)
+	s.Equal(expectedResponse.Run.Info.Name, resp.Run.Info.Name)
+	s.Equal(expectedResponse.Run.Info.Status, resp.Run.Info.Status)
+	s.Equal(expectedResponse.Run.Info.ArtifactURI, resp.Run.Info.ArtifactURI)
+	s.Equal(expectedResponse.Run.Info.ExperimentID, resp.Run.Info.ExperimentID)
+	s.Equal(expectedResponse.Run.Info.LifecycleStage, resp.Run.Info.LifecycleStage)
 	if expectedResponse.Run.Data.Tags != nil {
-		assert.Equal(s.T(), expectedResponse.Run.Data.Tags, resp.Run.Data.Tags)
+		s.Equal(expectedResponse.Run.Data.Tags, resp.Run.Data.Tags)
 	}
 	if expectedResponse.Run.Data.Params != nil {
-		assert.Equal(s.T(), expectedResponse.Run.Data.Params, resp.Run.Data.Params)
+		s.Equal(expectedResponse.Run.Data.Params, resp.Run.Data.Params)
 	}
 	if expectedResponse.Run.Data.Metrics != nil {
-		assert.Equal(s.T(), expectedResponse.Run.Data.Metrics, resp.Run.Data.Metrics)
+		s.Equal(expectedResponse.Run.Data.Metrics, resp.Run.Data.Metrics)
 	}
 	return &resp
 }
 
 func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunRequest) {
 	resp := response.UpdateRunResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -923,8 +916,7 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 	namespace string, req request.SearchRunsRequest, expectedRuns []*response.RunPartialResponse,
 ) {
 	searchResp := response.SearchRunsResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -937,14 +929,13 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute,
 		),
 	)
-	assert.Equal(s.T(), len(expectedRuns), len(searchResp.Runs))
-	assert.Equal(s.T(), "", searchResp.NextPageToken)
-	assert.Equal(s.T(), expectedRuns, searchResp.Runs)
+	s.Equal(len(expectedRuns), len(searchResp.Runs))
+	s.Equal("", searchResp.NextPageToken)
+	s.Equal(expectedRuns, searchResp.Runs)
 }
 
 func (s *RunFlowTestSuite) deleteRun(namespace string, req *request.DeleteRunRequest) {
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -958,8 +949,7 @@ func (s *RunFlowTestSuite) deleteRun(namespace string, req *request.DeleteRunReq
 }
 
 func (s *RunFlowTestSuite) restoreRun(namespace string, req *request.RestoreRunRequest) {
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -973,8 +963,7 @@ func (s *RunFlowTestSuite) restoreRun(namespace string, req *request.RestoreRunR
 }
 
 func (s *RunFlowTestSuite) logRunMetric(namespace string, req *request.LogMetricRequest) {
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -988,8 +977,7 @@ func (s *RunFlowTestSuite) logRunMetric(namespace string, req *request.LogMetric
 }
 
 func (s *RunFlowTestSuite) logRunParam(namespace string, req *request.LogParamRequest) {
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -1003,8 +991,7 @@ func (s *RunFlowTestSuite) logRunParam(namespace string, req *request.LogParamRe
 }
 
 func (s *RunFlowTestSuite) setRunTag(namespace string, req *request.SetRunTagRequest) {
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -1018,8 +1005,7 @@ func (s *RunFlowTestSuite) setRunTag(namespace string, req *request.SetRunTagReq
 }
 
 func (s *RunFlowTestSuite) deleteRunTag(namespace string, req *request.DeleteRunTagRequest) {
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -1033,8 +1019,7 @@ func (s *RunFlowTestSuite) deleteRunTag(namespace string, req *request.DeleteRun
 }
 
 func (s *RunFlowTestSuite) runLogBatch(namespace string, req *request.LogBatchRequest) {
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(

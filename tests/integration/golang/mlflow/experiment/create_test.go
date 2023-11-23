@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -30,7 +28,7 @@ func TestCreateExperimentTestSuite(t *testing.T) {
 
 func (s *CreateExperimentTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -38,7 +36,7 @@ func (s *CreateExperimentTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	req := request.CreateExperimentRequest{
 		Name:             "ExperimentName",
@@ -55,8 +53,7 @@ func (s *CreateExperimentTestSuite) Test_Ok() {
 		},
 	}
 	resp := response.CreateExperimentResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
@@ -67,12 +64,12 @@ func (s *CreateExperimentTestSuite) Test_Ok() {
 			"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute,
 		),
 	)
-	assert.NotEmpty(s.T(), resp.ID)
+	s.NotEmpty(resp.ID)
 }
 
 func (s *CreateExperimentTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -80,7 +77,7 @@ func (s *CreateExperimentTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	testData := []struct {
 		name    string
@@ -108,8 +105,7 @@ func (s *CreateExperimentTestSuite) Test_Error() {
 	for _, tt := range testData {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -120,7 +116,7 @@ func (s *CreateExperimentTestSuite) Test_Error() {
 					"%s%s", mlflow.ExperimentsRoutePrefix, mlflow.ExperimentsCreateRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

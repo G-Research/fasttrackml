@@ -9,8 +9,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -37,22 +35,22 @@ func (s *DeleteRunTestSuite) SetupTest() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 10)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 }
 
 func (s *DeleteRunTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name             string
@@ -81,11 +79,10 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 				context.Background(),
 				s.runs[0].ExperimentID,
 			)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			var resp fiber.Map
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(http.MethodDelete).WithRequest(
 					tt.request,
 				).WithResponse(
@@ -96,22 +93,22 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 			)
 
 			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
+			s.Require().Nil(err)
+			s.Equal(tt.expectedRunCount, len(runs))
 
 			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
-			assert.Greater(s.T(), originalMaxRowNum, newMaxRowNum)
+			s.Require().Nil(err)
+			s.Equal(originalMinRowNum, newMinRowNum)
+			s.Greater(originalMaxRowNum, newMaxRowNum)
 		})
 	}
 }
 
 func (s *DeleteRunTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name    string
@@ -127,11 +124,10 @@ func (s *DeleteRunTestSuite) Test_Error() {
 			originalMinRowNum, originalMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			var resp api.ErrorResponse
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(http.MethodDelete).WithRequest(
 					tt.request.RunID,
 				).WithResponse(
@@ -140,14 +136,14 @@ func (s *DeleteRunTestSuite) Test_Error() {
 					"/runs/%s", tt.request.RunID,
 				),
 			)
-			assert.Contains(s.T(), resp.Error(), "unable to find run 'some-other-id'")
+			s.Contains(resp.Error(), "unable to find run 'some-other-id'")
 
 			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
-			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
+			s.Require().Nil(err)
+			s.Equal(originalMinRowNum, newMinRowNum)
+			s.Equal(originalMaxRowNum, newMaxRowNum)
 		})
 	}
 }

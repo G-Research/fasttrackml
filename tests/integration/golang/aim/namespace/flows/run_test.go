@@ -10,8 +10,6 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -41,7 +39,7 @@ func TestRunFlowTestSuite(t *testing.T) {
 }
 
 func (s *RunFlowTestSuite) TearDownTest() {
-	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *RunFlowTestSuite) Test_Ok() {
@@ -97,14 +95,14 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment1",
@@ -112,7 +110,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             "id1",
@@ -124,9 +122,9 @@ func (s *RunFlowTestSuite) Test_Ok() {
 				ArtifactURI:    "artifact_uri1",
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
-			require.Nil(
-				s.T(), s.RunFixtures.CreateMetric(
+			s.Require().Nil(err)
+			s.Require().Nil(
+				s.RunFixtures.CreateMetric(
 					context.Background(),
 					&models.Metric{
 						Key:       "key1",
@@ -146,7 +144,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace2.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             "id2",
@@ -158,9 +156,9 @@ func (s *RunFlowTestSuite) Test_Ok() {
 				ArtifactURI:    "artifact_uri2",
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
-			require.Nil(
-				s.T(), s.RunFixtures.CreateMetric(
+			s.Require().Nil(err)
+			s.Require().Nil(
+				s.RunFixtures.CreateMetric(
 					context.Background(),
 					&models.Metric{
 						Key:       "key2",
@@ -323,8 +321,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 	// check that run has been actually deleted.
 	s.deleteRun(namespace1Code, run1.ID)
 	var resp response.Error
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace1Code,
 		).WithResponse(
@@ -333,11 +330,10 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run1.ID,
 		),
 	)
-	assert.Equal(s.T(), "Not Found", resp.Message)
+	s.Equal("Not Found", resp.Message)
 
 	s.deleteRun(namespace2Code, run2.ID)
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace2Code,
 		).WithResponse(
@@ -346,7 +342,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run1.ID,
 		),
 	)
-	assert.Equal(s.T(), "Not Found", resp.Message)
+	s.Equal("Not Found", resp.Message)
 
 	// test `DELETE /runs/delete-batch` endpoint.
 	// recreate deleted runs.
@@ -363,7 +359,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		ArtifactURI:    "artifact_uri3",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.getRunAndCompare(namespace1Code, run3.ID, &response.GetRunInfo{
 		Props: response.GetRunInfoProps{
 			Name:     "TestRun3",
@@ -371,8 +367,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 	})
 	s.deleteRunBatch(namespace1Code, []string{run3.ID})
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace1Code,
 		).WithResponse(
@@ -381,7 +376,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run3.ID,
 		),
 	)
-	assert.Equal(s.T(), "Not Found", resp.Message)
+	s.Equal("Not Found", resp.Message)
 
 	run4, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "id4",
@@ -393,7 +388,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		ArtifactURI:    "artifact_uri4",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.getRunAndCompare(namespace2Code, run4.ID, &response.GetRunInfo{
 		Props: response.GetRunInfoProps{
 			Name:     "TestRun4",
@@ -401,8 +396,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 	})
 	s.deleteRunBatch(namespace2Code, []string{run4.ID})
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace2Code,
 		).WithResponse(
@@ -411,12 +405,11 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run4.ID,
 		),
 	)
-	assert.Equal(s.T(), "Not Found", resp.Message)
+	s.Equal("Not Found", resp.Message)
 }
 
 func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunRequest) {
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodPut,
 		).WithNamespace(
@@ -433,24 +426,22 @@ func (s *RunFlowTestSuite) getRunAndCompare(
 	namespace string, runID string, expectedResponse *response.GetRunInfo,
 ) {
 	var resp response.GetRunInfo
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace,
 		).WithResponse(
 			&resp,
 		).DoRequest("/runs/%s/info", runID),
 	)
-	assert.Equal(s.T(), expectedResponse.Props.Name, resp.Props.Name)
-	assert.Equal(s.T(), expectedResponse.Props.Archived, resp.Props.Archived)
+	s.Equal(expectedResponse.Props.Name, resp.Props.Name)
+	s.Equal(expectedResponse.Props.Archived, resp.Props.Archived)
 }
 
 func (s *RunFlowTestSuite) searchRunsAndCompare(
 	namespace string, request request.SearchRunsRequest, expectedRunList []models.Run,
 ) {
 	resp := new(bytes.Buffer)
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithResponseType(
 			helpers.ResponseTypeBuffer,
 		).WithQuery(
@@ -463,25 +454,21 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 	)
 
 	decodedData, err := encoding.Decode(resp)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	for _, expectedRun := range expectedRunList {
-		assert.Equal(
-			s.T(),
+		s.Equal(
 			expectedRun.Name,
 			decodedData[fmt.Sprintf("%v.props.name", expectedRun.ID)],
 		)
-		assert.Equal(
-			s.T(),
+		s.Equal(
 			fmt.Sprintf("%d", expectedRun.ExperimentID),
 			decodedData[fmt.Sprintf("%v.props.experiment.id", expectedRun.ID)],
 		)
-		assert.Equal(
-			s.T(),
+		s.Equal(
 			expectedRun.Status == models.StatusRunning,
 			decodedData[fmt.Sprintf("%v.props.active", expectedRun.ID)],
 		)
-		assert.Equal(
-			s.T(),
+		s.Equal(
 			expectedRun.LifecycleStage == models.LifecycleStageDeleted,
 			decodedData[fmt.Sprintf("%v.props.archived", expectedRun.ID)],
 		)
@@ -490,8 +477,7 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 
 func (s *RunFlowTestSuite) getActiveRunsAndCompare(namespace string, expectedRunList []models.Run) {
 	resp := new(bytes.Buffer)
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithResponseType(
 			helpers.ResponseTypeBuffer,
 		).WithNamespace(
@@ -502,25 +488,21 @@ func (s *RunFlowTestSuite) getActiveRunsAndCompare(namespace string, expectedRun
 	)
 
 	decodedData, err := encoding.Decode(resp)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	for _, expectedRun := range expectedRunList {
-		assert.Equal(
-			s.T(),
+		s.Equal(
 			expectedRun.Name,
 			decodedData[fmt.Sprintf("%v.props.name", expectedRun.ID)],
 		)
-		assert.Equal(
-			s.T(),
+		s.Equal(
 			fmt.Sprintf("%d", expectedRun.ExperimentID),
 			decodedData[fmt.Sprintf("%v.props.experiment.id", expectedRun.ID)],
 		)
-		assert.Equal(
-			s.T(),
+		s.Equal(
 			expectedRun.Status == models.StatusRunning,
 			decodedData[fmt.Sprintf("%v.props.active", expectedRun.ID)],
 		)
-		assert.Equal(
-			s.T(),
+		s.Equal(
 			expectedRun.LifecycleStage == models.LifecycleStageDeleted,
 			decodedData[fmt.Sprintf("%v.props.archived", expectedRun.ID)],
 		)
@@ -531,8 +513,7 @@ func (s *RunFlowTestSuite) getRunMetricsAndCompare(
 	namespace, runID string, request *request.GetRunMetrics, expectedMetrics response.GetRunMetrics,
 ) {
 	var resp response.GetRunMetrics
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
@@ -545,13 +526,12 @@ func (s *RunFlowTestSuite) getRunMetricsAndCompare(
 			"/runs/%s/metric/get-batch", runID,
 		),
 	)
-	assert.ElementsMatch(s.T(), expectedMetrics, resp)
+	s.ElementsMatch(expectedMetrics, resp)
 }
 
 func (s *RunFlowTestSuite) archiveRunsBatch(namespace string, runIDs []string, archive bool) {
 	resp := map[string]any{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -566,13 +546,12 @@ func (s *RunFlowTestSuite) archiveRunsBatch(namespace string, runIDs []string, a
 			"/runs/archive-batch",
 		),
 	)
-	assert.Equal(s.T(), map[string]interface{}{"status": "OK"}, resp)
+	s.Equal(map[string]interface{}{"status": "OK"}, resp)
 }
 
 func (s *RunFlowTestSuite) deleteRun(namespace, runID string) {
 	var resp fiber.Map
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodDelete,
 		).WithNamespace(
@@ -583,13 +562,12 @@ func (s *RunFlowTestSuite) deleteRun(namespace, runID string) {
 			"/runs/%s", runID,
 		),
 	)
-	assert.Equal(s.T(), fiber.Map{"id": runID, "status": "OK"}, resp)
+	s.Equal(fiber.Map{"id": runID, "status": "OK"}, resp)
 }
 
 func (s *RunFlowTestSuite) deleteRunBatch(namespace string, runIDs []string) {
 	resp := fiber.Map{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -602,5 +580,5 @@ func (s *RunFlowTestSuite) deleteRunBatch(namespace string, runIDs []string) {
 			"/runs/delete-batch",
 		),
 	)
-	assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
+	s.Equal(fiber.Map{"status": "OK"}, resp)
 }

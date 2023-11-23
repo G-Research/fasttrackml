@@ -9,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/datatypes"
 
@@ -51,7 +49,7 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 		NamespaceID:    s.namespaceID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "id",
@@ -94,8 +92,7 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.GetRunInfo
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID),
 			)
 			assert.Equal(s.T(), run.Name, resp.Props.Name)
@@ -105,14 +102,14 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 			assert.Equal(s.T(), 1, len(resp.Traces.Metric))
 			assert.JSONEq(s.T(), metricContext.Json.String(), string(resp.Traces.Metric[0].Context))
 			// TODO this assertion fails because tags are not rendered by endpoint
-			// assert.Equal(s.T(), s.run.Tags[0].Key, resp.Props.Tags[0])
+			// s.Equal( s.run.Tags[0].Key, resp.Props.Tags[0])
 		})
 	}
 }
 
 func (s *GetRunInfoTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name  string
@@ -126,8 +123,8 @@ func (s *GetRunInfoTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.Error
-			require.Nil(s.T(), s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID))
-			assert.Equal(s.T(), "Not Found", resp.Message)
+			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID))
+			s.Equal("Not Found", resp.Message)
 		})
 	}
 }

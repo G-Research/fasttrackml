@@ -11,8 +11,6 @@ import (
 	"gorm.io/datatypes"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -54,7 +52,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		NamespaceID:    s.namespaceID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "id",
@@ -191,8 +189,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.GetRunMetrics
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -203,14 +200,14 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					"/runs/%s/metric/get-batch", tt.runID,
 				),
 			)
-			assert.ElementsMatch(s.T(), tt.expectedResponse, resp)
+			s.ElementsMatch(tt.expectedResponse, resp)
 		})
 	}
 }
 
 func (s *GetRunMetricsTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	tests := []struct {
 		name  string
@@ -226,11 +223,10 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.Error
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/metric/get-batch", tt.runID),
 			)
-			assert.Equal(s.T(), tt.error, resp.Message)
+			s.Equal(tt.error, resp.Message)
 		})
 	}
 }

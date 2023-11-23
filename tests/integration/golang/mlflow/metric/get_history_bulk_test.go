@@ -6,8 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -30,14 +28,14 @@ func TestGetHistoriesBulkTestSuite(t *testing.T) {
 
 func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  1,
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:             "Test Experiment",
@@ -45,7 +43,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "/artifact/location",
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "run1",
@@ -55,7 +53,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 		ExperimentID:   *experiment.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key1",
@@ -66,7 +64,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 		IsNan:     false,
 		Iter:      1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "run2",
@@ -76,7 +74,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 		ExperimentID:   *experiment.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key1",
@@ -87,7 +85,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 		IsNan:     false,
 		Iter:      1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	req := request.GetMetricHistoryBulkRequest{
 		RunIDs:    []string{run1.ID, run2.ID},
@@ -95,8 +93,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 	}
 
 	resp := response.GetMetricHistoryResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithQuery(
 			req,
 		).WithResponse(
@@ -106,7 +103,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 		),
 	)
 
-	assert.Equal(s.T(), response.GetMetricHistoryResponse{
+	s.Equal(response.GetMetricHistoryResponse{
 		Metrics: []response.MetricPartialResponse{
 			{
 				RunID:     run1.ID,
@@ -128,7 +125,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 
 func (s *GetHistoriesBulkTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -136,7 +133,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name    string
@@ -168,8 +165,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
@@ -178,7 +174,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Error() {
 					"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoryBulkRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

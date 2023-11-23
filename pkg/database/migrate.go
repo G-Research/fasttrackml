@@ -227,7 +227,7 @@ func CreateDefaultNamespace(db *gorm.DB) error {
 			var exp int32 = 0
 			ns := Namespace{
 				Code:                "default",
-				Description:         "Default",
+				Description:         "Default namespace",
 				DefaultExperimentID: &exp,
 			}
 			if err := db.Transaction(func(tx *gorm.DB) error {

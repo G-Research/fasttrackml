@@ -11,8 +11,6 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -37,22 +35,22 @@ func TestGetArtifactGSTestSuite(t *testing.T) {
 
 func (s *GetArtifactGSTestSuite) SetupSuite() {
 	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.gsClient = gsClient
 }
 
 func (s *GetArtifactGSTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest()
-	require.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
+	s.Require().Nil(helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *GetArtifactGSTestSuite) TearDownTest() {
-	require.Nil(s.T(), helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
+	s.Require().Nil(helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *GetArtifactGSTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -60,7 +58,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name   string
@@ -85,7 +83,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("gs://%s/1", tt.bucket),
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// create test run
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -97,23 +95,23 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 				ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// upload artifact root object to GS
 			writer := s.gsClient.Bucket(tt.bucket).Object(
 				fmt.Sprintf("/1/%s/artifacts/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("content"))
-			require.Nil(s.T(), err)
-			require.Nil(s.T(), writer.Close())
+			s.Require().Nil(err)
+			s.Require().Nil(writer.Close())
 
 			// upload artifact subdir object to GS
 			writer = s.gsClient.Bucket(tt.bucket).Object(
 				fmt.Sprintf("/1/%s/artifacts/artifact/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("subdir-object-content"))
-			require.Nil(s.T(), err)
-			require.Nil(s.T(), writer.Close())
+			s.Require().Nil(err)
+			s.Require().Nil(writer.Close())
 
 			// make API call for root object
 			query := request.GetArtifactRequest{
@@ -122,7 +120,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			}
 
 			resp := new(bytes.Buffer)
-			require.Nil(s.T(), s.MlflowClient().WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -131,7 +129,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			).DoRequest(
 				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
 			))
-			assert.Equal(s.T(), "content", resp.String())
+			s.Equal("content", resp.String())
 
 			// make API call for subdir object
 			query = request.GetArtifactRequest{
@@ -140,7 +138,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			}
 
 			resp = new(bytes.Buffer)
-			require.Nil(s.T(), s.MlflowClient().WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -149,14 +147,14 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			).DoRequest(
 				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
-			assert.Equal(s.T(), "subdir-object-content", resp.String())
+			s.Equal("subdir-object-content", resp.String())
 		})
 	}
 }
 
 func (s *GetArtifactGSTestSuite) Test_Error() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -164,7 +162,7 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create test experiment
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -173,7 +171,7 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "gs://bucket1/1",
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create test run
 	runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -185,16 +183,16 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 		ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// upload artifact subdir object to GS
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	writer := s.gsClient.Bucket("bucket1").Object(
 		fmt.Sprintf("1/%s/artifacts/artifact/artifact.file", runID),
 	).NewWriter(context.Background())
 	_, err = writer.Write([]byte("content"))
-	require.Nil(s.T(), err)
-	require.Nil(s.T(), writer.Close())
+	s.Require().Nil(err)
+	s.Require().Nil(writer.Close())
 
 	tests := []struct {
 		name    string
@@ -271,14 +269,14 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(s.T(), s.MlflowClient().WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,
 			).DoRequest(
 				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

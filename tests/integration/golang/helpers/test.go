@@ -87,7 +87,7 @@ func (s *BaseTestSuite) SetupTest() {
 	s.TagFixtures = tagFixtures
 
 	contextFixtures, err := fixtures.NewContextFixtures(db)
-	require.Nil(s.T(), err)
+	s.Require().Nil(s.T(), err)
 	s.ContextFixtures = contextFixtures
 
 	// by default, unload everything.

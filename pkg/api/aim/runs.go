@@ -130,12 +130,11 @@ func GetRunInfo(c *fiber.Ctx) error {
 	for i, m := range r.LatestMetrics {
 		metric := fiber.Map{
 			"name":       m.Key,
+			"context":    fiber.Map{},
 			"last_value": 0.1,
 		}
 		if m.Context != nil {
 			metric["context"] = m.Context.Json
-		} else {
-			metric["context"] = fiber.Map{}
 		}
 		metrics[i] = metric
 	}

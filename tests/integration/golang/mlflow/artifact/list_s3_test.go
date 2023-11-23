@@ -163,7 +163,6 @@ func (s *ListArtifactS3TestSuite) Test_Ok() {
 					FileSize: 8,
 				},
 			}, rootDirResp.Files)
-			require.Nil(s.T(), err)
 
 			// 5. make actual API call for sub dir.
 			subDirQuery := request.ListArtifactsRequest{

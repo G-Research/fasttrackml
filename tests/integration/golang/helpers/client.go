@@ -135,6 +135,7 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 	if err != nil {
 		return eris.Wrap(err, "error building url")
 	}
+
 	// 4. if params were provided then add params to actual url.
 	if c.params != nil {
 		switch reflect.ValueOf(c.params).Kind() {

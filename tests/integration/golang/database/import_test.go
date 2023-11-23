@@ -163,8 +163,8 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 }
 
 func (s *ImportTestSuite) TearDownTest() {
-	s.Require().Nil(s.inputRunFixtures.UnloadFixtures())
-	s.Require().Nil(s.outputRunFixtures.UnloadFixtures())
+	s.Require().Nil(s.inputRunFixtures.TruncateTables())
+	s.Require().Nil(s.outputRunFixtures.TruncateTables())
 }
 
 func (s *ImportTestSuite) Test_Ok() {

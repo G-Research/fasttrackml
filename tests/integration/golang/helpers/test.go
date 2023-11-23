@@ -100,7 +100,7 @@ func (s *BaseTestSuite) SetupSuite() {
 }
 
 func (s *BaseTestSuite) setup() {
-	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	s.Require().Nil(s.NamespaceFixtures.TruncateTables())
 
 	if !s.SkipCreateDefaultNamespace {
 		var err error
@@ -152,7 +152,7 @@ func (s *BaseTestSuite) AddTearDownHook(hook func()) {
 }
 
 func (s *BaseTestSuite) tearDown() {
-	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	s.Require().Nil(s.NamespaceFixtures.TruncateTables())
 }
 
 func (s *BaseTestSuite) runTearDownHooks() {

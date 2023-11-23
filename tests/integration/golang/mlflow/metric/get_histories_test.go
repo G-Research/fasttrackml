@@ -40,10 +40,9 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:             "Test Experiment",
-		NamespaceID:      namespace.ID,
-		LifecycleStage:   models.LifecycleStageActive,
-		ArtifactLocation: "/artifact/location",
+		Name:           "Test Experiment",
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
 

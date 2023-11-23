@@ -4,14 +4,12 @@ package artifact
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
@@ -64,22 +62,8 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 			// 1. create test experiment.
 			experimentArtifactDir := s.T().TempDir()
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name: fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
-				Tags: []models.ExperimentTag{
-					{
-						Key:   "key1",
-						Value: "value1",
-					},
-				},
-				NamespaceID: namespace.ID,
-				CreationTime: sql.NullInt64{
-					Int64: time.Now().UTC().UnixMilli(),
-					Valid: true,
-				},
-				LastUpdateTime: sql.NullInt64{
-					Int64: time.Now().UTC().UnixMilli(),
-					Valid: true,
-				},
+				Name:             fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
+				NamespaceID:      namespace.ID,
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("%s%s", tt.prefix, experimentArtifactDir),
 			})

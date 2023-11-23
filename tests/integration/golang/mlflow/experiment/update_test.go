@@ -4,11 +4,9 @@ package experiment
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -41,18 +39,9 @@ func (s *UpdateExperimentTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:        "Test Experiment",
-		NamespaceID: namespace.ID,
-		CreationTime: sql.NullInt64{
-			Int64: time.Now().UTC().UnixMilli(),
-			Valid: true,
-		},
-		LastUpdateTime: sql.NullInt64{
-			Int64: time.Now().UTC().UnixMilli(),
-			Valid: true,
-		},
-		LifecycleStage:   models.LifecycleStageActive,
-		ArtifactLocation: "/artifact/location",
+		Name:           "Test Experiment",
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
 

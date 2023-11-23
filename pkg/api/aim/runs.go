@@ -13,7 +13,9 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -131,7 +133,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 			"last_value": 0.1,
 		}
 		if m.Context != nil {
-			metric["context"] = json.RawMessage(m.Context.Json)
+			metric["context"] = m.Context.Json
 		} else {
 			metric["context"] = fiber.Map{}
 		}
@@ -212,7 +214,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		name    string
 		iters   []int
 		values  []*float64
-		context []byte
+		context datatypes.JSON
 	}, len(metricKeys))
 	for _, m := range r.Metrics {
 		v := m.Value
@@ -243,7 +245,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 			"name":    m.name,
 			"iters":   m.iters,
 			"values":  m.values,
-			"context": json.RawMessage(m.context),
+			"context": m.context,
 		}
 		resp = append(resp, data)
 	}
@@ -321,10 +323,16 @@ func GetRunsActive(c *fiber.Ctx) error {
 							"last_step":  m.LastIter,
 							"last":       v,
 							"version":    2,
+							"context":    fiber.Map{},
 						},
 					}
 					if m.Context != nil {
-						data["context"] = json.RawMessage(m.Context.Json)
+						// to be properly decoded by AIM UI, json should be represented as a key:value object.
+						context := fiber.Map{}
+						if err := json.Unmarshal(m.Context.Json, &context); err != nil {
+							return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+						}
+						data["context"] = context
 					}
 					metrics[i] = data
 				}

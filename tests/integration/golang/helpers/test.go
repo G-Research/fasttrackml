@@ -38,6 +38,56 @@ type BaseTestSuite struct {
 	tearDownHooks               []func()
 }
 
+func (s *BaseTestSuite) runSetupHooks() {
+	for _, hook := range s.setupHooks {
+		hook()
+	}
+}
+
+func (s *BaseTestSuite) runTearDownHooks() {
+	for _, hook := range s.tearDownHooks {
+		hook()
+	}
+}
+
+func (s *BaseTestSuite) setup() {
+	s.Require().Nil(s.NamespaceFixtures.TruncateTables())
+
+	if !s.SkipCreateDefaultNamespace {
+		var err error
+		s.DefaultNamespace, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+			Code:                "default",
+			DefaultExperimentID: common.GetPointer(int32(0)),
+		})
+		s.Require().Nil(err)
+
+		if !s.SkipCreateDefaultExperiment {
+			s.DefaultExperiment, err = s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+				Name:           "Default",
+				LifecycleStage: models.LifecycleStageActive,
+				NamespaceID:    s.DefaultNamespace.ID,
+			})
+			s.Require().Nil(err)
+
+			s.DefaultNamespace.DefaultExperimentID = s.DefaultExperiment.ID
+			_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), s.DefaultNamespace)
+			s.Require().Nil(err)
+		}
+	}
+}
+
+func (s *BaseTestSuite) tearDown() {
+	s.Require().Nil(s.NamespaceFixtures.TruncateTables())
+}
+
+func (s *BaseTestSuite) AddSetupHook(hook func()) {
+	s.setupHooks = append(s.setupHooks, hook)
+}
+
+func (s *BaseTestSuite) AddTearDownHook(hook func()) {
+	s.tearDownHooks = append([]func(){hook}, s.tearDownHooks...)
+}
+
 func (s *BaseTestSuite) SetupSuite() {
 	if db == nil {
 		instance, err := database.NewDBProvider(
@@ -99,42 +149,6 @@ func (s *BaseTestSuite) SetupSuite() {
 	s.AddTearDownHook(s.tearDown)
 }
 
-func (s *BaseTestSuite) setup() {
-	s.Require().Nil(s.NamespaceFixtures.TruncateTables())
-
-	if !s.SkipCreateDefaultNamespace {
-		var err error
-		s.DefaultNamespace, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-			Code:                "default",
-			DefaultExperimentID: common.GetPointer(int32(0)),
-		})
-		s.Require().Nil(err)
-
-		if !s.SkipCreateDefaultExperiment {
-			s.DefaultExperiment, err = s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:           "Default",
-				LifecycleStage: models.LifecycleStageActive,
-				NamespaceID:    s.DefaultNamespace.ID,
-			})
-			s.Require().Nil(err)
-
-			s.DefaultNamespace.DefaultExperimentID = s.DefaultExperiment.ID
-			_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), s.DefaultNamespace)
-			s.Require().Nil(err)
-		}
-	}
-}
-
-func (s *BaseTestSuite) AddSetupHook(hook func()) {
-	s.setupHooks = append(s.setupHooks, hook)
-}
-
-func (s *BaseTestSuite) runSetupHooks() {
-	for _, hook := range s.setupHooks {
-		hook()
-	}
-}
-
 func (s *BaseTestSuite) SetupTest() {
 	if !s.ResetOnSubTest {
 		s.runSetupHooks()
@@ -144,20 +158,6 @@ func (s *BaseTestSuite) SetupTest() {
 func (s *BaseTestSuite) SetupSubTest() {
 	if s.ResetOnSubTest {
 		s.runSetupHooks()
-	}
-}
-
-func (s *BaseTestSuite) AddTearDownHook(hook func()) {
-	s.tearDownHooks = append([]func(){hook}, s.tearDownHooks...)
-}
-
-func (s *BaseTestSuite) tearDown() {
-	s.Require().Nil(s.NamespaceFixtures.TruncateTables())
-}
-
-func (s *BaseTestSuite) runTearDownHooks() {
-	for _, hook := range s.tearDownHooks {
-		hook()
 	}
 }
 

@@ -128,7 +128,6 @@ func (s *DeleteRunTestSuite) Test_Error() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute,
 				),
 			)
-			s.Require().Nil(err)
 			s.Equal(api.NewResourceDoesNotExistError("unable to find run 'not-an-id'").Error(), resp.Error())
 		})
 	}

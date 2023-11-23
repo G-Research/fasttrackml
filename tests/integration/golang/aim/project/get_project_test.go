@@ -37,7 +37,7 @@ func (s *GetProjectTestSuite) Test_Ok() {
 	var resp response.GetProjectResponse
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/projects"))
 	s.Equal("FastTrackML", resp.Name)
-	// s.Equal( "", resp.Path)
+	s.NotEmpty(resp.Path)
 	s.Equal("", resp.Description)
 	s.Equal(0, resp.TelemetryEnabled)
 }

@@ -69,7 +69,7 @@ func (s *DeleteRunTagTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	// create few tags,.
+	// create few tags.
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "tag1",
 		Value: "value1",

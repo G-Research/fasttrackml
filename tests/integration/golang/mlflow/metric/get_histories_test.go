@@ -188,7 +188,6 @@ func (s *GetHistoriesTestSuite) Test_Error() {
 					"%s%s", mlflow.MetricsRoutePrefix, mlflow.MetricsGetHistoriesRoute,
 				),
 			)
-			s.Require().Nil(err)
 			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}

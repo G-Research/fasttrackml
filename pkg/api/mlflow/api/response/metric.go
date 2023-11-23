@@ -32,15 +32,19 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 
 	for n, m := range metrics {
 		var context map[string]interface{}
-		if err := json.Unmarshal(m.Context.Json, &context); err != nil {
-			return nil, eris.Wrap(err, "error unmarshaling context")
-		}
 		resp.Metrics[n] = MetricPartialResponse{
 			Key:       m.Key,
 			Step:      m.Step,
 			Value:     m.Value,
 			Timestamp: m.Timestamp,
-			Context:   context,
+		}
+		if m.Context != nil {
+			if err := json.Unmarshal(m.Context.Json, &context); err != nil {
+				return nil, eris.Wrap(err, "error unmarshaling context")
+			}
+			resp.Metrics[n].Context = context
+		} else {
+			resp.Metrics[n].Context = nil
 		}
 		if m.IsNan {
 			resp.Metrics[n].Value = common.NANValue

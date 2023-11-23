@@ -24,15 +24,6 @@ func TestUpdateNamespaceTestSuite(t *testing.T) {
 }
 
 func (s *UpdateNamespaceTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
 	ns, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
 		Code:                "test2",
@@ -61,16 +52,7 @@ func (s *UpdateNamespaceTestSuite) Test_Ok() {
 }
 
 func (s *UpdateNamespaceTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-	_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
 		Code:                "test2",
 		Description:         "test namespace 2 description",

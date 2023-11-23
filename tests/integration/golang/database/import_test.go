@@ -162,12 +162,12 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 	s.Require().Nil(err)
 }
 
-func (s *ImportTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.inputRunFixtures.UnloadFixtures())
-		s.Require().Nil(s.outputRunFixtures.UnloadFixtures())
-	}()
+func (s *ImportTestSuite) TearDownTest() {
+	s.Require().Nil(s.inputRunFixtures.UnloadFixtures())
+	s.Require().Nil(s.outputRunFixtures.UnloadFixtures())
+}
 
+func (s *ImportTestSuite) Test_Ok() {
 	// source DB should have expected
 	s.validateRowCounts(s.inputDB, s.populatedRowCounts)
 

@@ -28,11 +28,12 @@ type MetricFlowTestSuite struct {
 // - `GET /runs/search/metric`
 // - `GET /runs/search/metric/align`
 func TestMetricTestSuite(t *testing.T) {
-	suite.Run(t, new(MetricFlowTestSuite))
-}
-
-func (s *MetricFlowTestSuite) TearDownTest() {
-	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	suite.Run(t, &MetricFlowTestSuite{
+		helpers.BaseTestSuite{
+			ResetOnSubTest:             true,
+			SkipCreateDefaultNamespace: true,
+		},
+	})
 }
 
 func (s *MetricFlowTestSuite) Test_Ok() {
@@ -88,8 +89,6 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)

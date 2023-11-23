@@ -12,7 +12,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -22,21 +21,15 @@ type SearchExperimentsTestSuite struct {
 }
 
 func TestSearchExperimentsTestSuite(t *testing.T) {
-	suite.Run(t, new(SearchExperimentsTestSuite))
+	suite.Run(t, &SearchExperimentsTestSuite{
+		helpers.BaseTestSuite{
+			SkipCreateDefaultExperiment: true,
+		},
+	})
 }
 
 func (s *SearchExperimentsTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
 	// 1. prepare database with test data.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	experiments := []models.Experiment{
 		{
 			Name:           "Test Experiment 1",
@@ -66,7 +59,7 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 	for _, ex := range experiments {
 		_, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 			Name:           ex.Name,
-			NamespaceID:    namespace.ID,
+			NamespaceID:    s.DefaultNamespace.ID,
 			LifecycleStage: ex.LifecycleStage,
 		})
 		s.Require().Nil(err)
@@ -143,17 +136,6 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 }
 
 func (s *SearchExperimentsTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse

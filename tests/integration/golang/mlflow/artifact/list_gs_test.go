@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
@@ -16,50 +15,21 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type ListArtifactGSTestSuite struct {
-	helpers.BaseTestSuite
-	gsClient    *storage.Client
-	testBuckets []string
+	helpers.GSTestSuite
 }
 
 func TestListArtifactGSTestSuite(t *testing.T) {
 	suite.Run(t, &ListArtifactGSTestSuite{
-		testBuckets: []string{"bucket1", "bucket2"},
+		helpers.NewGSTestSuite("bucket1", "bucket2"),
 	})
-}
-
-func (s *ListArtifactGSTestSuite) SetupSuite() {
-	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
-	s.Require().Nil(err)
-	s.gsClient = gsClient
-}
-
-func (s *ListArtifactGSTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest()
-	s.Require().Nil(helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
-}
-
-func (s *ListArtifactGSTestSuite) TearDownTest() {
-	s.Require().Nil(helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *ListArtifactGSTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	tests := []struct {
 		name   string
 		bucket string
@@ -79,7 +49,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			// 1. create test experiment.
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
-				NamespaceID:      namespace.ID,
+				NamespaceID:      s.DefaultNamespace.ID,
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("gs://%s/1", tt.bucket),
 			})
@@ -98,7 +68,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			s.Require().Nil(err)
 
 			// 3. upload artifact objects to GS.
-			writer := s.gsClient.Bucket(
+			writer := s.Client.Bucket(
 				tt.bucket,
 			).Object(
 				fmt.Sprintf("1/%s/artifacts/artifact.txt", runID),
@@ -109,7 +79,7 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 			s.Require().Nil(err)
 			s.Require().Nil(writer.Close())
 
-			writer = s.gsClient.Bucket(
+			writer = s.Client.Bucket(
 				tt.bucket,
 			).Object(
 				fmt.Sprintf("1/%s/artifacts/artifact/artifact.txt", runID),
@@ -204,17 +174,6 @@ func (s *ListArtifactGSTestSuite) Test_Ok() {
 }
 
 func (s *ListArtifactGSTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse

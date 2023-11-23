@@ -23,21 +23,14 @@ type GetExperimentTestSuite struct {
 }
 
 func TestGetExperimentTestSuite(t *testing.T) {
-	suite.Run(t, new(GetExperimentTestSuite))
+	suite.Run(t, &GetExperimentTestSuite{
+		helpers.BaseTestSuite{
+			SkipCreateDefaultExperiment: true,
+		},
+	})
 }
 
 func (s *GetExperimentTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
@@ -50,7 +43,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
 		},
-		NamespaceID:    namespace.ID,
+		NamespaceID:    s.DefaultNamespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
@@ -66,17 +59,6 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 }
 
 func (s *GetExperimentTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	tests := []struct {
 		name  string
 		error string

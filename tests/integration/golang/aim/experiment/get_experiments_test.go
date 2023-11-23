@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -22,26 +21,19 @@ type GetExperimentsTestSuite struct {
 }
 
 func TestGetExperimentsTestSuite(t *testing.T) {
-	suite.Run(t, new(GetExperimentsTestSuite))
+	suite.Run(t, &GetExperimentsTestSuite{
+		helpers.BaseTestSuite{
+			SkipCreateDefaultExperiment: true,
+		},
+	})
 }
 
 func (s *GetExperimentsTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	experiments := map[string]*models.Experiment{}
 	for i := 0; i < 5; i++ {
 		experiment := &models.Experiment{
 			Name:        fmt.Sprintf("Test Experiment %d", i),
-			NamespaceID: namespace.ID,
+			NamespaceID: s.DefaultNamespace.ID,
 			CreationTime: sql.NullInt64{
 				Int64: time.Now().UTC().UnixMilli(),
 				Valid: true,

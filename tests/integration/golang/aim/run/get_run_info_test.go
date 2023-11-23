@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -28,28 +27,12 @@ func TestGetRunInfoTestSuite(t *testing.T) {
 func (s *GetRunInfoTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest()
 
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	s.Require().Nil(err)
-
-	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), experiment)
+	var err error
+	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), s.DefaultExperiment)
 	s.Require().Nil(err)
 }
 
 func (s *GetRunInfoTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name  string
 		runID string
@@ -79,9 +62,6 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 }
 
 func (s *GetRunInfoTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name  string
 		runID string

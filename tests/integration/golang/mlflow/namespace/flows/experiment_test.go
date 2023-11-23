@@ -35,11 +35,12 @@ type ExperimentFlowTestSuite struct {
 // - `GET /experiments/get-by-name`
 // - `POST /experiments/set-experiment-tag`
 func TestExperimentFlowTestSuite(t *testing.T) {
-	suite.Run(t, new(ExperimentFlowTestSuite))
-}
-
-func (s *ExperimentFlowTestSuite) TearDownTest() {
-	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	suite.Run(t, &ExperimentFlowTestSuite{
+		helpers.BaseTestSuite{
+			ResetOnSubTest:             true,
+			SkipCreateDefaultNamespace: true,
+		},
+	})
 }
 
 func (s *ExperimentFlowTestSuite) Test_Ok() {
@@ -95,11 +96,8 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 
 	// delete everything before the test, because when service starts under the hood we create
 	// default namespace and experiment, so it could lead to the problems with actual tests.
-	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)

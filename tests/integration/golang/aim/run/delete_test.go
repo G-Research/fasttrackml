@@ -8,12 +8,10 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -30,28 +28,12 @@ func TestDeleteRunTestSuite(t *testing.T) {
 func (s *DeleteRunTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest()
 
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	s.Require().Nil(err)
-
-	s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 10)
+	var err error
+	s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), s.DefaultExperiment, 10)
 	s.Require().Nil(err)
 }
 
 func (s *DeleteRunTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name             string
 		request          request.DeleteRunRequest
@@ -107,9 +89,6 @@ func (s *DeleteRunTestSuite) Test_Ok() {
 }
 
 func (s *DeleteRunTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name    string
 		request request.DeleteRunRequest

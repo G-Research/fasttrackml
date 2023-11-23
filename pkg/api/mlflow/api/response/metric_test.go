@@ -66,6 +66,38 @@ func TestNewMetricHistoryResponse_Ok(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "WithContext",
+			metrics: []models.Metric{
+				{
+					Key:       "key",
+					Value:     123.4,
+					Timestamp: 1234567890,
+					RunID:     "run_id",
+					Step:      1,
+					IsNan:     false,
+					Iter:      1,
+					ContextID: common.GetPointer(uint(1)),
+					Context: &models.Context{
+						ID:   1,
+						Json: []byte(`{"key": "value"}`),
+					},
+				},
+			},
+			expectedResponse: &GetMetricHistoryResponse{
+				Metrics: []MetricPartialResponse{
+					{
+						Key:       "key",
+						Timestamp: 1234567890,
+						Step:      1,
+						Value:     123.4,
+						Context: map[string]interface{}{
+							"key": "value",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range testData {

@@ -252,7 +252,7 @@ func (r MetricRepository) GetMetricHistoryByRunIDAndKey(
 	ctx context.Context, runID, key string,
 ) ([]models.Metric, error) {
 	var metrics []models.Metric
-	if err := r.db.WithContext(ctx).Where(
+	if err := r.db.WithContext(ctx).Preload("Context").Where(
 		"run_uuid = ?", runID,
 	).Where(
 		"key = ?", key,

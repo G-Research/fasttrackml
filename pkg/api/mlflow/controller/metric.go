@@ -37,7 +37,10 @@ func (c Controller) GetMetricHistory(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	resp := response.NewMetricHistoryResponse(metrics)
+	resp, err := response.NewMetricHistoryResponse(metrics)
+	if err != nil {
+		return err
+	}
 	log.Debugf("getMetricHistory response: %#v", resp)
 
 	return ctx.JSON(resp)

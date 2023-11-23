@@ -37,13 +37,13 @@ func (s *GetRunMetricsTestSuite) SetupTest() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.namespaceID = namespace.ID
 }
 
 func (s *GetRunMetricsTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create test data
@@ -64,13 +64,13 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		ExperimentID:   *experiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create context and attach it to own metric.
 	metricContext, err := s.ContextFixtures.CreateContext(context.Background(), &models.Context{
 		Json: datatypes.JSON(`{"key1": "key1", "value1": "value1"}`),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key1",
@@ -82,13 +82,13 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		Iter:      1,
 		ContextID: common.GetPointer(metricContext.ID),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create context and attach it to own metric.
 	metricContext, err = s.ContextFixtures.CreateContext(context.Background(), &models.Context{
 		Json: datatypes.JSON(`{"key2": "key2", "value2": "value2"}`),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key1",
@@ -100,13 +100,13 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		Iter:      2,
 		ContextID: common.GetPointer(metricContext.ID),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create context and attach it to own metric.
 	metricContext, err = s.ContextFixtures.CreateContext(context.Background(), &models.Context{
 		Json: datatypes.JSON(`{"key3": "key3", "value3": "value3"}`),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key2",
@@ -118,13 +118,13 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		Iter:      3,
 		ContextID: common.GetPointer(metricContext.ID),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create context and attach it to own metric.
 	metricContext, err = s.ContextFixtures.CreateContext(context.Background(), &models.Context{
 		Json: datatypes.JSON(`{"key4": "key4", "value4": "value4"}`),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key2",
@@ -136,7 +136,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		Iter:      4,
 		ContextID: common.GetPointer(metricContext.ID),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// runs tests over test data.
 	tests := []struct {

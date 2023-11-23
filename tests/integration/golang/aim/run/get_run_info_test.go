@@ -34,13 +34,13 @@ func (s *GetRunInfoTestSuite) SetupTest() {
 		Code:                "default",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.namespaceID = namespace.ID
 }
 
 func (s *GetRunInfoTestSuite) Test_Ok() {
 	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	}()
 
 	// create test data.
@@ -61,12 +61,12 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 		ExperimentID:   *experiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	metricContext, err := s.ContextFixtures.CreateContext(context.Background(), &models.Context{
 		Json: datatypes.JSON(`{"key": "key", "value": "value"}`),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "key",
@@ -77,7 +77,7 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 		RunID:     run.ID,
 		ContextID: common.GetPointer(metricContext.ID),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// run tests over the test data.
 	tests := []struct {
@@ -95,12 +95,12 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 			s.Require().Nil(
 				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID),
 			)
-			assert.Equal(s.T(), run.Name, resp.Props.Name)
-			assert.Equal(s.T(), fmt.Sprintf("%v", run.ExperimentID), resp.Props.Experiment.ID)
-			assert.Equal(s.T(), float64(run.StartTime.Int64)/1000, resp.Props.CreationTime)
-			assert.Equal(s.T(), float64(run.EndTime.Int64)/1000, resp.Props.EndTime)
-			assert.Equal(s.T(), 1, len(resp.Traces.Metric))
-			assert.JSONEq(s.T(), metricContext.Json.String(), string(resp.Traces.Metric[0].Context))
+			s.Require().Equal(run.Name, resp.Props.Name)
+			s.Require().Equal(fmt.Sprintf("%v", run.ExperimentID), resp.Props.Experiment.ID)
+			s.Require().Equal(float64(run.StartTime.Int64)/1000, resp.Props.CreationTime)
+			s.Require().Equal(float64(run.EndTime.Int64)/1000, resp.Props.EndTime)
+			s.Require().Equal(1, len(resp.Traces.Metric))
+			s.Require().JSONEq(metricContext.Json.String(), string(resp.Traces.Metric[0].Context))
 			// TODO this assertion fails because tags are not rendered by endpoint
 			// s.Equal( s.run.Tags[0].Key, resp.Props.Tags[0])
 		})

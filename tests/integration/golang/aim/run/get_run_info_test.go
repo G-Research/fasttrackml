@@ -69,8 +69,11 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 			s.Equal(fmt.Sprintf("%v", s.run.ExperimentID), resp.Props.Experiment.ID)
 			s.Equal(float64(s.run.StartTime.Int64)/1000, resp.Props.CreationTime)
 			s.Equal(float64(s.run.EndTime.Int64)/1000, resp.Props.EndTime)
-			// TODO this assertion fails because tags are not rendered by endpoint
-			// s.Equal( s.run.Tags[0].Key, resp.Props.Tags[0])
+			expectedTags := make(map[string]string, len(s.run.Tags))
+			for _, tag := range s.run.Tags {
+				expectedTags[tag.Key] = tag.Value
+			}
+			s.Equal(expectedTags, resp.Params.Tags)
 		})
 	}
 }

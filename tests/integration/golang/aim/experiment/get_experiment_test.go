@@ -56,9 +56,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	var resp response.GetExperiment
-
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
-
 	s.Equal(fmt.Sprintf("%d", *experiment.ID), resp.ID)
 	s.Equal(experiment.Name, resp.Name)
 	s.Equal(helpers.GetDescriptionFromExperiment(*experiment), resp.Description)

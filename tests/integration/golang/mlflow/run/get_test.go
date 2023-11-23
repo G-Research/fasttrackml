@@ -184,7 +184,6 @@ func (s *GetRunTestSuite) Test_Error() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 				),
 			)
-			s.Require().Nil(err)
 			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}

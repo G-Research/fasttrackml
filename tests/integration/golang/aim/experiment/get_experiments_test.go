@@ -55,7 +55,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 
 	var resp response.Experiments
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/"))
-	s.Equal(len(experiments), len(resp))
+	s.Require().Equal(len(experiments), len(resp))
 	for _, actualExperiment := range resp {
 		expectedExperiment := experiments[actualExperiment.ID]
 		s.Equal(fmt.Sprintf("%d", *expectedExperiment.ID), actualExperiment.ID)
@@ -64,6 +64,5 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 		s.Equal(expectedExperiment.LifecycleStage == models.LifecycleStageDeleted, actualExperiment.Archived)
 		s.Equal(len(expectedExperiment.Runs), actualExperiment.RunCount)
 		s.Equal(helpers.GetDescriptionFromExperiment(*expectedExperiment), actualExperiment.Description)
-
 	}
 }

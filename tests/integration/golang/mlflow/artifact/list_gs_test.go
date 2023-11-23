@@ -279,7 +279,6 @@ func (s *ListArtifactGSTestSuite) Test_Error() {
 					"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 				),
 			)
-			s.Require().Nil(err)
 			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}

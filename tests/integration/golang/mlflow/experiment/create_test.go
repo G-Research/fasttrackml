@@ -90,7 +90,7 @@ func (s *CreateExperimentTestSuite) Test_Error() {
 			request: &request.CreateExperimentRequest{},
 		},
 		{
-			name: "EmptyArtifactLocationProperty",
+			name: "IncorrectArtifactLocationProperty",
 			error: api.NewInvalidParameterValueError(
 				`Invalid value for parameter 'artifact_location': error parsing artifact location: parse ` +
 					`"incorrect-protocol,:/incorrect-location": first path segment in URL cannot contain colon`,

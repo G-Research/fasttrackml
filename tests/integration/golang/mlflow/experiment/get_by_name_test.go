@@ -83,13 +83,13 @@ func (s *GetExperimentByNameTestSuite) Test_Ok() {
 	s.Equal(experiment.Name, resp.Experiment.Name)
 	s.Equal(string(experiment.LifecycleStage), resp.Experiment.LifecycleStage)
 	s.Equal(experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
-	s.Equal([]models.ExperimentTag{
-		{
-			Key:          "key1",
-			Value:        "value1",
-			ExperimentID: *experiment.ID,
-		},
-	}, experiment.Tags)
+	s.Equal(experiment.CreationTime.Int64, resp.Experiment.CreationTime)
+	s.Equal(experiment.LastUpdateTime.Int64, resp.Experiment.LastUpdateTime)
+	s.Require().Equal(len(experiment.Tags), len(resp.Experiment.Tags))
+	for i, tag := range experiment.Tags {
+		s.Equal(tag.Key, resp.Experiment.Tags[i].Key)
+		s.Equal(tag.Value, resp.Experiment.Tags[i].Value)
+	}
 }
 
 func (s *GetExperimentByNameTestSuite) Test_Error() {

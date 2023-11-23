@@ -867,6 +867,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 					values = make([]float64, 0, q.Steps)
 					iters = make([]float64, 0, q.Steps)
 					epochs = make([]float64, 0, q.Steps)
+					context = fiber.Map{}
 					timestamps = make([]float64, 0, q.Steps)
 					if xAxis {
 						xAxisValues = make([]float64, 0, q.Steps)
@@ -932,9 +933,9 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		Runs    []struct {
 			ID     string `json:"run_id"`
 			Traces []struct {
-				Context fiber.Map `json:"context"`
 				Name    string    `json:"name"`
 				Slice   [3]int    `json:"slice"`
+				Context fiber.Map `json:"context"`
 			} `json:"traces"`
 		} `json:"runs"`
 	}{}
@@ -969,12 +970,13 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	values = append(values, ns.ID, b.AlignBy)
 	rows, err := database.DB.Raw(
 		fmt.Sprintf("WITH params(run_uuid, key, steps) AS (VALUES %s)", &valuesStmt)+
-			"        SELECT m.run_uuid, rm.key, m.iter, m.value, m.is_nan FROM metrics AS m"+
+			"        SELECT m.run_uuid, rm.key, m.iter, m.value, m.is_nan, c.json AS metric_context FROM metrics AS m"+
 			"        RIGHT JOIN ("+
 			"          SELECT p.run_uuid, p.key, lm.last_iter AS max, (lm.last_iter + 1) / p.steps AS interval"+
 			"          FROM params AS p"+
 			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key)"+
 			"        ) rm USING(run_uuid)"+
+			"		 LEFT JOIN contexts AS c ON c.id = m.context_id"+
 			"		 INNER JOIN runs AS r ON m.run_uuid = r.run_uuid"+
 			"		 INNER JOIN experiments AS e ON r.experiment_id = e.experiment_id AND e.namespace_id = ?"+
 			"        WHERE m.key = ?"+
@@ -999,6 +1001,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		if err := func() error {
 			var id string
 			var key string
+			var context fiber.Map
 			metrics := make([]fiber.Map, 0)
 			values := make([]float64, 0, capacity)
 			iters := make([]float64, 0, capacity)
@@ -1007,7 +1010,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 				if key != "" {
 					metric := fiber.Map{
 						"name":          key,
-						"context":       fiber.Map{},
+						"context":       context,
 						"x_axis_values": toNumpy(values),
 						"x_axis_iters":  toNumpy(iters),
 					}
@@ -1028,7 +1031,10 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			}
 
 			for rows.Next() {
-				var metric database.Metric
+				var metric struct {
+					database.Metric
+					Context datatypes.JSON `gorm:"column:metric_context"`
+				}
 				if err := database.DB.ScanRows(rows, &metric); err != nil {
 					return err
 				}
@@ -1041,7 +1047,6 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 						if err := flushMetrics(); err != nil {
 							return err
 						}
-
 						metrics = metrics[:0]
 						id = metric.RunID
 					}
@@ -1057,6 +1062,12 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 				}
 				values = append(values, v)
 				iters = append(iters, float64(metric.Iter))
+				if metric.Context != nil {
+					// to be properly decoded by AIM UI, json should be represented as a key:value object.
+					if err := json.Unmarshal(metric.Context, &context); err != nil {
+						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+					}
+				}
 			}
 
 			addMetrics()

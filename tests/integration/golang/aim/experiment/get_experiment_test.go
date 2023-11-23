@@ -42,7 +42,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
-				Key:   "key1",
+				Key:   common.DescriptionTagKey,
 				Value: "value1",
 			},
 		},
@@ -61,11 +61,12 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	var resp response.GetExperiment
+
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
 
 	s.Equal(fmt.Sprintf("%d", *experiment.ID), resp.ID)
 	s.Equal(experiment.Name, resp.Name)
-	s.Equal("", resp.Description)
+	s.Equal(helpers.GetDescriptionFromExperiment(*experiment), resp.Description)
 	s.Equal(float64(experiment.CreationTime.Int64)/1000, resp.CreationTime)
 	s.Equal(false, resp.Archived)
 	s.Equal(len(experiment.Runs), resp.RunCount)

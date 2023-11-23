@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -27,7 +28,8 @@ func GetExperiments(c *fiber.Ctx) error {
 
 	var experiments []struct {
 		database.Experiment
-		RunCount int
+		RunCount    int
+		Description string `gorm:"column:description"`
 	}
 	if tx := database.DB.Model(&database.Experiment{}).
 		Select(
@@ -36,10 +38,13 @@ func GetExperiments(c *fiber.Ctx) error {
 			"experiments.lifecycle_stage",
 			"experiments.creation_time",
 			"COUNT(runs.run_uuid) AS run_count",
+			"COALESCE(MAX(experiment_tags.value), '') AS description",
 		).
 		Where("experiments.namespace_id = ?", ns.ID).
 		Where("experiments.lifecycle_stage = ?", database.LifecycleStageActive).
 		Joins("LEFT JOIN runs USING(experiment_id)").
+		Joins("LEFT JOIN experiment_tags ON experiments.experiment_id = experiment_tags.experiment_id AND"+
+			" experiment_tags.key = ?", common.DescriptionTagKey).
 		Group("experiments.experiment_id").
 		Find(&experiments); tx.Error != nil {
 		return fmt.Errorf("error fetching experiments: %w", tx.Error)
@@ -50,7 +55,7 @@ func GetExperiments(c *fiber.Ctx) error {
 		resp[i] = fiber.Map{
 			"id":            strconv.Itoa(int(*e.ID)),
 			"name":          e.Name,
-			"description":   nil,
+			"description":   e.Description,
 			"archived":      e.LifecycleStage == database.LifecycleStageDeleted,
 			"run_count":     e.RunCount,
 			"creation_time": float64(e.CreationTime.Int64) / 1000,
@@ -92,7 +97,8 @@ func GetExperiment(c *fiber.Ctx) error {
 
 	var exp struct {
 		database.Experiment
-		RunCount int
+		RunCount    int
+		Description string `gorm:"column:description"`
 	}
 	if err := database.DB.Model(&database.Experiment{}).
 		Select(
@@ -101,22 +107,24 @@ func GetExperiment(c *fiber.Ctx) error {
 			"experiments.lifecycle_stage",
 			"experiments.creation_time",
 			"COUNT(runs.run_uuid) AS run_count",
+			"COALESCE(MAX(experiment_tags.value), '') AS description",
 		).
 		Joins("LEFT JOIN runs USING(experiment_id)").
-		Group("experiments.experiment_id").
+		Joins("LEFT JOIN experiment_tags ON experiments.experiment_id = experiment_tags.experiment_id AND"+
+			" experiment_tags.key = ?", common.DescriptionTagKey).
 		Where("experiments.namespace_id = ?", ns.ID).
 		Where("experiments.experiment_id = ?", id).
+		Group("experiments.experiment_id").
 		First(&exp).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fmt.Errorf("error fetching experiment %q: %w", p.ID, err)
 	}
-
 	return c.JSON(fiber.Map{
 		"id":            strconv.Itoa(int(id)),
 		"name":          exp.Name,
-		"description":   nil,
+		"description":   exp.Description,
 		"archived":      exp.LifecycleStage == database.LifecycleStageDeleted,
 		"run_count":     exp.RunCount,
 		"creation_time": float64(exp.CreationTime.Int64) / 1000,
@@ -320,6 +328,80 @@ func DeleteExperiment(c *fiber.Ctx) error {
 	}); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
 			fmt.Sprintf("unable to delete experiment %q: %s", params.ID, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"id":     params.ID,
+		"status": "OK",
+	})
+}
+
+func UpdateExperiment(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("updateExperiment namespace: %s", ns.Code)
+
+	params := struct {
+		ID string `params:"id"`
+	}{}
+	if err = c.ParamsParser(&params); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+	id, err := strconv.ParseInt(params.ID, 10, 32)
+	if err != nil {
+		return api.NewBadRequestError("Unable to parse experiment id '%s': %s", params.ID, err)
+	}
+
+	var updateRequest request.UpdateExperimentRequest
+	if err = c.BodyParser(&updateRequest); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	experimentRepository := repositories.NewExperimentRepository(database.DB)
+	tagRepository := repositories.NewTagRepository(database.DB)
+	experiment, err := experimentRepository.GetByNamespaceIDAndExperimentID(c.Context(), ns.ID, int32(id))
+	if err != nil {
+		return fiber.NewError(
+			fiber.StatusInternalServerError, fmt.Sprintf("unable to find experiment '%s': %s", params.ID, err),
+		)
+	}
+	if experiment == nil {
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("unable to find experiment '%s'", params.ID))
+	}
+	if updateRequest.Archived != nil {
+		if *updateRequest.Archived {
+			experiment.LifecycleStage = models.LifecycleStageDeleted
+		} else {
+			experiment.LifecycleStage = models.LifecycleStageActive
+		}
+	}
+
+	if updateRequest.Name != nil {
+		experiment.Name = *updateRequest.Name
+	}
+
+	if updateRequest.Archived != nil || updateRequest.Name != nil {
+		if err := database.DB.Transaction(func(tx *gorm.DB) error {
+			if err := experimentRepository.UpdateWithTransaction(c.Context(), tx, experiment); err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError,
+				fmt.Sprintf("unable to update experiment %q: %s", params.ID, err))
+		}
+	}
+	if updateRequest.Description != nil {
+		description := models.ExperimentTag{
+			Key:          common.DescriptionTagKey,
+			Value:        *updateRequest.Description,
+			ExperimentID: *experiment.ID,
+		}
+		if err := tagRepository.CreateExperimentTag(c.Context(), &description); err != nil {
+			return err
+		}
 	}
 
 	return c.JSON(fiber.Map{

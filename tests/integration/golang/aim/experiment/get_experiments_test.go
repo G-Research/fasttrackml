@@ -22,7 +22,7 @@ type GetExperimentsTestSuite struct {
 }
 
 func TestGetExperimentsTestSuite(t *testing.T) {
-	suite.Run(t, new(GetExperimentTestSuite))
+	suite.Run(t, new(GetExperimentsTestSuite))
 }
 
 func (s *GetExperimentsTestSuite) Test_Ok() {
@@ -74,5 +74,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 		s.Equal(float64(expectedExperiment.CreationTime.Int64)/1000, actualExperiment.CreationTime)
 		s.Equal(expectedExperiment.LifecycleStage == models.LifecycleStageDeleted, actualExperiment.Archived)
 		s.Equal(len(expectedExperiment.Runs), actualExperiment.RunCount)
+		s.Equal(helpers.GetDescriptionFromExperiment(*expectedExperiment), actualExperiment.Description)
+
 	}
 }

@@ -25,6 +25,7 @@ func AddRoutes(r fiber.Router) {
 	experiments.Get("/:id/activity/", GetExperimentActivity)
 	experiments.Get("/:id/runs/", GetExperimentRuns)
 	experiments.Delete("/:id/", DeleteExperiment)
+	experiments.Put("/:id/", UpdateExperiment)
 
 	projects := r.Group("/projects")
 	projects.Get("/", GetProject)

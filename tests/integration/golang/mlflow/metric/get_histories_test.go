@@ -91,6 +91,16 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	s.Require().Nil(metrics[0].ContextID)
 	s.Require().NotNil(metrics[1].ContextID)
 
+	// verify metric contexts can be used for selection
+	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]any{"metrickey1": "metricvalue1"})
+	s.Require().Nil(err)
+	s.Require().Len(metrics, 1)
+	s.Require().NotNil(metrics[0].ContextID)
+
+	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]any{"metrickey2": "metricvalue1"})
+	s.Require().Nil(err)
+	s.Require().Len(metrics, 0)
+
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "run2",
 		Name:           "chill-run",

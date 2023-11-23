@@ -1,8 +1,13 @@
 package repositories
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/rotisserie/eris"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
@@ -29,4 +34,24 @@ func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []in
 		index = index + 3
 	}
 	return placeholders, valuesArray
+}
+
+// addJsonCondition adds condition(s) to the query to select items having the specified jsonToMatch
+func addJsonCondition(tx *gorm.DB, jsonColumnName string, jsonToMatch map[string]any) error {
+	if len(jsonToMatch) == 0 {
+		return nil
+	}
+	switch tx.Dialector.Name() {
+	case postgres.Dialector{}.Name():
+		jsonString, err := json.Marshal(jsonToMatch)
+		if err != nil {
+			return eris.Wrap(err, "error marshaling metricContext")
+		}
+		tx.Where(fmt.Sprintf("%s @> ?::jsonb", jsonColumnName), jsonString)
+	default:
+		for k, v := range jsonToMatch {
+			tx.Where(fmt.Sprintf("%s->>'%s' = ?", jsonColumnName, k), v)
+		}
+	}
+	return nil
 }

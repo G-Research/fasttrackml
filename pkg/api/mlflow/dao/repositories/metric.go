@@ -3,10 +3,8 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 
 	"github.com/rotisserie/eris"
-	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -224,12 +222,8 @@ func (r MetricRepository) GetMetricHistories(
 	}
 
 	if len(metricContext) > 0 {
-		jsonString, err := json.Marshal(metricContext)
-		if err != nil {
-			return nil, nil, eris.Wrap(err, "error marshaling metricContext")
-		}
-		query.Joins("contexts on metrics.context_id = contexts.id")
-		query.Where(datatypes.JSONOverlaps(datatypes.Column("contexts.context"), string(jsonString)))
+		query.Joins("LEFT JOIN contexts on metrics.context_id = contexts.id")
+		addJsonCondition(query, "contexts.json", metricContext)
 	}
 
 	rows, err := query.Rows()

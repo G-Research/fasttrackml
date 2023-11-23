@@ -2,12 +2,16 @@ package fixtures
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"github.com/rotisserie/eris"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // MetricFixtures represents data fixtures object.
@@ -49,6 +53,26 @@ func (f MetricFixtures) GetMetricsByRunID(ctx context.Context, runID string) ([]
 	return metrics, nil
 }
 
+// GetMetricsByContext returns metric by a context partial match.
+func (f MetricFixtures) GetMetricsByContext(
+	ctx context.Context,
+	metricContext map[string]any,
+) ([]*models.Metric, error) {
+	var metrics []*models.Metric
+	tx := f.db.WithContext(ctx).Model(
+		&database.Metric{},
+	).Joins(
+		"LEFT JOIN contexts on metrics.context_id = contexts.id",
+	)
+	if err := addContextSelection(tx, "contexts.json", metricContext); err != nil {
+		return nil, eris.Wrap(err, "error adding json column contains condition")
+	}
+	if err := tx.Find(&metrics).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting metric by context: %v", metricContext)
+	}
+	return metrics, nil
+}
+
 // CreateLatestMetric creates new test Latest Metric.
 func (f MetricFixtures) CreateLatestMetric(
 	ctx context.Context, metric *models.LatestMetric,
@@ -85,4 +109,24 @@ func (f MetricFixtures) GetLatestMetricByRunID(ctx context.Context, runID string
 		return nil, eris.Wrapf(err, "error getting latest metric by run_uuid: %v", runID)
 	}
 	return &metric, nil
+}
+
+// addContextSelection adds conditions to the query to select metrics having the provided context.
+func addContextSelection(tx *gorm.DB, columnName string, metricContext map[string]any) error {
+	if len(metricContext) == 0 {
+		return nil
+	}
+	switch tx.Dialector.Name() {
+	case postgres.Dialector{}.Name():
+		jsonString, err := json.Marshal(metricContext)
+		if err != nil {
+			return eris.Wrap(err, "error marshaling metricContext")
+		}
+		tx.Where(fmt.Sprintf("%s @> ?::jsonb", columnName), jsonString)
+	default:
+		for k, v := range metricContext {
+			tx.Where(fmt.Sprintf("%s->>'%s' = ?", columnName, k), v)
+		}
+	}
+	return nil
 }

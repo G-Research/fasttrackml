@@ -28,14 +28,13 @@ func TestLogMetricTestSuite(t *testing.T) {
 }
 
 func (s *LogMetricTestSuite) Test_Ok() {
-	run := &models.Run{
+	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *s.DefaultExperiment.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
-	}
-	run, err := s.RunFixtures.CreateRun(context.Background(), run)
+	})
 	s.Require().Nil(err)
 
 	req := request.LogMetricRequest{
@@ -110,14 +109,13 @@ func (s *LogMetricTestSuite) Test_Error() {
 			},
 			error: api.NewInvalidParameterValueError(`invalid metric value 'incorrect_value'`),
 			setupDatabase: func() string {
-				run := &models.Run{
+				run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 					ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 					ExperimentID:   *s.DefaultExperiment.ID,
 					SourceType:     "JOB",
 					LifecycleStage: models.LifecycleStageActive,
 					Status:         models.StatusRunning,
-				}
-				run, err := s.RunFixtures.CreateRun(context.Background(), run)
+				})
 				s.Require().Nil(err)
 				return run.ID
 			},

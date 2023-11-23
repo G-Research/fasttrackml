@@ -43,8 +43,6 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 				return nil, eris.Wrap(err, "error unmarshaling context")
 			}
 			resp.Metrics[n].Context = context
-		} else {
-			resp.Metrics[n].Context = nil
 		}
 		if m.IsNan {
 			resp.Metrics[n].Value = common.NANValue

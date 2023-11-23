@@ -199,7 +199,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 				endTimeKey := fmt.Sprintf("%v.props.end_time", run.ID)
 				activeKey := fmt.Sprintf("%v.props.active", run.ID)
 				archivedKey := fmt.Sprintf("%v.props.archived", run.ID)
-				//contextKey := fmt.Sprintf("%v.traces.metric.0.context", run.ID)
+				// contextKey := fmt.Sprintf("%v.traces.metric.0.context", run.ID)
 				if run.Status == models.StatusRunning && run.LifecycleStage == models.LifecycleStageActive {
 					assert.Equal(s.T(), run.Name, decodedData[respNameKey])
 					assert.Equal(s.T(), fmt.Sprintf("%v", run.ExperimentID), decodedData[expIdKey])
@@ -207,7 +207,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 					assert.Equal(s.T(), false, decodedData[archivedKey])
 					assert.Equal(s.T(), float64(run.StartTime.Int64)/1000, decodedData[startTimeKey])
 					assert.Equal(s.T(), float64(run.EndTime.Int64)/1000, decodedData[endTimeKey])
-					//assert.Equal(s.T(), runToMetricContextMap[run.ID].Json.String(), decodedData[contextKey])
+					// assert.Equal(s.T(), runToMetricContextMap[run.ID].Json.String(), decodedData[contextKey])
 					responseCount++
 				} else {
 					s.Nil(decodedData[respNameKey])

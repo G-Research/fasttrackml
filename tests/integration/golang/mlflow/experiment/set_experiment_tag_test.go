@@ -13,7 +13,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -23,30 +22,24 @@ type SetExperimentTagTestSuite struct {
 }
 
 func TestSetExperimentTagTestSuite(t *testing.T) {
-	suite.Run(t, new(SetExperimentTagTestSuite))
+	suite.Run(t, &SetExperimentTagTestSuite{
+		helpers.BaseTestSuite{
+			SkipCreateDefaultExperiment: true,
+		},
+	})
 }
 
 func (s *SetExperimentTagTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
 	// 1. prepare database with test data.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           "Test Experiment",
-		NamespaceID:    namespace.ID,
+		NamespaceID:    s.DefaultNamespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
 	experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           "Test Experiment2",
-		NamespaceID:    namespace.ID,
+		NamespaceID:    s.DefaultNamespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
@@ -68,7 +61,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	)
 
 	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
-		context.Background(), namespace.ID, *experiment1.ID,
+		context.Background(), s.DefaultNamespace.ID, *experiment1.ID,
 	)
 	s.Require().Nil(err)
 	s.True(helpers.CheckTagExists(
@@ -92,7 +85,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 	)
 
 	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
-		context.Background(), namespace.ID, *experiment1.ID,
+		context.Background(), s.DefaultNamespace.ID, *experiment1.ID,
 	)
 	s.Require().Nil(err)
 	s.True(
@@ -102,7 +95,7 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 
 	// test that setting a tag on 1 experiment1 does not impact another experiment1.
 	experiment2, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
-		context.Background(), namespace.ID, *experiment2.ID,
+		context.Background(), s.DefaultNamespace.ID, *experiment2.ID,
 	)
 	s.Require().Nil(err)
 	s.Equal(len(experiment2.Tags), 0)
@@ -123,16 +116,15 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 		),
 	)
 	experiment1, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
-		context.Background(), namespace.ID, *experiment1.ID,
+		context.Background(), s.DefaultNamespace.ID, *experiment1.ID,
 	)
 	s.Require().Nil(err)
-	s.True(
-		helpers.CheckTagExists(experiment1.Tags, "KeyTag1", "ValueTag2"),
+	s.True(helpers.CheckTagExists(experiment1.Tags, "KeyTag1", "ValueTag2"),
 		"Expected 'experiment1.tags' to contain 'KeyTag1' with value 'ValueTag2'",
 	)
 
 	experiment2, err = s.ExperimentFixtures.GetByNamespaceIDAndExperimentID(
-		context.Background(), namespace.ID, *experiment2.ID,
+		context.Background(), s.DefaultNamespace.ID, *experiment2.ID,
 	)
 	s.Require().Nil(err)
 	s.True(
@@ -142,17 +134,6 @@ func (s *SetExperimentTagTestSuite) Test_Ok() {
 }
 
 func (s *SetExperimentTagTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse

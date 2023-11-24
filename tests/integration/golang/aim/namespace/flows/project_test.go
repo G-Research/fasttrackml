@@ -25,11 +25,12 @@ type ProjectFlowTestSuite struct {
 // - `GET /projects/params`
 // - `GET /projects/activity`
 func TestProjectFlowTestSuite(t *testing.T) {
-	suite.Run(t, new(ProjectFlowTestSuite))
-}
-
-func (s *ProjectFlowTestSuite) TearDownTest() {
-	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	suite.Run(t, &ProjectFlowTestSuite{
+		helpers.BaseTestSuite{
+			ResetOnSubTest:             true,
+			SkipCreateDefaultNamespace: true,
+		},
+	})
 }
 
 func (s *ProjectFlowTestSuite) Test_Ok() {
@@ -85,8 +86,6 @@ func (s *ProjectFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)

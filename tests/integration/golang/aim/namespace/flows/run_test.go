@@ -35,11 +35,12 @@ type RunFlowTestSuite struct {
 // - `DELETE /runs/:id`
 // - `DELETE /runs/delete-batch`
 func TestRunFlowTestSuite(t *testing.T) {
-	suite.Run(t, new(RunFlowTestSuite))
-}
-
-func (s *RunFlowTestSuite) TearDownTest() {
-	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	suite.Run(t, &RunFlowTestSuite{
+		helpers.BaseTestSuite{
+			ResetOnSubTest:             true,
+			SkipCreateDefaultNamespace: true,
+		},
+	})
 }
 
 func (s *RunFlowTestSuite) Test_Ok() {
@@ -95,8 +96,6 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)

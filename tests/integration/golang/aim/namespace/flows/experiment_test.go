@@ -27,11 +27,12 @@ type ExperimentFlowTestSuite struct {
 // - `GET /experiments/:id/runs`
 // - `GET /experiments/:id/activity`
 func TestExperimentFlowTestSuite(t *testing.T) {
-	suite.Run(t, new(ExperimentFlowTestSuite))
-}
-
-func (s *ExperimentFlowTestSuite) TearDownTest() {
-	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	suite.Run(t, &ExperimentFlowTestSuite{
+		helpers.BaseTestSuite{
+			ResetOnSubTest:             true,
+			SkipCreateDefaultNamespace: true,
+		},
+	})
 }
 
 func (s *ExperimentFlowTestSuite) Test_Ok() {
@@ -87,8 +88,6 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)

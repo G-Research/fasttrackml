@@ -11,8 +11,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -33,101 +31,50 @@ func TestSearchTestSuite(t *testing.T) {
 }
 
 func (s *SearchTestSuite) Test_DefaultNamespace_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	// create default namespace and experiment.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	require.Nil(s.T(), err)
-
-	s.testCases(namespace, experiment, false, *experiment.ID)
+	s.testCases(s.DefaultNamespace, s.DefaultExperiment, false, *s.DefaultExperiment.ID)
 }
 
-func (s *SearchTestSuite) Test_DefaultNamespaceExerimentZero_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	// create default namespace and experiment.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	require.Nil(s.T(), err)
-
-	// update default experiment id.
-	namespace.DefaultExperimentID = experiment.ID
-	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-	require.Nil(s.T(), err)
-
-	s.testCases(namespace, experiment, false, int32(0))
+func (s *SearchTestSuite) Test_DefaultNamespaceExperimentZero_Ok() {
+	s.testCases(s.DefaultNamespace, s.DefaultExperiment, false, int32(0))
 }
 
 func (s *SearchTestSuite) Test_CustomNamespace_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
 	// create custom namespace and experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		Code:                "custom",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	s.testCases(namespace, experiment, true, *experiment.ID)
 }
 
 func (s *SearchTestSuite) Test_CustomNamespaceExperimentZero_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
 	// create custom namespace and experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		Code:                "custom",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// update default experiment id.
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	s.testCases(namespace, experiment, true, int32(0))
 }
@@ -157,13 +104,13 @@ func (s *SearchTestSuite) testCases(
 		ArtifactURI:    "artifact_uri1",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag1",
 		RunID: run1.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "run1",
 		Value:     1.1,
@@ -173,13 +120,13 @@ func (s *SearchTestSuite) testCases(
 		RunID:     run1.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param1",
 		Value: "value1",
 		RunID: run1.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id2",
@@ -199,13 +146,13 @@ func (s *SearchTestSuite) testCases(
 		ArtifactURI:    "artifact_uri2",
 		LifecycleStage: models.LifecycleStageDeleted,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag2",
 		RunID: run2.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "run2",
 		Value:     2.1,
@@ -215,13 +162,13 @@ func (s *SearchTestSuite) testCases(
 		RunID:     run2.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param2",
 		Value: "value2",
 		RunID: run2.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run3, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id3",
@@ -241,13 +188,13 @@ func (s *SearchTestSuite) testCases(
 		ArtifactURI:    "artifact_uri3",
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
 		Value: "TestRunTag3",
 		RunID: run3.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "run3",
 		Value:     3.1,
@@ -257,13 +204,13 @@ func (s *SearchTestSuite) testCases(
 		RunID:     run3.ID,
 		LastIter:  1,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param3",
 		Value: "value3",
 		RunID: run3.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name     string
@@ -2944,9 +2891,9 @@ func (s *SearchTestSuite) testCases(
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := &response.SearchRunsResponse{}
-			client := s.MlflowClient.WithMethod(
+			client := s.MlflowClient().WithMethod(
 				http.MethodPost,
 			).WithRequest(
 				tt.request,
@@ -2958,14 +2905,13 @@ func (s *SearchTestSuite) testCases(
 					namespace.Code,
 				)
 			}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				client.DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute,
 				),
 			)
-			assert.Equal(s.T(), len(tt.response.Runs), len(resp.Runs))
-			assert.Equal(s.T(), len(tt.response.NextPageToken), len(resp.NextPageToken))
+			s.Equal(len(tt.response.Runs), len(resp.Runs))
+			s.Equal(len(tt.response.NextPageToken), len(resp.NextPageToken))
 
 			mappedExpectedResult := make(map[string]*response.RunPartialResponse, len(tt.response.Runs))
 			for _, run := range tt.response.Runs {
@@ -2975,20 +2921,20 @@ func (s *SearchTestSuite) testCases(
 			if tt.response.Runs != nil && resp.Runs != nil {
 				for _, actualRun := range resp.Runs {
 					expectedRun, ok := mappedExpectedResult[actualRun.Info.ID]
-					assert.True(s.T(), ok)
-					assert.NotEmpty(s.T(), actualRun.Info.ID)
-					assert.Equal(s.T(), expectedRun.Info.Name, actualRun.Info.Name)
-					assert.Equal(s.T(), expectedRun.Info.Name, actualRun.Info.Name)
-					assert.Equal(s.T(), expectedRun.Info.UserID, actualRun.Info.UserID)
-					assert.Equal(s.T(), expectedRun.Info.Status, actualRun.Info.Status)
-					assert.Equal(s.T(), expectedRun.Info.EndTime, actualRun.Info.EndTime)
-					assert.Equal(s.T(), expectedRun.Info.StartTime, actualRun.Info.StartTime)
-					assert.Equal(s.T(), expectedRun.Info.ArtifactURI, actualRun.Info.ArtifactURI)
-					assert.Equal(s.T(), expectedRun.Info.ExperimentID, actualRun.Info.ExperimentID)
-					assert.Equal(s.T(), expectedRun.Info.LifecycleStage, actualRun.Info.LifecycleStage)
-					assert.Equal(s.T(), expectedRun.Data.Tags, actualRun.Data.Tags)
-					assert.Equal(s.T(), expectedRun.Data.Params, actualRun.Data.Params)
-					assert.Equal(s.T(), expectedRun.Data.Metrics, actualRun.Data.Metrics)
+					s.True(ok)
+					s.NotEmpty(actualRun.Info.ID)
+					s.Equal(expectedRun.Info.Name, actualRun.Info.Name)
+					s.Equal(expectedRun.Info.Name, actualRun.Info.Name)
+					s.Equal(expectedRun.Info.UserID, actualRun.Info.UserID)
+					s.Equal(expectedRun.Info.Status, actualRun.Info.Status)
+					s.Equal(expectedRun.Info.EndTime, actualRun.Info.EndTime)
+					s.Equal(expectedRun.Info.StartTime, actualRun.Info.StartTime)
+					s.Equal(expectedRun.Info.ArtifactURI, actualRun.Info.ArtifactURI)
+					s.Equal(expectedRun.Info.ExperimentID, actualRun.Info.ExperimentID)
+					s.Equal(expectedRun.Info.LifecycleStage, actualRun.Info.LifecycleStage)
+					s.Equal(expectedRun.Data.Tags, actualRun.Data.Tags)
+					s.Equal(expectedRun.Data.Params, actualRun.Data.Params)
+					s.Equal(expectedRun.Data.Metrics, actualRun.Data.Metrics)
 				}
 			}
 		})

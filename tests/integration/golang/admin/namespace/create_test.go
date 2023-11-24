@@ -8,12 +8,8 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/request"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -27,16 +23,6 @@ func TestCreateNamespaceTestSuite(t *testing.T) {
 }
 
 func (s *CreateNamespaceTestSuite) Test_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	requests := []request.Namespace{
 		{
 			Code:        "test2",
@@ -48,9 +34,8 @@ func (s *CreateNamespaceTestSuite) Test_Ok() {
 		},
 	}
 	for _, request := range requests {
-		require.Nil(
-			s.T(),
-			s.AdminClient.WithMethod(
+		s.Require().Nil(
+			s.AdminClient().WithMethod(
 				http.MethodPost,
 			).WithRequest(
 				request,
@@ -59,24 +44,14 @@ func (s *CreateNamespaceTestSuite) Test_Ok() {
 	}
 
 	namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
-	require.Nil(s.T(), err)
-	assert.True(s.T(), helpers.CheckNamespaces(namespaces, requests))
+	s.Require().Nil(err)
+	s.True(helpers.CheckNamespaces(namespaces, requests))
 
 	// Check the length of the namespaces considering the default namespace
-	assert.Equal(s.T(), len(requests)+1, len(namespaces))
+	s.Equal(len(requests)+1, len(namespaces))
 }
 
 func (s *CreateNamespaceTestSuite) Test_Error() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	testData := []struct {
 		name    string
 		request *request.Namespace
@@ -124,11 +99,10 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range testData {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			var resp goquery.Document
-			require.Nil(
-				s.T(),
-				s.AdminClient.WithMethod(
+			s.Require().Nil(
+				s.AdminClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
@@ -140,13 +114,13 @@ func (s *CreateNamespaceTestSuite) Test_Error() {
 			)
 
 			msg := resp.Find(".error-message").Text()
-			assert.Equal(s.T(), tt.error, msg)
+			s.Equal(tt.error, msg)
 
 			namespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// Check that creation failed, only the default namespace is present
-			assert.Equal(s.T(), 1, len(namespaces))
+			s.Equal(1, len(namespaces))
 		})
 	}
 }

@@ -10,15 +10,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -32,26 +29,7 @@ func TestGetRunTestSuite(t *testing.T) {
 }
 
 func (s *GetRunTestSuite) Test_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	// create test experiment.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	require.Nil(s.T(), err)
-
-	// create test run for the experiment
+	// create test run.
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:     strings.ReplaceAll(uuid.New().String(), "-", ""),
 		Name:   "TestRun",
@@ -66,10 +44,10 @@ func (s *GetRunTestSuite) Test_Ok() {
 		},
 		SourceType:     "JOB",
 		ArtifactURI:    "artifact_uri",
-		ExperimentID:   *experiment.ID,
+		ExperimentID:   *s.DefaultExperiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create tags, metrics, params.
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
@@ -77,7 +55,7 @@ func (s *GetRunTestSuite) Test_Ok() {
 		Value: "value1",
 		RunID: run.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "metric1",
@@ -87,47 +65,46 @@ func (s *GetRunTestSuite) Test_Ok() {
 		Step:      1,
 		IsNan:     false,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param1",
 		Value: "value1",
 		RunID: run.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	query := request.GetRunRequest{
 		RunID: run.ID,
 	}
 
 	resp := response.GetRunResponse{}
-	require.Nil(
-		s.T(),
-		s.MlflowClient.WithQuery(
+	s.Require().Nil(
+		s.MlflowClient().WithQuery(
 			query,
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
 
-	assert.NotEmpty(s.T(), resp.Run.Info.ID)
-	assert.NotEmpty(s.T(), resp.Run.Info.UUID)
-	assert.Equal(s.T(), "TestRun", resp.Run.Info.Name)
-	assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.Run.Info.ExperimentID)
-	assert.Equal(s.T(), int64(1234567890), resp.Run.Info.StartTime)
-	assert.Equal(s.T(), int64(1234567899), resp.Run.Info.EndTime)
-	assert.Equal(s.T(), string(models.StatusRunning), resp.Run.Info.Status)
-	assert.Equal(s.T(), "artifact_uri", resp.Run.Info.ArtifactURI)
-	assert.Equal(s.T(), string(models.LifecycleStageActive), resp.Run.Info.LifecycleStage)
-	assert.Equal(s.T(), []response.RunTagPartialResponse{
+	s.NotEmpty(resp.Run.Info.ID)
+	s.NotEmpty(resp.Run.Info.UUID)
+	s.Equal("TestRun", resp.Run.Info.Name)
+	s.Equal(fmt.Sprintf("%d", *s.DefaultExperiment.ID), resp.Run.Info.ExperimentID)
+	s.Equal(int64(1234567890), resp.Run.Info.StartTime)
+	s.Equal(int64(1234567899), resp.Run.Info.EndTime)
+	s.Equal(string(models.StatusRunning), resp.Run.Info.Status)
+	s.Equal("artifact_uri", resp.Run.Info.ArtifactURI)
+	s.Equal(string(models.LifecycleStageActive), resp.Run.Info.LifecycleStage)
+	s.Equal([]response.RunTagPartialResponse{
 		{
 			Key:   "tag1",
 			Value: "value1",
 		},
 	}, resp.Run.Data.Tags)
-	assert.Equal(s.T(), []response.RunMetricPartialResponse{
+	s.Equal([]response.RunMetricPartialResponse{
 		{
 			Key:       "metric1",
 			Step:      1,
@@ -135,7 +112,7 @@ func (s *GetRunTestSuite) Test_Ok() {
 			Timestamp: 1234567890,
 		},
 	}, resp.Run.Data.Metrics)
-	assert.Equal(s.T(), []response.RunParamPartialResponse{
+	s.Equal([]response.RunParamPartialResponse{
 		{
 			Key:   "param1",
 			Value: "value1",
@@ -144,17 +121,6 @@ func (s *GetRunTestSuite) Test_Ok() {
 }
 
 func (s *GetRunTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -176,20 +142,18 @@ func (s *GetRunTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
-				s.MlflowClient.WithQuery(
+			s.Require().Nil(
+				s.MlflowClient().WithQuery(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 				),
 			)
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

@@ -252,7 +252,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 	}
 
 	var runs []database.Run
-	if tx := database.DB.
+	if err := database.DB.
 		Where("status = ?", database.StatusRunning).
 		InnerJoins(
 			"Experiment",
@@ -263,8 +263,10 @@ func GetRunsActive(c *fiber.Ctx) error {
 			),
 		).
 		Preload("LatestMetrics").
-		Find(&runs); tx.Error != nil {
-		return fmt.Errorf("error retrieving active runs: %w", tx.Error)
+		Limit(50).
+		Order("start_time DESC").
+		Find(&runs).Error; err != nil {
+		return fmt.Errorf("error retrieving active runs: %w", err)
 	}
 
 	c.Set("Content-Type", "application/octet-stream")
@@ -868,6 +870,12 @@ func SearchMetrics(c *fiber.Ctx) error {
 //
 //nolint:gocyclo
 func SearchAlignedMetrics(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("searchAlignedMetrics namespace: %s", ns.Code)
+
 	b := struct {
 		AlignBy string `json:"align_by"`
 		Runs    []struct {
@@ -907,7 +915,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 
 	// TODO this should probably be batched
 
-	values = append(values, b.AlignBy)
+	values = append(values, ns.ID, b.AlignBy)
 	rows, err := database.DB.Raw(
 		fmt.Sprintf("WITH params(run_uuid, key, steps) AS (VALUES %s)", &valuesStmt)+
 			"        SELECT m.run_uuid, rm.key, m.iter, m.value, m.is_nan FROM metrics AS m"+
@@ -916,6 +924,8 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			"          FROM params AS p"+
 			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key)"+
 			"        ) rm USING(run_uuid)"+
+			"		 INNER JOIN runs AS r ON m.run_uuid = r.run_uuid"+
+			"		 INNER JOIN experiments AS e ON r.experiment_id = e.experiment_id AND e.namespace_id = ?"+
 			"        WHERE m.key = ?"+
 			"          AND m.iter <= rm.max"+
 			"          AND MOD(m.iter + 1 + rm.interval / 2, rm.interval) < 1"+
@@ -1043,7 +1053,7 @@ func DeleteRun(c *fiber.Ctx) error {
 	}
 
 	// TODO this code should move to service with injected repository
-	if err = runRepository.Delete(c.Context(), run); err != nil {
+	if err = runRepository.Delete(c.Context(), ns.ID, run); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
 			fmt.Sprintf("unable to delete run %q: %s", params.ID, err),
 		)
@@ -1122,6 +1132,12 @@ func UpdateRun(c *fiber.Ctx) error {
 }
 
 func ArchiveBatch(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("archiveBatch namespace: %s", ns.Code)
+
 	var ids []string
 	if err := c.BodyParser(&ids); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
@@ -1130,11 +1146,11 @@ func ArchiveBatch(c *fiber.Ctx) error {
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB)
 	if c.Query("archive") == "true" {
-		if err := runRepo.ArchiveBatch(c.Context(), ids); err != nil {
+		if err := runRepo.ArchiveBatch(c.Context(), ns.ID, ids); err != nil {
 			return err
 		}
 	} else {
-		if err := runRepo.RestoreBatch(c.Context(), ids); err != nil {
+		if err := runRepo.RestoreBatch(c.Context(), ns.ID, ids); err != nil {
 			return err
 		}
 	}
@@ -1145,6 +1161,12 @@ func ArchiveBatch(c *fiber.Ctx) error {
 }
 
 func DeleteBatch(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("deleteBatch namespace: %s", ns.Code)
+
 	var ids []string
 	if err := c.BodyParser(&ids); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
@@ -1152,7 +1174,7 @@ func DeleteBatch(c *fiber.Ctx) error {
 
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB)
-	if err := runRepo.DeleteBatch(c.Context(), ids); err != nil {
+	if err := runRepo.DeleteBatch(c.Context(), ns.ID, ids); err != nil {
 		return err
 	}
 	return c.JSON(fiber.Map{

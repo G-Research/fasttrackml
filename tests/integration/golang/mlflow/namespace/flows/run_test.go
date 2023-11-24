@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -39,11 +37,12 @@ type RunFlowTestSuite struct {
 // - `POST /runs/delete-tag`
 // - `POST /runs/log-batch`
 func TestRunFlowTestSuite(t *testing.T) {
-	suite.Run(t, new(RunFlowTestSuite))
-}
-
-func (s *RunFlowTestSuite) TearDownTest() {
-	assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	suite.Run(t, &RunFlowTestSuite{
+		helpers.BaseTestSuite{
+			ResetOnSubTest:             true,
+			SkipCreateDefaultNamespace: true,
+		},
+	})
 }
 
 func (s *RunFlowTestSuite) Test_Ok() {
@@ -68,7 +67,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			namespace2Code: "namespace-2",
 		},
 		{
-			name: "TestObviousDefaultAndCustomNamespaces",
+			name: "TestExplicitDefaultAndCustomNamespaces",
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
@@ -98,31 +97,29 @@ func (s *RunFlowTestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
-			defer assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-
+		s.Run(tt.name, func() {
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment1",
-				ArtifactLocation: "/artifact/location",
+				ArtifactLocation: "/artifact/location/1",
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment2",
-				ArtifactLocation: "/artifact/location",
+				ArtifactLocation: "/artifact/location/2",
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace2.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// 2. run actual flow test over the test data.
 			s.testRunFlow(tt.namespace1Code, tt.namespace2Code, experiment1, experiment2)
@@ -158,7 +155,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "Run1",
 					Status:         string(models.StatusRunning),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -177,7 +174,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "Run2",
 					Status:         string(models.StatusRunning),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -190,11 +187,8 @@ func (s *RunFlowTestSuite) testRunFlow(
 	// check that there is no intersection between runs, so when we request
 	// run 1 in scope of namespace 2 and run 2 in scope of namespace 1 API will throw an error.
 	resp := api.ErrorResponse{}
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+	s.Require().Nil(
+		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
 			request.GetRunRequest{
@@ -203,18 +197,15 @@ func (s *RunFlowTestSuite) testRunFlow(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
-	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
-	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
+	s.Equal(fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
+	s.Equal(api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	resp = api.ErrorResponse{}
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+	s.Require().Nil(
+		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
 			request.GetRunRequest{
@@ -223,11 +214,11 @@ func (s *RunFlowTestSuite) testRunFlow(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
-	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
-	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
+	s.Equal(fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
+	s.Equal(api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	// test `POST /runs/update` endpoint.
 	s.updateRun(namespace1Code, &request.UpdateRunRequest{
@@ -254,7 +245,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "UpdatedRun1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -273,7 +264,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "UpdatedRun2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -296,7 +287,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun1",
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
 				Data: response.RunDataPartialResponse{
@@ -324,7 +315,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun2",
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
 				Data: response.RunDataPartialResponse{
@@ -355,7 +346,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "UpdatedRun1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageDeleted),
 				},
@@ -374,7 +365,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "UpdatedRun2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageDeleted),
 				},
@@ -399,7 +390,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "UpdatedRun1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -418,7 +409,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "UpdatedRun2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -455,7 +446,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "UpdatedRun1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -483,7 +474,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "UpdatedRun2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -525,7 +516,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "UpdatedRun1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -551,7 +542,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "UpdatedRun2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -592,7 +583,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun1",
 					UserID:         "1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -623,7 +614,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun2",
 					UserID:         "2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -666,7 +657,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun1",
 					UserID:         "1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -693,7 +684,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun2",
 					UserID:         "2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -770,7 +761,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun1",
 					UserID:         "1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -815,7 +806,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun2",
 					UserID:         "2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -854,9 +845,8 @@ func (s *RunFlowTestSuite) createRun(
 	namespace string, req *request.CreateRunRequest,
 ) string {
 	resp := response.CreateRunResponse{}
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -865,7 +855,7 @@ func (s *RunFlowTestSuite) createRun(
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 		),
 	)
 	return resp.Run.Info.ID
@@ -875,43 +865,39 @@ func (s *RunFlowTestSuite) getRunAndCompare(
 	namespace string, req request.GetRunRequest, expectedResponse *response.GetRunResponse,
 ) *response.GetRunResponse {
 	resp := response.GetRunResponse{}
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodGet,
-		).WithNamespace(
+	s.Require().Nil(
+		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
 			req,
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsGetRoute,
 		),
 	)
-	assert.Equal(s.T(), expectedResponse.Run.Info.ID, resp.Run.Info.ID)
-	assert.Equal(s.T(), expectedResponse.Run.Info.Name, resp.Run.Info.Name)
-	assert.Equal(s.T(), expectedResponse.Run.Info.Status, resp.Run.Info.Status)
-	assert.Equal(s.T(), expectedResponse.Run.Info.ArtifactURI, resp.Run.Info.ArtifactURI)
-	assert.Equal(s.T(), expectedResponse.Run.Info.ExperimentID, resp.Run.Info.ExperimentID)
-	assert.Equal(s.T(), expectedResponse.Run.Info.LifecycleStage, resp.Run.Info.LifecycleStage)
+	s.Equal(expectedResponse.Run.Info.ID, resp.Run.Info.ID)
+	s.Equal(expectedResponse.Run.Info.Name, resp.Run.Info.Name)
+	s.Equal(expectedResponse.Run.Info.Status, resp.Run.Info.Status)
+	s.Equal(expectedResponse.Run.Info.ArtifactURI, resp.Run.Info.ArtifactURI)
+	s.Equal(expectedResponse.Run.Info.ExperimentID, resp.Run.Info.ExperimentID)
+	s.Equal(expectedResponse.Run.Info.LifecycleStage, resp.Run.Info.LifecycleStage)
 	if expectedResponse.Run.Data.Tags != nil {
-		assert.Equal(s.T(), expectedResponse.Run.Data.Tags, resp.Run.Data.Tags)
+		s.Equal(expectedResponse.Run.Data.Tags, resp.Run.Data.Tags)
 	}
 	if expectedResponse.Run.Data.Params != nil {
-		assert.Equal(s.T(), expectedResponse.Run.Data.Params, resp.Run.Data.Params)
+		s.Equal(expectedResponse.Run.Data.Params, resp.Run.Data.Params)
 	}
 	if expectedResponse.Run.Data.Metrics != nil {
-		assert.Equal(s.T(), expectedResponse.Run.Data.Metrics, resp.Run.Data.Metrics)
+		s.Equal(expectedResponse.Run.Data.Metrics, resp.Run.Data.Metrics)
 	}
 	return &resp
 }
 
 func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunRequest) {
 	resp := response.UpdateRunResponse{}
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -920,7 +906,7 @@ func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunReq
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute,
 		),
 	)
 }
@@ -929,9 +915,8 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 	namespace string, req request.SearchRunsRequest, expectedRuns []*response.RunPartialResponse,
 ) {
 	searchResp := response.SearchRunsResponse{}
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
@@ -940,115 +925,108 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 		).WithResponse(
 			&searchResp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSearchRoute,
 		),
 	)
-	assert.Equal(s.T(), len(expectedRuns), len(searchResp.Runs))
-	assert.Equal(s.T(), "", searchResp.NextPageToken)
-	assert.Equal(s.T(), expectedRuns, searchResp.Runs)
+	s.Equal(len(expectedRuns), len(searchResp.Runs))
+	s.Equal("", searchResp.NextPageToken)
+	s.Equal(expectedRuns, searchResp.Runs)
 }
 
 func (s *RunFlowTestSuite) deleteRun(namespace string, req *request.DeleteRunRequest) {
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteRoute,
 		),
 	)
 }
 
 func (s *RunFlowTestSuite) restoreRun(namespace string, req *request.RestoreRunRequest) {
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute,
 		),
 	)
 }
 
 func (s *RunFlowTestSuite) logRunMetric(namespace string, req *request.LogMetricRequest) {
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute,
 		),
 	)
 }
 
 func (s *RunFlowTestSuite) logRunParam(namespace string, req *request.LogParamRequest) {
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
 		),
 	)
 }
 
 func (s *RunFlowTestSuite) setRunTag(namespace string, req *request.SetRunTagRequest) {
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSetTagRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsSetTagRoute,
 		),
 	)
 }
 
 func (s *RunFlowTestSuite) deleteRunTag(namespace string, req *request.DeleteRunTagRequest) {
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsDeleteTagRoute,
 		),
 	)
 }
 
 func (s *RunFlowTestSuite) runLogBatch(namespace string, req *request.LogBatchRequest) {
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
 			namespace,
 		).WithRequest(
 			req,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogBatchRoute,
 		),
 	)
 }

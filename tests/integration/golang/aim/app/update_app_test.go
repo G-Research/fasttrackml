@@ -9,14 +9,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -30,17 +26,6 @@ func TestUpdateAppTestSuite(t *testing.T) {
 }
 
 func (s *UpdateAppTestSuite) Test_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
 			ID:        uuid.New(),
@@ -48,9 +33,9 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 		},
 		Type:        "mpi",
 		State:       database.AppState{},
-		NamespaceID: namespace.ID,
+		NamespaceID: s.DefaultNamespace.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name        string
@@ -67,11 +52,10 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp response.App
-			require.Nil(
-				s.T(),
-				s.AIMClient.WithMethod(
+			s.Require().Nil(
+				s.AIMClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
 					tt.requestBody,
@@ -81,9 +65,8 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 					"/apps/%s", app.ID,
 				),
 			)
-			require.Nil(
-				s.T(),
-				s.AIMClient.WithMethod(
+			s.Require().Nil(
+				s.AIMClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
 					tt.requestBody,
@@ -93,24 +76,13 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 					"/apps/%s", app.ID,
 				),
 			)
-			assert.Equal(s.T(), "app-type", resp.Type)
-			assert.Equal(s.T(), response.AppState{"app-state-key": "new-app-state-value"}, resp.State)
+			s.Equal("app-type", resp.Type)
+			s.Equal(response.AppState{"app-state-key": "new-app-state-value"}, resp.State)
 		})
 	}
 }
 
 func (s *UpdateAppTestSuite) Test_Error() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
 			ID:        uuid.New(),
@@ -118,9 +90,9 @@ func (s *UpdateAppTestSuite) Test_Error() {
 		},
 		Type:        "mpi",
 		State:       database.AppState{},
-		NamespaceID: namespace.ID,
+		NamespaceID: s.DefaultNamespace.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name        string
@@ -144,11 +116,10 @@ func (s *UpdateAppTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp response.Error
-			require.Nil(
-				s.T(),
-				s.AIMClient.WithMethod(
+			s.Require().Nil(
+				s.AIMClient().WithMethod(
 					http.MethodPut,
 				).WithRequest(
 					tt.requestBody,
@@ -158,7 +129,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 					"/apps/%s", tt.ID,
 				),
 			)
-			assert.Contains(s.T(), resp.Message, tt.error)
+			s.Contains(resp.Message, tt.error)
 		})
 	}
 }

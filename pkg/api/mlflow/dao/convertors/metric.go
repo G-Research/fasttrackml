@@ -12,7 +12,11 @@ import (
 )
 
 // ConvertMetricParamRequestToDBModel converts request.LogMetricRequest into actual models.Metric model.
-func ConvertMetricParamRequestToDBModel(runID string, context *models.Context, req *request.LogMetricRequest) (*models.Metric, error) {
+func ConvertMetricParamRequestToDBModel(
+	runID string,
+	context *models.Context,
+	req *request.LogMetricRequest,
+) (*models.Metric, error) {
 	metric := models.Metric{
 		Key:       req.Key,
 		Timestamp: req.Timestamp,

@@ -1,14 +1,10 @@
 # Use an official Python runtime as a parent image
 FROM python:3.8
 
-# Set the working directory to /app
-WORKDIR /src
-
-# # Copy the current directory contents into the container at /app
-# COPY . /src
+# Expose default mlflow port
+EXPOSE 5000
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install psycopg2-binary fasttrackml mlflow
 
-# Run app.py when the container launches
-CMD ["pytest", "performance"]
+CMD [ "mlflow" , "server" ]

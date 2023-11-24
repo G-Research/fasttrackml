@@ -9,12 +9,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -29,17 +26,6 @@ func TestGetRunsActiveTestSuite(t *testing.T) {
 }
 
 func (s *GetRunsActiveTestSuite) Test_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	tests := []struct {
 		name         string
 		wantRunCount int
@@ -55,13 +41,13 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			beforeRunFn: func() {
 				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 					Name:           uuid.New().String(),
-					NamespaceID:    namespace.ID,
+					NamespaceID:    s.DefaultNamespace.ID,
 					LifecycleStage: models.LifecycleStageActive,
 				})
-				require.Nil(s.T(), err)
+				s.Require().Nil(err)
 
 				s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 3)
-				require.Nil(s.T(), err)
+				s.Require().Nil(err)
 			},
 		},
 		{
@@ -70,26 +56,25 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			beforeRunFn: func() {
 				// set 3rd run to status = StatusFinished
 				s.runs[2].Status = models.StatusFinished
-				require.Nil(s.T(), s.RunFixtures.UpdateRun(context.Background(), s.runs[2]))
+				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), s.runs[2]))
 			},
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			if tt.beforeRunFn != nil {
 				tt.beforeRunFn()
 			}
 			resp := new(bytes.Buffer)
-			require.Nil(
-				s.T(),
-				s.AIMClient.WithResponseType(
+			s.Require().Nil(
+				s.AIMClient().WithResponseType(
 					helpers.ResponseTypeBuffer,
 				).WithResponse(
 					resp,
 				).DoRequest("/runs/active"),
 			)
 			decodedData, err := encoding.Decode(resp)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			responseCount := 0
 			for _, run := range s.runs {
@@ -101,23 +86,23 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 				archivedKey := fmt.Sprintf("%v.props.archived", run.ID)
 				if run.Status == models.StatusRunning && run.LifecycleStage ==
 					models.LifecycleStageActive {
-					assert.Equal(s.T(), run.Name, decodedData[respNameKey])
-					assert.Equal(s.T(), fmt.Sprintf("%v", run.ExperimentID), decodedData[expIdKey])
-					assert.Equal(s.T(), run.Status == models.StatusRunning, decodedData[activeKey])
-					assert.Equal(s.T(), false, decodedData[archivedKey])
-					assert.Equal(s.T(), run.StartTime.Int64, int64(decodedData[startTimeKey].(float64)))
-					assert.Equal(s.T(), run.EndTime.Int64, int64(decodedData[endTimeKey].(float64)))
+					s.Equal(run.Name, decodedData[respNameKey])
+					s.Equal(fmt.Sprintf("%v", run.ExperimentID), decodedData[expIdKey])
+					s.Equal(run.Status == models.StatusRunning, decodedData[activeKey])
+					s.Equal(false, decodedData[archivedKey])
+					s.Equal(float64(run.StartTime.Int64)/1000, decodedData[startTimeKey])
+					s.Equal(float64(run.EndTime.Int64)/1000, decodedData[endTimeKey])
 					responseCount++
 				} else {
-					assert.Nil(s.T(), decodedData[respNameKey])
-					assert.Nil(s.T(), decodedData[expIdKey])
-					assert.Nil(s.T(), decodedData[activeKey])
-					assert.Nil(s.T(), decodedData[archivedKey])
-					assert.Nil(s.T(), decodedData[startTimeKey])
-					assert.Nil(s.T(), decodedData[endTimeKey])
+					s.Nil(decodedData[respNameKey])
+					s.Nil(decodedData[expIdKey])
+					s.Nil(decodedData[activeKey])
+					s.Nil(decodedData[archivedKey])
+					s.Nil(decodedData[startTimeKey])
+					s.Nil(decodedData[endTimeKey])
 				}
 			}
-			assert.Equal(s.T(), tt.wantRunCount, responseCount)
+			s.Equal(tt.wantRunCount, responseCount)
 		})
 	}
 }

@@ -11,15 +11,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -33,26 +30,7 @@ func TestUpdateRunTestSuite(t *testing.T) {
 }
 
 func (s *UpdateRunTestSuite) Test_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	// create test experiment.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	require.Nil(s.T(), err)
-
-	// create test run for the experiment
+	// create test run.
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:     strings.ReplaceAll(uuid.New().String(), "-", ""),
 		Name:   "TestRun",
@@ -67,10 +45,10 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 		},
 		SourceType:     "JOB",
 		ArtifactURI:    "artifact_uri",
-		ExperimentID:   *experiment.ID,
+		ExperimentID:   *s.DefaultExperiment.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	req := request.UpdateRunRequest{
 		RunID:   run.ID,
@@ -79,44 +57,36 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 		EndTime: 1111111111,
 	}
 	resp := response.UpdateRunResponse{}
-	require.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
 			req,
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute,
 		),
 	)
-	assert.NotEmpty(s.T(), resp.RunInfo.ID)
-	assert.NotEmpty(s.T(), resp.RunInfo.UUID)
-	assert.Equal(s.T(), "UpdatedName", resp.RunInfo.Name)
-	assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.RunInfo.ExperimentID)
-	assert.Equal(s.T(), int64(1234567890), resp.RunInfo.StartTime)
-	assert.Equal(s.T(), int64(1111111111), resp.RunInfo.EndTime)
-	assert.Equal(s.T(), string(models.StatusScheduled), resp.RunInfo.Status)
-	assert.NotEmpty(s.T(), resp.RunInfo.ArtifactURI)
-	assert.Equal(s.T(), string(models.LifecycleStageActive), resp.RunInfo.LifecycleStage)
+	s.NotEmpty(resp.RunInfo.ID)
+	s.NotEmpty(resp.RunInfo.UUID)
+	s.Equal("UpdatedName", resp.RunInfo.Name)
+	s.Equal(fmt.Sprintf("%d", *s.DefaultExperiment.ID), resp.RunInfo.ExperimentID)
+	s.Equal(int64(1234567890), resp.RunInfo.StartTime)
+	s.Equal(int64(1111111111), resp.RunInfo.EndTime)
+	s.Equal(string(models.StatusScheduled), resp.RunInfo.Status)
+	s.NotEmpty(resp.RunInfo.ArtifactURI)
+	s.Equal(string(models.LifecycleStageActive), resp.RunInfo.LifecycleStage)
 
 	// check that run has been updated in database.
 	run, err = s.RunFixtures.GetRun(context.Background(), run.ID)
-	require.Nil(s.T(), err)
-	assert.Equal(s.T(), "UpdatedName", run.Name)
-	assert.Equal(s.T(), models.StatusScheduled, run.Status)
-	assert.Equal(s.T(), int64(1111111111), run.EndTime.Int64)
+	s.Require().Nil(err)
+	s.Equal("UpdatedName", run.Name)
+	s.Equal(models.StatusScheduled, run.Status)
+	s.Equal(int64(1111111111), run.EndTime.Int64)
 }
 
 func (s *UpdateRunTestSuite) Test_Error() {
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -136,21 +106,20 @@ func (s *UpdateRunTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
-				s.MlflowClient.WithMethod(
+			s.Require().Nil(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

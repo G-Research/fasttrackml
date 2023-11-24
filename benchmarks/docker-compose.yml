@@ -1,27 +1,166 @@
+version: '3'
 services:
-  fasttrackml:
-    image: gresearch/fasttrackml
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-    #   interval: 2s
-    #   timeout: 5s
-    #   start_period: 5m
-    ports:
-      - "8000:5000"
+    mlflowdb:
+      image: postgres:13
+      container_name: mlflowdb
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+        - POSTGRES_DB=mlflow_db
+      networks:
+        - mlflow_network
+      healthcheck:
+        test: ["CMD", "pg_isready", "-U", "postgres"]
+        interval: 5s
+        timeout: 5s
 
-    networks:
-      - shared_network
+    fasttrackdb:
+      image: postgres:13
+      container_name: fasttrackdb
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+        - POSTGRES_DB=fasttrack_db
+      networks:
+        - fasttrack_network
+      healthcheck:
+        test: ["CMD", "pg_isready", "-U", "postgres"]
+        interval: 5s
+        timeout: 5s
 
-  performance-tests:
-    build: .
-    volumes:
-      - .:/src
-    depends_on:
-      - fasttrackml
+    mlflowpostgres:
+      image: seeloz/mlflow-server
+      ports:
+        - 8000:5000
+      environment:
+        - BACKEND_URI=postgresql://postgres:postgres@mlflowdb:5432/mlflow_db
+      depends_on:
+        mlflowdb:
+          condition: service_healthy
+      networks:
+        - mlflow_network
+        - shared
+    
+    mlflow:
+      image: seeloz/mlflow-server
+      ports:
+        - 8001:5000
+      networks:
+        - mlflow_network
+        - shared
 
-    networks:
-      - shared_network
+    fasttrack:
+      image: gresearch/fasttrackml
+      networks:
+        - fasttrack_network
+        - shared
+      ports:
+        - 8002:5000
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+        interval: 2s
+        timeout: 5s
+        start_period: 5m
+
+    fasttrackpostgres:
+      image: gresearch/fasttrackml
+      networks:
+        - fasttrack_network
+        - shared
+      ports:
+        - 8003:5000
+      environment:
+        - FML_DATABASE_URI=postgresql://postgres:postgres@fasttrackdb:5432/fasttrack_db
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+        interval: 5s
+        timeout: 10s
+        retries: 3
+      depends_on:
+        fasttrackdb:
+          condition: service_healthy
+
+    throughput_test_mlflow_sqlite:
+      image: grafana/k6:latest
+      command: run /k6ThroughputPerfScript.js -e HOSTNAME=mlflow:5000 
+      volumes:
+        - ./k6ThroughputPerfScript.js:/k6ThroughputPerfScript.js
+      networks:
+        - mlflow_network
+      depends_on:
+        - mlflow
+      
+    throughput_test_mlflow_postgres:
+      image: grafana/k6:latest
+      command: run /k6ThroughputPerfScript.js -e HOSTNAME=mlflowpostgres:5000 
+      volumes:
+        - ./k6ThroughputPerfScript.js:/k6ThroughputPerfScript.js
+      networks:
+        - mlflow_network
+      depends_on:
+        - mlflowpostgres
+
+    throughput_test_fasttrack_sqlite:
+      image: grafana/k6:latest
+      command: run /k6ThroughputPerfScript.js -e HOSTNAME=fasttrack:5000 
+      volumes:
+        - ./k6ThroughputPerfScript.js:/k6ThroughputPerfScript.js
+      networks:
+        - fasttrack_network
+      depends_on:
+        - fasttrack
+      
+    throughput_test_fasttrack_postgres:
+      image: grafana/k6:latest
+      command: run /k6ThroughputPerfScript.js -e HOSTNAME=fasttrackpostgres:5000 
+      volumes:
+        - ./k6ThroughputPerfScript.js:/k6ThroughputPerfScript.js
+      networks:
+        - fasttrack_network
+      depends_on:
+        - fasttrackpostgres
+
+    retreival_test_mlflow_sqlite:
+      image: grafana/k6:latest
+      command: run /k6RetreivalPerfScript.js -e HOSTNAME=mlflow:5000 
+      volumes:
+        - ./k6RetreivalPerfScript.js:/k6RetreivalPerfScript.js
+      networks:
+        - mlflow_network
+      depends_on:
+        - mlflow
+
+    retreival_test_mlflow_postgres:
+      image: grafana/k6:latest
+      command: run /k6RetreivalPerfScript.js -e HOSTNAME=mlflowpostgres:5000 
+      volumes:
+        - ./k6RetreivalPerfScript.js:/k6RetreivalPerfScript.js
+      networks:
+        - mlflow_network
+      depends_on:
+        - mlflowpostgres
+      
+    retreival_test_fasttrack_postgres:
+      image: grafana/k6:latest
+      command: run /k6RetreivalPerfScript.js -e HOSTNAME=fasttrackpostgres:5000 
+      volumes:
+        - ./k6RetreivalPerfScript.js:/k6RetreivalPerfScript.js
+      networks:
+        - fasttrack_network
+      depends_on:
+        - fasttrackpostgres
+
+    retreival_test_fasttrack_sqlite:
+      image: grafana/k6:latest
+      command: run /k6RetreivalPerfScript.js -e HOSTNAME=fasttrack:5000 
+      volumes:
+        - ./k6RetreivalPerfScript.js:/k6RetreivalPerfScript.js
+      networks:
+        - fasttrack_network
+      depends_on:
+        - fasttrack
 
 networks:
-  shared_network:
-    driver: bridge
+  mlflow_network:
+  fasttrack_network:
+  shared:

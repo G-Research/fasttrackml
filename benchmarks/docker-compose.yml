@@ -82,9 +82,10 @@ services:
 
     throughput_test_mlflow_sqlite:
       image: grafana/k6:latest
-      command: run /k6ThroughputPerfScript.js -e HOSTNAME=mlflow:5000 
+      command: run k6ThroughputPerfScript.js --out csv=mlflowsqlitethrougput.csv -e HOSTNAME=mlflow:5000 
+      working_dir: /src
       volumes:
-        - ./k6ThroughputPerfScript.js:/k6ThroughputPerfScript.js
+        - .:/src
       networks:
         - mlflow_network
       depends_on:
@@ -92,9 +93,10 @@ services:
       
     throughput_test_mlflow_postgres:
       image: grafana/k6:latest
-      command: run /k6ThroughputPerfScript.js -e HOSTNAME=mlflowpostgres:5000 
+      command: run k6ThroughputPerfScript.js --out csv=mlflowpostgresthrougput.csv -e HOSTNAME=mlflowpostgres:5000 
+      working_dir: /src
       volumes:
-        - ./k6ThroughputPerfScript.js:/k6ThroughputPerfScript.js
+        - .:/src
       networks:
         - mlflow_network
       depends_on:
@@ -102,9 +104,10 @@ services:
 
     throughput_test_fasttrack_sqlite:
       image: grafana/k6:latest
-      command: run /k6ThroughputPerfScript.js -e HOSTNAME=fasttrack:5000 
+      command: run k6ThroughputPerfScript.js --out csv=fasttracksqlitethrougput.csv -e HOSTNAME=fasttrack:5000 
+      working_dir: /src
       volumes:
-        - ./k6ThroughputPerfScript.js:/k6ThroughputPerfScript.js
+        - .:/src
       networks:
         - fasttrack_network
       depends_on:
@@ -112,9 +115,10 @@ services:
       
     throughput_test_fasttrack_postgres:
       image: grafana/k6:latest
-      command: run /k6ThroughputPerfScript.js -e HOSTNAME=fasttrackpostgres:5000 
+      command: run k6ThroughputPerfScript.js --out csv=fasttrackpostgresthrougput.csv -e HOSTNAME=fasttrackpostgres:5000 
+      working_dir: /src
       volumes:
-        - ./k6ThroughputPerfScript.js:/k6ThroughputPerfScript.js
+        - .:/src
       networks:
         - fasttrack_network
       depends_on:
@@ -122,9 +126,10 @@ services:
 
     retreival_test_mlflow_sqlite:
       image: grafana/k6:latest
-      command: run /k6RetreivalPerfScript.js -e HOSTNAME=mlflow:5000 
+      command: run k6RetreivalPerfScript.js --out csv=mlflowsqliteretreival.csv -e HOSTNAME=mlflow:5000 
+      working_dir: /src
       volumes:
-        - ./k6RetreivalPerfScript.js:/k6RetreivalPerfScript.js
+        - .:/src
       networks:
         - mlflow_network
       depends_on:
@@ -132,9 +137,10 @@ services:
 
     retreival_test_mlflow_postgres:
       image: grafana/k6:latest
-      command: run /k6RetreivalPerfScript.js -e HOSTNAME=mlflowpostgres:5000 
+      command: run k6RetreivalPerfScript.js --out csv=mlflowpostgresretreival.csv -e HOSTNAME=mlflowpostgres:5000 
+      working_dir: /src
       volumes:
-        - ./k6RetreivalPerfScript.js:/k6RetreivalPerfScript.js
+        - .:/src
       networks:
         - mlflow_network
       depends_on:
@@ -142,9 +148,10 @@ services:
       
     retreival_test_fasttrack_postgres:
       image: grafana/k6:latest
-      command: run /k6RetreivalPerfScript.js -e HOSTNAME=fasttrackpostgres:5000 
+      command: run k6RetreivalPerfScript.js --out csv=fasttrackpostgresretreival.csv -e HOSTNAME=fasttrackpostgres:5000 
+      working_dir: /src
       volumes:
-        - ./k6RetreivalPerfScript.js:/k6RetreivalPerfScript.js
+        - .:/src
       networks:
         - fasttrack_network
       depends_on:
@@ -152,9 +159,10 @@ services:
 
     retreival_test_fasttrack_sqlite:
       image: grafana/k6:latest
-      command: run /k6RetreivalPerfScript.js -e HOSTNAME=fasttrack:5000 
+      command: run k6RetreivalPerfScript.js --out csv=fasttracksqliteretreival.csv -e HOSTNAME=fasttrack:5000 
+      working_dir: /src
       volumes:
-        - ./k6RetreivalPerfScript.js:/k6RetreivalPerfScript.js
+        - .:/src
       networks:
         - fasttrack_network
       depends_on:

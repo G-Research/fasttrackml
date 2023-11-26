@@ -64,7 +64,9 @@ def generateReport(dfs, filename):
         axes[int(i / num_cols)][i % num_cols].set_title(dfs[i]["name"][0])
 
     # Save the figure to a single image file (e.g., PNG)
-    plt.savefig(filename)
+    plt.savefig('performanceReport.png')
+
+
 
 
 def getDataframeFromFile(filename, application_name):
@@ -197,8 +199,4 @@ if __name__ == "__main__":
         generateReport(dfs, filename=OUTPUT_FILE)
         logging.info("Report generated successfully")
     else:
-        logging.info("Generated CSV files not complete and could not generate reports")
-
-    if SHOULD_CLEAN:
-        # cleanGeneratedFiles()
-        pass
+        print("Generated CSV files not complete and could not generate reports")

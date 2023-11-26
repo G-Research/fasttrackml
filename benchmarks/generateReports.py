@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import time
 
@@ -7,6 +8,13 @@ import pandas as pd
 
 BENCHMARKS = ['SearchRuns', 'SearchExperiments', 'MetricHistory', 'CreateRun', 
               'LogMetricSingle', 'LogMetricBatch5', 'LogMetricBatch10', 'LogMetricBatch100']
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+)
+
 
 def generateReport(dfs, filename):
     """
@@ -32,7 +40,7 @@ def generateReport(dfs, filename):
     for i in range(num_dfs):
         axes[int(i/num_cols)][i%num_cols].set_xlabel('Application')
         axes[int(i/num_cols)][i%num_cols].set_ylabel('Milliseconds')
-        axes[int(i/num_cols)][i%num_cols].set_title(BENCHMARKS[i])
+        axes[int(i/num_cols)][i%num_cols].set_title(dfs[i]['name'][0])
     
     # Save the figure to a single image file (e.g., PNG)
     plt.savefig(filename)
@@ -54,7 +62,7 @@ def getDataframeFromFile(filename, application_name):
     df = df[df['name'].isin(BENCHMARKS)]
     
     # List of columns to keep
-    columns_to_keep = ['metric_name', 'metric_value', 'name', 'timestamp']
+    columns_to_keep = ['metric_value', 'name']
 
     # Drop all columns except the specified ones
     df.drop(df.columns.difference(columns_to_keep), axis=1, inplace=True)
@@ -82,6 +90,8 @@ def generateDataframes():
     dfs = []
     for benchmark in BENCHMARKS:
         benchmark_df = df[df['name'] == benchmark]
+        benchmark_df = benchmark_df.groupby('application')['metric_value'].mean().reset_index()
+        benchmark_df['name'] = benchmark
         dfs.append(benchmark_df)
     return dfs
 
@@ -129,7 +139,7 @@ def cleanGeneratedFiles():
     if os.path.exists("fasttrackpostgresthrougput.csv"):
         os.remove("fasttrackpostgresthrougput.csv")
     if os.path.exists("mlflowsqliteretreival.csv"):
-        os.remove("fasttrackpostgresthrougput.csv")
+        os.remove("mlflowsqliteretreival.csv")
     if os.path.exists("mlflowpostgresretreival.csv"):
         os.remove("mlflowpostgresretreival.csv")
     if os.path.exists("fasttrackpostgresretreival.csv"):
@@ -142,6 +152,8 @@ def cleanGeneratedFiles():
 
 if __name__ == '__main__':
     # ensure all reports have been generated
+    
+    logging.info("Beginning report generation")
     
     # get arguments to python script
     parser = argparse.ArgumentParser()
@@ -160,16 +172,18 @@ if __name__ == '__main__':
     DELAY_BETWEEN_CHECKS = args.delaybetween
     
     num_checks = 0
-    while checkAllFilesReady() == False and num_checks < NUM_OF_TIMES_TO_CHECK:
-        time.sleep(DELAY_BETWEEN_CHECKS)
+    # while checkAllFilesReady() == False and num_checks < NUM_OF_TIMES_TO_CHECK:
+    #     logging.info("Waiting for all csv files to be generated...")
+    #     time.sleep(DELAY_BETWEEN_CHECKS)
     
     if checkAllFilesReady() == True:
         # clean the reports and get the relevant dataframes for the tests
         # generate report using dataframes
         dfs = generateDataframes()
         generateReport(dfs, filename=OUTPUT_FILE)
+        logging.info("Report generated successfully")
     else:
-        print("Generated CSV files not complete and could not generate reports")
+        logging.info("Generated CSV files not complete and could not generate reports")
         
             
     if SHOULD_CLEAN:

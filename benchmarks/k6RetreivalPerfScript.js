@@ -1,7 +1,7 @@
 import http from 'k6/http';
 import { sleep } from 'k6';
 
-sleep(1);
+sleep(3);
 
 export default function () {
   const base_url = 'http://' + __ENV.HOSTNAME + '/api/2.0/mlflow/';
@@ -23,6 +23,7 @@ export default function () {
         },
       }
     );
+    console.log(experiment_response.json());
     let experimentId = experiment_response.json().experiment_id
     experimentIds.push(experimentId);
 
@@ -46,7 +47,7 @@ export default function () {
           },
         }
       );
-
+      console.log(run_response.json());
       let runId = run_response.json().run.info.run_id;
       runIds.push(runId)
     }

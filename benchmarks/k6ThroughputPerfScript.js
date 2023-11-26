@@ -1,7 +1,7 @@
 import http from 'k6/http';
 import { sleep } from 'k6';
 
-sleep(1);
+sleep(3);
 
 export default function () {
   // Set base url from environment variable, the variable ' -e HOSTNAME = xxxx ' must be added to command line arguement

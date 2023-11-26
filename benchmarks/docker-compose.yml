@@ -168,6 +168,22 @@ services:
       depends_on:
         - fasttrack
 
+    performance_benchmark_test: 
+      image: opencadc/matplotlib
+      command: python generateReports.py
+      working_dir: /src
+      volumes:
+        - .:/src
+      depends_on:
+        - throughput_test_mlflow_sqlite
+        - throughput_test_mlflow_postgres
+        - throughput_test_fasttrack_sqlite
+        - throughput_test_fasttrack_postgres
+        - retreival_test_mlflow_sqlite
+        - retreival_test_mlflow_postgres
+        - retreival_test_fasttrack_sqlite
+        - retreival_test_fasttrack_postgres
+
 networks:
   mlflow_network:
   fasttrack_network:

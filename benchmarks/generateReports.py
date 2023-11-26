@@ -1,3 +1,4 @@
+import argparse
 import os
 import time
 
@@ -7,7 +8,11 @@ import pandas as pd
 BENCHMARKS = ['SearchRuns', 'SearchExperiments', 'MetricHistory', 'CreateRun', 
               'LogMetricSingle', 'LogMetricBatch5', 'LogMetricBatch10', 'LogMetricBatch100']
 
-def generateReport(dfs):
+def generateReport(dfs, filename):
+    """
+    Generate an image report for a given dataframe and storing it with the 
+    provided filename.
+    """
     # Sample data
     colors1 = ['red', 'green', 'blue', 'orange']
     
@@ -30,7 +35,7 @@ def generateReport(dfs):
         axes[int(i/num_cols)][i%num_cols].set_title(BENCHMARKS[i])
     
     # Save the figure to a single image file (e.g., PNG)
-    plt.savefig('performanceReport.png')
+    plt.savefig(filename)
     
     
     
@@ -57,6 +62,10 @@ def getDataframeFromFile(filename, application_name):
     return df
 
 def generateDataframes():
+    """
+    Generate single dataframe by concatenating the results from the various report files
+    Filter the dataframe for only rows with benchmarks we want to measure
+    """
     # get all the dataframes from all the geneated files and indicate the relevant applications
     df1 = getDataframeFromFile('mlflowsqlitethrougput.csv', 'mlflow sqlite')
     df2 = getDataframeFromFile('mlflowpostgresthrougput.csv', 'mlflow postgres')
@@ -105,11 +114,51 @@ def checkAllFilesReady():
        
     return False
 
-NUM_OF_TIMES_TO_CHECK = 10
-DELAY_BETWEEN_CHECKS = 60
+def cleanGeneratedFiles():
+    """
+    Delete generated output files
+    The function checks if a particular csv report output file exists 
+    and deletes it
+    """
+    if os.path.exists("mlflowsqlitethrougput.csv"):
+        os.remove("mlflowsqlitethrougput.csv")
+    if os.path.exists("mlflowpostgresthrougput.csv"):
+        os.remove("mlflowpostgresthrougput.csv")
+    if os.path.exists("fasttracksqlitethrougput.csv"):
+        os.remove("fasttracksqlitethrougput.csv")
+    if os.path.exists("fasttrackpostgresthrougput.csv"):
+        os.remove("fasttrackpostgresthrougput.csv")
+    if os.path.exists("mlflowsqliteretreival.csv"):
+        os.remove("fasttrackpostgresthrougput.csv")
+    if os.path.exists("mlflowpostgresretreival.csv"):
+        os.remove("mlflowpostgresretreival.csv")
+    if os.path.exists("fasttrackpostgresretreival.csv"):
+        os.remove("fasttrackpostgresretreival.csv")
+    if os.path.exists("fasttracksqliteretreival.csv"):
+        os.remove("fasttracksqliteretreival.csv")
+       
+    return False
+    
 
 if __name__ == '__main__':
     # ensure all reports have been generated
+    
+    # get arguments to python script
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('--clean', help='clean generated csv files after report generation', default=True)
+    parser.add_argument('--output', help='the name of the output image, should be a .png file type', default="performanceReport.png")
+    parser.add_argument('--numchecks', help='the number of times the report generator should check that the csv files have been generated', default=10)
+    parser.add_argument('--delaybetween', help='the amout of time delay in seconds between checks', default=60)
+    
+    
+    args = parser.parse_args()
+
+    OUTPUT_FILE = args.output
+    SHOULD_CLEAN = args.clean
+    NUM_OF_TIMES_TO_CHECK = args.numchecks
+    DELAY_BETWEEN_CHECKS = args.delaybetween
+    
     num_checks = 0
     while checkAllFilesReady() == False and num_checks < NUM_OF_TIMES_TO_CHECK:
         time.sleep(DELAY_BETWEEN_CHECKS)
@@ -118,7 +167,11 @@ if __name__ == '__main__':
         # clean the reports and get the relevant dataframes for the tests
         # generate report using dataframes
         dfs = generateDataframes()
-        generateReport(dfs)
+        generateReport(dfs, filename=OUTPUT_FILE)
     else:
         print("Generated CSV files not complete and could not generate reports")
+        
+            
+    if SHOULD_CLEAN:
+        cleanGeneratedFiles()
     

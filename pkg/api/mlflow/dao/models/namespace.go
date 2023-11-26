@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -16,4 +17,11 @@ type Namespace struct {
 	DeletedAt           gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 	DefaultExperimentID *int32         `gorm:"not null" json:"default_experiment_id"`
 	Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE" json:"experiments"`
+}
+
+func (ns Namespace) DisplayName() string {
+	if ns.Description != "" {
+		return fmt.Sprintf("%s (%s)", ns.Code, ns.Description)
+	}
+	return ns.Code
 }

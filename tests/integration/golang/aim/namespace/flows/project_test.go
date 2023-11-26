@@ -6,8 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -27,11 +25,12 @@ type ProjectFlowTestSuite struct {
 // - `GET /projects/params`
 // - `GET /projects/activity`
 func TestProjectFlowTestSuite(t *testing.T) {
-	suite.Run(t, new(ProjectFlowTestSuite))
-}
-
-func (s *ProjectFlowTestSuite) TearDownTest() {
-	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	suite.Run(t, &ProjectFlowTestSuite{
+		helpers.BaseTestSuite{
+			ResetOnSubTest:             true,
+			SkipCreateDefaultNamespace: true,
+		},
+	})
 }
 
 func (s *ProjectFlowTestSuite) Test_Ok() {
@@ -87,22 +86,19 @@ func (s *ProjectFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:             "Experiment1",
-				ArtifactLocation: "/artifact/location",
-				LifecycleStage:   models.LifecycleStageActive,
-				NamespaceID:      namespace1.ID,
+				Name:           "Experiment1",
+				LifecycleStage: models.LifecycleStageActive,
+				NamespaceID:    namespace1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             "id1",
@@ -114,9 +110,9 @@ func (s *ProjectFlowTestSuite) Test_Ok() {
 				ArtifactURI:    "artifact_uri1",
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
-			require.Nil(
-				s.T(), s.RunFixtures.CreateMetric(
+			s.Require().Nil(err)
+			s.Require().Nil(
+				s.RunFixtures.CreateMetric(
 					context.Background(),
 					&models.Metric{
 						Key:       "key1",
@@ -139,29 +135,28 @@ func (s *ProjectFlowTestSuite) Test_Ok() {
 				RunID:     run1.ID,
 				LastIter:  1,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			tag1, err := s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 				Key:   "tag1",
 				Value: "value1",
 				RunID: run1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			param1, err := s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 				Key:   "param1",
 				Value: "value1",
 				RunID: run1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:             "Experiment2",
-				ArtifactLocation: "/artifact/location",
-				LifecycleStage:   models.LifecycleStageActive,
-				NamespaceID:      namespace2.ID,
+				Name:           "Experiment2",
+				LifecycleStage: models.LifecycleStageActive,
+				NamespaceID:    namespace2.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             "id2",
@@ -173,7 +168,7 @@ func (s *ProjectFlowTestSuite) Test_Ok() {
 				ArtifactURI:    "artifact_uri2",
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			metric2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 				Key:       "metric2",
@@ -184,21 +179,21 @@ func (s *ProjectFlowTestSuite) Test_Ok() {
 				RunID:     run2.ID,
 				LastIter:  1,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			tag2, err := s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 				Key:   "tag2",
 				Value: "value2",
 				RunID: run2.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			param2, err := s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 				Key:   "param2",
 				Value: "value2",
 				RunID: run2.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// 2. run actual flow test over the test data.
 			s.testRunFlow(
@@ -251,28 +246,27 @@ func (s *ProjectFlowTestSuite) getProjectAndCompare(
 	namespace string, expectedResponse *response.GetProjectResponse,
 ) {
 	var resp response.GetProjectResponse
-	require.Nil(
-		s.T(), s.AIMClient().WithNamespace(namespace).WithResponse(&resp).DoRequest("/projects"),
+	s.Require().Nil(
+		s.AIMClient().WithNamespace(namespace).WithResponse(&resp).DoRequest("/projects"),
 	)
-	assert.Equal(s.T(), expectedResponse.Name, resp.Name)
-	assert.Equal(s.T(), expectedResponse.Description, resp.Description)
-	assert.Equal(s.T(), expectedResponse.TelemetryEnabled, resp.TelemetryEnabled)
+	s.Equal(expectedResponse.Name, resp.Name)
+	s.Equal(expectedResponse.Description, resp.Description)
+	s.Equal(expectedResponse.TelemetryEnabled, resp.TelemetryEnabled)
 }
 
 func (s *ProjectFlowTestSuite) getProjectStatusAndCompare(namespace string) {
 	var resp string
-	require.Nil(
-		s.T(), s.AIMClient().WithNamespace(namespace).WithResponse(&resp).DoRequest("/projects/status"),
+	s.Require().Nil(
+		s.AIMClient().WithNamespace(namespace).WithResponse(&resp).DoRequest("/projects/status"),
 	)
-	assert.Equal(s.T(), "up-to-date", resp)
+	s.Equal("up-to-date", resp)
 }
 
 func (s *ProjectFlowTestSuite) getProjectParamsAndCompare(
 	namespace string, metric *models.LatestMetric, param *models.Param, tag *models.Tag,
 ) {
 	resp := response.ProjectParamsResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace,
 		).WithQuery(
@@ -282,10 +276,10 @@ func (s *ProjectFlowTestSuite) getProjectParamsAndCompare(
 		).DoRequest("/projects/params"),
 	)
 
-	assert.Equal(s.T(), 1, len(resp.Metric))
+	s.Equal(1, len(resp.Metric))
 	_, ok := resp.Metric[metric.Key]
-	assert.True(s.T(), ok)
-	assert.Equal(s.T(), map[string]interface{}{
+	s.True(ok)
+	s.Equal(map[string]interface{}{
 		param.Key: map[string]interface{}{
 			"__example_type__": "<class 'str'>",
 		},
@@ -301,12 +295,12 @@ func (s *ProjectFlowTestSuite) getProjectActivityAndCompare(
 	namespace string, expectedResponse *response.ProjectActivityResponse,
 ) {
 	var resp response.ProjectActivityResponse
-	require.Nil(
-		s.T(), s.AIMClient().WithNamespace(namespace).WithResponse(&resp).DoRequest("/projects/activity"),
+	s.Require().Nil(
+		s.AIMClient().WithNamespace(namespace).WithResponse(&resp).DoRequest("/projects/activity"),
 	)
 
-	assert.Equal(s.T(), expectedResponse.NumActiveRuns, resp.NumActiveRuns)
-	assert.Equal(s.T(), expectedResponse.NumArchivedRuns, resp.NumArchivedRuns)
-	assert.Equal(s.T(), expectedResponse.NumExperiments, resp.NumExperiments)
-	assert.Equal(s.T(), expectedResponse.NumRuns, resp.NumRuns)
+	s.Equal(expectedResponse.NumActiveRuns, resp.NumActiveRuns)
+	s.Equal(expectedResponse.NumArchivedRuns, resp.NumArchivedRuns)
+	s.Equal(expectedResponse.NumExperiments, resp.NumExperiments)
+	s.Equal(expectedResponse.NumRuns, resp.NumRuns)
 }

@@ -9,13 +9,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -29,17 +25,6 @@ func TestDeleteAppTestSuite(t *testing.T) {
 }
 
 func (s *DeleteAppTestSuite) Test_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
 			ID:        uuid.New(),
@@ -47,9 +32,9 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 		},
 		Type:        "mpi",
 		State:       database.AppState{},
-		NamespaceID: namespace.ID,
+		NamespaceID: s.DefaultNamespace.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name             string
@@ -62,8 +47,7 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodDelete,
 				).DoRequest(
@@ -71,34 +55,23 @@ func (s *DeleteAppTestSuite) Test_Ok() {
 				),
 			)
 			apps, err := s.AppFixtures.GetApps(context.Background())
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.expectedAppCount, len(apps))
+			s.Require().Nil(err)
+			s.Equal(tt.expectedAppCount, len(apps))
 		})
 	}
 }
 
 func (s *DeleteAppTestSuite) Test_Error() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
-	_, err = s.AppFixtures.CreateApp(context.Background(), &database.App{
+	_, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
 			ID:        uuid.New(),
 			CreatedAt: time.Now(),
 		},
 		Type:        "mpi",
 		State:       database.AppState{},
-		NamespaceID: namespace.ID,
+		NamespaceID: s.DefaultNamespace.ID,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	tests := []struct {
 		name             string
@@ -114,8 +87,7 @@ func (s *DeleteAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.Error
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodDelete,
 				).WithResponse(
@@ -124,11 +96,11 @@ func (s *DeleteAppTestSuite) Test_Error() {
 					"/apps/%s", tt.idParam,
 				),
 			)
-			assert.Contains(s.T(), resp.Message, "Not Found")
+			s.Contains(resp.Message, "Not Found")
 
 			apps, err := s.AppFixtures.GetApps(context.Background())
-			require.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.expectedAppCount, len(apps))
+			s.Require().Nil(err)
+			s.Equal(tt.expectedAppCount, len(apps))
 		})
 	}
 }

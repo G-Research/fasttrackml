@@ -6,3 +6,8 @@ const (
 	NANPositiveInfinity = "Infinity"
 	NANNegativeInfinity = "-Infinity"
 )
+
+// Constants for experiment tags keys.
+const (
+	DescriptionTagKey = "mlflow.note.content"
+)

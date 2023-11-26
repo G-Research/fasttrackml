@@ -177,6 +177,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_URI: ${{ matrix.database-uri }}
+          FML_OUTPUT_DATABASE_URI: ${{ matrix.database-uri }}
 
       - name: Save cache
         if: steps.cache.outputs.cache-hit != 'true'

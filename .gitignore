@@ -7,6 +7,7 @@ fml
 fasttrackml
 *.exe
 __debug_bin*
+venv
 
 # Local database
 fasttrackml.db*
@@ -31,3 +32,12 @@ wheelhouse/
 .aim
 mlruns
 .pytest_cache
+mlflowsqlitethrougput.csv
+mlflowpostgresthrougput.csv
+fasttracksqlitethrougput.csv
+fasttrackpostgresthrougput.csv
+mlflowsqliteretreival.csv
+mlflowpostgresretreival.csv
+fasttrackpostgresretreival.csv
+fasttracksqliteretreival.csv
+performanceReport.png

@@ -30,6 +30,13 @@ logging.basicConfig(
 )
 
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+)
+
+
 def generateReport(dfs, filename):
     """
     Generate an image report for a given dataframe and storing it with the

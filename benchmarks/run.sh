@@ -13,4 +13,16 @@ if ! command -v docker-compose &> /dev/null; then
 fi
 
 # Run your specific Docker command
-docker-Compose up performance_benchmark_test
+docker-compose up throughput_test_mlflow_sqlite
+docker-compose up throughput_test_mlflow_postgres
+docker-compose up throughput_test_fasttrack_sqlite
+docker-compose up throughput_test_fasttrack_postgres
+docker-compose up retreival_test_mlflow_sqlite
+docker-compose up retreival_test_mlflow_postgres
+docker-compose up retreival_test_fasttrack_postgres
+docker-compose up retreival_test_fasttrack_sqlite
+
+docker-compose up performance_benchmark_test
+
+# Shut down all created containers
+docker-compose down

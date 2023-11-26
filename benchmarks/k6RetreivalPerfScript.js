@@ -3,86 +3,139 @@ import { sleep } from 'k6';
 
 sleep(1);
 
-
 export default function () {
   const base_url = 'http://' + __ENV.HOSTNAME + '/api/2.0/mlflow/';
 
-  const run_response = http.post(
-    base_url + 'runs/create',
-    JSON.stringify({
-      experiment_id: '0',
-      start_time: Date.now(),
-      tags: [
+
+  // create experiments and runs
+  let runIds = []
+  let experimentIds = []
+  // We need to load data into the database to run the retreival tests
+  for(let i=0; i<3; i++) {
+    let experiment_response = http.post(
+      base_url + 'experiments/create',
+      JSON.stringify({
+          name: `experiment_${i}`,
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      }
+    );
+    let experimentId = experiment_response.json().experiment_id
+    experimentIds.push(experimentId);
+
+    for (let j=0; j<3; j++) {
+      const run_response = http.post(
+        base_url + 'runs/create',
+        JSON.stringify({
+          experiment_id: `${experimentId}`,
+          start_time: Date.now(),
+          run_name: `run_${j}_${experimentId}`,
+          tags: [
+            {
+              key: "mlflow.user",
+              value: "k6"
+            }
+          ]
+        }),
         {
-          key: "mlflow.user",
-          value: "k6"
+          headers: {
+            'Content-Type': 'application/json'
+          },
         }
-      ]
+      );
+
+      let runId = run_response.json().run.info.run_id;
+      runIds.push(runId)
+    }
+  }
+
+  // create sets of params
+  let params = []
+  // create sets of metrics
+  let metrics = []
+
+
+  for (let id = 1; id <= 100; id++) {
+    // add params
+    params.push({
+      key: `param${id}`,
+      value: `${id * Math.random()}`,
+    })
+    // add metrics
+    for (let step=1; step < 5; step++){
+      metrics.push({
+        key: `metric${id}`,
+        value: id * step * Math.random(),
+        timestamp: Date.now(),
+        step: step
+      })
+  }
+  }
+
+  // log metrics and params on runs
+  for(let id = 0; id < runIds.length; id++){
+    http.post(
+      base_url + 'runs/log-batch',
+      JSON.stringify({
+        run_id: runIds[id],
+        metrics: metrics,
+        params: params
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      }
+    );
+  }
+
+  // test searching for experiments
+  http.post(
+    base_url + 'runs/search',
+    JSON.stringify({
+      experiment_ids: experimentIds[0],
+      max_results: 10,
+      filter:" metrics.metric0 > 1 and params.param0 > 1",
     }),
     {
       headers: {
         'Content-Type': 'application/json'
       },
+      tags: {
+        name: 'SearchRuns',
+      },
     }
   );
-  // const run_id = run_response.json().run.info.run_id;
 
-  // let params = []
-  // for (let id = 1; id <= 4; id++) {
-  //   params.push({
-  //     key: `param${id}`,
-  //     value: `${id * Math.random()}`,
-  //   })
-  // }
-  // http.post(
-  //   base_url + 'runs/log-batch',
-  //   JSON.stringify({
-  //     run_id: run_id,
-  //     params: params
-  //   }),
-  //   {
-  //     headers: {
-  //       'Content-Type': 'application/json'
-  //     },
-  //   }
-  // );
+  // test searching for runs
+  http.post(
+    base_url + 'experiments/search',
+    JSON.stringify({
+      max_results: 10,
+      filter:"name LIKE 'run_%'  AND tags.key = 'mlflow.user' ",
+    }),
+    {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      tags: {
+        name: 'SearchExperiments',
+      },
+    }
+  );
 
-  // let metrics = [];
-  // for (let step = 1; step <= 10000; step++) {
-  //   for (let id = 1; id <= 4; id++) {
-  //     metrics.push({
-  //       key: `metric${id}`,
-  //       value: id * step * Math.random(),
-  //       timestamp: Date.now(),
-  //       step: step
-  //     })
-  //   }
-  // }
+  // test getting metric history
+  http.get(
+    base_url + `runs/log-batch?run_id=${runIds[0]}?metric_key=metric1`,
+    {
+      tags: {
+        name: 'MetricHistory',
+      },
+    }
+  );
 
-  // http.post(
-  //   base_url + 'runs/log-batch',
-  //   JSON.stringify({
-  //     run_id: run_id,
-  //     metrics: metrics
-  //   }),
-  //   {
-  //     headers: {
-  //       'Content-Type': 'application/json'
-  //     },
-  //   }
-  // );
-
-  // http.post(
-  //   base_url + 'runs/update',
-  //   JSON.stringify({
-  //     run_id: run_id,
-  //     end_time: Date.now(),
-  //     status: 'FINISHED'
-  //   }),
-  //   {
-  //     headers: {
-  //       'Content-Type': 'application/json'
-  //     },
-  //   }
-  // );
+  //TODO: test getting metric histories
 }

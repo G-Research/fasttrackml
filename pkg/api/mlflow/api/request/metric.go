@@ -24,10 +24,9 @@ type GetMetricHistoryBulkRequest struct {
 
 // GetMetricHistoriesRequest is a request object for `POST /mlflow/metrics/get-histories` endpoint.
 type GetMetricHistoriesRequest struct {
-	ExperimentIDs []string       `json:"experiment_ids"`
-	RunIDs        []string       `json:"run_ids"`
-	MetricKeys    []string       `json:"metric_keys"`
-	ViewType      ViewType       `json:"run_view_type"`
-	MaxResults    int32          `json:"max_results"`
-	Context       map[string]any `json:"context"`
+	ExperimentIDs []string `json:"experiment_ids"`
+	RunIDs        []string `json:"run_ids"`
+	MetricKeys    []string `json:"metric_keys"`
+	ViewType      ViewType `json:"run_view_type"`
+	MaxResults    int32    `json:"max_results"`
 }

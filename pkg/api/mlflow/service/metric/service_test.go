@@ -335,6 +335,7 @@ func TestNewService_GetMetricHistories_Ok(t *testing.T) {
 				[]string{"key1", "key2"},
 				request.ViewTypeActiveOnly,
 				int32(1),
+				map[string]any{},
 			).Return(
 				tt.expectedRows,
 				tt.expectedIter,
@@ -423,6 +424,7 @@ func TestNewService_GetMetricHistories_Error(t *testing.T) {
 					[]string{"key1", "key2"},
 					request.ViewTypeAll,
 					int32(1),
+					map[string]any{},
 				).Return(
 					nil,
 					nil,

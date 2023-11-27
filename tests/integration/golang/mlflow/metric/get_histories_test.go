@@ -126,12 +126,6 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
 			},
 		},
-		{
-			name: "GetMetricHistoriesByPartialContext",
-			request: &request.GetMetricHistoriesRequest{
-				Context: map[string]any{"metrickey1": "metricvalue1"},
-			},
-		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {

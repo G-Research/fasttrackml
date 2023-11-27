@@ -43,11 +43,10 @@ func addJsonCondition(tx *gorm.DB, jsonColumnName string, jsonToMatch map[string
 	}
 	switch tx.Dialector.Name() {
 	case postgres.Dialector{}.Name():
-		jsonString, err := json.Marshal(jsonToMatch)
-		if err != nil {
-			return eris.Wrap(err, "error marshaling metricContext")
+		for k, v := range jsonToMatch {
+			path := strings.ReplaceAll(k, ".", ",")
+			tx.Where(fmt.Sprintf("%s#>>'{%s}' = ?", jsonColumnName, path), v)
 		}
-		tx.Where(fmt.Sprintf("%s @> ?::jsonb", jsonColumnName), jsonString)
 	default:
 		for k, v := range jsonToMatch {
 			tx.Where(fmt.Sprintf("%s->>'%s' = ?", jsonColumnName, k), v)

@@ -66,7 +66,13 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 		Step:      1,
 		Iter:      1,
 		Context: &models.Context{
-			Json: datatypes.JSON([]byte(`{"metrickey1": "metricvalue1", "metrickey2": "metricvalue2"}`)),
+			Json: datatypes.JSON([]byte(`
+				{
+					"metrickey1": "metricvalue1",
+					"metrickey2": "metricvalue2",
+					"metricnested": { "metricnestedkey": "metricnestedvalue" }
+				}`,
+			)),
 		},
 	})
 	s.Require().Nil(err)
@@ -79,8 +85,18 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	s.Require().Nil(metrics[0].ContextID)
 	s.Require().NotNil(metrics[1].ContextID)
 
-	// verify metric contexts can be used for selection
-	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]any{"metrickey1": "metricvalue1"})
+	// verify metric contexts can be used for selection (toplevel key)
+	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]any{
+		"metrickey1": "metricvalue1",
+	})
+	s.Require().Nil(err)
+	s.Require().Len(metrics, 1)
+	s.Require().NotNil(metrics[0].ContextID)
+
+	// nested key
+	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]any{
+		"metricnested.metricnestedkey": "metricnestedvalue",
+	})
 	s.Require().Nil(err)
 	s.Require().Len(metrics, 1)
 	s.Require().NotNil(metrics[0].ContextID)

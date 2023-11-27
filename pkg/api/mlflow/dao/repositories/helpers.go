@@ -35,18 +35,18 @@ func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []in
 }
 
 // addJsonCondition adds condition(s) to the query to select items having the specified jsonToMatch
-func addJsonCondition(tx *gorm.DB, jsonColumnName string, jsonToMatch map[string]any) error {
-	if len(jsonToMatch) == 0 {
+func addJsonCondition(tx *gorm.DB, jsonColumnName string, jsonPathValueMap map[string]any) error {
+	if len(jsonPathValueMap) == 0 {
 		return nil
 	}
 	switch tx.Dialector.Name() {
 	case postgres.Dialector{}.Name():
-		for k, v := range jsonToMatch {
+		for k, v := range jsonPathValueMap {
 			path := strings.ReplaceAll(k, ".", ",")
 			tx.Where(fmt.Sprintf("%s#>>'{%s}' = ?", jsonColumnName, path), v)
 		}
 	default:
-		for k, v := range jsonToMatch {
+		for k, v := range jsonPathValueMap {
 			tx.Where(fmt.Sprintf("%s->>'%s' = ?", jsonColumnName, k), v)
 		}
 	}

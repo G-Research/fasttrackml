@@ -30,7 +30,7 @@ type MetricRepositoryProvider interface {
 		experimentIDs []string, runIDs []string, metricKeys []string,
 		viewType request.ViewType,
 		limit int32,
-		metricContext map[string]any,
+		jsonPathValueMap map[string]any,
 	) (*sql.Rows, func(*sql.Rows, interface{}) error, error)
 	// GetMetricHistoryBulk returns metrics history bulk.
 	GetMetricHistoryBulk(
@@ -152,7 +152,7 @@ func (r MetricRepository) GetMetricHistories(
 	experimentIDs []string, runIDs []string, metricKeys []string,
 	viewType request.ViewType,
 	limit int32,
-	metricContext map[string]any,
+	jsonPathValueMap map[string]any,
 ) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
 	// if experimentIDs has been provided then firstly get the runs by provided experimentIDs.
 	if len(experimentIDs) > 0 {
@@ -221,9 +221,9 @@ func (r MetricRepository) GetMetricHistories(
 		query.Where("metrics.key IN ?", metricKeys)
 	}
 
-	if len(metricContext) > 0 {
+	if len(jsonPathValueMap) > 0 {
 		query.Joins("LEFT JOIN contexts on metrics.context_id = contexts.id")
-		if err := addJsonCondition(query, "contexts.json", metricContext); err != nil {
+		if err := addJsonCondition(query, "contexts.json", jsonPathValueMap); err != nil {
 			return nil, nil, eris.Wrap(err, "error adding metric context clause")
 		}
 	}

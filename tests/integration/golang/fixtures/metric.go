@@ -112,7 +112,7 @@ func (f MetricFixtures) GetLatestMetricByRunID(ctx context.Context, runID string
 // addContextSelection adds conditions to the query to select metrics having the provided context.
 func addContextSelection(tx *gorm.DB, columnName string, jsonPathValueMap map[string]any) {
 	if len(jsonPathValueMap) == 0 {
-		return nil
+		return
 	}
 	switch tx.Dialector.Name() {
 	case postgres.Dialector{}.Name():
@@ -125,5 +125,4 @@ func addContextSelection(tx *gorm.DB, columnName string, jsonPathValueMap map[st
 			tx.Where(fmt.Sprintf("%s->>'%s' = ?", columnName, k), v)
 		}
 	}
-	return nil
 }

@@ -15,7 +15,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -25,21 +24,15 @@ type GetExperimentByNameTestSuite struct {
 }
 
 func TestGetExperimentByNameTestSuite(t *testing.T) {
-	suite.Run(t, new(GetExperimentByNameTestSuite))
+	suite.Run(t, &GetExperimentByNameTestSuite{
+		helpers.BaseTestSuite{
+			SkipCreateDefaultExperiment: true,
+		},
+	})
 }
 
 func (s *GetExperimentByNameTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
 	// 1. prepare database with test data.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
@@ -48,7 +41,7 @@ func (s *GetExperimentByNameTestSuite) Test_Ok() {
 				Value: "value1",
 			},
 		},
-		NamespaceID: namespace.ID,
+		NamespaceID: s.DefaultNamespace.ID,
 		CreationTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
@@ -83,27 +76,16 @@ func (s *GetExperimentByNameTestSuite) Test_Ok() {
 	s.Equal(experiment.Name, resp.Experiment.Name)
 	s.Equal(string(experiment.LifecycleStage), resp.Experiment.LifecycleStage)
 	s.Equal(experiment.ArtifactLocation, resp.Experiment.ArtifactLocation)
-	s.Equal([]models.ExperimentTag{
-		{
-			Key:          "key1",
-			Value:        "value1",
-			ExperimentID: *experiment.ID,
-		},
-	}, experiment.Tags)
+	s.Equal(experiment.CreationTime.Int64, resp.Experiment.CreationTime)
+	s.Equal(experiment.LastUpdateTime.Int64, resp.Experiment.LastUpdateTime)
+	s.Require().Equal(len(experiment.Tags), len(resp.Experiment.Tags))
+	for i, tag := range experiment.Tags {
+		s.Equal(tag.Key, resp.Experiment.Tags[i].Key)
+		s.Equal(tag.Value, resp.Experiment.Tags[i].Value)
+	}
 }
 
 func (s *GetExperimentByNameTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse

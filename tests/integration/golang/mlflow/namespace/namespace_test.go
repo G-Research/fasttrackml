@@ -18,11 +18,11 @@ type NamespaceTestSuite struct {
 }
 
 func TestNamespaceTestSuite(t *testing.T) {
-	suite.Run(t, new(NamespaceTestSuite))
-}
-
-func (s *NamespaceTestSuite) TearDownTest() {
-	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	suite.Run(t, &NamespaceTestSuite{
+		helpers.BaseTestSuite{
+			SkipCreateDefaultNamespace: true,
+		},
+	})
 }
 
 func (s *NamespaceTestSuite) Test_Error() {

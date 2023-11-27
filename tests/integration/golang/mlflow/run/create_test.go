@@ -29,64 +29,16 @@ func TestCreateRunTestSuite(t *testing.T) {
 }
 
 func (s *CreateRunTestSuite) Test_DefaultNamespace_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	// create test experiment.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	s.Require().Nil(err)
-
-	s.successCases(namespace, experiment, false, *experiment.ID)
+	s.successCases(s.DefaultNamespace, s.DefaultExperiment, false, *s.DefaultExperiment.ID)
 }
 
 func (s *CreateRunTestSuite) Test_DefaultNamespaceExperimentZero_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	// create test experiment.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	s.Require().Nil(err)
-
-	// update default experiment id for namespace.
-	namespace.DefaultExperimentID = experiment.ID
-	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-	s.Require().Nil(err)
-
-	s.successCases(namespace, experiment, false, int32(0))
+	s.successCases(s.DefaultNamespace, s.DefaultExperiment, false, int32(0))
 }
 
 func (s *CreateRunTestSuite) Test_CustomNamespace_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
 	// create test experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
 		Code:                "custom",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
@@ -103,13 +55,8 @@ func (s *CreateRunTestSuite) Test_CustomNamespace_Ok() {
 }
 
 func (s *CreateRunTestSuite) Test_CustomNamespaceExperimentZero_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
 	// create test experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
 		Code:                "custom",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
@@ -192,29 +139,6 @@ func (s *CreateRunTestSuite) successCases(
 }
 
 func (s *CreateRunTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	s.Require().Nil(err)
-
-	// set namespace default experiment.
-	namespace.DefaultExperimentID = experiment.ID
-	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-	s.Require().Nil(err)
-
 	tests := []struct {
 		name      string
 		error     *api.ErrorResponse
@@ -235,7 +159,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 			name:      "CreateRunWithNotExistingNamespaceAndExistingExperimentID",
 			namespace: "not_existing_namespace",
 			request: request.CreateRunRequest{
-				ExperimentID: fmt.Sprintf("%d", *experiment.ID),
+				ExperimentID: fmt.Sprintf("%d", *s.DefaultExperiment.ID),
 			},
 			error: api.NewResourceDoesNotExistError(
 				`unable to find namespace with code: not_existing_namespace`,

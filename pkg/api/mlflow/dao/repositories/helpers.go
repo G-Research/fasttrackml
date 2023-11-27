@@ -1,11 +1,9 @@
 package repositories
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/rotisserie/eris"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 

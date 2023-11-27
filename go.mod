@@ -45,11 +45,6 @@ require (
 )
 
 require (
-	github.com/go-sql-driver/mysql v1.7.0 // indirect
-	gorm.io/driver/mysql v1.4.7 // indirect
-)
-
-require (
 	cloud.google.com/go v0.110.8 // indirect
 	cloud.google.com/go/compute v1.23.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect

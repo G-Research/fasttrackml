@@ -2,8 +2,8 @@ package fixtures
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/rotisserie/eris"
 	"gorm.io/driver/postgres"
@@ -112,19 +112,18 @@ func (f MetricFixtures) GetLatestMetricByRunID(ctx context.Context, runID string
 }
 
 // addContextSelection adds conditions to the query to select metrics having the provided context.
-func addContextSelection(tx *gorm.DB, columnName string, metricContext map[string]any) error {
-	if len(metricContext) == 0 {
+func addContextSelection(tx *gorm.DB, columnName string, jsonPathValueMap map[string]any) error {
+	if len(jsonPathValueMap) == 0 {
 		return nil
 	}
 	switch tx.Dialector.Name() {
 	case postgres.Dialector{}.Name():
-		jsonString, err := json.Marshal(metricContext)
-		if err != nil {
-			return eris.Wrap(err, "error marshaling metricContext")
+		for k, v := range jsonPathValueMap {
+			path := strings.ReplaceAll(k, ".", ",")
+			tx.Where(fmt.Sprintf("%s#>>'{%s}' = ?", columnName, path), v)
 		}
-		tx.Where(fmt.Sprintf("%s @> ?::jsonb", columnName), jsonString)
 	default:
-		for k, v := range metricContext {
+		for k, v := range jsonPathValueMap {
 			tx.Where(fmt.Sprintf("%s->>'%s' = ?", columnName, k), v)
 		}
 	}

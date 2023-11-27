@@ -1,4 +1,4 @@
-package database
+package v_0007
 
 import (
 	"context"
@@ -32,25 +32,25 @@ const (
 )
 
 type Namespace struct {
-	ID                  uint           `gorm:"primaryKey;autoIncrement" json:"id"`
-	Apps                []App          `gorm:"constraint:OnDelete:CASCADE" json:"apps"`
-	Code                string         `gorm:"unique;index;not null" json:"code"`
-	Description         string         `json:"description"`
-	CreatedAt           time.Time      `json:"created_at"`
-	UpdatedAt           time.Time      `json:"updated_at"`
-	DeletedAt           gorm.DeletedAt `gorm:"index" json:"deleted_at"`
-	DefaultExperimentID *int32         `gorm:"not null" json:"default_experiment_id"`
-	Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE" json:"experiments"`
+	ID                  uint   `gorm:"primaryKey;autoIncrement"`
+	Apps                []App  `gorm:"constraint:OnDelete:CASCADE"`
+	Code                string `gorm:"unique;index;not null"`
+	Description         string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	DeletedAt           gorm.DeletedAt `gorm:"index"`
+	DefaultExperimentID *int32         `gorm:"not null"`
+	Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 type Experiment struct {
 	ID               *int32         `gorm:"column:experiment_id;not null;primaryKey"`
-	Name             string         `gorm:"type:varchar(256);not null;index:,unique,composite:name"`
+	Name             string         `gorm:"type:varchar(256);not null;index:idx_namespace_name,unique"`
 	ArtifactLocation string         `gorm:"type:varchar(256)"`
 	LifecycleStage   LifecycleStage `gorm:"type:varchar(32);check:lifecycle_stage IN ('active', 'deleted')"`
 	CreationTime     sql.NullInt64  `gorm:"type:bigint"`
 	LastUpdateTime   sql.NullInt64  `gorm:"type:bigint"`
-	NamespaceID      uint           `gorm:"index:,unique,composite:name"`
+	NamespaceID      uint           `gorm:"index:idx_namespace_name,unique"`
 	Namespace        Namespace
 	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
 	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
@@ -209,10 +209,10 @@ func (d Dashboard) MarshalJSON() ([]byte, error) {
 
 type App struct {
 	Base
-	Type        string    `gorm:"not null" json:"type"`
-	State       AppState  `json:"state"`
-	Namespace   Namespace `json:"-"`
-	NamespaceID uint      `gorm:"column:namespace_id" json:"-"`
+	Type        string   `gorm:"not null" json:"type"`
+	State       AppState `json:"state"`
+	Namespace   Namespace
+	NamespaceID uint `gorm:"column:namespace_id"`
 }
 
 type AppState map[string]any

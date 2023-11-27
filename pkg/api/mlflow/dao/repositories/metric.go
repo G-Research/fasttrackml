@@ -223,9 +223,7 @@ func (r MetricRepository) GetMetricHistories(
 
 	if len(jsonPathValueMap) > 0 {
 		query.Joins("LEFT JOIN contexts on metrics.context_id = contexts.id")
-		if err := addJsonCondition(query, "contexts.json", jsonPathValueMap); err != nil {
-			return nil, nil, eris.Wrap(err, "error adding metric context clause")
-		}
+		addJsonCondition(query, "contexts.json", jsonPathValueMap)
 	}
 
 	rows, err := query.Rows()

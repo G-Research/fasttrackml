@@ -35,7 +35,7 @@ func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []in
 }
 
 // addJsonCondition adds condition(s) to the query to select items having the specified jsonToMatch
-func addJsonCondition(tx *gorm.DB, jsonColumnName string, jsonPathValueMap map[string]any) error {
+func addJsonCondition(tx *gorm.DB, jsonColumnName string, jsonPathValueMap map[string]any) {
 	if len(jsonPathValueMap) == 0 {
 		return nil
 	}

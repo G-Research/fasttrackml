@@ -64,9 +64,7 @@ func (f MetricFixtures) GetMetricsByContext(
 	).Joins(
 		"LEFT JOIN contexts on metrics.context_id = contexts.id",
 	)
-	if err := addContextSelection(tx, "contexts.json", metricContext); err != nil {
-		return nil, eris.Wrap(err, "error adding json column contains condition")
-	}
+	addContextSelection(tx, "contexts.json", metricContext)
 	if err := tx.Find(&metrics).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting metric by context: %v", metricContext)
 	}
@@ -112,7 +110,7 @@ func (f MetricFixtures) GetLatestMetricByRunID(ctx context.Context, runID string
 }
 
 // addContextSelection adds conditions to the query to select metrics having the provided context.
-func addContextSelection(tx *gorm.DB, columnName string, jsonPathValueMap map[string]any) error {
+func addContextSelection(tx *gorm.DB, columnName string, jsonPathValueMap map[string]any) {
 	if len(jsonPathValueMap) == 0 {
 		return nil
 	}

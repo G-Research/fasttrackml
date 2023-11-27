@@ -3,18 +3,13 @@
 package run
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -27,17 +22,6 @@ func TestCreateAppTestSuite(t *testing.T) {
 }
 
 func (s *CreateAppTestSuite) Test_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	tests := []struct {
 		name        string
 		requestBody request.CreateApp
@@ -55,8 +39,7 @@ func (s *CreateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.App
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -67,27 +50,16 @@ func (s *CreateAppTestSuite) Test_Ok() {
 					"/apps",
 				),
 			)
-			assert.Equal(s.T(), tt.requestBody.Type, resp.Type)
-			assert.Equal(s.T(), tt.requestBody.State["app-state-key"], resp.State["app-state-key"])
-			assert.NotEmpty(s.T(), resp.ID)
-			assert.NotEmpty(s.T(), resp.CreatedAt)
-			assert.NotEmpty(s.T(), resp.UpdatedAt)
+			s.Equal(tt.requestBody.Type, resp.Type)
+			s.Equal(tt.requestBody.State["app-state-key"], resp.State["app-state-key"])
+			s.NotEmpty(resp.ID)
+			s.NotEmpty(resp.CreatedAt)
+			s.NotEmpty(resp.UpdatedAt)
 		})
 	}
 }
 
 func (s *CreateAppTestSuite) Test_Error() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	tests := []struct {
 		name        string
 		requestBody any
@@ -102,8 +74,7 @@ func (s *CreateAppTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.Error
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -112,7 +83,7 @@ func (s *CreateAppTestSuite) Test_Error() {
 					&resp,
 				).DoRequest("/apps"),
 			)
-			assert.Contains(s.T(), resp.Message, "cannot unmarshal")
+			s.Contains(resp.Message, "cannot unmarshal")
 		})
 	}
 }

@@ -28,6 +28,8 @@ type ExperimentRepositoryProvider interface {
 	GetByNamespaceIDAndExperimentID(
 		ctx context.Context, namespaceID uint, experimentID int32,
 	) (*models.Experiment, error)
+	// UpdateWithTransaction updates existing models.Experiment entity in scope of transaction.
+	UpdateWithTransaction(ctx context.Context, tx *gorm.DB, experiment *models.Experiment) error
 }
 
 // ExperimentRepository repository to work with `experiment` entity.
@@ -171,6 +173,19 @@ func (r ExperimentRepository) DeleteBatch(ctx context.Context, ids []*int32) err
 		return nil
 	}); err != nil {
 		return eris.Wrapf(err, "error deleting experiments")
+	}
+
+	return nil
+}
+
+// UpdateWithTransaction updates existing models.Experiment entity in scope of transaction.
+func (r ExperimentRepository) UpdateWithTransaction(
+	ctx context.Context,
+	tx *gorm.DB,
+	experiment *models.Experiment,
+) error {
+	if err := tx.WithContext(ctx).Model(&experiment).Updates(experiment).Error; err != nil {
+		return eris.Wrapf(err, "error updating existing experiment with id: %d", experiment.ID)
 	}
 
 	return nil

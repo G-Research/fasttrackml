@@ -12,7 +12,10 @@ def get_data_files():
 
 def get_version():
     version = os.environ.get("VERSION")
-    return version.replace("-", "+", 1)
+    # Translate from semver to Python version specifier
+    # see https://semver.org
+    # see https://packaging.python.org/en/latest/specifications/version-specifiers/#pre-releases
+    return version.replace("-alpha.", "a", 1).replace("-beta.", "b", 1).replace("-rc.", "rc", 1).replace("-", "+", 1)
 
 
 def get_platform():

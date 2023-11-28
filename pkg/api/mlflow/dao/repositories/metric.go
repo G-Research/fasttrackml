@@ -37,6 +37,8 @@ type MetricRepositoryProvider interface {
 	) ([]models.Metric, error)
 	// GetMetricHistoryByRunIDAndKey returns metrics history by RunID and Key.
 	GetMetricHistoryByRunIDAndKey(ctx context.Context, runID, key string) ([]models.Metric, error)
+	// CreateContext creates new models.Context entity.
+	CreateContext(ctx context.Context, context *models.Context) error
 }
 
 // MetricRepository repository to work with models.Metric entity.
@@ -297,4 +299,12 @@ func (r MetricRepository) GetMetricHistoryBulk(
 		return nil, eris.Wrapf(err, "error getting metric history by run ids: %v and key: %s", runIDs, key)
 	}
 	return metrics, nil
+}
+
+// CreateContext creates new models.Context entity.
+func (r MetricRepository) CreateContext(ctx context.Context, context *models.Context) error {
+	if err := r.db.WithContext(ctx).Where(context).FirstOrCreate(context).Error; err != nil {
+		return eris.Wrapf(err, "error creating or retrieving context.")
+	}
+	return nil
 }

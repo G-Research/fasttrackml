@@ -34,9 +34,9 @@ func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []in
 	return placeholders, valuesArray
 }
 
-// AddJsonCondition adds condition(s) to the query to select items having the specified map of json paths
-// and values. Json path is expressed as "outerkey.nestedKey".
-func AddJsonCondition(tx *gorm.DB, jsonColumnName string, jsonPathValueMap map[string]any) {
+// AddJsonCondition adds where condition(s) to the query to select items having the specified map of json paths
+// and values in the given json column. Json path is expressed as "key" or "outerkey.nestedKey".
+func AddJsonCondition(tx *gorm.DB, jsonColumnName string, jsonPathValueMap map[string]string) {
 	if len(jsonPathValueMap) == 0 {
 		return
 	}

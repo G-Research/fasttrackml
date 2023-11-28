@@ -30,7 +30,7 @@ type MetricRepositoryProvider interface {
 		experimentIDs []string, runIDs []string, metricKeys []string,
 		viewType request.ViewType,
 		limit int32,
-		jsonPathValueMap map[string]any,
+		jsonPathValueMap map[string]string,
 	) (*sql.Rows, func(*sql.Rows, interface{}) error, error)
 	// GetMetricHistoryBulk returns metrics history bulk.
 	GetMetricHistoryBulk(
@@ -152,7 +152,7 @@ func (r MetricRepository) GetMetricHistories(
 	experimentIDs []string, runIDs []string, metricKeys []string,
 	viewType request.ViewType,
 	limit int32,
-	jsonPathValueMap map[string]any,
+	jsonPathValueMap map[string]string,
 ) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
 	// if experimentIDs has been provided then firstly get the runs by provided experimentIDs.
 	if len(experimentIDs) > 0 {

@@ -53,7 +53,7 @@ func (f MetricFixtures) GetMetricsByRunID(ctx context.Context, runID string) ([]
 // GetMetricsByContext returns metric by a context partial match.
 func (f MetricFixtures) GetMetricsByContext(
 	ctx context.Context,
-	metricContext map[string]any,
+	metricContext map[string]string,
 ) ([]*models.Metric, error) {
 	var metrics []*models.Metric
 	tx := f.db.WithContext(ctx).Model(

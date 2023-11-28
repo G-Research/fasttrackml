@@ -52,16 +52,16 @@ func (_m *MockMetricRepositoryProvider) GetDB() *gorm.DB {
 }
 
 // GetMetricHistories provides a mock function with given fields: ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, jsonPathValueMap
-func (_m *MockMetricRepositoryProvider) GetMetricHistories(ctx context.Context, namespaceID uint, experimentIDs []string, runIDs []string, metricKeys []string, viewType request.ViewType, limit int32, jsonPathValueMap map[string]interface{}) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
+func (_m *MockMetricRepositoryProvider) GetMetricHistories(ctx context.Context, namespaceID uint, experimentIDs []string, runIDs []string, metricKeys []string, viewType request.ViewType, limit int32, jsonPathValueMap map[string]string) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
 	ret := _m.Called(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, jsonPathValueMap)
 
 	var r0 *sql.Rows
 	var r1 func(*sql.Rows, interface{}) error
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]interface{}) (*sql.Rows, func(*sql.Rows, interface{}) error, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]string) (*sql.Rows, func(*sql.Rows, interface{}) error, error)); ok {
 		return rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, jsonPathValueMap)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]interface{}) *sql.Rows); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]string) *sql.Rows); ok {
 		r0 = rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, jsonPathValueMap)
 	} else {
 		if ret.Get(0) != nil {
@@ -69,7 +69,7 @@ func (_m *MockMetricRepositoryProvider) GetMetricHistories(ctx context.Context, 
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]interface{}) func(*sql.Rows, interface{}) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]string) func(*sql.Rows, interface{}) error); ok {
 		r1 = rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, jsonPathValueMap)
 	} else {
 		if ret.Get(1) != nil {
@@ -77,7 +77,7 @@ func (_m *MockMetricRepositoryProvider) GetMetricHistories(ctx context.Context, 
 		}
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]interface{}) error); ok {
+	if rf, ok := ret.Get(2).(func(context.Context, uint, []string, []string, []string, request.ViewType, int32, map[string]string) error); ok {
 		r2 = rf(ctx, namespaceID, experimentIDs, runIDs, metricKeys, viewType, limit, jsonPathValueMap)
 	} else {
 		r2 = ret.Error(2)

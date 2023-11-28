@@ -89,7 +89,7 @@ func (s Service) GetMetricHistories(
 		req.MetricKeys,
 		req.ViewType,
 		req.MaxResults,
-		map[string]any{},
+		req.Context,
 	)
 	if err != nil {
 		return nil, nil, api.NewInternalError("Unable to search runs: %s", err)

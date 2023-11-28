@@ -86,7 +86,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	s.Require().NotNil(metrics[1].ContextID)
 
 	// verify metric contexts can be used for selection (toplevel key)
-	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]any{
+	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]string{
 		"metrickey1": "metricvalue1",
 	})
 	s.Require().Nil(err)
@@ -94,14 +94,14 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	s.Require().NotNil(metrics[0].ContextID)
 
 	// nested key
-	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]any{
+	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]string{
 		"metricnested.metricnestedkey": "metricnestedvalue",
 	})
 	s.Require().Nil(err)
 	s.Require().Len(metrics, 1)
 	s.Require().NotNil(metrics[0].ContextID)
 
-	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]any{"metrickey2": "metricvalue1"})
+	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]string{"metrickey2": "metricvalue1"})
 	s.Require().Nil(err)
 	s.Require().Len(metrics, 0)
 
@@ -140,6 +140,12 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 			name: "GetMetricHistoriesByExperimentIDs",
 			request: &request.GetMetricHistoriesRequest{
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+		},
+		{
+			name: "GetMetricHistoriesByContext",
+			request: &request.GetMetricHistoriesRequest{
+				Context: map[string]string{"metrickey1": "metricvalue1"},
 			},
 		},
 	}

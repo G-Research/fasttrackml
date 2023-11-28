@@ -720,7 +720,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 	tx := database.DB.
 		Select(`
 			metrics.*,
-			c.json AS metric_context`,
+			c.json AS context_json`,
 		).
 		Table("metrics").
 		Joins(
@@ -835,7 +835,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 			for rows.Next() {
 				var metric struct {
 					database.Metric
-					Context    datatypes.JSON `gorm:"column:metric_context"`
+					Context    datatypes.JSON `gorm:"column:context_json"`
 					XAxisValue float64        `gorm:"column:x_axis_value"`
 					XAxisIsNaN bool           `gorm:"column:x_axis_is_nan"`
 				}
@@ -969,7 +969,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	values = append(values, ns.ID, b.AlignBy)
 	rows, err := database.DB.Raw(
 		fmt.Sprintf("WITH params(run_uuid, key, steps) AS (VALUES %s)", &valuesStmt)+
-			"        SELECT m.run_uuid, rm.key, m.iter, m.value, m.is_nan, c.json AS metric_context FROM metrics AS m"+
+			"        SELECT m.run_uuid, rm.key, m.iter, m.value, m.is_nan, c.json AS context_json FROM metrics AS m"+
 			"        RIGHT JOIN ("+
 			"          SELECT p.run_uuid, p.key, lm.last_iter AS max, (lm.last_iter + 1) / p.steps AS interval"+
 			"          FROM params AS p"+
@@ -1032,7 +1032,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			for rows.Next() {
 				var metric struct {
 					database.Metric
-					Context datatypes.JSON `gorm:"column:metric_context"`
+					Context datatypes.JSON `gorm:"column:context_json"`
 				}
 				if err := database.DB.ScanRows(rows, &metric); err != nil {
 					return err

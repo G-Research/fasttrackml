@@ -2,11 +2,8 @@ package fixtures
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/rotisserie/eris"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -64,7 +61,7 @@ func (f MetricFixtures) GetMetricsByContext(
 	).Joins(
 		"LEFT JOIN contexts on metrics.context_id = contexts.id",
 	)
-	addContextSelection(tx, "contexts.json", metricContext)
+	repositories.AddJsonCondition(tx, "contexts.json", metricContext)
 	if err := tx.Find(&metrics).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting metric by context: %v", metricContext)
 	}
@@ -107,22 +104,4 @@ func (f MetricFixtures) GetLatestMetricByRunID(ctx context.Context, runID string
 		return nil, eris.Wrapf(err, "error getting latest metric by run_uuid: %v", runID)
 	}
 	return &metric, nil
-}
-
-// addContextSelection adds conditions to the query to select metrics having the provided context.
-func addContextSelection(tx *gorm.DB, columnName string, jsonPathValueMap map[string]any) {
-	if len(jsonPathValueMap) == 0 {
-		return
-	}
-	switch tx.Dialector.Name() {
-	case postgres.Dialector{}.Name():
-		for k, v := range jsonPathValueMap {
-			path := strings.ReplaceAll(k, ".", ",")
-			tx.Where(fmt.Sprintf("%s#>>'{%s}' = ?", columnName, path), v)
-		}
-	default:
-		for k, v := range jsonPathValueMap {
-			tx.Where(fmt.Sprintf("%s->>'%s' = ?", columnName, k), v)
-		}
-	}
 }

@@ -19,7 +19,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0004"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0005"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0006"
-	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0007"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0008"
 )
 
 var supportedAlembicVersions = []string{
@@ -41,7 +41,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 		tx.First(&schemaVersion)
 	}
 
-	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != v_0007.Version {
+	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != v_0008.Version {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf(
 				"unsupported database schema versions alembic %s, FastTrackML %s",
@@ -168,9 +168,9 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				fallthrough
 
 			case v_0006.Version:
-				log.Infof("Migrating database to FastTrackML schema %s", v_0007.Version)
-				if err := v_0007.Migrate(db); err != nil {
-					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0007.Version, err)
+				log.Infof("Migrating database to FastTrackML schema %s", v_0008.Version)
+				if err := v_0008.Migrate(db); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0008.Version, err)
 				}
 
 			default:
@@ -202,7 +202,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				Version: "97727af70f4d",
 			})
 			tx.Create(&SchemaVersion{
-				Version: v_0007.Version,
+				Version: v_0008.Version,
 			})
 			tx.Commit()
 			if tx.Error != nil {

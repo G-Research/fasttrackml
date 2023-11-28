@@ -19,6 +19,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0004"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0005"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0006"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0007"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0008"
 )
 

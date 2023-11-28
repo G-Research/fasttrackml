@@ -206,9 +206,6 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 }
 
 func (s *GetRunMetricsTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name  string
 		runID string

@@ -95,22 +95,21 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 			s.Require().Nil(
 				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID),
 			)
-			s.Require().Equal(run.Name, resp.Props.Name)
-			s.Require().Equal(fmt.Sprintf("%v", run.ExperimentID), resp.Props.Experiment.ID)
-			s.Require().Equal(float64(run.StartTime.Int64)/1000, resp.Props.CreationTime)
-			s.Require().Equal(float64(run.EndTime.Int64)/1000, resp.Props.EndTime)
-			s.Require().Equal(1, len(resp.Traces.Metric))
+			s.Equal(s.run.Name, resp.Props.Name)
+			s.Equal(fmt.Sprintf("%v", s.run.ExperimentID), resp.Props.Experiment.ID)
+			s.Equal(float64(s.run.StartTime.Int64)/1000, resp.Props.CreationTime)
+			s.Equal(float64(s.run.EndTime.Int64)/1000, resp.Props.EndTime)
 			s.Require().JSONEq(metricContext.Json.String(), string(resp.Traces.Metric[0].Context))
-			// TODO this assertion fails because tags are not rendered by endpoint
-			// s.Equal( s.run.Tags[0].Key, resp.Props.Tags[0])
+			expectedTags := make(map[string]string, len(s.run.Tags))
+			for _, tag := range s.run.Tags {
+				expectedTags[tag.Key] = tag.Value
+			}
+			s.Equal(expectedTags, resp.Params.Tags)
 		})
 	}
 }
 
 func (s *GetRunInfoTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name  string
 		runID string

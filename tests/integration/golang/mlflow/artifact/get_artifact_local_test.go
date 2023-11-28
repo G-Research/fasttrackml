@@ -18,7 +18,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -32,17 +31,6 @@ func TestGetArtifactLocalTestSuite(t *testing.T) {
 }
 
 func (s *GetArtifactLocalTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	tests := []struct {
 		name   string
 		prefix string
@@ -63,7 +51,7 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 			experimentArtifactDir := s.T().TempDir()
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
-				NamespaceID:      namespace.ID,
+				NamespaceID:      s.DefaultNamespace.ID,
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("%s%s", tt.prefix, experimentArtifactDir),
 			})
@@ -132,22 +120,11 @@ func (s *GetArtifactLocalTestSuite) Test_Ok() {
 }
 
 func (s *GetArtifactLocalTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	// create test experiment
 	experimentArtifactDir := s.T().TempDir()
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:             fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
-		NamespaceID:      namespace.ID,
+		NamespaceID:      s.DefaultNamespace.ID,
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: experimentArtifactDir,
 	})

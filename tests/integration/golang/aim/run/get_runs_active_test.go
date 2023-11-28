@@ -5,23 +5,20 @@ package run
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"fmt"
 	"testing"
-
-	"gorm.io/datatypes"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetRunsActiveTestSuite struct {
 	helpers.BaseTestSuite
+	runs []*models.Run
 }
 
 func TestGetRunsActiveTestSuite(t *testing.T) {
@@ -29,121 +26,6 @@ func TestGetRunsActiveTestSuite(t *testing.T) {
 }
 
 func (s *GetRunsActiveTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	runToMetricContextMap := map[string]*models.Context{}
-
-	// create test data.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	s.Require().Nil(err)
-
-	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
-		ID:             "id1",
-		Name:           "TestRun1",
-		Status:         models.StatusRunning,
-		StartTime:      sql.NullInt64{Int64: 123456789, Valid: true},
-		EndTime:        sql.NullInt64{Int64: 123456789, Valid: true},
-		SourceType:     "JOB",
-		ExperimentID:   *experiment.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	s.Require().Nil(err)
-
-	// create context and attach it to own metric.
-	metricContext1, err := s.ContextFixtures.CreateContext(context.Background(), &models.Context{
-		Json: datatypes.JSON(`{"key1": "key1", "value1": "value1"}`),
-	})
-	s.Require().Nil(err)
-	// save connection between `run` and `context` for further usage.
-	runToMetricContextMap[run1.ID] = metricContext1
-
-	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
-		Key:       "key1",
-		Value:     123.1,
-		Timestamp: 123456789,
-		Step:      1,
-		IsNan:     false,
-		RunID:     run1.ID,
-		ContextID: common.GetPointer(metricContext1.ID),
-	})
-	s.Require().Nil(err)
-
-	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
-		ID:             "id2",
-		Name:           "TestRun2",
-		Status:         models.StatusRunning,
-		StartTime:      sql.NullInt64{Int64: 123456789, Valid: true},
-		EndTime:        sql.NullInt64{Int64: 123456789, Valid: true},
-		SourceType:     "JOB",
-		ExperimentID:   *experiment.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	s.Require().Nil(err)
-
-	// create context and attach it to own metric.
-	metricContext2, err := s.ContextFixtures.CreateContext(context.Background(), &models.Context{
-		Json: datatypes.JSON(`{"key2": "key2", "value2": "value2"}`),
-	})
-	s.Require().Nil(err)
-	// save connection between `run` and `context` for further usage.
-	runToMetricContextMap[run2.ID] = metricContext2
-
-	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
-		Key:       "key2",
-		Value:     123.2,
-		Timestamp: 123456789,
-		Step:      1,
-		IsNan:     false,
-		RunID:     run2.ID,
-		ContextID: common.GetPointer(metricContext2.ID),
-	})
-	s.Require().Nil(err)
-
-	run3, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
-		ID:             "id3",
-		Name:           "TestRun3",
-		Status:         models.StatusRunning,
-		StartTime:      sql.NullInt64{Int64: 123456789, Valid: true},
-		EndTime:        sql.NullInt64{Int64: 123456789, Valid: true},
-		SourceType:     "JOB",
-		ExperimentID:   *experiment.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	s.Require().Nil(err)
-
-	// create context and attach it to own metric.
-	metricContext3, err := s.ContextFixtures.CreateContext(context.Background(), &models.Context{
-		Json: datatypes.JSON(`{"key3": "key3", "value3": "value3"}`),
-	})
-	s.Require().Nil(err)
-	// save connection between `run` and `context` for further usage.
-	runToMetricContextMap[run3.ID] = metricContext3
-
-	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
-		Key:       "key3",
-		Value:     123.3,
-		Timestamp: 123456789,
-		Step:      1,
-		IsNan:     false,
-		RunID:     run3.ID,
-		ContextID: common.GetPointer(metricContext3.ID),
-	})
-	s.Require().Nil(err)
-
-	// run tests over test data.
 	tests := []struct {
 		name         string
 		wantRunCount int
@@ -152,13 +34,24 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 		{
 			name:         "GetActiveRuns",
 			wantRunCount: 3,
+			beforeRunFn: func() {
+				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+					Name:           uuid.New().String(),
+					NamespaceID:    s.DefaultNamespace.ID,
+					LifecycleStage: models.LifecycleStageActive,
+				})
+				s.Require().Nil(err)
+
+				s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 3)
+				s.Require().Nil(err)
+			},
 		},
 		{
 			name:         "GetActiveRunsSkipsFinished",
 			wantRunCount: 2,
 			beforeRunFn: func() {
 				// set 3rd run to status = StatusFinished
-				run3.Status = models.StatusFinished
+				s.runs[2].Status = models.StatusFinished
 				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), run3))
 			},
 		},
@@ -167,9 +60,9 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			wantRunCount: 0,
 			beforeRunFn: func() {
 				// set 1t and 2d run to status = StatusFinished
-				run2.Status = models.StatusFinished
+				s.runs[1].Status = models.StatusFinished
 				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), run2))
-				run1.Status = models.StatusFinished
+				s.runs[0].Status = models.StatusFinished
 				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), run1))
 			},
 		},
@@ -192,22 +85,21 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			s.Require().Nil(err)
 
 			responseCount := 0
-			for _, run := range []*models.Run{run1, run2, run3} {
+			for _, run := range s.runs {
 				respNameKey := fmt.Sprintf("%v.props.name", run.ID)
 				expIdKey := fmt.Sprintf("%v.props.experiment.id", run.ID)
 				startTimeKey := fmt.Sprintf("%v.props.creation_time", run.ID)
 				endTimeKey := fmt.Sprintf("%v.props.end_time", run.ID)
 				activeKey := fmt.Sprintf("%v.props.active", run.ID)
 				archivedKey := fmt.Sprintf("%v.props.archived", run.ID)
-				// contextKey := fmt.Sprintf("%v.traces.metric.0.context", run.ID)
-				if run.Status == models.StatusRunning && run.LifecycleStage == models.LifecycleStageActive {
-					s.Require().Equal(run.Name, decodedData[respNameKey])
-					s.Require().Equal(fmt.Sprintf("%v", run.ExperimentID), decodedData[expIdKey])
-					s.Require().Equal(run.Status == models.StatusRunning, decodedData[activeKey])
-					s.Require().Equal(false, decodedData[archivedKey])
-					s.Require().Equal(float64(run.StartTime.Int64)/1000, decodedData[startTimeKey])
-					s.Require().Equal(float64(run.EndTime.Int64)/1000, decodedData[endTimeKey])
-					// assert.Equal(s.T(), runToMetricContextMap[run.ID].Json.String(), decodedData[contextKey])
+				if run.Status == models.StatusRunning && run.LifecycleStage ==
+					models.LifecycleStageActive {
+					s.Equal(run.Name, decodedData[respNameKey])
+					s.Equal(fmt.Sprintf("%v", run.ExperimentID), decodedData[expIdKey])
+					s.Equal(run.Status == models.StatusRunning, decodedData[activeKey])
+					s.Equal(false, decodedData[archivedKey])
+					s.Equal(float64(run.StartTime.Int64)/1000, decodedData[startTimeKey])
+					s.Equal(float64(run.EndTime.Int64)/1000, decodedData[endTimeKey])
 					responseCount++
 				} else {
 					s.Nil(decodedData[respNameKey])

@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gofiber/fiber/v2/log"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/rotisserie/eris"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"

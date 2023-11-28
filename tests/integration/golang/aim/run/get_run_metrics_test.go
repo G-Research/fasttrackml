@@ -22,7 +22,6 @@ import (
 
 type GetRunMetricsTestSuite struct {
 	helpers.BaseTestSuite
-	namespaceID uint
 }
 
 func TestGetRunMetricsTestSuite(t *testing.T) {
@@ -31,25 +30,13 @@ func TestGetRunMetricsTestSuite(t *testing.T) {
 
 func (s *GetRunMetricsTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-	s.namespaceID = namespace.ID
 }
 
 func (s *GetRunMetricsTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
 	// create test data
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
-		NamespaceID:    s.namespaceID,
+		NamespaceID:    s.DefaultNamespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)

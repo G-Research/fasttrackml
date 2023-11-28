@@ -52,7 +52,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			beforeRunFn: func() {
 				// set 3rd run to status = StatusFinished
 				s.runs[2].Status = models.StatusFinished
-				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), run3))
+				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), s.runs[2]))
 			},
 		},
 		{
@@ -61,9 +61,9 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			beforeRunFn: func() {
 				// set 1t and 2d run to status = StatusFinished
 				s.runs[1].Status = models.StatusFinished
-				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), run2))
+				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), s.runs[1]))
 				s.runs[0].Status = models.StatusFinished
-				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), run1))
+				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), s.runs[0]))
 			},
 		},
 	}

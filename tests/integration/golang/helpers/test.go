@@ -26,6 +26,7 @@ type BaseTestSuite struct {
 	MetricFixtures              *fixtures.MetricFixtures
 	ParamFixtures               *fixtures.ParamFixtures
 	ProjectFixtures             *fixtures.ProjectFixtures
+	ContextFixtures             *fixtures.ContextFixtures
 	DashboardFixtures           *fixtures.DashboardFixtures
 	ExperimentFixtures          *fixtures.ExperimentFixtures
 	DefaultExperiment           *models.Experiment

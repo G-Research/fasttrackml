@@ -20,7 +20,6 @@ import (
 
 type GetRunInfoTestSuite struct {
 	helpers.BaseTestSuite
-	namespaceID uint
 }
 
 func TestGetRunInfoTestSuite(t *testing.T) {
@@ -29,24 +28,13 @@ func TestGetRunInfoTestSuite(t *testing.T) {
 
 func (s *GetRunInfoTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest()
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-	s.namespaceID = namespace.ID
 }
 
 func (s *GetRunInfoTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
 	// create test data.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
-		NamespaceID:    s.namespaceID,
+		NamespaceID:    s.DefaultNamespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
@@ -95,13 +83,13 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 			s.Require().Nil(
 				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID),
 			)
-			s.Equal(s.run.Name, resp.Props.Name)
-			s.Equal(fmt.Sprintf("%v", s.run.ExperimentID), resp.Props.Experiment.ID)
-			s.Equal(float64(s.run.StartTime.Int64)/1000, resp.Props.CreationTime)
-			s.Equal(float64(s.run.EndTime.Int64)/1000, resp.Props.EndTime)
+			s.Equal(run.Name, resp.Props.Name)
+			s.Equal(fmt.Sprintf("%v", run.ExperimentID), resp.Props.Experiment.ID)
+			s.Equal(float64(run.StartTime.Int64)/1000, resp.Props.CreationTime)
+			s.Equal(float64(run.EndTime.Int64)/1000, resp.Props.EndTime)
 			s.Require().JSONEq(metricContext.Json.String(), string(resp.Traces.Metric[0].Context))
-			expectedTags := make(map[string]string, len(s.run.Tags))
-			for _, tag := range s.run.Tags {
+			expectedTags := make(map[string]string, len(run.Tags))
+			for _, tag := range run.Tags {
 				expectedTags[tag.Key] = tag.Value
 			}
 			s.Equal(expectedTags, resp.Params.Tags)

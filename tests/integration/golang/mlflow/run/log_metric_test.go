@@ -29,7 +29,6 @@ func TestLogMetricTestSuite(t *testing.T) {
 }
 
 func (s *LogMetricTestSuite) Test_Ok() {
-
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *s.DefaultExperiment.ID,

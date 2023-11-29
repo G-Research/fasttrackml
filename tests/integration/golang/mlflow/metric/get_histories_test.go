@@ -139,14 +139,14 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	tests := []struct {
 		name           string
 		request        *request.GetMetricHistoriesRequest
-		expectResponse func(response string)
+		verifyResponse func(response string)
 	}{
 		{
 			name: "GetMetricHistoriesByRunIDs",
 			request: &request.GetMetricHistoriesRequest{
 				RunIDs: []string{run1.ID, run2.ID},
 			},
-			expectResponse: func(resp string) {
+			verifyResponse: func(resp string) {
 				s.Contains(resp, "run1")
 				s.Contains(resp, "run2")
 			},
@@ -156,7 +156,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 			request: &request.GetMetricHistoriesRequest{
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
 			},
-			expectResponse: func(resp string) {
+			verifyResponse: func(resp string) {
 				s.Contains(resp, "run1")
 				s.NotContains(resp, "run2")
 			},
@@ -167,7 +167,18 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
 				Context:       map[string]string{"metrickey1": "metricvalue1"},
 			},
-			expectResponse: func(resp string) {
+			verifyResponse: func(resp string) {
+				s.Contains(resp, "run1")
+				s.NotContains(resp, "run2")
+			},
+		},
+		{
+			name: "GetMetricHistoriesByNestedContextMatch",
+			request: &request.GetMetricHistoriesRequest{
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				Context:       map[string]string{"metricnested.metricnestedkey": "metricnestedvalue"},
+			},
+			verifyResponse: func(resp string) {
 				s.Contains(resp, "run1")
 				s.NotContains(resp, "run2")
 			},
@@ -178,7 +189,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
 				Context:       map[string]string{"metrickey1": "metricvalue2"},
 			},
-			expectResponse: func(resp string) {
+			verifyResponse: func(resp string) {
 				s.NotContains(resp, "run1")
 				s.NotContains(resp, "run2")
 			},
@@ -203,7 +214,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 
 			// TODO:DSuhinin - data is encoded so we need a bit more smart way to check the data.
 			// right now we can go with this simple approach.
-			tt.expectResponse(resp.String())
+			tt.verifyResponse(resp.String())
 		})
 	}
 }

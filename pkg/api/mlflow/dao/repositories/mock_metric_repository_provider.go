@@ -112,25 +112,25 @@ func (_m *MockMetricRepositoryProvider) GetMetricHistoryBulk(ctx context.Context
 	return r0, r1
 }
 
-// GetMetricHistoryByRunIDAndKey provides a mock function with given fields: ctx, runID, key, jsonPathValueMap
-func (_m *MockMetricRepositoryProvider) GetMetricHistoryByRunIDAndKey(ctx context.Context, runID string, key string, jsonPathValueMap map[string]string) ([]models.Metric, error) {
-	ret := _m.Called(ctx, runID, key, jsonPathValueMap)
+// GetMetricHistoryByRunIDAndKey provides a mock function with given fields: ctx, runID, key
+func (_m *MockMetricRepositoryProvider) GetMetricHistoryByRunIDAndKey(ctx context.Context, runID string, key string) ([]models.Metric, error) {
+	ret := _m.Called(ctx, runID, key)
 
 	var r0 []models.Metric
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string]string) ([]models.Metric, error)); ok {
-		return rf(ctx, runID, key, jsonPathValueMap)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]models.Metric, error)); ok {
+		return rf(ctx, runID, key)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string]string) []models.Metric); ok {
-		r0 = rf(ctx, runID, key, jsonPathValueMap)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []models.Metric); ok {
+		r0 = rf(ctx, runID, key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.Metric)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, map[string]string) error); ok {
-		r1 = rf(ctx, runID, key, jsonPathValueMap)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, runID, key)
 	} else {
 		r1 = ret.Error(1)
 	}

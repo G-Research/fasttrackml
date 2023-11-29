@@ -42,7 +42,7 @@ func (s Service) GetMetricHistory(
 		return nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.GetRunID())
 	}
 
-	metrics, err := s.metricRepository.GetMetricHistoryByRunIDAndKey(ctx, run.ID, req.MetricKey, req.Context)
+	metrics, err := s.metricRepository.GetMetricHistoryByRunIDAndKey(ctx, run.ID, req.MetricKey)
 	if err != nil {
 		return nil, api.NewInternalError(
 			"unable to get metric history for metric '%s' of run '%s'", req.MetricKey, req.GetRunID(),

@@ -2,10 +2,9 @@ package request
 
 // GetMetricHistoryRequest is a request object for `GET /mlflow/metrics/get-history` endpoint.
 type GetMetricHistoryRequest struct {
-	RunID     string            `query:"run_id"`
-	RunUUID   string            `query:"run_uuid"`
-	MetricKey string            `query:"metric_key"`
-	Context   map[string]string `json:"context"`
+	RunID     string `query:"run_id"`
+	RunUUID   string `query:"run_uuid"`
+	MetricKey string `query:"metric_key"`
 }
 
 // GetRunID returns Run RunID.

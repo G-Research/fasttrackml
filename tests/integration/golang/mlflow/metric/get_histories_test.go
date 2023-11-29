@@ -36,6 +36,13 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
+	experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           "Test Experiment2",
+		NamespaceID:    s.DefaultNamespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
 	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "run1",
 		Name:           "chill-run",
@@ -101,7 +108,10 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	s.Require().Len(metrics, 1)
 	s.Require().NotNil(metrics[0].ContextID)
 
-	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]string{"metrickey2": "metricvalue1"})
+	metrics, err = s.MetricFixtures.GetMetricsByContext(
+		context.Background(),
+		map[string]string{"metrickey2": "metricvalue1"},
+	)
 	s.Require().Nil(err)
 	s.Require().Len(metrics, 0)
 
@@ -111,7 +121,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 		Status:         models.StatusScheduled,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
-		ExperimentID:   *experiment.ID,
+		ExperimentID:   *experiment2.ID,
 	})
 	s.Require().Nil(err)
 
@@ -127,13 +137,18 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	tests := []struct {
-		name    string
-		request *request.GetMetricHistoriesRequest
+		name           string
+		request        *request.GetMetricHistoriesRequest
+		expectResponse func(response string)
 	}{
 		{
 			name: "GetMetricHistoriesByRunIDs",
 			request: &request.GetMetricHistoriesRequest{
 				RunIDs: []string{run1.ID, run2.ID},
+			},
+			expectResponse: func(resp string) {
+				s.Contains(resp, "run1")
+				s.Contains(resp, "run2")
 			},
 		},
 		{
@@ -141,11 +156,31 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 			request: &request.GetMetricHistoriesRequest{
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
 			},
+			expectResponse: func(resp string) {
+				s.Contains(resp, "run1")
+				s.NotContains(resp, "run2")
+			},
 		},
 		{
-			name: "GetMetricHistoriesByContext",
+			name: "GetMetricHistoriesByContextMatch",
 			request: &request.GetMetricHistoriesRequest{
-				Context: map[string]string{"metrickey1": "metricvalue1"},
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				Context:       map[string]string{"metrickey1": "metricvalue1"},
+			},
+			expectResponse: func(resp string) {
+				s.Contains(resp, "run1")
+				s.NotContains(resp, "run2")
+			},
+		},
+		{
+			name: "GetMetricHistoriesByContextNoMatch",
+			request: &request.GetMetricHistoriesRequest{
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				Context:       map[string]string{"metrickey1": "metricvalue2"},
+			},
+			expectResponse: func(resp string) {
+				s.NotContains(resp, "run1")
+				s.NotContains(resp, "run2")
 			},
 		},
 	}
@@ -168,7 +203,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 
 			// TODO:DSuhinin - data is encoded so we need a bit more smart way to check the data.
 			// right now we can go with this simple approach.
-			s.NotEmpty(resp.String())
+			tt.expectResponse(resp.String())
 		})
 	}
 }

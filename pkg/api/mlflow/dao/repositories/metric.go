@@ -36,8 +36,13 @@ type MetricRepositoryProvider interface {
 	GetMetricHistoryBulk(
 		ctx context.Context, namespaceID uint, runIDs []string, key string, limit int,
 	) ([]models.Metric, error)
-	// GetMetricHistoryByRunIDAndKey returns metrics history by RunID and Key.
-	GetMetricHistoryByRunIDAndKey(ctx context.Context, runID, key string) ([]models.Metric, error)
+	// GetMetricHistoryByRunIDAndKey returns metrics history by RunID and Key, with optional context filtering.
+	GetMetricHistoryByRunIDAndKey(
+		ctx context.Context,
+		runID,
+		key string,
+		jsonPathValueMap map[string]string,
+	) ([]models.Metric, error)
 }
 
 // MetricRepository repository to work with models.Metric entity.
@@ -256,14 +261,21 @@ func (r MetricRepository) getLatestMetricsByRunIDAndKeys(
 
 // GetMetricHistoryByRunIDAndKey returns metrics history by RunID and Key.
 func (r MetricRepository) GetMetricHistoryByRunIDAndKey(
-	ctx context.Context, runID, key string,
+	ctx context.Context, runID, key string, jsonPathValueMap map[string]string,
 ) ([]models.Metric, error) {
 	var metrics []models.Metric
-	if err := r.db.WithContext(ctx).Where(
+	tx := r.db.WithContext(ctx).Where(
 		"run_uuid = ?", runID,
 	).Where(
 		"key = ?", key,
-	).Find(&metrics).Error; err != nil {
+	)
+
+	if len(jsonPathValueMap) > 0 {
+		tx.Joins("LEFT JOIN contexts on metrics.context_id = contexts.id")
+		AddJsonCondition(tx, "contexts.json", jsonPathValueMap)
+	}
+
+	if err := tx.Find(&metrics).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting metric history by run id: %s and key: %s", runID, key)
 	}
 	return metrics, nil

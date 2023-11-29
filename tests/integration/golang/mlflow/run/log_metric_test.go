@@ -4,6 +4,7 @@ package run
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
@@ -43,6 +44,9 @@ func (s *LogMetricTestSuite) Test_Ok() {
 		Value:     1.1,
 		Timestamp: 1234567890,
 		Step:      1,
+		Context: map[string]any{
+			"key": "value",
+		},
 	}
 	resp := fiber.Map{}
 	s.Require().Nil(
@@ -61,15 +65,19 @@ func (s *LogMetricTestSuite) Test_Ok() {
 	// makes user that records has been created correctly in database.
 	metric, err := s.MetricFixtures.GetLatestMetricByRunID(context.Background(), run.ID)
 	s.Require().Nil(err)
-	s.Equal(&models.LatestMetric{
-		Key:       "key1",
-		Value:     1.1,
-		Timestamp: 1234567890,
-		Step:      1,
-		IsNan:     false,
-		RunID:     run.ID,
-		LastIter:  1,
-	}, metric)
+
+	s.Equal("key1", metric.Key)
+	s.Equal(1.1, metric.Value)
+	s.Equal(int64(1234567890), metric.Timestamp)
+	s.Equal(int64(1), metric.Step)
+	s.Equal(false, metric.IsNan)
+	s.Equal(run.ID, metric.RunID)
+	s.Equal(int64(1), metric.LastIter)
+	s.Require().NotNil(metric.Context)
+	var contextMap map[string]interface{}
+	err = json.Unmarshal(metric.Context.Json, &contextMap)
+	s.Require().Nil(err)
+	s.Equal(req.Context, contextMap)
 }
 
 func (s *LogMetricTestSuite) Test_Error() {

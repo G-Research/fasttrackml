@@ -103,6 +103,8 @@ func (r MetricRepository) CreateBatch(
 				Step:      metric.Step,
 				IsNan:     metric.IsNan,
 				LastIter:  metric.Iter,
+				ContextID: metric.ContextID,
+				Context:   metric.Context,
 			}
 		}
 	}

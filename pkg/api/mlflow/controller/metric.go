@@ -108,6 +108,7 @@ func (c Controller) GetMetricHistories(ctx *fiber.Ctx) error {
 					{Name: "step", Type: arrow.PrimitiveTypes.Int64},
 					{Name: "timestamp", Type: arrow.PrimitiveTypes.Int64},
 					{Name: "value", Type: arrow.PrimitiveTypes.Float64},
+					{Name: "context", Type: arrow.BinaryTypes.String},
 				},
 				nil,
 			)
@@ -131,6 +132,9 @@ func (c Controller) GetMetricHistories(ctx *fiber.Ctx) error {
 					b.Field(4).(*array.Float64Builder).AppendNull()
 				} else {
 					b.Field(4).(*array.Float64Builder).Append(m.Value)
+				}
+				if m.Context != nil {
+					b.Field(5).(*array.StringBuilder).Append(m.Context.Json.String())
 				}
 				if (i+1)%100000 == 0 {
 					if err := WriteStreamingRecord(writer, b.NewRecord()); err != nil {

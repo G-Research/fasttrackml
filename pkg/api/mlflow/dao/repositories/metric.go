@@ -198,6 +198,8 @@ func (r MetricRepository) GetMetricHistories(
 	).Joins(
 		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 		namespaceID,
+	).Joins(
+		"Context",
 	).Order(
 		"runs.start_time DESC",
 	).Order(

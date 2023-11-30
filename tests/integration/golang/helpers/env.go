@@ -2,6 +2,14 @@ package helpers
 
 import "os"
 
+func GetLogLevel() string {
+	level, ok := os.LookupEnv("FML_LOG_LEVEL")
+	if ok {
+		return level
+	}
+	return "info"
+}
+
 func GetDatabaseUri() string {
 	uri, ok := os.LookupEnv("FML_DATABASE_URI")
 	if ok {

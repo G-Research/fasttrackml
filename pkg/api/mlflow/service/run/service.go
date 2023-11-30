@@ -491,7 +491,16 @@ func (s Service) LogMetric(
 		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
-	metric, err := convertors.ConvertMetricParamRequestToDBModel(run.ID, req)
+	context, err := convertors.ConvertLogMetricRequestToContextDBModel(req)
+	if err != nil {
+		return api.NewInvalidParameterValueError(err.Error())
+	}
+	if context != nil {
+		if err := s.metricRepository.CreateContext(ctx, context); err != nil {
+			return api.NewInternalError("unable to log context '%s' for metric '%s': %s", req.Context, req.Key, err)
+		}
+	}
+	metric, err := convertors.ConvertMetricParamRequestToDBModel(run.ID, context, req)
 	if err != nil {
 		return api.NewInvalidParameterValueError(err.Error())
 	}
@@ -608,7 +617,21 @@ func (s Service) LogBatch(
 		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
 	}
 
-	metrics, params, tags, err := convertors.ConvertLogBatchRequestToDBModel(run.ID, req)
+	contexts, err := convertors.ConvertLogBatchRequestToContextDBModel(req)
+	if err != nil {
+		return api.NewInvalidParameterValueError(err.Error())
+	}
+
+	for n, context := range contexts {
+		if context != nil {
+			if err := s.metricRepository.CreateContext(ctx, context); err != nil {
+				return api.NewInternalError("unable to log metric context: %s", err)
+			}
+		}
+		contexts[n] = context
+	}
+
+	metrics, params, tags, err := convertors.ConvertLogBatchRequestToDBModel(run.ID, req, contexts)
 	if err != nil {
 		return api.NewInvalidParameterValueError(err.Error())
 	}

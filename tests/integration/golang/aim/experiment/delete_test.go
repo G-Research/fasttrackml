@@ -4,16 +4,13 @@ package experiment
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -23,40 +20,18 @@ type DeleteExperimentTestSuite struct {
 }
 
 func TestDeleteExperimentTestSuite(t *testing.T) {
-	suite.Run(t, new(DeleteExperimentTestSuite))
+	suite.Run(t, &DeleteExperimentTestSuite{
+		helpers.BaseTestSuite{
+			SkipCreateDefaultExperiment: true,
+		},
+	})
 }
 
 func (s *DeleteExperimentTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name: "Test Experiment",
-		Tags: []models.ExperimentTag{
-			{
-				Key:   "key1",
-				Value: "value1",
-			},
-		},
-		CreationTime: sql.NullInt64{
-			Int64: time.Now().UTC().UnixMilli(),
-			Valid: true,
-		},
-		NamespaceID: namespace.ID,
-		LastUpdateTime: sql.NullInt64{
-			Int64: time.Now().UTC().UnixMilli(),
-			Valid: true,
-		},
-		LifecycleStage:   models.LifecycleStageActive,
-		ArtifactLocation: "/artifact/location",
+		Name:           "Test Experiment",
+		NamespaceID:    s.DefaultNamespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
 
@@ -81,17 +56,6 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 }
 
 func (s *DeleteExperimentTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	tests := []struct {
 		name  string
 		ID    string
@@ -122,7 +86,6 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 				),
 			)
 			s.Contains(resp.Error(), tt.error)
-			s.NoError(err)
 		})
 	}
 }

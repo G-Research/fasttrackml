@@ -13,8 +13,6 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -28,17 +26,6 @@ func TestUpdateDashboardTestSuite(t *testing.T) {
 }
 
 func (s *UpdateDashboardTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
 			ID:         uuid.New(),
@@ -47,7 +34,7 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 		},
 		Type:        "mpi",
 		State:       database.AppState{},
-		NamespaceID: namespace.ID,
+		NamespaceID: s.DefaultNamespace.ID,
 	})
 	s.Require().Nil(err)
 
@@ -114,17 +101,6 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 }
 
 func (s *UpdateDashboardTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
 		Base: database.Base{
 			ID:         uuid.New(),
@@ -133,7 +109,7 @@ func (s *UpdateDashboardTestSuite) Test_Error() {
 		},
 		Type:        "mpi",
 		State:       database.AppState{},
-		NamespaceID: namespace.ID,
+		NamespaceID: s.DefaultNamespace.ID,
 	})
 	s.Require().Nil(err)
 

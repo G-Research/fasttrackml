@@ -10,8 +10,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/request"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -25,16 +23,6 @@ func TestCreateNamespaceTestSuite(t *testing.T) {
 }
 
 func (s *CreateNamespaceTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	requests := []request.Namespace{
 		{
 			Code:        "test2",
@@ -64,16 +52,6 @@ func (s *CreateNamespaceTestSuite) Test_Ok() {
 }
 
 func (s *CreateNamespaceTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	testData := []struct {
 		name    string
 		request *request.Namespace

@@ -4,14 +4,12 @@ package artifact
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
@@ -20,7 +18,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -34,17 +31,6 @@ func TestListArtifactLocalTestSuite(t *testing.T) {
 }
 
 func (s *ListArtifactLocalTestSuite) Test_Ok() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	tests := []struct {
 		name   string
 		prefix string
@@ -64,22 +50,8 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 			// 1. create test experiment.
 			experimentArtifactDir := s.T().TempDir()
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name: fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
-				Tags: []models.ExperimentTag{
-					{
-						Key:   "key1",
-						Value: "value1",
-					},
-				},
-				NamespaceID: namespace.ID,
-				CreationTime: sql.NullInt64{
-					Int64: time.Now().UTC().UnixMilli(),
-					Valid: true,
-				},
-				LastUpdateTime: sql.NullInt64{
-					Int64: time.Now().UTC().UnixMilli(),
-					Valid: true,
-				},
+				Name:             fmt.Sprintf("Test Experiment In Path %s", experimentArtifactDir),
+				NamespaceID:      s.DefaultNamespace.ID,
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("%s%s", tt.prefix, experimentArtifactDir),
 			})
@@ -193,17 +165,6 @@ func (s *ListArtifactLocalTestSuite) Test_Ok() {
 }
 
 func (s *ListArtifactLocalTestSuite) Test_Error() {
-	defer func() {
-		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	s.Require().Nil(err)
-
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse

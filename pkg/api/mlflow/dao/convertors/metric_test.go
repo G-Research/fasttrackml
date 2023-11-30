@@ -17,7 +17,7 @@ func TestConvertMetricParamRequestToDBModel(t *testing.T) {
 		RunID:     "run_id",
 		Timestamp: 1234567890,
 	}
-	result, err := ConvertMetricParamRequestToDBModel("run_id", &req)
+	result, err := ConvertMetricParamRequestToDBModel("run_id", nil, &req)
 	require.Nil(t, err)
 	assert.Equal(t, "key", result.Key)
 	assert.Equal(t, int64(1), result.Step)

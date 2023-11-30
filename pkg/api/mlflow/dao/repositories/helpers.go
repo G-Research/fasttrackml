@@ -38,7 +38,7 @@ func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []in
 func BuildJsonCondition(
 	dialector string,
 	jsonColumnName string,
-	jsonPathValueMap map[string]string
+	jsonPathValueMap map[string]string,
 ) (sql string, args []any) {
 	if len(jsonPathValueMap) == 0 {
 		return

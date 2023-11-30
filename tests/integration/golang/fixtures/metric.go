@@ -61,7 +61,8 @@ func (f MetricFixtures) GetMetricsByContext(
 	).Joins(
 		"LEFT JOIN contexts on metrics.context_id = contexts.id",
 	)
-	repositories.AddJsonCondition(tx, "contexts.json", metricContext)
+	sql, args := repositories.BuildJsonCondition(tx.Dialector.Name(), "contexts.json", metricContext)
+	tx.Where(sql, args...)
 	if err := tx.Find(&metrics).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting metric by context: %v", metricContext)
 	}

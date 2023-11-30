@@ -53,3 +53,53 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 		assert.Equal(t, tt.expectedValues, values)
 	}
 }
+
+func TestBuildJsonCondition(t *testing.T) {
+	tests := []struct {
+		name             string
+		dialector        string
+		jsonColumnName   string
+		jsonPathValueMap map[string]string
+		expectedSQL      string
+		expectedArgs     []interface{}
+	}{
+		{
+			name:           "Postgres",
+			dialector:      "postgres",
+			jsonColumnName: "contexts.json",
+			jsonPathValueMap: map[string]string{
+				"key1":        "value1",
+				"key2.nested": "value2",
+			},
+			expectedSQL:  "contexts.json#>>? = ? AND contexts.json#>>? = ?",
+			expectedArgs: []interface{}{"{key1}", "value1", "{key2,nested}", "value2"},
+		},
+		{
+			name:           "Sqlite",
+			dialector:      "sqlite",
+			jsonColumnName: "contexts.json",
+			jsonPathValueMap: map[string]string{
+				"key1":        "value1",
+				"key2.nested": "value2",
+			},
+			expectedSQL:  "contexts.json->>? = ? AND contexts.json->>? = ?",
+			expectedArgs: []interface{}{"key1", "value1", "key2.nested", "value2"},
+		},
+		{
+			name:             "SqliteEmptyMap",
+			dialector:        "sqlite",
+			jsonColumnName:   "contexts.json",
+			jsonPathValueMap: map[string]string{},
+			expectedSQL:      "",
+			expectedArgs:     []interface{}(nil),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql, args := BuildJsonCondition(tt.dialector, tt.jsonColumnName, tt.jsonPathValueMap)
+			assert.Equal(t, tt.expectedSQL, sql)
+			assert.Equal(t, tt.expectedArgs, args)
+		})
+	}
+}

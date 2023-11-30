@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
@@ -34,21 +33,27 @@ func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []in
 	return placeholders, valuesArray
 }
 
-// AddJsonCondition adds where condition(s) to the query to select items having the specified map of json paths
+// BuildJsonCondition creates sql and values for where condition to select items having the specified map of json paths
 // and values in the given json column. Json path is expressed as "key" or "outerkey.nestedKey".
-func AddJsonCondition(tx *gorm.DB, jsonColumnName string, jsonPathValueMap map[string]string) {
+func BuildJsonCondition(dialector string, jsonColumnName string, jsonPathValueMap map[string]string) (sql string, args []any) {
 	if len(jsonPathValueMap) == 0 {
 		return
 	}
-	switch tx.Dialector.Name() {
+	var conditionTemplate string
+	switch dialector {
 	case postgres.Dialector{}.Name():
+		conditionTemplate = "%s#>>? = ?"
 		for k, v := range jsonPathValueMap {
 			path := strings.ReplaceAll(k, ".", ",")
-			tx.Where(fmt.Sprintf("%s#>>'{%s}' = ?", jsonColumnName, path), v)
+			args = append(args, "{"+path+"}", v)
 		}
 	default:
+		conditionTemplate = "%s->>? = ?"
 		for k, v := range jsonPathValueMap {
-			tx.Where(fmt.Sprintf("%s->>'%s' = ?", jsonColumnName, k), v)
+			args = append(args, k, v)
 		}
 	}
+	conditionTemplate = fmt.Sprintf(conditionTemplate, jsonColumnName)
+	sql = strings.Repeat(conditionTemplate+" AND ", len(jsonPathValueMap)-1) + conditionTemplate
+	return
 }

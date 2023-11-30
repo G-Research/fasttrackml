@@ -139,16 +139,18 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	tests := []struct {
 		name           string
 		request        *request.GetMetricHistoriesRequest
-		verifyResponse func(response string)
+		verifyResponse func(metrics []models.Metric)
 	}{
 		{
 			name: "GetMetricHistoriesByRunIDs",
 			request: &request.GetMetricHistoriesRequest{
 				RunIDs: []string{run1.ID, run2.ID},
 			},
-			verifyResponse: func(resp string) {
-				s.Contains(resp, "run1")
-				s.Contains(resp, "run2")
+			verifyResponse: func(metrics []models.Metric) {
+				s.Equal(3, len(metrics))
+				s.Equal("run1", metrics[0].RunID)
+				s.Equal("run1", metrics[1].RunID)
+				s.Equal("run2", metrics[2].RunID)
 			},
 		},
 		{
@@ -156,9 +158,10 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 			request: &request.GetMetricHistoriesRequest{
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
 			},
-			verifyResponse: func(resp string) {
-				s.Contains(resp, "run1")
-				s.NotContains(resp, "run2")
+			verifyResponse: func(metrics []models.Metric) {
+				s.Equal(2, len(metrics))
+				s.Equal("run1", metrics[0].RunID)
+				s.Equal("run1", metrics[1].RunID)
 			},
 		},
 		{
@@ -167,9 +170,9 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
 				Context:       map[string]string{"metrickey1": "metricvalue1"},
 			},
-			verifyResponse: func(resp string) {
-				s.Contains(resp, "run1")
-				s.NotContains(resp, "run2")
+			verifyResponse: func(metrics []models.Metric) {
+				s.Equal(1, len(metrics))
+				s.Equal("run1", metrics[0].RunID)
 			},
 		},
 		{
@@ -178,9 +181,9 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
 				Context:       map[string]string{"metricnested.metricnestedkey": "metricnestedvalue"},
 			},
-			verifyResponse: func(resp string) {
-				s.Contains(resp, "run1")
-				s.NotContains(resp, "run2")
+			verifyResponse: func(metrics []models.Metric) {
+				s.Equal(1, len(metrics))
+				s.Equal("run1", metrics[0].RunID)
 			},
 		},
 		{
@@ -189,9 +192,8 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
 				Context:       map[string]string{"metrickey1": "metricvalue2"},
 			},
-			verifyResponse: func(resp string) {
-				s.NotContains(resp, "run1")
-				s.NotContains(resp, "run2")
+			verifyResponse: func(metrics []models.Metric) {
+				s.Equal(0, len(metrics))
 			},
 		},
 	}
@@ -212,9 +214,9 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 				),
 			)
 
-			// TODO:DSuhinin - data is encoded so we need a bit more smart way to check the data.
-			// right now we can go with this simple approach.
-			tt.verifyResponse(resp.String())
+			metrics, err := helpers.DecodeArrowMetrics(resp)
+			s.Require().Nil(err)
+			tt.verifyResponse(metrics)
 		})
 	}
 }

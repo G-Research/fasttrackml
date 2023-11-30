@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -28,13 +29,28 @@ func TestUpdateRunTestSuite(t *testing.T) {
 
 func (s *UpdateRunTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest()
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
 
-	var err error
-	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), s.DefaultExperiment)
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
+	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), experiment)
 	s.Require().Nil(err)
 }
 
 func (s *UpdateRunTestSuite) Test_Ok() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
 	tests := []struct {
 		name    string
 		request request.UpdateRunRequest
@@ -74,6 +90,9 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 }
 
 func (s *UpdateRunTestSuite) Test_Error() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
 	tests := []struct {
 		name        string
 		ID          string

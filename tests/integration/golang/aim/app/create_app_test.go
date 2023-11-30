@@ -3,6 +3,7 @@
 package run
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -10,6 +11,8 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -22,6 +25,17 @@ func TestCreateAppTestSuite(t *testing.T) {
 }
 
 func (s *CreateAppTestSuite) Test_Ok() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
 	tests := []struct {
 		name        string
 		requestBody request.CreateApp
@@ -60,6 +74,17 @@ func (s *CreateAppTestSuite) Test_Ok() {
 }
 
 func (s *CreateAppTestSuite) Test_Error() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
 	tests := []struct {
 		name        string
 		requestBody any

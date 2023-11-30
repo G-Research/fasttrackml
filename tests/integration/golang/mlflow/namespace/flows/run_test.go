@@ -37,12 +37,11 @@ type RunFlowTestSuite struct {
 // - `POST /runs/delete-tag`
 // - `POST /runs/log-batch`
 func TestRunFlowTestSuite(t *testing.T) {
-	suite.Run(t, &RunFlowTestSuite{
-		helpers.BaseTestSuite{
-			ResetOnSubTest:             true,
-			SkipCreateDefaultNamespace: true,
-		},
-	})
+	suite.Run(t, new(RunFlowTestSuite))
+}
+
+func (s *RunFlowTestSuite) TearDownTest() {
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *RunFlowTestSuite) Test_Ok() {
@@ -98,6 +97,8 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
+			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
@@ -107,7 +108,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment1",
-				ArtifactLocation: "/artifact/location/1",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace1.ID,
 			})
@@ -115,7 +116,7 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment2",
-				ArtifactLocation: "/artifact/location/2",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace2.ID,
 			})
@@ -155,7 +156,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "Run1",
 					Status:         string(models.StatusRunning),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -174,7 +175,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "Run2",
 					Status:         string(models.StatusRunning),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -245,7 +246,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "UpdatedRun1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -264,7 +265,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "UpdatedRun2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -287,7 +288,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun1",
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
 				Data: response.RunDataPartialResponse{
@@ -315,7 +316,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun2",
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
 				Data: response.RunDataPartialResponse{
@@ -346,7 +347,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "UpdatedRun1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageDeleted),
 				},
@@ -365,7 +366,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "UpdatedRun2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageDeleted),
 				},
@@ -390,7 +391,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "UpdatedRun1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -409,7 +410,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "UpdatedRun2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -446,7 +447,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "UpdatedRun1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -474,7 +475,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "UpdatedRun2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -516,7 +517,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run1ID,
 					Name:           "UpdatedRun1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -542,7 +543,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					ID:             run2ID,
 					Name:           "UpdatedRun2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -583,7 +584,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun1",
 					UserID:         "1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -614,7 +615,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun2",
 					UserID:         "2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -657,7 +658,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun1",
 					UserID:         "1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -684,7 +685,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun2",
 					UserID:         "2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -761,7 +762,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun1",
 					UserID:         "1",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -806,7 +807,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 					Name:           "UpdatedRun2",
 					UserID:         "2",
 					Status:         string(models.StatusScheduled),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},

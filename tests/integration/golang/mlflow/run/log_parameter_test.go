@@ -15,6 +15,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -28,13 +29,33 @@ func TestLogParamTestSuite(t *testing.T) {
 }
 
 func (s *LogParamTestSuite) Test_Ok() {
-	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
+	experiment := &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	}
+	_, err = s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
+	s.Require().Nil(err)
+
+	run := &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
-		ExperimentID:   *s.DefaultExperiment.ID,
+		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
-	})
+	}
+	run, err = s.RunFixtures.CreateRun(context.Background(), run)
 	s.Require().Nil(err)
 
 	req := request.LogParamRequest{
@@ -77,13 +98,33 @@ func (s *LogParamTestSuite) Test_Ok() {
 }
 
 func (s *LogParamTestSuite) Test_Error() {
-	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
+	experiment := &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	}
+	_, err = s.ExperimentFixtures.CreateExperiment(context.Background(), experiment)
+	s.Require().Nil(err)
+
+	run := &models.Run{
 		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
-		ExperimentID:   *s.DefaultExperiment.ID,
+		ExperimentID:   *experiment.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
 		Status:         models.StatusRunning,
-	})
+	}
+	run, err = s.RunFixtures.CreateRun(context.Background(), run)
 	s.Require().Nil(err)
 
 	// setup param OK

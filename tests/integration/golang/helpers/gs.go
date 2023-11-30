@@ -13,34 +13,6 @@ import (
 	"google.golang.org/api/option"
 )
 
-type GSTestSuite struct {
-	BaseTestSuite
-	Client      *storage.Client
-	testBuckets []string
-}
-
-// NewGSTestSuite creates a new instance of GSTestSuite.
-func NewGSTestSuite(testBuckets ...string) GSTestSuite {
-	return GSTestSuite{
-		testBuckets: testBuckets,
-	}
-}
-
-func (s *GSTestSuite) SetupSuite() {
-	s.BaseTestSuite.SetupSuite()
-
-	client, err := NewGSClient(GetGSEndpointUri())
-	s.Require().Nil(err)
-	s.Client = client
-
-	s.AddSetupHook(func() {
-		s.Require().Nil(s.CreateTestBuckets())
-	})
-	s.AddTearDownHook(func() {
-		s.Require().Nil(s.DeleteTestBuckets())
-	})
-}
-
 // NewGSClient creates new instance of Google Storage client.
 func NewGSClient(endpoint string) (*storage.Client, error) {
 	client, err := storage.NewClient(
@@ -53,36 +25,33 @@ func NewGSClient(endpoint string) (*storage.Client, error) {
 	return client, nil
 }
 
-// CreateTestBuckets creates the test buckets.
-func (s *GSTestSuite) CreateTestBuckets() error {
-	for _, bucket := range s.testBuckets {
-		if err := s.Client.Bucket(bucket).Create(context.Background(), "", nil); err != nil {
-			return eris.Wrapf(err, "failed to create bucket %q", bucket)
+// CreateGSBuckets creates tests buckets in the Google Storage.
+func CreateGSBuckets(client *storage.Client, buckets []string) error {
+	for _, bucket := range buckets {
+		if err := client.Bucket(bucket).Create(context.Background(), "", nil); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-// DeleteTestBuckets deletes the test buckets.
-func (s *GSTestSuite) DeleteTestBuckets() error {
-	for _, bucket := range s.testBuckets {
-		it := s.Client.Bucket(bucket).Objects(context.Background(), &storage.Query{})
+// DeleteGSBuckets deletes tests buckets from the Google Storage.
+func DeleteGSBuckets(client *storage.Client, buckets []string) error {
+	for _, bucket := range buckets {
+		it := client.Bucket(bucket).Objects(context.Background(), &storage.Query{})
 		for {
 			object, err := it.Next()
-			if err != nil {
-				if errors.Is(err, iterator.Done) || errors.Is(err, storage.ErrBucketNotExist) {
-					break
-				}
-				return eris.Wrapf(err, "failed to list objects in bucket %q", bucket)
+			if errors.Is(err, iterator.Done) || errors.Is(err, storage.ErrBucketNotExist) {
+				break
 			}
-			if err := s.Client.Bucket(bucket).Object(object.Name).Delete(context.Background()); err != nil {
-				return eris.Wrapf(err, "failed to delete objects in bucket %q", bucket)
+			if err := client.Bucket(bucket).Object(object.Name).Delete(context.Background()); err != nil {
+				return err
 			}
 		}
 		var e *googleapi.Error
-		if err := s.Client.Bucket(bucket).Delete(context.Background()); errors.As(err, &e) &&
+		if err := client.Bucket(bucket).Delete(context.Background()); errors.As(err, &e) &&
 			e.Code != http.StatusNotFound {
-			return eris.Wrapf(err, "failed to delete bucket %q", bucket)
+			return err
 		}
 	}
 	return nil

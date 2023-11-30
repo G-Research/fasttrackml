@@ -3,6 +3,7 @@
 package experiment
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -20,14 +23,21 @@ type CreateExperimentTestSuite struct {
 }
 
 func TestCreateExperimentTestSuite(t *testing.T) {
-	suite.Run(t, &CreateExperimentTestSuite{
-		helpers.BaseTestSuite{
-			SkipCreateDefaultExperiment: true,
-		},
-	})
+	suite.Run(t, new(CreateExperimentTestSuite))
 }
 
 func (s *CreateExperimentTestSuite) Test_Ok() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
 	req := request.CreateExperimentRequest{
 		Name:             "ExperimentName",
 		ArtifactLocation: "/artifact/location",
@@ -58,6 +68,17 @@ func (s *CreateExperimentTestSuite) Test_Ok() {
 }
 
 func (s *CreateExperimentTestSuite) Test_Error() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -69,7 +90,7 @@ func (s *CreateExperimentTestSuite) Test_Error() {
 			request: &request.CreateExperimentRequest{},
 		},
 		{
-			name: "IncorrectArtifactLocationProperty",
+			name: "EmptyArtifactLocationProperty",
 			error: api.NewInvalidParameterValueError(
 				`Invalid value for parameter 'artifact_location': error parsing artifact location: parse ` +
 					`"incorrect-protocol,:/incorrect-location": first path segment in URL cannot contain colon`,

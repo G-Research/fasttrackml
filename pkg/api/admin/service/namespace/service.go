@@ -2,6 +2,7 @@ package namespace
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/rotisserie/eris"
 
@@ -48,7 +49,7 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 		return nil, eris.Wrap(err, "error validating namespace")
 	}
 	exp := &models.Experiment{
-		Name:           "Default",
+		Name:           fmt.Sprintf("%s-exp", code),
 		LifecycleStage: models.LifecycleStageActive,
 	}
 	namespace := &models.Namespace{

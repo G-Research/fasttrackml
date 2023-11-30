@@ -35,12 +35,11 @@ type ExperimentFlowTestSuite struct {
 // - `GET /experiments/get-by-name`
 // - `POST /experiments/set-experiment-tag`
 func TestExperimentFlowTestSuite(t *testing.T) {
-	suite.Run(t, &ExperimentFlowTestSuite{
-		helpers.BaseTestSuite{
-			ResetOnSubTest:             true,
-			SkipCreateDefaultNamespace: true,
-		},
-	})
+	suite.Run(t, new(ExperimentFlowTestSuite))
+}
+
+func (s *ExperimentFlowTestSuite) TearDownTest() {
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *ExperimentFlowTestSuite) Test_Ok() {
@@ -96,8 +95,11 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 
 	// delete everything before the test, because when service starts under the hood we create
 	// default namespace and experiment, so it could lead to the problems with actual tests.
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
+			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
@@ -116,11 +118,11 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 	// create experiments in scope of different namespaces.
 	experiment1ID := s.createExperiment(namespace1Code, &request.CreateExperimentRequest{
 		Name:             "ExperimentName1",
-		ArtifactLocation: "/artifact/location/1",
+		ArtifactLocation: "/artifact/location",
 	})
 	experiment2ID := s.createExperiment(namespace2Code, &request.CreateExperimentRequest{
 		Name:             "ExperimentName2",
-		ArtifactLocation: "/artifact/location/2",
+		ArtifactLocation: "/artifact/location",
 	})
 
 	// test `GET /experiments/get` endpoint.
@@ -133,7 +135,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 				ID:               experiment1ID,
 				Name:             "ExperimentName1",
 				Tags:             []response.ExperimentTagPartialResponse{},
-				ArtifactLocation: "/artifact/location/1",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageActive),
 			},
 		},
@@ -146,7 +148,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 				ID:               experiment2ID,
 				Name:             "ExperimentName2",
 				Tags:             []response.ExperimentTagPartialResponse{},
-				ArtifactLocation: "/artifact/location/2",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageActive),
 			},
 		},
@@ -213,7 +215,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 				ID:               experiment1ID,
 				Name:             "ExperimentName1",
 				Tags:             []response.ExperimentTagPartialResponse{},
-				ArtifactLocation: "/artifact/location/1",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageActive),
 			},
 		},
@@ -226,7 +228,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 				ID:               experiment2ID,
 				Name:             "ExperimentName2",
 				Tags:             []response.ExperimentTagPartialResponse{},
-				ArtifactLocation: "/artifact/location/2",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageActive),
 			},
 		},
@@ -259,7 +261,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 				ID:               experiment1ID,
 				Name:             "UpdatedExperiment1",
 				Tags:             []response.ExperimentTagPartialResponse{},
-				ArtifactLocation: "/artifact/location/1",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageActive),
 			},
 		},
@@ -272,7 +274,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 				ID:               experiment2ID,
 				Name:             "UpdatedExperiment2",
 				Tags:             []response.ExperimentTagPartialResponse{},
-				ArtifactLocation: "/artifact/location/2",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageActive),
 			},
 		},
@@ -304,7 +306,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 						Value: "ValueTag1",
 					},
 				},
-				ArtifactLocation: "/artifact/location/1",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageActive),
 			},
 		},
@@ -322,7 +324,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 						Value: "ValueTag2",
 					},
 				},
-				ArtifactLocation: "/artifact/location/2",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageActive),
 			},
 		},
@@ -346,7 +348,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 						Value: "ValueTag1",
 					},
 				},
-				ArtifactLocation: "/artifact/location/1",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageDeleted),
 			},
 		},
@@ -364,7 +366,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 						Value: "ValueTag2",
 					},
 				},
-				ArtifactLocation: "/artifact/location/2",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageDeleted),
 			},
 		},
@@ -388,7 +390,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 						Value: "ValueTag1",
 					},
 				},
-				ArtifactLocation: "/artifact/location/1",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageActive),
 			},
 		},
@@ -406,7 +408,7 @@ func (s *ExperimentFlowTestSuite) testExperimentFlow(namespace1Code, namespace2C
 						Value: "ValueTag2",
 					},
 				},
-				ArtifactLocation: "/artifact/location/2",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   string(models.LifecycleStageActive),
 			},
 		},

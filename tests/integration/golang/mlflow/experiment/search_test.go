@@ -4,7 +4,9 @@ package experiment
 
 import (
 	"context"
+	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -12,6 +14,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -21,46 +24,89 @@ type SearchExperimentsTestSuite struct {
 }
 
 func TestSearchExperimentsTestSuite(t *testing.T) {
-	suite.Run(t, &SearchExperimentsTestSuite{
-		helpers.BaseTestSuite{
-			SkipCreateDefaultExperiment: true,
-		},
-	})
+	suite.Run(t, new(SearchExperimentsTestSuite))
 }
 
 func (s *SearchExperimentsTestSuite) Test_Ok() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
 	// 1. prepare database with test data.
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
 	experiments := []models.Experiment{
 		{
-			Name:           "Test Experiment 1",
+			Name: "Test Experiment 1",
+			Tags: []models.ExperimentTag{
+				{
+					Key:   "key2",
+					Value: "value2",
+				},
+			},
+
 			LifecycleStage: models.LifecycleStageActive,
 		},
 		{
-			Name:           "Test Experiment 2",
+			Name: "Test Experiment 2",
+			Tags: []models.ExperimentTag{
+				{
+					Key:   "key1",
+					Value: "value1",
+				},
+			},
 			LifecycleStage: models.LifecycleStageActive,
 		},
 		{
-			Name:           "Test Experiment 3",
+			Name: "Test Experiment 3",
+			Tags: []models.ExperimentTag{
+				{
+					Key:   "key3",
+					Value: "value3",
+				},
+			},
 			LifecycleStage: models.LifecycleStageActive,
 		},
 		{
-			Name:           "Test Experiment 4",
+			Name: "Test Experiment 4",
+			Tags: []models.ExperimentTag{
+				{
+					Key:   "key4",
+					Value: "value4",
+				},
+			},
 			LifecycleStage: models.LifecycleStageActive,
 		},
 		{
 			Name:           "Test Experiment 5",
+			Tags:           nil,
 			LifecycleStage: models.LifecycleStageActive,
 		},
 		{
 			Name:           "Test Experiment 6",
+			Tags:           nil,
 			LifecycleStage: models.LifecycleStageDeleted,
 		},
 	}
 	for _, ex := range experiments {
 		_, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-			Name:           ex.Name,
-			NamespaceID:    s.DefaultNamespace.ID,
-			LifecycleStage: ex.LifecycleStage,
+			Name:        ex.Name,
+			Tags:        ex.Tags,
+			NamespaceID: namespace.ID,
+			CreationTime: sql.NullInt64{
+				Int64: time.Now().UTC().UnixMilli(),
+				Valid: true,
+			},
+			LastUpdateTime: sql.NullInt64{
+				Int64: time.Now().UTC().UnixMilli(),
+				Valid: true,
+			},
+			LifecycleStage:   ex.LifecycleStage,
+			ArtifactLocation: "/artifact/location",
 		})
 		s.Require().Nil(err)
 	}
@@ -136,6 +182,17 @@ func (s *SearchExperimentsTestSuite) Test_Ok() {
 }
 
 func (s *SearchExperimentsTestSuite) Test_Error() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
 	testData := []struct {
 		name    string
 		error   *api.ErrorResponse

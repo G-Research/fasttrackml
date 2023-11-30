@@ -23,14 +23,21 @@ type GetExperimentTestSuite struct {
 }
 
 func TestGetExperimentTestSuite(t *testing.T) {
-	suite.Run(t, &GetExperimentTestSuite{
-		helpers.BaseTestSuite{
-			SkipCreateDefaultExperiment: true,
-		},
-	})
+	suite.Run(t, new(GetExperimentTestSuite))
 }
 
 func (s *GetExperimentTestSuite) Test_Ok() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
@@ -43,13 +50,20 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
 		},
-		NamespaceID:    s.DefaultNamespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
+		NamespaceID: namespace.ID,
+		LastUpdateTime: sql.NullInt64{
+			Int64: time.Now().UTC().UnixMilli(),
+			Valid: true,
+		},
+		LifecycleStage:   models.LifecycleStageActive,
+		ArtifactLocation: "/artifact/location",
 	})
 	s.Require().Nil(err)
 
 	var resp response.GetExperiment
+
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
+
 	s.Equal(fmt.Sprintf("%d", *experiment.ID), resp.ID)
 	s.Equal(experiment.Name, resp.Name)
 	s.Equal(helpers.GetDescriptionFromExperiment(*experiment), resp.Description)
@@ -59,6 +73,17 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 }
 
 func (s *GetExperimentTestSuite) Test_Error() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
 	tests := []struct {
 		name  string
 		error string

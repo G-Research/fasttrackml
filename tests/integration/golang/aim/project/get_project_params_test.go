@@ -6,9 +6,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -22,18 +24,37 @@ func TestGetProjectParamsTestSuite(t *testing.T) {
 }
 
 func (s *GetProjectParamsTestSuite) Test_Ok() {
-	// create test run.
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	// 1. create test `namespace` and connect test `run`.
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
+	// 2. create test `experiment` and connect test `run`.
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "id",
 		Name:           "chill-run",
 		Status:         models.StatusScheduled,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
-		ExperimentID:   *s.DefaultExperiment.ID,
+		ExperimentID:   *experiment.ID,
 	})
 	s.Require().Nil(err)
 
-	// create latest metric.
+	// 3. create latest metric.
 	metric, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "key",
 		Value:     123.1,
@@ -45,7 +66,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	// create test param and tag.
+	// 4. create test param and tag.
 	tag, err := s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "tag1",
 		Value: "value1",
@@ -60,7 +81,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	// check that response contains metric from previous step.
+	// 5. check that response contains metric from previous step.
 	resp := response.ProjectParamsResponse{}
 	s.Require().Nil(
 		s.AIMClient().WithQuery(
@@ -84,11 +105,11 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		},
 	}, resp.Params)
 
-	// mark run as `deleted`.
+	// 6. mark run as `deleted`.
 	run.LifecycleStage = models.LifecycleStageDeleted
 	s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), run))
 
-	// check that endpoint returns an empty response.
+	// 7. check that endpoint returns an empty response.
 	resp = response.ProjectParamsResponse{}
 	s.Require().Nil(
 		s.AIMClient().WithQuery(
@@ -104,4 +125,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 }
 
 func (s *GetProjectParamsTestSuite) Test_Error() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
 }

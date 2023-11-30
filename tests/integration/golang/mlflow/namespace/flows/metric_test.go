@@ -28,12 +28,11 @@ type MetricFlowTestSuite struct {
 // - `GET /metrics/get-history-bulk`
 // - `POST /metrics/get-histories` - TODO:dsuhinin we need firstly to create proper decoder.
 func TestMetricFlowTestSuite(t *testing.T) {
-	suite.Run(t, &MetricFlowTestSuite{
-		helpers.BaseTestSuite{
-			ResetOnSubTest:             true,
-			SkipCreateDefaultNamespace: true,
-		},
-	})
+	suite.Run(t, new(MetricFlowTestSuite))
+}
+
+func (s *MetricFlowTestSuite) TearDownTest() {
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *MetricFlowTestSuite) Test_Ok() {
@@ -89,6 +88,8 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
+			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
@@ -98,7 +99,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment1",
-				ArtifactLocation: "/artifact/location/1",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace1.ID,
 			})
@@ -106,7 +107,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment2",
-				ArtifactLocation: "/artifact/location/2",
+				ArtifactLocation: "/artifact/location",
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace2.ID,
 			})
@@ -144,7 +145,7 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 					ID:             run1ID,
 					Name:           "Run1",
 					Status:         string(models.StatusRunning),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/1/%s/artifacts", run1ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run1ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment1.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},
@@ -163,7 +164,7 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 					ID:             run2ID,
 					Name:           "Run2",
 					Status:         string(models.StatusRunning),
-					ArtifactURI:    fmt.Sprintf("/artifact/location/2/%s/artifacts", run2ID),
+					ArtifactURI:    fmt.Sprintf("/artifact/location/%s/artifacts", run2ID),
 					ExperimentID:   fmt.Sprintf("%d", *experiment2.ID),
 					LifecycleStage: string(models.LifecycleStageActive),
 				},

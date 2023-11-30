@@ -24,12 +24,11 @@ type DashboardFlowTestSuite struct {
 }
 
 func TestDashboardFlowTestSuite(t *testing.T) {
-	suite.Run(t, &DashboardFlowTestSuite{
-		helpers.BaseTestSuite{
-			ResetOnSubTest:             true,
-			SkipCreateDefaultNamespace: true,
-		},
-	})
+	suite.Run(t, &DashboardFlowTestSuite{})
+}
+
+func (s *DashboardFlowTestSuite) TearDownTest() {
+	s.Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *DashboardFlowTestSuite) Test_Ok() {
@@ -57,6 +56,10 @@ func (s *DashboardFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
+			defer func() {
+				s.Nil(s.NamespaceFixtures.UnloadFixtures())
+			}()
+
 			// setup namespaces
 			for _, nsCode := range []string{"default", tt.namespace1Code, tt.namespace2Code} {
 				_, err := s.NamespaceFixtures.UpsertNamespace(context.Background(), &models.Namespace{

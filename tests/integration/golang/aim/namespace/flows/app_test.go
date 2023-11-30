@@ -23,12 +23,11 @@ type AppFlowTestSuite struct {
 }
 
 func TestAppFlowTestSuite(t *testing.T) {
-	suite.Run(t, &AppFlowTestSuite{
-		helpers.BaseTestSuite{
-			ResetOnSubTest:             true,
-			SkipCreateDefaultNamespace: true,
-		},
-	})
+	suite.Run(t, &AppFlowTestSuite{})
+}
+
+func (s *AppFlowTestSuite) TearDownTest() {
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *AppFlowTestSuite) Test_Ok() {
@@ -56,6 +55,10 @@ func (s *AppFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
+			defer func() {
+				s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+			}()
+
 			// setup namespaces
 			for _, nsCode := range []string{"default", tt.namespace1Code, tt.namespace2Code} {
 				_, err := s.NamespaceFixtures.UpsertNamespace(context.Background(), &models.Namespace{

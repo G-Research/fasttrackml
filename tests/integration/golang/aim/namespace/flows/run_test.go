@@ -35,12 +35,11 @@ type RunFlowTestSuite struct {
 // - `DELETE /runs/:id`
 // - `DELETE /runs/delete-batch`
 func TestRunFlowTestSuite(t *testing.T) {
-	suite.Run(t, &RunFlowTestSuite{
-		helpers.BaseTestSuite{
-			ResetOnSubTest:             true,
-			SkipCreateDefaultNamespace: true,
-		},
-	})
+	suite.Run(t, new(RunFlowTestSuite))
+}
+
+func (s *RunFlowTestSuite) TearDownTest() {
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *RunFlowTestSuite) Test_Ok() {
@@ -96,6 +95,8 @@ func (s *RunFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
+			defer s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
@@ -104,9 +105,10 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			s.Require().Nil(err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:           "Experiment1",
-				LifecycleStage: models.LifecycleStageActive,
-				NamespaceID:    namespace1.ID,
+				Name:             "Experiment1",
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   models.LifecycleStageActive,
+				NamespaceID:      namespace1.ID,
 			})
 			s.Require().Nil(err)
 
@@ -137,9 +139,10 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:           "Experiment2",
-				LifecycleStage: models.LifecycleStageActive,
-				NamespaceID:    namespace2.ID,
+				Name:             "Experiment2",
+				ArtifactLocation: "/artifact/location",
+				LifecycleStage:   models.LifecycleStageActive,
+				NamespaceID:      namespace2.ID,
 			})
 			s.Require().Nil(err)
 

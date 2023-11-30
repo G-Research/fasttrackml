@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -18,11 +20,7 @@ type GetAppsTestSuite struct {
 }
 
 func TestGetAppsTestSuite(t *testing.T) {
-	suite.Run(t, &GetAppsTestSuite{
-		helpers.BaseTestSuite{
-			ResetOnSubTest: true,
-		},
-	})
+	suite.Run(t, new(GetAppsTestSuite))
 }
 
 func (s *GetAppsTestSuite) Test_Ok() {
@@ -41,7 +39,18 @@ func (s *GetAppsTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			apps, err := s.AppFixtures.CreateApps(context.Background(), s.DefaultNamespace, tt.expectedAppCount)
+			defer func() {
+				s.Require().Nil(s.AppFixtures.UnloadFixtures())
+			}()
+
+			namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+				ID:                  1,
+				Code:                "default",
+				DefaultExperimentID: common.GetPointer(int32(0)),
+			})
+			s.Require().Nil(err)
+
+			apps, err := s.AppFixtures.CreateApps(context.Background(), namespace, tt.expectedAppCount)
 			s.Require().Nil(err)
 
 			var resp []response.App

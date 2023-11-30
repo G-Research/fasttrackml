@@ -13,8 +13,8 @@ type baseFixtures struct {
 	db *gorm.DB
 }
 
-// TruncateTables cleans database from the old data.
-func (f baseFixtures) TruncateTables() error {
+// UnloadFixtures cleans database from the old data.
+func (f baseFixtures) UnloadFixtures() error {
 	for _, table := range []interface{}{
 		database.Dashboard{}, // TODO update to models when available
 		database.App{},       // TODO update to models when available

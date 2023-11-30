@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -26,6 +27,17 @@ func TestGetRunsActiveTestSuite(t *testing.T) {
 }
 
 func (s *GetRunsActiveTestSuite) Test_Ok() {
+	defer func() {
+		s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+	}()
+
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  1,
+		Code:                "default",
+		DefaultExperimentID: common.GetPointer(int32(0)),
+	})
+	s.Require().Nil(err)
+
 	tests := []struct {
 		name         string
 		wantRunCount int
@@ -41,7 +53,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			beforeRunFn: func() {
 				experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 					Name:           uuid.New().String(),
-					NamespaceID:    s.DefaultNamespace.ID,
+					NamespaceID:    namespace.ID,
 					LifecycleStage: models.LifecycleStageActive,
 				})
 				s.Require().Nil(err)

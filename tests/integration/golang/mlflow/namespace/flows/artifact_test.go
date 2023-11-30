@@ -24,7 +24,9 @@ import (
 )
 
 type ArtifactFlowTestSuite struct {
-	helpers.S3TestSuite
+	helpers.BaseTestSuite
+	testBuckets []string
+	s3Client    *s3.Client
 }
 
 // TestArtifactFlowTestSuite tests the full `artifact` flow connected to namespace functionality.
@@ -32,15 +34,20 @@ type ArtifactFlowTestSuite struct {
 // - `GET /artifacts/get`
 // - `GET /artifacts/list`
 func TestArtifactFlowTestSuite(t *testing.T) {
-	s := &ArtifactFlowTestSuite{
-		helpers.NewS3TestSuite("bucket1", "bucket2"),
-	}
-	s.S3TestSuite.ResetOnSubTest = true
-	s.S3TestSuite.SkipCreateDefaultNamespace = true
-	suite.Run(t, s)
+	suite.Run(t, &ArtifactFlowTestSuite{
+		testBuckets: []string{"bucket1", "bucket2"},
+	})
+}
+
+func (s *ArtifactFlowTestSuite) TearDownTest() {
+	s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
 }
 
 func (s *ArtifactFlowTestSuite) Test_Ok() {
+	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
+	s.Require().Nil(err)
+	s.s3Client = s3Client
+
 	tests := []struct {
 		name           string
 		setup          func() (*models.Namespace, *models.Namespace)
@@ -93,6 +100,11 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
+			defer func() {
+				s.Require().Nil(s.NamespaceFixtures.UnloadFixtures())
+				s.Require().Nil(helpers.RemoveS3Buckets(s.s3Client, s.testBuckets))
+			}()
+
 			// setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
@@ -116,6 +128,9 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 			})
 			s.Require().Nil(err)
 
+			// create test buckets.
+			s.Require().Nil(helpers.CreateS3Buckets(s.s3Client, s.testBuckets))
+
 			// run actual flow test over the test data.
 			s.testRunArtifactFlow(tt.namespace1Code, tt.namespace2Code, experiment1, experiment2)
 		})
@@ -131,7 +146,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		ExperimentID: fmt.Sprintf("%d", *experiment1.ID),
 	})
 
-	_, err := s.Client.PutObject(context.Background(), &s3.PutObjectInput{
+	_, err := s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
 		Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact1.file", run1ID)),
 		Body:   strings.NewReader("content1"),
 		Bucket: aws.String("bucket1"),
@@ -143,7 +158,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		ExperimentID: fmt.Sprintf("%d", *experiment2.ID),
 	})
 
-	_, err = s.Client.PutObject(context.Background(), &s3.PutObjectInput{
+	_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
 		Key:    aws.String(fmt.Sprintf("2/%s/artifacts/artifact2.file", run2ID)),
 		Body:   strings.NewReader("content2"),
 		Bucket: aws.String("bucket2"),

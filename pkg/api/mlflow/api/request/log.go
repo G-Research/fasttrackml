@@ -14,11 +14,10 @@ type TagPartialRequest struct {
 
 // MetricPartialRequest is a partial request object for different requests.
 type MetricPartialRequest struct {
-	Key       string         `json:"key"`
-	Value     any            `json:"value"`
-	Timestamp int64          `json:"timestamp"`
-	Step      int64          `json:"step"`
-	Context   map[string]any `json:"context"`
+	Key       string `json:"key"`
+	Value     any    `json:"value"`
+	Timestamp int64  `json:"timestamp"`
+	Step      int64  `json:"step"`
 }
 
 // LogParamRequest is a request object for `POST mlflow/runs/log-parameter` endpoint.
@@ -39,13 +38,12 @@ func (r LogParamRequest) GetRunID() string {
 
 // LogMetricRequest is a request object for `POST mlflow/runs/log-metric` endpoint.
 type LogMetricRequest struct {
-	RunID     string         `json:"run_id"`
-	RunUUID   string         `json:"run_uuid"`
-	Key       string         `json:"key"`
-	Value     any            `json:"value"`
-	Timestamp int64          `json:"timestamp"`
-	Step      int64          `json:"step"`
-	Context   map[string]any `json:"context"`
+	RunID     string `json:"run_id"`
+	RunUUID   string `json:"run_uuid"`
+	Key       string `json:"key"`
+	Value     any    `json:"value"`
+	Timestamp int64  `json:"timestamp"`
+	Step      int64  `json:"step"`
 }
 
 // GetRunID returns Run ID.

@@ -1,7 +1,6 @@
 package convertors
 
 import (
-	"encoding/json"
 	"math"
 
 	"github.com/rotisserie/eris"
@@ -12,20 +11,12 @@ import (
 )
 
 // ConvertMetricParamRequestToDBModel converts request.LogMetricRequest into actual models.Metric model.
-func ConvertMetricParamRequestToDBModel(
-	runID string,
-	context *models.Context,
-	req *request.LogMetricRequest,
-) (*models.Metric, error) {
+func ConvertMetricParamRequestToDBModel(runID string, req *request.LogMetricRequest) (*models.Metric, error) {
 	metric := models.Metric{
 		Key:       req.Key,
 		Timestamp: req.Timestamp,
 		Step:      req.Step,
 		RunID:     runID,
-	}
-	if context != nil {
-		metric.Context = context
-		metric.ContextID = &context.ID
 	}
 	if v, ok := req.Value.(float64); ok {
 		metric.Value = v
@@ -45,20 +36,4 @@ func ConvertMetricParamRequestToDBModel(
 		return nil, eris.Errorf("invalid metric value '%s'", v)
 	}
 	return &metric, nil
-}
-
-// ConvertLogMetricRequestToContextDBModel converts request.LogMetricRequest into actual models.Context model.
-func ConvertLogMetricRequestToContextDBModel(req *request.LogMetricRequest) (*models.Context, error) {
-	if req.Context != nil {
-		contextJSON, err := json.Marshal(req.Context)
-		if err != nil {
-			return nil, err
-		}
-
-		return &models.Context{
-			Json: contextJSON,
-		}, nil
-	} else {
-		return nil, nil
-	}
 }

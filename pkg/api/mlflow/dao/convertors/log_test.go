@@ -42,8 +42,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 			},
 		},
 	}
-	contexts := []*models.Context{nil}
-	metrics, params, tags, err := ConvertLogBatchRequestToDBModel("run_id", &req, contexts)
+	metrics, params, tags, err := ConvertLogBatchRequestToDBModel("run_id", &req)
 	require.Nil(t, err)
 	assert.Equal(t, []models.Tag{
 		{

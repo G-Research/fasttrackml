@@ -35,7 +35,11 @@ func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []in
 
 // BuildJsonCondition creates sql and values for where condition to select items having the specified map of json paths
 // and values in the given json column. Json path is expressed as "key" or "outerkey.nestedKey".
-func BuildJsonCondition(dialector string, jsonColumnName string, jsonPathValueMap map[string]string) (sql string, args []any) {
+func BuildJsonCondition(
+	dialector string,
+	jsonColumnName string,
+	jsonPathValueMap map[string]string
+) (sql string, args []any) {
 	if len(jsonPathValueMap) == 0 {
 		return
 	}

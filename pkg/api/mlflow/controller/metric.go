@@ -135,6 +135,8 @@ func (c Controller) GetMetricHistories(ctx *fiber.Ctx) error {
 				}
 				if m.Context != nil {
 					b.Field(5).(*array.StringBuilder).Append(m.Context.Json.String())
+				} else {
+					b.Field(5).(*array.StringBuilder).AppendNull()
 				}
 				if (i+1)%100000 == 0 {
 					if err := WriteStreamingRecord(writer, b.NewRecord()); err != nil {

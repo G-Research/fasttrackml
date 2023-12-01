@@ -129,7 +129,7 @@ func TestNewMetricHistoryBulkResponse_Ok(t *testing.T) {
 				},
 			},
 			expectedResponse: &GetMetricHistoryBulkResponse{
-				Metrics: []MetricPartialResponse{
+				Metrics: []MetricPartialResponseBulk{
 					{
 						RunID:     "run_id",
 						Key:       "key",
@@ -154,7 +154,7 @@ func TestNewMetricHistoryBulkResponse_Ok(t *testing.T) {
 				},
 			},
 			expectedResponse: &GetMetricHistoryBulkResponse{
-				Metrics: []MetricPartialResponse{
+				Metrics: []MetricPartialResponseBulk{
 					{
 						RunID:     "run_id",
 						Key:       "key",

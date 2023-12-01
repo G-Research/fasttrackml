@@ -92,7 +92,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 	)
 
 	s.Equal(response.GetMetricHistoryBulkResponse{
-		Metrics: []response.MetricPartialResponse{
+		Metrics: []response.MetricPartialResponseBulk{
 			{
 				RunID:     run1.ID,
 				Key:       "key1",

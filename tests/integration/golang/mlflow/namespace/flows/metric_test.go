@@ -208,7 +208,7 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 		RunIDs:    []string{run1ID},
 		MetricKey: "key1",
 	}, response.GetMetricHistoryBulkResponse{
-		Metrics: []response.MetricPartialResponse{
+		Metrics: []response.MetricPartialResponseBulk{
 			{
 				RunID:     run1ID,
 				Key:       "key1",
@@ -222,7 +222,7 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 		RunIDs:    []string{run2ID},
 		MetricKey: "key3",
 	}, response.GetMetricHistoryBulkResponse{
-		Metrics: []response.MetricPartialResponse{
+		Metrics: []response.MetricPartialResponseBulk{
 			{
 				RunID:     run2ID,
 				Key:       "key3",
@@ -239,13 +239,13 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 		RunIDs:    []string{run2ID},
 		MetricKey: "key3",
 	}, response.GetMetricHistoryBulkResponse{
-		Metrics: []response.MetricPartialResponse{},
+		Metrics: []response.MetricPartialResponseBulk{},
 	})
 	s.getMetricHistoryBulkAndCompare(namespace2Code, request.GetMetricHistoryBulkRequest{
 		RunIDs:    []string{run1ID},
 		MetricKey: "key1",
 	}, response.GetMetricHistoryBulkResponse{
-		Metrics: []response.MetricPartialResponse{},
+		Metrics: []response.MetricPartialResponseBulk{},
 	})
 
 	// test `GET /metrics/get-history-bulk` endpoint.
@@ -254,7 +254,7 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 		RunIDs:    []string{run1ID, run2ID},
 		MetricKey: "key1",
 	}, response.GetMetricHistoryBulkResponse{
-		Metrics: []response.MetricPartialResponse{
+		Metrics: []response.MetricPartialResponseBulk{
 			{
 				RunID:     run1ID,
 				Key:       "key1",
@@ -268,7 +268,7 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 		RunIDs:    []string{run2ID, run1ID},
 		MetricKey: "key3",
 	}, response.GetMetricHistoryBulkResponse{
-		Metrics: []response.MetricPartialResponse{
+		Metrics: []response.MetricPartialResponseBulk{
 			{
 				RunID:     run2ID,
 				Key:       "key3",
@@ -285,7 +285,7 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 		RunID:     run1ID,
 		MetricKey: "key1",
 	}, response.GetMetricHistoryResponse{
-		Metrics: []response.MetricPartialResponseWithContext{
+		Metrics: []response.MetricPartialResponse{
 			{
 				Key:       "key1",
 				Step:      1,
@@ -298,7 +298,7 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 		RunID:     run2ID,
 		MetricKey: "key3",
 	}, response.GetMetricHistoryResponse{
-		Metrics: []response.MetricPartialResponseWithContext{
+		Metrics: []response.MetricPartialResponse{
 			{
 				Key:       "key3",
 				Step:      1,

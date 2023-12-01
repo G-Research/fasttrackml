@@ -10,7 +10,7 @@ import (
 )
 
 // MetricPartialResponse is a partial response object for GetMetricHistoryBulkResponse.
-type MetricPartialResponse struct {
+type MetricPartialResponseBulk struct {
 	RunID     string `json:"run_id,omitempty"`
 	Key       string `json:"key"`
 	Value     any    `json:"value"`
@@ -18,30 +18,30 @@ type MetricPartialResponse struct {
 	Step      int64  `json:"step"`
 }
 
-// MetricPartialResponseWithContext is a partial response object for GetMetricHistoryResponse.
-type MetricPartialResponseWithContext struct {
+// MetricPartialResponse is a partial response object for GetMetricHistoryResponse.
+type MetricPartialResponse struct {
 	RunID     string         `json:"run_id,omitempty"`
 	Key       string         `json:"key"`
 	Value     any            `json:"value"`
 	Timestamp int64          `json:"timestamp"`
 	Step      int64          `json:"step"`
-	Context   map[string]any `json:"context"`
+	Context   map[string]any `json:"context,omitempty"`
 }
 
 // GetMetricHistoryResponse is a response object for `GET mlflow/metrics/get-history` endpoint.
 type GetMetricHistoryResponse struct {
-	Metrics []MetricPartialResponseWithContext `json:"metrics"`
+	Metrics []MetricPartialResponse `json:"metrics"`
 }
 
 // NewMetricHistoryResponse creates new GetMetricHistoryResponse object.
 func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryResponse, error) {
 	resp := GetMetricHistoryResponse{
-		Metrics: make([]MetricPartialResponseWithContext, len(metrics)),
+		Metrics: make([]MetricPartialResponse, len(metrics)),
 	}
 
 	for n, m := range metrics {
 		var context map[string]interface{}
-		resp.Metrics[n] = MetricPartialResponseWithContext{
+		resp.Metrics[n] = MetricPartialResponse{
 			Key:       m.Key,
 			Step:      m.Step,
 			Value:     m.Value,
@@ -62,17 +62,17 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 
 // GetMetricHistoryBulkResponse is a response object for `GET mlflow/metrics/get-history-bulk` endpoint.
 type GetMetricHistoryBulkResponse struct {
-	Metrics []MetricPartialResponse `json:"metrics"`
+	Metrics []MetricPartialResponseBulk `json:"metrics"`
 }
 
 // NewMetricHistoryBulkResponse creates new GetMetricHistoryBulkResponse object.
 func NewMetricHistoryBulkResponse(metrics []models.Metric) *GetMetricHistoryBulkResponse {
 	resp := GetMetricHistoryBulkResponse{
-		Metrics: make([]MetricPartialResponse, len(metrics)),
+		Metrics: make([]MetricPartialResponseBulk, len(metrics)),
 	}
 
 	for n, m := range metrics {
-		resp.Metrics[n] = MetricPartialResponse{
+		resp.Metrics[n] = MetricPartialResponseBulk{
 			RunID:     m.RunID,
 			Key:       m.Key,
 			Step:      m.Step,

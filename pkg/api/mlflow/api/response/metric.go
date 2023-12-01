@@ -9,7 +9,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-// MetricPartialResponse is a partial response object for GetMetricHistoryBulkResponse.
+// MetricPartialResponseBulk is a partial response object for GetMetricHistoryBulkResponse.
 type MetricPartialResponseBulk struct {
 	RunID     string `json:"run_id,omitempty"`
 	Key       string `json:"key"`

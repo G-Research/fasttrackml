@@ -9,8 +9,17 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-// MetricPartialResponse is a partial response object for GetMetricHistoryResponse.
+// MetricPartialResponse is a partial response object for GetMetricHistoryBulkResponse.
 type MetricPartialResponse struct {
+	RunID     string `json:"run_id,omitempty"`
+	Key       string `json:"key"`
+	Value     any    `json:"value"`
+	Timestamp int64  `json:"timestamp"`
+	Step      int64  `json:"step"`
+}
+
+// MetricPartialResponseWithContext is a partial response object for GetMetricHistoryResponse.
+type MetricPartialResponseWithContext struct {
 	RunID     string         `json:"run_id,omitempty"`
 	Key       string         `json:"key"`
 	Value     any            `json:"value"`
@@ -21,18 +30,18 @@ type MetricPartialResponse struct {
 
 // GetMetricHistoryResponse is a response object for `GET mlflow/metrics/get-history` endpoint.
 type GetMetricHistoryResponse struct {
-	Metrics []MetricPartialResponse `json:"metrics"`
+	Metrics []MetricPartialResponseWithContext `json:"metrics"`
 }
 
 // NewMetricHistoryResponse creates new GetMetricHistoryResponse object.
 func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryResponse, error) {
 	resp := GetMetricHistoryResponse{
-		Metrics: make([]MetricPartialResponse, len(metrics)),
+		Metrics: make([]MetricPartialResponseWithContext, len(metrics)),
 	}
 
 	for n, m := range metrics {
 		var context map[string]interface{}
-		resp.Metrics[n] = MetricPartialResponse{
+		resp.Metrics[n] = MetricPartialResponseWithContext{
 			Key:       m.Key,
 			Step:      m.Step,
 			Value:     m.Value,

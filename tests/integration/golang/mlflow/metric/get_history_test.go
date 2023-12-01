@@ -77,7 +77,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 		),
 	)
 	s.Equal(response.GetMetricHistoryResponse{
-		Metrics: []response.MetricPartialResponse{
+		Metrics: []response.MetricPartialResponseWithContext{
 			{
 				Key:       "key1",
 				Step:      1,

@@ -80,7 +80,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 		MetricKey: "key1",
 	}
 
-	resp := response.GetMetricHistoryResponse{}
+	resp := response.GetMetricHistoryBulkResponse{}
 	s.Require().Nil(
 		s.MlflowClient().WithQuery(
 			req,
@@ -91,7 +91,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 		),
 	)
 
-	s.Equal(response.GetMetricHistoryResponse{
+	s.Equal(response.GetMetricHistoryBulkResponse{
 		Metrics: []response.MetricPartialResponse{
 			{
 				RunID:     run1.ID,

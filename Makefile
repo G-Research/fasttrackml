@@ -141,7 +141,7 @@ test-go-unit: ## run go unit tests.
 .PHONY: test-go-integration
 test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
-	@go test -p 1 -tags="$(GO_BUILDTAGS),integration" ./tests/integration/golang/...
+	@go test -tags="$(GO_BUILDTAGS),integration" ./tests/integration/golang/...
 
 .PHONY: test-python-integration
 test-python-integration: ## run all the python integration tests.

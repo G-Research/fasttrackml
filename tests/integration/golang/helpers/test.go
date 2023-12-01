@@ -61,9 +61,11 @@ func (s *BaseTestSuite) initLogger() {
 }
 
 func (s *BaseTestSuite) initDB() {
-	var err error
+	dsn, err := GenerateDatabaseURI(s.T(), GetDatabaseBackend())
+	s.Require().Nil(err)
+
 	s.db, err = database.NewDBProvider(
-		GetDatabaseUri(),
+		dsn,
 		1*time.Second,
 		20,
 	)

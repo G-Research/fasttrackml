@@ -46,8 +46,10 @@ func TestImportTestSuite(t *testing.T) {
 
 func (s *ImportTestSuite) SetupTest() {
 	// prepare input database.
+	dsn, err := helpers.GenerateDatabaseURI(s.T(), helpers.GetInputDatabaseBackend())
+	s.Require().Nil(err)
 	db, err := database.NewDBProvider(
-		helpers.GetInputDatabaseUri(),
+		dsn,
 		1*time.Second,
 		20,
 	)
@@ -63,8 +65,10 @@ func (s *ImportTestSuite) SetupTest() {
 	s.populateDB(s.inputDB)
 
 	// prepare output database.
+	dsn, err = helpers.GenerateDatabaseURI(s.T(), helpers.GetOutputDatabaseBackend())
+	s.Require().Nil(err)
 	db, err = database.NewDBProvider(
-		helpers.GetOutputDatabaseUri(),
+		dsn,
 		1*time.Second,
 		20,
 	)

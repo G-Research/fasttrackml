@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func Test_makeSqlPlaceholders(t *testing.T) {
@@ -65,7 +66,7 @@ func TestBuildJsonCondition(t *testing.T) {
 	}{
 		{
 			name:           "Postgres",
-			dialector:      "postgres",
+			dialector:      database.PostgresDialectorName,
 			jsonColumnName: "contexts.json",
 			jsonPathValueMap: map[string]string{
 				"key1":        "value1",
@@ -76,7 +77,7 @@ func TestBuildJsonCondition(t *testing.T) {
 		},
 		{
 			name:           "Sqlite",
-			dialector:      "sqlite",
+			dialector:      database.SQLiteDialectorName,
 			jsonColumnName: "contexts.json",
 			jsonPathValueMap: map[string]string{
 				"key1":        "value1",
@@ -87,7 +88,7 @@ func TestBuildJsonCondition(t *testing.T) {
 		},
 		{
 			name:             "SqliteEmptyMap",
-			dialector:        "sqlite",
+			dialector:        database.SQLiteDialectorName,
 			jsonColumnName:   "contexts.json",
 			jsonPathValueMap: map[string]string{},
 			expectedSQL:      "",

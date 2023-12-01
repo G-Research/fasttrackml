@@ -59,12 +59,11 @@ func (f MetricFixtures) GetMetricsByContext(
 	tx := f.db.WithContext(ctx).Model(
 		&database.Metric{},
 	).Joins(
-		"LEFT JOIN contexts on metrics.context_id = contexts.id",
+		"LEFT JOIN contexts ON metrics.context_id = contexts.id",
 	)
 	sql, args := repositories.BuildJsonCondition(tx.Dialector.Name(), "contexts.json", metricContext)
-	tx.Where(sql, args...)
-	if err := tx.Find(&metrics).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting metric by context: %v", metricContext)
+	if err := tx.Where(sql, args...).Find(&metrics).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting metrics by context: %v", metricContext)
 	}
 	return metrics, nil
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/apache/arrow/go/v12/arrow/array"
 	"github.com/apache/arrow/go/v12/arrow/ipc"
 	"github.com/apache/arrow/go/v12/arrow/memory"
+	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
@@ -16,7 +17,7 @@ func DecodeArrowMetrics(buf *bytes.Buffer) ([]models.Metric, error) {
 	// Create a new reader
 	reader, err := ipc.NewReader(buf, ipc.WithAllocator(pool))
 	if err != nil {
-		return nil, err
+		return nil, eris.Wrap(err, "error creating reader for arrow decode")
 	}
 	defer reader.Release()
 
@@ -42,7 +43,7 @@ func DecodeArrowMetrics(buf *bytes.Buffer) ([]models.Metric, error) {
 	}
 
 	if reader.Err() != nil {
-		return nil, reader.Err()
+		return nil, eris.Wrap(reader.Err(), "error processing reader in arrow decode")
 	}
 
 	return metrics, nil

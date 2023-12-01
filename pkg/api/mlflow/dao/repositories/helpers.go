@@ -41,23 +41,30 @@ func BuildJsonCondition(
 	jsonPathValueMap map[string]string,
 ) (sql string, args []any) {
 	if len(jsonPathValueMap) == 0 {
-		return
+		return sql, args
 	}
 	var conditionTemplate string
+	args = make([]any, len(jsonPathValueMap)*2)
 	switch dialector {
 	case postgres.Dialector{}.Name():
 		conditionTemplate = "%s#>>? = ?"
+		idx := 0
 		for k, v := range jsonPathValueMap {
 			path := strings.ReplaceAll(k, ".", ",")
-			args = append(args, "{"+path+"}", v)
+			args[idx] = fmt.Sprintf("{%s}", path)
+			args[idx+1] = v
+			idx = idx + 2
 		}
 	default:
 		conditionTemplate = "%s->>? = ?"
+		idx := 0
 		for k, v := range jsonPathValueMap {
-			args = append(args, k, v)
+			args[idx] = k
+			args[idx+1] = v
+			idx = idx + 2
 		}
 	}
 	conditionTemplate = fmt.Sprintf(conditionTemplate, jsonColumnName)
 	sql = strings.Repeat(conditionTemplate+" AND ", len(jsonPathValueMap)-1) + conditionTemplate
-	return
+	return sql, args
 }

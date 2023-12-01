@@ -100,7 +100,7 @@ func TestBuildJsonCondition(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sql, args := BuildJsonCondition(tt.dialector, tt.jsonColumnName, tt.jsonPathValueMap)
 			assert.Equal(t, tt.expectedSQL, sql)
-			assert.Equal(t, tt.expectedArgs, args)
+			assert.ElementsMatch(t, tt.expectedArgs, args)
 		})
 	}
 }

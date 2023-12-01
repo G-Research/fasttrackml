@@ -262,6 +262,30 @@ func (s *ImportTestSuite) validateTable(source, dest *gorm.DB, table string) {
 		s.Require().Nil(source.ScanRows(sourceRows, &sourceRow))
 		s.Require().Nil(dest.ScanRows(destRows, &destRow))
 
+		// translate some types to make comparison easier
+		for _, row := range []map[string]any{sourceRow, destRow} {
+			for k, v := range row {
+				switch k {
+				case "is_nan", "is_archived":
+					if v, ok := v.(float64); ok {
+						row[k] = v != 0
+					}
+				case "default_experiment_id", "experiment_id":
+					if v, ok := v.(int64); ok {
+						row[k] = int32(v)
+					}
+				case "id", "app_id":
+					switch v := v.(type) {
+					case *interface{}:
+						switch s := (*v).(type) {
+						case string:
+							row[k] = s
+						}
+					}
+				}
+			}
+		}
+
 		// TODO:DSuhinin delete this fields right now, because they
 		// cause comparison error when we compare `namespace` entities. Let's find smarter way to do that.
 		delete(destRow, "updated_at")

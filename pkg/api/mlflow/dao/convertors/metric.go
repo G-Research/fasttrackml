@@ -14,7 +14,6 @@ import (
 // ConvertMetricParamRequestToDBModel converts request.LogMetricRequest into actual models.Metric model.
 func ConvertMetricParamRequestToDBModel(
 	runID string,
-	context *models.Context,
 	req *request.LogMetricRequest,
 ) (*models.Metric, error) {
 	metric := models.Metric{
@@ -23,9 +22,14 @@ func ConvertMetricParamRequestToDBModel(
 		Step:      req.Step,
 		RunID:     runID,
 	}
-	if context != nil {
-		metric.Context = context
-		metric.ContextID = &context.ID
+	if req.Context != nil {
+		contextJSON, err := json.Marshal(req.Context)
+		if err != nil {
+			return nil, err
+		}
+		metric.Context = &models.Context{
+			Json: contextJSON,
+		}
 	}
 	if v, ok := req.Value.(float64); ok {
 		metric.Value = v

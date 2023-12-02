@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -35,6 +36,13 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
+	experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           "Test Experiment2",
+		NamespaceID:    s.DefaultNamespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
 	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "run1",
 		Name:           "chill-run",
@@ -45,16 +53,67 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+	metric, err := s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key1",
 		Value:     1.1,
 		Timestamp: 1234567890,
 		RunID:     run1.ID,
 		Step:      1,
-		IsNan:     false,
 		Iter:      1,
 	})
 	s.Require().Nil(err)
+	s.Require().Nil(metric.ContextID)
+	s.Require().Nil(metric.Context)
+
+	metric, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+		Key:       "key2",
+		Value:     1.1,
+		Timestamp: 2234567890,
+		RunID:     run1.ID,
+		Step:      1,
+		Iter:      1,
+		Context: &models.Context{
+			Json: datatypes.JSON([]byte(`
+				{
+					"metrickey1": "metricvalue1",
+					"metrickey2": "metricvalue2",
+					"metricnested": { "metricnestedkey": "metricnestedvalue" }
+				}`,
+			)),
+		},
+	})
+	s.Require().Nil(err)
+	s.Require().NotNil(metric.ContextID)
+	s.Require().NotNil(metric.Context)
+
+	// verify metric contexts are persisting
+	metrics, err := s.MetricFixtures.GetMetricsByRunID(context.Background(), run1.ID)
+	s.Require().Nil(err)
+	s.Require().Nil(metrics[0].ContextID)
+	s.Require().NotNil(metrics[1].ContextID)
+
+	// verify metric contexts can be used for selection (toplevel key)
+	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]string{
+		"metrickey1": "metricvalue1",
+	})
+	s.Require().Nil(err)
+	s.Require().Len(metrics, 1)
+	s.Require().NotNil(metrics[0].ContextID)
+
+	// nested key
+	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]string{
+		"metricnested.metricnestedkey": "metricnestedvalue",
+	})
+	s.Require().Nil(err)
+	s.Require().Len(metrics, 1)
+	s.Require().NotNil(metrics[0].ContextID)
+
+	metrics, err = s.MetricFixtures.GetMetricsByContext(
+		context.Background(),
+		map[string]string{"metrickey2": "metricvalue1"},
+	)
+	s.Require().Nil(err)
+	s.Require().Len(metrics, 0)
 
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "run2",
@@ -62,7 +121,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 		Status:         models.StatusScheduled,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,
-		ExperimentID:   *experiment.ID,
+		ExperimentID:   *experiment2.ID,
 	})
 	s.Require().Nil(err)
 
@@ -78,19 +137,63 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	tests := []struct {
-		name    string
-		request *request.GetMetricHistoriesRequest
+		name           string
+		request        *request.GetMetricHistoriesRequest
+		verifyResponse func(metrics []models.Metric)
 	}{
 		{
 			name: "GetMetricHistoriesByRunIDs",
 			request: &request.GetMetricHistoriesRequest{
 				RunIDs: []string{run1.ID, run2.ID},
 			},
+			verifyResponse: func(metrics []models.Metric) {
+				s.Equal(3, len(metrics))
+				s.Equal("run1", metrics[0].RunID)
+				s.Equal("run1", metrics[1].RunID)
+				s.Equal("run2", metrics[2].RunID)
+			},
 		},
 		{
 			name: "GetMetricHistoriesByExperimentIDs",
 			request: &request.GetMetricHistoriesRequest{
 				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+			},
+			verifyResponse: func(metrics []models.Metric) {
+				s.Equal(2, len(metrics))
+				s.Equal("run1", metrics[0].RunID)
+				s.Equal("run1", metrics[1].RunID)
+			},
+		},
+		{
+			name: "GetMetricHistoriesByContextMatch",
+			request: &request.GetMetricHistoriesRequest{
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				Context:       map[string]string{"metrickey1": "metricvalue1"},
+			},
+			verifyResponse: func(metrics []models.Metric) {
+				s.Equal(1, len(metrics))
+				s.Equal("run1", metrics[0].RunID)
+			},
+		},
+		{
+			name: "GetMetricHistoriesByNestedContextMatch",
+			request: &request.GetMetricHistoriesRequest{
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				Context:       map[string]string{"metricnested.metricnestedkey": "metricnestedvalue"},
+			},
+			verifyResponse: func(metrics []models.Metric) {
+				s.Equal(1, len(metrics))
+				s.Equal("run1", metrics[0].RunID)
+			},
+		},
+		{
+			name: "GetMetricHistoriesByContextNoMatch",
+			request: &request.GetMetricHistoriesRequest{
+				ExperimentIDs: []string{fmt.Sprintf("%d", *experiment.ID)},
+				Context:       map[string]string{"metrickey1": "metricvalue2"},
+			},
+			verifyResponse: func(metrics []models.Metric) {
+				s.Equal(0, len(metrics))
 			},
 		},
 	}
@@ -111,9 +214,9 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 				),
 			)
 
-			// TODO:DSuhinin - data is encoded so we need a bit more smart way to check the data.
-			// right now we can go with this simple approach.
-			s.NotEmpty(resp.String())
+			metrics, err := helpers.DecodeArrowMetrics(resp)
+			s.Require().Nil(err)
+			tt.verifyResponse(metrics)
 		})
 	}
 }

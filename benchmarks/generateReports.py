@@ -140,38 +140,57 @@ def checkAllFilesReady():
     """
     This is used to check whether all the required output files have been generated
     Since the K6 tests would be run inside containers before shutting down, we need to check if their
-    execution is complete before starting the report generation.
-
-    We check for all files that match a defined pattern and count
-    them to ensure that all the files have been generated
+    execution is complete before starting the report generataiton.
+    The files we are checking to ensure they exist are:
+    - mlflowsqlitethrougput.csv
+    - mlflowpostgresthrougput.csv
+    - fasttracksqlitethrougput.csv
+    - fasttrackpostgresthrougput.csv
+    - mlflowsqliteretreival.csv
+    - mlflowpostgresretreival.csv
+    - fasttrackpostgresretreival.csv
+    - fasttracksqliteretreival.csv
     """
-    file_pattern = "benchmark_outputs/*.csv"
-    # Use glob to find all files matching the pattern
-    matching_files = glob.glob(file_pattern)
-    # Count the number of matching files
-    file_count = len(matching_files)
-    if file_count >= 8:
-        return True
+    if os.path.exists("mlflowsqlitethrougput.csv") and \
+       os.path.exists("mlflowpostgresthrougput.csv") and \
+       os.path.exists("fasttracksqlitethrougput.csv") and \
+       os.path.exists("fasttrackpostgresthrougput.csv") and \
+       os.path.exists("mlflowsqliteretreival.csv") and \
+       os.path.exists("mlflowpostgresretreival.csv") and \
+       os.path.exists("fasttrackpostgresretreival.csv") and \
+       os.path.exists("fasttracksqliteretreival.csv"):
+           return True
+
     return False
 
 
 def cleanGeneratedFiles():
     """
     Delete generated output files
-    The function checks for all generated files based on a specific pattern
-    and deletes them
+    The function checks if a particular csv report output file exists
+    and deletes it
     """
+    if os.path.exists("mlflowsqlitethrougput.csv"):
+        os.remove("mlflowsqlitethrougput.csv")
+    if os.path.exists("mlflowpostgresthrougput.csv"):
+        os.remove("mlflowpostgresthrougput.csv")
+    if os.path.exists("fasttracksqlitethrougput.csv"):
+        os.remove("fasttracksqlitethrougput.csv")
+    if os.path.exists("fasttrackpostgresthrougput.csv"):
+        os.remove("fasttrackpostgresthrougput.csv")
+    if os.path.exists("mlflowsqliteretreival.csv"):
+        os.remove("mlflowsqliteretreival.csv")
+    if os.path.exists("mlflowpostgresretreival.csv"):
+        os.remove("mlflowpostgresretreival.csv")
+    if os.path.exists("fasttrackpostgresretreival.csv"):
+        os.remove("fasttrackpostgresretreival.csv")
+    if os.path.exists("fasttracksqliteretreival.csv"):
+        os.remove("fasttracksqliteretreival.csv")
 
-    files_to_delete = glob.glob("benchmark_outputs/*.csv")
-    for file_path in files_to_delete:
-        try:
-            os.remove(file_path)
-            print(f"Deleted: {file_path}")
-        except Exception as e:
-            print(f"Error deleting {file_path}: {e}")
+    return False
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # ensure all reports have been generated
 
     logging.info("Beginning report generation")

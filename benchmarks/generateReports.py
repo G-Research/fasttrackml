@@ -75,14 +75,14 @@ def generateDataframes():
     Filter the dataframe for only rows with benchmarks we want to measure
     """
     # get all the dataframes from all the geneated files and indicate the relevant applications
-    df1 = getDataframeFromFile('mlflowsqlitethrougput.csv', 'mlflow sqlite')
-    df2 = getDataframeFromFile('mlflowpostgresthrougput.csv', 'mlflow postgres')
-    df3 = getDataframeFromFile('fasttracksqlitethrougput.csv', 'fasttrack sqlite')
-    df4 = getDataframeFromFile('fasttrackpostgresthrougput.csv', 'fasttrack postgres')
-    df5 = getDataframeFromFile('mlflowsqliteretreival.csv', 'mlflow sqlite')
-    df6 = getDataframeFromFile('mlflowpostgresretreival.csv', 'mlflow postgres')
-    df7 = getDataframeFromFile('fasttracksqliteretreival.csv', 'fasttrack sqlite')
-    df8 = getDataframeFromFile('fasttrackpostgresretreival.csv', 'fasttrack postgres')
+    df1 = getDataframeFromFile('benchmark_outputs/mlflowsqlitethrougput.csv', 'mlflow sqlite')
+    df2 = getDataframeFromFile('benchmark_outputs/mlflowpostgresthrougput.csv', 'mlflow postgres')
+    df3 = getDataframeFromFile('benchmark_outputs/fasttracksqlitethrougput.csv', 'fasttrack sqlite')
+    df4 = getDataframeFromFile('benchmark_outputs/fasttrackpostgresthrougput.csv', 'fasttrack postgres')
+    df5 = getDataframeFromFile('benchmark_outputs/mlflowsqliteretreival.csv', 'mlflow sqlite')
+    df6 = getDataframeFromFile('benchmark_outputs/mlflowpostgresretreival.csv', 'mlflow postgres')
+    df7 = getDataframeFromFile('benchmark_outputs/fasttracksqliteretreival.csv', 'fasttrack sqlite')
+    df8 = getDataframeFromFile('benchmark_outputs/fasttrackpostgresretreival.csv', 'fasttrack postgres')
 
 
     # Read the CSV file into a DataFrame
@@ -112,14 +112,14 @@ def checkAllFilesReady():
     - fasttrackpostgresretreival.csv
     - fasttracksqliteretreival.csv
     """
-    if os.path.exists("mlflowsqlitethrougput.csv") and \
-       os.path.exists("mlflowpostgresthrougput.csv") and \
-       os.path.exists("fasttracksqlitethrougput.csv") and \
-       os.path.exists("fasttrackpostgresthrougput.csv") and \
-       os.path.exists("mlflowsqliteretreival.csv") and \
-       os.path.exists("mlflowpostgresretreival.csv") and \
-       os.path.exists("fasttrackpostgresretreival.csv") and \
-       os.path.exists("fasttracksqliteretreival.csv"):
+    if os.path.exists("benchmark_outputs/mlflowsqlitethrougput.csv") and \
+       os.path.exists("benchmark_outputs/mlflowpostgresthrougput.csv") and \
+       os.path.exists("benchmark_outputs/fasttracksqlitethrougput.csv") and \
+       os.path.exists("benchmark_outputs/fasttrackpostgresthrougput.csv") and \
+       os.path.exists("benchmark_outputs/mlflowsqliteretreival.csv") and \
+       os.path.exists("benchmark_outputs/mlflowpostgresretreival.csv") and \
+       os.path.exists("benchmark_outputs/fasttrackpostgresretreival.csv") and \
+       os.path.exists("benchmark_outputs/fasttracksqliteretreival.csv"):
            return True
        
     return False
@@ -130,22 +130,22 @@ def cleanGeneratedFiles():
     The function checks if a particular csv report output file exists 
     and deletes it
     """
-    if os.path.exists("mlflowsqlitethrougput.csv"):
-        os.remove("mlflowsqlitethrougput.csv")
-    if os.path.exists("mlflowpostgresthrougput.csv"):
-        os.remove("mlflowpostgresthrougput.csv")
-    if os.path.exists("fasttracksqlitethrougput.csv"):
-        os.remove("fasttracksqlitethrougput.csv")
-    if os.path.exists("fasttrackpostgresthrougput.csv"):
-        os.remove("fasttrackpostgresthrougput.csv")
-    if os.path.exists("mlflowsqliteretreival.csv"):
-        os.remove("mlflowsqliteretreival.csv")
-    if os.path.exists("mlflowpostgresretreival.csv"):
-        os.remove("mlflowpostgresretreival.csv")
-    if os.path.exists("fasttrackpostgresretreival.csv"):
-        os.remove("fasttrackpostgresretreival.csv")
-    if os.path.exists("fasttracksqliteretreival.csv"):
-        os.remove("fasttracksqliteretreival.csv")
+    if os.path.exists("benchmark_outputs/mlflowsqlitethrougput.csv"):
+        os.remove("benchmark_outputs/mlflowsqlitethrougput.csv")
+    if os.path.exists("benchmark_outputs/mlflowpostgresthrougput.csv"):
+        os.remove("benchmark_outputs/mlflowpostgresthrougput.csv")
+    if os.path.exists("benchmark_outputs/fasttracksqlitethrougput.csv"):
+        os.remove("benchmark_outputs/fasttracksqlitethrougput.csv")
+    if os.path.exists("benchmark_outputs/fasttrackpostgresthrougput.csv"):
+        os.remove("benchmark_outputs/fasttrackpostgresthrougput.csv")
+    if os.path.exists("benchmark_outputs/mlflowsqliteretreival.csv"):
+        os.remove("benchmark_outputs/mlflowsqliteretreival.csv")
+    if os.path.exists("benchmark_outputs/mlflowpostgresretreival.csv"):
+        os.remove("benchmark_outputs/mlflowpostgresretreival.csv")
+    if os.path.exists("benchmark_outputs/fasttrackpostgresretreival.csv"):
+        os.remove("benchmark_outputs/fasttrackpostgresretreival.csv")
+    if os.path.exists("benchmark_outputs/fasttracksqliteretreival.csv"):
+        os.remove("benchmark_outputs/fasttracksqliteretreival.csv")
        
     return False
     

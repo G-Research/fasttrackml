@@ -33,36 +33,24 @@ func New(namespaceRepository repositories.NamespaceRepositoryProvider) fiber.Han
 		}
 		log.Debugf("checking namespace for path: %s. no-cache: %t", c.Path(), noCache)
 		// if namespace exists in the request then try to process it, otherwise fallback to default namespace.
+		namespaceCode := defaultNamespaceCode
 		if matches := namespaceRegexp.FindStringSubmatch(c.Path()); matches != nil {
-			namespaceCode := strings.Clone(matches[1])
-			namespace, err := namespaceRepository.GetByCode(c.Context(), noCache, namespaceCode)
-			if err != nil {
-				return c.JSON(api.NewInternalError("error getting namespace with code: %s", namespaceCode))
-			}
-			if namespace == nil {
-				return c.Status(
-					http.StatusNotFound,
-				).JSON(
-					api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespaceCode),
-				)
-			}
-
-			c.Locals(namespaceContextKey, namespace)
+			namespaceCode = strings.Clone(matches[1])
 			c.Path(strings.TrimPrefix(c.Path(), fmt.Sprintf("/ns/%s", namespaceCode)))
-		} else {
-			namespace, err := namespaceRepository.GetByCode(c.Context(), noCache, defaultNamespaceCode)
-			if err != nil {
-				return c.JSON(api.NewInternalError("error getting namespace with code: %s", defaultNamespaceCode))
-			}
-			if namespace == nil {
-				return c.Status(
-					http.StatusNotFound,
-				).JSON(
-					api.NewResourceDoesNotExistError("unable to find namespace with code: %s", defaultNamespaceCode),
-				)
-			}
-			c.Locals(namespaceContextKey, namespace)
 		}
+		namespace, err := namespaceRepository.GetByCode(c.Context(), noCache, namespaceCode)
+		if err != nil {
+			return c.JSON(api.NewInternalError("error getting namespace with code: %s", namespaceCode))
+		}
+		if namespace == nil {
+			return c.Status(
+				http.StatusNotFound,
+			).JSON(
+				api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespaceCode),
+			)
+		}
+
+		c.Locals(namespaceContextKey, namespace)
 
 		return c.Next()
 	}

@@ -12,11 +12,14 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
+# Create the benchmark outputs if they do not exist
+mkdir -p benchmark_outputs
+
 # Run your specific Docker command
-docker-compose up throughput_test_mlflow_sqlite
-docker-compose up throughput_test_mlflow_postgres
-docker-compose up throughput_test_fasttrack_sqlite
-docker-compose up throughput_test_fasttrack_postgres
+docker-compose up logging_test_mlflow_sqlite
+docker-compose up logging_test_mlflow_postgres
+docker-compose up logging_test_fasttrack_sqlite
+docker-compose up logging_test_fasttrack_postgres
 docker-compose up retreival_test_mlflow_sqlite
 docker-compose up retreival_test_mlflow_postgres
 docker-compose up retreival_test_fasttrack_postgres

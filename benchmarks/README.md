@@ -2,7 +2,7 @@
 
 ## Introduction
 
-FastTrack ML Benchmark Suite is a project designed to provide a comprehensive and user-friendly performance tracking system for FastTrack ML, with a specific focus on comparing its capabilities with other popular machine learning parameter servers, such as MLflow. This documentation aims to guide users on how to use FastTrack ML Performance Tracker effectively.
+FastTrack ML Benchmark Suite is a project designed to provide a comprehensive and user-friendly performance benchmarking system for FastTrack ML, with a specific focus on comparing its capabilities with other popular machine learning parameter servers, such as MLflow. This documentation aims to guide users on how to use FastTrack ML Performance Benchmark effectively.
 
 ## Table of Contents
 
@@ -11,71 +11,55 @@ FastTrack ML Benchmark Suite is a project designed to provide a comprehensive an
   - [Table of Contents](#table-of-contents)
   - [2. Getting Started ](#2-getting-started-)
   - [3. Usage ](#3-usage-)
-    - [Tracking Experiments ](#tracking-experiments-)
+    - [Benchmarking Performance ](#benchmarking-performance-)
     - [Results ](#results-)
-  - [4. Advanced Features ](#4-advanced-features-)
-    - [Custom Metrics ](#custom-metrics-)
-    - [Visualization ](#visualization-)
-  - [5. Contributing ](#5-contributing-)
-  - [6. License ](#6-license-)
 
 ## 2. Getting Started <a name="getting-started"></a>
 
-To run the performance tracker ensure you have docker and docker compose installed and run the following commands 
+To run the performance benchmark ensure you have docker and docker compose installed and run the following command:
 
 ```bash
-docker-comopose up performance-tests
+./run.sh
 ```
 
 ## 3. Usage <a name="usage"></a>
 
-### Tracking Experiments <a name="tracking-experiments"></a>
+### Benchmarking Performance <a name="benchmarking-performance"></a>
 
-FastTrack ML benchmark suite allows you to test the performance of the FastTrackML project and compare it to other machine learning experiment trackers such as MLFlow and Aim
+FastTrack ML benchmark suite allows you to test the performance of the FastTrackML project and compare it to MLFlow through the REST API. We do this by orchestrating 4 containers to to be tested:
+- FasttrackML with sqlite
+- FasttrackML with postgres
+- MLflow with sqlite
+- MLflow with postgres
 
-1. To test FastTrackML in isolation:
+We then perform 2 categories of API benchmark tests on them using the K6 benchmarkign tool. The categories of tests are:
+- Logging (throughput)
+- Retrieval
+
+You run tests on any of these platforms in isolation for example:
+
+1. To test FastTrackML postgres in isolation:
 
 ```bash
-docker-comopose up performance-tests
+docker-compose up logging_test_fasttrack_postgres
 ```
 
-2. To test performance as compared to MLFlow and Aim:
+1. To test performance of MLflow sqlite:
 
 ```bash
-docker-comopose up performance-tests --compare=True
+docker-compose up retreival_test_mlflow_sqlite
 ```
+
+*Note* These tests in isolation will generate csv report files, but will not generate report images. To generate a report image you will have to run all the tests on all 4 instances then use the `generateReports.py` script to generate the `perfromanceReport.png` image
+
+*Note* For the performance tests to work you must have a `\benchmark_outputs` folder in this directory. If you are running the pefromance benchmarks without the `run.sh` script you will have to create this folder manually.
 
 ### Results <a name="comparing-with-mlflow"></a>
 
-FastTrack ML Performance Tracker is designed to provide features similar to MLflow. You can compare the two as follows:
+FastTrack ML Performance Benchmark is designed to perform benchmark tests on both MLflow and FasttrackML:
 
-![Performance Report](performance/report.png)
-FastTrack ML Performance Tracker offers similar functionality as MLflow but may provide additional features and customization options to meet specific project requirements.
+![Performance Report](performanceReport.png)
+FastTrack ML Performance Tracker offers the same functionality as MLflow but implements performance optimizations behind the scene to improve overall performance.
 
-## 4. Advanced Features <a name="advanced-features"></a>
-
-### Custom Metrics <a name="custom-metrics"></a>
-
-You can define custom metrics and log them within your experiments:
-
-```python
-tracker.log_custom_metric("f1_score", 0.88)
-```
-
-### Visualization <a name="visualization"></a>
-
-FastTrack ML Performance Tracker provides visualization tools for metrics and parameters, making it easier to analyze your experiments. You can use these visualizations to create graphs, charts, and reports for your machine learning projects.
-
-## 5. Contributing <a name="contributing"></a>
-
-If you'd like to contribute to FastTrack ML Performance Tracker, please see our [contribution guidelines](CONTRIBUTING.md) for details on how to get involved.
-
-## 6. License <a name="license"></a>
-
-FastTrack ML Performance Tracker is distributed under the [MIT License](LICENSE.md). Please review the license before using or contributing to the project.
-
-For any questions, issues, or support, please refer to the project's [GitHub repository](https://github.com/yourusername/fasttrack-ml-performance-tracker).
-
----
 
 Thank you for choosing FastTrack ML Performance Tracker! We hope this documentation helps you effectively track and manage your machine learning experiments and compare it with other parameter servers like MLflow.

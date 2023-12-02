@@ -5,8 +5,6 @@ package namespace
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -18,11 +16,11 @@ type NamespaceTestSuite struct {
 }
 
 func TestNamespaceTestSuite(t *testing.T) {
-	suite.Run(t, new(NamespaceTestSuite))
-}
-
-func (s *NamespaceTestSuite) TearDownTest() {
-	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	suite.Run(t, &NamespaceTestSuite{
+		helpers.BaseTestSuite{
+			SkipCreateDefaultNamespace: true,
+		},
+	})
 }
 
 func (s *NamespaceTestSuite) Test_Error() {
@@ -49,8 +47,7 @@ func (s *NamespaceTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithNamespace(
 					tt.namespace,
 				).WithResponse(
@@ -59,8 +56,8 @@ func (s *NamespaceTestSuite) Test_Error() {
 					"/experiments",
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
-			assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
+			s.Equal(tt.error.Error(), resp.Error())
+			s.Equal(api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 		})
 	}
 }

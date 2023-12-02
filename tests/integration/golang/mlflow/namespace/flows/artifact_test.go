@@ -12,8 +12,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -26,9 +24,7 @@ import (
 )
 
 type ArtifactFlowTestSuite struct {
-	helpers.BaseTestSuite
-	testBuckets []string
-	s3Client    *s3.Client
+	helpers.S3TestSuite
 }
 
 // TestArtifactFlowTestSuite tests the full `artifact` flow connected to namespace functionality.
@@ -36,20 +32,15 @@ type ArtifactFlowTestSuite struct {
 // - `GET /artifacts/get`
 // - `GET /artifacts/list`
 func TestArtifactFlowTestSuite(t *testing.T) {
-	suite.Run(t, &ArtifactFlowTestSuite{
-		testBuckets: []string{"bucket1", "bucket2"},
-	})
-}
-
-func (s *ArtifactFlowTestSuite) TearDownTest() {
-	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	s := &ArtifactFlowTestSuite{
+		helpers.NewS3TestSuite("bucket1", "bucket2"),
+	}
+	s.S3TestSuite.ResetOnSubTest = true
+	s.S3TestSuite.SkipCreateDefaultNamespace = true
+	suite.Run(t, s)
 }
 
 func (s *ArtifactFlowTestSuite) Test_Ok() {
-	s3Client, err := helpers.NewS3Client(helpers.GetS3EndpointUri())
-	require.Nil(s.T(), err)
-	s.s3Client = s3Client
-
 	tests := []struct {
 		name           string
 		setup          func() (*models.Namespace, *models.Namespace)
@@ -102,17 +93,12 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer func() {
-				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-				require.Nil(s.T(), helpers.RemoveS3Buckets(s.s3Client, s.testBuckets))
-			}()
-
 			// setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment1",
@@ -120,7 +106,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment2",
@@ -128,10 +114,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace2.ID,
 			})
-			require.Nil(s.T(), err)
-
-			// create test buckets.
-			require.Nil(s.T(), helpers.CreateS3Buckets(s.s3Client, s.testBuckets))
+			s.Require().Nil(err)
 
 			// run actual flow test over the test data.
 			s.testRunArtifactFlow(tt.namespace1Code, tt.namespace2Code, experiment1, experiment2)
@@ -148,24 +131,24 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		ExperimentID: fmt.Sprintf("%d", *experiment1.ID),
 	})
 
-	_, err := s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
+	_, err := s.Client.PutObject(context.Background(), &s3.PutObjectInput{
 		Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact1.file", run1ID)),
 		Body:   strings.NewReader("content1"),
 		Bucket: aws.String("bucket1"),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	run2ID := s.createRun(namespace2Code, &request.CreateRunRequest{
 		Name:         "Run2",
 		ExperimentID: fmt.Sprintf("%d", *experiment2.ID),
 	})
 
-	_, err = s.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
+	_, err = s.Client.PutObject(context.Background(), &s3.PutObjectInput{
 		Key:    aws.String(fmt.Sprintf("2/%s/artifacts/artifact2.file", run2ID)),
 		Body:   strings.NewReader("content2"),
 		Bucket: aws.String("bucket2"),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// test `GET /artifacts/list` endpoint.
 	s.listRunArtifactsAndCompare(namespace1Code, request.ListArtifactsRequest{
@@ -192,8 +175,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	// check that there is no intersection between runs, so when we request
 	// run 1 in scope of namespace 2 and run 2 in scope of namespace 1 API will throw an error.
 	resp := api.ErrorResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
@@ -206,12 +188,11 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 			"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 		),
 	)
-	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
-	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
+	s.Equal(fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
+	s.Equal(api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	resp = api.ErrorResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
@@ -224,8 +205,8 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 			"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 		),
 	)
-	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
-	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
+	s.Equal(fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
+	s.Equal(api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	// test `GET /artifacts/get` endpoint.
 	s.getRunArtifactAndCompare(namespace1Code, request.GetArtifactRequest{
@@ -242,8 +223,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	// check that there is no intersection between runs, so when we request
 	// run 1 in scope of namespace 2 and run 2 in scope of namespace 1 API will throw an error.
 	resp = api.ErrorResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
@@ -256,12 +236,11 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 			"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 		),
 	)
-	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
-	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
+	s.Equal(fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run1ID), resp.Error())
+	s.Equal(api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	resp = api.ErrorResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
@@ -274,14 +253,13 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 			"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 		),
 	)
-	assert.Equal(s.T(), fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
-	assert.Equal(s.T(), api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
+	s.Equal(fmt.Sprintf("RESOURCE_DOES_NOT_EXIST: unable to find run '%s'", run2ID), resp.Error())
+	s.Equal(api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 }
 
 func (s *ArtifactFlowTestSuite) createRun(namespace string, req *request.CreateRunRequest) string {
 	resp := response.CreateRunResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithNamespace(
@@ -301,8 +279,7 @@ func (s *ArtifactFlowTestSuite) listRunArtifactsAndCompare(
 	namespace string, req request.ListArtifactsRequest, expectedResponse []response.FilePartialResponse,
 ) {
 	actualResponse := response.ListArtifactsResponse{}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace,
 		).WithQuery(
@@ -313,14 +290,14 @@ func (s *ArtifactFlowTestSuite) listRunArtifactsAndCompare(
 			"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsListRoute,
 		),
 	)
-	assert.Equal(s.T(), expectedResponse, actualResponse.Files)
+	s.Equal(expectedResponse, actualResponse.Files)
 }
 
 func (s *ArtifactFlowTestSuite) getRunArtifactAndCompare(
 	namespace string, req request.GetArtifactRequest, expectedResponse string,
 ) {
 	actualResponse := new(bytes.Buffer)
-	require.Nil(s.T(), s.MlflowClient().WithNamespace(
+	s.Require().Nil(s.MlflowClient().WithNamespace(
 		namespace,
 	).WithQuery(
 		req,
@@ -331,5 +308,5 @@ func (s *ArtifactFlowTestSuite) getRunArtifactAndCompare(
 	).DoRequest(
 		"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 	))
-	assert.Equal(s.T(), expectedResponse, actualResponse.String())
+	s.Equal(expectedResponse, actualResponse.String())
 }

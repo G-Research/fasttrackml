@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -29,11 +27,12 @@ type ExperimentFlowTestSuite struct {
 // - `GET /experiments/:id/runs`
 // - `GET /experiments/:id/activity`
 func TestExperimentFlowTestSuite(t *testing.T) {
-	suite.Run(t, new(ExperimentFlowTestSuite))
-}
-
-func (s *ExperimentFlowTestSuite) TearDownTest() {
-	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	suite.Run(t, &ExperimentFlowTestSuite{
+		helpers.BaseTestSuite{
+			ResetOnSubTest:             true,
+			SkipCreateDefaultNamespace: true,
+		},
+	})
 }
 
 func (s *ExperimentFlowTestSuite) Test_Ok() {
@@ -89,22 +88,19 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:             "Experiment1",
-				ArtifactLocation: "/artifact/location",
-				LifecycleStage:   models.LifecycleStageActive,
-				NamespaceID:      namespace1.ID,
+				Name:           "Experiment1",
+				LifecycleStage: models.LifecycleStageActive,
+				NamespaceID:    namespace1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             "id1",
@@ -116,15 +112,14 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 				ArtifactURI:    "artifact_uri1",
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:             "Experiment2",
-				ArtifactLocation: "/artifact/location",
-				LifecycleStage:   models.LifecycleStageActive,
-				NamespaceID:      namespace2.ID,
+				Name:           "Experiment2",
+				LifecycleStage: models.LifecycleStageActive,
+				NamespaceID:    namespace2.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:             "id2",
@@ -136,7 +131,7 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 				ArtifactURI:    "artifact_uri2",
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// 2. run actual flow test over the test data.
 			s.testRunFlow(tt.namespace1Code, tt.namespace2Code, experiment1, experiment2, run1, run2)
@@ -218,8 +213,7 @@ func (s *ExperimentFlowTestSuite) getExperimentAndCompare(
 	namespace string, experimentID int32, expectedResponse *response.GetExperiment,
 ) {
 	var resp response.GetExperiment
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace,
 		).WithResponse(
@@ -228,19 +222,19 @@ func (s *ExperimentFlowTestSuite) getExperimentAndCompare(
 			"/experiments/%d", experimentID,
 		),
 	)
-	assert.Equal(s.T(), expectedResponse.ID, resp.ID)
-	assert.Equal(s.T(), expectedResponse.Name, resp.Name)
-	assert.Equal(s.T(), expectedResponse.Description, resp.Description)
-	assert.Equal(s.T(), expectedResponse.Archived, resp.Archived)
-	assert.Equal(s.T(), expectedResponse.RunCount, resp.RunCount)
+	s.Equal(expectedResponse.ID, resp.ID)
+	s.Equal(expectedResponse.Name, resp.Name)
+	s.Equal(expectedResponse.Description, resp.Description)
+	s.Equal(expectedResponse.Archived, resp.Archived)
+	s.Equal(expectedResponse.RunCount, resp.RunCount)
 }
 
 func (s *ExperimentFlowTestSuite) getExperimentsAndCompare(
 	namespace string, expectedResponse response.Experiments,
 ) {
 	var resp response.Experiments
-	require.Nil(
-		s.T(), s.AIMClient().WithNamespace(
+	s.Require().Nil(
+		s.AIMClient().WithNamespace(
 			namespace,
 		).WithResponse(
 			&resp,
@@ -248,15 +242,14 @@ func (s *ExperimentFlowTestSuite) getExperimentsAndCompare(
 			"/experiments",
 		),
 	)
-	assert.ElementsMatch(s.T(), expectedResponse, resp)
+	s.ElementsMatch(expectedResponse, resp)
 }
 
 func (s *ExperimentFlowTestSuite) getExperimentRunsAndCompare(
 	namespace string, experimentID int32, expectedResponse response.GetExperimentRuns,
 ) {
 	var resp response.GetExperimentRuns
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace,
 		).WithResponse(
@@ -265,16 +258,15 @@ func (s *ExperimentFlowTestSuite) getExperimentRunsAndCompare(
 			"/experiments/%d/runs", experimentID,
 		),
 	)
-	assert.Equal(s.T(), expectedResponse.ID, resp.ID)
-	assert.ElementsMatch(s.T(), expectedResponse.Runs, resp.Runs)
+	s.Equal(expectedResponse.ID, resp.ID)
+	s.ElementsMatch(expectedResponse.Runs, resp.Runs)
 }
 
 func (s *ExperimentFlowTestSuite) getExperimentActivityAndCompare(
 	namespace string, experimentID int32, expectedResponse *response.GetExperimentActivity,
 ) {
 	var resp response.GetExperimentActivity
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithResponse(
 			&resp,
 		).WithNamespace(
@@ -283,15 +275,14 @@ func (s *ExperimentFlowTestSuite) getExperimentActivityAndCompare(
 			"/experiments/%d/activity", experimentID,
 		),
 	)
-	assert.Equal(s.T(), expectedResponse.NumRuns, resp.NumRuns)
-	assert.Equal(s.T(), expectedResponse.NumArchivedRuns, expectedResponse.NumArchivedRuns)
-	assert.Equal(s.T(), expectedResponse.NumActiveRuns, expectedResponse.NumActiveRuns)
+	s.Equal(expectedResponse.NumRuns, resp.NumRuns)
+	s.Equal(expectedResponse.NumArchivedRuns, expectedResponse.NumArchivedRuns)
+	s.Equal(expectedResponse.NumActiveRuns, expectedResponse.NumActiveRuns)
 }
 
 func (s *ExperimentFlowTestSuite) deleteExperiment(namespace string, experimentID int32) {
 	var resp response.DeleteExperiment
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodDelete,
 		).WithNamespace(
@@ -302,6 +293,6 @@ func (s *ExperimentFlowTestSuite) deleteExperiment(namespace string, experimentI
 			"/experiments/%d", experimentID,
 		),
 	)
-	assert.Equal(s.T(), "OK", resp.Status)
-	assert.Equal(s.T(), fmt.Sprintf("%d", experimentID), resp.ID)
+	s.Equal("OK", resp.Status)
+	s.Equal(fmt.Sprintf("%d", experimentID), resp.ID)
 }

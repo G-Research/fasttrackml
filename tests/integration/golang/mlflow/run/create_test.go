@@ -9,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -31,103 +29,50 @@ func TestCreateRunTestSuite(t *testing.T) {
 }
 
 func (s *CreateRunTestSuite) Test_DefaultNamespace_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	// create test experiment.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	require.Nil(s.T(), err)
-
-	s.successCases(namespace, experiment, false, *experiment.ID)
+	s.successCases(s.DefaultNamespace, s.DefaultExperiment, false, *s.DefaultExperiment.ID)
 }
 
 func (s *CreateRunTestSuite) Test_DefaultNamespaceExperimentZero_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	// create test experiment.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	require.Nil(s.T(), err)
-
-	// update default experiment id for namespace.
-	namespace.DefaultExperimentID = experiment.ID
-	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-	require.Nil(s.T(), err)
-
-	s.successCases(namespace, experiment, false, int32(0))
+	s.successCases(s.DefaultNamespace, s.DefaultExperiment, false, int32(0))
 }
 
 func (s *CreateRunTestSuite) Test_CustomNamespace_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
 	// create test experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
 		Code:                "custom",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	s.successCases(namespace, experiment, true, *experiment.ID)
 }
 
 func (s *CreateRunTestSuite) Test_CustomNamespaceExperimentZero_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
 	// create test experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
 		Code:                "custom",
 		DefaultExperimentID: common.GetPointer(int32(0)),
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// update default experiment id.
 	namespace.DefaultExperimentID = experiment.ID
 	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	s.successCases(namespace, experiment, true, int32(0))
 }
@@ -167,22 +112,21 @@ func (s *CreateRunTestSuite) successCases(
 			namespace.Code,
 		)
 	}
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		client.DoRequest(
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 		),
 	)
-	assert.NotEmpty(s.T(), resp.Run.Info.ID)
-	assert.NotEmpty(s.T(), resp.Run.Info.UUID)
-	assert.Equal(s.T(), "TestRun", resp.Run.Info.Name)
-	assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.Run.Info.ExperimentID)
-	assert.Equal(s.T(), int64(1234567890), resp.Run.Info.StartTime)
-	assert.Equal(s.T(), int64(0), resp.Run.Info.EndTime)
-	assert.Equal(s.T(), string(models.StatusRunning), resp.Run.Info.Status)
-	assert.NotEmpty(s.T(), resp.Run.Info.ArtifactURI)
-	assert.Equal(s.T(), string(models.LifecycleStageActive), resp.Run.Info.LifecycleStage)
-	assert.Equal(s.T(), []response.RunTagPartialResponse{
+	s.NotEmpty(resp.Run.Info.ID)
+	s.NotEmpty(resp.Run.Info.UUID)
+	s.Equal("TestRun", resp.Run.Info.Name)
+	s.Equal(fmt.Sprintf("%d", *experiment.ID), resp.Run.Info.ExperimentID)
+	s.Equal(int64(1234567890), resp.Run.Info.StartTime)
+	s.Equal(int64(0), resp.Run.Info.EndTime)
+	s.Equal(string(models.StatusRunning), resp.Run.Info.Status)
+	s.NotEmpty(resp.Run.Info.ArtifactURI)
+	s.Equal(string(models.LifecycleStageActive), resp.Run.Info.LifecycleStage)
+	s.Equal([]response.RunTagPartialResponse{
 		{
 			Key:   "key1",
 			Value: "value1",
@@ -195,29 +139,6 @@ func (s *CreateRunTestSuite) successCases(
 }
 
 func (s *CreateRunTestSuite) Test_Error() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	require.Nil(s.T(), err)
-
-	// set namespace default experiment.
-	namespace.DefaultExperimentID = experiment.ID
-	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
-	require.Nil(s.T(), err)
-
 	tests := []struct {
 		name      string
 		error     *api.ErrorResponse
@@ -238,7 +159,7 @@ func (s *CreateRunTestSuite) Test_Error() {
 			name:      "CreateRunWithNotExistingNamespaceAndExistingExperimentID",
 			namespace: "not_existing_namespace",
 			request: request.CreateRunRequest{
-				ExperimentID: fmt.Sprintf("%d", *experiment.ID),
+				ExperimentID: fmt.Sprintf("%d", *s.DefaultExperiment.ID),
 			},
 			error: api.NewResourceDoesNotExistError(
 				`unable to find namespace with code: not_existing_namespace`,
@@ -283,13 +204,12 @@ func (s *CreateRunTestSuite) Test_Error() {
 			).WithResponse(
 				&resp,
 			)
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				client.DoRequest(
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

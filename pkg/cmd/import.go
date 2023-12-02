@@ -56,6 +56,11 @@ func initDBs() (input, output database.DBProvider, err error) {
 	if err != nil {
 		return input, output, fmt.Errorf("error connecting to output DB: %w", err)
 	}
+
+	if err := database.CheckAndMigrateDB(true, output.GormDB()); err != nil {
+		return nil, nil, fmt.Errorf("error running database migration: %w", err)
+	}
+
 	return
 }
 

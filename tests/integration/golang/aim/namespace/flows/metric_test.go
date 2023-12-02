@@ -10,8 +10,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -30,11 +28,12 @@ type MetricFlowTestSuite struct {
 // - `GET /runs/search/metric`
 // - `GET /runs/search/metric/align`
 func TestMetricTestSuite(t *testing.T) {
-	suite.Run(t, new(MetricFlowTestSuite))
-}
-
-func (s *MetricFlowTestSuite) TearDownTest() {
-	require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
+	suite.Run(t, &MetricFlowTestSuite{
+		helpers.BaseTestSuite{
+			ResetOnSubTest:             true,
+			SkipCreateDefaultNamespace: true,
+		},
+	})
 }
 
 func (s *MetricFlowTestSuite) Test_Ok() {
@@ -90,22 +89,19 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			defer require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-
 			// 1. setup data under the test.
 			namespace1, namespace2 := tt.setup()
 			namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace1)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			namespace2, err = s.NamespaceFixtures.CreateNamespace(context.Background(), namespace2)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:             "Experiment1",
-				ArtifactLocation: "/artifact/location",
-				LifecycleStage:   models.LifecycleStageActive,
-				NamespaceID:      namespace1.ID,
+				Name:           "Experiment1",
+				LifecycleStage: models.LifecycleStageActive,
+				NamespaceID:    namespace1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// create different test runs and attach tags, metrics, params, etc.
 			run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -126,7 +122,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				ArtifactURI:    "artifact_uri1",
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 				Key:       "TestMetric1",
 				Value:     1.1,
@@ -136,7 +132,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				RunID:     run1.ID,
 				Iter:      1,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			metric1Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 				Key:       "TestMetric1",
 				Value:     1.1,
@@ -146,27 +142,26 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				RunID:     run1.ID,
 				LastIter:  1,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 				Key:   "param1",
 				Value: "value1",
 				RunID: run1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 				Key:   "mlflow.runName",
 				Value: "TestRunTag1",
 				RunID: run1.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:             "Experiment2",
-				ArtifactLocation: "/artifact/location",
-				LifecycleStage:   models.LifecycleStageActive,
-				NamespaceID:      namespace2.ID,
+				Name:           "Experiment2",
+				LifecycleStage: models.LifecycleStageActive,
+				NamespaceID:    namespace2.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 				ID:         "id2",
@@ -186,7 +181,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				ArtifactURI:    "artifact_uri2",
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 				Key:       "TestMetric2",
 				Value:     0.5,
@@ -196,7 +191,7 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				RunID:     run2.ID,
 				Iter:      3,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			metric1Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 				Key:       "TestMetric2",
 				Value:     0.5,
@@ -206,19 +201,19 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				RunID:     run2.ID,
 				LastIter:  3,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 				Key:   "param2",
 				Value: "value2",
 				RunID: run2.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 			_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 				Key:   "mlflow.runName",
 				Value: "TestRunTag2",
 				RunID: run2.ID,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// 2. run actual flow test over the test data.
 			s.testRunFlow(
@@ -281,8 +276,7 @@ func (s *MetricFlowTestSuite) searchMetricsAndCompare(
 	expectedMetrics []*models.LatestMetric,
 ) {
 	resp := new(bytes.Buffer)
-	require.Nil(
-		s.T(),
+	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace,
 		).WithQuery(
@@ -294,7 +288,7 @@ func (s *MetricFlowTestSuite) searchMetricsAndCompare(
 		).DoRequest("/runs/search/metric"),
 	)
 	decodedData, err := encoding.Decode(resp)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	var decodedMetrics []*models.LatestMetric
 	for _, run := range expectedRuns {
@@ -322,14 +316,14 @@ func (s *MetricFlowTestSuite) searchMetricsAndCompare(
 	}
 
 	// Check if the received metrics match the expected ones
-	assert.Equal(s.T(), expectedMetrics, decodedMetrics)
+	s.Equal(expectedMetrics, decodedMetrics)
 }
 
 func (s *MetricFlowTestSuite) searchAlignedMetricsAndCompare(
 	namespace string, request *request.GetAlignedMetricRequest, expectedRuns []*models.Run, expectedResponse []float64,
 ) {
 	resp := new(bytes.Buffer)
-	require.Nil(s.T(), s.AIMClient().WithMethod(
+	s.Require().Nil(s.AIMClient().WithMethod(
 		http.MethodPost,
 	).WithNamespace(
 		namespace,
@@ -344,7 +338,7 @@ func (s *MetricFlowTestSuite) searchAlignedMetricsAndCompare(
 	))
 
 	decodedData, err := encoding.Decode(resp)
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	xValues := make(map[int][]float64)
 
@@ -360,6 +354,6 @@ func (s *MetricFlowTestSuite) searchAlignedMetricsAndCompare(
 
 	// Check if the received values for each metric match the expected ones
 	for _, metricValues := range xValues {
-		assert.Equal(s.T(), expectedResponse, metricValues)
+		s.Equal(expectedResponse, metricValues)
 	}
 }

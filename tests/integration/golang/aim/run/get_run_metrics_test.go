@@ -8,13 +8,10 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -31,28 +28,12 @@ func TestGetRunMetricsTestSuite(t *testing.T) {
 func (s *GetRunMetricsTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest()
 
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	require.Nil(s.T(), err)
-
-	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), experiment)
-	require.Nil(s.T(), err)
+	var err error
+	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), s.DefaultExperiment)
+	s.Require().Nil(err)
 }
 
 func (s *GetRunMetricsTestSuite) Test_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name             string
 		runID            string
@@ -91,8 +72,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.GetRunMetrics
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
@@ -103,15 +83,12 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					"/runs/%s/metric/get-batch", tt.runID,
 				),
 			)
-			assert.ElementsMatch(s.T(), tt.expectedResponse, resp)
+			s.ElementsMatch(tt.expectedResponse, resp)
 		})
 	}
 }
 
 func (s *GetRunMetricsTestSuite) Test_Error() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name  string
 		runID string
@@ -126,11 +103,10 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.Error
-			require.Nil(
-				s.T(),
+			s.Require().Nil(
 				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/metric/get-batch", tt.runID),
 			)
-			assert.Equal(s.T(), tt.error, resp.Message)
+			s.Equal(tt.error, resp.Message)
 		})
 	}
 }

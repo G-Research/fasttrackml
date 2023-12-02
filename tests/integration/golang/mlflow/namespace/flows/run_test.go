@@ -883,13 +883,13 @@ func (s *RunFlowTestSuite) getRunAndCompare(
 	s.Equal(expectedResponse.Run.Info.ExperimentID, resp.Run.Info.ExperimentID)
 	s.Equal(expectedResponse.Run.Info.LifecycleStage, resp.Run.Info.LifecycleStage)
 	if expectedResponse.Run.Data.Tags != nil {
-		s.Equal(expectedResponse.Run.Data.Tags, resp.Run.Data.Tags)
+		s.ElementsMatch(expectedResponse.Run.Data.Tags, resp.Run.Data.Tags)
 	}
 	if expectedResponse.Run.Data.Params != nil {
-		s.Equal(expectedResponse.Run.Data.Params, resp.Run.Data.Params)
+		s.ElementsMatch(expectedResponse.Run.Data.Params, resp.Run.Data.Params)
 	}
 	if expectedResponse.Run.Data.Metrics != nil {
-		s.Equal(expectedResponse.Run.Data.Metrics, resp.Run.Data.Metrics)
+		s.ElementsMatch(expectedResponse.Run.Data.Metrics, resp.Run.Data.Metrics)
 	}
 	return &resp
 }

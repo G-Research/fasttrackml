@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/rotisserie/eris"
+
 	"github.com/spf13/cobra"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -26,15 +27,28 @@ var DecodeCmd = &cobra.Command{
 			defer f.Close()
 		}
 
-		data, err := encoding.Decode(f)
-		if err != nil {
-			return eris.Wrap(err, "error decoding binary AIM stream")
+		decoder := encoding.NewDecoder(f)
+		fmt.Println("decoded Aim stream:")
+		for result := range decoder.DecodeByChunk() {
+			if result.Error != nil {
+				return eris.Wrap(result.Error, "error decoding binary AIM stream")
+			} else {
+				for key, value := range result.Data {
+					fmt.Printf("%s: %#v\n", key, value)
+				}
+				// time.Sleep(5 * time.Second)
+			}
 		}
 
-		fmt.Println("decoded Aim stream data:")
-		for key, value := range data {
-			fmt.Printf("%s: %#v\n", key, value)
-		}
+		/*
+			data, err := decoder.DecodeAll()
+			if err != nil {
+				return eris.Wrap(err, "error decoding binary AIM stream")
+			}
+			for key, value := range data {
+				fmt.Printf("%s: %#v\n", key, value)
+			}
+		*/
 		return nil
 	},
 }

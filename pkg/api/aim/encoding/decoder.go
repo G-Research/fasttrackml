@@ -42,12 +42,14 @@ func (d *reader) readField() ([]byte, error) {
 	return data, nil
 }
 
+// DecoderResult represents result of one piece of data after decoding.
 type DecoderResult struct {
 	Data    map[string]interface{}
 	Error   error
 	Portion int
 }
 
+// DecoderProvider provides an interface to work with Decoder.
 type DecoderProvider interface {
 	// Decode represents syntactic sugar function which returns decoded stream data at once.
 	// this function is just for back compatibility with integration tests.
@@ -56,10 +58,12 @@ type DecoderProvider interface {
 	DecodeByChunk() <-chan DecoderResult
 }
 
+// Decoder represents AIM stream data decoder.
 type Decoder struct {
 	data io.Reader
 }
 
+// NewDecoder creates new instance of Decoder.
 func NewDecoder(data io.Reader) *Decoder {
 	return &Decoder{data: data}
 }

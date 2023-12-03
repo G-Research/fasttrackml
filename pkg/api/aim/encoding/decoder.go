@@ -51,9 +51,9 @@ type DecoderResult struct {
 type DecoderProvider interface {
 	// Decode represents syntactic sugar function which returns decoded stream data at once.
 	// this function is just for back compatibility with integration tests.
-	Decode() <-chan DecoderResult
+	Decode() (map[string]interface{}, error)
 	// DecodeByChunk decodes stream data by chunks.
-	DecodeByChunk() (map[string]interface{}, error)
+	DecodeByChunk() <-chan DecoderResult
 }
 
 type Decoder struct {
@@ -62,6 +62,22 @@ type Decoder struct {
 
 func NewDecoder(data io.Reader) *Decoder {
 	return &Decoder{data: data}
+}
+
+// Decode represents syntactic sugar function which returns decoded stream data at once.
+// this function is just for back compatibility with integration tests.
+func (d Decoder) Decode() (map[string]interface{}, error) {
+	data := map[string]interface{}{}
+	for result := range d.DecodeByChunk() {
+		if result.Error != nil {
+			return nil, eris.Wrap(result.Error, "error decoding binary AIM stream")
+		} else {
+			for key, value := range result.Data {
+				data[key] = value
+			}
+		}
+	}
+	return data, nil
 }
 
 // DecodeByChunk decodes stream data by chunks.
@@ -177,22 +193,6 @@ func (d Decoder) DecodeByChunk() <-chan DecoderResult {
 		}
 	}()
 	return result
-}
-
-// Decode represents syntactic sugar function which returns decoded stream data at once.
-// this function is just for back compatibility with integration tests.
-func (d Decoder) Decode() (map[string]interface{}, error) {
-	data := map[string]interface{}{}
-	for result := range d.DecodeByChunk() {
-		if result.Error != nil {
-			return nil, eris.Wrap(result.Error, "error decoding binary AIM stream")
-		} else {
-			for key, value := range result.Data {
-				data[key] = value
-			}
-		}
-	}
-	return data, nil
 }
 
 // Decode decodes input stream of Data into map[string]interface{}.

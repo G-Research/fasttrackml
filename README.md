@@ -143,6 +143,10 @@ vscode ➜ /workspaces/fasttrackml (main) $ make run
 ```
 </details>
 
+### Performance benchmarking
+Here is a performance benchmark comparison between FasttrackML and MLflow
+![Performance Report](benchmarks/performanceReport.png)
+
 ### License
 
 Copyright 2022-2023 G-Research

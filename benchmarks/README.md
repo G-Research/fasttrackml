@@ -59,7 +59,7 @@ docker-compose up retreival_test_mlflow_sqlite
 FastTrack ML Performance Benchmark is designed to perform benchmark tests on both MLflow and FasttrackML:
 
 ![Performance Report](performanceReport.png)
-FastTrack ML Performance Tracker offers the same functionality as MLflow but implements performance optimizations behind the scene to improve overall performance.
+FastTrack ML offers the same functionality as MLflow but implements performance optimizations behind the scene to improve overall performance.
 
 
 Thank you for choosing FastTrack ML Performance Tracker! We hope this documentation helps you effectively track and manage your machine learning experiments and compare it with other parameter servers like MLflow.

@@ -90,20 +90,22 @@ func (r MetricRepository) CreateBatch(
 	latestMetrics := make(map[string]models.LatestMetric)
 	contextCache := make(map[string]*models.Context)
 	for n, metric := range metrics {
-		hash := md5.Sum([]byte(metric.Context.Json))
-		hashKey := hex.EncodeToString(hash[:])
+		if metric.Context != nil {
+			hash := md5.Sum([]byte(metric.Context.Json))
+			hashKey := hex.EncodeToString(hash[:])
 
-		if context, ok := contextCache[hashKey]; ok {
-			metric.ContextID = &context.ID
-			metric.Context = context
-		} else {
-			context := &models.Context{}
-			if err := r.db.WithContext(ctx).Where(metric.Context).FirstOrCreate(context).Error; err != nil {
-				return eris.Wrapf(err, "error creating or retrieving context.")
+			if context, ok := contextCache[hashKey]; ok {
+				metric.ContextID = &context.ID
+				metric.Context = context
+			} else {
+				context := &models.Context{}
+				if err := r.db.WithContext(ctx).Where(metric.Context).FirstOrCreate(context).Error; err != nil {
+					return eris.Wrapf(err, "error creating or retrieving context.")
+				}
+				contextCache[hashKey] = context
+				metric.ContextID = &context.ID
+				metric.Context = context
 			}
-			contextCache[hashKey] = context
-			metric.ContextID = &context.ID
-			metric.Context = context
 		}
 		metrics[n].Iter = lastIters[metric.Key] + 1
 		metrics[n].Context = metric.Context

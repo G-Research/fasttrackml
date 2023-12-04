@@ -133,7 +133,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				),
 			)
 			s.Empty(resp)
-      
+
 			// makes user that records has been created correctly in database.
 			metric, err := s.MetricFixtures.GetLatestMetricByRunID(context.Background(), run.ID)
 			s.Require().Nil(err)

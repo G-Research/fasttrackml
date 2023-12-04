@@ -78,8 +78,6 @@ func ConvertLogBatchRequestToDBModel(
 			metrics[n].Context = &models.Context{
 				Json: contextJSON,
 			}
-		} else {
-			metrics[n].Context = nil
 		}
 	}
 	return metrics, params, tags, nil

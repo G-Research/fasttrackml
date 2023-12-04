@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 
@@ -91,7 +91,7 @@ func (r MetricRepository) CreateBatch(
 	contextCache := make(map[string]*models.Context)
 	for n, metric := range metrics {
 		if metric.Context != nil {
-			hash := md5.Sum([]byte(metric.Context.Json))
+			hash := sha256.Sum256([]byte(metric.Context.Json.String()))
 			hashKey := hex.EncodeToString(hash[:])
 
 			if context, ok := contextCache[hashKey]; ok {

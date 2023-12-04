@@ -11,11 +11,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-// ConvertMetricParamRequestToDBModel converts request.LogMetricRequest into actual models.Metric model.
-func ConvertMetricParamRequestToDBModel(
-	runID string,
-	req *request.LogMetricRequest,
-) (*models.Metric, error) {
+// ConvertLogMetricRequestToDBModel converts request.LogMetricRequest into actual models.Metric model.
+func ConvertLogMetricRequestToDBModel(runID string, req *request.LogMetricRequest) (*models.Metric, error) {
 	metric := models.Metric{
 		Key:       req.Key,
 		Timestamp: req.Timestamp,
@@ -46,7 +43,7 @@ func ConvertMetricParamRequestToDBModel(
 			return nil, eris.Errorf("invalid metric value '%s'", v)
 		}
 	} else {
-		return nil, eris.Errorf("invalid metric value '%s'", v)
+		return nil, eris.Errorf("invalid metric value '%v'", req.Value)
 	}
 	return &metric, nil
 }

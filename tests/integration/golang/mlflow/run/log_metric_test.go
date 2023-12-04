@@ -4,7 +4,7 @@ package run
 
 import (
 	"context"
-	"encoding/json"
+	"math"
 	"net/http"
 	"strings"
 	"testing"
@@ -38,46 +38,108 @@ func (s *LogMetricTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	req := request.LogMetricRequest{
-		RunID:     run.ID,
-		Key:       "key1",
-		Value:     1.1,
-		Timestamp: 1234567890,
-		Step:      1,
-		Context: map[string]any{
-			"key": "value",
+	tests := []struct {
+		name           string
+		request        *request.LogMetricRequest
+		expectedMetric *models.LatestMetric
+	}{
+		{
+			name: "LogMetricWithNormalValue",
+			request: &request.LogMetricRequest{
+				RunID:     run.ID,
+				Key:       "key1",
+				Value:     1.1,
+				Timestamp: 1234567890,
+				Step:      1,
+			},
+			expectedMetric: &models.LatestMetric{
+				Key:       "key1",
+				Value:     1.1,
+				Timestamp: 1234567890,
+				Step:      1,
+				IsNan:     false,
+				RunID:     run.ID,
+				LastIter:  1,
+			},
+		},
+		{
+			name: "LogMetricWithNaNValue",
+			request: &request.LogMetricRequest{
+				RunID:     run.ID,
+				Key:       "key1",
+				Value:     "NaN",
+				Timestamp: 1234567890,
+				Step:      1,
+			},
+			expectedMetric: &models.LatestMetric{
+				Key:       "key1",
+				Value:     0,
+				Timestamp: 1234567890,
+				Step:      1,
+				IsNan:     true,
+				RunID:     run.ID,
+				LastIter:  2,
+			},
+		},
+		{
+			name: "LogMetricPositiveInfinityValue",
+			request: &request.LogMetricRequest{
+				RunID:     run.ID,
+				Key:       "key1",
+				Value:     "Infinity",
+				Timestamp: 1234567890,
+				Step:      1,
+			},
+			expectedMetric: &models.LatestMetric{
+				Key:       "key1",
+				Value:     math.MaxFloat64,
+				Timestamp: 1234567890,
+				Step:      1,
+				RunID:     run.ID,
+				LastIter:  3,
+			},
+		},
+		{
+			name: "LogMetricNegativeInfinityValue",
+			request: &request.LogMetricRequest{
+				RunID:     run.ID,
+				Key:       "key1",
+				Value:     "-Infinity",
+				Timestamp: 1234567890,
+				Step:      1,
+			},
+			expectedMetric: &models.LatestMetric{
+				Key:       "key1",
+				Value:     -math.MaxFloat64,
+				Timestamp: 1234567890,
+				Step:      1,
+				RunID:     run.ID,
+				LastIter:  4,
+			},
 		},
 	}
-	resp := fiber.Map{}
-	s.Require().Nil(
-		s.MlflowClient().WithMethod(
-			http.MethodPost,
-		).WithRequest(
-			req,
-		).WithResponse(
-			&resp,
-		).DoRequest(
-			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute,
-		),
-	)
-	s.Empty(resp)
-
-	// makes user that records has been created correctly in database.
-	metric, err := s.MetricFixtures.GetLatestMetricByRunID(context.Background(), run.ID)
-	s.Require().Nil(err)
-
-	s.Equal("key1", metric.Key)
-	s.Equal(1.1, metric.Value)
-	s.Equal(int64(1234567890), metric.Timestamp)
-	s.Equal(int64(1), metric.Step)
-	s.Equal(false, metric.IsNan)
-	s.Equal(run.ID, metric.RunID)
-	s.Equal(int64(1), metric.LastIter)
-	s.Require().NotNil(metric.Context)
-	var contextMap map[string]interface{}
-	err = json.Unmarshal(metric.Context.Json, &contextMap)
-	s.Require().Nil(err)
-	s.Equal(req.Context, contextMap)
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			resp := fiber.Map{}
+			s.Require().Nil(
+				s.MlflowClient().WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogMetricRoute,
+				),
+			)
+			s.Empty(resp)
+      
+			// makes user that records has been created correctly in database.
+			metric, err := s.MetricFixtures.GetLatestMetricByRunID(context.Background(), run.ID)
+			s.Require().Nil(err)
+			s.Equal(tt.expectedMetric, metric)
+		})
+	}
 }
 
 func (s *LogMetricTestSuite) Test_Error() {

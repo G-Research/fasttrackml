@@ -15,7 +15,7 @@ require (
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.6
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/apache/arrow/go/v12 v12.0.1
-	github.com/aws/aws-sdk-go-v2 v1.23.4
+	github.com/aws/aws-sdk-go-v2 v1.23.5
 	github.com/aws/aws-sdk-go-v2/config v1.25.10
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.47.1
 	github.com/go-python/gpython v0.2.0

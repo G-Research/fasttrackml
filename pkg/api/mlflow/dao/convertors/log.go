@@ -73,7 +73,7 @@ func ConvertLogBatchRequestToDBModel(
 		if metric.Context != nil {
 			contextJSON, err := json.Marshal(metric.Context)
 			if err != nil {
-				return nil, nil, nil, err
+				return nil, nil, nil, eris.Wrap(err, "error marshalling context")
 			}
 			metrics[n].Context = &models.Context{
 				Json: contextJSON,

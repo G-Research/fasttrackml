@@ -25,7 +25,7 @@ func ConvertMetricParamRequestToDBModel(
 	if req.Context != nil {
 		contextJSON, err := json.Marshal(req.Context)
 		if err != nil {
-			return nil, err
+			return nil, eris.Wrap(err, "error marshalling context")
 		}
 		metric.Context = &models.Context{
 			Json: contextJSON,

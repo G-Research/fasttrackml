@@ -1,5 +1,5 @@
 from math import nan
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 import pyarrow as pa

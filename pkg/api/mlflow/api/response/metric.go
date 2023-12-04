@@ -25,7 +25,7 @@ type MetricPartialResponse struct {
 	Value     any            `json:"value"`
 	Timestamp int64          `json:"timestamp"`
 	Step      int64          `json:"step"`
-	Context   map[string]any `json:"context,omitempty"`
+	Context   map[string]any `json:"context"`
 }
 
 // GetMetricHistoryResponse is a response object for `GET mlflow/metrics/get-history` endpoint.
@@ -40,7 +40,6 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 	}
 
 	for n, m := range metrics {
-		var context map[string]interface{}
 		resp.Metrics[n] = MetricPartialResponse{
 			Key:       m.Key,
 			Step:      m.Step,
@@ -48,6 +47,7 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 			Timestamp: m.Timestamp,
 		}
 		if m.Context != nil {
+			var context map[string]interface{}
 			if err := json.Unmarshal(m.Context.Json, &context); err != nil {
 				return nil, eris.Wrap(err, "error unmarshaling context")
 			}

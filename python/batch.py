@@ -25,6 +25,7 @@ def get_metric_histories(
     max_results: int = 10000000,
     search_all_experiments: bool = False,
     experiment_names: Optional[List[str]] = None,
+    context: Optional[Dict[str, str]] = None,
 ) -> pd.DataFrame:
     """
     Get metric histories of Runs that fit the specified criteria.
@@ -48,6 +49,7 @@ def get_metric_histories(
                              than ``None`` or ``[]`` will result in error if ``experiment_ids``
                              is also not ``None`` or ``[]``. ``None`` will default to the active
                              experiment if ``experiment_ids`` is ``None`` or ``[]``.
+    :param context: Dictionary of of json paths (keys) and values by which to filter results.
     :return: ``pandas.DataFrame`` of metric timestamps and values, indexed on run ID, metric key,
              and step. If index is ``timestamp``, the columns will be metric steps and values, and
              the index will be run ID, metric key, and timestamp.
@@ -93,6 +95,7 @@ def get_metric_histories(
             "metric_keys": metric_keys,
             "run_view_type": ViewType.to_string(run_view_type).upper(),
             "max_results": max_results,
+            "context": context,
         },
         stream=True,
     )

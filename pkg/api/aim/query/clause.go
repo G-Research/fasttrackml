@@ -1,7 +1,6 @@
 package query
 
 import (
-	"fmt"
 	"strings"
 
 	"gorm.io/driver/postgres"
@@ -66,33 +65,38 @@ type Json struct {
 // Build builds positive statement.
 func (json Json) Build(builder clause.Builder) {
 	json.writeColumn(builder)
+	jsonPath := json.JsonPath
 	switch json.Dialector {
 	case postgres.Dialector{}.Name():
-		pgJsonPath := strings.ReplaceAll(json.JsonPath, ".", ",")
 		//nolint:errcheck,gosec
-		builder.WriteString(fmt.Sprintf("#>>{%s}", pgJsonPath))
+		builder.WriteString("#>>?")
+		jsonPath = "{" + strings.ReplaceAll(jsonPath, ",", ".") + "}"
 	default:
 		//nolint:errcheck,gosec
-		builder.WriteString("->>" + json.JsonPath)
+		builder.WriteString("->>?")
 	}
 	//nolint:errcheck,gosec
 	builder.WriteString(" = ")
+	builder.AddVar(builder, jsonPath)
 	builder.AddVar(builder, json.Value)
 }
 
 // NegationBuild builds negative statement.
 func (json Json) NegationBuild(builder clause.Builder) {
 	json.writeColumn(builder)
+	jsonPath := json.JsonPath
 	switch json.Dialector {
 	case postgres.Dialector{}.Name():
 		//nolint:errcheck,gosec
-		builder.WriteString("#>>")
+		builder.WriteString("#>>?")
+		jsonPath = "{" + strings.ReplaceAll(jsonPath, ",", ".") + "}"
 	default:
 		//nolint:errcheck,gosec
-		builder.WriteString("->>")
+		builder.WriteString("->>?")
 	}
-	builder.WriteString(json.JsonPath)
-	builder.WriteString(" != ")
+	//nolint:errcheck,gosec
+	builder.WriteString(" <> ")
+	builder.AddVar(builder, jsonPath)
 	builder.AddVar(builder, json.Value)
 }
 

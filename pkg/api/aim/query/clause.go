@@ -1,6 +1,9 @@
 package query
 
 import (
+	"fmt"
+	"strings"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm/clause"
@@ -50,5 +53,58 @@ func (regexp Regexp) writeColumn(builder clause.Builder) {
 		builder.WriteString(", '')")
 	default:
 		builder.WriteQuoted(regexp.Column)
+	}
+}
+
+// Json clause for string match at a json path
+type Json struct {
+	clause.Eq
+	JsonPath  string
+	Dialector string
+}
+
+// Build builds positive statement.
+func (json Json) Build(builder clause.Builder) {
+	json.writeColumn(builder)
+	switch json.Dialector {
+	case postgres.Dialector{}.Name():
+		pgJsonPath := strings.ReplaceAll(json.JsonPath, ".", ",")
+		//nolint:errcheck,gosec
+		builder.WriteString(fmt.Sprintf("#>>{%s}", pgJsonPath))
+	default:
+		//nolint:errcheck,gosec
+		builder.WriteString("->>" + json.JsonPath)
+	}
+	//nolint:errcheck,gosec
+	builder.WriteString(" = ")
+	builder.AddVar(builder, json.Value)
+}
+
+// NegationBuild builds negative statement.
+func (json Json) NegationBuild(builder clause.Builder) {
+	json.writeColumn(builder)
+	switch json.Dialector {
+	case postgres.Dialector{}.Name():
+		//nolint:errcheck,gosec
+		builder.WriteString("#>>")
+	default:
+		//nolint:errcheck,gosec
+		builder.WriteString("->>")
+	}
+	builder.WriteString(json.JsonPath)
+	builder.WriteString(" != ")
+	builder.AddVar(builder, json.Value)
+}
+
+func (json Json) writeColumn(builder clause.Builder) {
+	switch json.Dialector {
+	case sqlite.Dialector{}.Name():
+		//nolint:errcheck,gosec
+		builder.WriteString("IFNULL(")
+		builder.WriteQuoted(json.Column)
+		//nolint:errcheck,gosec
+		builder.WriteString(", '{}'::json)")
+	default:
+		builder.WriteQuoted(json.Column)
 	}
 }

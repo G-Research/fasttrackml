@@ -602,6 +602,35 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 						}, nil
 					case "first_step":
 						return 0, nil
+					case "context":
+						return attributeGetter(
+							func(contextKey string) (any, error) {
+								// Create the join for metrics_context key
+								alias := "metric_contexts"
+								j := join{
+									alias: alias,
+									query: fmt.Sprintf(
+										"LEFT JOIN contexts %s ON %s.context_id = %s.id",
+										alias, table, alias,
+									),
+								}
+								pq.joins[alias] = j
+
+								// Add a WHERE clause for the context key AND VALUE
+								return Json{
+									Eq: clause.Eq{
+										Column: clause.Column{
+											Table: "contexts",
+											Alias: alias,
+											Name:  "json",
+										},
+										Value: "value",
+									},
+									JsonPath:  contextKey,
+									Dialector: pq.qp.Dialector,
+								}, nil
+							},
+						), nil
 					default:
 						return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
 					}

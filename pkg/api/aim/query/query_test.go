@@ -121,6 +121,15 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
+		{
+			name:  "TestMetricContext",
+			query: `metric.context.key1 == 'value1'`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid ` +
+				`LEFT JOIN contexts ON metrics_0.context_id = contexts.context_id ` +
+				`WHERE ("contexts"."json"->>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
+			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {
@@ -133,6 +142,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				Tables: map[string]string{
 					"runs":        "runs",
 					"experiments": "Experiment",
+					"metrics":     "metrics",
 				},
 				Dialector: postgres.Dialector{}.Name(),
 			}

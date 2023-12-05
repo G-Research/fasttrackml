@@ -2,9 +2,7 @@ package repositories
 
 import (
 	"context"
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
@@ -66,6 +64,18 @@ func (r MetricRepository) CreateBatch(
 	if len(metrics) == 0 {
 		return nil
 	}
+	contexts := make([]*models.Context, 0, len(metrics))
+	for n, metric := range metrics {
+		if metric.Context != nil {
+			contexts = append(contexts, metric.Context)
+			metrics[n].Context = nil
+		}
+	}
+	if err := r.db.WithContext(ctx).Clauses(
+		clause.OnConflict{DoNothing: true},
+	).CreateInBatches(&contexts, len(metrics)).Error; err != nil {
+		return eris.Wrapf(err, "error creating contexts")
+	}
 
 	metricKeysMap := make(map[string]any)
 	for _, m := range metrics {
@@ -88,27 +98,9 @@ func (r MetricRepository) CreateBatch(
 	}
 
 	latestMetrics := make(map[string]models.LatestMetric)
-	contextCache := make(map[string]*models.Context)
+	// contextCache := make(map[string]*models.Context)
 	for n, metric := range metrics {
-		if metric.Context != nil {
-			hash := sha256.Sum256([]byte(metric.Context.Json.String()))
-			hashKey := hex.EncodeToString(hash[:])
-
-			if context, ok := contextCache[hashKey]; ok {
-				metric.ContextID = &context.ID
-				metric.Context = context
-			} else {
-				context := &models.Context{}
-				if err := r.db.WithContext(ctx).Where(metric.Context).FirstOrCreate(context).Error; err != nil {
-					return eris.Wrapf(err, "error creating or retrieving context.")
-				}
-				contextCache[hashKey] = context
-				metric.ContextID = &context.ID
-				metric.Context = context
-			}
-		}
 		metrics[n].Iter = lastIters[metric.Key] + 1
-		metrics[n].Context = metric.Context
 		lastIters[metric.Key] = metrics[n].Iter
 		lm, ok := latestMetrics[metric.Key]
 		if !ok ||

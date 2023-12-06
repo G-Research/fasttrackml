@@ -874,13 +874,13 @@ func newSqlJsonPathComparison(op ast.CmpOp, left Json, right any) (clause.Expres
 	switch op {
 	case ast.Eq:
 		return JsonEq{
-			Left: left,
+			Left:  left,
 			Value: right,
 		}, nil
 	case ast.NotEq:
 		return JsonNeq{
-			Left: left,
-			Value:  right,
+			Left:  left,
+			Value: right,
 		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported comparison operation %q", op)

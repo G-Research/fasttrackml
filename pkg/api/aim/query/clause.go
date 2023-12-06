@@ -110,7 +110,7 @@ func (json Json) writeColumn(builder clause.Builder) {
 }
 
 type JsonEq struct {
-	Left Json
+	Left  Json
 	Value any
 }
 

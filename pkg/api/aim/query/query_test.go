@@ -279,7 +279,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				Tables: map[string]string{
 					"runs":        "runs",
 					"experiments": "Experiment",
-					"metrics":     "metrics", 
+					"metrics":     "metrics",
 				},
 				Dialector: sqlite.Dialector{}.Name(),
 			}
@@ -296,17 +296,16 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 }
 
 func (s *QueryTestSuite) Test_Error() {
-	tests := []struct{
-		name string
-		query string
+	tests := []struct {
+		name          string
+		query         string
 		expectedError error
 	}{
 		{
-			name:  "TestMetricContextNested",
-			query: `metric.context.parent.nested == 'value1'`,
+			name:          "TestMetricContextNested",
+			query:         `metric.context.parent.nested == 'value1'`,
 			expectedError: SyntaxError{},
 		},
-
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
@@ -323,8 +322,8 @@ func (s *QueryTestSuite) Test_Error() {
 				Dialector: sqlite.Dialector{}.Name(),
 			}
 			parsedQuery, err := pq.Parse(tt.query)
-			require.IsType (s.T(), tt.expectedError, err)
+			require.IsType(s.T(), tt.expectedError, err)
 			require.Nil(s.T(), parsedQuery)
 		})
-	}			
+	}
 }

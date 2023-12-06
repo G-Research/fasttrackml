@@ -14,6 +14,8 @@ fi
 
 # Create the benchmark outputs if they do not exist
 mkdir -p benchmark_outputs
+# Ensure the created folder is world writable
+chmod 777 benchmark_outputs
 
 # Run your specific Docker command
 docker-compose up logging_test_mlflow_sqlite

@@ -224,6 +224,8 @@ func (r MetricRepository) GetMetricHistories(
 	).Joins(
 		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 		namespaceID,
+	).Joins(
+		"Context",
 	).Order(
 		"runs.start_time DESC",
 	).Order(
@@ -286,7 +288,7 @@ func (r MetricRepository) GetMetricHistoryByRunIDAndKey(
 	ctx context.Context, runID, key string,
 ) ([]models.Metric, error) {
 	var metrics []models.Metric
-	if err := r.db.WithContext(ctx).Where(
+	if err := r.db.WithContext(ctx).Preload("Context").Where(
 		"run_uuid = ?", runID,
 	).Where(
 		"key = ?", key,

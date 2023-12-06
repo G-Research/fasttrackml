@@ -130,7 +130,7 @@ export default function () {
 
   // test getting metric history
   http.get(
-    base_url + `runs/log-batch?run_id=${runIds[0]}&metric_key=metric1`,
+    base_url + `runs/metrics/get-history?run_id=${runIds[0]}&metric_key=metric1`,
     {
       tags: {
         name: 'MetricHistory',

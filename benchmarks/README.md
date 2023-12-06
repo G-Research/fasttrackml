@@ -16,7 +16,7 @@ FastTrack ML Benchmark Suite is a project designed to provide a comprehensive an
 
 ## 2. Getting Started <a name="getting-started"></a>
 
-To run the performance benchmark ensure you have docker and docker compose installed and run the following command:
+To run the performance benchmark ensure you have Docker and Docker Compose installed and run the following command:
 
 ```bash
 ./run.sh
@@ -26,19 +26,19 @@ To run the performance benchmark ensure you have docker and docker compose insta
 
 ### Benchmarking Performance <a name="benchmarking-performance"></a>
 
-FastTrack ML benchmark suite allows you to test the performance of the FastTrackML project and compare it to MLFlow through the REST API. We do this by orchestrating 4 containers to to be tested:
-- FasttrackML with sqlite
-- FasttrackML with postgres
+FastTrack ML benchmark suite allows you to test the performance of the FastTrack ML project and compare it to MLFlow through the REST API. We do this by orchestrating 4 containers to to be tested:
+- FastTrack ML with sqlite
+- FastTrack ML with postgres
 - MLflow with sqlite
 - MLflow with postgres
 
-We then perform 2 categories of API benchmark tests on them using the K6 benchmarkign tool. The categories of tests are:
+We then perform 2 categories of API benchmark tests on them using the K6 benchmarking tool. The categories of tests are:
 - Logging (throughput)
 - Retrieval
 
 You run tests on any of these platforms in isolation for example:
 
-1. To test FastTrackML postgres in isolation:
+1. To test FastTrack ML postgres in isolation:
 
 ```bash
 docker-compose up logging_test_fasttrack_postgres
@@ -50,13 +50,13 @@ docker-compose up logging_test_fasttrack_postgres
 docker-compose up retreival_test_mlflow_sqlite
 ```
 
-*Note* These tests in isolation will generate csv report files, but will not generate report images. To generate a report image you will have to run all the tests on all 4 instances then use the `generateReports.py` script to generate the `perfromanceReport.png` image
+*Note* These tests in isolation will generate csv report files, but will not generate report images. To generate a report image you will have to run all the tests on all 4 instances then use the `generateReports.py` script to generate the `performanceReport.png` image
 
 *Note* For the performance tests to work you must have a `\benchmark_outputs` folder in this directory. If you are running the pefromance benchmarks without the `run.sh` script you will have to create this folder manually.
 
 ### Results <a name="comparing-with-mlflow"></a>
 
-FastTrack ML Performance Benchmark is designed to perform benchmark tests on both MLflow and FasttrackML:
+FastTrack ML Performance Benchmark is designed to perform benchmark tests on both MLflow and FastTrack ML:
 
 ![Performance Report](performanceReport.png)
 FastTrack ML offers the same functionality as MLflow but implements performance optimizations behind the scene to improve overall performance.

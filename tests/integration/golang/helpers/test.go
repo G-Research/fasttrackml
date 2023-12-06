@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
@@ -50,6 +51,13 @@ func (s *BaseTestSuite) runTearDownHooks() {
 	for _, hook := range s.tearDownHooks {
 		hook()
 	}
+}
+
+func (s *BaseTestSuite) initLogger() {
+	levelString := GetLogLevel()
+	level, err := logrus.ParseLevel(levelString)
+	s.Require().Nil(err)
+	logrus.SetLevel(level)
 }
 
 func (s *BaseTestSuite) initDB() {
@@ -179,6 +187,7 @@ func (s *BaseTestSuite) AddTearDownHook(hook func()) {
 }
 
 func (s *BaseTestSuite) SetupSuite() {
+	s.initLogger()
 	s.initDB()
 	s.initFixtures()
 	s.AddSetupHook(s.startServer)

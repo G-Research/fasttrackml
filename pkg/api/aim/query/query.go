@@ -624,7 +624,6 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 									pq.joins["metric_contexts"] = j
 								}
 
-
 								// Add a WHERE clause for the context key
 								return Json{
 									Column: clause.Column{

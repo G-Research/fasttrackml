@@ -207,8 +207,8 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 	s.getMetricHistoryBulkAndCompare(namespace1Code, request.GetMetricHistoryBulkRequest{
 		RunIDs:    []string{run1ID},
 		MetricKey: "key1",
-	}, response.GetMetricHistoryResponse{
-		Metrics: []response.MetricPartialResponse{
+	}, response.GetMetricHistoryBulkResponse{
+		Metrics: []response.MetricPartialResponseBulk{
 			{
 				RunID:     run1ID,
 				Key:       "key1",
@@ -221,8 +221,8 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 	s.getMetricHistoryBulkAndCompare(namespace2Code, request.GetMetricHistoryBulkRequest{
 		RunIDs:    []string{run2ID},
 		MetricKey: "key3",
-	}, response.GetMetricHistoryResponse{
-		Metrics: []response.MetricPartialResponse{
+	}, response.GetMetricHistoryBulkResponse{
+		Metrics: []response.MetricPartialResponseBulk{
 			{
 				RunID:     run2ID,
 				Key:       "key3",
@@ -238,14 +238,14 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 	s.getMetricHistoryBulkAndCompare(namespace1Code, request.GetMetricHistoryBulkRequest{
 		RunIDs:    []string{run2ID},
 		MetricKey: "key3",
-	}, response.GetMetricHistoryResponse{
-		Metrics: []response.MetricPartialResponse{},
+	}, response.GetMetricHistoryBulkResponse{
+		Metrics: []response.MetricPartialResponseBulk{},
 	})
 	s.getMetricHistoryBulkAndCompare(namespace2Code, request.GetMetricHistoryBulkRequest{
 		RunIDs:    []string{run1ID},
 		MetricKey: "key1",
-	}, response.GetMetricHistoryResponse{
-		Metrics: []response.MetricPartialResponse{},
+	}, response.GetMetricHistoryBulkResponse{
+		Metrics: []response.MetricPartialResponseBulk{},
 	})
 
 	// test `GET /metrics/get-history-bulk` endpoint.
@@ -253,8 +253,8 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 	s.getMetricHistoryBulkAndCompare(namespace1Code, request.GetMetricHistoryBulkRequest{
 		RunIDs:    []string{run1ID, run2ID},
 		MetricKey: "key1",
-	}, response.GetMetricHistoryResponse{
-		Metrics: []response.MetricPartialResponse{
+	}, response.GetMetricHistoryBulkResponse{
+		Metrics: []response.MetricPartialResponseBulk{
 			{
 				RunID:     run1ID,
 				Key:       "key1",
@@ -267,8 +267,8 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 	s.getMetricHistoryBulkAndCompare(namespace2Code, request.GetMetricHistoryBulkRequest{
 		RunIDs:    []string{run2ID, run1ID},
 		MetricKey: "key3",
-	}, response.GetMetricHistoryResponse{
-		Metrics: []response.MetricPartialResponse{
+	}, response.GetMetricHistoryBulkResponse{
+		Metrics: []response.MetricPartialResponseBulk{
 			{
 				RunID:     run2ID,
 				Key:       "key3",
@@ -387,9 +387,9 @@ func (s *MetricFlowTestSuite) logRunMetric(namespace string, req *request.LogMet
 }
 
 func (s *MetricFlowTestSuite) getMetricHistoryBulkAndCompare(
-	namespace string, req request.GetMetricHistoryBulkRequest, expectedResponse response.GetMetricHistoryResponse,
+	namespace string, req request.GetMetricHistoryBulkRequest, expectedResponse response.GetMetricHistoryBulkResponse,
 ) {
-	actualResponse := response.GetMetricHistoryResponse{}
+	actualResponse := response.GetMetricHistoryBulkResponse{}
 	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace,

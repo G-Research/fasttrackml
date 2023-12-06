@@ -491,7 +491,7 @@ func (s Service) LogMetric(
 		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
-	metric, err := convertors.ConvertMetricParamRequestToDBModel(run.ID, req)
+	metric, err := convertors.ConvertLogMetricRequestToDBModel(run.ID, req)
 	if err != nil {
 		return api.NewInvalidParameterValueError(err.Error())
 	}

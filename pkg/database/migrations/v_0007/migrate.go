@@ -1,25 +1,41 @@
 package v_0007
 
 import (
+	"fmt"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	"github.com/G-Research/fasttrackml/pkg/database/migrations"
 )
 
-const Version = "2c2299e4e061"
+const Version = "cbc41c0f4fc5"
 
 func Migrate(db *gorm.DB) error {
-	return db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Migrator().AddColumn(&Metric{}, "ContextID"); err != nil {
-			return err
-		}
-		if err := tx.Migrator().AddColumn(&LatestMetric{}, "ContextID"); err != nil {
-			return err
-		}
-		if err := tx.Migrator().AutoMigrate(&Context{}); err != nil {
-			return err
-		}
-		return tx.Model(&SchemaVersion{}).
-			Where("1 = 1").
-			Update("Version", Version).
-			Error
+	// We need to run this migration without foreign key constraints to avoid
+	// the cascading delete to kick in and delete all the runs.
+	return migrations.RunWithoutForeignKeyIfNeeded(db, func() error {
+		return db.Transaction(func(tx *gorm.DB) error {
+			switch tx.Dialector.Name() {
+			case sqlite.Dialector{}.Name():
+				// SQLite no action needed
+			case postgres.Dialector{}.Name():
+				// Postgres needs to remove this constraint
+				constraint := "experiments_name_key"
+				if tx.Migrator().HasConstraint("experiments", constraint) {
+					if err := tx.Migrator().DropConstraint("experiments", constraint); err != nil {
+						return err
+					}
+				}
+			default:
+				return fmt.Errorf("unsupported database dialect %s", tx.Dialector.Name())
+			}
+
+			return tx.Model(&SchemaVersion{}).
+				Where("1 = 1").
+				Update("Version", Version).
+				Error
+		})
 	})
 }

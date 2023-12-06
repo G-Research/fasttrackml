@@ -66,7 +66,7 @@ func ConvertLogBatchRequestToDBModel(
 				return nil, nil, nil, eris.Errorf("invalid metric value '%s'", v)
 			}
 		} else {
-			return nil, nil, nil, eris.Errorf("invalid metric value '%s'", v)
+			return nil, nil, nil, eris.Errorf("invalid metric value '%v'", metric.Value)
 		}
 		metrics[n] = m
 	}

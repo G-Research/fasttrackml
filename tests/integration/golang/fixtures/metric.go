@@ -28,7 +28,7 @@ func NewMetricFixtures(db *gorm.DB) (*MetricFixtures, error) {
 // CreateMetric creates new test Metric.
 func (f MetricFixtures) CreateMetric(ctx context.Context, metric *models.Metric) (*models.Metric, error) {
 	if metric.Context != nil {
-		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&metric.Context).Error; err != nil {
+		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&metric.Context, metric.Context).Error; err != nil {
 			return nil, eris.Wrap(err, "error creating metric context")
 		}
 		metric.ContextID = &metric.Context.ID

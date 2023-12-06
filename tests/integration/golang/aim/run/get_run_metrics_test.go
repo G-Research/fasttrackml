@@ -8,14 +8,11 @@ import (
 	"net/http"
 	"testing"
 
-	"gorm.io/datatypes"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -53,12 +50,6 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	// create context and attach it to own metric.
-	metricContext, err := s.ContextFixtures.CreateContext(context.Background(), &models.Context{
-		Json: datatypes.JSON(`{"key1": "key1", "value1": "value1"}`),
-	})
-	s.Require().Nil(err)
-
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key1",
 		Value:     123.1,
@@ -67,13 +58,9 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run.ID,
 		Iter:      1,
-		ContextID: common.GetPointer(metricContext.ID),
-	})
-	s.Require().Nil(err)
-
-	// create context and attach it to own metric.
-	metricContext, err = s.ContextFixtures.CreateContext(context.Background(), &models.Context{
-		Json: datatypes.JSON(`{"key2": "key2", "value2": "value2"}`),
+		Context: &models.Context{
+			Json: []byte(`{"key1": "key1", "value1": "value1"}`),
+		},
 	})
 	s.Require().Nil(err)
 
@@ -85,13 +72,9 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run.ID,
 		Iter:      2,
-		ContextID: common.GetPointer(metricContext.ID),
-	})
-	s.Require().Nil(err)
-
-	// create context and attach it to own metric.
-	metricContext, err = s.ContextFixtures.CreateContext(context.Background(), &models.Context{
-		Json: datatypes.JSON(`{"key3": "key3", "value3": "value3"}`),
+		Context: &models.Context{
+			Json: []byte(`{"key2": "key2", "value2": "value2"}`),
+		},
 	})
 	s.Require().Nil(err)
 
@@ -103,13 +86,9 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run.ID,
 		Iter:      3,
-		ContextID: common.GetPointer(metricContext.ID),
-	})
-	s.Require().Nil(err)
-
-	// create context and attach it to own metric.
-	metricContext, err = s.ContextFixtures.CreateContext(context.Background(), &models.Context{
-		Json: datatypes.JSON(`{"key4": "key4", "value4": "value4"}`),
+		Context: &models.Context{
+			Json: []byte(`{"key3": "key3", "value3": "value3"}`),
+		},
 	})
 	s.Require().Nil(err)
 
@@ -121,7 +100,9 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run.ID,
 		Iter:      4,
-		ContextID: common.GetPointer(metricContext.ID),
+		Context: &models.Context{
+			Json: []byte(`{"key4": "key4", "value4": "value4"}`),
+		},
 	})
 	s.Require().Nil(err)
 

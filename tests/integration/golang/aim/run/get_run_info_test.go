@@ -13,7 +13,6 @@ import (
 	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -51,19 +50,16 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	metricContext, err := s.ContextFixtures.CreateContext(context.Background(), &models.Context{
-		Json: datatypes.JSON(`{"key": "key", "value": "value"}`),
-	})
-	s.Require().Nil(err)
-
-	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+	latestMetric, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "key",
 		Value:     123,
 		Timestamp: 123456789,
 		Step:      1,
 		IsNan:     false,
 		RunID:     run.ID,
-		ContextID: common.GetPointer(metricContext.ID),
+		Context: &models.Context{
+			Json: datatypes.JSON(`{"key": "key", "value": "value"}`),
+		},
 	})
 	s.Require().Nil(err)
 
@@ -87,7 +83,7 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 			s.Equal(fmt.Sprintf("%v", run.ExperimentID), resp.Props.Experiment.ID)
 			s.Equal(float64(run.StartTime.Int64)/1000, resp.Props.CreationTime)
 			s.Equal(float64(run.EndTime.Int64)/1000, resp.Props.EndTime)
-			s.Require().JSONEq(metricContext.Json.String(), string(resp.Traces.Metric[0].Context))
+			s.Require().JSONEq(latestMetric.Context.Json.String(), string(resp.Traces.Metric[0].Context))
 			expectedTags := make(map[string]string, len(run.Tags))
 			for _, tag := range run.Tags {
 				expectedTags[tag.Key] = tag.Value

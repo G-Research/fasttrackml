@@ -175,9 +175,6 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 			req.Header.Set(key, value)
 		}
 	}
-	// TODO:dsuhinin - right now set `no-cache` for all the requests to avoid any
-	// problem related to namespace caching logic. Remove it a bit later.
-	req.Header.Set("no-cache", "true")
 
 	// 7. send request data.
 	resp, err := c.server.Test(req, 60000)

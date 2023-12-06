@@ -52,52 +52,37 @@ type server struct {
 	*fiber.App
 }
 
+// NewServer creates a new server instance.
 func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server, error) {
-	// init database connection.
-	db, err := initDB(config)
+	// create artifact storage factory.
+	artifactStorageFactory, err := storage.NewArtifactStorageFactory(config)
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating artifact storage factory")
+	}
+
+	// create database provider.
+	db, err := createDBProvider(config)
 	if err != nil {
 		return nil, err
 	}
 
-	var namespaceRepository repositories.NamespaceRepositoryProvider
-	var artifactStorageFactory storage.ArtifactStorageFactoryProvider
-	if err := func() error {
-		// create namespace notification listener.
-		namespaceListener, err := dao.NewNamespaceListener(ctx, db.GormDB())
-		if err != nil {
-			return eris.Wrap(err, "error creating namespace notification listener")
-		}
-
-		// create cached namespace repository.
-		namespaceRepository, err = repositories.NewNamespaceCachedRepository(
-			db.GormDB(), namespaceListener, repositories.NewNamespaceRepository(db.GormDB()),
-		)
-		if err != nil {
-			return eris.Wrap(err, "error creating cached namespace repository")
-		}
-
-		// create artifact storage factory.
-		artifactStorageFactory, err = storage.NewArtifactStorageFactory(config)
-		if err != nil {
-			return eris.Wrap(err, "error creating artifact storage factory")
-		}
-
-		return nil
-	}(); err != nil {
+	// create namespace repository.
+	namespaceRepository, err := createNamespaceRepository(ctx, db)
+	if err != nil {
 		//nolint:errcheck,gosec
 		db.Close()
 		return nil, err
 	}
 
-	// init main HTTP server.
+	// create fiber app.
 	//nolint:contextcheck
-	server := initServer(config, db, artifactStorageFactory, namespaceRepository)
+	app := createApp(config, db, artifactStorageFactory, namespaceRepository)
 
-	return server, nil
+	return server{app}, nil
 }
 
-// initDB init DB connection.
-func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
+// createDBProvider creates a new DB provider.
+func createDBProvider(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 	db, err := database.NewDBProvider(
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
@@ -130,13 +115,34 @@ func initDB(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 	return db, nil
 }
 
-// initServer init HTTP server with base configuration.
-func initServer(
+// createNamespaceRepository creates a new namespace repository.
+func createNamespaceRepository(
+	ctx context.Context, db database.DBProvider,
+) (repositories.NamespaceRepositoryProvider, error) {
+	// create namespace notification listener.
+	listener, err := dao.NewNamespaceListener(ctx, db.GormDB())
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating namespace notification listener")
+	}
+
+	// create cached namespace repository.
+	repo, err := repositories.NewNamespaceCachedRepository(
+		db.GormDB(), listener, repositories.NewNamespaceRepository(db.GormDB()),
+	)
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating namespace repository")
+	}
+
+	return repo, nil
+}
+
+// createApp creates a new fiber app with base configuration.
+func createApp(
 	config *mlflowConfig.ServiceConfig,
 	db database.DBProvider,
 	artifactStorageFactory storage.ArtifactStorageFactoryProvider,
 	namespaceRepository repositories.NamespaceRepositoryProvider,
-) Server {
+) *fiber.App {
 	app := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
 		ReadBufferSize:        16384,
@@ -250,5 +256,5 @@ func initServer(
 		),
 	).AddRoutes(app)
 
-	return &server{app}
+	return app
 }

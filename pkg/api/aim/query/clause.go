@@ -59,7 +59,7 @@ func (regexp Regexp) writeColumn(builder clause.Builder) {
 
 // Json clause for string match at a json path.
 type Json struct {
-	clause.Eq
+	clause.Column
 	JsonPath  string
 	Dialector string
 }
@@ -71,16 +71,13 @@ func (json Json) Build(builder clause.Builder) {
 	switch json.Dialector {
 	case postgres.Dialector{}.Name():
 		//nolint:errcheck,gosec
-		builder.WriteString("#>>?")
+		builder.WriteString("#>>")
 		jsonPath = "{" + strings.ReplaceAll(jsonPath, ",", ".") + "}"
 	default:
 		//nolint:errcheck,gosec
-		builder.WriteString("->>?")
+		builder.WriteString("->>")
 	}
-	//nolint:errcheck,gosec
-	builder.WriteString(" = ")
 	builder.AddVar(builder, jsonPath)
-	builder.AddVar(builder, json.Value)
 }
 
 // NegationBuild builds negative statement.
@@ -90,16 +87,13 @@ func (json Json) NegationBuild(builder clause.Builder) {
 	switch json.Dialector {
 	case postgres.Dialector{}.Name():
 		//nolint:errcheck,gosec
-		builder.WriteString("#>>?")
+		builder.WriteString("#>>")
 		jsonPath = "{" + strings.ReplaceAll(jsonPath, ",", ".") + "}"
 	default:
 		//nolint:errcheck,gosec
-		builder.WriteString("->>?")
+		builder.WriteString("->>")
 	}
-	//nolint:errcheck,gosec
-	builder.WriteString(" <> ")
 	builder.AddVar(builder, jsonPath)
-	builder.AddVar(builder, json.Value)
 }
 
 func (json Json) writeColumn(builder clause.Builder) {
@@ -109,7 +103,7 @@ func (json Json) writeColumn(builder clause.Builder) {
 		builder.WriteString("IFNULL(")
 		builder.WriteQuoted(json.Column)
 		//nolint:errcheck,gosec
-		builder.WriteString(", '{}'::json)")
+		builder.WriteString(", JSON('{}'))")
 	default:
 		builder.WriteQuoted(json.Column)
 	}

@@ -126,8 +126,16 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			query: `metric.context.key1 == 'value1'`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN contexts metric_contexts ON metrics.context_id = metric_contexts.id ` +
-				`WHERE ("contexts"."json"->>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
-			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
+				`WHERE ("metric_contexts"."json"#>>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
+			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestMetricContextNegative",
+			query: `metric.context.key1 != 'value1'`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN contexts metric_contexts ON metrics.context_id = metric_contexts.id ` +
+				`WHERE ("metric_contexts"."json"#>>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
+			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
 		},
 	}
 
@@ -243,6 +251,22 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
+		{
+			name:  "TestMetricContext",
+			query: `metric.context.key1 == 'value1'`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN contexts metric_contexts ON metrics.context_id = metric_contexts.id ` +
+				`WHERE (IFNULL("metric_contexts"."json", JSON('{}'))->>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
+			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestMetricContextNegative",
+			query: `metric.context.key1 != 'value1'`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN contexts metric_contexts ON metrics.context_id = metric_contexts.id ` +
+				`WHERE (IFNULL("metric_contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
+			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {
@@ -255,6 +279,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				Tables: map[string]string{
 					"runs":        "runs",
 					"experiments": "Experiment",
+					"metrics":     "metrics", 
 				},
 				Dialector: sqlite.Dialector{}.Name(),
 			}
@@ -270,4 +295,36 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 	}
 }
 
-func (s *QueryTestSuite) Test_Error() {}
+func (s *QueryTestSuite) Test_Error() {
+	tests := []struct{
+		name string
+		query string
+		expectedError error
+	}{
+		{
+			name:  "TestMetricContextNested",
+			query: `metric.context.parent.nested == 'value1'`,
+			expectedError: SyntaxError{},
+		},
+
+	}
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			pq := QueryParser{
+				Default: DefaultExpression{
+					Contains:   "run.archived",
+					Expression: "not run.archived",
+				},
+				Tables: map[string]string{
+					"runs":        "runs",
+					"experiments": "Experiment",
+					"metrics":     "metrics",
+				},
+				Dialector: sqlite.Dialector{}.Name(),
+			}
+			parsedQuery, err := pq.Parse(tt.query)
+			require.IsType (s.T(), tt.expectedError, err)
+			require.Nil(s.T(), parsedQuery)
+		})
+	}			
+}

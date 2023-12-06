@@ -621,14 +621,11 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								}
 								pq.joins[alias] = j
 
-								// Add a WHERE clause for the context key and value
+								// Add a WHERE clause for the context key
 								return Json{
-									Eq: clause.Eq{
-										Column: clause.Column{
-											Table: "metric_contexts",
-											Name:  "json",
-										},
-										Value: "value",
+									Column: clause.Column{
+										Table: "metric_contexts",
+										Name:  "json",
 									},
 									JsonPath:  contextKey,
 									Dialector: pq.qp.Dialector,

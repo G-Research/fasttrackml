@@ -312,6 +312,7 @@ func (pq *parsedQuery) parseCall(node *ast.Call) (any, error) {
 	}
 }
 
+// nolint:gocyclo
 func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 	exprs := make([]clause.Expression, len(node.Ops))
 

@@ -120,21 +120,27 @@ func (eq JsonEq) Build(builder clause.Builder) {
 	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:
 		rv := reflect.ValueOf(eq.Value)
 		if rv.Len() == 0 {
+			//nolint:errcheck,gosec
 			builder.WriteString(" IN (NULL)")
 		} else {
+			//nolint:errcheck,gosec
 			builder.WriteString(" IN (")
 			for i := 0; i < rv.Len(); i++ {
 				if i > 0 {
+					//nolint:errcheck,gosec
 					builder.WriteByte(',')
 				}
 				builder.AddVar(builder, rv.Index(i).Interface())
 			}
+			//nolint:errcheck,gosec
 			builder.WriteByte(')')
 		}
 	default:
 		if eqNil(eq.Value) {
+			//nolint:errcheck,gosec
 			builder.WriteString(" IS NULL")
 		} else {
+			//nolint:errcheck,gosec
 			builder.WriteString(" = ")
 			builder.AddVar(builder, eq.Value)
 		}
@@ -152,19 +158,24 @@ func (neq JsonNeq) Build(builder clause.Builder) {
 	neq.Left.Build(builder)
 	switch neq.Value.(type) {
 	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:
+		//nolint:errcheck,gosec
 		builder.WriteString(" NOT IN (")
 		rv := reflect.ValueOf(neq.Value)
 		for i := 0; i < rv.Len(); i++ {
 			if i > 0 {
+				//nolint:errcheck,gosec
 				builder.WriteByte(',')
 			}
 			builder.AddVar(builder, rv.Index(i).Interface())
 		}
+		//nolint:errcheck,gosec
 		builder.WriteByte(')')
 	default:
 		if eqNil(neq.Value) {
+			//nolint:errcheck,gosec
 			builder.WriteString(" IS NOT NULL")
 		} else {
+			//nolint:errcheck,gosec
 			builder.WriteString(" <> ")
 			builder.AddVar(builder, neq.Value)
 		}
@@ -177,6 +188,7 @@ func (neq JsonNeq) NegationBuild(builder clause.Builder) {
 
 func eqNil(value interface{}) bool {
 	if valuer, ok := value.(driver.Valuer); ok && !eqNilReflect(valuer) {
+		//nolint:errcheck
 		value, _ = valuer.Value()
 	}
 

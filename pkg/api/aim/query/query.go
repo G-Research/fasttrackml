@@ -610,16 +610,13 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 					case "context":
 						return attributeGetter(
 							func(contextKey string) (any, error) {
-								// Create the join for metrics and contexts
+								// create the join for contexts
 								j, ok := pq.joins["metric_contexts"]
 								if !ok {
-									alias := "metric_contexts"
+									alias := "contexts"
 									j = join{
 										alias: alias,
-										query: fmt.Sprintf(
-											"LEFT JOIN contexts %s ON metrics.context_id = %s.id",
-											alias, alias,
-										),
+										query: "LEFT JOIN contexts ON metrics.context_id = contexts.id",
 									}
 									pq.joins["metric_contexts"] = j
 								}
@@ -627,7 +624,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								// Add a WHERE clause for the context key
 								return Json{
 									Column: clause.Column{
-										Table: "metric_contexts",
+										Table: "contexts",
 										Name:  "json",
 									},
 									JsonPath:  contextKey,

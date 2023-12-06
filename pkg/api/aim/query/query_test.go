@@ -37,10 +37,11 @@ func (s *QueryTestSuite) SetupTest() {
 
 func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 	tests := []struct {
-		name         string
-		query        string
-		expectedSQL  string
-		expectedVars []interface{}
+		name          string
+		query         string
+		selectMetrics bool
+		expectedSQL   string
+		expectedVars  []interface{}
 	}{
 		{
 			name:  "TestRunNameWithoutFunction",
@@ -122,19 +123,21 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
 		{
-			name:  "TestMetricContext",
-			query: `metric.context.key1 == 'value1'`,
-			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN contexts metric_contexts ON metrics.context_id = metric_contexts.id ` +
-				`WHERE ("metric_contexts"."json"#>>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
+			name:          "TestMetricContext",
+			query:         `metric.context.key1 == 'value1'`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`LEFT JOIN contexts ON metrics.context_id = contexts.id ` +
+				`WHERE ("contexts"."json"#>>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
 		},
 		{
-			name:  "TestMetricContextNegative",
-			query: `metric.context.key1 != 'value1'`,
-			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN contexts metric_contexts ON metrics.context_id = metric_contexts.id ` +
-				`WHERE ("metric_contexts"."json"#>>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
+			name:          "TestMetricContextNegative",
+			query:         `metric.context.key1 != 'value1'`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`LEFT JOIN contexts ON metrics.context_id = contexts.id ` +
+				`WHERE ("contexts"."json"#>>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
 		},
 	}
@@ -155,22 +158,31 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			}
 			parsedQuery, err := pq.Parse(tt.query)
 			require.Nil(s.T(), err)
-			result := parsedQuery.Filter(
-				s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
-			).Select("ID").Find(&models.Run{})
-			require.Nil(s.T(), result.Error)
-			assert.Equal(s.T(), tt.expectedSQL, result.Statement.SQL.String())
-			assert.Equal(s.T(), tt.expectedVars, result.Statement.Vars)
+			var tx *gorm.DB
+			if tt.selectMetrics {
+				tx = parsedQuery.Filter(
+					s.db.Session(&gorm.Session{DryRun: true}).Model(models.Metric{}),
+				).Select("ID").Find(models.Metric{})
+			} else {
+				tx = parsedQuery.Filter(
+					s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
+				).Select("ID").Find(&models.Run{})
+			}
+
+			require.Nil(s.T(), tx.Error)
+			assert.Equal(s.T(), tt.expectedSQL, tx.Statement.SQL.String())
+			assert.Equal(s.T(), tt.expectedVars, tx.Statement.Vars)
 		})
 	}
 }
 
 func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 	tests := []struct {
-		name         string
-		query        string
-		expectedSQL  string
-		expectedVars []interface{}
+		name          string
+		query         string
+		selectMetrics bool
+		expectedSQL   string
+		expectedVars  []interface{}
 	}{
 		{
 			name:  "TestRunNameWithoutFunction",
@@ -252,19 +264,21 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
 		{
-			name:  "TestMetricContext",
-			query: `metric.context.key1 == 'value1'`,
-			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN contexts metric_contexts ON metrics.context_id = metric_contexts.id ` +
-				`WHERE (IFNULL("metric_contexts"."json", JSON('{}'))->>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
+			name:          "TestMetricContext",
+			query:         `metric.context.key1 == 'value1'`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`LEFT JOIN contexts ON metrics.context_id = contexts.id ` +
+				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
 		},
 		{
-			name:  "TestMetricContextNegative",
-			query: `metric.context.key1 != 'value1'`,
-			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN contexts metric_contexts ON metrics.context_id = metric_contexts.id ` +
-				`WHERE (IFNULL("metric_contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
+			name:          "TestMetricContextNegative",
+			query:         `metric.context.key1 != 'value1'`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`LEFT JOIN contexts ON metrics.context_id = contexts.id ` +
+				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
 		},
 	}
@@ -285,12 +299,20 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			}
 			parsedQuery, err := pq.Parse(tt.query)
 			require.Nil(s.T(), err)
-			result := parsedQuery.Filter(
-				s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
-			).Select("ID").Find(&models.Run{})
-			require.Nil(s.T(), result.Error)
-			assert.Equal(s.T(), tt.expectedSQL, result.Statement.SQL.String())
-			assert.Equal(s.T(), tt.expectedVars, result.Statement.Vars)
+			var tx *gorm.DB
+			if tt.selectMetrics {
+				tx = parsedQuery.Filter(
+					s.db.Session(&gorm.Session{DryRun: true}).Model(models.Metric{}),
+				).Select("ID").Find(models.Metric{})
+			} else {
+				tx = parsedQuery.Filter(
+					s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
+				).Select("ID").Find(&models.Run{})
+			}
+
+			require.Nil(s.T(), tx.Error)
+			assert.Equal(s.T(), tt.expectedSQL, tx.Statement.SQL.String())
+			assert.Equal(s.T(), tt.expectedVars, tx.Statement.Vars)
 		})
 	}
 }

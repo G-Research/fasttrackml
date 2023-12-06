@@ -173,7 +173,7 @@ jobs:
         run: docker run --rm -v fml-integration-tests_go-cache:/cache -v /tmp/go-cache:/src alpine tar xf /src/go-build.tar -C /cache
 
       - name: Run Integration Tests
-        run: make service-test
+        run: make container-test
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_URI: ${{ matrix.database-uri }}

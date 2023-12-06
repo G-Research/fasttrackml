@@ -64,18 +64,6 @@ func (r MetricRepository) CreateBatch(
 	if len(metrics) == 0 {
 		return nil
 	}
-	contexts := make([]*models.Context, 0, len(metrics))
-	for n, metric := range metrics {
-		if metric.Context != nil {
-			contexts = append(contexts, metric.Context)
-			metrics[n].Context = nil
-		}
-	}
-	if err := r.db.WithContext(ctx).Clauses(
-		clause.OnConflict{DoNothing: true},
-	).CreateInBatches(&contexts, len(metrics)).Error; err != nil {
-		return eris.Wrapf(err, "error creating contexts")
-	}
 
 	metricKeysMap := make(map[string]any)
 	for _, m := range metrics {
@@ -96,10 +84,12 @@ func (r MetricRepository) CreateBatch(
 	for _, lastMetric := range lastMetrics {
 		lastIters[lastMetric.Key] = lastMetric.LastIter
 	}
-
+	contexts := make([]*models.Context, 0, len(metrics))
 	latestMetrics := make(map[string]models.LatestMetric)
-	// contextCache := make(map[string]*models.Context)
 	for n, metric := range metrics {
+		if metric.Context != nil {
+			contexts = append(contexts, metric.Context)
+		}
 		metrics[n].Iter = lastIters[metric.Key] + 1
 		lastIters[metric.Key] = metrics[n].Iter
 		lm, ok := latestMetrics[metric.Key]
@@ -116,7 +106,28 @@ func (r MetricRepository) CreateBatch(
 				IsNan:     metric.IsNan,
 				LastIter:  metric.Iter,
 				Context:   metric.Context,
-				ContextID: metric.ContextID,
+			}
+		}
+	}
+
+	tx := r.db.WithContext(ctx).Clauses(
+		clause.OnConflict{DoNothing: true},
+	).CreateInBatches(&contexts, batchSize)
+
+	if tx.Error != nil {
+		return eris.Wrapf(tx.Error, "error creating contexts")
+	}
+
+	// if there were ignored conflicts, update contexts with the correct IDs
+	if tx.RowsAffected != int64(len(contexts)) {
+		for i, context := range contexts {
+			if context.ID == 0 {
+				existingContext := &models.Context{}
+				if err := r.db.WithContext(ctx).Where("json = ?", context.Json).First(existingContext).Error; err != nil {
+					return eris.Wrapf(err, "error retrieving context: %s", context.Json)
+				} else {
+					*contexts[i] = *existingContext
+				}
 			}
 		}
 	}

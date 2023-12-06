@@ -345,6 +345,11 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 			default:
 				return nil, fmt.Errorf("unsupported comparison %q", ast.Dump(node))
 			}
+		case Json:
+			exprs[i], err = newSqlJsonPathComparison(op, left, right)
+			if err != nil {
+				return nil, err
+			}
 		default:
 			switch right := right.(type) {
 			case clause.Column:
@@ -616,12 +621,11 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								}
 								pq.joins[alias] = j
 
-								// Add a WHERE clause for the context key AND VALUE
+								// Add a WHERE clause for the context key and value
 								return Json{
 									Eq: clause.Eq{
 										Column: clause.Column{
-											Table: "contexts",
-											Alias: alias,
+											Table: "metric_contexts",
 											Name:  "json",
 										},
 										Value: "value",
@@ -864,6 +868,23 @@ func newSqlComparison(op ast.CmpOp, left clause.Column, right any) (clause.Expre
 			Column: left,
 			Values: r,
 		}), nil
+	default:
+		return nil, fmt.Errorf("unsupported comparison operation %q", op)
+	}
+}
+
+func newSqlJsonPathComparison(op ast.CmpOp, left Json, right any) (clause.Expression, error) {
+	switch op {
+	case ast.Eq:
+		return JsonEq{
+			Left: left,
+			Value: right,
+		}, nil
+	case ast.NotEq:
+		return JsonNeq{
+			Left: left,
+			Value:  right,
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported comparison operation %q", op)
 	}

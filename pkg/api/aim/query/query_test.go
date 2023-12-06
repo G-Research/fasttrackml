@@ -125,8 +125,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			name:  "TestMetricContext",
 			query: `metric.context.key1 == 'value1'`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid ` +
-				`LEFT JOIN contexts ON metrics_0.context_id = contexts.context_id ` +
+				`LEFT JOIN contexts metric_contexts ON metrics.context_id = metric_contexts.id ` +
 				`WHERE ("contexts"."json"->>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
 		},

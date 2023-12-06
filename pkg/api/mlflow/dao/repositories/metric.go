@@ -30,6 +30,7 @@ type MetricRepositoryProvider interface {
 		experimentIDs []string, runIDs []string, metricKeys []string,
 		viewType request.ViewType,
 		limit int32,
+		jsonPathValueMap map[string]string,
 	) (*sql.Rows, func(*sql.Rows, interface{}) error, error)
 	// GetMetricHistoryBulk returns metrics history bulk.
 	GetMetricHistoryBulk(
@@ -151,6 +152,7 @@ func (r MetricRepository) GetMetricHistories(
 	experimentIDs []string, runIDs []string, metricKeys []string,
 	viewType request.ViewType,
 	limit int32,
+	jsonPathValueMap map[string]string,
 ) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
 	// if experimentIDs has been provided then firstly get the runs by provided experimentIDs.
 	if len(experimentIDs) > 0 {
@@ -196,6 +198,8 @@ func (r MetricRepository) GetMetricHistories(
 	).Joins(
 		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 		namespaceID,
+	).Joins(
+		"Context",
 	).Order(
 		"runs.start_time DESC",
 	).Order(
@@ -217,6 +221,12 @@ func (r MetricRepository) GetMetricHistories(
 
 	if len(metricKeys) > 0 {
 		query.Where("metrics.key IN ?", metricKeys)
+	}
+
+	if len(jsonPathValueMap) > 0 {
+		query.Joins("LEFT JOIN contexts on metrics.context_id = contexts.id")
+		sql, args := BuildJsonCondition(query.Dialector.Name(), "contexts.json", jsonPathValueMap)
+		query.Where(sql, args...)
 	}
 
 	rows, err := query.Rows()
@@ -252,7 +262,7 @@ func (r MetricRepository) GetMetricHistoryByRunIDAndKey(
 	ctx context.Context, runID, key string,
 ) ([]models.Metric, error) {
 	var metrics []models.Metric
-	if err := r.db.WithContext(ctx).Where(
+	if err := r.db.WithContext(ctx).Preload("Context").Where(
 		"run_uuid = ?", runID,
 	).Where(
 		"key = ?", key,

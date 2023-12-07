@@ -1,5 +1,3 @@
-//go:build integration
-
 package run
 
 import (
@@ -293,6 +291,57 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				}
 				return metrics
 			}(),
+		},
+		{
+			name: "LogNaNValue",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key4",
+						Value:     "NaN",
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key4": 1,
+			},
+		},
+		{
+			name: "LogPositiveInfinityValue",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key5",
+						Value:     "Infinity",
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key5": 1,
+			},
+		},
+		{
+			name: "LogNegativeInfinityValue",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key6",
+						Value:     "-Infinity",
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key6": 1,
+			},
 		},
 	}
 	for _, tt := range tests {

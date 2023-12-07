@@ -54,7 +54,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 		InnerJoins(
 			"Experiment",
 			database.DB.Select(
-				"ID",
+				"ID", "Name",
 			).Where(
 				&models.Experiment{NamespaceID: ns.ID},
 			),
@@ -257,7 +257,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 		InnerJoins(
 			"Experiment",
 			database.DB.Select(
-				"ID",
+				"ID", "Name",
 			).Where(
 				&models.Experiment{NamespaceID: ns.ID},
 			),
@@ -415,7 +415,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		InnerJoins(
 			"Experiment",
 			database.DB.Select(
-				"ID",
+				"ID", "Name",
 			).Where(
 				&models.Experiment{NamespaceID: ns.ID},
 			),
@@ -623,7 +623,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 		InnerJoins(
 			"Experiment",
 			database.DB.Select(
-				"ID",
+				"ID", "Name",
 			).Where(&models.Experiment{NamespaceID: ns.ID}),
 		).
 		Preload("Params").

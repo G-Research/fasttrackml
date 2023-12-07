@@ -140,13 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        include:
-          - database-backend: sqlite
-            database-uri: sqlite:///tmp/fasttrackml.db
-          - database-backend: sqlcipher
-            database-uri: sqlite:///tmp/fasttrackml.db?_key=passphrase
-          - database-backend: postgres
-            database-uri: postgres://postgres:postgres@postgres/postgres
+        database-backend: [sqlite, sqlcipher, postgres]
       fail-fast: false
     steps:
       - name: Checkout
@@ -166,18 +160,17 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/go-cache/go-build.tar
-          key: go-integration-tests-image-${{ steps.cache-info.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
+          key: go-integration-tests-${{ matrix.database-backend }}-image-${{ steps.cache-info.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
 
       - name: Restore cache
         if: steps.cache.outputs.cache-hit == 'true'
         run: docker run --rm -v fml-integration-tests_go-cache:/cache -v /tmp/go-cache:/src alpine tar xf /src/go-build.tar -C /cache
 
       - name: Run Integration Tests
-        run: make service-test
+        run: make container-test
         env:
           DOCKER_BUILDKIT: 1
-          FML_DATABASE_URI: ${{ matrix.database-uri }}
-          FML_OUTPUT_DATABASE_URI: ${{ matrix.database-uri }}
+          FML_DATABASE_BACKEND: ${{ matrix.database-backend }}
 
       - name: Save cache
         if: steps.cache.outputs.cache-hit != 'true'

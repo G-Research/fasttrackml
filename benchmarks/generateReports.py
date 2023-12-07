@@ -75,14 +75,14 @@ def generateDataframes():
     Filter the dataframe for only rows with benchmarks we want to measure
     """
     # get all the dataframes from all the geneated files and indicate the relevant applications
-    df1 = getDataframeFromFile('benchmark_outputs/mlflowsqlitethrougput.csv', 'mlflow sqlite')
-    df2 = getDataframeFromFile('benchmark_outputs/mlflowpostgresthrougput.csv', 'mlflow postgres')
-    df3 = getDataframeFromFile('benchmark_outputs/fasttracksqlitethrougput.csv', 'fasttrack sqlite')
-    df4 = getDataframeFromFile('benchmark_outputs/fasttrackpostgresthrougput.csv', 'fasttrack postgres')
-    df5 = getDataframeFromFile('benchmark_outputs/mlflowsqliteretreival.csv', 'mlflow sqlite')
-    df6 = getDataframeFromFile('benchmark_outputs/mlflowpostgresretreival.csv', 'mlflow postgres')
-    df7 = getDataframeFromFile('benchmark_outputs/fasttracksqliteretreival.csv', 'fasttrack sqlite')
-    df8 = getDataframeFromFile('benchmark_outputs/fasttrackpostgresretreival.csv', 'fasttrack postgres')
+    df1 = getDataframeFromFile('benchmark_outputs/mlflowsqlitelogging.csv', 'mlflow sqlite')
+    df2 = getDataframeFromFile('benchmark_outputs/mlflowpostgreslogging.csv', 'mlflow postgres')
+    df3 = getDataframeFromFile('benchmark_outputs/fasttracksqlitelogging.csv', 'fasttrack sqlite')
+    df4 = getDataframeFromFile('benchmark_outputs/fasttrackpostgreslogging.csv', 'fasttrack postgres')
+    df5 = getDataframeFromFile('benchmark_outputs/mlflowsqliteretrieval.csv', 'mlflow sqlite')
+    df6 = getDataframeFromFile('benchmark_outputs/mlflowpostgresretrieval.csv', 'mlflow postgres')
+    df7 = getDataframeFromFile('benchmark_outputs/fasttracksqliteretrieval.csv', 'fasttrack sqlite')
+    df8 = getDataframeFromFile('benchmark_outputs/fasttrackpostgresretrieval.csv', 'fasttrack postgres')
 
 
     # Read the CSV file into a DataFrame
@@ -103,23 +103,23 @@ def checkAllFilesReady():
     Since the K6 tests would be run inside containers before shutting down, we need to check if their
     execution is complete before starting the report generataiton. 
     The files we are checking to ensure they exist are:
-    - mlflowsqlitethrougput.csv
-    - mlflowpostgresthrougput.csv
-    - fasttracksqlitethrougput.csv
-    - fasttrackpostgresthrougput.csv
-    - mlflowsqliteretreival.csv
-    - mlflowpostgresretreival.csv
-    - fasttrackpostgresretreival.csv
-    - fasttracksqliteretreival.csv
+    - mlflowsqlitelogging.csv
+    - mlflowpostgreslogging.csv
+    - fasttracksqlitelogging.csv
+    - fasttrackpostgreslogging.csv
+    - mlflowsqliteretrieval.csv
+    - mlflowpostgresretrieval.csv
+    - fasttrackpostgresretrieval.csv
+    - fasttracksqliteretrieval.csv
     """
-    if os.path.exists("benchmark_outputs/mlflowsqlitethrougput.csv") and \
-       os.path.exists("benchmark_outputs/mlflowpostgresthrougput.csv") and \
-       os.path.exists("benchmark_outputs/fasttracksqlitethrougput.csv") and \
-       os.path.exists("benchmark_outputs/fasttrackpostgresthrougput.csv") and \
-       os.path.exists("benchmark_outputs/mlflowsqliteretreival.csv") and \
-       os.path.exists("benchmark_outputs/mlflowpostgresretreival.csv") and \
-       os.path.exists("benchmark_outputs/fasttrackpostgresretreival.csv") and \
-       os.path.exists("benchmark_outputs/fasttracksqliteretreival.csv"):
+    if os.path.exists("benchmark_outputs/mlflowsqlitelogging.csv") and \
+       os.path.exists("benchmark_outputs/mlflowpostgreslogging.csv") and \
+       os.path.exists("benchmark_outputs/fasttracksqlitelogging.csv") and \
+       os.path.exists("benchmark_outputs/fasttrackpostgreslogging.csv") and \
+       os.path.exists("benchmark_outputs/mlflowsqliteretrieval.csv") and \
+       os.path.exists("benchmark_outputs/mlflowpostgresretrieval.csv") and \
+       os.path.exists("benchmark_outputs/fasttrackpostgresretrieval.csv") and \
+       os.path.exists("benchmark_outputs/fasttracksqliteretrieval.csv"):
            return True
        
     return False
@@ -130,22 +130,22 @@ def cleanGeneratedFiles():
     The function checks if a particular csv report output file exists 
     and deletes it
     """
-    if os.path.exists("benchmark_outputs/mlflowsqlitethrougput.csv"):
-        os.remove("benchmark_outputs/mlflowsqlitethrougput.csv")
-    if os.path.exists("benchmark_outputs/mlflowpostgresthrougput.csv"):
-        os.remove("benchmark_outputs/mlflowpostgresthrougput.csv")
-    if os.path.exists("benchmark_outputs/fasttracksqlitethrougput.csv"):
-        os.remove("benchmark_outputs/fasttracksqlitethrougput.csv")
-    if os.path.exists("benchmark_outputs/fasttrackpostgresthrougput.csv"):
-        os.remove("benchmark_outputs/fasttrackpostgresthrougput.csv")
-    if os.path.exists("benchmark_outputs/mlflowsqliteretreival.csv"):
-        os.remove("benchmark_outputs/mlflowsqliteretreival.csv")
-    if os.path.exists("benchmark_outputs/mlflowpostgresretreival.csv"):
-        os.remove("benchmark_outputs/mlflowpostgresretreival.csv")
-    if os.path.exists("benchmark_outputs/fasttrackpostgresretreival.csv"):
-        os.remove("benchmark_outputs/fasttrackpostgresretreival.csv")
-    if os.path.exists("benchmark_outputs/fasttracksqliteretreival.csv"):
-        os.remove("benchmark_outputs/fasttracksqliteretreival.csv")
+    if os.path.exists("benchmark_outputs/mlflowsqlitelogging.csv"):
+        os.remove("benchmark_outputs/mlflowsqlitelogging.csv")
+    if os.path.exists("benchmark_outputs/mlflowpostgreslogging.csv"):
+        os.remove("benchmark_outputs/mlflowpostgreslogging.csv")
+    if os.path.exists("benchmark_outputs/fasttracksqlitelogging.csv"):
+        os.remove("benchmark_outputs/fasttracksqlitelogging.csv")
+    if os.path.exists("benchmark_outputs/fasttrackpostgreslogging.csv"):
+        os.remove("benchmark_outputs/fasttrackpostgreslogging.csv")
+    if os.path.exists("benchmark_outputs/mlflowsqliteretrieval.csv"):
+        os.remove("benchmark_outputs/mlflowsqliteretrieval.csv")
+    if os.path.exists("benchmark_outputs/mlflowpostgresretrieval.csv"):
+        os.remove("benchmark_outputs/mlflowpostgresretrieval.csv")
+    if os.path.exists("benchmark_outputs/fasttrackpostgresretrieval.csv"):
+        os.remove("benchmark_outputs/fasttrackpostgresretrieval.csv")
+    if os.path.exists("benchmark_outputs/fasttracksqliteretrieval.csv"):
+        os.remove("benchmark_outputs/fasttracksqliteretrieval.csv")
        
     return False
     

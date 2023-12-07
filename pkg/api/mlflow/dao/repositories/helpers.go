@@ -73,6 +73,6 @@ func BuildJsonCondition(
 
 // getJsonHash returns hash of the given json.
 func getJsonHash(json datatypes.JSON) string {
-	hash := sha256.Sum256([]byte(json))
+	hash := sha256.Sum256(json)
 	return string(hash[:])
 }

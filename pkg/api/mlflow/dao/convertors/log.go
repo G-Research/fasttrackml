@@ -69,16 +69,16 @@ func ConvertLogBatchRequestToDBModel(
 		} else {
 			return nil, nil, nil, eris.Errorf("invalid metric value '%v'", metric.Value)
 		}
-		metrics[n] = m
 		if metric.Context != nil {
 			contextJSON, err := json.Marshal(metric.Context)
 			if err != nil {
 				return nil, nil, nil, eris.Wrap(err, "error marshalling context")
 			}
-			metrics[n].Context = &models.Context{
+			m.Context = &models.Context{
 				Json: contextJSON,
 			}
 		}
+		metrics[n] = m
 	}
 	return metrics, params, tags, nil
 }

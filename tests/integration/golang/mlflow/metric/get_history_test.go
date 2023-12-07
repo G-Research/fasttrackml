@@ -7,11 +7,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -42,6 +44,11 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
+	metricContext, err := s.ContextFixtures.CreateContext(context.Background(), &models.Context{
+		Json: datatypes.JSON(`{"key": "key", "value": "value"}`),
+	})
+	s.Require().Nil(err)
+
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key1",
 		Value:     1.1,
@@ -50,6 +57,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 		Step:      1,
 		IsNan:     false,
 		Iter:      1,
+		ContextID: common.GetPointer(metricContext.ID),
 	})
 	s.Require().Nil(err)
 
@@ -75,6 +83,10 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 				Step:      1,
 				Value:     1.1,
 				Timestamp: 1234567890,
+				Context: map[string]any{
+					"key":   "key",
+					"value": "value",
+				},
 			},
 		},
 	}, resp)

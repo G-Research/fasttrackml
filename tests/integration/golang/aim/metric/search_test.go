@@ -5875,7 +5875,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 					resp,
 				).DoRequest("/runs/search/metric"),
 			)
-			decodedData, err := encoding.Decode(resp)
+
+			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
 
 			var decodedMetrics []*models.LatestMetric

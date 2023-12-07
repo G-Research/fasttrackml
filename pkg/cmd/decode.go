@@ -31,15 +31,17 @@ var DecodeCmd = &cobra.Command{
 		decoder := encoding.NewDecoder(f)
 		fmt.Println("decoded Aim stream data:")
 		for {
-			data, err := decoder.Decode()
+			data, err := decoder.Next()
+			if len(data) > 0 {
+				for key, value := range data {
+					fmt.Printf("%s: %#v\n", key, value)
+				}
+			}
 			if err != nil {
 				if errors.Is(err, io.EOF) {
 					break
 				}
 				return eris.Wrap(err, "error decoding binary AIM stream")
-			}
-			for key, value := range data {
-				fmt.Printf("%s: %#v\n", key, value)
 			}
 		}
 		return nil

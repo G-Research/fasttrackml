@@ -287,7 +287,7 @@ func (s *MetricFlowTestSuite) searchMetricsAndCompare(
 			resp,
 		).DoRequest("/runs/search/metric"),
 	)
-	decodedData, err := encoding.Decode(resp)
+	decodedData, err := encoding.NewDecoder(resp).Decode()
 	s.Require().Nil(err)
 
 	var decodedMetrics []*models.LatestMetric
@@ -337,7 +337,7 @@ func (s *MetricFlowTestSuite) searchAlignedMetricsAndCompare(
 		"/runs/search/metric/align",
 	))
 
-	decodedData, err := encoding.Decode(resp)
+	decodedData, err := encoding.NewDecoder(resp).Decode()
 	s.Require().Nil(err)
 
 	xValues := make(map[int][]float64)

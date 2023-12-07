@@ -770,7 +770,7 @@ func (s *SearchTestSuite) Test_Ok() {
 				).DoRequest("/runs/search/run"),
 			)
 
-			decodedData, err := encoding.Decode(resp)
+			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
 
 			for _, run := range runs {

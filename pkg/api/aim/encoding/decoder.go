@@ -43,6 +43,15 @@ func (d *reader) readField() ([]byte, error) {
 	return data, nil
 }
 
+// DecoderProvider provides an interface to work with stream decoder.
+type DecoderProvider interface {
+	// Next implements iterator pattern and return data set by set.
+	Next() (map[string]interface{}, error)
+	// Decode decodes all the data stream at once.
+	Decode() (map[string]interface{}, error)
+}
+
+// Decoder represents decoders for streaming data.
 type Decoder struct {
 	path     []string
 	reader   reader
@@ -50,16 +59,17 @@ type Decoder struct {
 	position int
 }
 
+// NewDecoder creates mew instance of Decoder.
 func NewDecoder(data io.Reader) *Decoder {
 	return &Decoder{
 		reader: reader{bufio.NewReader(data)},
 	}
 }
 
-// Decode decodes input stream of data into map[string]interface{}.
+// Next implements iterator pattern and return data set by set.
 // nolint:gocyclo
 // TODO:get back and fix `gocyclo` problem.
-func (d *Decoder) Decode() (map[string]interface{}, error) {
+func (d *Decoder) Next() (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 	for {
 		if len(d.path) == 0 {
@@ -148,18 +158,21 @@ func (d *Decoder) Decode() (map[string]interface{}, error) {
 	}
 }
 
-func (d *Decoder) DecodeAll() (map[string]interface{}, error) {
+// Decode decodes all the data stream at once.
+func (d *Decoder) Decode() (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 	for {
-		data, err := d.Decode()
+		data, err := d.Next()
+		if len(data) > 0 {
+			for key, value := range data {
+				result[key] = value
+			}
+		}
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return result, nil
 			}
 			return nil, eris.Wrap(err, "error decoding binary AIM stream")
-		}
-		for key, value := range data {
-			result[key] = value
 		}
 	}
 }

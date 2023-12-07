@@ -59,7 +59,7 @@ type Decoder struct {
 	position int
 }
 
-// NewDecoder creates mew instance of Decoder.
+// NewDecoder creates a new instance of Decoder.
 func NewDecoder(data io.Reader) *Decoder {
 	return &Decoder{
 		reader: reader{bufio.NewReader(data)},

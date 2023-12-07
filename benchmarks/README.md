@@ -1,12 +1,12 @@
-# FastTrack ML Benchmark Suite
+# FastTrackML Benchmark Suite
 
 ## Introduction
 
-FastTrack ML Benchmark Suite is a project designed to provide a comprehensive and user-friendly performance benchmarking system for FastTrack ML, with a specific focus on comparing its capabilities with other popular machine learning parameter servers, such as MLflow. This documentation aims to guide users on how to use FastTrack ML Performance Benchmark effectively.
+FastTrackML Benchmark Suite is a project designed to provide a comprehensive and user-friendly performance benchmarking system for FastTrackML, with a specific focus on comparing its capabilities with other popular machine learning parameter servers, such as MLflow. This documentation aims to guide users on how to use FastTrackML Performance Benchmark effectively.
 
 ## Table of Contents
 
-- [FastTrack ML Benchmark Suite](#fasttrack-ml-benchmark-suite)
+- [FastTrackML Benchmark Suite](#fasttrackml-benchmark-suite)
   - [Introduction](#introduction)
   - [Table of Contents](#table-of-contents)
   - [2. Getting Started ](#2-getting-started-)
@@ -26,9 +26,9 @@ To run the performance benchmark ensure you have Docker and Docker Compose insta
 
 ### Benchmarking Performance <a name="benchmarking-performance"></a>
 
-FastTrack ML benchmark suite allows you to test the performance of the FastTrack ML project and compare it to MLFlow through the REST API. We do this by orchestrating 4 containers to to be tested:
-- FastTrack ML with sqlite
-- FastTrack ML with postgres
+FastTrackML benchmark suite allows you to test the performance of the FastTrackML project and compare it to MLFlow through the REST API. We do this by orchestrating 4 containers to to be tested:
+- FastTrackML with sqlite
+- FastTrackML with postgres
 - MLflow with sqlite
 - MLflow with postgres
 
@@ -38,7 +38,7 @@ We then perform 2 categories of API benchmark tests on them using the K6 benchma
 
 You run tests on any of these platforms in isolation for example:
 
-1. To test FastTrack ML postgres in isolation:
+1. To test FastTrackML postgres in isolation:
 
 ```bash
 docker-compose up logging_test_fasttrack_postgres
@@ -56,10 +56,10 @@ docker-compose up retreival_test_mlflow_sqlite
 
 ### Results <a name="comparing-with-mlflow"></a>
 
-FastTrack ML Performance Benchmark is designed to perform benchmark tests on both MLflow and FastTrack ML:
+FastTrackML Performance Benchmark is designed to perform benchmark tests on both MLflow and FastTrackML:
 
 ![Performance Report](performanceReport.png)
-FastTrack ML offers the same functionality as MLflow but implements performance optimizations behind the scene to improve overall performance.
+FastTrackML offers the same functionality as MLflow but implements performance optimizations behind the scene to improve overall performance.
 
 
-Thank you for choosing FastTrack ML Performance Tracker! We hope this documentation helps you effectively track and manage your machine learning experiments and compare it with other parameter servers like MLflow.
+Thank you for choosing FastTrackML Performance Tracker! We hope this documentation helps you effectively track and manage your machine learning experiments and compare it with other parameter servers like MLflow.

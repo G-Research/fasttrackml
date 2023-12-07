@@ -635,6 +635,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 				ns.ID,
 			).
+			Joins("LEFT JOIN metrics USING(run_uuid)").
 			Joins("LEFT JOIN latest_metrics USING(run_uuid)"))).
 		Order("runs.row_num DESC").
 		Find(&runs); tx.Error != nil {
@@ -696,6 +697,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 					ns.ID,
 				).
+				Joins("LEFT JOIN metrics USING(run_uuid)").
 				Joins("LEFT JOIN latest_metrics USING(run_uuid)")),
 		).
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").

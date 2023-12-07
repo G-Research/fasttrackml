@@ -33,6 +33,8 @@ type ImportTestSuite struct {
 	runs               []*models.Run
 	inputRunFixtures   *fixtures.RunFixtures
 	outputRunFixtures  *fixtures.RunFixtures
+	inputBackend       string
+	outputBackend      string
 	inputDB            *gorm.DB
 	outputDB           *gorm.DB
 	populatedRowCounts rowCounts
@@ -42,9 +44,9 @@ func TestImportTestSuite(t *testing.T) {
 	suite.Run(t, new(ImportTestSuite))
 }
 
-func (s *ImportTestSuite) SetupTest() {
+func (s *ImportTestSuite) SetupSubTest() {
 	// prepare input database.
-	dsn, err := helpers.GenerateDatabaseURI(s.T(), helpers.GetInputDatabaseBackend())
+	dsn, err := helpers.GenerateDatabaseURI(s.T(), s.inputBackend)
 	s.Require().Nil(err)
 	db, err := database.NewDBProvider(
 		dsn,
@@ -63,7 +65,7 @@ func (s *ImportTestSuite) SetupTest() {
 	s.populateDB(s.inputDB)
 
 	// prepare output database.
-	dsn, err = helpers.GenerateDatabaseURI(s.T(), helpers.GetOutputDatabaseBackend())
+	dsn, err = helpers.GenerateDatabaseURI(s.T(), s.outputBackend)
 	s.Require().Nil(err)
 	db, err = database.NewDBProvider(
 		dsn,
@@ -164,44 +166,53 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 	s.Require().Nil(err)
 }
 
-func (s *ImportTestSuite) TearDownTest() {
+func (s *ImportTestSuite) TearDownSubTest() {
 	s.Require().Nil(s.inputRunFixtures.TruncateTables())
 	s.Require().Nil(s.outputRunFixtures.TruncateTables())
 }
 
 func (s *ImportTestSuite) Test_Ok() {
-	// source DB should have expected
-	s.validateRowCounts(s.inputDB, s.populatedRowCounts)
+	backends := []string{"sqlite", "sqlcipher", "postgres"}
+	for _, inputBackend := range backends {
+		for _, outputBackend := range backends {
+			s.inputBackend = inputBackend
+			s.outputBackend = outputBackend
+			s.Run(inputBackend+"->"+outputBackend, func() {
+				// source DB should have expected
+				s.validateRowCounts(s.inputDB, s.populatedRowCounts)
 
-	// initially, dest DB is empty
-	s.validateRowCounts(s.outputDB, rowCounts{namespaces: 1, experiments: 1})
+				// initially, dest DB is empty
+				s.validateRowCounts(s.outputDB, rowCounts{namespaces: 1, experiments: 1})
 
-	// invoke the Importer.Import() method
-	importer := database.NewImporter(s.inputDB, s.outputDB)
-	s.Require().Nil(importer.Import())
+				// invoke the Importer.Import() method
+				importer := database.NewImporter(s.inputDB, s.outputDB)
+				s.Require().Nil(importer.Import())
 
-	// dest DB should now have the expected
-	s.validateRowCounts(s.outputDB, s.populatedRowCounts)
+				// dest DB should now have the expected
+				s.validateRowCounts(s.outputDB, s.populatedRowCounts)
 
-	// invoke the Importer.Import method a 2nd time
-	s.Require().Nil(importer.Import())
+				// invoke the Importer.Import method a 2nd time
+				s.Require().Nil(importer.Import())
 
-	// dest DB should still only have the expected (idempotent)
-	s.validateRowCounts(s.outputDB, s.populatedRowCounts)
+				// dest DB should still only have the expected (idempotent)
+				s.validateRowCounts(s.outputDB, s.populatedRowCounts)
 
-	// confirm row-for-row equality
-	for _, table := range []string{
-		"namespaces",
-		"apps",
-		"dashboards",
-		"experiment_tags",
-		"runs",
-		"tags",
-		"params",
-		"metrics",
-		"latest_metrics",
-	} {
-		s.validateTable(s.inputDB, s.outputDB, table)
+				// confirm row-for-row equality
+				for _, table := range []string{
+					"namespaces",
+					"apps",
+					"dashboards",
+					"experiment_tags",
+					"runs",
+					"tags",
+					"params",
+					"metrics",
+					"latest_metrics",
+				} {
+					s.validateTable(s.inputDB, s.outputDB, table)
+				}
+			})
+		}
 	}
 }
 

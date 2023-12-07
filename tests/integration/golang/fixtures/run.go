@@ -98,6 +98,7 @@ func (f RunFixtures) CreateExampleRuns(
 		if err != nil {
 			return nil, err
 		}
+		run.Experiment = *exp
 		tag := models.Tag{
 			Key:   "my tag key",
 			Value: "my tag value",

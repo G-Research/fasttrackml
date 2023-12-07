@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 
 	"github.com/rotisserie/eris"
@@ -84,11 +85,18 @@ func (r MetricRepository) CreateBatch(
 	for _, lastMetric := range lastMetrics {
 		lastIters[lastMetric.Key] = lastMetric.LastIter
 	}
-	contexts := make([]*models.Context, 0, len(metrics))
+
+	contextMap := make(map[string]*models.Context)
 	latestMetrics := make(map[string]models.LatestMetric)
 	for n, metric := range metrics {
 		if metric.Context != nil {
-			contexts = append(contexts, metric.Context)
+			hash := sha256.Sum256([]byte(metric.Context.Json))
+			jsonHash := string(hash[:])
+			if contextMap[jsonHash] == nil {
+				contextMap[jsonHash] = metric.Context
+			} else {
+				metrics[n].Context = contextMap[jsonHash]
+			}
 		}
 		metrics[n].Iter = lastIters[metric.Key] + 1
 		lastIters[metric.Key] = metrics[n].Iter
@@ -105,31 +113,21 @@ func (r MetricRepository) CreateBatch(
 				Step:      metric.Step,
 				IsNan:     metric.IsNan,
 				LastIter:  metric.Iter,
-				Context:   metric.Context,
+				Context:   metrics[n].Context,
 			}
 		}
 	}
-
-	tx := r.db.WithContext(ctx).Clauses(
-		clause.OnConflict{DoNothing: true},
-	).CreateInBatches(&contexts, batchSize)
-
-	if tx.Error != nil {
-		return eris.Wrapf(tx.Error, "error creating contexts")
+	uniqueContexts := make([]*models.Context, 0, len(contextMap))
+	for _, context := range contextMap {
+		uniqueContexts = append(uniqueContexts, context)
 	}
-
-	// if there were ignored conflicts, update contexts with the correct IDs
-	if tx.RowsAffected != int64(len(contexts)) {
-		for i, context := range contexts {
-			if context.ID == 0 {
-				existingContext := &models.Context{}
-				if err := r.db.WithContext(ctx).Where("json = ?", context.Json).First(existingContext).Error; err != nil {
-					return eris.Wrapf(err, "error retrieving context: %s", context.Json)
-				} else {
-					*contexts[i] = *existingContext
-				}
-			}
-		}
+	if err := r.db.WithContext(ctx).Clauses(
+		clause.OnConflict{
+			Columns:   []clause.Column{{Name: "json"}},
+			UpdateAll: true,
+		},
+	).CreateInBatches(&uniqueContexts, batchSize).Error; err != nil {
+		return eris.Wrapf(err, "error creating contexts")
 	}
 
 	if err := r.db.WithContext(ctx).Clauses(
@@ -166,7 +164,6 @@ func (r MetricRepository) CreateBatch(
 			return eris.Wrapf(err, "error updating latest metrics for run: %s", run.ID)
 		}
 	}
-
 	return nil
 }
 

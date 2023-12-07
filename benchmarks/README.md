@@ -49,7 +49,7 @@ We then perform 2 categories of API benchmark tests on them using the K6 benchma
 
 You run tests on any of these platforms in isolation for example:
 
-1. To test FastTrack ML postgres in isolation:
+1. To test FastTrackML postgres in isolation:
 
 ```bash
 docker-compose up logging_test_fasttrack_postgres

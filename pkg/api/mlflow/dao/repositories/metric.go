@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"crypto/sha256"
 	"database/sql"
 
 	"github.com/rotisserie/eris"
@@ -90,12 +89,11 @@ func (r MetricRepository) CreateBatch(
 	latestMetrics := make(map[string]models.LatestMetric)
 	for n, metric := range metrics {
 		if metric.Context != nil {
-			hash := sha256.Sum256([]byte(metric.Context.Json))
-			jsonHash := string(hash[:])
-			if contextMap[jsonHash] == nil {
-				contextMap[jsonHash] = metric.Context
+			hash := getJsonHash(metric.Context.Json)
+			if contextMap[hash] == nil {
+				contextMap[hash] = metric.Context
 			} else {
-				metrics[n].Context = contextMap[jsonHash]
+				metrics[n].Context = contextMap[hash]
 			}
 		}
 		metrics[n].Iter = lastIters[metric.Key] + 1

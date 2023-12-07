@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "fast-track-test"
 version = "0.1.0"
-description = "A Stable Baselines Example for Fast Track"
+description = "A Stable Baselines Example for FastTrackML"
 authors = ["Sharpz7 <adam.mcarthur62@gmail.com>"]
 
 [tool.poetry.dependencies]

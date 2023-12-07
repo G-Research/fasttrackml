@@ -80,6 +80,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 			for _, run := range s.runs {
 				respNameKey := fmt.Sprintf("%v.props.name", run.ID)
 				expIdKey := fmt.Sprintf("%v.props.experiment.id", run.ID)
+				expNameKey := fmt.Sprintf("%v.props.experiment.name", run.ID)
 				startTimeKey := fmt.Sprintf("%v.props.creation_time", run.ID)
 				endTimeKey := fmt.Sprintf("%v.props.end_time", run.ID)
 				activeKey := fmt.Sprintf("%v.props.active", run.ID)
@@ -88,6 +89,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 					models.LifecycleStageActive {
 					s.Equal(run.Name, decodedData[respNameKey])
 					s.Equal(fmt.Sprintf("%v", run.ExperimentID), decodedData[expIdKey])
+					s.Equal(run.Experiment.Name, decodedData[expNameKey])
 					s.Equal(run.Status == models.StatusRunning, decodedData[activeKey])
 					s.Equal(false, decodedData[archivedKey])
 					s.Equal(float64(run.StartTime.Int64)/1000, decodedData[startTimeKey])
@@ -96,6 +98,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 				} else {
 					s.Nil(decodedData[respNameKey])
 					s.Nil(decodedData[expIdKey])
+					s.Nil(decodedData[expNameKey])
 					s.Nil(decodedData[activeKey])
 					s.Nil(decodedData[archivedKey])
 					s.Nil(decodedData[startTimeKey])

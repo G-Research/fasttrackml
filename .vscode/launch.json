@@ -57,19 +57,6 @@
             ],
         },
         {
-            "name": "Launch server (supports integration tests)",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}/main.go",
-            "buildFlags": "-tags '${config:go.buildTags}'",
-            "args": [
-                "server",
-                "--database-uri",
-                "sqlite:///tmp/fasttrackml.db"
-            ],
-        },
-        {
             "name": "Launch database import (sqlite to pg)",
             "type": "go",
             "request": "launch",

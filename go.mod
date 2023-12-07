@@ -32,7 +32,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
-	google.golang.org/api v0.152.0
+	google.golang.org/api v0.153.0
 	gorm.io/driver/postgres v1.5.4
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.25.5

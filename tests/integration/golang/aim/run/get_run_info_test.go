@@ -50,6 +50,7 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 			)
 			s.Equal(s.run.Name, resp.Props.Name)
 			s.Equal(fmt.Sprintf("%v", s.run.ExperimentID), resp.Props.Experiment.ID)
+			s.Equal(s.run.Experiment.Name, resp.Props.Experiment.Name)
 			s.Equal(float64(s.run.StartTime.Int64)/1000, resp.Props.CreationTime)
 			s.Equal(float64(s.run.EndTime.Int64)/1000, resp.Props.EndTime)
 			expectedTags := make(map[string]string, len(s.run.Tags))

@@ -63,6 +63,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri1",
 		LifecycleStage: models.LifecycleStageActive,
 	})
+	run1.Experiment = *experiment
 	s.Require().Nil(err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
@@ -106,6 +107,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri2",
 		LifecycleStage: models.LifecycleStageDeleted,
 	})
+	run2.Experiment = *experiment
 	s.Require().Nil(err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
@@ -149,6 +151,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri3",
 		LifecycleStage: models.LifecycleStageActive,
 	})
+	run3.Experiment = *experiment2
 	s.Require().Nil(err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
@@ -192,6 +195,7 @@ func (s *SearchTestSuite) Test_Ok() {
 		ArtifactURI:    "artifact_uri4",
 		LifecycleStage: models.LifecycleStageDeleted,
 	})
+	run4.Experiment = *experiment2
 	s.Require().Nil(err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
 		Key:   "mlflow.runName",
@@ -776,6 +780,7 @@ func (s *SearchTestSuite) Test_Ok() {
 			for _, run := range runs {
 				respNameKey := fmt.Sprintf("%v.props.name", run.ID)
 				expIdKey := fmt.Sprintf("%v.props.experiment.id", run.ID)
+				expNameKey := fmt.Sprintf("%v.props.experiment.name", run.ID)
 				startTimeKey := fmt.Sprintf("%v.props.creation_time", run.ID)
 				endTimeKey := fmt.Sprintf("%v.props.end_time", run.ID)
 				activeKey := fmt.Sprintf("%v.props.active", run.ID)
@@ -787,6 +792,7 @@ func (s *SearchTestSuite) Test_Ok() {
 					s.Equal(
 						fmt.Sprintf("%v", run.ExperimentID),
 						decodedData[expIdKey])
+					s.Equal(run.Experiment.Name, decodedData[expNameKey])
 					s.Equal(
 						run.Status == models.StatusRunning,
 						decodedData[activeKey])

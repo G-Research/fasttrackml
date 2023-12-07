@@ -12,6 +12,7 @@ stable-baselines3 = "^2.2.1"
 tqdm = "^4.66.1"
 moviepy = "^1.0.3"
 gymnasium = {extras = ["classic-control"], version = "^0.29.1"}
+pynvml = "^11.5.0"
 
 [tool.poetry.dev-dependencies]
 

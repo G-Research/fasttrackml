@@ -10,28 +10,9 @@ import mlflow
 import numpy as np
 import torch
 from stable_baselines3 import PPO
-from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.logger import HumanOutputFormat, KVWriter, Logger
 from stable_baselines3.common.vec_env import VecVideoRecorder
-from tqdm import tqdm
-
-
-class TqdmCallback(BaseCallback):
-    def __init__(self):
-        super().__init__()
-        self.progress_bar = None
-
-    def _on_training_start(self):
-        self.progress_bar = tqdm(total=self.locals["total_timesteps"])
-
-    def _on_step(self):
-        self.progress_bar.update(3)
-        return True
-
-    def _on_training_end(self):
-        self.progress_bar.close()
-        self.progress_bar = None
 
 
 class MLflowOutputFormat(KVWriter):
@@ -73,14 +54,14 @@ mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("cartpole-ppo-v1")
 
 vec_env = make_vec_env("CartPole-v1", n_envs=4)
-# record steps at intervals increaseing with loge
+# record steps at intervals increaseing with powers of 2
 vec_env = VecVideoRecorder(vec_env, "vidcap", record_video_trigger=lambda x: (x & (x - 1)) == 0)
 
 model = PPO("MlpPolicy", vec_env, verbose=1)
 model.set_logger(loggers)
 
 with mlflow.start_run():
-    model.learn(total_timesteps=25000, callback=TqdmCallback(), log_interval=1)
+    model.learn(total_timesteps=100000, log_interval=1, progress_bar=True)
     model.save("ckpt/ppo_cartpole")
 
     print("Done Training!!")

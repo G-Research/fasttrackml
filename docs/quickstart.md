@@ -83,3 +83,5 @@ poetry run python3 stable_baseline.py
 ```
 
 And then you will see the experiment `cartpole-ppo-v1` and be able to view the metrics.
+
+You can also see the videos of the model in `docs/example/vidcap` as it trains, as well as the final model weights in `ckpt`

@@ -49,7 +49,8 @@ def get_metric_histories(
                              than ``None`` or ``[]`` will result in error if ``experiment_ids``
                              is also not ``None`` or ``[]``. ``None`` will default to the active
                              experiment if ``experiment_ids`` is ``None`` or ``[]``.
-    :param context: Dictionary of of json paths (keys) and values by which to filter results.
+    :param context: Dictionary of of json paths (keys) and values which must be found in the
+                    metric context recorded when logged.
     :return: ``pandas.DataFrame`` of metric timestamps and values, indexed on run ID, metric key,
              and step. If index is ``timestamp``, the columns will be metric steps and values, and
              the index will be run ID, metric key, and timestamp.

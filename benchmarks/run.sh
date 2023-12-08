@@ -27,7 +27,7 @@ docker-compose up retrieval_test_mlflow_postgres
 docker-compose up retrieval_test_fasttrack_postgres
 docker-compose up retrieval_test_fasttrack_sqlite
 
-docker-compose up performance_benchmark_test
+# docker-compose up performance_benchmark_test
 
 # Shut down all created containers
 docker-compose down

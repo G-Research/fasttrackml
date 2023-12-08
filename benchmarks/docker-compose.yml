@@ -29,23 +29,35 @@ services:
         timeout: 5s
 
     mlflowpostgres:
-      image: seeloz/mlflow-server
+      image: python:3.8
+      command: bash -c "pip install mlflow psycopg2 && mlflow server --host 0.0.0.0  --backend-store-uri postgresql://postgres:postgres@mlflowdb:5432/mlflow_db"
       ports:
-        - 6000:5000
-      environment:
-        - BACKEND_URI=postgresql://postgres:postgres@mlflowdb:5432/mlflow_db
+        - 6005:5000
       depends_on:
         mlflowdb:
           condition: service_healthy
       networks:
         - mlflow_network
+
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+        interval: 2s
+        timeout: 5s
+        start_period: 5m
     
     mlflow:
-      image: seeloz/mlflow-server
+      image: python:3.8
+      command: bash -c "pip install mlflow && mlflow server --host 0.0.0.0 "
       ports:
         - 6001:5000
       networks:
         - mlflow_network
+
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+        interval: 2s
+        timeout: 5s
+        start_period: 5m
 
     fasttrack:
       image: gresearch/fasttrackml
@@ -78,29 +90,31 @@ services:
 
     logging_test_mlflow_sqlite:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/mlflowsqlitelogging.csv -e HOSTNAME=mlflow:5000 
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/mlflow_sqlite_logging.csv -e HOSTNAME=mlflow:5000 
       working_dir: /src
       volumes:
         - .:/src
       networks:
         - mlflow_network
       depends_on:
-        - mlflow
+        mlflow: 
+          condition: service_healthy
       
     logging_test_mlflow_postgres:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/mlflowpostgreslogging.csv -e HOSTNAME=mlflowpostgres:5000 
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/mlflow_postgres_logging.csv -e HOSTNAME=mlflowpostgres:5000 
       working_dir: /src
       volumes:
         - .:/src
       networks:
         - mlflow_network
       depends_on:
-        - mlflowpostgres
+        mlflowpostgres: 
+          condition: service_healthy
 
     logging_test_fasttrack_sqlite:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/fasttracksqlitelogging.csv -e HOSTNAME=fasttrack:5000 
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/fasttrack_sqlite_logging.csv -e HOSTNAME=fasttrack:5000 
       working_dir: /src
       volumes:
         - .:/src
@@ -111,7 +125,7 @@ services:
       
     logging_test_fasttrack_postgres:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/fasttrackpostgreslogging.csv -e HOSTNAME=fasttrackpostgres:5000 
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/fasttrack_postgres_logging.csv -e HOSTNAME=fasttrackpostgres:5000 
       working_dir: /src
       volumes:
         - .:/src
@@ -122,29 +136,31 @@ services:
 
     retrieval_test_mlflow_sqlite:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/mlflowsqliteretrieval.csv -e HOSTNAME=mlflow:5000 
+      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/mlflow_sqlite_retrieval.csv -e HOSTNAME=mlflow:5000 
       working_dir: /src
       volumes:
         - .:/src
       networks:
         - mlflow_network
       depends_on:
-        - mlflow
+        mlflow: 
+          condition: service_healthy
 
     retrieval_test_mlflow_postgres:
       image: grafana/k6:latest
-      command: run -u 20 -i 100 k6RetrievalPerfScript.js --out csv=benchmark_outputs/mlflowpostgresretrieval.csv -e HOSTNAME=mlflowpostgres:5000 
+      command: run -u 20 -i 100 k6RetrievalPerfScript.js --out csv=benchmark_outputs/mlflow_postgres_retrieval.csv -e HOSTNAME=mlflowpostgres:5000 
       working_dir: /src
       volumes:
         - .:/src
       networks:
         - mlflow_network
       depends_on:
-        - mlflowpostgres
+        mlflowpostgres: 
+          condition: service_healthy
       
     retrieval_test_fasttrack_postgres:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/fasttrackpostgresretrieval.csv -e HOSTNAME=fasttrackpostgres:5000 
+      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/fasttrack_postgres_retrieval.csv -e HOSTNAME=fasttrackpostgres:5000 
       working_dir: /src
       volumes:
         - .:/src
@@ -155,7 +171,7 @@ services:
 
     retrieval_test_fasttrack_sqlite:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/fasttracksqliteretrieval.csv -e HOSTNAME=fasttrack:5000 
+      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/fasttrack_sqlite_retrieval.csv -e HOSTNAME=fasttrack:5000 
       working_dir: /src
       volumes:
         - .:/src
@@ -169,6 +185,7 @@ services:
       working_dir: /src
       volumes:
         - .:/src
+
 
 networks:
   mlflow_network:

@@ -3,6 +3,18 @@ import { sleep } from 'k6';
 
 sleep(3);
 
+function generateRandomString(length) {
+  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let randomString = '';
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    randomString += characters.charAt(randomIndex);
+  }
+
+  return randomString;
+}
+
 export default function () {
   const base_url = 'http://' + __ENV.HOSTNAME + '/api/2.0/mlflow/';
 
@@ -15,7 +27,7 @@ export default function () {
     let experiment_response = http.post(
       base_url + 'experiments/create',
       JSON.stringify({
-          name: `experiment_${i}`,
+          name: `experiment_${generateRandomString(5)}`,
       }),
       {
         headers: {
@@ -23,7 +35,7 @@ export default function () {
         },
       }
     );
-    console.log(experiment_response.json());
+
     let experimentId = experiment_response.json().experiment_id
     experimentIds.push(experimentId);
 
@@ -33,7 +45,7 @@ export default function () {
         JSON.stringify({
           experiment_id: `${experimentId}`,
           start_time: Date.now(),
-          run_name: `run_${j}_${experimentId}`,
+          run_name: `run_${generateRandomString(5)}_${experimentId}`,
           tags: [
             {
               key: "mlflow.user",
@@ -47,7 +59,6 @@ export default function () {
           },
         }
       );
-      console.log(run_response.json());
       let runId = run_response.json().run.info.run_id;
       runIds.push(runId)
     }

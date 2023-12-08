@@ -151,14 +151,14 @@ def checkAllFilesReady():
     - fasttrackpostgresretrieval.csv
     - fasttracksqliteretrieval.csv
     """
-    if os.path.exists("mlflowsqlitethrougput.csv") and \
-       os.path.exists("mlflowpostgresthrougput.csv") and \
-       os.path.exists("fasttracksqlitethrougput.csv") and \
-       os.path.exists("fasttrackpostgresthrougput.csv") and \
-       os.path.exists("mlflowsqliteretreival.csv") and \
-       os.path.exists("mlflowpostgresretreival.csv") and \
-       os.path.exists("fasttrackpostgresretreival.csv") and \
-       os.path.exists("fasttracksqliteretreival.csv"):
+    if os.path.exists("benchmark_outputs/mlflowsqlitelogging.csv") and \
+       os.path.exists("benchmark_outputs/mlflowpostgreslogging.csv") and \
+       os.path.exists("benchmark_outputs/fasttracksqlitelogging.csv") and \
+       os.path.exists("benchmark_outputs/fasttrackpostgreslogging.csv") and \
+       os.path.exists("benchmark_outputs/mlflowsqliteretrieval.csv") and \
+       os.path.exists("benchmark_outputs/mlflowpostgresretrieval.csv") and \
+       os.path.exists("benchmark_outputs/fasttrackpostgresretrieval.csv") and \
+       os.path.exists("benchmark_outputs/fasttracksqliteretrieval.csv"):
            return True
 
     return False
@@ -170,22 +170,22 @@ def cleanGeneratedFiles():
     The function checks if a particular csv report output file exists
     and deletes it
     """
-    if os.path.exists("benchmark_outputs/mlflowsqlitethrougput.csv"):
-        os.remove("benchmark_outputs/mlflowsqlitethrougput.csv")
-    if os.path.exists("benchmark_outputs/mlflowpostgresthrougput.csv"):
-        os.remove("benchmark_outputs/mlflowpostgresthrougput.csv")
-    if os.path.exists("benchmark_outputs/fasttracksqlitethrougput.csv"):
-        os.remove("benchmark_outputs/fasttracksqlitethrougput.csv")
-    if os.path.exists("benchmark_outputs/fasttrackpostgresthrougput.csv"):
-        os.remove("benchmark_outputs/fasttrackpostgresthrougput.csv")
-    if os.path.exists("benchmark_outputs/mlflowsqliteretreival.csv"):
-        os.remove("benchmark_outputs/mlflowsqliteretreival.csv")
-    if os.path.exists("benchmark_outputs/mlflowpostgresretreival.csv"):
-        os.remove("benchmark_outputs/mlflowpostgresretreival.csv")
-    if os.path.exists("benchmark_outputs/fasttrackpostgresretreival.csv"):
-        os.remove("benchmark_outputs/fasttrackpostgresretreival.csv")
-    if os.path.exists("benchmark_outputs/fasttracksqliteretreival.csv"):
-        os.remove("benchmark_outputs/fasttracksqliteretreival.csv")
+    if os.path.exists("benchmark_outputs/mlflowsqlitelogging.csv"):
+        os.remove("benchmark_outputs/mlflowsqlitelogging.csv")
+    if os.path.exists("benchmark_outputs/mlflowpostgreslogging.csv"):
+        os.remove("benchmark_outputs/mlflowpostgreslogging.csv")
+    if os.path.exists("benchmark_outputs/fasttracksqlitelogging.csv"):
+        os.remove("benchmark_outputs/fasttracksqlitelogging.csv")
+    if os.path.exists("benchmark_outputs/fasttrackpostgreslogging.csv"):
+        os.remove("benchmark_outputs/fasttrackpostgreslogging.csv")
+    if os.path.exists("benchmark_outputs/mlflowsqliteretrieval.csv"):
+        os.remove("benchmark_outputs/mlflowsqliteretrieval.csv")
+    if os.path.exists("benchmark_outputs/mlflowpostgresretrieval.csv"):
+        os.remove("benchmark_outputs/mlflowpostgresretrieval.csv")
+    if os.path.exists("benchmark_outputs/fasttrackpostgresretrieval.csv"):
+        os.remove("benchmark_outputs/fasttrackpostgresretrieval.csv")
+    if os.path.exists("benchmark_outputs/fasttracksqliteretrieval.csv"):
+        os.remove("benchmark_outputs/fasttracksqliteretrieval.csv")
 
     return False
 
@@ -217,6 +217,9 @@ if __name__ == '__main__':
     DELAY_BETWEEN_CHECKS = args.delaybetween
 
     num_checks = 0
+    # while checkAllFilesReady() == False and num_checks < NUM_OF_TIMES_TO_CHECK:
+    #     logging.info("Waiting for all csv files to be generated...")
+    #     time.sleep(DELAY_BETWEEN_CHECKS)
 
     if checkAllFilesReady() == True:
         # clean the reports and get the relevant dataframes for the tests
@@ -225,4 +228,8 @@ if __name__ == '__main__':
         generateReport(dfs, filename=OUTPUT_FILE)
         logging.info("Report generated successfully")
     else:
-        print("Generated CSV files not complete and could not generate reports")
+        logging.info("Generated CSV files not complete and could not generate reports")
+
+
+    if SHOULD_CLEAN:
+        cleanGeneratedFiles()

@@ -1,5 +1,3 @@
-//go:build integration
-
 package metric
 
 import (
@@ -80,7 +78,7 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 		MetricKey: "key1",
 	}
 
-	resp := response.GetMetricHistoryResponse{}
+	resp := response.GetMetricHistoryBulkResponse{}
 	s.Require().Nil(
 		s.MlflowClient().WithQuery(
 			req,
@@ -91,8 +89,8 @@ func (s *GetHistoriesBulkTestSuite) Test_Ok() {
 		),
 	)
 
-	s.Equal(response.GetMetricHistoryResponse{
-		Metrics: []response.MetricPartialResponse{
+	s.Equal(response.GetMetricHistoryBulkResponse{
+		Metrics: []response.MetricPartialResponseBulk{
 			{
 				RunID:     run1.ID,
 				Key:       "key1",

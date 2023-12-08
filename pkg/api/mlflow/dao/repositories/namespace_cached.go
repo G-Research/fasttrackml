@@ -105,19 +105,9 @@ func (r NamespaceCachedRepository) Update(ctx context.Context, namespace *models
 
 // GetByCode returns namespace by its Code.
 func (r NamespaceCachedRepository) GetByCode(
-	ctx context.Context, noCache bool, code string,
+	ctx context.Context, code string,
 ) (*models.Namespace, error) {
-	// TODO:dsuhinin - it is temporary solution for integration tests.
-	// Right now we have to disable cache, because in integration tests we directly work with database.
-	// It leads that cache state and database state is out of sync and different tests could just fail
-	if !noCache {
-		result, ok := r.cache.Get(code)
-		if ok {
-			return &result, nil
-		}
-	}
-
-	namespace, err := r.namespaceRepository.GetByCode(ctx, noCache, code)
+	namespace, err := r.namespaceRepository.GetByCode(ctx, code)
 	if err != nil {
 		return nil, eris.Wrapf(err, "error getting cached namespace by code: %s", code)
 	}

@@ -20,6 +20,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0005"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0006"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0007"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0008"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0009"
 )
 
@@ -176,6 +177,13 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				fallthrough
 
 			case v_0007.Version:
+				log.Infof("Migrating database to FastTrackML schema %s", v_0008.Version)
+				if err := v_0008.Migrate(db); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0008.Version, err)
+				}
+				fallthrough
+
+			case v_0008.Version:
 				log.Infof("Migrating database to FastTrackML schema %s", v_0009.Version)
 				if err := v_0009.Migrate(db); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0009.Version, err)

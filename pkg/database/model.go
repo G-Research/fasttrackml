@@ -50,7 +50,7 @@ type Experiment struct {
 	LifecycleStage   LifecycleStage `gorm:"type:varchar(32);check:lifecycle_stage IN ('active', 'deleted')"`
 	CreationTime     sql.NullInt64  `gorm:"type:bigint"`
 	LastUpdateTime   sql.NullInt64  `gorm:"type:bigint"`
-	NamespaceID      uint           `gorm:"index:,unique,composite:name"`
+	NamespaceID      uint           `gorm:"not null;index:,unique,composite:name"`
 	Namespace        Namespace
 	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
 	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
@@ -212,7 +212,7 @@ type App struct {
 	Type        string    `gorm:"not null" json:"type"`
 	State       AppState  `json:"state"`
 	Namespace   Namespace `json:"-"`
-	NamespaceID uint      `gorm:"column:namespace_id" json:"-"`
+	NamespaceID uint      `gorm:"not null" json:"-"`
 }
 
 type AppState map[string]any

@@ -235,10 +235,10 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 
 // CreateDefaultNamespace creates the default namespace if it doesn't exist.
 func CreateDefaultNamespace(db *gorm.DB) error {
-	if tx := db.First(&Namespace{
+	if err := db.First(&Namespace{
 		Code: "default",
-	}); tx.Error != nil {
-		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+	}).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Creating default namespace")
 			var exp int32 = 0
 			ns := Namespace{
@@ -246,22 +246,11 @@ func CreateDefaultNamespace(db *gorm.DB) error {
 				Description:         "Default namespace",
 				DefaultExperimentID: &exp,
 			}
-			if err := db.Transaction(func(tx *gorm.DB) error {
-				if err := tx.Create(&ns).Error; err != nil {
-					return err
-				}
-				if err := tx.Model(&Experiment{}).
-					Where("namespace_id IS NULL").
-					Update("namespace_id", ns.ID).
-					Error; err != nil {
-					return fmt.Errorf("error updating experiments: %s", err)
-				}
-				return nil
-			}); err != nil {
+			if err := db.Create(&ns).Error; err != nil {
 				return fmt.Errorf("error creating default namespace: %s", err)
 			}
 		} else {
-			return fmt.Errorf("unable to find default namespace: %s", tx.Error)
+			return fmt.Errorf("unable to find default namespace: %s", err)
 		}
 	}
 	return nil

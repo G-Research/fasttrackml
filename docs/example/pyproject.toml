@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "fast-track-test"
+name = "fasttrackml-test"
 version = "0.1.0"
 description = "A Stable Baselines Example for FastTrackML"
 authors = ["Sharpz7 <adam.mcarthur62@gmail.com>"]

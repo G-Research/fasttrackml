@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -156,7 +157,7 @@ func (s *AppFlowTestSuite) testAppFlow(
 	s.Equal(fiber.ErrNotFound.Code, client.GetStatusCode())
 }
 
-func (s *AppFlowTestSuite) deleteAppAndCompare(namespaceCode string, appID string) {
+func (s *AppFlowTestSuite) deleteAppAndCompare(namespaceCode string, appID uuid.UUID) {
 	client := s.AIMClient()
 	appResp := response.App{}
 	s.Require().Nil(
@@ -173,7 +174,7 @@ func (s *AppFlowTestSuite) deleteAppAndCompare(namespaceCode string, appID strin
 	s.Equal(fiber.StatusOK, client.GetStatusCode())
 }
 
-func (s *AppFlowTestSuite) updateAppAndCompare(namespaceCode string, appID string) {
+func (s *AppFlowTestSuite) updateAppAndCompare(namespaceCode string, appID uuid.UUID) {
 	client := s.AIMClient()
 	appResp := response.App{}
 	s.Require().Nil(
@@ -198,7 +199,7 @@ func (s *AppFlowTestSuite) updateAppAndCompare(namespaceCode string, appID strin
 	s.Equal(fiber.StatusOK, client.GetStatusCode())
 }
 
-func (s *AppFlowTestSuite) getAppAndCompare(namespaceCode string, appID string) response.App {
+func (s *AppFlowTestSuite) getAppAndCompare(namespaceCode string, appID uuid.UUID) response.App {
 	appResp := response.App{}
 	client := s.AIMClient()
 	s.Require().Nil(
@@ -233,7 +234,7 @@ func (s *AppFlowTestSuite) getApps(namespaceCode string) []response.App {
 	return resp
 }
 
-func (s *AppFlowTestSuite) createAppAndCompare(namespace string, req *request.CreateApp) string {
+func (s *AppFlowTestSuite) createAppAndCompare(namespace string, req *request.CreateApp) uuid.UUID {
 	var resp response.App
 	s.Require().Nil(
 		s.AIMClient().WithMethod(

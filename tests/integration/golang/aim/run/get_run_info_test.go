@@ -1,5 +1,3 @@
-//go:build integration
-
 package run
 
 import (
@@ -79,13 +77,13 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 			s.Require().Nil(
 				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID),
 			)
-			s.Equal(run.Name, resp.Props.Name)
-			s.Equal(fmt.Sprintf("%v", run.ExperimentID), resp.Props.Experiment.ID)
-			s.Equal(float64(run.StartTime.Int64)/1000, resp.Props.CreationTime)
-			s.Equal(float64(run.EndTime.Int64)/1000, resp.Props.EndTime)
-			s.Require().JSONEq(latestMetric.Context.Json.String(), string(resp.Traces.Metric[0].Context))
-			expectedTags := make(map[string]string, len(run.Tags))
-			for _, tag := range run.Tags {
+			s.Equal(s.run.Name, resp.Props.Name)
+			s.Equal(fmt.Sprintf("%v", s.run.ExperimentID), resp.Props.Experiment.ID)
+			s.Equal(s.run.Experiment.Name, resp.Props.Experiment.Name)
+			s.Equal(float64(s.run.StartTime.Int64)/1000, resp.Props.CreationTime)
+			s.Equal(float64(s.run.EndTime.Int64)/1000, resp.Props.EndTime)
+			expectedTags := make(map[string]string, len(s.run.Tags))
+			for _, tag := range s.run.Tags {
 				expectedTags[tag.Key] = tag.Value
 			}
 			s.Equal(expectedTags, resp.Params.Tags)

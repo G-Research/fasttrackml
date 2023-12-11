@@ -46,10 +46,11 @@ func (s *GetDashboardTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	var resp database.Dashboard
+	var resp response.Dashboard
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/dashboards/%s", dashboard.ID))
 	s.Equal(dashboard.ID, resp.ID)
-	s.Equal(&app.ID, resp.AppID)
+	s.Equal(app.ID, resp.AppID)
+	s.Equal(app.Type, resp.AppType)
 	s.Equal(dashboard.Name, resp.Name)
 	s.Equal(dashboard.Description, resp.Description)
 	s.NotEmpty(resp.CreatedAt)

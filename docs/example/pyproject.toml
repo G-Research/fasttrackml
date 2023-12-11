@@ -1,16 +1,12 @@
 [tool.poetry]
-name = "fast-track-test"
+name = "fasttrackml-test"
 version = "0.1.0"
-description = "A Random Forest Classifier for EMG Data - Fast Track Test"
+description = "Python Example for FastTrackML"
 authors = ["Sharpz7 <adam.mcarthur62@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pandas = "^1.5.3"
-scikit-learn = "^1.2.1"
 mlflow-skinny = "^2.6.0"
-matplotlib = "^3.7.2"
-
 [tool.poetry.dev-dependencies]
 
 [build-system]

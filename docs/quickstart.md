@@ -69,20 +69,3 @@ After running this script, you should see the following output from http://local
 ![FastTrackML UI](images/runs_ui.png)
 
 From here you can check out the metrics and run information to see more details about the run.
-
-## Testing a Random Forest Model
-
-**Note that since artifacts are not yet supported, most of the autolog features will not work.**
-
-### Get the required data
-
-From Kaggle, download https://www.kaggle.com/datasets/kyr7plus/emg-4?resource=download
-
-Extract the zip file and move the files to `docs/example/data`.
-
-### Run the script
-
-```bash
-poetry run python3 random_forest.py
-```
-

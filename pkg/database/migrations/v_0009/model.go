@@ -1,4 +1,4 @@
-package v_0008
+package v_0009
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -132,6 +133,8 @@ type Metric struct {
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
 	Iter      int64   `gorm:"index"`
+	ContextID *uint
+	Context   *Context
 }
 
 type LatestMetric struct {
@@ -142,6 +145,13 @@ type LatestMetric struct {
 	IsNan     bool   `gorm:"not null"`
 	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
 	LastIter  int64
+	ContextID *uint
+	Context   *Context
+}
+
+type Context struct {
+	ID   uint           `gorm:"primaryKey;autoIncrement"`
+	Json datatypes.JSON `gorm:"not null;unique;index"`
 }
 
 type AlembicVersion struct {

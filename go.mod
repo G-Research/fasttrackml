@@ -9,7 +9,7 @@ replace (
 
 require (
 	cloud.google.com/go/storage v1.35.1
-	dagger.io/dagger v0.9.3
+	dagger.io/dagger v0.9.4
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/G-Research/fasttrackml-ui-aim v0.31602.15
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.6
@@ -24,13 +24,13 @@ require (
 	github.com/google/uuid v1.4.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hetiansu5/urlquery v1.2.7
-	github.com/jackc/pgx/v5 v5.5.0
+	github.com/jackc/pgx/v5 v5.5.1
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/pkg/errors v0.9.1
 	github.com/rotisserie/eris v0.5.4
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
-	github.com/spf13/viper v1.18.0
+	github.com/spf13/viper v1.18.1
 	github.com/stretchr/testify v1.8.4
 	google.golang.org/api v0.153.0
 	gorm.io/driver/postgres v1.5.4

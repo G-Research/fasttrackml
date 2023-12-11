@@ -29,14 +29,14 @@ func (f ContextFixtures) CreateContext(ctx context.Context, context *models.Cont
 	return context, nil
 }
 
-// GetContextByMetricKey returns the associated Context of a Metric.
-func (f ContextFixtures) GetContextByMetricKey(ctx context.Context, key string) (*models.Context, error) {
-	var metric models.Metric
-	if err := f.db.WithContext(ctx).Preload("Context").Where(
-		"key = ?", key,
-	).Find(&metric).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting metric by key: %s ", key)
+// GetContext returns the Context with the given JSON.
+func (f ContextFixtures) GetContext(ctx context.Context, json string) (*models.Context, error) {
+	var context models.Context
+	if err := f.db.WithContext(ctx).Where("json = ?", json).First(&context).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, eris.Wrapf(err, "error getting context with json: %s", json)
 	}
-
-	return metric.Context, nil
+	return &context, nil
 }

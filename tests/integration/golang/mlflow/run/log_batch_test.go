@@ -404,14 +404,11 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 			}
 			for _, metric := range tt.request.Metrics {
 				if metric.Context != nil {
-					context, err := s.ContextFixtures.GetContextByMetricKey(context.Background(), metric.Key)
+					metricContextJson, err := json.Marshal(metric.Context)
 					s.Require().Nil(err)
-
-					var contextMap map[string]interface{}
-					err = json.Unmarshal([]byte(context.Json), &contextMap)
+					context, err := s.ContextFixtures.GetContext(context.Background(), string(metricContextJson))
 					s.Require().Nil(err)
-
-					s.Equal(metric.Context, contextMap)
+					s.Require().NotNil(context)
 				}
 			}
 		})

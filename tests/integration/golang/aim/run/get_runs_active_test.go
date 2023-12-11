@@ -79,7 +79,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 					resp,
 				).DoRequest("/runs/active"),
 			)
-			decodedData, err := encoding.Decode(resp)
+			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
 
 			responseCount := 0

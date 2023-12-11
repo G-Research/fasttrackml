@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"gorm.io/gorm"
-
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
+	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -195,7 +194,6 @@ func (f RunFixtures) CreateMetrics(
 ) error {
 	for i := 1; i <= count; i++ {
 		// create test `metric` and test `latest metric` and connect to run.
-
 		for iter := 1; iter <= count; iter++ {
 			if err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
 				Key:       fmt.Sprintf("key%d", i),
@@ -209,7 +207,7 @@ func (f RunFixtures) CreateMetrics(
 				return err
 			}
 		}
-		err := f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
+		if err := f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
 			Key:       fmt.Sprintf("key%d", i),
 			Value:     123.1 + float64(count),
 			Timestamp: 1234567890 + int64(count),
@@ -217,8 +215,7 @@ func (f RunFixtures) CreateMetrics(
 			IsNan:     false,
 			RunID:     run.ID,
 			LastIter:  int64(count),
-		}).Error
-		if err != nil {
+		}).Error; err != nil {
 			return err
 		}
 	}

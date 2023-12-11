@@ -252,9 +252,9 @@ func (s *RunFlowTestSuite) testRunFlow(
 		response.GetRunMetrics{
 			response.RunMetrics{
 				Name:    "key1",
-				Context: map[string]interface{}{},
 				Values:  []float64{1111.1},
 				Iters:   []int64{1},
+				Context: []byte(`{}`),
 			},
 		},
 	)
@@ -269,9 +269,9 @@ func (s *RunFlowTestSuite) testRunFlow(
 		response.GetRunMetrics{
 			response.RunMetrics{
 				Name:    "key2",
-				Context: map[string]interface{}{},
 				Values:  []float64{2222.2},
 				Iters:   []int64{2},
+				Context: []byte(`{}`),
 			},
 		},
 	)
@@ -448,7 +448,7 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 		).DoRequest("/runs/search/run"),
 	)
 
-	decodedData, err := encoding.Decode(resp)
+	decodedData, err := encoding.NewDecoder(resp).Decode()
 	s.Require().Nil(err)
 	for _, expectedRun := range expectedRunList {
 		s.Equal(
@@ -482,7 +482,7 @@ func (s *RunFlowTestSuite) getActiveRunsAndCompare(namespace string, expectedRun
 		).DoRequest("/runs/active"),
 	)
 
-	decodedData, err := encoding.Decode(resp)
+	decodedData, err := encoding.NewDecoder(resp).Decode()
 	s.Require().Nil(err)
 	for _, expectedRun := range expectedRunList {
 		s.Equal(

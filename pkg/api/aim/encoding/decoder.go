@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"io"
 	"math"
 	"strconv"
@@ -42,36 +43,68 @@ func (d *reader) readField() ([]byte, error) {
 	return data, nil
 }
 
-// Decode decodes input stream of data into map[string]interface{}.
+// DecoderProvider provides an interface to work with stream decoder.
+type DecoderProvider interface {
+	// Next implements iterator pattern and return data set by set.
+	Next() (map[string]interface{}, error)
+	// Decode decodes all the data stream at once.
+	Decode() (map[string]interface{}, error)
+}
+
+// Decoder represents decoders for streaming data.
+type Decoder struct {
+	path   []string
+	reader reader
+	cursor string
+}
+
+// NewDecoder creates a new instance of Decoder.
+func NewDecoder(data io.Reader) *Decoder {
+	return &Decoder{
+		reader: reader{bufio.NewReader(data)},
+	}
+}
+
+// Next implements iterator pattern and return data set by set.
 // nolint:gocyclo
 // TODO:get back and fix `gocyclo` problem.
-func Decode(data io.Reader) (map[string]interface{}, error) {
+func (d *Decoder) Next() (map[string]interface{}, error) {
 	result := map[string]interface{}{}
-	d := reader{bufio.NewReader(data)}
 	for {
-		key, err := d.readField()
-		if err != nil {
-			if err := eris.Unwrap(err); err == io.EOF {
-				return result, nil
+		if len(d.path) == 0 {
+			key, err := d.reader.readField()
+			if err != nil {
+				if err := eris.Unwrap(err); err == io.EOF {
+					return result, err
+				}
+				return result, eris.Wrap(err, "error reading data line")
 			}
-			return result, eris.Wrap(err, "error reading data line")
-		}
-		var index bool
-		var path []string
-		for _, p := range bytes.Split(key, []byte{0xFE}) {
-			switch {
-			case index:
-				i := int64(binary.BigEndian.Uint64(p))
-				path = append(path, strconv.FormatInt(i, 10))
-				index = false
-			case len(p) == 0:
-				index = true
-			default:
-				path = append(path, string(p))
+			var index bool
+			for _, p := range bytes.Split(key, []byte{0xFE}) {
+				switch {
+				case index:
+					i := int64(binary.BigEndian.Uint64(p))
+					d.path = append(d.path, strconv.FormatInt(i, 10))
+					index = false
+				case len(p) == 0:
+					index = true
+				default:
+					d.path = append(d.path, string(p))
+				}
 			}
 		}
 
-		valuebuf, err := d.readField()
+		if len(d.path[0]) > 0 && d.cursor == "" {
+			d.cursor = d.path[0]
+		}
+
+		// if `cursor` has been changed, then we have to release current object.
+		if len(d.path) > 0 && d.cursor != d.path[0] {
+			d.cursor = d.path[0]
+			return result, nil
+		}
+
+		valuebuf, err := d.reader.readField()
 		if err != nil {
 			return nil, eris.Wrap(err, "error reading data line")
 		}
@@ -118,6 +151,26 @@ func Decode(data io.Reader) (map[string]interface{}, error) {
 			return nil, eris.Errorf("unsupported type %x", valuebuf[0])
 		}
 
-		result[strings.Join(path, ".")] = value
+		result[strings.Join(d.path, ".")] = value
+		d.path = []string{}
+	}
+}
+
+// Decode decodes all the data stream at once.
+func (d *Decoder) Decode() (map[string]interface{}, error) {
+	result := map[string]interface{}{}
+	for {
+		data, err := d.Next()
+		if len(data) > 0 {
+			for key, value := range data {
+				result[key] = value
+			}
+		}
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return result, nil
+			}
+			return nil, eris.Wrap(err, "error decoding binary AIM stream")
+		}
 	}
 }

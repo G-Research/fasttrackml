@@ -68,7 +68,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 			s.Equal(tt.requestBody.Description, resp.Description)
 			s.Equal(dashboards[0].Name, resp.Name)
 			s.Equal(dashboards[0].Description, resp.Description)
-			s.Equal(dashboards[0].ID.String(), resp.ID)
+			s.Equal(dashboards[0].ID, resp.ID)
 			s.Equal(dashboards[0].AppID, &resp.AppID)
 			s.NotEmpty(resp.ID)
 		})

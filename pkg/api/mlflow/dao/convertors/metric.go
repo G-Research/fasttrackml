@@ -1,6 +1,7 @@
 package convertors
 
 import (
+	"encoding/json"
 	"math"
 
 	"github.com/rotisserie/eris"
@@ -17,6 +18,15 @@ func ConvertLogMetricRequestToDBModel(runID string, req *request.LogMetricReques
 		Timestamp: req.Timestamp,
 		Step:      req.Step,
 		RunID:     runID,
+	}
+	if req.Context != nil {
+		contextJSON, err := json.Marshal(req.Context)
+		if err != nil {
+			return nil, eris.Wrap(err, "error marshalling context")
+		}
+		metric.Context = &models.Context{
+			Json: contextJSON,
+		}
 	}
 	if v, ok := req.Value.(float64); ok {
 		metric.Value = v

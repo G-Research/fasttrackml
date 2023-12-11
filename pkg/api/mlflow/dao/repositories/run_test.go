@@ -38,11 +38,6 @@ func Test_renumberRows(t *testing.T) {
 	//nolint:errcheck
 	defer mockDb.Close()
 
-	lockExpect := func() {
-		mock.ExpectExec("LOCK TABLE runs").WillReturnResult(sqlmock.NewResult(0, 1))
-		mock.ExpectExec(`UPDATE runs`).WillReturnResult(sqlmock.NewResult(0, 1))
-	}
-
 	dialector := postgres.New(postgres.Config{
 		Conn:       mockDb,
 		DriverName: "postgres",
@@ -55,12 +50,21 @@ func Test_renumberRows(t *testing.T) {
 	for _, tc := range testData {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.startWith < 0 {
-				err := repo.renumberRows(db, tc.startWith)
-				assert.EqualError(t, err, "attempting to renumber with less than 0 row number value")
+				assert.EqualError(
+					t,
+					repo.renumberRows(db, tc.startWith),
+					"attempting to renumber with less than 0 row number value",
+				)
 			} else {
-				lockExpect()
-				err := repo.renumberRows(db, tc.startWith)
-				assert.NoError(t, err)
+				mock.ExpectExec(
+					"LOCK TABLE runs",
+				).WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectExec(`UPDATE runs`).WithArgs(
+					tc.startWith, tc.startWith,
+				).WillReturnResult(
+					sqlmock.NewResult(0, 1),
+				)
+				assert.NoError(t, repo.renumberRows(db, tc.startWith))
 			}
 		})
 	}

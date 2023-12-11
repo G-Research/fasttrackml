@@ -53,10 +53,9 @@ type DecoderProvider interface {
 
 // Decoder represents decoders for streaming data.
 type Decoder struct {
-	path     []string
-	reader   reader
-	cursor   string
-	position int
+	path   []string
+	reader reader
+	cursor string
 }
 
 // NewDecoder creates a new instance of Decoder.
@@ -99,10 +98,9 @@ func (d *Decoder) Next() (map[string]interface{}, error) {
 			d.cursor = d.path[0]
 		}
 
-		// if `current` has been changed, then we have to release current object.
+		// if `cursor` has been changed, then we have to release current object.
 		if len(d.path) > 0 && d.cursor != d.path[0] {
 			d.cursor = d.path[0]
-			d.position++
 			return result, nil
 		}
 

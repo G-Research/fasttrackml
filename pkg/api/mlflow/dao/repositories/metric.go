@@ -85,6 +85,7 @@ func (r MetricRepository) CreateBatch(
 		lastIters[lastMetric.Key] = lastMetric.LastIter
 	}
 
+	uniqueContexts := make([]*models.Context, 0, len(metrics))
 	contextMap := make(map[string]*models.Context)
 	latestMetrics := make(map[string]models.LatestMetric)
 	for n, metric := range metrics {
@@ -92,6 +93,7 @@ func (r MetricRepository) CreateBatch(
 			hash := getJsonHash(metric.Context.Json)
 			if contextMap[hash] == nil {
 				contextMap[hash] = metric.Context
+				uniqueContexts = append(uniqueContexts, metric.Context)
 			} else {
 				metrics[n].Context = contextMap[hash]
 			}
@@ -114,10 +116,6 @@ func (r MetricRepository) CreateBatch(
 				Context:   metrics[n].Context,
 			}
 		}
-	}
-	uniqueContexts := make([]*models.Context, 0, len(contextMap))
-	for _, context := range contextMap {
-		uniqueContexts = append(uniqueContexts, context)
 	}
 	if err := r.db.WithContext(ctx).Clauses(
 		clause.OnConflict{

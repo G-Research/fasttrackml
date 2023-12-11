@@ -401,6 +401,13 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				s.Require().Nil(err)
 				s.Equal(iteration, lastMetric.LastIter)
 			}
+			for _, metric := range tt.request.Metrics {
+				if metric.Context != nil {
+					context, err := s.ContextFixtures.GetContextByMetricKey(context.Background(), metric.Key)
+					s.Require().Nil(err)
+					s.Equal(metric.Context, context)
+				}
+			}
 		})
 	}
 }

@@ -30,7 +30,6 @@ type BaseTestSuite struct {
 	MetricFixtures              *fixtures.MetricFixtures
 	ParamFixtures               *fixtures.ParamFixtures
 	ProjectFixtures             *fixtures.ProjectFixtures
-	ContextFixtures             *fixtures.ContextFixtures
 	DashboardFixtures           *fixtures.DashboardFixtures
 	ExperimentFixtures          *fixtures.ExperimentFixtures
 	DefaultExperiment           *models.Experiment
@@ -110,10 +109,6 @@ func (s *BaseTestSuite) initFixtures() {
 	tagFixtures, err := fixtures.NewTagFixtures(db)
 	s.Require().Nil(err)
 	s.TagFixtures = tagFixtures
-
-	contextFixtures, err := fixtures.NewContextFixtures(db)
-	s.Require().Nil(err)
-	s.ContextFixtures = contextFixtures
 }
 
 func (s *BaseTestSuite) closeDB() {

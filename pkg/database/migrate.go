@@ -205,6 +205,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				&Run{},
 				&Param{},
 				&Tag{},
+				&Context{},
 				&Metric{},
 				&LatestMetric{},
 				&AlembicVersion{},

@@ -192,6 +192,12 @@ func (f RunFixtures) CreateMetric(ctx context.Context, metric *models.Metric) er
 func (f RunFixtures) CreateMetrics(
 	ctx context.Context, run *models.Run, count int,
 ) error {
+	defaultCtx := models.Context{
+		Json: []byte(`{}`),
+	}
+	if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&defaultCtx).Error; err != nil {
+		return eris.Wrap(err, "error creating default context")
+	}
 	for i := 1; i <= count; i++ {
 		// create test `metric` and test `latest metric` and connect to run.
 		for iter := 1; iter <= count; iter++ {
@@ -203,6 +209,7 @@ func (f RunFixtures) CreateMetrics(
 				Step:      int64(iter),
 				IsNan:     false,
 				Iter:      int64(iter),
+				Context:   defaultCtx,
 			}).Error; err != nil {
 				return err
 			}
@@ -215,6 +222,7 @@ func (f RunFixtures) CreateMetrics(
 			IsNan:     false,
 			RunID:     run.ID,
 			LastIter:  int64(count),
+			Context:   defaultCtx,
 		}).Error; err != nil {
 			return err
 		}

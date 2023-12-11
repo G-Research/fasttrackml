@@ -48,6 +48,7 @@ func (s *Importer) Import() error {
 		"runs",
 		"tags",
 		"params",
+		"contexts",
 		"metrics",
 		"latest_metrics",
 	}

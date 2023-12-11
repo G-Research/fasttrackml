@@ -77,8 +77,8 @@ func TestNewMetricHistoryResponse_Ok(t *testing.T) {
 					Step:      1,
 					IsNan:     false,
 					Iter:      1,
-					ContextID: common.GetPointer(uint(1)),
-					Context: &models.Context{
+					ContextID: 1,
+					Context: models.Context{
 						ID:   1,
 						Json: []byte(`{"key": "value"}`),
 					},

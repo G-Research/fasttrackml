@@ -70,7 +70,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 		RunID:     run1.ID,
 		Step:      1,
 		Iter:      1,
-		Context: &models.Context{
+		Context: models.Context{
 			Json: datatypes.JSON([]byte(`
 				{
 					"metrickey1": "metricvalue1",

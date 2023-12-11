@@ -133,9 +133,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 			"context":    fiber.Map{},
 			"last_value": 0.1,
 		}
-		if m.Context != nil {
-			metric["context"] = m.Context.Json
-		}
+		metric["context"] = m.Context.Json
 		metrics[i] = metric
 	}
 	traces["metric"] = metrics
@@ -223,18 +221,12 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		}
 
 		key := m.Key
-		if m.ContextID != nil {
-			key = fmt.Sprintf("%s%d", m.Key, *m.ContextID)
-		}
+		key = fmt.Sprintf("%s%d", m.Key, m.ContextID)
 		k := metrics[key]
 		k.name = m.Key
 		k.iters = append(k.iters, int(m.Iter))
 		k.values = append(k.values, pv)
-		if m.Context != nil {
-			k.context = m.Context.Json
-		} else {
-			k.context = []byte(`{}`)
-		}
+		k.context = m.Context.Json
 		metrics[key] = k
 	}
 
@@ -325,14 +317,12 @@ func GetRunsActive(c *fiber.Ctx) error {
 							"context":    fiber.Map{},
 						},
 					}
-					if m.Context != nil {
-						// to be properly decoded by AIM UI, json should be represented as a key:value object.
-						context := fiber.Map{}
-						if err := json.Unmarshal(m.Context.Json, &context); err != nil {
-							return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
-						}
-						data["context"] = context
+					// to be properly decoded by AIM UI, json should be represented as a key:value object.
+					context := fiber.Map{}
+					if err := json.Unmarshal(m.Context.Json, &context); err != nil {
+						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
 					}
+					data["context"] = context
 					metrics[i] = data
 				}
 
@@ -523,14 +513,12 @@ func SearchRuns(c *fiber.Ctx) error {
 							},
 							"context": fiber.Map{},
 						}
-						if m.Context != nil {
-							// to be properly decoded by AIM UI, json should be represented as a key:value object.
-							context := fiber.Map{}
-							if err := json.Unmarshal(m.Context.Json, &context); err != nil {
-								return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
-							}
-							data["context"] = context
+						// to be properly decoded by AIM UI, json should be represented as a key:value object.
+						context := fiber.Map{}
+						if err := json.Unmarshal(m.Context.Json, &context); err != nil {
+							return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
 						}
+						data["context"] = context
 						metrics[i] = data
 					}
 					run["traces"] = fiber.Map{

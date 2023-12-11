@@ -56,7 +56,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run.ID,
 		Iter:      1,
-		Context: &models.Context{
+		Context: models.Context{
 			Json: []byte(`{"key1": "key1", "value1": "value1"}`),
 		},
 	})
@@ -70,7 +70,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run.ID,
 		Iter:      2,
-		Context: &models.Context{
+		Context: models.Context{
 			Json: []byte(`{"key2": "key2", "value2": "value2"}`),
 		},
 	})
@@ -84,7 +84,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run.ID,
 		Iter:      3,
-		Context: &models.Context{
+		Context: models.Context{
 			Json: []byte(`{"key3": "key3", "value3": "value3"}`),
 		},
 	})
@@ -98,7 +98,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run.ID,
 		Iter:      4,
-		Context: &models.Context{
+		Context: models.Context{
 			Json: []byte(`{"key4": "key4", "value4": "value4"}`),
 		},
 	})

@@ -27,13 +27,15 @@ func NewMetricFixtures(db *gorm.DB) (*MetricFixtures, error) {
 
 // CreateMetric creates new test Metric.
 func (f MetricFixtures) CreateMetric(ctx context.Context, metric *models.Metric) (*models.Metric, error) {
-	if metric.Context != nil {
-		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
-			&metric.Context, metric.Context,
-		).Error; err != nil {
-			return nil, eris.Wrap(err, "error creating metric context")
+	if metric.Context.Json == nil {
+		metric.Context = models.Context{
+			Json: []byte(`{}`),
 		}
-		metric.ContextID = &metric.Context.ID
+	}
+	if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
+		&metric.Context, metric.Context,
+	).Error; err != nil {
+		return nil, eris.Wrap(err, "error creating metric context")
 	}
 	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
 		return nil, eris.Wrap(err, "error creating metric")
@@ -74,13 +76,15 @@ func (f MetricFixtures) GetMetricsByContext(
 func (f MetricFixtures) CreateLatestMetric(
 	ctx context.Context, metric *models.LatestMetric,
 ) (*models.LatestMetric, error) {
-	if metric.Context != nil {
-		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
-			&metric.Context, metric.Context,
-		).Error; err != nil {
-			return nil, eris.Wrap(err, "error creating latest metric context")
+	if metric.Context.Json == nil {
+		metric.Context = models.Context{
+			Json: []byte(`{}`),
 		}
-		metric.ContextID = &metric.Context.ID
+	}
+	if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
+		&metric.Context, metric.Context,
+	).Error; err != nil {
+		return nil, eris.Wrap(err, "error creating metric context")
 	}
 	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
 		return nil, eris.Wrap(err, "error creating latest metric")

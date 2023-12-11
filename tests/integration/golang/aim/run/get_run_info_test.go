@@ -2,13 +2,11 @@ package run
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -17,6 +15,7 @@ import (
 
 type GetRunInfoTestSuite struct {
 	helpers.BaseTestSuite
+	run *models.Run
 }
 
 func TestGetRunInfoTestSuite(t *testing.T) {
@@ -25,50 +24,20 @@ func TestGetRunInfoTestSuite(t *testing.T) {
 
 func (s *GetRunInfoTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest()
+
+	var err error
+	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), s.DefaultExperiment)
+	s.Require().Nil(err)
 }
 
 func (s *GetRunInfoTestSuite) Test_Ok() {
-	// create test data.
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    s.DefaultNamespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	s.Require().Nil(err)
-
-	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
-		ID:             "id",
-		Name:           "TestRun",
-		Status:         models.StatusScheduled,
-		StartTime:      sql.NullInt64{Int64: 123456789, Valid: true},
-		EndTime:        sql.NullInt64{Int64: 123456789, Valid: true},
-		SourceType:     "JOB",
-		ExperimentID:   *experiment.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	s.Require().Nil(err)
-
-	latestMetric, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
-		Key:       "key",
-		Value:     123,
-		Timestamp: 123456789,
-		Step:      1,
-		IsNan:     false,
-		RunID:     run.ID,
-		Context: &models.Context{
-			Json: datatypes.JSON(`{"key": "key", "value": "value"}`),
-		},
-	})
-	s.Require().Nil(err)
-
-	// run tests over the test data.
 	tests := []struct {
 		name  string
 		runID string
 	}{
 		{
 			name:  "GetOneRun",
-			runID: run.ID,
+			runID: s.run.ID,
 		},
 	}
 	for _, tt := range tests {

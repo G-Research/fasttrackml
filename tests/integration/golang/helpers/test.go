@@ -109,10 +109,6 @@ func (s *BaseTestSuite) initFixtures() {
 	tagFixtures, err := fixtures.NewTagFixtures(db)
 	s.Require().Nil(err)
 	s.TagFixtures = tagFixtures
-
-	contextFixtures, err := fixtures.NewContextFixtures(db)
-	s.Require().Nil(err)
-	s.ContextFixtures = contextFixtures
 }
 
 func (s *BaseTestSuite) closeDB() {

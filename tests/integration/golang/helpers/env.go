@@ -20,22 +20,6 @@ func GetDatabaseBackend() string {
 	return defaultDatabaseBackend
 }
 
-func GetInputDatabaseBackend() string {
-	uri, ok := os.LookupEnv("FML_INPUT_DATABASE_BACKEND")
-	if ok {
-		return uri
-	}
-	return defaultDatabaseBackend
-}
-
-func GetOutputDatabaseBackend() string {
-	uri, ok := os.LookupEnv("FML_OUTPUT_DATABASE_BACKEND")
-	if ok {
-		return uri
-	}
-	return defaultDatabaseBackend
-}
-
 func GetPostgresUri() string {
 	uri, ok := os.LookupEnv("FML_POSTGRES_URI")
 	if ok {

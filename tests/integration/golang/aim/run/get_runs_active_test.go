@@ -30,10 +30,6 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 		beforeRunFn  func()
 	}{
 		{
-			name:         "GetActiveRunsWithNoData",
-			wantRunCount: 0,
-		},
-		{
 			name:         "GetActiveRuns",
 			wantRunCount: 3,
 			beforeRunFn: func() {
@@ -57,7 +53,19 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), s.runs[2]))
 			},
 		},
+		{
+			name:         "GetActiveRunsWithNoData",
+			wantRunCount: 0,
+			beforeRunFn: func() {
+				// set 1t and 2d run to status = StatusFinished
+				s.runs[1].Status = models.StatusFinished
+				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), s.runs[1]))
+				s.runs[0].Status = models.StatusFinished
+				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), s.runs[0]))
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			if tt.beforeRunFn != nil {

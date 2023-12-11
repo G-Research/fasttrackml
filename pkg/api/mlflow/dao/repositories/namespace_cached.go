@@ -111,6 +111,7 @@ func (r NamespaceCachedRepository) GetByCode(
 	if ok {
 		return &result, nil
 	}
+
 	namespace, err := r.namespaceRepository.GetByCode(ctx, code)
 	if err != nil {
 		return nil, eris.Wrapf(err, "error getting cached namespace by code: %s", code)

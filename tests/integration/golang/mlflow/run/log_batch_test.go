@@ -411,7 +411,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 					err = json.Unmarshal([]byte(context.Json), &contextMap)
 					s.Require().Nil(err)
 
-					// s.Equal(metric.Context, contextMap)
+					s.Equal(metric.Context, contextMap)
 				}
 			}
 		})

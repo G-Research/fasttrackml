@@ -406,7 +406,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				if metric.Context != nil {
 					metricContextJson, err := json.Marshal(metric.Context)
 					s.Require().Nil(err)
-					context, err := s.ContextFixtures.GetContext(context.Background(), string(metricContextJson))
+					context, err := s.ContextFixtures.GetContextByJSON(context.Background(), string(metricContextJson))
 					s.Require().Nil(err)
 					s.Require().NotNil(context)
 				}

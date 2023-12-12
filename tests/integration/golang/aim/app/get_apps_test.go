@@ -46,7 +46,7 @@ func (s *GetAppsTestSuite) Test_Ok() {
 			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/apps"))
 			s.Equal(tt.expectedAppCount, len(resp))
 			for idx := 0; idx < tt.expectedAppCount; idx++ {
-				s.Equal(apps[idx].ID.String(), resp[idx].ID)
+				s.Equal(apps[idx].ID, resp[idx].ID)
 				s.Equal(apps[idx].Type, resp[idx].Type)
 				s.Equal(apps[idx].State, database.AppState(resp[idx].State))
 				s.NotEmpty(resp[idx].CreatedAt)

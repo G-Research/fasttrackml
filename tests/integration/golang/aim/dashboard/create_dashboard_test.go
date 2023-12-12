@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
@@ -25,11 +24,6 @@ func TestCreateDashboardTestSuite(t *testing.T) {
 
 func (s *CreateDashboardTestSuite) Test_Ok() {
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
-		Base: database.Base{
-			ID:         uuid.New(),
-			IsArchived: false,
-			CreatedAt:  time.Now(),
-		},
 		Type:        "mpi",
 		State:       database.AppState{},
 		NamespaceID: s.DefaultNamespace.ID,

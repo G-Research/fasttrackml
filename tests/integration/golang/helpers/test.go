@@ -91,6 +91,10 @@ func (s *BaseTestSuite) initFixtures() {
 	s.Require().Nil(err)
 	s.MetricFixtures = metricFixtures
 
+	contextFixtures, err := fixtures.NewContextFixtures(db)
+	s.Require().Nil(err)
+	s.ContextFixtures = contextFixtures
+
 	namespaceFixtures, err := fixtures.NewNamespaceFixtures(db)
 	s.Require().Nil(err)
 	s.NamespaceFixtures = namespaceFixtures

@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
@@ -24,26 +23,13 @@ func TestUpdateDashboardTestSuite(t *testing.T) {
 }
 
 func (s *UpdateDashboardTestSuite) Test_Ok() {
-	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
-		Base: database.Base{
-			ID:         uuid.New(),
-			IsArchived: false,
-			CreatedAt:  time.Now(),
-		},
-		Type:        "mpi",
-		State:       database.AppState{},
-		NamespaceID: s.DefaultNamespace.ID,
-	})
-	s.Require().Nil(err)
-
 	dashboard, err := s.DashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
-		Base: database.Base{
-			ID:         uuid.New(),
-			IsArchived: false,
-			CreatedAt:  time.Now(),
+		Name: "dashboard-exp",
+		App: database.App{
+			Type:        "mpi",
+			State:       database.AppState{},
+			NamespaceID: s.DefaultNamespace.ID,
 		},
-		Name:        "dashboard-exp",
-		AppID:       &app.ID,
 		Description: "dashboard for experiment",
 	})
 	s.Require().Nil(err)
@@ -91,7 +77,7 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 			s.Require().Nil(err)
 			s.Equal(tt.requestBody.Name, resp.Name)
 			s.Equal(tt.requestBody.Description, resp.Description)
-			s.Equal((dashboard.ID).String(), resp.ID)
+			s.Equal(dashboard.ID, resp.ID)
 			s.Equal(tt.requestBody.Name, actualDashboard.Name)
 			s.Equal(tt.requestBody.Description, actualDashboard.Description)
 		})
@@ -99,26 +85,13 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 }
 
 func (s *UpdateDashboardTestSuite) Test_Error() {
-	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
-		Base: database.Base{
-			ID:         uuid.New(),
-			IsArchived: false,
-			CreatedAt:  time.Now(),
-		},
-		Type:        "mpi",
-		State:       database.AppState{},
-		NamespaceID: s.DefaultNamespace.ID,
-	})
-	s.Require().Nil(err)
-
 	dashboard, err := s.DashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
-		Base: database.Base{
-			ID:         uuid.New(),
-			IsArchived: false,
-			CreatedAt:  time.Now(),
+		Name: "dashboard-exp",
+		App: database.App{
+			Type:        "mpi",
+			State:       database.AppState{},
+			NamespaceID: s.DefaultNamespace.ID,
 		},
-		Name:        "dashboard-exp",
-		AppID:       &app.ID,
 		Description: "dashboard for experiment",
 	})
 	s.Require().Nil(err)

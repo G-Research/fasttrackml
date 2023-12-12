@@ -93,7 +93,7 @@ func (s *UpdateDashboardTestSuite) Test_Ok() {
 			s.Require().Nil(err)
 			s.Equal(tt.requestBody.Name, resp.Name)
 			s.Equal(tt.requestBody.Description, resp.Description)
-			s.Equal((dashboard.ID).String(), resp.ID)
+			s.Equal(dashboard.ID, resp.ID)
 			s.Equal(tt.requestBody.Name, actualDashboard.Name)
 			s.Equal(tt.requestBody.Description, actualDashboard.Description)
 		})

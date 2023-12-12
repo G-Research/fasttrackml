@@ -64,8 +64,9 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/dashboards"))
 			s.Equal(tt.expectedDashboardCount, len(resp))
 			for idx := 0; idx < tt.expectedDashboardCount; idx++ {
-				s.Equal(dashboards[idx].ID.String(), resp[idx].ID)
+				s.Equal(dashboards[idx].ID, resp[idx].ID)
 				s.Equal(app.ID, resp[idx].AppID)
+				s.Equal(app.Type, resp[idx].AppType)
 				s.Equal(dashboards[idx].Name, resp[idx].Name)
 				s.Equal(dashboards[idx].Description, resp[idx].Description)
 				s.NotEmpty(resp[idx].CreatedAt)

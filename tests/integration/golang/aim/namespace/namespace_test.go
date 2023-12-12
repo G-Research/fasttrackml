@@ -15,9 +15,7 @@ type NamespaceTestSuite struct {
 
 func TestNamespaceTestSuite(t *testing.T) {
 	suite.Run(t, &NamespaceTestSuite{
-		helpers.BaseTestSuite{
-			SkipCreateDefaultNamespace: true,
-		},
+		helpers.BaseTestSuite{},
 	})
 }
 
@@ -31,15 +29,6 @@ func (s *NamespaceTestSuite) Test_Error() {
 			name:      "RequestNotExistingNamespace",
 			error:     api.NewResourceDoesNotExistError("unable to find namespace with code: not-existing-namespace"),
 			namespace: "not-existing-namespace",
-		},
-		{
-			name:      "RequestNotExistingDefaultNamespaceExplicitly",
-			error:     api.NewResourceDoesNotExistError("unable to find namespace with code: default"),
-			namespace: "default",
-		},
-		{
-			name:  "RequestNotExistingDefaultNamespaceImplicitly",
-			error: api.NewResourceDoesNotExistError("unable to find namespace with code: default"),
 		},
 	}
 	for _, tt := range tests {

@@ -29,8 +29,8 @@ func (f ContextFixtures) CreateContext(ctx context.Context, context *models.Cont
 	return context, nil
 }
 
-// GetContext returns the Context with the given JSON.
-func (f ContextFixtures) GetContext(ctx context.Context, json string) (*models.Context, error) {
+// GetContextByJSON returns the Context with the given JSON.
+func (f ContextFixtures) GetContextByJSON(ctx context.Context, json string) (*models.Context, error) {
 	var context models.Context
 	if err := f.db.WithContext(ctx).Where("json = ?", json).First(&context).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {

@@ -85,17 +85,18 @@ func (r MetricRepository) CreateBatch(
 		lastIters[lastMetric.Key] = lastMetric.LastIter
 	}
 
-	uniqueContexts := make([]*models.Context, 0, len(metrics))
+	relatedContexts := make([]*models.Context, 0, len(metrics))
 	contextMap := make(map[string]*models.Context)
 	latestMetrics := make(map[string]models.LatestMetric)
 	for n, metric := range metrics {
 		if metric.Context != nil {
 			hash := getJsonHash(metric.Context.Json)
-			if contextMap[hash] == nil {
+			foundCtx := contextMap[hash]
+			if foundCtx == nil {
 				contextMap[hash] = metric.Context
-				uniqueContexts = append(uniqueContexts, metric.Context)
+				relatedContexts = append(relatedContexts, metric.Context)
 			} else {
-				metrics[n].Context = contextMap[hash]
+				metrics[n].Context = foundCtx
 			}
 		}
 		metrics[n].Iter = lastIters[metric.Key] + 1
@@ -122,7 +123,7 @@ func (r MetricRepository) CreateBatch(
 			Columns:   []clause.Column{{Name: "json"}},
 			UpdateAll: true,
 		},
-	).CreateInBatches(&uniqueContexts, batchSize).Error; err != nil {
+	).CreateInBatches(&relatedContexts, batchSize).Error; err != nil {
 		return eris.Wrapf(err, "error creating contexts")
 	}
 

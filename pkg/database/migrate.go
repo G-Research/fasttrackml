@@ -20,6 +20,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0005"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0006"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0007"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0008"
 )
 
 var supportedAlembicVersions = []string{
@@ -41,7 +42,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 		tx.First(&schemaVersion)
 	}
 
-	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != v_0007.Version {
+	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != v_0008.Version {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf(
 				"unsupported database schema versions alembic %s, FastTrackML %s",
@@ -172,6 +173,13 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				if err := v_0007.Migrate(db); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0007.Version, err)
 				}
+				fallthrough
+
+			case v_0007.Version:
+				log.Infof("Migrating database to FastTrackML schema %s", v_0008.Version)
+				if err := v_0008.Migrate(db); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0008.Version, err)
+				}
 
 			default:
 				return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
@@ -202,7 +210,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				Version: "97727af70f4d",
 			})
 			tx.Create(&SchemaVersion{
-				Version: v_0007.Version,
+				Version: v_0008.Version,
 			})
 			tx.Commit()
 			if tx.Error != nil {
@@ -219,10 +227,10 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 
 // CreateDefaultNamespace creates the default namespace if it doesn't exist.
 func CreateDefaultNamespace(db *gorm.DB) error {
-	if tx := db.First(&Namespace{
+	if err := db.First(&Namespace{
 		Code: "default",
-	}); tx.Error != nil {
-		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+	}).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Creating default namespace")
 			var exp int32 = 0
 			ns := Namespace{
@@ -230,22 +238,11 @@ func CreateDefaultNamespace(db *gorm.DB) error {
 				Description:         "Default namespace",
 				DefaultExperimentID: &exp,
 			}
-			if err := db.Transaction(func(tx *gorm.DB) error {
-				if err := tx.Create(&ns).Error; err != nil {
-					return err
-				}
-				if err := tx.Model(&Experiment{}).
-					Where("namespace_id IS NULL").
-					Update("namespace_id", ns.ID).
-					Error; err != nil {
-					return fmt.Errorf("error updating experiments: %s", err)
-				}
-				return nil
-			}); err != nil {
+			if err := db.Create(&ns).Error; err != nil {
 				return fmt.Errorf("error creating default namespace: %s", err)
 			}
 		} else {
-			return fmt.Errorf("unable to find default namespace: %s", tx.Error)
+			return fmt.Errorf("unable to find default namespace: %s", err)
 		}
 	}
 	return nil

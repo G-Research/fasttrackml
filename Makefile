@@ -11,8 +11,6 @@ ifeq ($(shell go env GOOS),windows)
 endif
 # Version.
 VERSION?=$(shell git describe --tags --always --dirty --match='v*' 2> /dev/null | sed 's/^v//')
-# Enable Go Modules.
-GO111MODULE=on
 # Go ldflags.
 # Set version to git tag if available, otherwise use commit hash.
 # Strip debug symbols and disable DWARF generation.

@@ -43,8 +43,8 @@ func (s *JsonTestSuite) SetupSuite() {
 	s.Require().Nil(err)
 
 	// use simplified schema
-	db.GormDB().AutoMigrate(&Context{})
-	db.GormDB().AutoMigrate(&Metric{})
+	s.Require().Nil(db.GormDB().AutoMigrate(&Context{}))
+	s.Require().Nil(db.GormDB().AutoMigrate(&Metric{}))
 
 	// Begin a transaction
 	s.db, err = db.GormDB().DB()
@@ -81,6 +81,7 @@ func (s *JsonTestSuite) SetupSuite() {
 
 		// Randomly decide whether to insert null/defuult or the current context id
 		contextNullId := sql.NullInt64{Int64: id, Valid: true}
+		//nolint:gosec
 		if rand.Intn(2) == 0 { // 50% chance of being true
 			// when true, put empty doc reference and null
 			contextNullId = sql.NullInt64{Int64: 0, Valid: false}
@@ -89,6 +90,7 @@ func (s *JsonTestSuite) SetupSuite() {
 
 		// Insert into the 'metrics' table
 		key := fmt.Sprintf("key%d", i)
+		//nolint:gosec
 		value := rand.Float64()
 		_, err = stmtMetrics.Exec(key, value, id, contextNullId) // Replace 'i' with the actual value you want to insert
 		s.Require().Nil(err)

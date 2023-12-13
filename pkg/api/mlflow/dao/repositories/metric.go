@@ -96,10 +96,10 @@ func (r MetricRepository) CreateBatch(
 		hash := getJsonHash(metric.Context.Json)
 		foundCtx := contextMap[hash]
 		if foundCtx == nil {
-			contextMap[hash] = metric.Context
-			uniqueContexts = append(uniqueContexts, metric.Context)
+			contextMap[hash] = &metric.Context
+			uniqueContexts = append(uniqueContexts, &metric.Context)
 		} else {
-			metrics[n].Context = foundCtx
+			metrics[n].Context = *foundCtx
 		}
 
 		metrics[n].Iter = lastIters[metric.Key] + 1

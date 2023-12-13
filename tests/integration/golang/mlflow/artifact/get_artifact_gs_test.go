@@ -1,5 +1,3 @@
-//go:build integration
-
 package artifact
 
 import (
@@ -9,59 +7,27 @@ import (
 	"strings"
 	"testing"
 
-	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetArtifactGSTestSuite struct {
-	helpers.BaseTestSuite
-	gsClient    *storage.Client
-	testBuckets []string
+	helpers.GSTestSuite
 }
 
 func TestGetArtifactGSTestSuite(t *testing.T) {
 	suite.Run(t, &GetArtifactGSTestSuite{
-		testBuckets: []string{"bucket1", "bucket2"},
+		helpers.NewGSTestSuite("bucket1", "bucket2"),
 	})
-}
-
-func (s *GetArtifactGSTestSuite) SetupSuite() {
-	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
-	require.Nil(s.T(), err)
-	s.gsClient = gsClient
-}
-
-func (s *GetArtifactGSTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest()
-	require.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
-}
-
-func (s *GetArtifactGSTestSuite) TearDownTest() {
-	require.Nil(s.T(), helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *GetArtifactGSTestSuite) Test_Ok() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	tests := []struct {
 		name   string
 		bucket string
@@ -77,15 +43,15 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			// create test experiment
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
-				NamespaceID:      namespace.ID,
+				NamespaceID:      s.DefaultNamespace.ID,
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("gs://%s/1", tt.bucket),
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// create test run
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -97,23 +63,23 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 				ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// upload artifact root object to GS
-			writer := s.gsClient.Bucket(tt.bucket).Object(
+			writer := s.Client.Bucket(tt.bucket).Object(
 				fmt.Sprintf("/1/%s/artifacts/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("content"))
-			require.Nil(s.T(), err)
-			require.Nil(s.T(), writer.Close())
+			s.Require().Nil(err)
+			s.Require().Nil(writer.Close())
 
 			// upload artifact subdir object to GS
-			writer = s.gsClient.Bucket(tt.bucket).Object(
+			writer = s.Client.Bucket(tt.bucket).Object(
 				fmt.Sprintf("/1/%s/artifacts/artifact/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("subdir-object-content"))
-			require.Nil(s.T(), err)
-			require.Nil(s.T(), writer.Close())
+			s.Require().Nil(err)
+			s.Require().Nil(writer.Close())
 
 			// make API call for root object
 			query := request.GetArtifactRequest{
@@ -122,7 +88,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			}
 
 			resp := new(bytes.Buffer)
-			require.Nil(s.T(), s.MlflowClient.WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -131,7 +97,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			).DoRequest(
 				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
 			))
-			assert.Equal(s.T(), "content", resp.String())
+			s.Equal("content", resp.String())
 
 			// make API call for subdir object
 			query = request.GetArtifactRequest{
@@ -140,40 +106,29 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			}
 
 			resp = new(bytes.Buffer)
-			require.Nil(s.T(), s.MlflowClient.WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
 			).WithResponse(
 				resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
-			assert.Equal(s.T(), "subdir-object-content", resp.String())
+			s.Equal("subdir-object-content", resp.String())
 		})
 	}
 }
 
 func (s *GetArtifactGSTestSuite) Test_Error() {
-	defer func() {
-		require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	require.Nil(s.T(), err)
-
 	// create test experiment
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:             "Test Experiment In Bucket bucket1",
-		NamespaceID:      namespace.ID,
+		NamespaceID:      s.DefaultNamespace.ID,
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "gs://bucket1/1",
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create test run
 	runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -185,16 +140,16 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 		ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	require.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// upload artifact subdir object to GS
-	require.Nil(s.T(), err)
-	writer := s.gsClient.Bucket("bucket1").Object(
+	s.Require().Nil(err)
+	writer := s.Client.Bucket("bucket1").Object(
 		fmt.Sprintf("1/%s/artifacts/artifact/artifact.file", runID),
 	).NewWriter(context.Background())
 	_, err = writer.Write([]byte("content"))
-	require.Nil(s.T(), err)
-	require.Nil(s.T(), writer.Close())
+	s.Require().Nil(err)
+	s.Require().Nil(writer.Close())
 
 	tests := []struct {
 		name    string
@@ -269,16 +224,16 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			require.Nil(t, s.MlflowClient.WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

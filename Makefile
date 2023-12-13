@@ -130,55 +130,45 @@ python-lint: python-env ## check python code formatting.
 #
 # Tests targets.
 #
+.PHONY: test
+test: test-go-unit container-test test-python-integration ## run all the tests.
+
 .PHONY: test-go-unit
 test-go-unit: ## run go unit tests.
 	@echo ">>> Running unit tests."
-	@go test -v ./...
+	@go test -tags="$(GO_BUILDTAGS)" ./pkg/...
 
 .PHONY: test-go-integration
 test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
-	@go test -v -p 1 -count=1 -tags="integration" ./tests/integration/golang/...
+	@go test -tags="$(GO_BUILDTAGS)" ./tests/integration/golang/...
 
 .PHONY: test-python-integration
-test-python-integration: test-python-integration-mlflow test-python-integration-aim  ## run all the python integration tests.
+test-python-integration: ## run all the python integration tests.
+	@echo ">>> Running all python integration tests."
+	@go run tests/integration/python/main.go
 
 .PHONY: test-python-integration-mlflow
-test-python-integration-mlflow: build ## run the MLFlow python integration tests.
+test-python-integration-mlflow: ## run the MLFlow python integration tests.
 	@echo ">>> Running MLFlow python integration tests."
-	@tests/integration/python/mlflow/test.sh
+	@go run tests/integration/python/main.go -targets mlflow
 
 .PHONY: test-python-integration-aim
-test-python-integration-aim: build ## run the Aim python integration tests.
+test-python-integration-aim: ## run the Aim python integration tests.
 	@echo ">>> Running Aim python integration tests."
-	@tests/integration/python/aim/test.sh
+	@go run tests/integration/python/main.go -targets aim
 
 #
-# Service test targets.
+# Container test targets.
 #
-.PHONY: service-start
-service-start: ## start service in container.
-	@echo ">>> Starting up service container."
-	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose up -d service
-
-.PHONY: service-stop
-service-stop: ## stop service in container.
-	@echo ">>> Stopping service container."
-	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose stop service
-
-.PHONY: service-restart
-service-restart: service-stop service-start ## restart service in container.
-
-.PHONY: service-test
-service-test: service-restart ## run integration tests in container.
+.PHONY: container-test
+container-test: ## run integration tests in container.
 	@echo ">>> Running integration tests in container."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-	    docker-compose run integration-tests
+		docker-compose run integration-tests
 
-.PHONY: service-clean
-service-clean: ## clean containers.
+.PHONY: container-clean
+container-clean: ## clean containers.
 	@echo ">>> Cleaning containers."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
 		docker-compose down -v --remove-orphans

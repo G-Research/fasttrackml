@@ -108,7 +108,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -140,13 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        include:
-          - database-backend: sqlite
-            database-uri: sqlite:///tmp/fasttrackml.db
-          - database-backend: sqlcipher
-            database-uri: sqlite:///tmp/fasttrackml.db?_key=passphrase
-          - database-backend: postgres
-            database-uri: postgres://postgres:postgres@postgres/postgres
+        database-backend: [sqlite, sqlcipher, postgres]
       fail-fast: false
     steps:
       - name: Checkout
@@ -166,17 +160,17 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/go-cache/go-build.tar
-          key: go-integration-tests-image-${{ steps.cache-info.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
+          key: go-integration-tests-${{ matrix.database-backend }}-image-${{ steps.cache-info.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
 
       - name: Restore cache
         if: steps.cache.outputs.cache-hit == 'true'
         run: docker run --rm -v fml-integration-tests_go-cache:/cache -v /tmp/go-cache:/src alpine tar xf /src/go-build.tar -C /cache
 
       - name: Run Integration Tests
-        run: make service-test
+        run: make container-test
         env:
           DOCKER_BUILDKIT: 1
-          FML_DATABASE_URI: ${{ matrix.database-uri }}
+          FML_DATABASE_BACKEND: ${{ matrix.database-backend }}
 
       - name: Save cache
         if: steps.cache.outputs.cache-hit != 'true'
@@ -190,20 +184,6 @@ jobs:
       matrix:
         api: [aim, mlflow]
       fail-fast: false
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test
-          LC_COLLATE: POSIX
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -214,8 +194,26 @@ jobs:
         with:
           cache-prefix: python-integration-tests
 
+      - name: Compute cache info
+        id: cache-info
+        run: |
+          echo go-version=$(skopeo inspect docker://golang:${{ steps.setup-go.outputs.go-version }} | jq -r .Digest | cut -d: -f2) >> $GITHUB_OUTPUT
+
+      - name: Setup cache
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: /tmp/go-cache
+          key: python-integration-tests-image-${{ steps.cache-info.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
+
       - name: Run Python integration tests
-        run: ./tests/integration/python/${{ matrix.api }}/test.sh
+        run: |
+          if [ "${{ steps.cache.outputs.cache-hit }}" == "true" ]; then
+            cache=-cache-from=/tmp/go-cache
+          else
+            cache=-cache-to=/tmp/go-cache
+          fi
+          go run tests/integration/python/main.go $cache -targets ${{ matrix.api }}
 
   build:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
@@ -249,7 +247,7 @@ jobs:
           cache-prefix: build-${{ matrix.os }}-${{ matrix.arch }}
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 

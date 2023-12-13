@@ -2,7 +2,6 @@ package namespace
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/rotisserie/eris"
 
@@ -49,7 +48,7 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 		return nil, eris.Wrap(err, "error validating namespace")
 	}
 	exp := &models.Experiment{
-		Name:           fmt.Sprintf("%s-exp", code),
+		Name:           "Default",
 		LifecycleStage: models.LifecycleStageActive,
 	}
 	namespace := &models.Namespace{
@@ -100,7 +99,7 @@ func (s Service) DeleteNamespace(ctx context.Context, id uint) error {
 	if namespace == nil {
 		return eris.Errorf("namespace not found by id: %d", id)
 	}
-	if err := s.namespaceRepository.Delete(ctx, id); err != nil {
+	if err := s.namespaceRepository.Delete(ctx, namespace); err != nil {
 		return eris.Wrap(err, "error deleting namespace")
 	}
 	return nil

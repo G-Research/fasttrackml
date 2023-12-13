@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -490,7 +491,7 @@ func (s Service) LogMetric(
 		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
-	metric, err := convertors.ConvertMetricParamRequestToDBModel(run.ID, req)
+	metric, err := convertors.ConvertLogMetricRequestToDBModel(run.ID, req)
 	if err != nil {
 		return api.NewInvalidParameterValueError(err.Error())
 	}
@@ -522,6 +523,9 @@ func (s Service) LogParam(
 
 	param := convertors.ConvertLogParamRequestToDBModel(run.ID, req)
 	if err := s.paramRepository.CreateBatch(ctx, 1, []models.Param{*param}); err != nil {
+		if errors.As(err, &repositories.ParamConflictError{}) {
+			return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
+		}
 		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 	}
 
@@ -609,6 +613,9 @@ func (s Service) LogBatch(
 		return api.NewInvalidParameterValueError(err.Error())
 	}
 	if err := s.paramRepository.CreateBatch(ctx, 100, params); err != nil {
+		if errors.As(err, &repositories.ParamConflictError{}) {
+			return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
+		}
 		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 	}
 	if err := s.metricRepository.CreateBatch(ctx, run, 100, metrics); err != nil {

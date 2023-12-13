@@ -12,9 +12,6 @@ __debug_bin*
 fasttrackml.db*
 encrypted.db*
 
-# Imported integration tests
-tests/integration/python/*/*.src
-
 # Quick start
 outputs
 poetry.lock

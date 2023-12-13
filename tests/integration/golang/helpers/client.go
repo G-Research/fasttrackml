@@ -2,17 +2,19 @@ package helpers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/hetiansu5/urlquery"
 	"github.com/rotisserie/eris"
+
+	"github.com/G-Research/fasttrackml/pkg/server"
 )
 
 // ResponseType represents HTTP response type.
@@ -28,8 +30,7 @@ const (
 
 // HttpClient represents HTTP client.
 type HttpClient struct {
-	client       *http.Client
-	baseURL      string
+	server       server.Server
 	basePath     string
 	namespace    string
 	method       string
@@ -38,13 +39,13 @@ type HttpClient struct {
 	request      any
 	response     any
 	responseType ResponseType
+	statusCode   int
 }
 
 // NewClient creates new preconfigured HTTP client.
-func NewClient(baseURL, basePath string) *HttpClient {
+func NewClient(server server.Server, basePath string) *HttpClient {
 	return &HttpClient{
-		client:   &http.Client{},
-		baseURL:  baseURL,
+		server:   server,
 		basePath: basePath,
 		method:   http.MethodGet,
 		headers: map[string]string{
@@ -55,18 +56,18 @@ func NewClient(baseURL, basePath string) *HttpClient {
 }
 
 // NewMlflowApiClient creates new HTTP client for the mlflow api
-func NewMlflowApiClient(baseURL string) *HttpClient {
-	return NewClient(baseURL, "/api/2.0/mlflow")
+func NewMlflowApiClient(server server.Server) *HttpClient {
+	return NewClient(server, "/api/2.0/mlflow")
 }
 
 // NewAimApiClient creates new HTTP client for the aim api
-func NewAimApiClient(baseURL string) *HttpClient {
-	return NewClient(baseURL, "/aim/api")
+func NewAimApiClient(server server.Server) *HttpClient {
+	return NewClient(server, "/aim/api")
 }
 
 // NewAdminApiClient creates new HTTP client for the admin api
-func NewAdminApiClient(baseURL string) *HttpClient {
-	return NewClient(baseURL, "/admin")
+func NewAdminApiClient(server server.Server) *HttpClient {
+	return NewClient(server, "/admin")
 }
 
 // WithMethod sets the HTTP method.
@@ -111,6 +112,11 @@ func (c *HttpClient) WithResponseType(responseType ResponseType) *HttpClient {
 	return c
 }
 
+// GetStatusCode returns HTTP status code of the last response, if available.
+func (c *HttpClient) GetStatusCode() int {
+	return c.statusCode
+}
+
 // DoRequest do actual HTTP request based on provided parameters.
 // nolint:gocyclo
 func (c *HttpClient) DoRequest(uri string, values ...any) error {
@@ -131,10 +137,11 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 	}
 
 	// 3. build actual URL.
-	u, err := url.Parse(fmt.Sprintf("%s%s%s", c.baseURL, path, fmt.Sprintf(uri, values...)))
+	u, err := url.Parse(fmt.Sprintf("%s%s", path, fmt.Sprintf(uri, values...)))
 	if err != nil {
 		return eris.Wrap(err, "error building url")
 	}
+
 	// 4. if params were provided then add params to actual url.
 	if c.params != nil {
 		switch reflect.ValueOf(c.params).Kind() {
@@ -157,12 +164,9 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 
 	// 5. create actual request object.
 	// if HttpMethod was not provided, then by default use HttpMethodGet.
-	req, err := http.NewRequestWithContext(
-		context.Background(), c.method, u.String(), requestBody,
+	req := httptest.NewRequest(
+		c.method, u.String(), requestBody,
 	)
-	if err != nil {
-		return eris.Wrap(err, "error creating request")
-	}
 
 	// 6. if headers were provided, then attach them.
 	// by default attach `"Content-Type", "application/json"`
@@ -173,10 +177,12 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 	}
 
 	// 7. send request data.
-	resp, err := c.client.Do(req)
+	resp, err := c.server.Test(req, 60000)
 	if err != nil {
 		return eris.Wrap(err, "error doing request")
 	}
+
+	c.statusCode = resp.StatusCode
 
 	// 8. read and check response data.
 	if c.response != nil {

@@ -1,20 +1,13 @@
-//go:build integration
-
 package run
 
 import (
 	"context"
+	"slices"
 	"testing"
-	"time"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -24,7 +17,11 @@ type GetDashboardsTestSuite struct {
 }
 
 func TestGetDashboardsTestSuite(t *testing.T) {
-	suite.Run(t, new(GetDashboardsTestSuite))
+	suite.Run(t, &GetDashboardsTestSuite{
+		helpers.BaseTestSuite{
+			ResetOnSubTest: true,
+		},
+	})
 }
 
 func (s *GetDashboardsTestSuite) Test_Ok() {
@@ -42,45 +39,28 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
-			defer func() {
-				require.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-			}()
-
-			namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-				ID:                  1,
-				Code:                "default",
-				DefaultExperimentID: common.GetPointer(int32(0)),
-			})
-			require.Nil(s.T(), err)
-
-			app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
-				Base: database.Base{
-					ID:         uuid.New(),
-					IsArchived: false,
-					CreatedAt:  time.Now(),
-				},
-				Type:        "mpi",
-				State:       database.AppState{},
-				NamespaceID: namespace.ID,
-			})
-			require.Nil(s.T(), err)
-
+		s.Run(tt.name, func() {
 			dashboards, err := s.DashboardFixtures.CreateDashboards(
-				context.Background(), tt.expectedDashboardCount, &app.ID,
+				context.Background(), s.DefaultNamespace, tt.expectedDashboardCount,
 			)
-			require.Nil(s.T(), err)
+			s.Require().Nil(err)
+
+			// Sort dashboards by App.UpdateAt time in descending order
+			slices.SortFunc(dashboards, func(a, b *database.Dashboard) int {
+				return b.App.UpdatedAt.Compare(a.App.UpdatedAt)
+			})
 
 			var resp []response.Dashboard
-			require.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/dashboards"))
-			assert.Equal(s.T(), tt.expectedDashboardCount, len(resp))
+			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/dashboards"))
+			s.Equal(tt.expectedDashboardCount, len(resp))
 			for idx := 0; idx < tt.expectedDashboardCount; idx++ {
-				assert.Equal(s.T(), dashboards[idx].ID.String(), resp[idx].ID)
-				assert.Equal(s.T(), app.ID, resp[idx].AppID)
-				assert.Equal(s.T(), dashboards[idx].Name, resp[idx].Name)
-				assert.Equal(s.T(), dashboards[idx].Description, resp[idx].Description)
-				assert.NotEmpty(s.T(), resp[idx].CreatedAt)
-				assert.NotEmpty(s.T(), resp[idx].UpdatedAt)
+				s.Equal(dashboards[idx].ID, resp[idx].ID)
+				s.Equal(dashboards[idx].App.ID, resp[idx].AppID)
+				s.Equal(dashboards[idx].App.Type, resp[idx].AppType)
+				s.Equal(dashboards[idx].Name, resp[idx].Name)
+				s.Equal(dashboards[idx].Description, resp[idx].Description)
+				s.NotEmpty(resp[idx].CreatedAt)
+				s.NotEmpty(resp[idx].UpdatedAt)
 			}
 		})
 	}

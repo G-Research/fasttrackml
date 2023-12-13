@@ -4,11 +4,13 @@ package run
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -44,6 +46,11 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 				context.Background(), s.DefaultNamespace, tt.expectedDashboardCount,
 			)
 			s.Require().Nil(err)
+
+			// Sort dashboards by App.UpdateAt time in descending order
+			slices.SortFunc(dashboards, func(a, b *database.Dashboard) int {
+				return b.App.UpdatedAt.Compare(a.App.UpdatedAt)
+			})
 
 			var resp []response.Dashboard
 			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/dashboards"))

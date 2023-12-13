@@ -36,7 +36,7 @@ func (s *JsonTestSuite) SetupSuite() {
 	dsn, err := helpers.GenerateDatabaseURI(s.T(), helpers.GetDatabaseBackend())
 	s.Require().Nil(err)
 
-	db, err := database.NewDBProvider(
+	dbProvider, err := database.NewDBProvider(
 		dsn,
 		1*time.Second,
 		20,
@@ -44,11 +44,11 @@ func (s *JsonTestSuite) SetupSuite() {
 	s.Require().Nil(err)
 
 	// use simplified schema
-	s.Require().Nil(db.GormDB().AutoMigrate(&Context{}))
-	s.Require().Nil(db.GormDB().AutoMigrate(&Metric{}))
+	s.Require().Nil(dbProvider.GormDB().AutoMigrate(&Context{}))
+	s.Require().Nil(dbProvider.GormDB().AutoMigrate(&Metric{}))
 
 	// Begin a transaction
-	s.db, err = db.GormDB().DB()
+	s.db, err = dbProvider.GormDB().DB()
 	s.Require().Nil(err)
 	tx, err := s.db.Begin()
 	s.Require().Nil(err)
@@ -130,11 +130,6 @@ func (s *JsonTestSuite) TestJson() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			// Record the start time
-			startTime := time.Now()
-			key := "key1000"
-			value := "value1000"
-
 			// Begin a transaction
 			tx, err := s.db.Begin()
 			s.Require().Nil(err)
@@ -145,17 +140,13 @@ func (s *JsonTestSuite) TestJson() {
 			//nolint:gosec
 			contextStmt, err := tx.Prepare("SELECT * FROM metrics LEFT JOIN contexts ON metrics." + tt.joinColumn + " = contexts.id WHERE contexts.json->>? = ?")
 			s.Require().Nil(err)
+
+			key := "key1000"
+			value := "value1000"
 			_, err = contextStmt.Exec(key, value)
 			s.Require().Nil(err)
 
 			defer s.Require().Nil(contextStmt.Close())
-
-			// Record the end time and calculate the duration
-			endTime := time.Now()
-			duration := endTime.Sub(startTime)
-
-			// Print the duration
-			s.T().Logf("Duration: %v", duration)
 		})
 	}
 }

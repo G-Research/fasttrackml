@@ -56,12 +56,14 @@ func (s *JsonTestSuite) SetupSuite() {
 	// Prepare a statement for inserting data
 	contextStmt, err := tx.Prepare("INSERT INTO contexts(json) VALUES(?)")
 	s.Require().Nil(err)
-	defer s.Require().Nil(contextStmt.Close())
+	//nolint:errcheck
+	defer contextStmt.Close()
 
 	// Prepare a statement for inserting data into the 'metrics' table
 	stmtMetrics, err := tx.Prepare("INSERT INTO metrics(key, value, context_id, context_null_id) VALUES(?, ?, ?, ?)")
 	s.Require().Nil(err)
-	defer s.Require().Nil(stmtMetrics.Close())
+	//nolint:errcheck
+	defer stmtMetrics.Close()
 
 	// Create a default/empty json context
 	result, err := contextStmt.Exec("{}") // Insert the JSON document
@@ -146,7 +148,8 @@ func (s *JsonTestSuite) TestJson() {
 			_, err = contextStmt.Exec(key, value)
 			s.Require().Nil(err)
 
-			defer s.Require().Nil(contextStmt.Close())
+			//nolint:errcheck
+			defer contextStmt.Close()
 		})
 	}
 }

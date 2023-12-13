@@ -106,8 +106,6 @@ func (s *JsonTestSuite) TestJson() {
 		{
 			name:       "TestNotNullable",
 			joinColumn: "context_id",
-			key:        "key1000",
-			value:      "value1000",
 		},
 	}
 

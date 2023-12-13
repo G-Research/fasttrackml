@@ -140,7 +140,11 @@ func (s *JsonTestSuite) TestJson() {
 			// Prepare a statement for selecting data using the join column
 			// and a json path expression
 			//nolint:gosec
-			contextStmt, err := tx.Prepare("SELECT * FROM metrics LEFT JOIN contexts ON metrics." + tt.joinColumn + " = contexts.id WHERE contexts.json->>? = ?")
+			contextStmt, err := tx.Prepare(
+				`SELECT * FROM metrics LEFT JOIN contexts ON metrics.` +
+					tt.joinColumn +
+					` = contexts.id WHERE contexts.json->>? = ?`,
+			)
 			s.Require().Nil(err)
 
 			key := "key1000"

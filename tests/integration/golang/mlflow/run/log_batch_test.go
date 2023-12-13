@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -185,6 +186,10 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						Value:     1.0,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key1": "value1",
+							"key2": 2,
+						},
 					},
 				},
 			},
@@ -202,36 +207,57 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						Value:     1.1,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key1": "value1",
+							"key2": 2,
+						},
 					},
 					{
 						Key:       "key1",
 						Value:     1.1,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key3": "value3",
+						},
 					},
 					{
 						Key:       "key2",
 						Value:     1.1,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key1": "value1",
+							"key2": 2,
+						},
 					},
 					{
 						Key:       "key2",
 						Value:     1.2,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key3": "value3",
+						},
 					},
 					{
 						Key:       "key2",
 						Value:     1.3,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key1": "value1",
+							"key2": 2,
+						},
 					},
 					{
 						Key:       "key2",
 						Value:     1.4,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key4": "value4",
+						},
 					},
 				},
 			},
@@ -250,12 +276,18 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						Value:     1.0,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key3": "value3",
+						},
 					},
 					{
 						Key:       "key3",
 						Value:     1.0,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key3": "value3",
+						},
 					},
 				},
 			},
@@ -277,6 +309,9 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 								Value:     float64(i) + 0.1,
 								Timestamp: 1687325991,
 								Step:      1,
+								Context: map[string]any{
+									"key1": "value1",
+								},
 							}
 						}
 					}
@@ -366,6 +401,15 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				lastMetric, err := s.MetricFixtures.GetLatestMetricByKey(context.Background(), key)
 				s.Require().Nil(err)
 				s.Equal(iteration, lastMetric.LastIter)
+			}
+			for _, metric := range tt.request.Metrics {
+				if metric.Context != nil {
+					metricContextJson, err := json.Marshal(metric.Context)
+					s.Require().Nil(err)
+					context, err := s.ContextFixtures.GetContextByJSON(context.Background(), string(metricContextJson))
+					s.Require().Nil(err)
+					s.Require().NotNil(context)
+				}
 			}
 		})
 	}

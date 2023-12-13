@@ -63,14 +63,15 @@ func (s *JsonTestSuite) SetupSuite() {
 		id, err := result.LastInsertId()
 		s.Require().Nil(err)
 
-		// Randomly decide whether to insert a null and default
+		// Randomly decide whether to insert null/defuult or the current context id
 		contextNullId := sql.NullInt64{Int64: id, Valid: true}
 		if rand.Intn(2) == 0 { // 50% chance of being true
+			// when true, put empty doc reference and null
 			contextNullId = sql.NullInt64{Int64: 0, Valid: false}
 			id = defaultContextId
 		}
 
-		// Insert a row into the 'metrics' table that references the 'contexts' row
+		// Insert into the 'metrics' table
 		key := fmt.Sprintf("key%d", i)
 		value := rand.Float64()
 		_, err = stmtMetrics.Exec(key, value, id, contextNullId) // Replace 'i' with the actual value you want to insert
@@ -101,8 +102,6 @@ func (s *JsonTestSuite) TestJson() {
 		{
 			name:       "TestNullable",
 			joinColumn: "context_null_id",
-			key:        "key1000",
-			value:      "value1000",
 		},
 		{
 			name:       "TestNotNullable",
@@ -116,15 +115,18 @@ func (s *JsonTestSuite) TestJson() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Record the start time
 			startTime := time.Now()
+			key := "key1000",
+			value := "value1000",
 
 			// Begin a transaction
 			tx, err := s.db.Begin()
 			s.Require().Nil(err)
 
-			// Prepare a statement for inserting data
+			// Prepare a statement for selecting data using the join column
+			// and a json path expression
 			contextStmt, err := tx.Prepare("SELECT * FROM metrics LEFT JOIN contexts ON metrics." + tt.joinColumn + " = contexts.id WHERE contexts.json->>? = ?")
 			s.Require().Nil(err)
-			_, err = contextStmt.Exec(tt.key, tt.value) // Replace 'i' with the actual value you want to insert
+			_, err = contextStmt.Exec(key, value)
 			s.Require().Nil(err)
 
 			defer contextStmt.Close() // Close the statement when we're done with it

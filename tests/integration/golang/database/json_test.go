@@ -35,6 +35,7 @@ func (s *JsonTestSuite) SetupSuite() {
 	// setup db
 	dsn, err := helpers.GenerateDatabaseURI(s.T(), helpers.GetDatabaseBackend())
 	s.Require().Nil(err)
+
 	db, err := database.NewDBProvider(
 		dsn,
 		1*time.Second,
@@ -55,12 +56,12 @@ func (s *JsonTestSuite) SetupSuite() {
 	// Prepare a statement for inserting data
 	contextStmt, err := tx.Prepare("INSERT INTO contexts(json) VALUES(?)")
 	s.Require().Nil(err)
-	defer contextStmt.Close() // Close the statement when we're done with it
+	defer s.Require().Nil(contextStmt.Close())
 
 	// Prepare a statement for inserting data into the 'metrics' table
 	stmtMetrics, err := tx.Prepare("INSERT INTO metrics(key, value, context_id, context_null_id) VALUES(?, ?, ?, ?)")
 	s.Require().Nil(err)
-	defer stmtMetrics.Close() // Close the statement when we're done with it
+	defer s.Require().Nil(stmtMetrics.Close())
 
 	// Create a default/empty json context
 	result, err := contextStmt.Exec("{}") // Insert the JSON document
@@ -137,16 +138,17 @@ func (s *JsonTestSuite) TestJson() {
 			// Begin a transaction
 			tx, err := s.db.Begin()
 			s.Require().Nil(err)
-			defer tx.Commit()
+			defer s.Require().Nil(tx.Commit())
 
 			// Prepare a statement for selecting data using the join column
 			// and a json path expression
+			//nolint:gosec
 			contextStmt, err := tx.Prepare("SELECT * FROM metrics LEFT JOIN contexts ON metrics." + tt.joinColumn + " = contexts.id WHERE contexts.json->>? = ?")
 			s.Require().Nil(err)
 			_, err = contextStmt.Exec(key, value)
 			s.Require().Nil(err)
 
-			defer contextStmt.Close() // Close the statement when we're done with it
+			defer s.Require().Nil(contextStmt.Close())
 
 			// Record the end time and calculate the duration
 			endTime := time.Now()

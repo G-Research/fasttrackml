@@ -12,7 +12,6 @@ endif
 # Version.
 VERSION?=$(shell git describe --tags --always --dirty --match='v*' 2> /dev/null | sed 's/^v//')
 # Go ldflags.
-# Set version to git tag if available, otherwise use commit hash.
 # Strip debug symbols and disable DWARF generation.
 # Build static binaries on Linux.
 GO_LDFLAGS=-s -w -X github.com/G-Research/fasttrackml/pkg/version.Version=$(VERSION)

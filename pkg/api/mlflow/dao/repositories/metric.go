@@ -85,8 +85,8 @@ func (r MetricRepository) CreateBatch(
 		lastIters[lastMetric.Key] = lastMetric.LastIter
 	}
 	// uniqueContexts potentially up to length of metrics but most likely far less
-	uniqueContexts := make([]models.Context, 0, len(metrics))
-	contextMap := make(map[string]models.Context)
+	uniqueContexts := make([]*models.Context, 0, len(metrics))
+	contextMap := make(map[string]*models.Context)
 	latestMetrics := make(map[string]models.LatestMetric)
 	for n, metric := range metrics {
 		if metric.Context.Json == nil {

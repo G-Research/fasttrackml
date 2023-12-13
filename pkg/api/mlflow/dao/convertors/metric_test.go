@@ -123,6 +123,30 @@ func TestConvertMetricParamRequestToDBModel_Ok(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "WithMetricContext",
+			request: &request.LogMetricRequest{
+				Key:       "key",
+				Step:      1,
+				Value:     1.1,
+				RunID:     "run_id",
+				Timestamp: 1234567890,
+				Context: map[string]interface{}{
+					"key1": "value1",
+					"key2": 2,
+				},
+			},
+			expectedMetric: &models.Metric{
+				Key:       "key",
+				Value:     1.1,
+				Timestamp: 1234567890,
+				RunID:     "run_id",
+				Step:      1,
+				Context: &models.Context{
+					Json: []byte(`{"key1":"value1","key2":2}`),
+				},
+			},
+		},
 	}
 
 	for _, tt := range testData {

@@ -4,35 +4,51 @@ import (
 	"database/sql"
 	"fmt"
 	"math/rand"
-	"os"
-	"path"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"gorm.io/datatypes"
+
+	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
+
+type Metric struct {
+	Key           string  `gorm:"type:varchar(250);not null;primaryKey"`
+	Value         float64 `gorm:"type:double precision;not null;primaryKey"`
+	ContextNullID *uint
+	ContextID     uint
+}
+
+type Context struct {
+	ID   uint           `gorm:"primaryKey;autoIncrement"`
+	Json datatypes.JSON `gorm:"not null;unique;index"`
+}
 
 type JsonTestSuite struct {
 	suite.Suite
-	B  *testing.B
 	db *sql.DB
 }
 
 func (s *JsonTestSuite) SetupSuite() {
-	// setup sqlite Jsontest database from the schema
-	jsontestDBPath := path.Join(s.T().TempDir(), "jsontest.db")
-	db, err := sql.Open("sqlite3", jsontestDBPath)
+	// setup db
+	dsn, err := helpers.GenerateDatabaseURI(s.T(), helpers.GetDatabaseBackend())
 	s.Require().Nil(err)
-	s.db = db
+	db, err := database.NewDBProvider(
+		dsn,
+		1*time.Second,
+		20,
+	)
+	s.Require().Nil(err)
 
-	//nolint:gosec
-	jsontestSql, err := os.ReadFile("jsondocschema.sql")
-	s.Require().Nil(err)
-
-	_, err = s.db.Exec(string(jsontestSql))
-	s.Require().Nil(err)
+	// use simplified schema
+	db.GormDB().AutoMigrate(&Context{})
+	db.GormDB().AutoMigrate(&Metric{})
 
 	// Begin a transaction
+	s.db, err = db.GormDB().DB()
+	s.Require().Nil(err)
 	tx, err := s.db.Begin()
 	s.Require().Nil(err)
 
@@ -113,12 +129,13 @@ func (s *JsonTestSuite) TestJson() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Record the start time
 			startTime := time.Now()
-			key := "key1000",
-			value := "value1000",
+			key := "key1000"
+			value := "value1000"
 
 			// Begin a transaction
 			tx, err := s.db.Begin()
 			s.Require().Nil(err)
+			defer tx.Commit()
 
 			// Prepare a statement for selecting data using the join column
 			// and a json path expression

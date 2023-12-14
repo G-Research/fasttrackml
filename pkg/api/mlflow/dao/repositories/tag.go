@@ -67,6 +67,9 @@ func (r TagRepository) CreateRunTagWithTransaction(
 func (r TagRepository) GetByRunIDAndKey(ctx context.Context, runID, key string) (*models.Tag, error) {
 	tag := models.Tag{RunID: runID, Key: key}
 	if err := r.db.WithContext(ctx).First(&tag).Error; err != nil {
+		if eris.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, eris.Wrapf(err, "error getting tag by run id: %s and tag key: %s", runID, key)
 	}
 	return &tag, nil

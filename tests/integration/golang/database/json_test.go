@@ -18,7 +18,7 @@ type Metric struct {
 	Key           string  `gorm:"type:varchar(250);not null;primaryKey"`
 	Value         float64 `gorm:"type:double precision;not null;primaryKey"`
 	ContextNullID *uint
-	ContextID     uint
+	ContextID     uint `gorm:"not null"`
 }
 
 type Context struct {
@@ -54,32 +54,29 @@ func (s *JsonTestSuite) SetupSuite() {
 	s.Require().Nil(err)
 
 	// Prepare a statement for inserting data
-	contextStmt, err := tx.Prepare("INSERT INTO contexts(json) VALUES(?)")
+	contextStmt, err := tx.Prepare("INSERT INTO contexts(id, json) VALUES($1, $2)")
 	s.Require().Nil(err)
 	//nolint:errcheck
 	defer contextStmt.Close()
 
 	// Prepare a statement for inserting data into the 'metrics' table
-	stmtMetrics, err := tx.Prepare("INSERT INTO metrics(key, value, context_id, context_null_id) VALUES(?, ?, ?, ?)")
+	stmtMetrics, err := tx.Prepare("INSERT INTO metrics(key, value, context_id, context_null_id) VALUES($1, $2, $3, $4)")
 	s.Require().Nil(err)
 	//nolint:errcheck
 	defer stmtMetrics.Close()
 
 	// Create a default/empty json context
-	result, err := contextStmt.Exec("{}") // Insert the JSON document
+	_, err = contextStmt.Exec(1, "{}") // Insert the JSON document
 	s.Require().Nil(err)
-	defaultContextId, err := result.LastInsertId()
+	defaultContextId := int64(1)
 	s.Require().Nil(err)
 
 	// Insert a large number of rows
-	for i := 0; i < 1000000; i++ {
+	for i := 2; i < 1000002; i++ {
 		// Create a JSON document with small variations
 		jsonDoc := fmt.Sprintf(`{"key": "key%d", "value": "value%d"}`, i, i)
-
-		result, err := contextStmt.Exec(jsonDoc) // Insert the JSON document
-		s.Require().Nil(err)
-
-		id, err := result.LastInsertId()
+		id := int64(i)
+		_, err := contextStmt.Exec(i, jsonDoc) // Insert the JSON document
 		s.Require().Nil(err)
 
 		// Randomly decide whether to insert null/defuult or the current context id
@@ -135,22 +132,34 @@ func (s *JsonTestSuite) TestJson() {
 			// Begin a transaction
 			tx, err := s.db.Begin()
 			s.Require().Nil(err)
-			defer s.Require().Nil(tx.Commit())
+			//nolint:errcheck
+			defer tx.Commit()
 
+			pathOperator := `->>`
+			keyPattern := `key%d`
+			if helpers.GetDatabaseBackend() == `postgres` {
+				pathOperator = `#>>`
+				keyPattern = `{key%d}`
+			}
+			
 			// Prepare a statement for selecting data using the join column
 			// and a json path expression
+			sql := `SELECT * FROM metrics LEFT JOIN contexts ON metrics.` +
+				tt.joinColumn +
+				` = contexts.id WHERE contexts.json` +
+				pathOperator +
+				`$1 = $2`
+
 			//nolint:gosec
-			contextStmt, err := tx.Prepare(
-				`SELECT * FROM metrics LEFT JOIN contexts ON metrics.` +
-					tt.joinColumn +
-					` = contexts.id WHERE contexts.json->>? = ?`,
-			)
+			contextStmt, err := tx.Prepare(sql)
 			s.Require().Nil(err)
 
-			key := "key1000"
-			value := "value1000"
-			_, err = contextStmt.Exec(key, value)
-			s.Require().Nil(err)
+			for i := 0; i < 1000; i++ {
+				key := fmt.Sprintf(keyPattern, i)
+				value := fmt.Sprintf("value%d", i)
+				_, err = contextStmt.Exec(key, value)
+				s.Require().Nil(err)
+			}
 
 			//nolint:errcheck
 			defer contextStmt.Close()

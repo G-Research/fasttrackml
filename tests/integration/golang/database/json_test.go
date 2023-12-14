@@ -141,7 +141,7 @@ func (s *JsonTestSuite) TestJson() {
 				pathOperator = `#>>`
 				keyPattern = `{key%d}`
 			}
-			
+
 			// Prepare a statement for selecting data using the join column
 			// and a json path expression
 			sql := `SELECT * FROM metrics LEFT JOIN contexts ON metrics.` +

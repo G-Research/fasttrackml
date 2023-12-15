@@ -6,7 +6,6 @@ from wheel.bdist_wheel import bdist_wheel
 
 install_requires=[
     "mlflow",
-    # Other dependencies
 ],
 
 def get_data_files():

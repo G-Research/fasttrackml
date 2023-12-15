@@ -4,7 +4,7 @@ import mlflow
 from mlflow import *
 
 del log_metric, log_metrics
-from fasttrackml.fluent_context_support import log_metric, log_metrics
+from python.fasttrackml.fluent import log_metric, log_metrics
 
 __all__ = [name for name in dir() if name in dir(mlflow)]
 

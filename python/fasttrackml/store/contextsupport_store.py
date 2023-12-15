@@ -3,12 +3,12 @@ from mlflow.store.tracking.rest_store import RestStore
 from mlflow.utils.rest_utils import http_request
 
 
-class ContextsupportStore(RestStore):
+class ContextSupportStore(RestStore):
 
     def __init__(self, host_creds) -> None:
         super().__init__(host_creds)
 
-    def log_metric_with_context(self, run_id, metric):
+    def log_metric(self, run_id, metric):
         context = [{"key": c, "value": metric.context[c]}for c in metric.context]
         result = http_request(**{
             "host_creds": self.get_host_creds(),
@@ -32,7 +32,7 @@ class ContextsupportStore(RestStore):
             )
         return result
 
-    def log_batch_with_context(self, run_id, metrics):
+    def log_batch(self, run_id, metrics):
         metrics_list = []
         for metric in metrics:
             context = [{"key": c, "value": metric.context[c]}for c in metric.context]

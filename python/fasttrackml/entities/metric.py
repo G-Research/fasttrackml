@@ -1,7 +1,7 @@
 from mlflow.entities._mlflow_object import _MLflowObject
 
 
-class MetricWithContext(_MLflowObject):
+class Metric(_MLflowObject):
     """
     Metric object.
     """

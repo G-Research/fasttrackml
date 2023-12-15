@@ -3,7 +3,7 @@ from mlflow.store.tracking.rest_store import RestStore
 from mlflow.utils.rest_utils import http_request
 
 
-class ContextSupportStore(RestStore):
+class CustomRestStore(RestStore):
 
     def __init__(self, host_creds) -> None:
         super().__init__(host_creds)

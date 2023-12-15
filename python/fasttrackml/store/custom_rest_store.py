@@ -9,7 +9,6 @@ class CustomRestStore(RestStore):
         super().__init__(host_creds)
 
     def log_metric(self, run_id, metric):
-        context = [{"key": c, "value": metric.context[c]}for c in metric.context]
         result = http_request(**{
             "host_creds": self.get_host_creds(),
             "endpoint": "/api/2.0/mlflow/runs/log-metric",
@@ -20,7 +19,7 @@ class CustomRestStore(RestStore):
                 "value": metric.value,
                 "timestamp": metric.timestamp,
                 "step": metric.step,
-                "context": context,
+                "context": metric.context,
             }
         })
         if result.status_code != 200:
@@ -35,13 +34,12 @@ class CustomRestStore(RestStore):
     def log_batch(self, run_id, metrics):
         metrics_list = []
         for metric in metrics:
-            context = [{"key": c, "value": metric.context[c]}for c in metric.context]
             metrics_list.append({
                     "key": metric.key,
                     "value": metric.value,
                     "timestamp": metric.timestamp,
                     "step": metric.step,
-                    "context": context,
+                    "context": metric.context,
                 })
         
         result = http_request(**{

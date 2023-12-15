@@ -1,10 +1,9 @@
 from typing import Dict, Optional
 
 from fasttrackml.client import FasttrackmlClient
+from fasttrackml.entities.metric import Metric
 from mlflow.tracking.fluent import _get_or_start_run
 from mlflow.utils.time import get_current_time_millis
-
-from python.fasttrackml.entities.metric import Metric
 
 
 def log_metric(key: str, value: float, step: Optional[int] = None, context: Optional[dict] = None) -> None:

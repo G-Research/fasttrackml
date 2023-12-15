@@ -1,4 +1,5 @@
-from fasttrackml.store.contextsupport_store import CustomRestStore
+from fasttrackml.entities.metric import Metric
+from fasttrackml.store.custom_rest_store import CustomRestStore
 from mlflow.tracking._tracking_service.client import TrackingServiceClient
 from mlflow.tracking.metric_value_conversion_utils import (
     convert_metric_value_to_float_if_possible,
@@ -7,8 +8,6 @@ from mlflow.utils import chunk_list
 from mlflow.utils.rest_utils import MlflowHostCreds
 from mlflow.utils.time import get_current_time_millis
 from mlflow.utils.validation import MAX_METRICS_PER_BATCH
-
-from python.fasttrackml.entities.metric import Metric
 
 
 class FasttrackmlTrackingServiceClient(TrackingServiceClient):

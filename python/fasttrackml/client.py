@@ -1,10 +1,9 @@
 from typing import Dict, Optional, Sequence
 
 from fasttrackml._tracking_service.client import FasttrackmlTrackingServiceClient
+from fasttrackml.entities.metric import Metric
 from mlflow import MlflowClient
 from mlflow.tracking._tracking_service import utils
-
-from python.fasttrackml.entities.metric import Metric
 
 
 class FasttrackmlClient(MlflowClient):

@@ -2,12 +2,12 @@ package fixtures
 
 import (
 	"context"
-	"time"
+	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -35,20 +35,19 @@ func (f DashboardFixtures) CreateDashboard(
 
 // CreateDashboards creates some num dashboards belonging to the experiment
 func (f DashboardFixtures) CreateDashboards(
-	ctx context.Context, num int, appId *uuid.UUID,
+	ctx context.Context, namespace *models.Namespace, num int,
 ) ([]*database.Dashboard, error) {
 	var dashboards []*database.Dashboard
 	// create dashboards for the experiment
 	for i := 0; i < num; i++ {
 		dashboard, err := f.CreateDashboard(ctx, &database.Dashboard{
-			Base: database.Base{
-				ID:         uuid.New(),
-				IsArchived: false,
-				CreatedAt:  time.Now(),
+			Name:        fmt.Sprintf("dashboard-%d", i+1),
+			Description: fmt.Sprintf("Dashboard %d", i+1),
+			App: database.App{
+				Type:        "mpi",
+				State:       database.AppState{},
+				NamespaceID: namespace.ID,
 			},
-			Name:        "dashboard-exp",
-			Description: "dashboard for experiment",
-			AppID:       appId,
 		})
 		if err != nil {
 			return nil, err

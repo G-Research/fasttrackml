@@ -3,7 +3,6 @@ package run
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
@@ -23,10 +22,6 @@ func TestGetAppTestSuite(t *testing.T) {
 
 func (s *GetAppTestSuite) Test_Ok() {
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-		},
 		Type:        "mpi",
 		State:       database.AppState{},
 		NamespaceID: s.DefaultNamespace.ID,

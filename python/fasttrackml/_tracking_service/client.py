@@ -22,7 +22,6 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
         context = context if context else {}
         metric_value = convert_metric_value_to_float_if_possible(value)
         metric = Metric(key, metric_value, timestamp, step, context)
-        
         self.store_with_context.log_metric(run_id, metric)
     
     def log_batch(self, run_id, metrics=()):

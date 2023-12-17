@@ -92,7 +92,7 @@ func (s *ImportTestSuite) SetupSubTest() {
 		tags:                     10,
 		params:                   20,
 		dashboards:               2,
-		apps:                     1,
+		apps:                     2,
 	}
 }
 
@@ -127,41 +127,28 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 	s.Require().Nil(err)
 	s.runs = runs
 
-	appFixtures, err := fixtures.NewAppFixtures(db)
-	s.Require().Nil(err)
-	app, err := appFixtures.CreateApp(context.Background(), &database.App{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-		},
-		NamespaceID: 1,
-		Type:        "mpi",
-		State:       database.AppState{},
-	})
-	s.Require().Nil(err)
-
 	dashboardFixtures, err := fixtures.NewDashboardFixtures(db)
 	s.Require().Nil(err)
 
 	// dashboard 1
 	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+		App: database.App{
+			Type:        "mpi",
+			State:       database.AppState{},
+			NamespaceID: 1,
 		},
-		AppID: &app.ID,
-		Name:  uuid.NewString(),
+		Name: uuid.NewString(),
 	})
 	s.Require().Nil(err)
 
 	// dashboard 2
 	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+		App: database.App{
+			Type:        "mpi",
+			State:       database.AppState{},
+			NamespaceID: 1,
 		},
-		AppID: &app.ID,
-		Name:  uuid.NewString(),
+		Name: uuid.NewString(),
 	})
 	s.Require().Nil(err)
 }

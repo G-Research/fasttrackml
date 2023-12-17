@@ -3,6 +3,7 @@ Code edited from https://stable-baselines3.readthedocs.io/en/master/modules/ppo.
 """
 
 
+import os
 import sys
 from typing import Any, Dict, Tuple, Union
 
@@ -65,5 +66,9 @@ with mlflow.start_run():
     model.save("ckpt/ppo_cartpole")
 
     print("Done Training!!")
+
+    # save videos as artifacts
+    for file in os.listdir("vidcap"):
+        mlflow.log_artifact(f"vidcap/{file}")
 
 vec_env.close()

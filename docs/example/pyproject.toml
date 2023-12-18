@@ -11,7 +11,10 @@ stable-baselines3 = {extras = ["extra"], version = "^2.2.1"}
 moviepy = "^1.0.3"
 gymnasium = {extras = ["classic-control"], version = "^0.29.1"}
 pynvml = "^11.5.0"
-torch = {version = "^2.1.2+cu118", source = "pytorch"}
+torch = [
+  {version = "^2.1.0+cu118", source = "pytorch", markers = "sys_platform == 'linux'"},
+  {version = "^2.1.0", source = "PyPI", markers = "sys_platform == 'darwin'"}
+]
 
 [tool.poetry.dev-dependencies]
 
@@ -19,6 +22,10 @@ torch = {version = "^2.1.2+cu118", source = "pytorch"}
 name = "pytorch"
 url = "https://download.pytorch.org/whl/cu118"
 priority = "explicit"
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

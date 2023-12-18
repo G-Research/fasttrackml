@@ -293,20 +293,20 @@ jobs:
           DOCKER_OUTPUT: type=oci,dest=fasttrackml-oci-${{ matrix.arch }}.tar
 
       - name: Upload binary artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fasttrackml-archives
           path: dist/*
 
       - name: Upload wheels artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fasttrackml-wheels
           path: wheelhouse/*.whl
 
       - name: Upload Docker artifact
         if: matrix.os == 'linux'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fasttrackml-oci-images
           path: fasttrackml-oci-*.tar

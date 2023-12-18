@@ -107,6 +107,11 @@ func (r NamespaceCachedRepository) Update(ctx context.Context, namespace *models
 func (r NamespaceCachedRepository) GetByCode(
 	ctx context.Context, code string,
 ) (*models.Namespace, error) {
+	result, ok := r.cache.Get(code)
+	if ok {
+		return &result, nil
+	}
+
 	namespace, err := r.namespaceRepository.GetByCode(ctx, code)
 	if err != nil {
 		return nil, eris.Wrapf(err, "error getting cached namespace by code: %s", code)

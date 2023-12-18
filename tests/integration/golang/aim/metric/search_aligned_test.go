@@ -736,7 +736,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 				"/runs/search/metric/align/",
 			))
 
-			decodedData, err := encoding.Decode(resp)
+			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
 
 			xValues := make(map[int][]float64)

@@ -16,7 +16,7 @@ jobs:
       id-token: write
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: fasttrackml-wheels
           path: wheelhouse
@@ -35,7 +35,7 @@ jobs:
       contents: write
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: fasttrackml-archives
           path: dist
@@ -89,7 +89,7 @@ jobs:
           echo "tags=${tags[@]}" >> $GITHUB_OUTPUT
 
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: fasttrackml-oci-images
 

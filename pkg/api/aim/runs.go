@@ -847,7 +847,13 @@ func SearchMetrics(c *fiber.Ctx) error {
 				}
 
 				// New series of metrics
-				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
+				contextChanged := false
+				if contextID == nil || metric.ContextID == nil {
+					contextChanged = contextID != metric.ContextID
+				} else {
+					contextChanged = *contextID != *metric.ContextID
+				}
+				if metric.Key != key || metric.RunID != id || contextChanged {
 					addMetrics()
 
 					if metric.RunID != id {
@@ -870,6 +876,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 					iters = make([]float64, 0, q.Steps)
 					epochs = make([]float64, 0, q.Steps)
 					context = fiber.Map{}
+					contextID = nil
 					timestamps = make([]float64, 0, q.Steps)
 					if xAxis {
 						xAxisValues = make([]float64, 0, q.Steps)

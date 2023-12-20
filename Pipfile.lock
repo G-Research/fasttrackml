@@ -375,12 +375,12 @@
         },
         "isort": {
             "hashes": [
-                "sha256:15e0e937819b350bc256a7ae13bb25f4fe4f8871a0bc335b20c3627dba33f458",
-                "sha256:d67f78c6a1715f224cca46b29d740037bdb6eea15323a133e897cda15876147b"
+                "sha256:48fdfcb9face5d58a4f6dde2e72a1fb8dcaf8ab26f95ab49fab84c2ddefb0109",
+                "sha256:8ca5e72a8d85860d5a3fa69b8745237f2939afe12dbf656afbcb47fe72d947a6"
             ],
             "index": "pypi",
             "markers": "python_full_version >= '3.8.0'",
-            "version": "==5.13.0"
+            "version": "==5.13.2"
         },
         "multidict": {
             "hashes": [

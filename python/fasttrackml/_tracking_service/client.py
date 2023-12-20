@@ -2,7 +2,11 @@ from typing import Optional, Sequence
 
 from fasttrackml.entities.metric import Metric
 from fasttrackml.store.custom_rest_store import CustomRestStore
+<<<<<<< HEAD
 from mlflow.store.tracking import GET_METRIC_HISTORY_MAX_RESULTS
+=======
+from mlflow.entities import Param, RunTag
+>>>>>>> python-mlflow-wrapper
 from mlflow.tracking._tracking_service.client import TrackingServiceClient
 from mlflow.tracking.metric_value_conversion_utils import (
     convert_metric_value_to_float_if_possible,
@@ -10,7 +14,11 @@ from mlflow.tracking.metric_value_conversion_utils import (
 from mlflow.utils import chunk_list
 from mlflow.utils.rest_utils import MlflowHostCreds
 from mlflow.utils.time import get_current_time_millis
-from mlflow.utils.validation import MAX_METRICS_PER_BATCH
+from mlflow.utils.validation import (
+    MAX_ENTITIES_PER_BATCH,
+    MAX_METRICS_PER_BATCH,
+    MAX_PARAMS_TAGS_PER_BATCH,
+)
 
 
 class FasttrackmlTrackingServiceClient(TrackingServiceClient):
@@ -27,9 +35,10 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
         metric = Metric(key, metric_value, timestamp, step, context)
         self.custom_store.log_metric(run_id, metric)
     
-    def log_batch(self, run_id: str, metrics: Sequence[Metric]=()):
+    def log_batch(self, run_id: str, metrics: Sequence[Metric]=(), params: Sequence[Param]=(), tags: Sequence[RunTag]=()):
         for metrics_batch in chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH):
             self.custom_store.log_batch(run_id=run_id, metrics=metrics_batch)
+<<<<<<< HEAD
 
     def get_metric_history(self, run_id, key):
         # NB: Paginated query support is currently only available for the RestStore backend.
@@ -77,3 +86,5 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
             search_all_experiments,
             experiment_names,
         )
+=======
+>>>>>>> python-mlflow-wrapper

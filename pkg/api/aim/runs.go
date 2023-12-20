@@ -777,6 +777,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 				id          string
 				key         string
 				context     fiber.Map
+				contextID   *uint
 				metrics     []fiber.Map
 				values      []float64
 				iters       []float64
@@ -846,7 +847,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 				}
 
 				// New series of metrics
-				if metric.Key != key || metric.RunID != id {
+				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
 					addMetrics()
 
 					if metric.RunID != id {
@@ -896,6 +897,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 					if err := json.Unmarshal(metric.Context, &context); err != nil {
 						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
 					}
+					contextID = metric.ContextID
 				}
 			}
 

@@ -32,28 +32,38 @@ FastTrackML introduces enhanced logging methods that go beyond the standard MLFl
     ```
 
     
-### Example:
+**Extended Metric Retrieval:**
 
+FastTrackML extends the functionality for retrieving metric information by introducing the following methods:
 
-   ```python
-   import fasttrackml
-from fasttrackml import log_metric, log_metrics
+-   **`get_metric_history` Method:**
+    
+    The `get_metric_history` method retrieves a list of metric objects corresponding to all values logged for a given metric within a specific run. This allows users to explore the detailed history of a metric, including its values, steps, timestamps, and associated context.
+    
+	 ```python
+	from fasttrackml import FasttrackmlClient
 
-# Set MLFlow tracking URI and experiment
-fasttrackml.set_tracking_uri("http://localhost:5000")
-fasttrackml.set_experiment("my-experiment")
+	# Create a FasttrackmlClient instance
+	client = FasttrackmlClient()
 
-# Log a single metric with context 
-log_metric("accuracy", 0.85, step=100, context={'subset': 'training'})
+	# Fetch metric history for a specific run and metric
+	run_id = "your_run_id"  # Replace with a valid run ID
+	metric_key = "accuracy"  # Replace with the desired metric key
+	metric_history = client.get_metric_history(run_id, metric_key)
 
-# Log another single metric without context
-log_metric("loss", 0.05, step=100)
+	```
+    
+-   **`get_metric_histories` Method:**
+    
+    FastTrackML introduces the `get_metric_histories` method, which is not available in standard MLFlow. This method allows users to retrieve metric histories for multiple runs, metrics, or experiments, providing a convenient way to analyze and compare metric trends across various contexts.
+    ```python
+	from fasttrackml import FasttrackmlClient
 
-# Log multiple metrics with context 
-metrics_dict_with_context = {'precision': 0.92, 'recall': 0.88}
-log_metrics(metrics_dict_with_context, step=200, context={'subset': 'validation'})
+	# Create a FasttrackmlClient instance
+	client = FasttrackmlClient()
 
-# Log another set of metrics without context
-metrics_dict_without_context = {'f1_score': 0.89, 'time_elapsed': 120}
-log_metrics(metrics_dict_without_context, step=200)
-```
+	# Fetch metric histories for multiple runs and metrics
+	run_ids = ["run_id1", "run_id2"]  # Replace with valid run IDs
+	metric_keys = ["metric1", "metric2"]  # Replace with desired metric keys
+	metric_histories_df = client.get_metric_histories(run_ids=run_ids, metric_keys=metric_keys)
+	```

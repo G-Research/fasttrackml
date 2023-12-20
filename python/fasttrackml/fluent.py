@@ -13,5 +13,5 @@ def log_metric(key: str, value: float, step: Optional[int] = None, context: Opti
 def log_metrics(metrics: Dict[str, float], step: Optional[int] = None, context: Optional[dict] = None) -> None:
     run_id = _get_or_start_run().info.run_id
     timestamp = get_current_time_millis()
-    metrics_arr = [Metric(key, value, timestamp, step or 0, context or {}) for key, value in metrics.items()]
+    metrics_arr = [Metric(key, value, timestamp, step or 0, context) for key, value in metrics.items()]
     FasttrackmlClient().log_batch(run_id=run_id, metrics=metrics_arr)

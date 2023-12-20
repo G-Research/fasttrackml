@@ -19,7 +19,7 @@ class FasttrackmlClient(MlflowClient):
             value: float,
             timestamp: Optional[int] = None,
             step: Optional[int] = None,
-            context: Optional[Dict[str, str]] = None,
+            context: Optional[Dict[str, object]] = None,
         ) -> None:
             self._tracking_client.log_metric(run_id, key, value, timestamp, step, context)
     

@@ -20,6 +20,7 @@ class CustomRestStore(RestStore):
             "endpoint": "/api/2.0/mlflow/runs/log-metric",
             "method": "POST",
             "json": {
+                "run_id": run_id,
                 "run_uuid": run_id,
                 "key": metric.key,
                 "value": metric.value,

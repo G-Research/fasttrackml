@@ -89,7 +89,7 @@ func (c *ServiceConfig) normalizeConfiguration() error {
 		if err != nil {
 			return eris.Wrapf(err, "error getting absolute path for 'default-artifact-root': %s", c.DefaultArtifactRoot)
 		}
-		c.DefaultArtifactRoot = absoluteArtifactRoot
+		c.DefaultArtifactRoot = "file://" + absoluteArtifactRoot
 	}
 	return nil
 }

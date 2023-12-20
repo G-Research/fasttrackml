@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 
 from fasttrackml._tracking_service.client import FasttrackmlTrackingServiceClient
 from fasttrackml.entities.metric import Metric
@@ -29,3 +29,6 @@ class FasttrackmlClient(MlflowClient):
             metrics: Sequence[Metric] = (),
         ) -> None:
             self._tracking_client.log_batch(run_id, metrics)
+
+    def get_metric_history(self, run_id: str, key: str) -> List[Metric]:
+        return self._tracking_client.get_metric_history(run_id, key)

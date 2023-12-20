@@ -2,6 +2,7 @@ from typing import Optional, Sequence
 
 from fasttrackml.entities.metric import Metric
 from fasttrackml.store.custom_rest_store import CustomRestStore
+from mlflow.store.tracking import GET_METRIC_HISTORY_MAX_RESULTS
 from mlflow.tracking._tracking_service.client import TrackingServiceClient
 from mlflow.tracking.metric_value_conversion_utils import (
     convert_metric_value_to_float_if_possible,
@@ -16,7 +17,7 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
 
     def __init__(self, tracking_uri):
         super().__init__(tracking_uri)
-        self.store_with_context = CustomRestStore(lambda: MlflowHostCreds(self.tracking_uri))
+        self.custom_store = CustomRestStore(lambda: MlflowHostCreds(self.tracking_uri))
 
     def log_metric(self, run_id: str, key:str, value:float, timestamp: Optional[int] = None, step:Optional[int] = None, context: Optional[dict] = None):
         timestamp = timestamp if timestamp is not None else get_current_time_millis()
@@ -24,8 +25,33 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
         context = context if context else {}
         metric_value = convert_metric_value_to_float_if_possible(value)
         metric = Metric(key, metric_value, timestamp, step, context)
-        self.store_with_context.log_metric(run_id, metric)
+        self.custom_store.log_metric(run_id, metric)
     
     def log_batch(self, run_id: str, metrics: Sequence[Metric]=()):
         for metrics_batch in chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH):
-            self.store_with_context.log_batch(run_id=run_id, metrics=metrics_batch)
+            self.custom_store.log_batch(run_id=run_id, metrics=metrics_batch)
+
+    def get_metric_history(self, run_id, key):
+        # NB: Paginated query support is currently only available for the RestStore backend.
+        # FileStore and SQLAlchemy store do not provide support for paginated queries and will
+        # raise an MlflowException if the `page_token` argument is not None when calling this
+        # API for a continuation query.
+        history = self.custom_store.get_metric_history(
+            run_id=run_id,
+            metric_key=key,
+            max_results=GET_METRIC_HISTORY_MAX_RESULTS,
+            page_token=None,
+        )
+        token = history.token
+        # Continue issuing queries to the backend store to retrieve all pages of
+        # metric history.
+        while token is not None:
+            paged_history = self.store.get_metric_history(
+                run_id=run_id,
+                metric_key=key,
+                max_results=GET_METRIC_HISTORY_MAX_RESULTS,
+                page_token=token,
+            )
+            history.extend(paged_history)
+            token = paged_history.token
+        return history

@@ -1,6 +1,8 @@
 import json
 
+from fasttrackml.entities.metric import Metric
 from mlflow import MlflowException
+from mlflow.store.entities.paged_list import PagedList
 from mlflow.store.tracking.rest_store import RestStore
 from mlflow.utils.rest_utils import http_request
 
@@ -67,3 +69,27 @@ class CustomRestStore(RestStore):
             )
         return result
 
+    def get_metric_history(self, run_id, metric_key, max_results=None, page_token=None):
+        result = http_request(**{
+            "host_creds": self.get_host_creds(),
+            "endpoint": "/api/2.0/mlflow/metrics/get-history",
+            "method": "GET",
+            "params": {
+                "run_uuid": run_id,
+                "metric_key": metric_key,
+                "max_results": max_results,
+                "page_token": page_token,
+            }
+        })
+        
+        if result.status_code != 200:
+            result = result.json()
+        if "error_code" in result:
+            raise MlflowException(
+                message=result["message"],
+                error_code=result["error_code"],
+            )
+        js_dict = json.loads(result.text)
+        metric_history = [Metric(metric["key"], metric["value"], metric["timestamp"], metric["step"], metric["context"]) for metric in js_dict.get("metrics")]
+        next_page_token = js_dict.get("next_page_token")
+        return PagedList(metric_history, next_page_token or None)

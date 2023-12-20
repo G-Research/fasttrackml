@@ -204,6 +204,10 @@ func (pq *parsedQuery) _parseNode(node ast.Expr) (any, error) {
 		return pq.parseAttribute(n)
 	case *ast.Compare:
 		return pq.parseCompare(n)
+	case *ast.Dict:
+		return pq.parseDictionary(n)
+	case *ast.Tuple:
+		return pq.parseTuple(n)
 	default:
 		return nil, fmt.Errorf("unsupported expression %q", ast.Dump(n))
 	}
@@ -404,6 +408,23 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 	}, nil
 }
 
+func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
+	return nil, nil //errors.New("I can't parse dict yet")
+}
+
+func (pq *parsedQuery) parseTuple(node *ast.Tuple) (any, error) {
+	var err error
+	list := make([]any, len(node.Elts))
+	for i, e := range node.Elts {
+		list[i], err = pq.parseNode(e)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return list, nil
+}
+
+
 func (pq *parsedQuery) parseList(node *ast.List) (any, error) {
 	var err error
 	list := make([]any, len(node.Elts))
@@ -520,6 +541,26 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 											Name:  name,
 										}, nil
 									}), nil
+								// case map[string]any:
+								// 	_, ok := pq.joins["metric_contexts"]
+								// 	if !ok {
+								// 		alias := "contexts"
+								// 		j := join{
+								// 			alias: alias,
+								// 			query: "LEFT JOIN contexts ON metrics.context_id = contexts.id",
+								// 		}
+								// 		pq.joins["metric_contexts"] = j
+								// 	}
+
+								// 	// Add a WHERE clause for the context key
+								// 	return Json{
+								// 		Column: clause.Column{
+								// 			Table: "contexts",
+								// 			Name:  "json",
+								// 		},
+								// 		JsonPath:  ,
+								// 		Dialector: pq.qp.Dialector,
+								// 	}, nil
 								default:
 									return nil, fmt.Errorf("unsupported index value type %t", v)
 								}

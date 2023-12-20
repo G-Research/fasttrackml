@@ -281,6 +281,15 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
 		},
+		{
+			name:  "TestMetricContextSlice",
+			query: `run.metrics[{"key1": "value1"}].last < -1`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
+				`LEFT JOIN contexts ON metrics_0.context_id = contexts.id ` +
+				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$2 <> $3 AND "metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $3)`,
+			expectedVars: []interface{}{"my_metric", "key1", "value1", models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {

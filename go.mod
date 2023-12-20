@@ -8,7 +8,7 @@ replace (
 )
 
 require (
-	cloud.google.com/go/storage v1.35.1
+	cloud.google.com/go/storage v1.36.0
 	dagger.io/dagger v0.9.4
 	github.com/DATA-DOG/go-sqlmock v1.5.1
 	github.com/G-Research/fasttrackml-ui-aim v0.31602.16

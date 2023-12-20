@@ -55,3 +55,25 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
             history.extend(paged_history)
             token = paged_history.token
         return history
+    
+    def get_metric_histories(
+        self,
+        experiment_ids: Optional[Sequence[str]] = None,
+        run_ids: Optional[Sequence[str]] = None,
+        metric_keys: Optional[Sequence[str]] = None,
+        index: str = "step",
+        run_view_type: int = None,
+        max_results: int = 10000000,
+        search_all_experiments: bool = False,
+        experiment_names: Optional[Sequence[str]] = None,
+    ):
+        return self.custom_store.get_metric_histories(
+            experiment_ids,
+            run_ids,
+            metric_keys,
+            index,
+            run_view_type,
+            max_results,
+            search_all_experiments,
+            experiment_names,
+        )

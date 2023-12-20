@@ -293,22 +293,22 @@ jobs:
           DOCKER_OUTPUT: type=oci,dest=fasttrackml-oci-${{ matrix.arch }}.tar
 
       - name: Upload binary artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: fasttrackml-archives
+          name: fasttrackml-archives-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/*
 
       - name: Upload wheels artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: fasttrackml-wheels
+          name: fasttrackml-wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: wheelhouse/*.whl
 
       - name: Upload Docker artifact
         if: matrix.os == 'linux'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: fasttrackml-oci-images
+          name: fasttrackml-oci-images-${{ matrix.arch }}
           path: fasttrackml-oci-*.tar
 
   # Virtual job that can be configured as a required check before a PR can be merged.
@@ -338,9 +338,10 @@ jobs:
       packages: write
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: fasttrackml-oci-images
+          pattern: fasttrackml-oci-images-*
+          merge-multiple: true
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3

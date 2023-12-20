@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
+	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -160,6 +161,13 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run2.ID,
 		Iter:      3,
+		Context: &models.Context{
+			Json: datatypes.JSON([]byte(`
+				{
+					"testkey": "testvalue"
+				}`,
+			)),
+		},
 	})
 	s.Require().Nil(err)
 	metric1Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -5859,6 +5867,22 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 			},
+		},
+		{
+			name: "SearchMetricContext",
+			request: request.SearchMetricsRequest{
+				Query: `metric.name == "TestMetric1" and metric.context.testkey == "testvalue"`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run2,
+			},
+		},
+		{
+			name: "NegativeSearchMetricContext",
+			request: request.SearchMetricsRequest{
+				Query: `metric.name == "TestMetric1" and metric.context.testkey != "testvalue"`,
+			},
+			metrics: []*models.LatestMetric(nil),
 		},
 	}
 	for _, tt := range tests {

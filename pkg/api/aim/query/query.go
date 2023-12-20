@@ -312,6 +312,7 @@ func (pq *parsedQuery) parseCall(node *ast.Call) (any, error) {
 	}
 }
 
+// nolint:gocyclo
 func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 	exprs := make([]clause.Expression, len(node.Ops))
 
@@ -344,6 +345,11 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 				}
 			default:
 				return nil, fmt.Errorf("unsupported comparison %q", ast.Dump(node))
+			}
+		case Json:
+			exprs[i], err = newSqlJsonPathComparison(op, left, right)
+			if err != nil {
+				return nil, err
 			}
 		default:
 			switch right := right.(type) {
@@ -602,6 +608,31 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 						}, nil
 					case "first_step":
 						return 0, nil
+					case "context":
+						return attributeGetter(
+							func(contextKey string) (any, error) {
+								// create the join for contexts
+								_, ok := pq.joins["metric_contexts"]
+								if !ok {
+									alias := "contexts"
+									j := join{
+										alias: alias,
+										query: "LEFT JOIN contexts ON metrics.context_id = contexts.id",
+									}
+									pq.joins["metric_contexts"] = j
+								}
+
+								// Add a WHERE clause for the context key
+								return Json{
+									Column: clause.Column{
+										Table: "contexts",
+										Name:  "json",
+									},
+									JsonPath:  contextKey,
+									Dialector: pq.qp.Dialector,
+								}, nil
+							},
+						), nil
 					default:
 						return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
 					}
@@ -835,6 +866,23 @@ func newSqlComparison(op ast.CmpOp, left clause.Column, right any) (clause.Expre
 			Column: left,
 			Values: r,
 		}), nil
+	default:
+		return nil, fmt.Errorf("unsupported comparison operation %q", op)
+	}
+}
+
+func newSqlJsonPathComparison(op ast.CmpOp, left Json, right any) (clause.Expression, error) {
+	switch op {
+	case ast.Eq:
+		return JsonEq{
+			Left:  left,
+			Value: right,
+		}, nil
+	case ast.NotEq:
+		return JsonNeq{
+			Left:  left,
+			Value: right,
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported comparison operation %q", op)
 	}

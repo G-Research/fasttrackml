@@ -102,7 +102,7 @@ func TestService_ListArtifacts_Error(t *testing.T) {
 		},
 		{
 			name:  "PathIsRelativeAndContains2Dots",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.ListArtifactsRequest{
 				RunID: "id",
 				Path:  "../",
@@ -246,7 +246,7 @@ func TestService_GetArtifact_Error(t *testing.T) {
 		},
 		{
 			name:  "PathIsRelativeAndContains2Dots",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.GetArtifactRequest{
 				RunID: "id",
 				Path:  "../",

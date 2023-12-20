@@ -33,7 +33,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 				DefaultArtifactRoot: (func() string {
 					path, err := filepath.Abs("path1/path2/path3")
 					require.Nil(t, err)
-					return path
+					return "file://" + path
 				})(),
 			},
 		},
@@ -43,7 +43,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 				DefaultArtifactRoot: "file:///path1/path2/path3",
 			},
 			expectedConfig: &ServiceConfig{
-				DefaultArtifactRoot: "/path1/path2/path3",
+				DefaultArtifactRoot: "file:///path1/path2/path3",
 			},
 		},
 		{
@@ -52,7 +52,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 				DefaultArtifactRoot: "/path1/path2/path3",
 			},
 			expectedConfig: &ServiceConfig{
-				DefaultArtifactRoot: "/path1/path2/path3",
+				DefaultArtifactRoot: "file:///path1/path2/path3",
 			},
 		},
 		{
@@ -64,7 +64,7 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 				DefaultArtifactRoot: (func() string {
 					path, err := filepath.Abs("path1/path2/path3")
 					require.Nil(t, err)
-					return path
+					return "file://" + path
 				})(),
 			},
 		},

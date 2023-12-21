@@ -720,7 +720,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 	tx := database.DB.
 		Select(`
 			metrics.*,
-			c.json AS context_json`,
+			runmetrics.context_json`,
 		).
 		Table("metrics").
 		Joins(
@@ -730,6 +730,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 					"runs.run_uuid",
 					"runs.row_num",
 					"latest_metrics.key",
+					"ctxs.json AS context_json",
 					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
 				).
 				Table("runs").
@@ -737,9 +738,9 @@ func SearchMetrics(c *fiber.Ctx) error {
 					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 					ns.ID,
 				).
-				Joins("LEFT JOIN latest_metrics USING(run_uuid)")),
+				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
+				Joins("LEFT JOIN contexts ctxs ON latest_metrics.context_id = ctxs.id")),
 		).
-		Joins("LEFT JOIN contexts AS c ON c.id = metrics.context_id").
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").
 		Order("metrics.key").

@@ -17,15 +17,15 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type SearchTestSuite struct {
+type SearchMetricTestSuite struct {
 	helpers.BaseTestSuite
 }
 
-func TestSearchTestSuite(t *testing.T) {
-	suite.Run(t, new(SearchTestSuite))
+func TestSearchMetricTestSuite(t *testing.T) {
+	suite.Run(t, new(SearchMetricTestSuite))
 }
 
-func (s *SearchTestSuite) Test_Ok() {
+func (s *SearchMetricTestSuite) Test_Ok() {
 	// create test experiments.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
@@ -369,6 +369,11 @@ func (s *SearchTestSuite) Test_Ok() {
 				run3,
 			},
 		},
+	}
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			resp := new(bytes.Buffer)
+			s.Require().Nil(
 				s.AIMClient().WithResponseType(
 					helpers.ResponseTypeBuffer,
 				).WithQuery(

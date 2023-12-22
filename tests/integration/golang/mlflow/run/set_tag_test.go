@@ -105,7 +105,7 @@ func (s *SetRunTagTestSuite) Test_Error() {
 				Key:   "key1",
 				RunID: "id",
 			},
-			error: api.NewResourceDoesNotExistError("Unable to find active run 'id'"),
+			error: api.NewResourceDoesNotExistError("Run 'id' not found"),
 		},
 	}
 	for _, tt := range tests {

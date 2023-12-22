@@ -104,6 +104,22 @@ func ValidateLogBatchRequest(req *request.LogBatchRequest) error {
 	if req.RunID == "" {
 		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
 	}
+	for _, metric := range req.Metrics {
+		if metric.Key == "" || metric.Timestamp == 0 {
+			return api.NewInvalidParameterValueError("Invalid value for parameter 'metrics' supplied")
+		}
+	}
+	for _, param := range req.Params {
+		if param.Key == "" {
+			return api.NewInvalidParameterValueError("Invalid value for parameter 'params' supplied")
+		}
+	}
+	for _, tag := range req.Tags {
+		if tag.Key == "" {
+			return api.NewInvalidParameterValueError("Invalid value for parameter 'tags' supplied")
+		}
+	}
+
 	return nil
 }
 

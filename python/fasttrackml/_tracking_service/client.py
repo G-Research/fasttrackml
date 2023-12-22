@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 from fasttrackml.entities.metric import Metric
 from fasttrackml.store.custom_rest_store import CustomRestStore
@@ -66,7 +66,8 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
         run_view_type: int = None,
         max_results: int = 10000000,
         search_all_experiments: bool = False,
-        experiment_names: Optional[Sequence[str]] = None,
+        experiment_names: Optional[Sequence[str]] = None,    
+        context: Optional[Dict[str, object]] = None,
     ):
         return self.custom_store.get_metric_histories(
             experiment_ids,
@@ -77,4 +78,5 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
             max_results,
             search_all_experiments,
             experiment_names,
+            context,
         )

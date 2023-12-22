@@ -231,7 +231,8 @@ class FasttrackmlClient(MlflowClient):
         run_view_type: int = ViewType.ACTIVE_ONLY,
         max_results: int = 10000000,
         search_all_experiments: bool = False,
-        experiment_names: Optional[List[str]] = None,
+        experiment_names: Optional[List[str]] = None,     
+        context: Optional[Dict[str, object]] = None,
     ) -> pd.DataFrame:
         """
         Get metric histories of Runs that fit the specified criteria.
@@ -255,6 +256,8 @@ class FasttrackmlClient(MlflowClient):
                                 than ``None`` or ``[]`` will result in error if ``experiment_ids``
                                 is also not ``None`` or ``[]``. ``None`` will default to the active
                                 experiment if ``experiment_ids`` is ``None`` or ``[]``.
+        :param context: Dictionary of json paths (keys) and values which must be found in the 
+                        metric context recorded when logged.
         :return: ``pandas.DataFrame`` of metric timestamps and values, indexed on run ID, metric key,
                 and step. If index is ``timestamp``, the columns will be metric steps and values, and
                 the index will be run ID, metric key, and timestamp.
@@ -269,4 +272,5 @@ class FasttrackmlClient(MlflowClient):
             max_results,
             search_all_experiments,
             experiment_names,
+            context,
         )

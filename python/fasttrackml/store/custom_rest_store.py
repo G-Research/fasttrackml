@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 import pyarrow as pa
 from fasttrackml.entities.metric import Metric
@@ -115,7 +115,8 @@ class CustomRestStore(RestStore):
         run_view_type: int = None,
         max_results: int = 10000000,
         search_all_experiments: bool = False,
-        experiment_names: Optional[Sequence[str]] = None,
+        experiment_names: Optional[Sequence[str]] = None,    
+        context: Optional[Dict[str, object]] = None,
     ):
         if index not in ("step", "timestamp"):
             raise ValueError(f"Unsupported index: {index}. Supported string values are 'step' or 'timestamp'")
@@ -154,6 +155,7 @@ class CustomRestStore(RestStore):
                 "metric_keys": metric_keys,
                 "run_view_type": ViewType.to_string(run_view_type).upper(),
                 "max_results": max_results,
+                "context": context,
             },
             stream=True,
         )

@@ -161,7 +161,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run2.ID,
 		Iter:      3,
-		Context: &models.Context{
+		Context: models.Context{
 			Json: datatypes.JSON([]byte(`
 				{
 					"testkey": "testvalue"
@@ -178,7 +178,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run2.ID,
 		LastIter:  3,
-		Context: &models.Context{
+		Context: models.Context{
 			Json: datatypes.JSON([]byte(`
 				{
 					"testkey": "testvalue"
@@ -5927,6 +5927,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 						IsNan:     false,
 						RunID:     run.ID,
 						LastIter:  int64(decodedData[itersKey].([]float64)[0]),
+						Context:   models.Context{Json: datatypes.JSON(`{}`)},
+						ContextID: 1,
 					}
 					decodedMetrics = append(decodedMetrics, &m)
 					metricCount++
@@ -5937,10 +5939,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			s.Equal(len(tt.metrics), len(decodedMetrics))
 			for i, metric := range tt.metrics {
 				// TODO when encoding.Decoder handles the context object, we can include it in the comparison
-				if metric.Context != nil {
-					metric.Context = nil
-					metric.ContextID = nil
-				}
+				metric.Context = models.Context{Json: datatypes.JSON(`{}`)}
+				metric.ContextID = 1
 				s.Equal(metric, decodedMetrics[i])
 			}
 		})

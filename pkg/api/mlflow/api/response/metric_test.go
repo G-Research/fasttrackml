@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -27,6 +28,7 @@ func TestNewMetricHistoryResponse_Ok(t *testing.T) {
 					Step:      1,
 					IsNan:     true,
 					Iter:      1,
+					Context:   models.Context{Json: datatypes.JSON(`{}`)},
 				},
 			},
 			expectedResponse: &GetMetricHistoryResponse{
@@ -52,6 +54,7 @@ func TestNewMetricHistoryResponse_Ok(t *testing.T) {
 					Step:      1,
 					IsNan:     false,
 					Iter:      1,
+					Context:   models.Context{Json: datatypes.JSON(`{}`)},
 				},
 			},
 			expectedResponse: &GetMetricHistoryResponse{

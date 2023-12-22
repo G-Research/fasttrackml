@@ -1,7 +1,7 @@
 
 ## FastTrackML Python Client Overview
 
-`fasttrackml` is a Python package that fully leverage the capabilities of MLFlow, FastTrackML extends its functionality by providing additional methods for a more convenient and efficient user experience.
+`fasttrackml` is a Python package that extends MLFlow's capabilities by providing additional methods.
 
 
 **Enhanced Logging Methods:**

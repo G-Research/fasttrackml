@@ -66,6 +66,6 @@ FastTrackML extends the functionality for retrieving metric information by intro
 	run_ids = ["run_id1", "run_id2"]  # Replace with valid run IDs
 	metric_keys = ["metric1", "metric2"]  # Replace with desired metric keys
 	metric_histories_df = client.get_metric_histories(run_ids=run_ids, metric_keys=metric_keys)
-    # # Fetch metric histories for multiple runs and metrics with a specific context
+    # Fetch metric histories for multiple runs and metrics with a specific context
 	filtered_metric_histories = client.get_metric_histories(run_ids=run_ids, metric_keys=metric_keys, context={"context_key": "context_value1"})
 	```

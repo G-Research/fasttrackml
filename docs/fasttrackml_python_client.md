@@ -1,7 +1,7 @@
 
 ## FastTrackML Python Client Overview
 
-`fasttrackml` is a Python package that fully leverage the capabilities of MLFlow, FastTrackML extends its functionality by providing additional methods for a more convenient and efficient user experience.
+`fasttrackml` is a Python package that incorporates and enhances the capabilities MLFlow's tracking client package. While offerring the same interface as MLFlow, `fasttrackml` adds some additional methods for convenience and better performance with the FastTrackML tracking server. 
 
 
 **Enhanced Logging Methods:**
@@ -66,4 +66,6 @@ FastTrackML extends the functionality for retrieving metric information by intro
 	run_ids = ["run_id1", "run_id2"]  # Replace with valid run IDs
 	metric_keys = ["metric1", "metric2"]  # Replace with desired metric keys
 	metric_histories_df = client.get_metric_histories(run_ids=run_ids, metric_keys=metric_keys)
+    # # Fetch metric histories for multiple runs and metrics with a specific context
+	filtered_metric_histories = client.get_metric_histories(run_ids=run_ids, metric_keys=metric_keys, context={"context_key": "context_value1"})
 	```

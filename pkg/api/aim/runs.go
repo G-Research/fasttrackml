@@ -661,7 +661,6 @@ func SearchMetrics(c *fiber.Ctx) error {
 				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 				ns.ID,
 			).
-			Joins("LEFT JOIN metrics USING(run_uuid)").
 			Joins("LEFT JOIN latest_metrics USING(run_uuid)"))).
 		Order("runs.row_num DESC").
 		Find(&runs); tx.Error != nil {
@@ -709,7 +708,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 	tx := database.DB.
 		Select(`
 			metrics.*,
-			c.json AS context_json`,
+			runmetrics.context_json`,
 		).
 		Table("metrics").
 		Joins(
@@ -719,6 +718,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 					"runs.run_uuid",
 					"runs.row_num",
 					"latest_metrics.key",
+					"latest_metrics_context.json AS context_json",
 					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
 				).
 				Table("runs").
@@ -726,10 +726,10 @@ func SearchMetrics(c *fiber.Ctx) error {
 					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 					ns.ID,
 				).
-				Joins("LEFT JOIN metrics USING(run_uuid)").
-				Joins("LEFT JOIN latest_metrics USING(run_uuid)")),
+				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
+				Joins(`LEFT JOIN contexts latest_metrics_context `+
+					`ON latest_metrics.context_id = latest_metrics_context.id`)),
 		).
-		Joins("LEFT JOIN contexts AS c ON c.id = metrics.context_id").
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").
 		Order("metrics.key").
@@ -765,6 +765,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 				id          string
 				key         string
 				context     fiber.Map
+				contextID   *uint
 				metrics     []fiber.Map
 				values      []float64
 				iters       []float64
@@ -834,7 +835,13 @@ func SearchMetrics(c *fiber.Ctx) error {
 				}
 
 				// New series of metrics
-				if metric.Key != key || metric.RunID != id {
+				contextChanged := false
+				if contextID == nil || metric.ContextID == nil {
+					contextChanged = contextID != metric.ContextID
+				} else {
+					contextChanged = *contextID != *metric.ContextID
+				}
+				if metric.Key != key || metric.RunID != id || contextChanged {
 					addMetrics()
 
 					if metric.RunID != id {
@@ -857,6 +864,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 					iters = make([]float64, 0, q.Steps)
 					epochs = make([]float64, 0, q.Steps)
 					context = fiber.Map{}
+					contextID = nil
 					timestamps = make([]float64, 0, q.Steps)
 					if xAxis {
 						xAxisValues = make([]float64, 0, q.Steps)
@@ -884,6 +892,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 					if err := json.Unmarshal(metric.Context, &context); err != nil {
 						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
 					}
+					contextID = metric.ContextID
 				}
 			}
 

@@ -127,7 +127,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			query:         `metric.context.key1 == 'value1'`,
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`LEFT JOIN contexts ON metrics.context_id = contexts.id ` +
+				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
 				`WHERE ("contexts"."json"#>>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
 		},
@@ -136,7 +136,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			query:         `metric.context.key1 != 'value1'`,
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`LEFT JOIN contexts ON metrics.context_id = contexts.id ` +
+				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
 				`WHERE ("contexts"."json"#>>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
 		},
@@ -268,7 +268,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			query:         `metric.context.key1 == 'value1'`,
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`LEFT JOIN contexts ON metrics.context_id = contexts.id ` +
+				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
 				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
 		},
@@ -277,7 +277,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			query:         `metric.context.key1 != 'value1'`,
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`LEFT JOIN contexts ON metrics.context_id = contexts.id ` +
+				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
 				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
 		},

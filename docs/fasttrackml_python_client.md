@@ -1,7 +1,7 @@
 
 ## FastTrackML Python Client Overview
 
-`fasttrackml` is a Python package that extends MLFlow's capabilities by providing additional methods.
+`fasttrackml` is a Python package that incorporates and enhances the capabilities MLFlow's tracking client package. While offerring the same interface as MLFlow, `fasttrackml` adds some additional methods for convenience and better performance with the FastTrackML tracking server. 
 
 
 **Enhanced Logging Methods:**
@@ -32,6 +32,43 @@ FastTrackML introduces enhanced logging methods that go beyond the standard MLFl
     ```
 
     
+**Extended Metric Retrieval:**
+
+FastTrackML extends the functionality for retrieving metric information by introducing the following methods:
+
+-   **`get_metric_history` Method:**
+    
+    The `get_metric_history` method retrieves a list of metric objects corresponding to all values logged for a given metric within a specific run. This allows users to explore the detailed history of a metric, including its values, steps, timestamps, and associated context.
+    
+	 ```python
+	from fasttrackml import FasttrackmlClient
+
+	# Create a FasttrackmlClient instance
+	client = FasttrackmlClient()
+
+	# Fetch metric history for a specific run and metric
+	run_id = "your_run_id"  # Replace with a valid run ID
+	metric_key = "accuracy"  # Replace with the desired metric key
+	metric_history = client.get_metric_history(run_id, metric_key)
+
+	```
+    
+-   **`get_metric_histories` Method:**
+    
+    FastTrackML introduces the `get_metric_histories` method, which is not available in standard MLFlow. This method allows users to retrieve metric histories for multiple runs, metrics, or experiments, providing a convenient way to analyze and compare metric trends across various contexts.
+    ```python
+	from fasttrackml import FasttrackmlClient
+
+	# Create a FasttrackmlClient instance
+	client = FasttrackmlClient()
+
+	# Fetch metric histories for multiple runs and metrics
+	run_ids = ["run_id1", "run_id2"]  # Replace with valid run IDs
+	metric_keys = ["metric1", "metric2"]  # Replace with desired metric keys
+	metric_histories_df = client.get_metric_histories(run_ids=run_ids, metric_keys=metric_keys)
+    # Fetch metric histories for multiple runs and metrics with a specific context
+	filtered_metric_histories = client.get_metric_histories(run_ids=run_ids, metric_keys=metric_keys, context={"context_key": "context_value1"})
+	```
 ### Example:
 
 

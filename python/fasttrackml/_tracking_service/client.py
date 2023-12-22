@@ -12,6 +12,11 @@ from mlflow.utils import chunk_list
 from mlflow.utils.rest_utils import MlflowHostCreds
 from mlflow.utils.time import get_current_time_millis
 from mlflow.utils.validation import MAX_METRICS_PER_BATCH
+from mlflow.utils.validation import (
+    MAX_ENTITIES_PER_BATCH,
+    MAX_METRICS_PER_BATCH,
+    MAX_PARAMS_TAGS_PER_BATCH,
+)
 
 
 class FasttrackmlTrackingServiceClient(TrackingServiceClient):

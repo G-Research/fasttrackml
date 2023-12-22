@@ -69,3 +69,28 @@ FastTrackML extends the functionality for retrieving metric information by intro
     # Fetch metric histories for multiple runs and metrics with a specific context
 	filtered_metric_histories = client.get_metric_histories(run_ids=run_ids, metric_keys=metric_keys, context={"context_key": "context_value1"})
 	```
+### Example:
+
+
+   ```python
+   import fasttrackml
+from fasttrackml import log_metric, log_metrics
+
+# Set MLFlow tracking URI and experiment
+fasttrackml.set_tracking_uri("http://localhost:5000")
+fasttrackml.set_experiment("my-experiment")
+
+# Log a single metric with context 
+log_metric("accuracy", 0.85, step=100, context={'subset': 'training'})
+
+# Log another single metric without context
+log_metric("loss", 0.05, step=100)
+
+# Log multiple metrics with context 
+metrics_dict_with_context = {'precision': 0.92, 'recall': 0.88}
+log_metrics(metrics_dict_with_context, step=200, context={'subset': 'validation'})
+
+# Log another set of metrics without context
+metrics_dict_without_context = {'f1_score': 0.89, 'time_elapsed': 120}
+log_metrics(metrics_dict_without_context, step=200)
+```

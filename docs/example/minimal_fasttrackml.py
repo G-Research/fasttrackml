@@ -16,6 +16,7 @@ def print_metric_info(history):
         print(f"context: {m.context}")
         print("--")
 
+
 def main():
     fasttrackml.set_tracking_uri("http://localhost:5000")
     # Creating an instance of the Fasttrackml client

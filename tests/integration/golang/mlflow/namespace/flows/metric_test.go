@@ -289,6 +289,7 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 				Step:      1,
 				Value:     1.1,
 				Timestamp: 123456789,
+				Context:   map[string]any{},
 			},
 		},
 	})
@@ -302,6 +303,7 @@ func (s *MetricFlowTestSuite) testRunMetricFlow(
 				Step:      1,
 				Value:     3.3,
 				Timestamp: 123456789,
+				Context:   map[string]any{},
 			},
 		},
 	})

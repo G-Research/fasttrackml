@@ -182,6 +182,15 @@ func (f RunFixtures) CreateTag(
 
 // CreateMetric creates a new test Metric.
 func (f RunFixtures) CreateMetric(ctx context.Context, metric *models.Metric) error {
+	if metric.ContextID == 0 {
+		defaultCtx := models.Context{
+			Json: []byte(`{}`),
+		}
+		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&defaultCtx).Error; err != nil {
+			return eris.Wrap(err, "error creating default context")
+		}
+		metric.ContextID = defaultCtx.ID
+	}
 	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
 		return eris.Wrap(err, "error creating test metric")
 	}

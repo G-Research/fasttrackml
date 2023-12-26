@@ -82,52 +82,47 @@ func (r MetricRepository) CreateBatch(
 
 	lastIters := make(map[string]int64)
 	for _, lastMetric := range lastMetrics {
-		lastIters[lastMetric.Key] = lastMetric.LastIter
+		lastIters[lastMetric.UniqueKey()] = lastMetric.LastIter
 	}
-	// uniqueContexts potentially up to length of metrics but most likely far less
-	uniqueContexts := make([]*models.Context, 0, len(metrics))
-	contextMap := make(map[string]*models.Context)
+	contexts := make([]*models.Context, len(metrics))
 	latestMetrics := make(map[string]models.LatestMetric)
-	for n, metric := range metrics {
-		if metric.Context.Json == nil {
-			metric.Context.Json = []byte(`{}`)
+	defaultContext := models.Context{Json: []byte(`{}`)}
+	for n, _ := range metrics {
+		if metrics[n].Context.Json == nil {
+			metrics[n].Context = defaultContext
 		}
-
-		hash := getJsonHash(metric.Context.Json)
-		foundCtx := contextMap[hash]
-		if foundCtx == nil {
-			contextMap[hash] = &metric.Context
-			uniqueContexts = append(uniqueContexts, &metric.Context)
-		} else {
-			metrics[n].Context = *foundCtx
-		}
-
-		metrics[n].Iter = lastIters[metric.Key] + 1
-		lastIters[metric.Key] = metrics[n].Iter
-		lm, ok := latestMetrics[metric.Key]
-		if !ok ||
-			metric.Step > lm.Step ||
-			(metric.Step == lm.Step && metric.Timestamp > lm.Timestamp) ||
-			(metric.Step == lm.Step && metric.Timestamp == lm.Timestamp && metric.Value > lm.Value) {
-			latestMetrics[metric.Key] = models.LatestMetric{
-				RunID:     metric.RunID,
-				Key:       metric.Key,
-				Value:     metric.Value,
-				Timestamp: metric.Timestamp,
-				Step:      metric.Step,
-				IsNan:     metric.IsNan,
-				LastIter:  metric.Iter,
-				Context:   metrics[n].Context,
-			}
-		}
+		contexts[n] = &metrics[n].Context
 	}
+
 	if err := r.db.WithContext(ctx).Clauses(
 		clause.OnConflict{
 			Columns:   []clause.Column{{Name: "json"}},
 			UpdateAll: true,
 		},
-	).CreateInBatches(&uniqueContexts, batchSize).Error; err != nil {
+	).CreateInBatches(&contexts, batchSize).Error; err != nil {
 		return eris.Wrapf(err, "error creating contexts")
+	}
+
+	for n, _ := range metrics {
+		metrics[n].ContextID = contexts[n].ID
+		metrics[n].Iter = lastIters[metrics[n].UniqueKey()] + 1
+		lastIters[metrics[n].UniqueKey()] = metrics[n].Iter
+		lm, ok := latestMetrics[metrics[n].UniqueKey()]
+		if !ok ||
+			metrics[n].Step > lm.Step ||
+			(metrics[n].Step == lm.Step && metrics[n].Timestamp > lm.Timestamp) ||
+			(metrics[n].Step == lm.Step && metrics[n].Timestamp == lm.Timestamp && metrics[n].Value > lm.Value) {
+			latestMetrics[metrics[n].UniqueKey()] = models.LatestMetric{
+				RunID:     metrics[n].RunID,
+				Key:       metrics[n].Key,
+				Value:     metrics[n].Value,
+				Timestamp: metrics[n].Timestamp,
+				Step:      metrics[n].Step,
+				IsNan:     metrics[n].IsNan,
+				LastIter:  metrics[n].Iter,
+				ContextID: contexts[n].ID,
+			}
+		}
 	}
 
 	if err := r.db.WithContext(ctx).Clauses(
@@ -137,10 +132,9 @@ func (r MetricRepository) CreateBatch(
 	}
 
 	// TODO update latest metrics in the background?
-
 	currentLatestMetricsMap := make(map[string]models.LatestMetric, len(latestMetrics))
-	for _, m := range latestMetrics {
-		currentLatestMetricsMap[m.Key] = m
+	for k, m := range latestMetrics {
+		currentLatestMetricsMap[k] = m
 	}
 
 	updatedLatestMetrics := make([]models.LatestMetric, 0, len(latestMetrics))

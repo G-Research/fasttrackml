@@ -859,7 +859,6 @@ func SearchMetrics(c *fiber.Ctx) error {
 					iters = make([]float64, 0, q.Steps)
 					epochs = make([]float64, 0, q.Steps)
 					context = fiber.Map{}
-					contextID = 0
 					timestamps = make([]float64, 0, q.Steps)
 					if xAxis {
 						xAxisValues = make([]float64, 0, q.Steps)
@@ -882,13 +881,11 @@ func SearchMetrics(c *fiber.Ctx) error {
 					}
 					xAxisValues = append(xAxisValues, x)
 				}
-				if metric.Context != nil {
-					// to be properly decoded by AIM UI, json should be represented as a key:value object.
-					if err := json.Unmarshal(metric.Context, &context); err != nil {
-						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
-					}
-					contextID = metric.ContextID
+				// to be properly decoded by AIM UI, json should be represented as a key:value object.
+				if err := json.Unmarshal(metric.Context, &context); err != nil {
+					return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
 				}
+				contextID = metric.ContextID
 			}
 
 			addMetrics()

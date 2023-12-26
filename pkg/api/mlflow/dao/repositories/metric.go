@@ -87,7 +87,7 @@ func (r MetricRepository) CreateBatch(
 	contexts := make([]*models.Context, len(metrics))
 	latestMetrics := make(map[string]models.LatestMetric)
 	defaultContext := models.Context{Json: []byte(`{}`)}
-	for n, _ := range metrics {
+	for n := range metrics {
 		if metrics[n].Context.Json == nil {
 			metrics[n].Context = defaultContext
 		}
@@ -103,7 +103,7 @@ func (r MetricRepository) CreateBatch(
 		return eris.Wrapf(err, "error creating contexts")
 	}
 
-	for n, _ := range metrics {
+	for n := range metrics {
 		metrics[n].ContextID = contexts[n].ID
 		metrics[n].Iter = lastIters[metrics[n].UniqueKey()] + 1
 		lastIters[metrics[n].UniqueKey()] = metrics[n].Iter

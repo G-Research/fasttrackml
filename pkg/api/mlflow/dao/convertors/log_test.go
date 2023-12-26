@@ -74,7 +74,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 					Timestamp: 1234567890,
 					RunID:     "run_id",
 					Step:      1,
-					Context:   models.Context{
+					Context: models.Context{
 						Json: []byte(`{}`),
 					},
 				},
@@ -124,7 +124,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 					Timestamp: 1234567890,
 					RunID:     "run_id",
 					Step:      1,
-					Context:   models.Context{
+					Context: models.Context{
 						Json: []byte(`{}`),
 					},
 				},
@@ -173,7 +173,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 					Timestamp: 1234567890,
 					RunID:     "run_id",
 					Step:      1,
-					Context:   models.Context{
+					Context: models.Context{
 						Json: []byte(`{}`),
 					},
 				},
@@ -222,7 +222,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 					Timestamp: 1234567890,
 					RunID:     "run_id",
 					Step:      1,
-					Context:   models.Context{
+					Context: models.Context{
 						Json: []byte(`{}`),
 					},
 				},

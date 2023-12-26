@@ -220,8 +220,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 			pv = nil
 		}
 
-		key := m.Key
-		key = fmt.Sprintf("%s%d", m.Key, m.ContextID)
+		key := fmt.Sprintf("%s%d", m.Key, m.ContextID)
 		k := metrics[key]
 		k.name = m.Key
 		k.iters = append(k.iters, int(m.Iter))

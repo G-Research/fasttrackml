@@ -51,7 +51,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	metric, err := s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key1",
 		Value:     1.1,
 		Timestamp: 1234567890,
@@ -61,7 +61,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	metric, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+	metric, err := s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
 		Key:       "key2",
 		Value:     1.1,
 		Timestamp: 2234567890,
@@ -85,6 +85,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	// verify metric contexts are persisting
 	metrics, err := s.MetricFixtures.GetMetricsByRunID(context.Background(), run1.ID)
 	s.Require().Nil(err)
+	s.Require().Len(metrics, 2)
 
 	// verify metric contexts can be used for selection (toplevel key)
 	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]string{

@@ -110,6 +110,10 @@ func createDBProvider(config *mlflowConfig.ServiceConfig) (database.DBProvider, 
 		return nil, eris.Wrap(err, "error creating default experiment")
 	}
 
+	if err := database.CreateDefaultMetricContext(db.GormDB()); err != nil {
+		return nil, eris.Wrap(err, "error creating default context")
+	}
+
 	// cache a global reference to the gorm.DB
 	database.DB = db.GormDB()
 	return db, nil

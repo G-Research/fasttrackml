@@ -303,3 +303,24 @@ func CreateDefaultExperiment(db *gorm.DB, defaultArtifactRoot string) error {
 	}
 	return nil
 }
+
+// CreateDefaultMetricContext creates the default metric context if it doesn't exist.
+func CreateDefaultMetricContext(db *gorm.DB) error {
+	if err := db.First(&DefaultContext).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Info("Creating default context")
+			if err := db.Create(&DefaultContext).Error; err != nil {
+				return fmt.Errorf("error creating default context: %s", err)
+			}
+			// override the autoincrement ID to start at 0
+			if err := db.Exec(`UPDATE contexts SET id = ? WHERE id = ?`, DefaultContextID, DefaultContext.ID).Error; err != nil {
+				return fmt.Errorf("error updating default context id to 0: %s", err)
+			}
+			DefaultContext.ID = DefaultContextID
+		} else {
+			return fmt.Errorf("unable to find default context: %s", err)
+		}
+	}
+	log.Debugf("Default metric context: %v", DefaultContext)
+	return nil
+}

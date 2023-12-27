@@ -19,15 +19,17 @@ func ConvertLogMetricRequestToDBModel(runID string, req *request.LogMetricReques
 		Step:      req.Step,
 		RunID:     runID,
 	}
-	if req.Context == nil {
-		req.Context = map[string]any{}
-	}
-	contextJSON, err := json.Marshal(req.Context)
-	if err != nil {
-		return nil, eris.Wrap(err, "error marshalling context")
-	}
-	metric.Context = models.Context{
-		Json: contextJSON,
+	if req.Context == nil || len(req.Context) == 0 {
+		metric.Context = models.DefaultContext
+		metric.ContextID = models.DefaultContextID
+	} else {
+		contextJSON, err := json.Marshal(req.Context)
+		if err != nil {
+			return nil, eris.Wrap(err, "error marshalling context")
+		}
+		metric.Context = models.Context{
+			Json: contextJSON,
+		}
 	}
 	if v, ok := req.Value.(float64); ok {
 		metric.Value = v

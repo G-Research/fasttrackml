@@ -84,14 +84,17 @@ func (r MetricRepository) CreateBatch(
 	for _, lastMetric := range lastMetrics {
 		lastIters[lastMetric.UniqueKey()] = lastMetric.LastIter
 	}
-	contexts := make([]*models.Context, len(metrics))
+	allContexts := make([]*models.Context, len(metrics))
+	uniqueContexts := make([]*models.Context, 0, len(metrics))
+	contextProcessed := make(map[string]any)
 	latestMetrics := make(map[string]models.LatestMetric)
-	defaultContext := models.Context{Json: []byte(`{}`)}
 	for n := range metrics {
-		if metrics[n].Context.Json == nil {
-			metrics[n].Context = defaultContext
+		allContexts[n] = &metrics[n].Context
+		ctxHash := getJsonHash(metrics[n].Context.Json)
+		if _, ok := contextProcessed[ctxHash]; !ok {
+			uniqueContexts = append(uniqueContexts, &metrics[n].Context)
+			contextProcessed[ctxHash] = true
 		}
-		contexts[n] = &metrics[n].Context
 	}
 
 	if err := r.db.WithContext(ctx).Clauses(
@@ -99,12 +102,12 @@ func (r MetricRepository) CreateBatch(
 			Columns:   []clause.Column{{Name: "json"}},
 			UpdateAll: true,
 		},
-	).CreateInBatches(&contexts, batchSize).Error; err != nil {
+	).CreateInBatches(&uniqueContexts, batchSize).Error; err != nil {
 		return eris.Wrapf(err, "error creating contexts")
 	}
 
 	for n := range metrics {
-		metrics[n].ContextID = contexts[n].ID
+		metrics[n].ContextID = allContexts[n].ID
 		metrics[n].Iter = lastIters[metrics[n].UniqueKey()] + 1
 		lastIters[metrics[n].UniqueKey()] = metrics[n].Iter
 		lm, ok := latestMetrics[metrics[n].UniqueKey()]
@@ -120,7 +123,7 @@ func (r MetricRepository) CreateBatch(
 				Step:      metrics[n].Step,
 				IsNan:     metrics[n].IsNan,
 				LastIter:  metrics[n].Iter,
-				ContextID: contexts[n].ID,
+				ContextID: allContexts[n].ID,
 			}
 		}
 	}

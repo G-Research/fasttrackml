@@ -6,6 +6,13 @@ import (
 	"gorm.io/datatypes"
 )
 
+const (
+	DefaultContextID uint = 0
+)
+
+// DefaultContext is the default metric context
+var DefaultContext = Context{ID: DefaultContextID, Json: datatypes.JSON("{}")}
+
 // Metric represents model to work with `metrics` table.
 type Metric struct {
 	Key       string  `gorm:"type:varchar(250);not null;primaryKey"`
@@ -15,7 +22,7 @@ type Metric struct {
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
 	Iter      int64   `gorm:"index"`
-	ContextID uint    `gorm:"not null;primaryKey"`
+	ContextID uint    `gorm:"not null;primaryKey;default:0"`
 	Context   Context
 }
 
@@ -33,7 +40,7 @@ type LatestMetric struct {
 	IsNan     bool   `gorm:"not null"`
 	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
 	LastIter  int64
-	ContextID uint `gorm:"not null;primaryKey"`
+	ContextID uint `gorm:"not null;primaryKey:default:0"`
 	Context   Context
 }
 

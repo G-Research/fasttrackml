@@ -17,12 +17,15 @@ import (
 type Status string
 
 const (
-	StatusRunning   Status = "RUNNING"
-	StatusScheduled Status = "SCHEDULED"
-	StatusFinished  Status = "FINISHED"
-	StatusFailed    Status = "FAILED"
-	StatusKilled    Status = "KILLED"
+	StatusRunning    Status = "RUNNING"
+	StatusScheduled  Status = "SCHEDULED"
+	StatusFinished   Status = "FINISHED"
+	StatusFailed     Status = "FAILED"
+	StatusKilled     Status = "KILLED"
+	DefaultContextID uint   = 0
 )
+
+var DefaultContext = Context{ID: DefaultContextID, Json: datatypes.JSON("{}")}
 
 type LifecycleStage string
 
@@ -133,7 +136,7 @@ type Metric struct {
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
 	Iter      int64   `gorm:"index"`
-	ContextID uint    `gorm:"not null;primaryKey"`
+	ContextID uint    `gorm:"not null;primaryKey;default:0"`
 	Context   Context
 }
 
@@ -145,7 +148,7 @@ type LatestMetric struct {
 	IsNan     bool   `gorm:"not null"`
 	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
 	LastIter  int64
-	ContextID uint `gorm:"not null;primaryKey"`
+	ContextID uint `gorm:"not null;primaryKey;default:0"`
 	Context   Context
 }
 

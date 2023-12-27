@@ -80,7 +80,7 @@ func TestNewMetricHistoryResponse_Ok(t *testing.T) {
 					Step:      1,
 					IsNan:     false,
 					Iter:      1,
-					ContextID: 1,
+					ContextID: models.DefaultContextID,
 					Context: models.Context{
 						ID:   1,
 						Json: []byte(`{"key": "value"}`),

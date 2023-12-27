@@ -33,9 +33,8 @@ func TestConvertMetricParamRequestToDBModel_Ok(t *testing.T) {
 				Timestamp: 1234567890,
 				RunID:     "run_id",
 				Step:      1,
-				Context: models.Context{
-					Json: []byte(`{}`),
-				},
+				ContextID: models.DefaultContextID,
+				Context:   models.DefaultContext,
 			},
 		},
 		{
@@ -54,9 +53,8 @@ func TestConvertMetricParamRequestToDBModel_Ok(t *testing.T) {
 				Timestamp: 1234567890,
 				RunID:     "run_id",
 				Step:      1,
-				Context: models.Context{
-					Json: []byte(`{}`),
-				},
+				ContextID: models.DefaultContextID,
+				Context:   models.DefaultContext,
 			},
 		},
 		{
@@ -74,9 +72,8 @@ func TestConvertMetricParamRequestToDBModel_Ok(t *testing.T) {
 				Timestamp: 1234567890,
 				RunID:     "run_id",
 				Step:      1,
-				Context: models.Context{
-					Json: []byte(`{}`),
-				},
+				ContextID: models.DefaultContextID,
+				Context:   models.DefaultContext,
 			},
 		},
 		{
@@ -94,9 +91,8 @@ func TestConvertMetricParamRequestToDBModel_Ok(t *testing.T) {
 				Timestamp: 1234567890,
 				RunID:     "run_id",
 				Step:      1,
-				Context: models.Context{
-					Json: []byte(`{}`),
-				},
+				ContextID: models.DefaultContextID,
+				Context:   models.DefaultContext,
 			},
 		},
 		{
@@ -118,6 +114,7 @@ func TestConvertMetricParamRequestToDBModel_Ok(t *testing.T) {
 				Timestamp: 1234567890,
 				RunID:     "run_id",
 				Step:      1,
+				ContextID: 0,
 				Context: models.Context{
 					Json: []byte(`{"key1":"value1","key2":2}`),
 				},
@@ -142,6 +139,7 @@ func TestConvertMetricParamRequestToDBModel_Ok(t *testing.T) {
 				Timestamp: 1234567890,
 				RunID:     "run_id",
 				Step:      1,
+				ContextID: 0,
 				Context: models.Context{
 					Json: []byte(`{"key1":"value1","key2":2}`),
 				},

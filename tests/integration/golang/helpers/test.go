@@ -174,6 +174,7 @@ func (s *BaseTestSuite) setupDatabase() {
 			s.Require().Nil(err)
 		}
 	}
+	database.CreateDefaultMetricContext(s.db.GormDB())
 }
 
 func (s *BaseTestSuite) resetDatabase() {

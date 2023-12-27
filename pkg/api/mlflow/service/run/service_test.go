@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -1297,7 +1296,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 							Value:     1.1,
 							RunID:     "1",
 							Timestamp: 123456789,
-							Context:   models.Context{Json: datatypes.JSON(`{}`)},
+							ContextID: models.DefaultContextID,
+							Context:   models.DefaultContext,
 						},
 					},
 				).Return(errors.New("database error"))
@@ -1393,7 +1393,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 							Value:     1.1,
 							RunID:     "1",
 							Timestamp: 123456789,
-							Context:   models.Context{Json: datatypes.JSON(`{}`)},
+							ContextID: models.DefaultContextID,
+							Context:   models.DefaultContext,
 						},
 					},
 				).Return(nil)

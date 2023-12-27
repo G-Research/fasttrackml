@@ -10,7 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -37,8 +36,6 @@ func (s *LogMetricTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	defaultContext := models.Context{ID: 1, Json: datatypes.JSON([]byte(`{}`))}
-
 	tests := []struct {
 		name           string
 		request        *request.LogMetricRequest
@@ -61,8 +58,8 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				IsNan:     false,
 				RunID:     run.ID,
 				LastIter:  1,
-				ContextID: defaultContext.ID,
-				Context:   defaultContext,
+				ContextID: models.DefaultContextID,
+				Context:   models.DefaultContext,
 			},
 		},
 		{
@@ -82,8 +79,8 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				IsNan:     true,
 				RunID:     run.ID,
 				LastIter:  2,
-				ContextID: defaultContext.ID,
-				Context:   defaultContext,
+				ContextID: models.DefaultContextID,
+				Context:   models.DefaultContext,
 			},
 		},
 		{
@@ -102,8 +99,8 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				Step:      1,
 				RunID:     run.ID,
 				LastIter:  3,
-				ContextID: defaultContext.ID,
-				Context:   defaultContext,
+				ContextID: models.DefaultContextID,
+				Context:   models.DefaultContext,
 			},
 		},
 		{
@@ -122,8 +119,8 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				Step:      1,
 				RunID:     run.ID,
 				LastIter:  4,
-				ContextID: defaultContext.ID,
-				Context:   defaultContext,
+				ContextID: models.DefaultContextID,
+				Context:   models.DefaultContext,
 			},
 		},
 	}

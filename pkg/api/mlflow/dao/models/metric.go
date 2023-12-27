@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	DefaultContextID uint = 0
+	DefaultContextID uint = 1
 )
 
 // DefaultContext is the default metric context
@@ -22,7 +22,7 @@ type Metric struct {
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
 	Iter      int64   `gorm:"index"`
-	ContextID uint    `gorm:"not null;primaryKey;default:0"`
+	ContextID uint    `gorm:"not null;primaryKey"`
 	Context   Context
 }
 
@@ -40,7 +40,7 @@ type LatestMetric struct {
 	IsNan     bool   `gorm:"not null"`
 	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
 	LastIter  int64
-	ContextID uint `gorm:"not null;primaryKey:default:0"`
+	ContextID uint `gorm:"not null;primaryKey"`
 	Context   Context
 }
 

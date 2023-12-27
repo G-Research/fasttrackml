@@ -95,7 +95,7 @@ func (f MetricFixtures) CreateLatestMetric(
 // GetLatestMetricByKey returns the latest metric by provided key.
 func (f MetricFixtures) GetLatestMetricByKey(ctx context.Context, key string) (*models.LatestMetric, error) {
 	var metric models.LatestMetric
-	if err := f.db.WithContext(ctx).Where(
+	if err := f.db.WithContext(ctx).Preload("Context").Where(
 		"key = ?", key,
 	).First(&metric).Error; err != nil {
 		return nil, eris.Wrapf(err, "error getting latest metric by key: %v", key)

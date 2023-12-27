@@ -86,14 +86,17 @@ func (r MetricRepository) CreateBatch(
 	}
 	allContexts := make([]*models.Context, len(metrics))
 	uniqueContexts := make([]*models.Context, 0, len(metrics))
-	contextProcessed := make(map[string]any)
+	contextProcessed := make(map[string]*models.Context)
 	latestMetrics := make(map[string]models.LatestMetric)
 	for n := range metrics {
-		allContexts[n] = &metrics[n].Context
 		ctxHash := getJsonHash(metrics[n].Context.Json)
-		if _, ok := contextProcessed[ctxHash]; !ok {
+		ctxRef, ok := contextProcessed[ctxHash]
+		if ok {
+			allContexts[n] = ctxRef
+		} else {
 			uniqueContexts = append(uniqueContexts, &metrics[n].Context)
-			contextProcessed[ctxHash] = true
+			allContexts[n] = &metrics[n].Context
+			contextProcessed[ctxHash] = &metrics[n].Context
 		}
 	}
 
@@ -107,7 +110,7 @@ func (r MetricRepository) CreateBatch(
 	}
 
 	for n := range metrics {
-		metrics[n].ContextID = allContexts[n].ID
+		metrics[n].Context = *allContexts[n]
 		metrics[n].Iter = lastIters[metrics[n].UniqueKey()] + 1
 		lastIters[metrics[n].UniqueKey()] = metrics[n].Iter
 		lm, ok := latestMetrics[metrics[n].UniqueKey()]
@@ -123,7 +126,7 @@ func (r MetricRepository) CreateBatch(
 				Step:      metrics[n].Step,
 				IsNan:     metrics[n].IsNan,
 				LastIter:  metrics[n].Iter,
-				ContextID: allContexts[n].ID,
+				Context:   *allContexts[n],
 			}
 		}
 	}

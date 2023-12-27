@@ -711,12 +711,13 @@ func SearchMetrics(c *fiber.Ctx) error {
 		).
 		Table("metrics").
 		Joins(
-			"INNER JOIN (?) runmetrics USING(run_uuid, key)",
+			"INNER JOIN (?) runmetrics USING(run_uuid, key, context_id)",
 			pq.Filter(database.DB.
 				Select(
 					"runs.run_uuid",
 					"runs.row_num",
 					"latest_metrics.key",
+					"latest_metrics.context_id",
 					"latest_metrics_context.json AS context_json",
 					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
 				).

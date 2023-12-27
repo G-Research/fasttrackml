@@ -111,6 +111,7 @@ func (r MetricRepository) CreateBatch(
 
 	for n := range metrics {
 		metrics[n].Context = *allContexts[n]
+		metrics[n].ContextID = allContexts[n].ID
 		metrics[n].Iter = lastIters[metrics[n].UniqueKey()] + 1
 		lastIters[metrics[n].UniqueKey()] = metrics[n].Iter
 		lm, ok := latestMetrics[metrics[n].UniqueKey()]

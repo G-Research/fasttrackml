@@ -7,6 +7,16 @@ import fasttrackml
 from fasttrackml import FasttrackmlClient
 
 
+def print_metric_info(history):
+    for m in history:
+        print(f"name: {m.key}")
+        print(f"value: {m.value}")
+        print(f"step: {m.step}")
+        print(f"timestamp: {m.timestamp}")
+        print(f"context: {m.context}")
+        print("--")
+
+
 def main():
     fasttrackml.set_tracking_uri("http://localhost:5000")
     # Creating an instance of the Fasttrackml client
@@ -36,6 +46,14 @@ def main():
         Metric("precision", 0.92, timestamp, 1, context={"context_key": "context_value4"}),
     ]
     client.log_batch(run_id, metrics=metrics)
+
+    # Retrieving metric histories
+    metric_keys = [metric_key, "loss"]
+    metric_histories_df = client.get_metric_histories(run_ids=[run_id], metric_keys=metric_keys)
+
+    print(metric_histories_df)
+
+    print_metric_info(client.get_metric_history(run_id, metric_key))
 
     # Closing the run
     client.set_terminated(run_id)

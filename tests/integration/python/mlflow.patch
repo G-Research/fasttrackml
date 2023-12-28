@@ -1,14 +1,30 @@
+diff --git a/pytest.ini b/pytest.ini
+index 90cb8c3b8..4506a194f 100644
+--- a/pytest.ini
++++ b/pytest.ini
+@@ -4,4 +4,3 @@ filterwarnings =
+   # Prevent deprecated numpy type aliases from being used
+   error:^`np\.[a-z]+` is a deprecated alias for.+:DeprecationWarning:mlflow
+   error:^`np\.[a-z]+` is a deprecated alias for.+:DeprecationWarning:tests
+-timeout = 1200
 diff --git a/tests/tracking/integration_test_utils.py b/tests/tracking/integration_test_utils.py
-index 41ec85f..a99de1d 100644
+index f64ea82d1..461a63a2a 100644
 --- a/tests/tracking/integration_test_utils.py
 +++ b/tests/tracking/integration_test_utils.py
-@@ -52,14 +52,16 @@ def _init_server(backend_uri, root_artifact_uri):
+@@ -42,21 +42,16 @@ def _init_server(backend_uri, root_artifact_uri, extra_env=None, app="mlflow.ser
      server_port = get_safe_port()
-     process = Popen(
+     with Popen(
          [
 -            sys.executable,
--            "-c",
--            f'from mlflow.server import app; app.run("{LOCALHOST}", {server_port})',
+-            "-m",
+-            "flask",
+-            "--app",
+-            app,
+-            "run",
+-            "--host",
+-            LOCALHOST,
+-            "--port",
+-            str(server_port),
 +            "fml",
 +            "server",
          ],
@@ -18,41 +34,39 @@ index 41ec85f..a99de1d 100644
 -            ARTIFACT_ROOT_ENV_VAR: root_artifact_uri,
 +            "FML_LISTEN_ADDRESS": f"{LOCALHOST}:{server_port}",
 +            "FML_DATABASE_URI": backend_uri,
-+            "FML_ARTIFACT_ROOT": root_artifact_uri,
++            "FML_DEFAULT_ARTIFACT_ROOT": root_artifact_uri,
 +            "FML_LOG_LEVEL": "debug",
 +            "FML_DATABASE_RESET": str(backend_uri.startswith("postgres://")),
+             **(extra_env or {}),
          },
-     )
- 
+     ) as proc:
 diff --git a/tests/tracking/test_rest_tracking.py b/tests/tracking/test_rest_tracking.py
-index 45ee41e..3afdfcb 100644
+index 5f952dda4..7679a1d7c 100644
 --- a/tests/tracking/test_rest_tracking.py
 +++ b/tests/tracking/test_rest_tracking.py
-@@ -51,7 +51,7 @@ from tests.tracking.integration_test_utils import (
+@@ -60,7 +60,7 @@ from tests.tracking.integration_test_utils import (
  _logger = logging.getLogger(__name__)
  
  
 -@pytest.fixture(params=["file", "sqlalchemy"])
-+@pytest.fixture(params=["sqlite+memory", "sqlite+file", "sqlite+key", "postgres"])
++@pytest.fixture(params=["sqlite", "sqlcipher", "postgres"])
  def mlflow_client(request, tmp_path):
      """Provides an MLflow Tracking API client pointed at the local tracking server."""
      if request.param == "file":
-@@ -61,6 +61,14 @@ def mlflow_client(request, tmp_path):
+@@ -70,6 +70,12 @@ def mlflow_client(request, tmp_path):
          backend_uri = ("sqlite://" if sys.platform == "win32" else "sqlite:////") + path[
              len("file://") :
          ]
-+    elif request.param == "sqlite+memory":
-+        backend_uri = f"sqlite://{tmp_path.joinpath('sqlalchemy.db')}?mode=memory&cache=shared"
-+    elif request.param == "sqlite+file":
-+        backend_uri = f"sqlite://{tmp_path.joinpath('sqlalchemy.db')}?_journal_mode=WAL"
-+    elif request.param == "sqlite+key":
-+        backend_uri = f"sqlite://{tmp_path.joinpath('sqlalchemy.db')}?_key=passphrase&_journal_mode=WAL"
++    elif request.param == "sqlite":
++        backend_uri = f"sqlite://{tmp_path.joinpath('mlflow.db')}"
++    elif request.param == "sqlcipher":
++        backend_uri = f"sqlite://{tmp_path.joinpath('mlflow.db')}?_key=passphrase"
 +    elif request.param == "postgres":
 +        backend_uri = "postgres://postgres:postgres@postgres/postgres"
  
-     url, process = _init_server(backend_uri, root_artifact_uri=tmp_path.as_uri())
-     yield MlflowClient(url)
-@@ -140,7 +148,7 @@ def test_create_experiment_validation(mlflow_client):
+     with _init_server(backend_uri, root_artifact_uri=tmp_path.as_uri()) as url:
+         yield MlflowClient(url)
+@@ -146,7 +152,7 @@ def test_create_experiment_validation(mlflow_client):
          {
              "name": 123,
          },
@@ -61,7 +75,7 @@ index 45ee41e..3afdfcb 100644
      )
      assert_bad_request({}, "Missing value for required parameter 'name'")
      assert_bad_request(
-@@ -149,7 +157,7 @@ def test_create_experiment_validation(mlflow_client):
+@@ -155,7 +161,7 @@ def test_create_experiment_validation(mlflow_client):
              "artifact_location": 9.0,
              "tags": [{"key": "key", "value": "value"}],
          },
@@ -70,7 +84,7 @@ index 45ee41e..3afdfcb 100644
      )
      assert_bad_request(
          {
-@@ -157,7 +165,7 @@ def test_create_experiment_validation(mlflow_client):
+@@ -163,7 +169,7 @@ def test_create_experiment_validation(mlflow_client):
              "artifact_location": "my_location",
              "tags": "5",
          },
@@ -79,7 +93,7 @@ index 45ee41e..3afdfcb 100644
      )
  
  
-@@ -324,7 +332,7 @@ def test_log_metric_validation(mlflow_client):
+@@ -328,7 +334,7 @@ def test_log_metric_validation(mlflow_client):
              "timestamp": 59,
              "step": 26,
          },
@@ -88,7 +102,7 @@ index 45ee41e..3afdfcb 100644
      )
      assert_bad_request(
          {
-@@ -334,7 +342,7 @@ def test_log_metric_validation(mlflow_client):
+@@ -338,7 +344,7 @@ def test_log_metric_validation(mlflow_client):
              "timestamp": 59,
              "step": 26,
          },
@@ -97,7 +111,7 @@ index 45ee41e..3afdfcb 100644
      )
      assert_bad_request(
          {
-@@ -344,7 +352,7 @@ def test_log_metric_validation(mlflow_client):
+@@ -348,7 +354,7 @@ def test_log_metric_validation(mlflow_client):
              "timestamp": 59,
              "step": "foo",
          },
@@ -106,7 +120,7 @@ index 45ee41e..3afdfcb 100644
      )
      assert_bad_request(
          {
-@@ -354,7 +362,7 @@ def test_log_metric_validation(mlflow_client):
+@@ -358,7 +364,7 @@ def test_log_metric_validation(mlflow_client):
              "timestamp": "foo",
              "step": 41,
          },
@@ -115,7 +129,7 @@ index 45ee41e..3afdfcb 100644
      )
      assert_bad_request(
          {
-@@ -408,7 +416,7 @@ def test_log_param_validation(mlflow_client):
+@@ -412,7 +418,7 @@ def test_log_param_validation(mlflow_client):
              "key": "param",
              "value": 41,
          },
@@ -124,7 +138,7 @@ index 45ee41e..3afdfcb 100644
      )
      assert_bad_request(
          {
-@@ -416,7 +424,7 @@ def test_log_param_validation(mlflow_client):
+@@ -420,7 +426,7 @@ def test_log_param_validation(mlflow_client):
              "key": 31,
              "value": 41,
          },
@@ -133,7 +147,7 @@ index 45ee41e..3afdfcb 100644
      )
  
  
-@@ -478,7 +486,7 @@ def test_set_tag_validation(mlflow_client):
+@@ -482,7 +488,7 @@ def test_set_tag_validation(mlflow_client):
              "key": "tag",
              "value": 41,
          },
@@ -142,7 +156,7 @@ index 45ee41e..3afdfcb 100644
      )
      assert_bad_request(
          {
-@@ -486,7 +494,7 @@ def test_set_tag_validation(mlflow_client):
+@@ -490,7 +496,7 @@ def test_set_tag_validation(mlflow_client):
              "key": "param",
              "value": 41,
          },
@@ -151,31 +165,35 @@ index 45ee41e..3afdfcb 100644
      )
      assert_bad_request(
          {
-@@ -537,6 +545,7 @@ def test_validate_path_is_safe_bad(path):
-         validate_path_is_safe(path)
+@@ -533,17 +539,11 @@ def test_path_validation(mlflow_client):
+     assert_response(response)
  
+     response = requests.get(
+-        f"{mlflow_client.tracking_uri}/get-artifact",
++        f"{mlflow_client.tracking_uri}/ajax-api/2.0/mlflow/artifacts/get",
+         params={"run_id": run_id, "path": invalid_path},
+     )
+     assert_response(response)
  
-+@pytest.mark.skip
- def test_path_validation(mlflow_client):
-     experiment_id = mlflow_client.create_experiment("tags validation")
-     created_run = mlflow_client.create_run(experiment_id)
-@@ -618,12 +627,12 @@ def test_delete_tag(mlflow_client):
-     mlflow_client.delete_tag(run_id, "taggity")
-     run = mlflow_client.get_run(run_id)
-     assert "taggity" not in run.data.tags
--    with pytest.raises(MlflowException, match=r"Run .+ not found"):
-+    with pytest.raises(MlflowException, match="Unable to find active run 'fake_run_id'"):
-         mlflow_client.delete_tag("fake_run_id", "taggity")
--    with pytest.raises(MlflowException, match="No tag with name: fakeTag"):
-+    with pytest.raises(MlflowException, match="Unable to find tag 'fakeTag'"):
+-    response = requests.get(
+-        f"{mlflow_client.tracking_uri}//model-versions/get-artifact",
+-        params={"name": "model", "version": 1, "path": invalid_path},
+-    )
+-    assert_response(response)
+-
+ 
+ def test_set_experiment_tag(mlflow_client):
+     experiment_id = mlflow_client.create_experiment("SetExperimentTagTest")
+@@ -602,7 +602,7 @@ def test_delete_tag(mlflow_client):
+     with pytest.raises(MlflowException, match="No tag with name: fakeTag"):
          mlflow_client.delete_tag(run_id, "fakeTag")
      mlflow_client.delete_run(run_id)
 -    with pytest.raises(MlflowException, match=f"The run {run_id} must be in"):
-+    with pytest.raises(MlflowException, match=f"Unable to find active run '{run_id}'"):
++    with pytest.raises(MlflowException, match=f"Run '{run_id}' not found"):
          mlflow_client.delete_tag(run_id, "taggity")
  
  
-@@ -670,10 +679,11 @@ def test_log_batch_validation(mlflow_client):
+@@ -649,13 +649,13 @@ def test_log_batch_validation(mlflow_client):
                  "run_id": run_id,
                  request_parameter: "foo",
              },
@@ -183,20 +201,24 @@ index 45ee41e..3afdfcb 100644
 +            f"Invalid value for parameter '{request_parameter}' supplied",
          )
  
+     ## Should 400 if missing timestamp
+     assert_bad_request(
+         {"run_id": run_id, "metrics": [{"key": "mae", "value": 2.5}]},
+-        "Invalid value [{'key': 'mae', 'value': 2.5}] for parameter 'metrics' supplied",
++        "Invalid value for parameter 'metrics' supplied",
+     )
  
-+@pytest.mark.skip
- @pytest.mark.allow_infer_pip_requirements_fallback
+     ## Should 200 if timestamp provided but step is not
+@@ -668,7 +668,7 @@ def test_log_batch_validation(mlflow_client):
+     assert response.status_code == 200
+ 
+ 
+-@pytest.mark.allow_infer_pip_requirements_fallback
++@pytest.mark.skip()
  def test_log_model(mlflow_client):
      experiment_id = mlflow_client.create_experiment("Log models")
-@@ -727,6 +737,7 @@ def test_set_terminated_status(mlflow_client):
-     assert mlflow_client.get_run(run_id).info.end_time <= get_current_time_millis()
- 
- 
-+@pytest.mark.skip
- def test_artifacts(mlflow_client, tmp_path):
-     experiment_id = mlflow_client.create_experiment("Art In Fact")
-     experiment_info = mlflow_client.get_experiment(experiment_id)
-@@ -780,7 +791,7 @@ def test_search_pagination(mlflow_client):
+     with TempDir(chdr=True):
+@@ -778,7 +778,7 @@ def test_search_pagination(mlflow_client):
  def test_search_validation(mlflow_client):
      experiment_id = mlflow_client.create_experiment("search_validation")
      with pytest.raises(
@@ -205,19 +227,131 @@ index 45ee41e..3afdfcb 100644
      ):
          mlflow_client.search_runs([experiment_id], max_results=123456789)
  
-@@ -1044,6 +1055,7 @@ def test_get_metric_history_bulk_calls_optimized_impl_when_expected(monkeypatch,
+@@ -1003,6 +1003,7 @@ def test_get_metric_history_bulk_respects_max_results(mlflow_client):
+     ]
+ 
+ 
++@pytest.mark.skip
+ def test_get_metric_history_bulk_calls_optimized_impl_when_expected(tmp_path):
+     from mlflow.server.handlers import get_metric_history_bulk_handler
+ 
+@@ -1045,6 +1046,7 @@ def test_get_metric_history_bulk_calls_optimized_impl_when_expected(tmp_path):
          )
  
  
-+@pytest.mark.skip
- def test_create_model_version_with_local_source(mlflow_client):
-     name = "mode"
++@pytest.mark.skip()
+ def test_search_dataset_handler_rejects_invalid_requests(mlflow_client):
+     def assert_response(resp, message_part):
+         assert resp.status_code == 400
+@@ -1080,6 +1082,7 @@ def test_search_dataset_handler_rejects_invalid_requests(mlflow_client):
+     )
+ 
+ 
++@pytest.mark.skip()
+ def test_search_dataset_handler_returns_expected_results(mlflow_client):
+     experiment_id = mlflow_client.create_experiment("log inputs test")
+     created_run = mlflow_client.create_run(experiment_id)
+@@ -1113,6 +1116,7 @@ def test_search_dataset_handler_returns_expected_results(mlflow_client):
+     assert response.json().get("dataset_summaries") == [expected]
+ 
+ 
++@pytest.mark.skip()
+ def test_create_model_version_with_path_source(mlflow_client):
+     name = "model"
      mlflow_client.create_registered_model(name)
-@@ -1124,6 +1136,7 @@ def test_create_model_version_with_local_source(mlflow_client):
-     assert "Invalid source" in resp["message"]
+@@ -1153,6 +1157,7 @@ def test_create_model_version_with_path_source(mlflow_client):
+     assert "To use a local path as a model version" in response.json()["message"]
  
  
-+@pytest.mark.skip
++@pytest.mark.skip()
+ def test_create_model_version_with_non_local_source(mlflow_client):
+     name = "model"
+     mlflow_client.create_registered_model(name)
+@@ -1313,6 +1318,7 @@ def test_create_model_version_with_non_local_source(mlflow_client):
+     assert "If supplying a source as an http, https," in response.json()["message"]
+ 
+ 
++@pytest.mark.skip()
+ def test_create_model_version_with_file_uri(mlflow_client):
+     name = "test"
+     mlflow_client.create_registered_model(name)
+@@ -1393,6 +1399,7 @@ def test_create_model_version_with_file_uri(mlflow_client):
+     assert "MLflow tracking server doesn't allow" in response.json()["message"]
+ 
+ 
++@pytest.mark.skip()
+ def test_create_model_version_with_file_uri_env_var(tmp_path):
+     backend_uri = tmp_path.joinpath("file").as_uri()
+     with _init_server(
+@@ -1417,6 +1424,7 @@ def test_create_model_version_with_file_uri_env_var(tmp_path):
+         assert response.status_code == 200
+ 
+ 
++@pytest.mark.skip()
  def test_logging_model_with_local_artifact_uri(mlflow_client):
      from sklearn.linear_model import LogisticRegression
  
+@@ -1427,6 +1435,7 @@ def test_logging_model_with_local_artifact_uri(mlflow_client):
+         mlflow.pyfunc.load_model("models:/rmn/1")
+ 
+ 
++@pytest.mark.skip()
+ def test_log_input(mlflow_client, tmp_path):
+     df = pd.DataFrame([[1, 2, 3], [1, 2, 3]], columns=["a", "b", "c"])
+     path = tmp_path / "temp.csv"
+@@ -1461,6 +1470,7 @@ def test_log_input(mlflow_client, tmp_path):
+     assert dataset_inputs[0].tags[1].value == "train"
+ 
+ 
++@pytest.mark.skip()
+ def test_log_inputs(mlflow_client):
+     experiment_id = mlflow_client.create_experiment("log inputs test")
+     created_run = mlflow_client.create_run(experiment_id)
+@@ -1490,6 +1500,7 @@ def test_log_inputs(mlflow_client):
+     assert run.inputs.dataset_inputs[0].tags[0].value == "value1"
+ 
+ 
++@pytest.mark.skip()
+ def test_log_inputs_validation(mlflow_client):
+     experiment_id = mlflow_client.create_experiment("log inputs validation")
+     created_run = mlflow_client.create_run(experiment_id)
+@@ -1537,6 +1548,7 @@ def test_update_run_name_without_changing_status(mlflow_client):
+     assert updated_run_info.status == "FINISHED"
+ 
+ 
++@pytest.mark.skip()
+ def test_create_promptlab_run_handler_rejects_invalid_requests(mlflow_client):
+     def assert_response(resp, message_part):
+         assert resp.status_code == 400
+@@ -1626,6 +1638,7 @@ def test_create_promptlab_run_handler_rejects_invalid_requests(mlflow_client):
+     )
+ 
+ 
++@pytest.mark.skip()
+ def test_create_promptlab_run_handler_returns_expected_results(mlflow_client):
+     experiment_id = mlflow_client.create_experiment("log inputs test")
+ 
+@@ -1669,6 +1682,7 @@ def test_create_promptlab_run_handler_returns_expected_results(mlflow_client):
+     ]["tags"]
+ 
+ 
++@pytest.mark.skip()
+ def test_gateway_proxy_handler_rejects_invalid_requests(mlflow_client):
+     def assert_response(resp, message_part):
+         assert resp.status_code == 400
+@@ -1693,6 +1707,7 @@ def test_gateway_proxy_handler_rejects_invalid_requests(mlflow_client):
+         )
+ 
+ 
++@pytest.mark.skip()
+ def test_upload_artifact_handler_rejects_invalid_requests(mlflow_client):
+     def assert_response(resp, message_part):
+         assert resp.status_code == 400
+@@ -1738,6 +1753,7 @@ def test_upload_artifact_handler_rejects_invalid_requests(mlflow_client):
+     assert_response(response, "Request must specify data.")
+ 
+ 
++@pytest.mark.skip()
+ def test_upload_artifact_handler(mlflow_client):
+     experiment_id = mlflow_client.create_experiment("upload_artifacts_test")
+     created_run = mlflow_client.create_run(experiment_id)

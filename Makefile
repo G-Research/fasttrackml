@@ -10,11 +10,13 @@ ifeq ($(shell go env GOOS),windows)
   APP:=$(APP).exe
 endif
 # Version.
-VERSION?=$(shell git describe --tags --always --dirty --match='v*' 2> /dev/null | sed 's/^v//')
-# Enable Go Modules.
-GO111MODULE=on
+# Use git describe to get the version.
+# If the git describe fails, fallback to a version based on the git commit.
+VERSION?=$(shell git describe --tags --dirty --match='v*' 2> /dev/null | sed 's/^v//')
+ifeq ($(VERSION),)
+  VERSION=0.0.0-g$(shell git describe --always --dirty 2> /dev/null)
+endif
 # Go ldflags.
-# Set version to git tag if available, otherwise use commit hash.
 # Strip debug symbols and disable DWARF generation.
 # Build static binaries on Linux.
 GO_LDFLAGS=-s -w -X github.com/G-Research/fasttrackml/pkg/version.Version=$(VERSION)
@@ -113,7 +115,7 @@ python-env: ## create python virtual environment.
 .PHONY: python-dist
 python-dist: go-build python-env ## build python wheels.
 	@echo '>>> Building Python Wheels.'
-	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python --wheel-dir=wheelhouse --no-deps
+	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python/fasttrackml --wheel-dir=wheelhouse --no-deps
 
 .PHONY: python-format
 python-format: python-env ## format python code.

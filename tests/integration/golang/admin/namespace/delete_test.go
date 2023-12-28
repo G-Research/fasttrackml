@@ -81,7 +81,16 @@ func (s *DeleteNamespaceTestSuite) Test_Error() {
 			ID:                      "10",
 			expectedNamespacesCount: 2,
 			response: map[string]any{
-				"message": "An unexepected error was encountered: namespace not found by id: 10",
+				"message": "An unexpected error was encountered: namespace not found by id: 10",
+				"status":  "error",
+			},
+		},
+		{
+			name:                    "DeleteDefaultNamespace",
+			ID:                      "1",
+			expectedNamespacesCount: 2,
+			response: map[string]any{
+				"message": "An unexpected error was encountered: unable to delete default namespace",
 				"status":  "error",
 			},
 		},

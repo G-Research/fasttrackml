@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0001"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0002"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0003"
@@ -242,7 +243,7 @@ func CreateDefaultNamespace(db *gorm.DB) error {
 			log.Info("Creating default namespace")
 			var exp int32 = 0
 			ns := Namespace{
-				Code:                "default",
+				Code:                models.DefaultNamespaceCode,
 				Description:         "Default namespace",
 				DefaultExperimentID: &exp,
 			}
@@ -269,8 +270,8 @@ func CreateDefaultExperiment(db *gorm.DB, defaultArtifactRoot string) error {
 			if err := db.Transaction(func(tx *gorm.DB) error {
 				ts := time.Now().UTC().UnixMilli()
 				exp := Experiment{
-					ID:             common.GetPointer(int32(0)),
-					Name:           "Default",
+					ID:             common.GetPointer(models.DefaultExperimentID),
+					Name:           models.DefaultExperimentName,
 					NamespaceID:    ns.ID,
 					LifecycleStage: LifecycleStageActive,
 					CreationTime: sql.NullInt64{

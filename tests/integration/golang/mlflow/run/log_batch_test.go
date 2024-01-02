@@ -208,7 +208,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						Timestamp: 1687325991,
 						Step:      1,
 						Context: map[string]any{
-							"key1": "value2",
+							"key1": "value1",
 							"key2": 2,
 						},
 					},
@@ -227,7 +227,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						Timestamp: 1687325991,
 						Step:      1,
 						Context: map[string]any{
-							"key1": "value2",
+							"key1": "value1",
 							"key2": 2,
 						},
 					},
@@ -246,7 +246,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						Timestamp: 1687325991,
 						Step:      1,
 						Context: map[string]any{
-							"key1": "value2",
+							"key1": "value1",
 							"key2": 2,
 						},
 					},

@@ -26,9 +26,14 @@ type Metric struct {
 	Context   Context
 }
 
-// UniqueKey is a compound unique key for this metric series
+// UniqueKey is a compound unique key for this metric series.
 func (m Metric) UniqueKey() string {
 	return fmt.Sprintf("%v-%v-%v", m.RunID, m.Key, m.ContextID)
+}
+
+// HasContextAssociation indicates if the context FK is present.
+func (m Metric) HasContextAssociation() bool {
+	return m.ContextID != 0
 }
 
 // LatestMetric represents model to work with `last_metrics` table.
@@ -44,9 +49,14 @@ type LatestMetric struct {
 	Context   Context
 }
 
-// UniqueKey is a compound unique key for this metric series
+// UniqueKey is a compound unique key for this metric series.
 func (m LatestMetric) UniqueKey() string {
 	return fmt.Sprintf("%v-%v-%v", m.RunID, m.Key, m.ContextID)
+}
+
+// HasContextAssociation indicates if the context FK is present.
+func (m LatestMetric) HasContextAssociation() bool {
+	return m.ContextID != 0
 }
 
 // Context represents model to work with `contexts` table.

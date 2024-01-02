@@ -22,10 +22,7 @@ const (
 	StatusFinished   Status = "FINISHED"
 	StatusFailed     Status = "FAILED"
 	StatusKilled     Status = "KILLED"
-	DefaultContextID uint   = 1
 )
-
-var DefaultContext = Context{ID: DefaultContextID, Json: datatypes.JSON("{}")}
 
 type LifecycleStage string
 

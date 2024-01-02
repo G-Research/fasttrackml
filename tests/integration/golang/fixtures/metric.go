@@ -77,14 +77,13 @@ func (f MetricFixtures) CreateLatestMetric(
 	ctx context.Context, metric *models.LatestMetric,
 ) (*models.LatestMetric, error) {
 	if metric.Context.Json == nil {
-		metric.Context = models.Context{
-			Json: []byte(`{}`),
+		metric.Context = models.DefaultContext
+	} else {
+		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
+			&metric.Context, metric.Context,
+		).Error; err != nil {
+			return nil, eris.Wrap(err, "error creating metric context")
 		}
-	}
-	if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
-		&metric.Context, metric.Context,
-	).Error; err != nil {
-		return nil, eris.Wrap(err, "error creating metric context")
 	}
 	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
 		return nil, eris.Wrap(err, "error creating latest metric")

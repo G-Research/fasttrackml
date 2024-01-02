@@ -86,8 +86,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 	metrics, err := s.MetricFixtures.GetMetricsByRunID(context.Background(), run1.ID)
 	s.Require().Nil(err)
 	s.Require().Len(metrics, 2)
-	s.Require().GreaterOrEqual(metrics[0].ContextID, uint(1))
-	s.Require().GreaterOrEqual(metrics[1].ContextID, uint(1))
+	s.Require().GreaterOrEqual(metrics[0].ContextID, models.DefaultContext.ID)
 
 	// verify metric contexts can be used for selection (toplevel key)
 	metrics, err = s.MetricFixtures.GetMetricsByContext(context.Background(), map[string]string{

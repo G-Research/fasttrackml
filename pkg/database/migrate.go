@@ -323,7 +323,7 @@ func CreateDefaultMetricContext(db *gorm.DB) error {
 	} {
 		if err := db.Model(model).
 			Where("context_id IS NULL").
-			Update("context_id", DefaultContextID).
+			Update("context_id", DefaultContext.ID).
 			Error; err != nil {
 			return eris.Wrapf(err, "error updating context_id for %t", model)
 		}

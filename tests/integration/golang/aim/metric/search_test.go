@@ -5927,8 +5927,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 						IsNan:     false,
 						RunID:     run.ID,
 						LastIter:  int64(decodedData[itersKey].([]float64)[0]),
-						Context:   models.Context{Json: datatypes.JSON(`{}`)},
-						ContextID: 1,
+						Context:   models.DefaultContext,
+						ContextID: models.DefaultContext.ID,
 					}
 					decodedMetrics = append(decodedMetrics, &m)
 					metricCount++

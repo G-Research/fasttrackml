@@ -21,7 +21,6 @@ func ConvertLogMetricRequestToDBModel(runID string, req *request.LogMetricReques
 	}
 	if req.Context == nil || len(req.Context) == 0 {
 		metric.Context = models.DefaultContext
-		metric.ContextID = models.DefaultContextID
 	} else {
 		contextJSON, err := json.Marshal(req.Context)
 		if err != nil {

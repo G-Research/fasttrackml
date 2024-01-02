@@ -71,7 +71,6 @@ func ConvertLogBatchRequestToDBModel(
 		}
 		if metric.Context == nil || len(metric.Context) == 0 {
 			m.Context = models.DefaultContext
-1ID
 		} else {
 			contextJSON, err := json.Marshal(metric.Context)
 			if err != nil {

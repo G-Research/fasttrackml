@@ -17,11 +17,11 @@ import (
 type Status string
 
 const (
-	StatusRunning    Status = "RUNNING"
-	StatusScheduled  Status = "SCHEDULED"
-	StatusFinished   Status = "FINISHED"
-	StatusFailed     Status = "FAILED"
-	StatusKilled     Status = "KILLED"
+	StatusRunning   Status = "RUNNING"
+	StatusScheduled Status = "SCHEDULED"
+	StatusFinished  Status = "FINISHED"
+	StatusFailed    Status = "FAILED"
+	StatusKilled    Status = "KILLED"
 )
 
 var DefaultContext = Context{ID: 1, Json: datatypes.JSON("{}")}

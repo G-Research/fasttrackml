@@ -74,7 +74,7 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 				Description: "test namespace updated",
 			},
 			response: map[string]any{
-				"message": "An unexepected error was encountered: namespace not found by id: 10",
+				"message": "An unexpected error was encountered: namespace not found by id: 10",
 				"status":  "error",
 			},
 		},

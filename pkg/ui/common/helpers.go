@@ -56,6 +56,6 @@ func ErrorMessageForUI(field, errMsg string) string {
 	case validationError.Match(msg):
 		return fmt.Sprintf("The %s is invalid.", field)
 	default:
-		return fmt.Sprintf("An unexepected error was encountered: %s", msg)
+		return fmt.Sprintf("An unexpected error was encountered: %s", msg)
 	}
 }

@@ -190,7 +190,11 @@ func (s Service) DeleteExperiment(
 
 	experiment, err := s.experimentRepository.GetByNamespaceIDAndExperimentID(ctx, ns.ID, int32(parsedID))
 	if err != nil {
-		return api.NewResourceDoesNotExistError(`unable to find experiment '%d': %s`, parsedID, err)
+		return api.NewResourceDoesNotExistError("unable to find experiment '%d': %s", parsedID, err)
+	}
+
+	if experiment.IsDefault() {
+		return api.NewBadRequestError("unable to delete default experiment")
 	}
 
 	experiment.LifecycleStage = models.LifecycleStageDeleted

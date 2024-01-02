@@ -55,7 +55,7 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 		Code:                code,
 		Description:         description,
 		Experiments:         []models.Experiment{*exp},
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	}
 	if err := s.namespaceRepository.Create(ctx, namespace); err != nil {
 		return nil, eris.Wrap(err, "error creating namespace")

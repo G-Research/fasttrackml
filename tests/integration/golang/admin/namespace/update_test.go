@@ -26,7 +26,7 @@ func (s *UpdateNamespaceTestSuite) Test_Ok() {
 		ID:                  2,
 		Code:                "test2",
 		Description:         "test namespace 2 description",
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
 
@@ -54,7 +54,7 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 		ID:                  2,
 		Code:                "test2",
 		Description:         "test namespace 2 description",
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
 	expectedNamespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())

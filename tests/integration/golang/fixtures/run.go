@@ -182,7 +182,7 @@ func (f RunFixtures) CreateTag(
 
 // CreateMetric creates a new test Metric.
 func (f RunFixtures) CreateMetric(ctx context.Context, metric *models.Metric) error {
-	if !metric.HasContextAssociation(){
+	if !metric.HasContextAssociation() {
 		defaultCtx := models.Context{
 			Json: []byte(`{}`),
 		}

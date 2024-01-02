@@ -11,7 +11,7 @@ require (
 	cloud.google.com/go/storage v1.36.0
 	dagger.io/dagger v0.9.5
 	github.com/DATA-DOG/go-sqlmock v1.5.1
-	github.com/G-Research/fasttrackml-ui-aim v0.31602.16
+	github.com/G-Research/fasttrackml-ui-aim v0.31705.2
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.2
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/apache/arrow/go/v12 v12.0.1
@@ -124,7 +124,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/net v0.19.0 // indirect

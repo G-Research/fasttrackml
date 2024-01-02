@@ -718,7 +718,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 					"runs.row_num",
 					"latest_metrics.key",
 					"latest_metrics.context_id",
-					"contexts.json AS context_json",
+					"latest_metrics_context.json AS context_json",
 					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
 				).
 				Table("runs").
@@ -727,8 +727,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 					ns.ID,
 				).
 				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
-				Joins(`LEFT JOIN contexts `+
-					`ON contexts.context_id = latest_metrics_context.id`)),
+				Joins(`LEFT JOIN contexts latest_metrics_context `+
+					`ON latest_metrics.context_id = latest_metrics_context.id`)),
 		).
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").

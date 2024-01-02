@@ -76,6 +76,9 @@ func (f MetricFixtures) GetMetricsByContext(
 func (f MetricFixtures) CreateLatestMetric(
 	ctx context.Context, metric *models.LatestMetric,
 ) (*models.LatestMetric, error) {
+	if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&models.DefaultContext).Error; err != nil {
+		return nil, eris.Wrap(err, "error creating or finding default context")
+	}
 	if metric.Context.Json == nil {
 		metric.Context = models.DefaultContext
 	} else {

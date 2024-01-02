@@ -5939,8 +5939,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			s.Equal(len(tt.metrics), len(decodedMetrics))
 			for i, metric := range tt.metrics {
 				// TODO when encoding.Decoder handles the context object, we can include it in the comparison
-				metric.Context = models.Context{Json: datatypes.JSON(`{}`)}
-				metric.ContextID = 1
+				metric.Context = models.DefaultContext
+				metric.ContextID = models.DefaultContext.ID
 				s.Equal(metric, decodedMetrics[i])
 			}
 		})

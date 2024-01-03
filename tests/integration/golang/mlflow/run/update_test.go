@@ -28,7 +28,7 @@ func TestUpdateRunTestSuite(t *testing.T) {
 }
 
 func (s *UpdateRunTestSuite) Test_Ok() {
-	// create test run.
+	// create test runs.
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:     strings.ReplaceAll(uuid.New().String(), "-", ""),
 		Name:   "TestRun",
@@ -48,40 +48,98 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	req := request.UpdateRunRequest{
-		RunID:   run.ID,
-		Name:    "UpdatedName",
-		Status:  string(models.StatusScheduled),
-		EndTime: 1111111111,
-	}
-	resp := response.UpdateRunResponse{}
-	s.Require().Nil(
-		s.MlflowClient().WithMethod(
-			http.MethodPost,
-		).WithRequest(
-			req,
-		).WithResponse(
-			&resp,
-		).DoRequest(
-			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute,
-		),
-	)
-	s.NotEmpty(resp.RunInfo.ID)
-	s.NotEmpty(resp.RunInfo.UUID)
-	s.Equal("UpdatedName", resp.RunInfo.Name)
-	s.Equal(fmt.Sprintf("%d", *s.DefaultExperiment.ID), resp.RunInfo.ExperimentID)
-	s.Equal(int64(1234567890), resp.RunInfo.StartTime)
-	s.Equal(int64(1111111111), resp.RunInfo.EndTime)
-	s.Equal(string(models.StatusScheduled), resp.RunInfo.Status)
-	s.NotEmpty(resp.RunInfo.ArtifactURI)
-	s.Equal(string(models.LifecycleStageActive), resp.RunInfo.LifecycleStage)
-
-	// check that run has been updated in database.
-	run, err = s.RunFixtures.GetRun(context.Background(), run.ID)
+	finishedRun, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:     strings.ReplaceAll(uuid.New().String(), "-", ""),
+		Name:   "TestFinishedRun",
+		Status: models.StatusFinished,
+		StartTime: sql.NullInt64{
+			Int64: 1234567890,
+			Valid: true,
+		},
+		EndTime: sql.NullInt64{
+			Int64: 1234567899,
+			Valid: true,
+		},
+		SourceType:     "JOB",
+		ArtifactURI:    "artifact_uri",
+		ExperimentID:   *s.DefaultExperiment.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
 	s.Require().Nil(err)
-	s.Equal("UpdatedName", run.Name)
-	s.Equal(models.StatusScheduled, run.Status)
-	s.Equal(int64(1111111111), run.EndTime.Int64)
+
+	tests := []struct {
+		name            string
+		request         request.UpdateRunRequest
+		expectedRunInfo response.UpdateRunResponse
+	}{
+		{
+			name: "UpdateRun",
+			request: request.UpdateRunRequest{
+				RunID:   run.ID,
+				Name:    "UpdatedName",
+				Status:  string(models.StatusScheduled),
+				EndTime: 1111111111,
+			},
+			expectedRunInfo: response.UpdateRunResponse{
+				RunInfo: response.RunInfoPartialResponse{
+					ID:             run.ID,
+					UUID:           run.ID,
+					Name:           "UpdatedName",
+					ExperimentID:   fmt.Sprintf("%d", *s.DefaultExperiment.ID),
+					ArtifactURI:    run.ArtifactURI,
+					Status:         string(models.StatusScheduled),
+					StartTime:      1234567890,
+					EndTime:        1111111111,
+					LifecycleStage: string(models.LifecycleStageActive),
+				},
+			},
+		},
+		{
+			name: "RestartRun",
+			request: request.UpdateRunRequest{
+				RunID:  finishedRun.ID,
+				Name:   "RestartedRun",
+				Status: string(models.StatusRunning),
+			},
+			expectedRunInfo: response.UpdateRunResponse{
+				RunInfo: response.RunInfoPartialResponse{
+					ID:             finishedRun.ID,
+					UUID:           finishedRun.ID,
+					Name:           "RestartedRun",
+					ExperimentID:   fmt.Sprintf("%d", *s.DefaultExperiment.ID),
+					ArtifactURI:    finishedRun.ArtifactURI,
+					Status:         string(models.StatusRunning),
+					StartTime:      1234567890,
+					EndTime:        0,
+					LifecycleStage: string(models.LifecycleStageActive),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			resp := response.UpdateRunResponse{}
+			s.Require().Nil(
+				s.MlflowClient().WithMethod(
+					http.MethodPost,
+				).WithRequest(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest(
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsUpdateRoute,
+				),
+			)
+			s.Equal(tt.expectedRunInfo, resp)
+
+			// check that run has been updated in database.
+			run, err = s.RunFixtures.GetRun(context.Background(), tt.request.RunID)
+			s.Require().Nil(err)
+			s.Equal(tt.expectedRunInfo.RunInfo.Name, run.Name)
+			s.Equal(tt.expectedRunInfo.RunInfo.Status, string(run.Status))
+			s.Equal(tt.expectedRunInfo.RunInfo.EndTime, run.EndTime.Int64)
+		})
+	}
 }
 
 func (s *UpdateRunTestSuite) Test_Error() {

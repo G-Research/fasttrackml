@@ -292,9 +292,9 @@ func (r RunRepository) UpdateWithTransaction(ctx context.Context, tx *gorm.DB, r
 	if err := tx.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
 		return eris.Wrapf(err, "error updating existing run with id: %s", run.ID)
 	}
-
+	// Use UpdateColumn so we can reset EndTime to null
 	if run.EndTime.Int64 == 0 {
-		if err := tx.Model(&run).UpdateColumn("EndTime", 0).Error; err != nil {
+		if err := tx.Model(&run).UpdateColumn("EndTime", sql.NullInt64{}).Error; err != nil {
 			return eris.Wrapf(err, "error updating EndTime for run with id: %s", run.ID)
 		}
 	}

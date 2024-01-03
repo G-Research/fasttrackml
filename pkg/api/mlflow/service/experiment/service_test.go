@@ -308,6 +308,27 @@ func TestService_DeleteExperiment_Error(t *testing.T) {
 			},
 		},
 		{
+			name:  "DefaultExperiment",
+			error: api.NewBadRequestError("unable to delete default experiment"),
+			request: &request.DeleteExperimentRequest{
+				ID: "0",
+			},
+			service: func() *Service {
+				experimentRepository := repositories.MockExperimentRepositoryProvider{}
+				experimentRepository.On(
+					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(0),
+				).Return(&models.Experiment{
+					ID:   common.GetPointer(models.DefaultExperimentID),
+					Name: models.DefaultExperimentName,
+				}, nil)
+				return NewService(
+					&config.ServiceConfig{},
+					&repositories.MockTagRepositoryProvider{},
+					&experimentRepository,
+				)
+			},
+		},
+		{
 			name:  "UpdateExperimentDatabaseError",
 			error: api.NewInternalError(`unable to delete experiment '1': database error`),
 			request: &request.DeleteExperimentRequest{

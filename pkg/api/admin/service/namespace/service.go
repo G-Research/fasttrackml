@@ -55,7 +55,7 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 		Code:                code,
 		Description:         description,
 		Experiments:         []models.Experiment{*exp},
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	}
 	if err := s.namespaceRepository.Create(ctx, namespace); err != nil {
 		return nil, eris.Wrap(err, "error creating namespace")
@@ -98,6 +98,9 @@ func (s Service) DeleteNamespace(ctx context.Context, id uint) error {
 	}
 	if namespace == nil {
 		return eris.Errorf("namespace not found by id: %d", id)
+	}
+	if namespace.IsDefault() {
+		return eris.Errorf("unable to delete default namespace")
 	}
 	if err := s.namespaceRepository.Delete(ctx, namespace); err != nil {
 		return eris.Wrap(err, "error deleting namespace")

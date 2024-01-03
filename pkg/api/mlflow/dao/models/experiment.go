@@ -4,6 +4,12 @@ import (
 	"database/sql"
 )
 
+// Default Experiment properties.
+const (
+	DefaultExperimentID   = int32(0)
+	DefaultExperimentName = "Default"
+)
+
 // Experiment represents model to work with `experiments` table.
 type Experiment struct {
 	ID               *int32         `gorm:"column:experiment_id;not null;primaryKey"`
@@ -16,6 +22,11 @@ type Experiment struct {
 	Namespace        Namespace
 	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
 	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
+}
+
+// IsDefault makes check that Experiment is default.
+func (e Experiment) IsDefault() bool {
+	return e.ID != nil && *e.ID == DefaultExperimentID && e.Name == DefaultExperimentName
 }
 
 // ExperimentTag represents model to work with `experiment_tags` table.

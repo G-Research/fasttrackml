@@ -29,7 +29,7 @@ func TestErrorMessageForUI(t *testing.T) {
 			name:     "UnknownError",
 			field:    "username",
 			errMsg:   "An unknown error occurred",
-			expected: "An unexepected error was encountered: An unknown error occurred",
+			expected: "An unexpected error was encountered: An unknown error occurred",
 		},
 	}
 

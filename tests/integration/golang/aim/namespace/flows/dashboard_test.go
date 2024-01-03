@@ -59,7 +59,7 @@ func (s *DashboardFlowTestSuite) Test_Ok() {
 			for _, nsCode := range []string{"default", tt.namespace1Code, tt.namespace2Code} {
 				_, err := s.NamespaceFixtures.UpsertNamespace(context.Background(), &models.Namespace{
 					Code:                nsCode,
-					DefaultExperimentID: common.GetPointer(int32(0)),
+					DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 				})
 				s.Require().Nil(err)
 			}

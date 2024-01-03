@@ -7,6 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// DefaultNamespaceCode represents default Namespace code.
+const DefaultNamespaceCode = "default"
+
 // Namespace represents model to work with `namespaces` table.
 type Namespace struct {
 	ID                  uint           `gorm:"primaryKey;autoIncrement" json:"id"`
@@ -19,9 +22,15 @@ type Namespace struct {
 	Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE" json:"experiments"`
 }
 
+// DisplayName returns Namespace display name.
 func (ns Namespace) DisplayName() string {
 	if ns.Description != "" {
 		return fmt.Sprintf("%s (%s)", ns.Code, ns.Description)
 	}
 	return ns.Code
+}
+
+// IsDefault makes check that Namespace is default.
+func (ns Namespace) IsDefault() bool {
+	return ns.Code == DefaultNamespaceCode
 }

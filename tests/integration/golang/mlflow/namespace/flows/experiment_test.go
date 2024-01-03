@@ -53,10 +53,10 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}, &models.Namespace{
 						Code:                "namespace-2",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}
 			},
 			namespace1Code: "namespace-1",
@@ -67,10 +67,10 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}, &models.Namespace{
 						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}
 			},
 			namespace1Code: "default",
@@ -81,10 +81,10 @@ func (s *ExperimentFlowTestSuite) Test_Ok() {
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}, &models.Namespace{
 						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}
 			},
 			namespace1Code: "",

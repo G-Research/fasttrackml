@@ -25,14 +25,14 @@ func (s *DeleteNamespaceTestSuite) Test_Ok() {
 		ID:                  2,
 		Code:                "test2",
 		Description:         "test namespace 2 description",
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
 	ns2, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  3,
 		Code:                "test3",
 		Description:         "test namespace 3 description",
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
 
@@ -66,7 +66,7 @@ func (s *DeleteNamespaceTestSuite) Test_Error() {
 		ID:                  2,
 		Code:                "test2",
 		Description:         "test namespace 2 description",
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
 
@@ -81,7 +81,16 @@ func (s *DeleteNamespaceTestSuite) Test_Error() {
 			ID:                      "10",
 			expectedNamespacesCount: 2,
 			response: map[string]any{
-				"message": "An unexepected error was encountered: namespace not found by id: 10",
+				"message": "An unexpected error was encountered: namespace not found by id: 10",
+				"status":  "error",
+			},
+		},
+		{
+			name:                    "DeleteDefaultNamespace",
+			ID:                      "1",
+			expectedNamespacesCount: 2,
+			response: map[string]any{
+				"message": "An unexpected error was encountered: unable to delete default namespace",
 				"status":  "error",
 			},
 		},

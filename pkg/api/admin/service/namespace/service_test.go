@@ -192,6 +192,27 @@ func TestService_DeleteNamespace_Error(t *testing.T) {
 	assert.Equal(t, "namespace not found by id: 0", err.Error())
 }
 
+func TestService_DeleteDefaultNamespace_Error(t *testing.T) {
+	// init repository mocks.
+	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}
+	namespaceRepository.On(
+		"GetByID", context.TODO(), uint(0),
+	).Return(&models.Namespace{
+		ID:   1,
+		Code: models.DefaultNamespaceCode,
+	}, nil)
+
+	// call service under testing.
+	service := NewService(
+		&namespaceRepository,
+	)
+	err := service.DeleteNamespace(context.TODO(), uint(0))
+
+	// compare results.
+	assert.NotNil(t, err)
+	assert.Equal(t, "unable to delete default namespace", err.Error())
+}
+
 func TestService_UpdateNamespace_Ok(t *testing.T) {
 	// init repository mocks.
 	namespaceRepository := repositories.MockNamespaceRepositoryProvider{}

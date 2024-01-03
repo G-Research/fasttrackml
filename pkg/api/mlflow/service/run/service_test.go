@@ -1296,6 +1296,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 							Value:     1.1,
 							RunID:     "1",
 							Timestamp: 123456789,
+							ContextID: models.DefaultContext.ID,
+							Context:   models.DefaultContext,
 						},
 					},
 				).Return(errors.New("database error"))
@@ -1391,6 +1393,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 							Value:     1.1,
 							RunID:     "1",
 							Timestamp: 123456789,
+							ContextID: models.DefaultContext.ID,
+							Context:   models.DefaultContext,
 						},
 					},
 				).Return(nil)

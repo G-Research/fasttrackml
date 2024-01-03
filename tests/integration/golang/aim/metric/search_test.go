@@ -5885,6 +5885,16 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
+			name: "SearchMetricContextWithXAxis",
+			request: request.SearchMetricsRequest{
+				Query: `metric.name == "TestMetric1" and metric.context.testkey == "testvalue"`,
+				XAxis: `TestMetric2`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run2,
+			},
+		},
+		{
 			name: "NegativeSearchMetricContext",
 			request: request.SearchMetricsRequest{
 				Query: `metric.name == "TestMetric1" and metric.context.testkey != "testvalue"`,

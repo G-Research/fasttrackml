@@ -182,7 +182,7 @@ func (f RunFixtures) CreateTag(
 
 // CreateMetric creates a new test Metric.
 func (f RunFixtures) CreateMetric(ctx context.Context, metric *models.Metric) error {
-	if needsContextAssociation(metric) {
+	if metric.Context.Json == nil {
 		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&models.DefaultContext).Error; err != nil {
 			return eris.Wrap(err, "error creating or finding default context")
 		}
@@ -248,9 +248,4 @@ func (f RunFixtures) CreateParams(
 		}
 	}
 	return nil
-}
-
-// needsContextAssociation indicates if the context FK is present.
-func needsContextAssociation(m *models.Metric) bool {
-	return m.ContextID == 0
 }

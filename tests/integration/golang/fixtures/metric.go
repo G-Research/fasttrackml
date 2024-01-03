@@ -27,15 +27,17 @@ func NewMetricFixtures(db *gorm.DB) (*MetricFixtures, error) {
 
 // CreateMetric creates new test Metric.
 func (f MetricFixtures) CreateMetric(ctx context.Context, metric *models.Metric) (*models.Metric, error) {
-	if metric.Context.Json == nil {
-		metric.Context = models.Context{
-			Json: []byte(`{}`),
-		}
+	if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&models.DefaultContext).Error; err != nil {
+		return nil, eris.Wrap(err, "error creating or finding default context")
 	}
-	if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
-		&metric.Context, metric.Context,
-	).Error; err != nil {
-		return nil, eris.Wrap(err, "error creating metric context")
+	if metric.Context.Json == nil {
+		metric.Context = models.DefaultContext
+	} else {
+		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
+			&metric.Context, metric.Context,
+		).Error; err != nil {
+			return nil, eris.Wrap(err, "error creating metric context")
+		}
 	}
 	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
 		return nil, eris.Wrap(err, "error creating metric")

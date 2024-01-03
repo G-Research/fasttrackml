@@ -1,6 +1,7 @@
 package models
 
 import (
+	"crypto/sha256"
 	"fmt"
 
 	"gorm.io/datatypes"
@@ -49,4 +50,10 @@ func (m LatestMetric) UniqueKey() string {
 type Context struct {
 	ID   uint           `gorm:"primaryKey;autoIncrement"`
 	Json datatypes.JSON `gorm:"not null;unique;index"`
+}
+
+// GetJsonHash returns hash of the Context.Json
+func (c Context) GetJsonHash() string {
+	hash := sha256.Sum256(c.Json)
+	return string(hash[:])
 }

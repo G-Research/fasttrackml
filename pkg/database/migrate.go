@@ -329,6 +329,6 @@ func CreateDefaultMetricContext(db *gorm.DB) error {
 			return eris.Wrapf(err, "error updating context_id for %t", model)
 		}
 	}
-	log.Debugf("Default metric context: %v", DefaultContext)
+	log.Debugf("default metric context: %v", DefaultContext)
 	return nil
 }

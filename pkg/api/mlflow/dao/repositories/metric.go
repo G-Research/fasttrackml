@@ -89,7 +89,7 @@ func (r MetricRepository) CreateBatch(
 	contextProcessed := make(map[string]*models.Context)
 	latestMetrics := make(map[string]models.LatestMetric)
 	for n := range metrics {
-		ctxHash := getJsonHash(metrics[n].Context.Json)
+		ctxHash := metrics[n].Context.GetJsonHash()
 		ctxRef, ok := contextProcessed[ctxHash]
 		if ok {
 			allContexts[n] = ctxRef

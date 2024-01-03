@@ -70,9 +70,3 @@ func BuildJsonCondition(
 	sql = strings.Repeat(conditionTemplate+" AND ", len(jsonPathValueMap)-1) + conditionTemplate
 	return sql, args
 }
-
-// getJsonHash returns hash of the given json.
-func getJsonHash(json datatypes.JSON) string {
-	hash := sha256.Sum256(json)
-	return string(hash[:])
-}

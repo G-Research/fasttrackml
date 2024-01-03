@@ -186,23 +186,29 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	r := database.Run{
 		ID: p.ID,
 	}
-	if err := database.DB.
-		Select("ID").
-		InnerJoins(
-			"Experiment",
-			database.DB.Select(
-				"ID",
-			).Where(
-				&models.Experiment{NamespaceID: ns.ID},
-			),
-		).
-		Preload("Metrics", func(db *gorm.DB) *gorm.DB {
-			return db.
-				Where("key IN ?", metricKeys).
-				Order("iter")
-		}).
-		Preload("Metrics.Context").
-		First(&r).Error; err != nil {
+
+	query := database.DB.Select(
+		"ID",
+	).InnerJoins(
+		"Experiment",
+		database.DB.Select(
+			"ID",
+		).Where(
+			&models.Experiment{NamespaceID: ns.ID},
+		),
+	).Preload(
+		"Metrics",
+		func(db *gorm.DB) *gorm.DB {
+			return db.Where("key IN ?", metricKeys).Order("iter")
+		},
+	).Preload(
+		"Metrics.Context",
+		func(db *gorm.DB) *gorm.DB {
+			return db
+		},
+	)
+
+	if err := query.First(&r).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}

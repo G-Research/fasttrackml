@@ -18,16 +18,16 @@ func Migrate(db *gorm.DB) error {
 			tables := []string{"metrics", "latest_metrics"}
 			for _, table := range tables {
 				index := fmt.Sprintf("idx_%s_run_id", table)
-				if err := tx.Migrator().DropIndex(table, index); err != nil {
-					return eris.Wrapf(err, "error renaming %s", index)
+				if err := dropIndex(tx, table, index); err != nil {
+					return eris.Wrapf(err, "error dropping %s", index)
 				}
 				if err := tx.Migrator().RenameTable(table, backupName(table)); err != nil {
 					return eris.Wrapf(err, "error renaming %s", table)
 				}
 			}
 			index := "idx_metrics_iter"
-			if err := tx.Migrator().DropIndex(backupName("metrics"), index); err != nil {
-				return eris.Wrapf(err, "error renaming %s", index)
+			if err := dropIndex(tx, backupName("metrics"), index); err != nil {
+				return eris.Wrapf(err, "error dropping %s", index)
 			}
 
 			// Auto-migrate the new tables
@@ -58,4 +58,13 @@ func Migrate(db *gorm.DB) error {
 
 func backupName(name string) string {
 	return fmt.Sprintf("%s_old", name)
+}
+
+func dropIndex(tx *gorm.DB, table, index string) error {
+	if tx.Migrator().HasIndex(table, index) {
+		if err := tx.Migrator().DropIndex(table, index); err != nil {
+			return eris.Wrapf(err, "error dropping %s", index)
+		}
+	}
+	return nil
 }

@@ -86,9 +86,13 @@ func ConvertCreateRunRequestToDBModel(
 func ConvertUpdateRunRequestToDBModel(run *models.Run, req *request.UpdateRunRequest) *models.Run {
 	run.Name = req.Name
 	run.Status = models.Status(req.Status)
-	run.EndTime = sql.NullInt64{
-		Int64: req.EndTime,
-		Valid: true,
+	if req.Status == string(models.StatusRunning) {
+		run.EndTime = sql.NullInt64{}
+	} else {
+		run.EndTime = sql.NullInt64{
+			Int64: req.EndTime,
+			Valid: true,
+		}
 	}
 	return run
 }

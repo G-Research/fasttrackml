@@ -113,11 +113,6 @@ func (s Service) UpdateRun(
 
 	run = convertors.ConvertUpdateRunRequestToDBModel(run, req)
 	if err := s.runRepository.GetDB().Transaction(func(tx *gorm.DB) error {
-		if req.Status == string(models.StatusRunning) {
-			if err := tx.Model(&run).UpdateColumn("EndTime", gorm.Expr("NULL")).Error; err != nil {
-				return err
-			}
-		}
 		if err := s.runRepository.UpdateWithTransaction(ctx, tx, run); err != nil {
 			return err
 		}

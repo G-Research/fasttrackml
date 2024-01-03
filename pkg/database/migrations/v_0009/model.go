@@ -126,26 +126,26 @@ type Tag struct {
 }
 
 type Metric struct {
-	Key       string  `gorm:"type:varchar(250);not null;primaryKey;uniqueIndex:idx_unique_trace"`
+	Key       string  `gorm:"type:varchar(250);not null;primaryKey"`
 	Value     float64 `gorm:"type:double precision;not null;primaryKey"`
-	Timestamp int64   `gorm:"not null;primaryKey;uniqueIndex:idx_unique_trace"`
+	Timestamp int64   `gorm:"not null;primaryKey"`
 	RunID     string  `gorm:"column:run_uuid;not null;primaryKey;index"`
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
 	Iter      int64   `gorm:"index"`
-	ContextID uint    `gorm:"not null;default:0;uniqueIndex:idx_unique_trace"`
+	ContextID uint    `gorm:"not null;primaryKey;default:0"`
 	Context   Context
 }
 
 type LatestMetric struct {
-	Key       string  `gorm:"type:varchar(250);not null;primaryKey;uniqueIndex:idx_unique_trace"`
+	Key       string  `gorm:"type:varchar(250);not null;primaryKey"`
 	Value     float64 `gorm:"type:double precision;not null"`
 	Timestamp int64
 	Step      int64  `gorm:"not null"`
 	IsNan     bool   `gorm:"not null"`
-	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index;uniqueIndex:idx_unique_trace"`
+	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
 	LastIter  int64
-	ContextID uint `gorm:"not null;primaryKey;default:0;uniqueIndex:idx_unique_trace"`
+	ContextID uint `gorm:"not null;primaryKey;default:0"`
 	Context   Context
 }
 

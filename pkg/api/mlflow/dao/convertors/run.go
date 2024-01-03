@@ -86,8 +86,10 @@ func ConvertCreateRunRequestToDBModel(
 func ConvertUpdateRunRequestToDBModel(run *models.Run, req *request.UpdateRunRequest) *models.Run {
 	run.Name = req.Name
 	run.Status = models.Status(req.Status)
+	// if the status is running then we should set the Endtime to nil
+	//(in that way AIM UI shows the correct badge on run info https://github.com/G-Research/fasttrackml/issues/655).
 	if req.Status == string(models.StatusRunning) {
-		run.EndTime = sql.NullInt64{}
+		run.EndTime = sql.NullInt64{Valid: true}
 	} else {
 		run.EndTime = sql.NullInt64{
 			Int64: req.EndTime,

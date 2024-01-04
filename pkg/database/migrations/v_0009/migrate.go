@@ -1,9 +1,11 @@
 package v_0009
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/rotisserie/eris"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/database/migrations"
@@ -35,9 +37,17 @@ func Migrate(db *gorm.DB) error {
 				return eris.Wrap(err, "error automigrating new tables")
 			}
 
+			// Create the default metric context
+			if err := createDefaultMetricContext(tx); err != nil {
+				return eris.Wrap(err, "error creating default metric context")
+			}
+
 			// Copy the data from the old tables to the new ones
 			for _, table := range tables {
-				if err := tx.Exec(fmt.Sprintf("INSERT INTO %s SELECT *, '0' FROM %s", table, backupName(table))).Error; err != nil {
+				if err := tx.Exec(fmt.Sprintf("INSERT INTO %s SELECT *, %d FROM %s",
+					table,
+					DefaultContext.ID,
+					backupName(table))).Error; err != nil {
 					return eris.Wrapf(err, "error copying data for %s", table)
 				}
 
@@ -66,5 +76,21 @@ func dropIndex(tx *gorm.DB, table, index string) error {
 			return eris.Wrapf(err, "error dropping %s", index)
 		}
 	}
+	return nil
+}
+
+// createDefaultMetricContext creates the default metric context if it doesn't exist.
+func createDefaultMetricContext(db *gorm.DB) error {
+	if err := db.First(&DefaultContext).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Info("Creating default context")
+			if err := db.Create(&DefaultContext).Error; err != nil {
+				return fmt.Errorf("error creating default context: %s", err)
+			}
+		} else {
+			return fmt.Errorf("unable to find default context: %s", err)
+		}
+	}
+	log.Debugf("default metric context: %v", DefaultContext)
 	return nil
 }

@@ -70,6 +70,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run1.ID,
 		Iter:      1,
+		Context: models.Context{
+			Json: []byte(`{"key11": "value11"}`),
+		},
 	})
 	s.Require().Nil(err)
 	metric1Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -90,6 +93,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run1.ID,
 		Iter:      1,
+		Context: models.Context{
+			Json: []byte(`{"key12": "value12"}`),
+		},
 	})
 	s.Require().Nil(err)
 	metric2Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -110,6 +116,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run1.ID,
 		Iter:      1,
+		Context: models.Context{
+			Json: []byte(`{"key13": "value13"}`),
+		},
 	})
 	s.Require().Nil(err)
 	metric3Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -149,6 +158,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run2.ID,
 		Iter:      1,
+		Context: models.Context{
+			Json: []byte(`{"key21": "value21"}`),
+		},
 	})
 	s.Require().Nil(err)
 	metric1Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -169,6 +181,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run2.ID,
 		Iter:      1,
+		Context: models.Context{
+			Json: []byte(`{"key22": "value22"}`),
+		},
 	})
 	s.Require().Nil(err)
 	metric2Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -189,6 +204,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run2.ID,
 		Iter:      1,
+		Context: models.Context{
+			Json: []byte(`{"key23": "value23"}`),
+		},
 	})
 	s.Require().Nil(err)
 	metric3Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -228,6 +246,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run3.ID,
 		Iter:      1,
+		Context: models.Context{
+			Json: []byte(`{"key31": "value31"}`),
+		},
 	})
 	s.Require().Nil(err)
 	metric1Run3, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -248,6 +269,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run3.ID,
 		Iter:      1,
+		Context: models.Context{
+			Json: []byte(`{"key32": "value32"}`),
+		},
 	})
 	s.Require().Nil(err)
 	metric2Run3, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -268,6 +292,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run3.ID,
 		Iter:      1,
+		Context: models.Context{
+			Json: []byte(`{"key33": "value33"}`),
+		},
 	})
 	s.Require().Nil(err)
 	metric3Run3, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -288,6 +315,93 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		request  *request.GetAlignedMetricRequest
 		response []float64
 	}{
+		{
+			name: "TestSearchAlignedByMetric1AndContext",
+			request: &request.GetAlignedMetricRequest{
+				AlignBy: "TestMetric1",
+				Runs: []request.AlignedMetricRunRequest{
+					{
+						ID: run1.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+								Context: map[string]interface{}{
+									"key11": "value11",
+								},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+								Context: map[string]interface{}{
+									"key11": "value11",
+								},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
+								Context: map[string]interface{}{
+									"key11": "value11",
+								},
+							},
+						},
+					},
+					{
+						ID: run2.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+								Context: map[string]interface{}{
+									"key21": "value21",
+								},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+								Context: map[string]interface{}{
+									"key21": "value21",
+								},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
+								Context: map[string]interface{}{
+									"key21": "value21",
+								},
+							},
+						},
+					},
+					{
+						ID: run3.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+								Context: map[string]interface{}{
+									"key31": "value31",
+								},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+								Context: map[string]interface{}{
+									"key31": "value31",
+								},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
+								Context: map[string]interface{}{
+									"key31": "value31",
+								},
+							},
+						},
+					},
+				},
+			},
+			response: []float64{metric1Run1.Value, metric1Run2.Value, metric1Run3.Value},
+		},
 		{
 			name: "TestSearchAlignedByMetric1",
 			request: &request.GetAlignedMetricRequest{

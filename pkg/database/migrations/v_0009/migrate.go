@@ -16,7 +16,7 @@ const Version = "2c2299e4e061"
 func Migrate(db *gorm.DB) error {
 	return migrations.RunWithoutForeignKeyIfNeeded(db, func() error {
 		return db.Transaction(func(tx *gorm.DB) error {
-			// Rename the existing tables and indexes
+			// Rename the existing metricx tables and drop indexes
 			tables := []string{"metrics", "latest_metrics"}
 			for _, table := range tables {
 				index := fmt.Sprintf("idx_%s_run_id", table)
@@ -32,7 +32,7 @@ func Migrate(db *gorm.DB) error {
 				return eris.Wrapf(err, "error dropping %s", index)
 			}
 
-			// Auto-migrate the new tables
+			// Auto-migrate the replacements and new tables
 			if err := tx.Migrator().AutoMigrate(&Context{}, &Metric{}, &LatestMetric{}); err != nil {
 				return eris.Wrap(err, "error automigrating new tables")
 			}
@@ -42,7 +42,7 @@ func Migrate(db *gorm.DB) error {
 				return eris.Wrap(err, "error creating default metric context")
 			}
 
-			// Copy the data from the old tables to the new ones
+			// Copy the data from the old tables to the new ones with default metric context
 			for _, table := range tables {
 				if err := tx.Exec(fmt.Sprintf("INSERT INTO %s SELECT *, %d FROM %s",
 					table,

@@ -175,6 +175,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 		name                  string
 		request               *request.LogBatchRequest
 		latestMetricIteration map[string]int64
+		latestMetricKeyCount  map[string]int
 	}{
 		{
 			name: "LogOne",
@@ -250,15 +251,6 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 							"key2": 2,
 						},
 					},
-					{
-						Key:       "key3",
-						Value:     1.4,
-						Timestamp: 1687325991,
-						Step:      1,
-						Context: map[string]any{
-							"key4": "value4",
-						},
-					},
 				},
 			},
 			latestMetricIteration: map[string]int64{
@@ -267,7 +259,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 			},
 		},
 		{
-			name: "LogDuplicate",
+			name: "LogDuplicateSameContext",
 			request: &request.LogBatchRequest{
 				RunID: run.ID,
 				Metrics: []request.MetricPartialRequest{
@@ -293,6 +285,41 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 			},
 			latestMetricIteration: map[string]int64{
 				"key3": 2,
+			},
+			latestMetricKeyCount: map[string]int{
+				"key3": 1,
+			},
+		},
+		{
+			name: "LogDuplicateDifferentContext",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key4",
+						Value:     1.0,
+						Timestamp: 1687325991,
+						Step:      1,
+						Context: map[string]any{
+							"key3": "value3",
+						},
+					},
+					{
+						Key:       "key4",
+						Value:     1.0,
+						Timestamp: 1687325991,
+						Step:      1,
+						Context: map[string]any{
+							"key4": "value4",
+						},
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key4": 1,
+			},
+			latestMetricKeyCount: map[string]int{
+				"key4": 2,
 			},
 		},
 		{
@@ -397,10 +424,20 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 			s.Empty(resp)
 
 			// make sure that `iter` and `last_iter` for each metric has been updated correctly.
-			for key, iteration := range tt.latestMetricIteration {
-				lastMetric, err := s.MetricFixtures.GetLatestMetricByKey(context.Background(), key)
-				s.Require().Nil(err)
-				s.Equal(iteration, lastMetric.LastIter)
+			if len(tt.latestMetricIteration) > 0 {
+				for key, iteration := range tt.latestMetricIteration {
+					lastMetric, err := s.MetricFixtures.GetLatestMetricByKey(context.Background(), key)
+					s.Require().Nil(err)
+					s.Equal(iteration, lastMetric.LastIter)
+				}
+			}
+			if len(tt.latestMetricKeyCount) > 0 {
+				for key, count := range tt.latestMetricKeyCount {
+					latestMetrics, err := s.MetricFixtures.GetLatestMetricsByKey(context.Background(), key)
+					s.Require().Nil(err)
+					s.T().Log(latestMetrics)
+					s.Equal(count, len(latestMetrics))
+				}
 			}
 			for _, metric := range tt.request.Metrics {
 				if metric.Context != nil {

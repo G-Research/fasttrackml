@@ -107,7 +107,6 @@ func (f MetricFixtures) GetLatestMetricByKey(ctx context.Context, key string) (*
 	return &metric, nil
 }
 
-
 // GetLatestMetricsByKey returns the latest metrics by provided key.
 func (f MetricFixtures) GetLatestMetricsByKey(ctx context.Context, key string) ([]models.LatestMetric, error) {
 	var metrics []models.LatestMetric

@@ -184,11 +184,8 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		i++
 	}
 
-	r := database.Run{
-		ID: p.ID,
-	}
-
-	query := database.DB.Select(
+	// check that requested run actually exists.
+	if err := database.DB.Select(
 		"ID",
 	).InnerJoins(
 		"Experiment",
@@ -197,28 +194,37 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		).Where(
 			&models.Experiment{NamespaceID: ns.ID},
 		),
-	).Preload(
-		"Metrics",
-		func(db *gorm.DB) *gorm.DB {
-			return db.Where("key IN ?", metricKeys).Order("iter")
-		},
-	).Preload(
-		"Metrics.Context",
-		func(query *gorm.DB) *gorm.DB {
+	).First(&database.Run{
+		ID: p.ID,
+	}).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fiber.ErrNotFound
+		}
+		return fmt.Errorf("unable to find run %q: %w", p.ID, err)
+	}
+
+	// fetch run metrics based on provided criteria.
+	var data []database.Metric
+	if err := database.DB.Where(
+		"run_uuid = ?", p.ID,
+	).InnerJoins(
+		"Context",
+		func() *gorm.DB {
 			subQuery := database.DB
 			for _, context := range contexts {
 				sql, args := repositories.BuildJsonCondition(database.DB.Dialector.Name(), "json", context)
 				subQuery = subQuery.Or(sql, args...)
 			}
-			return query.Where(subQuery)
-		},
-	)
-
-	if err := query.First(&r).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("unable to find run %q: %w", p.ID, err)
+			return subQuery
+		}(),
+	).Where(
+		"key IN ?", metricKeys,
+	).Order(
+		"iter",
+	).Find(
+		&data,
+	).Error; err != nil {
+		return fmt.Errorf("unable to find run metrics: %w", err)
 	}
 
 	metrics := make(map[string]struct {
@@ -227,7 +233,8 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		values  []*float64
 		context datatypes.JSON
 	}, len(metricKeys))
-	for _, m := range r.Metrics {
+
+	for _, m := range data {
 		v := m.Value
 		pv := &v
 		if m.IsNan {
@@ -252,13 +259,12 @@ func GetRunMetrics(c *fiber.Ctx) error {
 
 	resp := make([]fiber.Map, 0, len(metrics))
 	for _, m := range metrics {
-		data := fiber.Map{
+		resp = append(resp, fiber.Map{
 			"name":    m.name,
 			"iters":   m.iters,
 			"values":  m.values,
 			"context": m.context,
-		}
-		resp = append(resp, data)
+		})
 	}
 
 	return c.JSON(resp)

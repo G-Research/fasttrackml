@@ -150,7 +150,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name:  "GetOneRunWithContext",
+			name:  "GetOneRunWithContextCase1",
 			runID: run.ID,
 			request: request.GetRunMetrics{
 				{
@@ -202,6 +202,38 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					Iters:   []int64{4},
 					Values:  []float64{124.2},
 					Context: []byte(`{"key4":"key4","value4":"value4"}`),
+				},
+			},
+		},
+		{
+			name:  "GetOneRunWithContextCase2",
+			runID: run.ID,
+			request: request.GetRunMetrics{
+				{
+					Name: "key1",
+					Context: map[string]string{
+						"key1": "key1",
+					},
+				},
+				{
+					Name: "key2",
+					Context: map[string]string{
+						"key3": "key3",
+					},
+				},
+			},
+			expectedResponse: response.GetRunMetrics{
+				response.RunMetrics{
+					Name:    "key1",
+					Iters:   []int64{1},
+					Values:  []float64{123.1},
+					Context: []byte(`{"key1":"key1","value1":"value1"}`),
+				},
+				response.RunMetrics{
+					Name:    "key2",
+					Iters:   []int64{3},
+					Values:  []float64{124.1},
+					Context: []byte(`{"key3":"key3","value3":"value3"}`),
 				},
 			},
 		},

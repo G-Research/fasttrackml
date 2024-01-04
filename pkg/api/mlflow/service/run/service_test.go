@@ -624,7 +624,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "ActiveRunNotFound",
-			error: api.NewResourceDoesNotExistError("Unable to find active run '1'"),
+			error: api.NewResourceDoesNotExistError("Run '1' not found"),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 			},
@@ -648,7 +648,42 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "NotFoundTag",
-			error: api.NewResourceDoesNotExistError("Unable to find tag 'key' for run '1': database error"),
+			error: api.NewResourceDoesNotExistError("No tag with name: key"),
+			request: &request.DeleteRunTagRequest{
+				RunID: "1",
+				Key:   "key",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByNamespaceIDRunIDAndLifecycleStage",
+					context.TODO(),
+					uint(1),
+					"1",
+					models.LifecycleStageActive,
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
+				tagRepository := repositories.MockTagRepositoryProvider{}
+				tagRepository.On(
+					"GetByRunIDAndKey",
+					context.TODO(),
+					"1",
+					"key",
+				).Return(nil, nil)
+				return NewService(
+					&tagRepository,
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "NotFoundTagDatabaseError",
+			error: api.NewInternalError("Unable to find tag 'key' for run '1': database error"),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 				Key:   "key",
@@ -1031,7 +1066,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundDatabaseNotFoundError",
-			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError("Run '1' not found"),
 			request: &request.LogBatchRequest{
 				RunID: "1",
 			},
@@ -1055,7 +1090,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 		},
 		{
 			name:  "NoActiveRunFound",
-			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError("Run '1' not found"),
 			request: &request.LogBatchRequest{
 				RunID: "1",
 			},
@@ -1079,13 +1114,14 @@ func TestService_LogBatch_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectMetricValue",
-			error: api.NewInvalidParameterValueError(`invalid metric value 'incorrect_value'`),
+			error: api.NewInvalidParameterValueError("invalid metric value 'incorrect_value'"),
 			request: &request.LogBatchRequest{
 				RunID: "1",
 				Metrics: []request.MetricPartialRequest{
 					{
-						Key:   "key",
-						Value: "incorrect_value",
+						Key:       "key",
+						Value:     "incorrect_value",
+						Timestamp: 1234567890,
 					},
 				},
 			},
@@ -1260,6 +1296,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 							Value:     1.1,
 							RunID:     "1",
 							Timestamp: 123456789,
+							ContextID: models.DefaultContext.ID,
+							Context:   models.DefaultContext,
 						},
 					},
 				).Return(errors.New("database error"))
@@ -1355,6 +1393,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 							Value:     1.1,
 							RunID:     "1",
 							Timestamp: 123456789,
+							ContextID: models.DefaultContext.ID,
+							Context:   models.DefaultContext,
 						},
 					},
 				).Return(nil)
@@ -1706,7 +1746,7 @@ func TestService_LogParam_Error(t *testing.T) {
 		},
 		{
 			name:  "NoActiveRunFound",
-			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError("Run '1' not found"),
 			request: &request.LogParamRequest{
 				RunID: "1",
 				Key:   "key",

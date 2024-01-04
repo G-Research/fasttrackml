@@ -658,7 +658,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 									alias := "contexts"
 									j := join{
 										alias: alias,
-										query: "LEFT JOIN contexts ON metrics.context_id = contexts.id",
+										query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
 									}
 									pq.joins["metric_contexts"] = j
 								}

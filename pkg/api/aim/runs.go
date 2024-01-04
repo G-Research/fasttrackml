@@ -133,9 +133,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 			"context":    fiber.Map{},
 			"last_value": 0.1,
 		}
-		if m.Context != nil {
-			metric["context"] = m.Context.Json
-		}
+		metric["context"] = m.Context.Json
 		metrics[i] = metric
 	}
 	traces["metric"] = metrics
@@ -222,19 +220,12 @@ func GetRunMetrics(c *fiber.Ctx) error {
 			pv = nil
 		}
 
-		key := m.Key
-		if m.ContextID != nil {
-			key = fmt.Sprintf("%s%d", m.Key, *m.ContextID)
-		}
+		key := fmt.Sprintf("%s%d", m.Key, m.ContextID)
 		k := metrics[key]
 		k.name = m.Key
 		k.iters = append(k.iters, int(m.Iter))
 		k.values = append(k.values, pv)
-		if m.Context != nil {
-			k.context = m.Context.Json
-		} else {
-			k.context = []byte(`{}`)
-		}
+		k.context = m.Context.Json
 		metrics[key] = k
 	}
 
@@ -325,14 +316,12 @@ func GetRunsActive(c *fiber.Ctx) error {
 							"context":    fiber.Map{},
 						},
 					}
-					if m.Context != nil {
-						// to be properly decoded by AIM UI, json should be represented as a key:value object.
-						context := fiber.Map{}
-						if err := json.Unmarshal(m.Context.Json, &context); err != nil {
-							return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
-						}
-						data["context"] = context
+					// to be properly decoded by AIM UI, json should be represented as a key:value object.
+					context := fiber.Map{}
+					if err := json.Unmarshal(m.Context.Json, &context); err != nil {
+						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
 					}
+					data["context"] = context
 					metrics[i] = data
 				}
 
@@ -523,14 +512,12 @@ func SearchRuns(c *fiber.Ctx) error {
 							},
 							"context": fiber.Map{},
 						}
-						if m.Context != nil {
-							// to be properly decoded by AIM UI, json should be represented as a key:value object.
-							context := fiber.Map{}
-							if err := json.Unmarshal(m.Context.Json, &context); err != nil {
-								return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
-							}
-							data["context"] = context
+						// to be properly decoded by AIM UI, json should be represented as a key:value object.
+						context := fiber.Map{}
+						if err := json.Unmarshal(m.Context.Json, &context); err != nil {
+							return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
 						}
+						data["context"] = context
 						metrics[i] = data
 					}
 					run["traces"] = fiber.Map{
@@ -673,7 +660,6 @@ func SearchMetrics(c *fiber.Ctx) error {
 				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 				ns.ID,
 			).
-			Joins("LEFT JOIN metrics USING(run_uuid)").
 			Joins("LEFT JOIN latest_metrics USING(run_uuid)"))).
 		Order("runs.row_num DESC").
 		Find(&runs); tx.Error != nil {
@@ -721,16 +707,18 @@ func SearchMetrics(c *fiber.Ctx) error {
 	tx := database.DB.
 		Select(`
 			metrics.*,
-			c.json AS context_json`,
+			runmetrics.context_json`,
 		).
 		Table("metrics").
 		Joins(
-			"INNER JOIN (?) runmetrics USING(run_uuid, key)",
+			"INNER JOIN (?) runmetrics USING(run_uuid, key, context_id)",
 			pq.Filter(database.DB.
 				Select(
 					"runs.run_uuid",
 					"runs.row_num",
 					"latest_metrics.key",
+					"latest_metrics.context_id",
+					"latest_metrics_context.json AS context_json",
 					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
 				).
 				Table("runs").
@@ -738,10 +726,10 @@ func SearchMetrics(c *fiber.Ctx) error {
 					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 					ns.ID,
 				).
-				Joins("LEFT JOIN metrics USING(run_uuid)").
-				Joins("LEFT JOIN latest_metrics USING(run_uuid)")),
+				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
+				Joins(`LEFT JOIN contexts latest_metrics_context `+
+					`ON latest_metrics.context_id = latest_metrics_context.id`)),
 		).
-		Joins("LEFT JOIN contexts AS c ON c.id = metrics.context_id").
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").
 		Order("metrics.key").
@@ -750,7 +738,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 	var xAxis bool
 	if q.XAxis != "" {
 		tx.
-			Select("metrics.*", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
+			Select("metrics.*", "runmetrics.context_json", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
 			Joins(
 				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND metrics.iter = x_axis.iter AND x_axis.key = ?",
 				q.XAxis,
@@ -777,6 +765,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 				id          string
 				key         string
 				context     fiber.Map
+				contextID   uint
 				metrics     []fiber.Map
 				values      []float64
 				iters       []float64
@@ -845,8 +834,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 					return err
 				}
 
-				// New series of metrics
-				if metric.Key != key || metric.RunID != id {
+				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
 					addMetrics()
 
 					if metric.RunID != id {
@@ -891,12 +879,11 @@ func SearchMetrics(c *fiber.Ctx) error {
 					}
 					xAxisValues = append(xAxisValues, x)
 				}
-				if metric.Context != nil {
-					// to be properly decoded by AIM UI, json should be represented as a key:value object.
-					if err := json.Unmarshal(metric.Context, &context); err != nil {
-						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
-					}
+				// to be properly decoded by AIM UI, json should be represented as a key:value object.
+				if err := json.Unmarshal(metric.Context, &context); err != nil {
+					return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
 				}
+				contextID = metric.ContextID
 			}
 
 			addMetrics()

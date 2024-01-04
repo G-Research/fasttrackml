@@ -46,11 +46,9 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 			Value:     m.Value,
 			Timestamp: m.Timestamp,
 		}
-		context := map[string]any{}
-		if m.Context != nil {
-			if err := json.Unmarshal(m.Context.Json, &context); err != nil {
-				return nil, eris.Wrap(err, "error unmarshaling context")
-			}
+		var context map[string]interface{}
+		if err := json.Unmarshal(m.Context.Json, &context); err != nil {
+			return nil, eris.Wrap(err, "error unmarshaling context")
 		}
 		resp.Metrics[n].Context = context
 		if m.IsNan {

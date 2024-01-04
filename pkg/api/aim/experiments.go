@@ -307,18 +307,23 @@ func DeleteExperiment(c *fiber.Ctx) error {
 		)
 	}
 
-	// validate that requested experiment exists.
+	// validate that requested experiment exists and is not a default experiment.
+	experiment := database.Experiment{}
 	if err := database.DB.Select(
-		"ID",
+		"ID", "Name",
+	).Where(
+		"experiments.experiment_id = ?", id,
 	).Where(
 		"experiments.namespace_id = ?", ns.ID,
-	).First(&database.Experiment{
-		ID: common.GetPointer(int32(id)),
-	}).Error; err != nil {
+	).First(&experiment).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fmt.Errorf("unable to find experiment %q: %w", params.ID, err)
+	}
+
+	if experiment.IsDefault() {
+		return fiber.NewError(fiber.StatusBadRequest, "unable to delete default experiment")
 	}
 
 	// TODO this code should move to service with injected repository

@@ -93,7 +93,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase1",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "..",
@@ -101,7 +101,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase2",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "./..",
@@ -109,7 +109,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase3",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "./../",
@@ -117,7 +117,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase4",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "foo/../bar",
@@ -125,7 +125,7 @@ func TestValidateListArtifactsRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase5",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.ListArtifactsRequest{
 				RunID: "run_id",
 				Path:  "/foo/../bar",
@@ -245,7 +245,7 @@ func TestValidateGetArtifactRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase1",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "..",
@@ -253,7 +253,7 @@ func TestValidateGetArtifactRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase2",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./..",
@@ -261,7 +261,7 @@ func TestValidateGetArtifactRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase3",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./../",
@@ -269,7 +269,7 @@ func TestValidateGetArtifactRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase4",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "foo/../bar",
@@ -277,7 +277,7 @@ func TestValidateGetArtifactRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectPathProvidedCase5",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "/foo/../bar",
@@ -285,7 +285,7 @@ func TestValidateGetArtifactRequest_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectLeadingSlash",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: &request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "/foo.bar",

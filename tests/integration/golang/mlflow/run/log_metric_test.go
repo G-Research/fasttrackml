@@ -58,6 +58,8 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				IsNan:     false,
 				RunID:     run.ID,
 				LastIter:  1,
+				ContextID: models.DefaultContext.ID,
+				Context:   models.DefaultContext,
 			},
 		},
 		{
@@ -77,6 +79,8 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				IsNan:     true,
 				RunID:     run.ID,
 				LastIter:  2,
+				ContextID: models.DefaultContext.ID,
+				Context:   models.DefaultContext,
 			},
 		},
 		{
@@ -95,6 +99,8 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				Step:      1,
 				RunID:     run.ID,
 				LastIter:  3,
+				ContextID: models.DefaultContext.ID,
+				Context:   models.DefaultContext,
 			},
 		},
 		{
@@ -113,6 +119,8 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				Step:      1,
 				RunID:     run.ID,
 				LastIter:  4,
+				ContextID: models.DefaultContext.ID,
+				Context:   models.DefaultContext,
 			},
 		},
 	}

@@ -8,16 +8,16 @@ replace (
 )
 
 require (
-	cloud.google.com/go/storage v1.35.1
-	dagger.io/dagger v0.9.4
+	cloud.google.com/go/storage v1.36.0
+	dagger.io/dagger v0.9.5
 	github.com/DATA-DOG/go-sqlmock v1.5.1
-	github.com/G-Research/fasttrackml-ui-aim v0.31602.16
-	github.com/G-Research/fasttrackml-ui-mlflow v0.20301.6
+	github.com/G-Research/fasttrackml-ui-aim v0.31705.3
+	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.2
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/apache/arrow/go/v12 v12.0.1
 	github.com/aws/aws-sdk-go-v2 v1.24.0
-	github.com/aws/aws-sdk-go-v2/config v1.26.1
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.47.5
+	github.com/aws/aws-sdk-go-v2/config v1.26.2
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.47.7
 	github.com/go-python/gpython v0.2.0
 	github.com/gofiber/fiber/v2 v2.51.0
 	github.com/gofiber/template/html/v2 v2.0.5
@@ -30,7 +30,7 @@ require (
 	github.com/rotisserie/eris v0.5.4
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
-	github.com/spf13/viper v1.18.1
+	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
 	google.golang.org/api v0.154.0
 	gorm.io/driver/postgres v1.5.4
@@ -51,7 +51,7 @@ require (
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/apache/thrift v0.16.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.4 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.16.12 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.16.13 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.10 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.9 // indirect
@@ -63,7 +63,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.16.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.18.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.26.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.26.6 // indirect
 	github.com/aws/smithy-go v1.19.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -124,7 +124,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/net v0.19.0 // indirect

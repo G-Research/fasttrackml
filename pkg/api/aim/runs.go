@@ -162,17 +162,18 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	b := []struct {
-		Name    string    `json:"name"`
-		Context fiber.Map `json:"context"`
-	}{}
+	var b []struct {
+		Name    string            `json:"name"`
+		Context map[string]string `json:"context"`
+	}
 
 	if err := c.BodyParser(&b); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	metricKeysMap := make(fiber.Map, len(b))
+	metricKeysMap, contexts := make(fiber.Map, len(b)), make([]map[string]string, 0, len(b))
 	for _, m := range b {
+		contexts = append(contexts, m.Context)
 		metricKeysMap[m.Name] = nil
 	}
 	metricKeys := make([]string, len(metricKeysMap))
@@ -203,8 +204,13 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		},
 	).Preload(
 		"Metrics.Context",
-		func(db *gorm.DB) *gorm.DB {
-			return db
+		func(query *gorm.DB) *gorm.DB {
+			subQuery := database.DB
+			for _, context := range contexts {
+				sql, args := repositories.BuildJsonCondition(database.DB.Dialector.Name(), "json", context)
+				subQuery = subQuery.Or(sql, args...)
+			}
+			return query.Where(subQuery)
 		},
 	)
 
@@ -940,9 +946,9 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		Runs    []struct {
 			ID     string `json:"run_id"`
 			Traces []struct {
-				Name    string    `json:"name"`
-				Slice   [3]int    `json:"slice"`
-				Context fiber.Map `json:"context"`
+				Name    string            `json:"name"`
+				Slice   [3]int            `json:"slice"`
+				Context map[string]string `json:"context"`
 			} `json:"traces"`
 		} `json:"runs"`
 	}{}
@@ -951,8 +957,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	var capacity int
-	var values []any
+	values, capacity, contexts := []any{}, 0, []map[string]string{}
 	for _, r := range b.Runs {
 		for _, t := range r.Traces {
 			l := t.Slice[2]
@@ -960,6 +965,9 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 				capacity = l
 			}
 			values = append(values, r.ID, t.Name, float32(l))
+			if len(t.Context) > 0 {
+				contexts = append(contexts, t.Context)
+			}
 		}
 	}
 
@@ -972,9 +980,24 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		}
 	}
 
-	// TODO this should probably be batched
-
 	values = append(values, ns.ID, b.AlignBy)
+
+	// process context information.
+	var contextStmt strings.Builder
+	if len(contexts) > 0 {
+		for i, context := range contexts {
+			sql, args := repositories.BuildJsonCondition(database.DB.Dialector.Name(), "c.json", context)
+			contextStmt.WriteString(sql)
+			if i < len(contexts)-1 {
+				contextStmt.WriteString(" OR ")
+			}
+			values = append(values, args...)
+		}
+	} else {
+		contextStmt.WriteString(" 1=1 ")
+	}
+
+	// TODO this should probably be batched
 	rows, err := database.DB.Raw(
 		fmt.Sprintf("WITH params(run_uuid, key, steps) AS (VALUES %s)", &valuesStmt)+
 			"        SELECT m.run_uuid, rm.key, m.iter, m.value, m.is_nan, c.json AS context_json FROM metrics AS m"+
@@ -989,6 +1012,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			"        WHERE m.key = ?"+
 			"          AND m.iter <= rm.max"+
 			"          AND MOD(m.iter + 1 + rm.interval / 2, rm.interval) < 1"+
+			"		   AND ("+contextStmt.String()+")"+
 			"        ORDER BY m.run_uuid, rm.key, m.iter",
 		values...,
 	).Rows()

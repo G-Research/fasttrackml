@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	namespaceContextKey  = "namespace"
-	defaultNamespaceCode = "default"
+	namespaceContextKey = "namespace"
 )
 
 var namespaceRegexp = regexp.MustCompile(`^/ns/([^/]+)/`)
@@ -28,7 +27,7 @@ func New(namespaceRepository repositories.NamespaceRepositoryProvider) fiber.Han
 	return func(c *fiber.Ctx) (err error) {
 		log.Debugf("checking namespace for path: %s", c.Path())
 		// if namespace exists in the request then try to process it, otherwise fallback to default namespace.
-		namespaceCode := defaultNamespaceCode
+		namespaceCode := models.DefaultNamespaceCode
 		if matches := namespaceRegexp.FindStringSubmatch(c.Path()); matches != nil {
 			namespaceCode = strings.Clone(matches[1])
 			c.Path(strings.TrimPrefix(c.Path(), fmt.Sprintf("/ns/%s", namespaceCode)))

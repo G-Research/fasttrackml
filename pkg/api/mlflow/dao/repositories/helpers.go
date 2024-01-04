@@ -1,11 +1,9 @@
 package repositories
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"strings"
 
-	"gorm.io/datatypes"
 	"gorm.io/driver/postgres"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -69,10 +67,4 @@ func BuildJsonCondition(
 	conditionTemplate = fmt.Sprintf(conditionTemplate, jsonColumnName)
 	sql = strings.Repeat(conditionTemplate+" AND ", len(jsonPathValueMap)-1) + conditionTemplate
 	return sql, args
-}
-
-// getJsonHash returns hash of the given json.
-func getJsonHash(json datatypes.JSON) string {
-	hash := sha256.Sum256(json)
-	return string(hash[:])
 }

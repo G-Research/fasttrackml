@@ -8,11 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0001"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0002"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0003"
@@ -205,6 +207,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				&Run{},
 				&Param{},
 				&Tag{},
+				&Context{},
 				&Metric{},
 				&LatestMetric{},
 				&AlembicVersion{},
@@ -242,7 +245,7 @@ func CreateDefaultNamespace(db *gorm.DB) error {
 			log.Info("Creating default namespace")
 			var exp int32 = 0
 			ns := Namespace{
-				Code:                "default",
+				Code:                models.DefaultNamespaceCode,
 				Description:         "Default namespace",
 				DefaultExperimentID: &exp,
 			}
@@ -269,8 +272,8 @@ func CreateDefaultExperiment(db *gorm.DB, defaultArtifactRoot string) error {
 			if err := db.Transaction(func(tx *gorm.DB) error {
 				ts := time.Now().UTC().UnixMilli()
 				exp := Experiment{
-					ID:             common.GetPointer(int32(0)),
-					Name:           "Default",
+					ID:             common.GetPointer(models.DefaultExperimentID),
+					Name:           models.DefaultExperimentName,
 					NamespaceID:    ns.ID,
 					LifecycleStage: LifecycleStageActive,
 					CreationTime: sql.NullInt64{
@@ -300,5 +303,32 @@ func CreateDefaultExperiment(db *gorm.DB, defaultArtifactRoot string) error {
 			return fmt.Errorf("unable to find default experiment: %s", err)
 		}
 	}
+	return nil
+}
+
+// CreateDefaultMetricContext creates the default metric context if it doesn't exist.
+func CreateDefaultMetricContext(db *gorm.DB) error {
+	if err := db.First(&DefaultContext).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Info("Creating default context")
+			if err := db.Create(&DefaultContext).Error; err != nil {
+				return fmt.Errorf("error creating default context: %s", err)
+			}
+		} else {
+			return fmt.Errorf("unable to find default context: %s", err)
+		}
+	}
+	for _, model := range []interface{}{
+		&Metric{},
+		&LatestMetric{},
+	} {
+		if err := db.Model(model).
+			Where("context_id IS NULL").
+			Update("context_id", DefaultContext.ID).
+			Error; err != nil {
+			return eris.Wrapf(err, "error updating context_id for %t", model)
+		}
+	}
+	log.Debugf("default metric context: %v", DefaultContext)
 	return nil
 }

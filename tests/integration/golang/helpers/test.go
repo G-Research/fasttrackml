@@ -156,13 +156,13 @@ func (s *BaseTestSuite) setupDatabase() {
 		s.DefaultNamespace, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 			ID:                  1,
 			Code:                "default",
-			DefaultExperimentID: common.GetPointer(int32(0)),
+			DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 		})
 		s.Require().Nil(err)
 
 		if !s.SkipCreateDefaultExperiment {
 			s.DefaultExperiment, err = s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				ID:             common.GetPointer[int32](0),
+				ID:             common.GetPointer(models.DefaultExperimentID),
 				Name:           "Default",
 				LifecycleStage: models.LifecycleStageActive,
 				NamespaceID:    s.DefaultNamespace.ID,
@@ -174,6 +174,7 @@ func (s *BaseTestSuite) setupDatabase() {
 			s.Require().Nil(err)
 		}
 	}
+	s.Require().Nil(database.CreateDefaultMetricContext(s.db.GormDB()))
 }
 
 func (s *BaseTestSuite) resetDatabase() {

@@ -49,7 +49,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 		Step:      1,
 		IsNan:     false,
 		Iter:      1,
-		Context: &models.Context{
+		Context: models.Context{
 			Json: datatypes.JSON(`{"key": "key", "value": "value"}`),
 		},
 	})

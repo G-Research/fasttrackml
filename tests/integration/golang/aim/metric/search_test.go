@@ -161,7 +161,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run2.ID,
 		Iter:      3,
-		Context: &models.Context{
+		Context: models.Context{
 			Json: datatypes.JSON([]byte(`
 				{
 					"testkey": "testvalue"
@@ -178,7 +178,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run2.ID,
 		LastIter:  3,
-		Context: &models.Context{
+		Context: models.Context{
 			Json: datatypes.JSON([]byte(`
 				{
 					"testkey": "testvalue"
@@ -5885,6 +5885,16 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
+			name: "SearchMetricContextWithXAxis",
+			request: request.SearchMetricsRequest{
+				Query: `metric.name == "TestMetric1" and metric.context.testkey == "testvalue"`,
+				XAxis: `TestMetric2`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run2,
+			},
+		},
+		{
 			name: "NegativeSearchMetricContext",
 			request: request.SearchMetricsRequest{
 				Query: `metric.name == "TestMetric1" and metric.context.testkey != "testvalue"`,
@@ -5927,6 +5937,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 						IsNan:     false,
 						RunID:     run.ID,
 						LastIter:  int64(decodedData[itersKey].([]float64)[0]),
+						Context:   models.DefaultContext,
+						ContextID: models.DefaultContext.ID,
 					}
 					decodedMetrics = append(decodedMetrics, &m)
 					metricCount++
@@ -5937,10 +5949,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			s.Equal(len(tt.metrics), len(decodedMetrics))
 			for i, metric := range tt.metrics {
 				// TODO when encoding.Decoder handles the context object, we can include it in the comparison
-				if metric.Context != nil {
-					metric.Context = nil
-					metric.ContextID = nil
-				}
+				metric.Context = models.DefaultContext
+				metric.ContextID = models.DefaultContext.ID
 				s.Equal(metric, decodedMetrics[i])
 			}
 		})

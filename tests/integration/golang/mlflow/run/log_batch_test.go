@@ -182,7 +182,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				RunID: run.ID,
 				Metrics: []request.MetricPartialRequest{
 					{
-						Key:       "key1",
+						Key:       "key0",
 						Value:     1.0,
 						Timestamp: 1687325991,
 						Step:      1,
@@ -194,7 +194,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				},
 			},
 			latestMetricIteration: map[string]int64{
-				"key1": 1,
+				"key0": 1,
 			},
 		},
 		{
@@ -213,7 +213,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						},
 					},
 					{
-						Key:       "key1",
+						Key:       "key2",
 						Value:     1.1,
 						Timestamp: 1687325991,
 						Step:      1,
@@ -222,7 +222,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						},
 					},
 					{
-						Key:       "key2",
+						Key:       "key1",
 						Value:     1.1,
 						Timestamp: 1687325991,
 						Step:      1,
@@ -241,7 +241,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						},
 					},
 					{
-						Key:       "key2",
+						Key:       "key1",
 						Value:     1.3,
 						Timestamp: 1687325991,
 						Step:      1,
@@ -251,7 +251,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						},
 					},
 					{
-						Key:       "key2",
+						Key:       "key3",
 						Value:     1.4,
 						Timestamp: 1687325991,
 						Step:      1,
@@ -263,7 +263,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 			},
 			latestMetricIteration: map[string]int64{
 				"key1": 3,
-				"key2": 4,
+				"key2": 2,
 			},
 		},
 		{

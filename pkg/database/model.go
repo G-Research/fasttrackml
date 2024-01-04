@@ -24,6 +24,8 @@ const (
 	StatusKilled    Status = "KILLED"
 )
 
+var DefaultContext = Context{ID: 1, Json: datatypes.JSON("{}")}
+
 type LifecycleStage string
 
 const (
@@ -144,8 +146,8 @@ type Metric struct {
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
 	Iter      int64   `gorm:"index"`
-	ContextID *uint
-	Context   *Context
+	ContextID uint    `gorm:"not null;primaryKey"`
+	Context   Context
 }
 
 type LatestMetric struct {
@@ -156,8 +158,8 @@ type LatestMetric struct {
 	IsNan     bool   `gorm:"not null"`
 	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
 	LastIter  int64
-	ContextID *uint
-	Context   *Context
+	ContextID uint `gorm:"not null;primaryKey"`
+	Context   Context
 }
 
 type Context struct {

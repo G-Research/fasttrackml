@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -206,6 +207,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				&Run{},
 				&Param{},
 				&Tag{},
+				&Context{},
 				&Metric{},
 				&LatestMetric{},
 				&AlembicVersion{},
@@ -301,5 +303,32 @@ func CreateDefaultExperiment(db *gorm.DB, defaultArtifactRoot string) error {
 			return fmt.Errorf("unable to find default experiment: %s", err)
 		}
 	}
+	return nil
+}
+
+// CreateDefaultMetricContext creates the default metric context if it doesn't exist.
+func CreateDefaultMetricContext(db *gorm.DB) error {
+	if err := db.First(&DefaultContext).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Info("Creating default context")
+			if err := db.Create(&DefaultContext).Error; err != nil {
+				return fmt.Errorf("error creating default context: %s", err)
+			}
+		} else {
+			return fmt.Errorf("unable to find default context: %s", err)
+		}
+	}
+	for _, model := range []interface{}{
+		&Metric{},
+		&LatestMetric{},
+	} {
+		if err := db.Model(model).
+			Where("context_id IS NULL").
+			Update("context_id", DefaultContext.ID).
+			Error; err != nil {
+			return eris.Wrapf(err, "error updating context_id for %t", model)
+		}
+	}
+	log.Debugf("default metric context: %v", DefaultContext)
 	return nil
 }

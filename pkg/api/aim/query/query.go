@@ -409,7 +409,31 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 }
 
 func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
-	return nil, nil //errors.New("I can't parse dict yet")
+	_, ok := pq.joins["metric_contexts"]
+	if !ok {
+		alias := "contexts"
+		j := join{
+			alias: alias,
+			query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
+		}
+		pq.joins["metric_contexts"] = j
+	}
+
+	clauses := make([]JsonEq, len(node.Keys))
+	for i, key := range node.Keys {
+		clauses[i] = JsonEq{
+			Left: Json{
+				Column: clause.Column{
+					Table: "contexts",
+					Name:  "json",
+				},
+				JsonPath:  string(key.(*ast.Str).S),
+				Dialector: pq.qp.Dialector,
+			},
+			Value: string(node.Values[i].(*ast.Str).S),
+		}
+	}
+	return clauses, nil
 }
 
 func (pq *parsedQuery) parseTuple(node *ast.Tuple) (any, error) {
@@ -423,7 +447,6 @@ func (pq *parsedQuery) parseTuple(node *ast.Tuple) (any, error) {
 	}
 	return list, nil
 }
-
 
 func (pq *parsedQuery) parseList(node *ast.List) (any, error) {
 	var err error
@@ -510,7 +533,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 									return nil, err
 								}
 								switch v := v.(type) {
-								case string:
+								case string, []JsonEq:
 									j, ok := pq.joins[fmt.Sprintf("metrics:%s", v)]
 									if !ok {
 										alias := fmt.Sprintf("metrics_%d", len(pq.joins))
@@ -541,28 +564,11 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 											Name:  name,
 										}, nil
 									}), nil
-								// case map[string]any:
-								// 	_, ok := pq.joins["metric_contexts"]
-								// 	if !ok {
-								// 		alias := "contexts"
-								// 		j := join{
-								// 			alias: alias,
-								// 			query: "LEFT JOIN contexts ON metrics.context_id = contexts.id",
-								// 		}
-								// 		pq.joins["metric_contexts"] = j
-								// 	}
-
-								// 	// Add a WHERE clause for the context key
-								// 	return Json{
-								// 		Column: clause.Column{
-								// 			Table: "contexts",
-								// 			Name:  "json",
-								// 		},
-								// 		JsonPath:  ,
-								// 		Dialector: pq.qp.Dialector,
-								// 	}, nil
+								// TODO if metrics name AND context are in the subscript
+								// case []any:
+								// 	return nil, fmt.Errorf("unsupported index value type %T", v)
 								default:
-									return nil, fmt.Errorf("unsupported index value type %t", v)
+									return nil, fmt.Errorf("unsupported index value type %T", v)
 								}
 							default:
 								return nil, fmt.Errorf("unsupported slicer %q", ast.Dump(s))
@@ -596,7 +602,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 										Name:  "value",
 									}, nil
 								default:
-									return nil, fmt.Errorf("unsupported index value type %t", v)
+									return nil, fmt.Errorf("unsupported index value type %T", v)
 								}
 							default:
 								return nil, fmt.Errorf("unsupported slicer %q", ast.Dump(s))

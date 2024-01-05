@@ -16,6 +16,10 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
+const (
+	TableContexts = "contexts"
+)
+
 type DefaultExpression struct {
 	Contains   string
 	Expression string
@@ -411,7 +415,7 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 	_, ok := pq.joins["metric_contexts"]
 	if !ok {
-		alias := "contexts"
+		alias := TableContexts
 		j := join{
 			alias: alias,
 			query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
@@ -424,7 +428,7 @@ func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 		clauses[i] = JsonEq{
 			Left: Json{
 				Column: clause.Column{
-					Table: "contexts",
+					Table: TableContexts,
 					Name:  "json",
 				},
 				JsonPath:  string(key.(*ast.Str).S),
@@ -553,7 +557,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 									// create the join for contexts
 									_, ok := pq.joins["metric_contexts"]
 									if !ok {
-										alias := "contexts"
+										alias := TableContexts
 										j := join{
 											alias: alias,
 											query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
@@ -658,7 +662,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								// create the join for contexts
 								_, ok := pq.joins["metric_contexts"]
 								if !ok {
-									alias := "contexts"
+									alias := TableContexts
 									j := join{
 										alias: alias,
 										query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
@@ -669,7 +673,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								// Add a WHERE clause for the context key
 								return Json{
 									Column: clause.Column{
-										Table: "contexts",
+										Table: TableContexts,
 										Name:  "json",
 									},
 									JsonPath:  contextKey,
@@ -775,6 +779,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 func metricAttributeGetter(table string) (any, error) {
 	return attributeGetter(func(attr string) (any, error) {
 		var name string
+		//nolint:ineffassign
 		switch attr {
 		case "last":
 			name = "value"

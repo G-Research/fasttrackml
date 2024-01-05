@@ -419,7 +419,7 @@ func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 		pq.joins["metric_contexts"] = j
 	}
 
-	clauses := make([]JsonEq, len(node.Keys))
+	clauses := make([]clause.Expression, len(node.Keys))
 	for i, key := range node.Keys {
 		clauses[i] = JsonEq{
 			Left: Json{
@@ -433,6 +433,7 @@ func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 			Value: string(node.Values[i].(*ast.Str).S),
 		}
 	}
+	pq.conditions = append(pq.conditions, clauses...)
 	return clauses, nil
 }
 
@@ -533,7 +534,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 									return nil, err
 								}
 								switch v := v.(type) {
-								case string, []JsonEq:
+								case string:
 									j, ok := pq.joins[fmt.Sprintf("metrics:%s", v)]
 									if !ok {
 										alias := fmt.Sprintf("metrics_%d", len(pq.joins))
@@ -564,7 +565,36 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 											Name:  name,
 										}, nil
 									}), nil
-								// TODO if metrics name AND context are in the subscript
+								case []clause.Expression:
+
+									// create the join for contexts
+									_, ok := pq.joins["metric_contexts"]
+									if !ok {
+										alias := "contexts"
+										j := join{
+											alias: alias,
+											query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
+										}
+										pq.joins["metric_contexts"] = j
+									}
+									return attributeGetter(func(attr string) (any, error) {
+										var name string
+										switch attr {
+										case "last":
+											name = "value"
+										case "last_step":
+											name = "last_iter"
+										case "first_step":
+											return 0, nil
+										default:
+											return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
+										}
+										return clause.Column{
+											Table: "latest_metrics",
+											Name:  name,
+										}, nil
+									}), nil
+								// TODO if metrics name AND context are in the subscript...
 								// case []any:
 								// 	return nil, fmt.Errorf("unsupported index value type %T", v)
 								default:

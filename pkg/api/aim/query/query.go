@@ -548,23 +548,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 										}
 										pq.joins[fmt.Sprintf("metrics:%s", v)] = j
 									}
-									return attributeGetter(func(attr string) (any, error) {
-										var name string
-										switch attr {
-										case "last":
-											name = "value"
-										case "last_step":
-											name = "last_iter"
-										case "first_step":
-											return 0, nil
-										default:
-											return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
-										}
-										return clause.Column{
-											Table: j.alias,
-											Name:  name,
-										}, nil
-									}), nil
+									return metricAttributeGetter(j.alias)
 								case []clause.Expression:
 									// create the join for contexts
 									_, ok := pq.joins["metric_contexts"]
@@ -576,23 +560,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 										}
 										pq.joins["metric_contexts"] = j
 									}
-									return attributeGetter(func(attr string) (any, error) {
-										var name string
-										switch attr {
-										case "last":
-											name = "value"
-										case "last_step":
-											name = "last_iter"
-										case "first_step":
-											return 0, nil
-										default:
-											return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
-										}
-										return clause.Column{
-											Table: "latest_metrics",
-											Name:  name,
-										}, nil
-									}), nil
+									return metricAttributeGetter("latest_metrics")
 								// TODO if metrics name AND context are in the subscript...
 								// case []any:
 								// 	return nil, fmt.Errorf("unsupported index value type %T", v)
@@ -802,6 +770,25 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 	default:
 		return nil, fmt.Errorf("unsupported name context %q", node.Ctx)
 	}
+}
+
+func metricAttributeGetter(table string) (any, error) {
+	return attributeGetter(func(attr string) (any, error) {
+		var name string
+		switch attr {
+		case "last":
+			name = "value"
+		case "last_step":
+			name = "last_iter"
+			return 0, nil
+		default:
+			return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
+		}
+		return clause.Column{
+			Table: table,
+			Name:  name,
+		}, nil
+	}), nil
 }
 
 func (pq *parsedQuery) parseNameConstant(node *ast.NameConstant) (any, error) {

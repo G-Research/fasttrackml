@@ -566,7 +566,6 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 										}, nil
 									}), nil
 								case []clause.Expression:
-
 									// create the join for contexts
 									_, ok := pq.joins["metric_contexts"]
 									if !ok {

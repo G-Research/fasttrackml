@@ -148,7 +148,6 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`WHERE ("contexts"."json"#>>$1 = $2 AND ("latest_metrics"."value" < $3 AND "runs"."lifecycle_stage" <> $4))`,
 			expectedVars: []interface{}{"{key1}", "value1", -1, models.LifecycleStageDeleted},
 		},
-
 	}
 
 	for _, tt := range tests {

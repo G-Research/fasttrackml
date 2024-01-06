@@ -779,12 +779,12 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 func metricAttributeGetter(table string) (any, error) {
 	return attributeGetter(func(attr string) (any, error) {
 		var name string
-		//nolint:ineffassign
 		switch attr {
 		case "last":
 			name = "value"
 		case "last_step":
 			name = "last_iter"
+		case "first_step":
 			return 0, nil
 		default:
 			return nil, fmt.Errorf("unsupported metrics attribute %q", attr)

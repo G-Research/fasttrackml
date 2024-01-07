@@ -537,40 +537,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								if err != nil {
 									return nil, err
 								}
-								switch v := v.(type) {
-								case string:
-									j, ok := pq.joins[fmt.Sprintf("metrics:%s", v)]
-									if !ok {
-										alias := fmt.Sprintf("metrics_%d", len(pq.joins))
-										j = join{
-											alias: alias,
-											query: fmt.Sprintf(
-												"LEFT JOIN latest_metrics %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?",
-												alias, table, alias, alias,
-											),
-											args: []any{v},
-										}
-										pq.joins[fmt.Sprintf("metrics:%s", v)] = j
-									}
-									return metricAttributeGetter(j.alias)
-								case []clause.Expression:
-									// create the join for contexts
-									_, ok := pq.joins["metric_contexts"]
-									if !ok {
-										alias := TableContexts
-										j := join{
-											alias: alias,
-											query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
-										}
-										pq.joins["metric_contexts"] = j
-									}
-									return metricAttributeGetter("latest_metrics")
-								// TODO if metrics name AND context are in the subscript...
-								// case []any:
-								// 	return nil, fmt.Errorf("unsupported index value type %T", v)
-								default:
-									return nil, fmt.Errorf("unsupported index value type %T", v)
-								}
+								return pq.metricSubscriptSlicer(v, table)
 							default:
 								return nil, fmt.Errorf("unsupported slicer %q", ast.Dump(s))
 							}
@@ -773,6 +740,46 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 		}
 	default:
 		return nil, fmt.Errorf("unsupported name context %q", node.Ctx)
+	}
+}
+
+func (pq *parsedQuery) metricSubscriptSlicer(v any, table string) (any, error) {
+	switch v := v.(type) {
+	case string:
+		j, ok := pq.joins[fmt.Sprintf("metrics:%s", v)]
+		if !ok {
+			alias := fmt.Sprintf("metrics_%d", len(pq.joins))
+			j = join{
+				alias: alias,
+				query: fmt.Sprintf(
+					"LEFT JOIN latest_metrics %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?",
+					alias, table, alias, alias,
+				),
+				args: []any{v},
+			}
+			pq.joins[fmt.Sprintf("metrics:%s", v)] = j
+		}
+		return metricAttributeGetter(j.alias)
+	case []clause.Expression:
+		_, ok := pq.joins["metric_contexts"]
+		if !ok {
+			alias := TableContexts
+			j := join{
+				alias: alias,
+				query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
+			}
+			pq.joins["metric_contexts"] = j
+		}
+		return metricAttributeGetter("latest_metrics")
+	case []any:
+		var err error
+		var rtn any
+		for _, v := range v {
+			rtn, err = pq.metricSubscriptSlicer(v, table)
+		}
+		return rtn, err
+	default:
+		return nil, fmt.Errorf("unsupported index value type %T", v)
 	}
 }
 

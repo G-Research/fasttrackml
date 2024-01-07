@@ -437,7 +437,6 @@ func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 			Value: string(node.Values[i].(*ast.Str).S),
 		}
 	}
-	pq.conditions = append(pq.conditions, clauses...)
 	return clauses, nil
 }
 
@@ -770,6 +769,7 @@ func (pq *parsedQuery) metricSubscriptSlicer(v any, table string) (any, error) {
 			}
 			pq.joins["metric_contexts"] = j
 		}
+		pq.conditions = append(pq.conditions, v...)
 		return metricAttributeGetter("latest_metrics")
 	case []any:
 		var err error

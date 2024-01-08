@@ -30,7 +30,7 @@ func (s *ListNamespacesTestSuite) Test_Ok() {
 	for i := 0; i < 5; i++ {
 		namespace := &models.Namespace{
 			ID:                  uint(i + 2),
-			Code:                fmt.Sprintf("Test Namespace %d", i),
+			Code:                fmt.Sprintf("ns%d", i),
 			Description:         fmt.Sprintf("Test namespace %d description", i),
 			DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 		}
@@ -41,7 +41,7 @@ func (s *ListNamespacesTestSuite) Test_Ok() {
 
 	var resp response.ListNamespaces
 	s.Require().Nil(s.AdminClient().WithResponse(&resp).DoRequest("/namespaces/list"))
-	// +1 for default namespace
+
 	s.Require().Equal(len(namespaces), len(resp))
 	for _, actualNamespace := range resp {
 		expectedNamespace := namespaces[fmt.Sprintf("%d", actualNamespace.ID)]

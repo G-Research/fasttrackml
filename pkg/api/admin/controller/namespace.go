@@ -17,7 +17,7 @@ func (c Controller) ListNamespaces(ctx *fiber.Ctx) error {
 	resp := response.NewListNamespacesResponse(namespaces)
 	log.Debugf("namespacesList response: %#v", resp)
 
-	return ctx.JSON(namespaces)
+	return ctx.JSON(resp)
 }
 
 // GetCurrentNamespace handles `GET /namespaces/current` endpoint.
@@ -26,6 +26,8 @@ func (c Controller) GetCurrentNamespace(ctx *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	resp := response.NewGetCurrentNamespaceResponse(ns)
+	log.Debugf("currentNamespace response: %#v", resp)
 
 	return ctx.JSON(ns)
 }

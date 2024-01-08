@@ -27,3 +27,14 @@ func NewListNamespacesResponse(
 
 	return &response
 }
+
+// NewGetCurrentNamespaceResponse creates new instance of Namespace.
+func NewGetCurrentNamespaceResponse(
+	namespace *models.Namespace,
+) *Namespace {
+	return &Namespace{
+		ID:          namespace.ID,
+		Code:        namespace.Code,
+		Description: namespace.Description,
+	}
+}

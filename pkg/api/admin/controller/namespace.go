@@ -2,7 +2,9 @@ package controller
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 
+	"github.com/G-Research/fasttrackml/pkg/api/admin/api/response"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
@@ -12,6 +14,8 @@ func (c Controller) ListNamespaces(ctx *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	resp := response.NewListNamespacesResponse(namespaces)
+	log.Debugf("namespacesList response: %#v", resp)
 
 	return ctx.JSON(namespaces)
 }

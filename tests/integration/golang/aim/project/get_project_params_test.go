@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -40,6 +41,10 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run.ID,
 		LastIter:  1,
+		Context: models.Context{
+			ID:   2,
+			Json: []byte(`{"key":"value"}`),
+		},
 	})
 	s.Require().Nil(err)
 
@@ -71,6 +76,13 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	s.Equal(1, len(resp.Metric))
 	_, ok := resp.Metric[metric.Key]
 	s.True(ok)
+	s.Equal(map[string][]fiber.Map{
+		"key": {
+			{
+				"key": "value",
+			},
+		},
+	}, resp.Metric)
 	s.Equal(map[string]interface{}{
 		param.Key: map[string]interface{}{
 			"__example_type__": "<class 'str'>",
@@ -101,5 +113,4 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	s.Equal(map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
 }
 
-func (s *GetProjectParamsTestSuite) Test_Error() {
-}
+func (s *GetProjectParamsTestSuite) Test_Error() {}

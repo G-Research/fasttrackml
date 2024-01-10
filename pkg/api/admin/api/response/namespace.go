@@ -19,7 +19,7 @@ func NewListNamespacesResponse(
 	response := ListNamespaces(make([]Namespace, len(namespaces)))
 
 	for i := range namespaces {
-		NewGetCurrentNamespaceResponse(&namespaces[i])
+		response[i] = *NewGetCurrentNamespaceResponse(&namespaces[i])
 	}
 
 	return &response

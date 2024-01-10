@@ -22,10 +22,10 @@ func TestListNamespacesTestSuite(t *testing.T) {
 }
 
 func (s *ListNamespacesTestSuite) Test_Ok() {
-	namespaces := map[string]*models.Namespace{}
-	defaultNamespace, err := s.NamespaceFixtures.GetDefaultNamespace(context.Background())
+	namespaces := map[uint]*models.Namespace{}
+	defaultNamespace, err := s.NamespaceFixtures.GetNamespaceByCode(context.Background(), s.DefaultNamespace.Code)
 	s.Require().Nil(err)
-	namespaces[fmt.Sprintf("%d", defaultNamespace.ID)] = defaultNamespace
+	namespaces[defaultNamespace.ID] = defaultNamespace
 
 	for i := 0; i < 5; i++ {
 		namespace := &models.Namespace{
@@ -36,7 +36,7 @@ func (s *ListNamespacesTestSuite) Test_Ok() {
 		}
 		namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), namespace)
 		s.Require().Nil(err)
-		namespaces[fmt.Sprintf("%d", namespace.ID)] = namespace
+		namespaces[namespace.ID] = namespace
 	}
 
 	var resp response.ListNamespaces
@@ -44,7 +44,7 @@ func (s *ListNamespacesTestSuite) Test_Ok() {
 
 	s.Require().Equal(len(namespaces), len(resp))
 	for _, actualNamespace := range resp {
-		expectedNamespace := namespaces[fmt.Sprintf("%d", actualNamespace.ID)]
+		expectedNamespace := namespaces[actualNamespace.ID]
 		s.Equal(expectedNamespace.ID, actualNamespace.ID)
 		s.Equal(expectedNamespace.Code, actualNamespace.Code)
 		s.Equal(expectedNamespace.Description, actualNamespace.Description)

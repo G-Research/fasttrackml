@@ -2,6 +2,7 @@ package response
 
 import "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 
+// Namespace is the response struct for the GetCurrentNamespace endpoint.
 type Namespace struct {
 	ID          uint   `json:"id"`
 	Code        string `json:"code"`
@@ -17,12 +18,8 @@ func NewListNamespacesResponse(
 ) *ListNamespaces {
 	response := ListNamespaces(make([]Namespace, len(namespaces)))
 
-	for i, namespace := range namespaces {
-		response[i] = Namespace{
-			ID:          namespace.ID,
-			Code:        namespace.Code,
-			Description: namespace.Description,
-		}
+	for i := range namespaces {
+		NewGetCurrentNamespaceResponse(&namespaces[i])
 	}
 
 	return &response

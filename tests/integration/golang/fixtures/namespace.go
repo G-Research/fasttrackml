@@ -87,13 +87,14 @@ func (f NamespaceFixtures) UpdateNamespace(
 	return namespace, nil
 }
 
-// GetDefaultNamespace fetches the default namespace.
-func (f NamespaceFixtures) GetDefaultNamespace(
+// GetNamespaceByCode fetches a namespace by code.
+func (f NamespaceFixtures) GetNamespaceByCode(
 	ctx context.Context,
+	code string,
 ) (*models.Namespace, error) {
 	var namespace models.Namespace
 	if err := f.db.WithContext(ctx).
-		Where("code = ?", "default").
+		Where("code = ?", code).
 		First(&namespace).Error; err != nil {
 		return nil, eris.Wrap(err, "error getting default namespace")
 	}

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"

@@ -183,7 +183,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 		case "images", "texts", "figures", "distributions", "audios":
 			resp[s] = fiber.Map{}
 		case "metric":
-			var metrics []database.Metric
+			var metrics []database.LatestMetric
 			if tx := database.DB.Distinct().Model(
 				&database.LatestMetric{},
 			).Joins(

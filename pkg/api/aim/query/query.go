@@ -10,7 +10,6 @@ import (
 	"github.com/go-python/gpython/parser"
 	"github.com/go-python/gpython/py"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -759,29 +758,41 @@ func (pq *parsedQuery) metricContextJoins() {
 func (pq *parsedQuery) metricSubscriptSlicer(v any, table string) (any, error) {
 	switch v := v.(type) {
 	case string:
+		// case of metric key
 		pq.latestMetricsJoins()
-		return clause.Eq{
-			Column: fmt.Sprintf("%s.%s", TableLatestMetrics, "key"),
-			Value:  v,
-		}, nil
+		keyEqual := pq.metricSubscriptString(v)
+		pq.conditions = append(pq.conditions, keyEqual)
+		return metricAttributeGetter(TableLatestMetrics)
 	case clause.Expression:
+		// case of metric context dictionary
 		pq.metricContextJoins()
 		pq.conditions = append(pq.conditions, v)
 		return metricAttributeGetter(TableLatestMetrics)
 	case []any:
-		clauses := []clause.Expression{}
-		for _, v := range v {
-			rtn, err := pq.metricSubscriptSlicer(v, table)
-			if err != nil {
-				return nil, eris.Wrap(err, "unable to parse metric subscript")
-			}
-			if exp, ok := rtn.(clause.Expression); ok {
-				clauses = append(clauses, exp)
-			}
+		// case of subscript tuple of string and clause.Expression
+		if len(v) != 2 {
+			return nil, fmt.Errorf("unsupported tuple length %d (should be 2)", len(v))
 		}
-		return clause.And(clauses...), nil
+		if _, ok := v[0].(string); !ok {
+			return nil, fmt.Errorf("unsupported tuple value type %T (should be string at 0)", v)
+		}
+		if _, ok := v[1].(clause.Expression); !ok {
+			return nil, fmt.Errorf("unsupported index value type %T (should be clause.Expression at 1)", v)
+		}
+		pq.metricContextJoins()
+		metricKeyExpression := pq.metricSubscriptString(v[0].(string))
+		metricContextExpression := v[1].(clause.Expression)
+		pq.conditions = append(pq.conditions, clause.And(metricKeyExpression, metricContextExpression))
+		return metricAttributeGetter(TableLatestMetrics)
 	default:
 		return nil, fmt.Errorf("unsupported index value type %T", v)
+	}
+}
+
+func (pq *parsedQuery) metricSubscriptString(v string) clause.Expression {
+	return clause.Eq{
+		Column: fmt.Sprintf("%s.%s", TableLatestMetrics, "key"),
+		Value:  v,
 	}
 }
 

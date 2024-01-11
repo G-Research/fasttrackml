@@ -10,6 +10,7 @@ import (
 	"github.com/go-python/gpython/parser"
 	"github.com/go-python/gpython/py"
 	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -17,7 +18,8 @@ import (
 )
 
 const (
-	TableContexts = "contexts"
+	TableContexts      = "contexts"
+	TableLatestMetrics = "latest_metrics"
 )
 
 type DefaultExpression struct {
@@ -412,17 +414,9 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 	}, nil
 }
 
+// parseDictionary will return `clause.And` having joined JsonEq conditions
+// derived from the dictionary
 func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
-	_, ok := pq.joins["metric_contexts"]
-	if !ok {
-		alias := TableContexts
-		j := join{
-			alias: alias,
-			query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
-		}
-		pq.joins["metric_contexts"] = j
-	}
-
 	clauses := make([]clause.Expression, len(node.Keys))
 	for i, key := range node.Keys {
 		clauses[i] = JsonEq{
@@ -437,7 +431,7 @@ func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 			Value: string(node.Values[i].(*ast.Str).S),
 		}
 	}
-	return clauses, nil
+	return clause.And(clauses...), nil
 }
 
 func (pq *parsedQuery) parseTuple(node *ast.Tuple) (any, error) {
@@ -624,18 +618,10 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 						return 0, nil
 					case "context":
 						return attributeGetter(
-							func(contextKey string) (any, error) {
-								// create the join for contexts
-								_, ok := pq.joins["metric_contexts"]
-								if !ok {
-									alias := TableContexts
-									j := join{
-										alias: alias,
-										query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
-									}
-									pq.joins["metric_contexts"] = j
-								}
 
+							func(contextKey string) (any, error) {
+								// Add JOINS clauses if needed
+								pq.metricContextJoins()
 								// Add a WHERE clause for the context key
 								return Json{
 									Column: clause.Column{
@@ -742,42 +728,58 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 	}
 }
 
+func (pq *parsedQuery) latestMetricsJoins() {
+	// create the join for latest_metrics
+	_, ok := pq.joins[TableLatestMetrics]
+	if !ok {
+		alias := TableLatestMetrics
+		j := join{
+			alias: alias,
+			query: "LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid",
+		}
+		pq.joins[TableLatestMetrics] = j
+	}
+}
+
+func (pq *parsedQuery) metricContextJoins() {
+	// ensure latest_metrics is joined
+	pq.latestMetricsJoins()
+	// create the join for contexts
+	_, ok := pq.joins[TableContexts]
+	if !ok {
+		alias := TableContexts
+		j := join{
+			alias: alias,
+			query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
+		}
+		pq.joins[TableContexts] = j
+	}
+}
+
 func (pq *parsedQuery) metricSubscriptSlicer(v any, table string) (any, error) {
 	switch v := v.(type) {
 	case string:
-		j, ok := pq.joins[fmt.Sprintf("metrics:%s", v)]
-		if !ok {
-			alias := fmt.Sprintf("metrics_%d", len(pq.joins))
-			j = join{
-				alias: alias,
-				query: fmt.Sprintf(
-					"LEFT JOIN latest_metrics %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?",
-					alias, table, alias, alias,
-				),
-				args: []any{v},
-			}
-			pq.joins[fmt.Sprintf("metrics:%s", v)] = j
-		}
-		return metricAttributeGetter(j.alias)
-	case []clause.Expression:
-		_, ok := pq.joins["metric_contexts"]
-		if !ok {
-			alias := TableContexts
-			j := join{
-				alias: alias,
-				query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
-			}
-			pq.joins["metric_contexts"] = j
-		}
-		pq.conditions = append(pq.conditions, v...)
-		return metricAttributeGetter("latest_metrics")
+		pq.latestMetricsJoins()
+		return clause.Eq{
+			Column: fmt.Sprintf("%s.%s", TableLatestMetrics, "key"),
+			Value:  v,
+		}, nil
+	case clause.Expression:
+		pq.metricContextJoins()
+		pq.conditions = append(pq.conditions, v)
+		return metricAttributeGetter(TableLatestMetrics)
 	case []any:
-		var err error
-		var rtn any
+		clauses := []clause.Expression{}
 		for _, v := range v {
-			rtn, err = pq.metricSubscriptSlicer(v, table)
+			rtn, err := pq.metricSubscriptSlicer(v, table)
+			if err != nil {
+				return nil, eris.Wrap(err, "unable to parse metric subscript")
+			}
+			if exp, ok := rtn.(clause.Expression); ok {
+				clauses = append(clauses, exp)
+			}
 		}
-		return rtn, err
+		return clause.And(clauses...), nil
 	default:
 		return nil, fmt.Errorf("unsupported index value type %T", v)
 	}

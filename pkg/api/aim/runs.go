@@ -732,6 +732,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").
 		Order("metrics.key").
+		Order("metrics.context_id").
 		Order("metrics.iter")
 
 	var xAxis bool

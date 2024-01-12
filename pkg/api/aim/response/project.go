@@ -1,5 +1,7 @@
 package response
 
+import "github.com/gofiber/fiber/v2"
+
 // ProjectActivityResponse represents the response json for the `GET aim/projects/activity` endpoint.
 type ProjectActivityResponse struct {
 	NumExperiments  int            `json:"num_experiments"`
@@ -19,6 +21,6 @@ type GetProjectResponse struct {
 
 // ProjectParamsResponse is a response object for `GET aim/projects/params` endpoint.
 type ProjectParamsResponse struct {
-	Metric map[string][]struct{}  `json:"metric"`
+	Metric map[string][]fiber.Map `json:"metric"`
 	Params map[string]interface{} `json:"params"`
 }

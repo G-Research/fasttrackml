@@ -110,8 +110,8 @@ func (r MetricRepository) CreateBatch(
 	}
 
 	for n := range metrics {
-		metrics[n].Context = *allContexts[n]
 		metrics[n].ContextID = allContexts[n].ID
+		metrics[n].Context = *allContexts[n]
 		metrics[n].Iter = lastIters[metrics[n].UniqueKey()] + 1
 		lastIters[metrics[n].UniqueKey()] = metrics[n].Iter
 		lm, ok := latestMetrics[metrics[n].UniqueKey()]
@@ -127,6 +127,7 @@ func (r MetricRepository) CreateBatch(
 				Step:      metrics[n].Step,
 				IsNan:     metrics[n].IsNan,
 				LastIter:  metrics[n].Iter,
+				ContextID: allContexts[n].ID,
 				Context:   *allContexts[n],
 			}
 		}
@@ -160,6 +161,7 @@ func (r MetricRepository) CreateBatch(
 
 	if len(updatedLatestMetrics) > 0 {
 		if err := r.db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "run_uuid"}, {Name: "key"}, {Name: "context_id"}},
 			UpdateAll: true,
 		}).Create(&updatedLatestMetrics).Error; err != nil {
 			return eris.Wrapf(err, "error updating latest metrics for run: %s", run.ID)

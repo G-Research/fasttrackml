@@ -16,6 +16,8 @@ import (
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
+	adminAPI "github.com/G-Research/fasttrackml/pkg/api/admin"
+	adminAPIController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -246,17 +248,36 @@ func createApp(
 	).Init(app)
 	mlflowUI.AddRoutes(app)
 
+	// init `admin` api routes.
+	adminAPI.NewRouter(
+		adminAPIController.NewController(
+			namespace.NewService(
+				config,
+				namespaceRepository,
+				mlflowRepositories.NewExperimentRepository(db.GormDB()),
+			),
+		),
+	).Init(app)
+
 	// init `admin` UI routes.
 	adminUI.NewRouter(
 		adminUIController.NewController(
-			namespace.NewService(namespaceRepository),
+			namespace.NewService(
+				config,
+				namespaceRepository,
+				mlflowRepositories.NewExperimentRepository(db.GormDB()),
+			),
 		),
 	).Init(app)
 
 	// init `chooser` ui routes.
 	chooser.NewRouter(
 		chooserController.NewController(
-			namespace.NewService(namespaceRepository),
+			namespace.NewService(
+				config,
+				namespaceRepository,
+				mlflowRepositories.NewExperimentRepository(db.GormDB()),
+			),
 		),
 	).AddRoutes(app)
 

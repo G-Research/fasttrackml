@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -316,17 +315,6 @@ func CreateDefaultMetricContext(db *gorm.DB) error {
 			}
 		} else {
 			return fmt.Errorf("unable to find default context: %s", err)
-		}
-	}
-	for _, model := range []interface{}{
-		&Metric{},
-		&LatestMetric{},
-	} {
-		if err := db.Model(model).
-			Where("context_id IS NULL").
-			Update("context_id", DefaultContext.ID).
-			Error; err != nil {
-			return eris.Wrapf(err, "error updating context_id for %t", model)
 		}
 	}
 	log.Debugf("default metric context: %v", DefaultContext)

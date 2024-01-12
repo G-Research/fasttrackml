@@ -61,7 +61,7 @@ func Migrate(db *gorm.DB) error {
 					return eris.Wrapf(err, "error counting rows for %s", backupName(table))
 				}
 				if oldRowCount != newRowCount {
-					return eris.Errorf("rowcount incorrect for for %s (old: %d, new: %d)",
+					return eris.Errorf("rowcount incorrect for %s (old: %d, new: %d)",
 						table, oldRowCount, newRowCount)
 				}
 

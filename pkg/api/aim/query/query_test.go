@@ -118,8 +118,8 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			name:  "TestNegativeFloat",
 			query: `run.metrics['my_metric'].last < -1.0`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid ` +
+				`WHERE ("latest_metrics"."key" = $1 AND ("latest_metrics"."value" < $2 AND "runs"."lifecycle_stage" <> $3))`,
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
 		{
@@ -153,23 +153,13 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			expectedVars: []interface{}{"{key1}", "value1", -1, models.LifecycleStageDeleted},
 		},
 		{
-			name:  "TestMetricContextSliceTuple1",
+			name:  "TestMetricContextSliceTuple",
 			query: `run.metrics["my_metric", {"key1": "value1"}].last < -1`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid ` +
 				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
-				`WHERE ("contexts"."json"#>>$2 = $3 AND ` +
-				`("latest_metrics"."value" < $4 AND "runs"."lifecycle_stage" <> $5))`,
-			expectedVars: []interface{}{"my_metric", "{key1}", "value1", -1, models.LifecycleStageDeleted},
-		},
-		{
-			name:  "TestMetricContextSliceTuple2",
-			query: `run.metrics[{"key1": "value1"}, "my_metric"].last < -1`,
-			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
-				`LEFT JOIN latest_metrics metrics_1 ON runs.run_uuid = metrics_1.run_uuid AND metrics_1.key = $1 ` +
-				`WHERE ("contexts"."json"#>>$2 = $3 AND ` +
-				`("metrics_1"."value" < $4 AND "runs"."lifecycle_stage" <> $5))`,
+				`WHERE (("latest_metrics"."key" = $1 AND "contexts"."json"#>>$2 = $3) ` +
+				`AND ("latest_metrics"."value" < $4 AND "runs"."lifecycle_stage" <> $5))`,
 			expectedVars: []interface{}{"my_metric", "{key1}", "value1", -1, models.LifecycleStageDeleted},
 		},
 	}
@@ -283,16 +273,18 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			name:  "TestNegativeInteger",
 			query: `run.metrics['my_metric'].last < -1`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid ` +
+				`WHERE ("latest_metrics"."key" = $1 AND ("latest_metrics"."value" < $2 ` +
+				`AND "runs"."lifecycle_stage" <> $3))`,
 			expectedVars: []interface{}{"my_metric", -1, models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestNegativeFloat",
 			query: `run.metrics['my_metric'].last < -1.0`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid ` +
+				`WHERE ("latest_metrics"."key" = $1 AND ("latest_metrics"."value" < $2 ` +
+				`AND "runs"."lifecycle_stage" <> $3))`,
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
 		{
@@ -300,6 +292,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			query:         `metric.context.key1 == 'value1'`,
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid ` +
 				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
 				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
@@ -309,6 +302,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			query:         `metric.context.key1 != 'value1'`,
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid ` +
 				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
 				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
@@ -317,6 +311,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			name:  "TestMetricKeySlice",
 			query: `run.metrics["key1"].last < -1`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid ` +
 				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
 				`WHERE ("latest_metrics"."key" = "$1 AND ` +
 				`("latest_metrics"."value" < $3 AND "runs"."lifecycle_stage" <> $4))`,
@@ -332,23 +327,13 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			expectedVars: []interface{}{"key1", "value1", -1, models.LifecycleStageDeleted},
 		},
 		{
-			name:  "TestMetricContextSliceTuple1",
+			name:  "TestMetricContextSliceTuple",
 			query: `run.metrics["my_metric", {"key1": "value1"}].last < -1`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid ` +
 				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
-				`LEFT JOIN latest_metrics metrics_1 ON runs.run_uuid = metrics_1.run_uuid AND metrics_1.key = $1 ` +
-				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$2 = $3 AND ` +
-				`("latest_metrics"."value" < $4 AND "runs"."lifecycle_stage" <> $5))`,
-			expectedVars: []interface{}{"my_metric", "key1", "value1", -1, models.LifecycleStageDeleted},
-		},
-		{
-			name:  "TestMetricContextSliceTuple2",
-			query: `run.metrics[{"key1": "value1"}, "my_metric"].last < -1`,
-			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
-				`LEFT JOIN latest_metrics metrics_1 ON runs.run_uuid = metrics_1.run_uuid AND metrics_1.key = $1 ` +
-				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$2 = $3 AND ` +
-				`("metrics_1"."value" < $4 AND "runs"."lifecycle_stage" <> $5))`,
+				`WHERE ("latest_metrics"."key" = $1 AND IFNULL("contexts"."json", JSON('{}'))->>$2 = $3 ` +
+				`AND ("latest_metrics"."value" < $4 AND "runs"."lifecycle_stage" <> $5))`,
 			expectedVars: []interface{}{"my_metric", "key1", "value1", -1, models.LifecycleStageDeleted},
 		},
 	}
@@ -396,6 +381,11 @@ func (s *QueryTestSuite) Test_Error() {
 		{
 			name:          "TestMetricContextNested",
 			query:         `metric.context.parent.nested == 'value1'`,
+			expectedError: SyntaxError{},
+		},
+		{
+			name:  "TestMetricContextSliceTupleOrder",
+			query: `run.metrics[{"key1": "value1"}, "my_metric"].last < -1`,
 			expectedError: SyntaxError{},
 		},
 	}

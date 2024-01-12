@@ -424,20 +424,15 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 			s.Empty(resp)
 
 			// make sure that `iter` and `last_iter` for each metric has been updated correctly.
-			if len(tt.latestMetricIteration) > 0 {
-				for key, iteration := range tt.latestMetricIteration {
-					lastMetric, err := s.MetricFixtures.GetLatestMetricByKey(context.Background(), key)
-					s.Require().Nil(err)
-					s.Equal(iteration, lastMetric.LastIter)
-				}
+			for key, iteration := range tt.latestMetricIteration {
+				lastMetric, err := s.MetricFixtures.GetLatestMetricByKey(context.Background(), key)
+				s.Require().Nil(err)
+				s.Equal(iteration, lastMetric.LastIter)
 			}
-			if len(tt.latestMetricKeyCount) > 0 {
-				for key, count := range tt.latestMetricKeyCount {
-					latestMetrics, err := s.MetricFixtures.GetLatestMetricsByKey(context.Background(), key)
-					s.Require().Nil(err)
-					s.T().Log(latestMetrics)
-					s.Equal(count, len(latestMetrics))
-				}
+			for key, count := range tt.latestMetricKeyCount {
+				latestMetrics, err := s.MetricFixtures.GetLatestMetricsByKey(context.Background(), key)
+				s.Require().Nil(err)
+				s.Equal(count, len(latestMetrics))
 			}
 			for _, metric := range tt.request.Metrics {
 				if metric.Context != nil {

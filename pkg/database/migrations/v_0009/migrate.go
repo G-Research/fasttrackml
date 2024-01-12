@@ -44,11 +44,25 @@ func Migrate(db *gorm.DB) error {
 
 			// Copy the data from the old tables to the new ones with default metric context
 			for _, table := range tables {
+				// copy
 				if err := tx.Exec(fmt.Sprintf("INSERT INTO %s SELECT *, %d FROM %s",
 					table,
 					DefaultContext.ID,
 					backupName(table))).Error; err != nil {
 					return eris.Wrapf(err, "error copying data for %s", table)
+				}
+
+				// verify
+				var oldRowCount, newRowCount int64
+				if err := tx.Table(table).Count(&newRowCount).Error; err != nil {
+					return eris.Wrapf(err, "error counting rows for %s", table)
+				}
+				if err := tx.Table(backupName(table)).Count(&oldRowCount).Error; err != nil {
+					return eris.Wrapf(err, "error counting rows for %s", backupName(table))
+				}
+				if oldRowCount != newRowCount {
+					return eris.Errorf("rowcount incorrect for for %s (old: %d, new: %d)",
+						table, oldRowCount, newRowCount)
 				}
 
 				// Drop the backup tables

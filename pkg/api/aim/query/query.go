@@ -41,6 +41,7 @@ type ParsedQuery interface {
 type parsedQuery struct {
 	qp             *QueryParser
 	joins          map[string]join
+	joinKeys       []string
 	conditions     []clause.Expression
 	metricSelected bool
 }
@@ -159,9 +160,18 @@ func (qp *QueryParser) Parse(q string) (ParsedQuery, error) {
 	return pq, nil
 }
 
+// AddJoin will add a join to the transaction, retaining the order added
+func (pq *parsedQuery) AddJoin(table string, j join) {
+	_, ok := pq.joins[table]
+	if !ok {
+		pq.joins[table] = j
+		pq.joinKeys = append(pq.joinKeys, table)
+	}
+}
+
 func (pq *parsedQuery) Filter(tx *gorm.DB) *gorm.DB {
-	for _, j := range pq.joins {
-		tx.Joins(j.query, j.args...)
+	for _, j := range pq.joinKeys {
+		tx.Joins(pq.joins[j].query, pq.joins[j].args...)
 	}
 	if len(pq.conditions) > 0 {
 		tx.Where(clause.And(pq.conditions...))
@@ -729,30 +739,20 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 
 func (pq *parsedQuery) latestMetricsJoins() {
 	// create the join for latest_metrics
-	_, ok := pq.joins[TableLatestMetrics]
-	if !ok {
-		alias := TableLatestMetrics
-		j := join{
-			alias: alias,
-			query: "LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid",
-		}
-		pq.joins[TableLatestMetrics] = j
-	}
+	pq.AddJoin(TableLatestMetrics, join{
+		alias: TableLatestMetrics,
+		query: "LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid",
+	})
 }
 
 func (pq *parsedQuery) metricContextJoins() {
 	// ensure latest_metrics is joined
 	pq.latestMetricsJoins()
 	// create the join for contexts
-	_, ok := pq.joins[TableContexts]
-	if !ok {
-		alias := TableContexts
-		j := join{
-			alias: alias,
-			query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
-		}
-		pq.joins[TableContexts] = j
-	}
+	pq.AddJoin(TableContexts, join{
+		alias: TableContexts,
+		query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
+	})
 }
 
 func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {

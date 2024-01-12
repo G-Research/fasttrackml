@@ -18,8 +18,8 @@ func Migrate(db *gorm.DB) error {
 		return db.Transaction(func(tx *gorm.DB) error {
 			// Rename the existing metrics tables and drop indexes
 			tablesIndexes := map[string][]string{
-				"metrics":        []string{"idx_metrics_run_id", "idx_metrics_iter"},
-				"latest_metrics": []string{"idx_latest_metrics_run_id"},
+				"metrics":        {"idx_metrics_run_id", "idx_metrics_iter"},
+				"latest_metrics": {"idx_latest_metrics_run_id"},
 			}
 			for table, indexes := range tablesIndexes {
 				for _, index := range indexes {
@@ -43,7 +43,7 @@ func Migrate(db *gorm.DB) error {
 			}
 
 			// Copy the data from the old tables to the new ones with default metric context
-			for table, _ := range tablesIndexes {
+			for table := range tablesIndexes {
 				// copy
 				if err := tx.Exec(fmt.Sprintf("INSERT INTO %s SELECT *, %d FROM %s",
 					table,

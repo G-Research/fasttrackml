@@ -529,7 +529,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								if err != nil {
 									return nil, err
 								}
-								return pq.metricSubscriptSlicer(v, table)
+								return pq.metricSubscriptSlicer(v)
 							default:
 								return nil, fmt.Errorf("unsupported slicer %q", ast.Dump(s))
 							}
@@ -755,12 +755,12 @@ func (pq *parsedQuery) metricContextJoins() {
 	}
 }
 
-func (pq *parsedQuery) metricSubscriptSlicer(v any, table string) (any, error) {
+func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {
 	switch v := v.(type) {
 	case string:
 		// case of metric key
 		pq.latestMetricsJoins()
-		keyEqual := pq.metricSubscriptString(v)
+		keyEqual := pq.metricSubscriptStringExpression(v)
 		pq.conditions = append(pq.conditions, keyEqual)
 		return metricAttributeGetter(TableLatestMetrics)
 	case clause.Expression:
@@ -769,19 +769,20 @@ func (pq *parsedQuery) metricSubscriptSlicer(v any, table string) (any, error) {
 		pq.conditions = append(pq.conditions, v)
 		return metricAttributeGetter(TableLatestMetrics)
 	case []any:
-		// case of subscript tuple of string and clause.Expression
+		// case of subscript tuple (string and context dictionary)
 		if len(v) != 2 {
 			return nil, fmt.Errorf("unsupported tuple length %d (should be 2)", len(v))
 		}
-		if _, ok := v[0].(string); !ok {
+		metricKey, ok := v[0].(string)
+		if !ok {
 			return nil, fmt.Errorf("unsupported tuple value type %T (should be string at 0)", v)
 		}
-		if _, ok := v[1].(clause.Expression); !ok {
+		metricContextExpression, ok := v[1].(clause.Expression)
+		if !ok {
 			return nil, fmt.Errorf("unsupported index value type %T (should be clause.Expression at 1)", v)
 		}
+		metricKeyExpression := pq.metricSubscriptStringExpression(metricKey)
 		pq.metricContextJoins()
-		metricKeyExpression := pq.metricSubscriptString(v[0].(string))
-		metricContextExpression := v[1].(clause.Expression)
 		pq.conditions = append(pq.conditions, clause.And(metricKeyExpression, metricContextExpression))
 		return metricAttributeGetter(TableLatestMetrics)
 	default:
@@ -789,7 +790,7 @@ func (pq *parsedQuery) metricSubscriptSlicer(v any, table string) (any, error) {
 	}
 }
 
-func (pq *parsedQuery) metricSubscriptString(v string) clause.Expression {
+func (pq *parsedQuery) metricSubscriptStringExpression(v string) clause.Expression {
 	return clause.Eq{
 		Column: fmt.Sprintf("%s.%s", TableLatestMetrics, "key"),
 		Value:  v,

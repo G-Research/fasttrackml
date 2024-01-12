@@ -16,23 +16,23 @@ const Version = "2c2299e4e061"
 func Migrate(db *gorm.DB) error {
 	return migrations.RunWithoutForeignKeyIfNeeded(db, func() error {
 		return db.Transaction(func(tx *gorm.DB) error {
-			// Rename the existing metricx tables and drop indexes
-			tables := []string{"metrics", "latest_metrics"}
-			for _, table := range tables {
-				index := fmt.Sprintf("idx_%s_run_id", table)
-				if err := dropIndex(tx, table, index); err != nil {
-					return eris.Wrapf(err, "error dropping %s", index)
+			// Rename the existing metrics tables and drop indexes
+			tablesIndexes := map[string][]string{
+				"metrics": []string{"idx_metrics_run_id", "idx_metrics_iter"},
+				"latest_metrics": []string{"idx_latest_metrics_run_id"},
+			}
+			for table, indexes := range tablesIndexes {
+				for _, index := range indexes {
+					if err := dropIndex(tx, table, index); err != nil {
+						return eris.Wrapf(err, "error dropping %s", index)
+					}
 				}
 				if err := tx.Migrator().RenameTable(table, backupName(table)); err != nil {
 					return eris.Wrapf(err, "error renaming %s", table)
 				}
 			}
-			index := "idx_metrics_iter"
-			if err := dropIndex(tx, backupName("metrics"), index); err != nil {
-				return eris.Wrapf(err, "error dropping %s", index)
-			}
 
-			// Auto-migrate the replacements and new tables
+			// Auto-migrate to create new and altered tables
 			if err := tx.Migrator().AutoMigrate(&Context{}, &Metric{}, &LatestMetric{}); err != nil {
 				return eris.Wrap(err, "error automigrating new tables")
 			}
@@ -43,7 +43,7 @@ func Migrate(db *gorm.DB) error {
 			}
 
 			// Copy the data from the old tables to the new ones with default metric context
-			for _, table := range tables {
+			for table, _ := range tablesIndexes {
 				// copy
 				if err := tx.Exec(fmt.Sprintf("INSERT INTO %s SELECT *, %d FROM %s",
 					table,

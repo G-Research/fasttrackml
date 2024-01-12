@@ -107,6 +107,17 @@ func (f MetricFixtures) GetLatestMetricByKey(ctx context.Context, key string) (*
 	return &metric, nil
 }
 
+// GetLatestMetricsByKey returns the latest metrics by provided key.
+func (f MetricFixtures) GetLatestMetricsByKey(ctx context.Context, key string) ([]models.LatestMetric, error) {
+	var metrics []models.LatestMetric
+	if err := f.db.WithContext(ctx).Preload("Context").Where(
+		"key = ?", key,
+	).Find(&metrics).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting latest metrics by key: %v", key)
+	}
+	return metrics, nil
+}
+
 // GetLatestMetricByRunID returns the latest metric by provide Run ID.
 func (f MetricFixtures) GetLatestMetricByRunID(ctx context.Context, runID string) (*models.LatestMetric, error) {
 	var metric models.LatestMetric

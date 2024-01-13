@@ -742,7 +742,7 @@ func (pq *parsedQuery) latestMetricsJoins() {
 	// create the join for latest_metrics
 	pq.AddJoin(TableLatestMetrics, join{
 		alias: TableLatestMetrics,
-		query: "LEFT JOIN latest_metrics ON latest_metrics.run_uuid = runs.run_uuid",
+		query: "LEFT JOIN latest_metrics USING(run_uuid)",
 	})
 }
 

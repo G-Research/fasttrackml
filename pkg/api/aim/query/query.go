@@ -600,6 +600,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 				},
 			), nil
 		case "metric":
+			pq.latestMetricsJoins()
 			table, ok := pq.qp.Tables["metrics"]
 			if !ok {
 				return nil, errors.New("unsupported name identifier 'metric'")

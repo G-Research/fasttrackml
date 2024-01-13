@@ -160,15 +160,7 @@ func (qp *QueryParser) Parse(q string) (ParsedQuery, error) {
 	return pq, nil
 }
 
-// AddJoin will add a join to the transaction, retaining the order added
-func (pq *parsedQuery) AddJoin(table string, j join) {
-	_, ok := pq.joins[table]
-	if !ok {
-		pq.joins[table] = j
-		pq.joinKeys = append(pq.joinKeys, table)
-	}
-}
-
+// Filter will add the appropriate Joins and Where clauses to the tx.
 func (pq *parsedQuery) Filter(tx *gorm.DB) *gorm.DB {
 	for _, j := range pq.joinKeys {
 		tx.Joins(pq.joins[j].query, pq.joins[j].args...)
@@ -600,7 +592,6 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 				},
 			), nil
 		case "metric":
-			pq.latestMetricsJoins()
 			table, ok := pq.qp.Tables["metrics"]
 			if !ok {
 				return nil, errors.New("unsupported name identifier 'metric'")
@@ -630,8 +621,6 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 						return attributeGetter(
 
 							func(contextKey string) (any, error) {
-								// Add JOINS clauses if needed
-								pq.metricContextJoins()
 								// Add a WHERE clause for the context key
 								return Json{
 									Column: clause.Column{
@@ -738,35 +727,15 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 	}
 }
 
-func (pq *parsedQuery) latestMetricsJoins() {
-	// create the join for latest_metrics
-	pq.AddJoin(TableLatestMetrics, join{
-		alias: TableLatestMetrics,
-		query: "LEFT JOIN latest_metrics USING(run_uuid)",
-	})
-}
-
-func (pq *parsedQuery) metricContextJoins() {
-	// ensure latest_metrics is joined
-	pq.latestMetricsJoins()
-	// create the join for contexts
-	pq.AddJoin(TableContexts, join{
-		alias: TableContexts,
-		query: "LEFT JOIN contexts ON latest_metrics.context_id = contexts.id",
-	})
-}
-
 func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {
 	switch v := v.(type) {
 	case string:
 		// case of metric key
-		pq.latestMetricsJoins()
 		keyEqual := pq.metricSubscriptStringExpression(v)
 		pq.conditions = append(pq.conditions, keyEqual)
 		return metricAttributeGetter(TableLatestMetrics)
 	case clause.Expression:
 		// case of metric context dictionary
-		pq.metricContextJoins()
 		pq.conditions = append(pq.conditions, v)
 		return metricAttributeGetter(TableLatestMetrics)
 	case []any:
@@ -783,7 +752,6 @@ func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {
 			return nil, fmt.Errorf("unsupported index value type %T (should be clause.Expression at 1)", v)
 		}
 		metricKeyExpression := pq.metricSubscriptStringExpression(metricKey)
-		pq.metricContextJoins()
 		pq.conditions = append(pq.conditions, clause.And(metricKeyExpression, metricContextExpression))
 		return metricAttributeGetter(TableLatestMetrics)
 	default:

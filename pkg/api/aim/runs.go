@@ -659,7 +659,10 @@ func SearchMetrics(c *fiber.Ctx) error {
 			Joins(
 				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 				ns.ID,
-			))).
+			).
+			Joins("JOIN latest_metrics USING(run_uuid)").
+			Joins("JOIN contexts ON latest_metrics.context_id = contexts.id"),
+		)).
 		Order("runs.row_num DESC").
 		Find(&runs); tx.Error != nil {
 		return fmt.Errorf("error searching run metrics: %w", tx.Error)
@@ -715,9 +718,9 @@ func SearchMetrics(c *fiber.Ctx) error {
 				Select(
 					"runs.run_uuid",
 					"runs.row_num",
-					"lm.key",
-					"lm.context_id",
-					"metrics_context.json AS context_json",
+					"latest_metrics.key",
+					"latest_metrics.context_id",
+					"contexts.json AS context_json",
 					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
 				).
 				Table("runs").
@@ -725,9 +728,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 					ns.ID,
 				).
-				Joins("LEFT JOIN latest_metrics lm USING(run_uuid)").
-				Joins(`LEFT JOIN contexts metrics_context `+
-					`ON lm.context_id = metrics_context.id`)),
+				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
+				Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id")),
 		).
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").

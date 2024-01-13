@@ -3,6 +3,7 @@ package aim
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -951,63 +952,88 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	values, capacity, contexts := []any{}, 0, []map[string]string{}
+	values, capacity, contextsMap := []any{}, 0, map[string]map[string]string{}
 	for _, r := range b.Runs {
 		for _, t := range r.Traces {
 			l := t.Slice[2]
 			if l > capacity {
 				capacity = l
 			}
-			values = append(values, r.ID, t.Name, float32(l))
-			if len(t.Context) > 0 {
-				contexts = append(contexts, t.Context)
+			// collect map of unique contexts.
+			data, err := json.Marshal(t.Context)
+			if err != nil {
+				return api.NewInternalError("error serializing provided context: %s", err)
+			}
+			sum := sha256.Sum256(data)
+			contextHash := fmt.Sprintf("%x", sum)
+			_, ok := contextsMap[contextHash]
+			if !ok {
+				contextsMap[contextHash] = t.Context
+			}
+			values = append(values, r.ID, t.Name, string(data), float32(l))
+		}
+	}
+
+	// map context values to context ids
+	query := database.DB
+	for _, context := range contextsMap {
+		sql, args := repositories.BuildJsonCondition(database.DB.Dialector.Name(), "contexts.json", context)
+		query = query.Or(sql, args...)
+	}
+	var contexts []database.Context
+	if err := query.Find(&contexts).Error; err != nil {
+		return api.NewInternalError("error getting context information: %s", err)
+	}
+
+	// add context ids to `values`
+	for _, context := range contexts {
+		for i := 2; i < len(values); i += 2 {
+			if values[i] == context.Json.String() {
+				values[i] = context.ID
 			}
 		}
 	}
 
 	var valuesStmt strings.Builder
-	length := len(values) / 3
+	length := len(values) / 4
 	for i := 0; i < length; i++ {
-		valuesStmt.WriteString("(?, ?, CAST(? AS numeric))")
+		valuesStmt.WriteString("(?, ?, ?, CAST(? AS numeric))")
 		if i < length-1 {
 			valuesStmt.WriteString(",")
 		}
 	}
 
+	// TODO this should probably be batched
+
 	values = append(values, ns.ID, b.AlignBy)
 
-	// process context information.
-	var contextStmt strings.Builder
-	if len(contexts) > 0 {
-		for i, context := range contexts {
-			sql, args := repositories.BuildJsonCondition(database.DB.Dialector.Name(), "c.json", context)
-			contextStmt.WriteString(sql)
-			if i < len(contexts)-1 {
-				contextStmt.WriteString(" OR ")
-			}
-			values = append(values, args...)
-		}
-	} else {
-		contextStmt.WriteString(" 1=1 ")
-	}
-
-	// TODO this should probably be batched
 	rows, err := database.DB.Raw(
-		fmt.Sprintf("WITH params(run_uuid, key, steps) AS (VALUES %s)", &valuesStmt)+
-			"        SELECT m.run_uuid, rm.key, m.iter, m.value, m.is_nan, c.json AS context_json FROM metrics AS m"+
+		fmt.Sprintf("WITH params(run_uuid, key, context_id, steps) AS (VALUES %s)", &valuesStmt)+
+			"        SELECT m.run_uuid, "+
+			"				rm.key, "+
+			"				m.iter, "+
+			"				m.value, "+
+			"				m.is_nan, "+
+			"				rm.context_id, "+
+			"				rm.context_json"+
+			"		 FROM metrics AS m"+
 			"        RIGHT JOIN ("+
-			"          SELECT p.run_uuid, p.key, lm.last_iter AS max, (lm.last_iter + 1) / p.steps AS interval"+
+			"          SELECT p.run_uuid, "+
+			"				  p.key, "+
+			"				  p.context_id, "+
+			"				  lm.last_iter AS max, "+
+			"				  (lm.last_iter + 1) / p.steps AS interval, "+
+			"				  contexts.json AS context_json"+
 			"          FROM params AS p"+
-			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key)"+
-			"        ) rm USING(run_uuid)"+
-			"		 LEFT JOIN contexts AS c ON c.id = m.context_id"+
+			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key, context_id)"+
+			"          INNER JOIN contexts ON contexts.id = lm.context_id"+
+			"        ) rm USING(run_uuid, key, context_id)"+
 			"		 INNER JOIN runs AS r ON m.run_uuid = r.run_uuid"+
 			"		 INNER JOIN experiments AS e ON r.experiment_id = e.experiment_id AND e.namespace_id = ?"+
 			"        WHERE m.key = ?"+
 			"          AND m.iter <= rm.max"+
-			"          AND MOD(m.iter + 1 + rm.interval / 2, rm.interval) < 1"+
-			"		   AND ("+contextStmt.String()+")"+
-			"        ORDER BY m.run_uuid, rm.key, m.iter",
+			"          AND COALESCE(MOD(m.iter + 1 + rm.interval / 2, rm.interval), 0) < 1"+
+			"        ORDER BY m.run_uuid, rm.key, rm.context_id, m.iter",
 		values...,
 	).Rows()
 	if err != nil {
@@ -1027,6 +1053,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			var id string
 			var key string
 			var context fiber.Map
+			var contextID uint
 			metrics := make([]fiber.Map, 0)
 			values := make([]float64, 0, capacity)
 			iters := make([]float64, 0, capacity)
@@ -1065,7 +1092,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 				}
 
 				// New series of metrics
-				if metric.Key != key || metric.RunID != id {
+				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
 					addMetrics()
 
 					if metric.RunID != id {
@@ -1079,6 +1106,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 					key = metric.Key
 					values = values[:0]
 					iters = iters[:0]
+					context = fiber.Map{}
 				}
 
 				v := metric.Value
@@ -1092,6 +1120,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 					if err := json.Unmarshal(metric.Context, &context); err != nil {
 						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
 					}
+					contextID = metric.ContextID
 				}
 			}
 

@@ -251,21 +251,33 @@ func createApp(
 	// init `admin` api routes.
 	adminAPI.NewRouter(
 		adminAPIController.NewController(
-			namespace.NewService(namespaceRepository),
+			namespace.NewService(
+				config,
+				namespaceRepository,
+				mlflowRepositories.NewExperimentRepository(db.GormDB()),
+			),
 		),
 	).Init(app)
 
 	// init `admin` UI routes.
 	adminUI.NewRouter(
 		adminUIController.NewController(
-			namespace.NewService(namespaceRepository),
+			namespace.NewService(
+				config,
+				namespaceRepository,
+				mlflowRepositories.NewExperimentRepository(db.GormDB()),
+			),
 		),
 	).Init(app)
 
 	// init `chooser` ui routes.
 	chooser.NewRouter(
 		chooserController.NewController(
-			namespace.NewService(namespaceRepository),
+			namespace.NewService(
+				config,
+				namespaceRepository,
+				mlflowRepositories.NewExperimentRepository(db.GormDB()),
+			),
 		),
 	).AddRoutes(app)
 

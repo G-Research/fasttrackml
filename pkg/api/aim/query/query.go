@@ -41,7 +41,6 @@ type ParsedQuery interface {
 type parsedQuery struct {
 	qp             *QueryParser
 	joins          map[string]join
-	joinKeys       []string
 	conditions     []clause.Expression
 	metricSelected bool
 }
@@ -162,8 +161,8 @@ func (qp *QueryParser) Parse(q string) (ParsedQuery, error) {
 
 // Filter will add the appropriate Joins and Where clauses to the tx.
 func (pq *parsedQuery) Filter(tx *gorm.DB) *gorm.DB {
-	for _, j := range pq.joinKeys {
-		tx.Joins(pq.joins[j].query, pq.joins[j].args...)
+	for _, j := range pq.joins {
+		tx.Joins(j.query, j.args...)
 	}
 	if len(pq.conditions) > 0 {
 		tx.Where(clause.And(pq.conditions...))

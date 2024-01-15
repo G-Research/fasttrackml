@@ -16,10 +16,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-const (
-	TableContexts      = "contexts"
-	TableLatestMetrics = "latest_metrics"
-)
 
 type DefaultExpression struct {
 	Contains   string
@@ -41,6 +37,7 @@ type ParsedQuery interface {
 type parsedQuery struct {
 	qp             *QueryParser
 	joins          map[string]join
+	joinKeys       []string
 	conditions     []clause.Expression
 	metricSelected bool
 }
@@ -52,6 +49,7 @@ type attributeGetter func(attr string) (any, error)
 type subscriptSlicer func(index ast.Slicer) (any, error)
 
 type join struct {
+	key   string
 	alias string
 	query string
 	args  []any
@@ -159,9 +157,19 @@ func (qp *QueryParser) Parse(q string) (ParsedQuery, error) {
 	return pq, nil
 }
 
+// AddJoin will append a query join and retain the order added
+func (pq *parsedQuery) AddJoin(key string, j join) {
+	_, ok := pq.joins[key]
+	if !ok {
+		pq.joinKeys = append(pq.joinKeys, key)
+		pq.joins[key] = j
+	}
+}
+
 // Filter will add the appropriate Joins and Where clauses to the tx.
 func (pq *parsedQuery) Filter(tx *gorm.DB) *gorm.DB {
-	for _, j := range pq.joins {
+	for _, k := range pq.joinKeys {
+		j := pq.joins[k]
 		tx.Joins(j.query, j.args...)
 	}
 	if len(pq.conditions) > 0 {
@@ -417,12 +425,12 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 // parseDictionary will return `clause.And` having joined JsonEq conditions
 // derived from the dictionary
 func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
-	clauses := make([]clause.Expression, len(node.Keys))
+	clauses := make([]JsonEq, len(node.Keys))
 	for i, key := range node.Keys {
 		clauses[i] = JsonEq{
 			Left: Json{
 				Column: clause.Column{
-					Table: TableContexts,
+					Table: "contexts",
 					Name:  "json",
 				},
 				JsonPath:  string(key.(*ast.Str).S),
@@ -431,7 +439,7 @@ func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 			Value: string(node.Values[i].(*ast.Str).S),
 		}
 	}
-	return clause.And(clauses...), nil
+	return clauses, nil
 }
 
 func (pq *parsedQuery) parseTuple(node *ast.Tuple) (any, error) {
@@ -545,7 +553,8 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								}
 								switch v := v.(type) {
 								case string:
-									j, ok := pq.joins[fmt.Sprintf("tags:%s", v)]
+									joinKey := fmt.Sprintf("tags:%s", v)
+									j, ok := pq.joins[joinKey]
 									if !ok {
 										alias := fmt.Sprintf("tags_%d", len(pq.joins))
 										j = join{
@@ -556,7 +565,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 											),
 											args: []any{v},
 										}
-										pq.joins[fmt.Sprintf("tags:%s", v)] = j
+										pq.AddJoin(joinKey, j)
 									}
 									return clause.Column{
 										Table: j.alias,
@@ -570,7 +579,8 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 							}
 						}), nil
 					default:
-						j, ok := pq.joins[fmt.Sprintf("params:%s", attr)]
+						joinKey := fmt.Sprintf("params:%s", attr)
+						j, ok := pq.joins[joinKey]
 						if !ok {
 							alias := fmt.Sprintf("params_%d", len(pq.joins))
 							j = join{
@@ -581,7 +591,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 								),
 								args: []any{attr},
 							}
-							pq.joins[fmt.Sprintf("params:%s", attr)] = j
+							pq.AddJoin(joinKey, j)
 						}
 						return clause.Column{
 							Table: j.alias,
@@ -618,12 +628,12 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 						return 0, nil
 					case "context":
 						return attributeGetter(
-
 							func(contextKey string) (any, error) {
+								_, contextJoin := pq.latestMetricsContextJoin([]JsonEq{}, join{})
 								// Add a WHERE clause for the context key
 								return Json{
 									Column: clause.Column{
-										Table: TableContexts,
+										Table: contextJoin.alias,
 										Name:  "json",
 									},
 									JsonPath:  contextKey,
@@ -727,16 +737,19 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 }
 
 func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {
+	table, ok := pq.qp.Tables["runs"]
+	if !ok {
+		return nil, errors.New("unsupported table name 'runs'")
+	}
 	switch v := v.(type) {
 	case string:
 		// case of metric key
-		keyEqual := pq.metricSubscriptStringExpression(v)
-		pq.conditions = append(pq.conditions, keyEqual)
-		return metricAttributeGetter(TableLatestMetrics)
-	case clause.Expression:
+		latestMetricJoin := pq.latestMetricsKeyJoin(v, table)
+		return metricAttributeGetter(latestMetricJoin.alias)
+	case []JsonEq:
 		// case of metric context dictionary
-		pq.conditions = append(pq.conditions, v)
-		return metricAttributeGetter(TableLatestMetrics)
+		latestMetricJoin, _ := pq.latestMetricsContextJoin(v, join{})
+		return metricAttributeGetter(latestMetricJoin.alias)
 	case []any:
 		// case of subscript tuple (string and context dictionary)
 		if len(v) != 2 {
@@ -746,23 +759,76 @@ func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {
 		if !ok {
 			return nil, fmt.Errorf("unsupported tuple value type %T (should be string at 0)", v)
 		}
-		metricContextExpression, ok := v[1].(clause.Expression)
+		metricContextExpression, ok := v[1].([]JsonEq)
 		if !ok {
-			return nil, fmt.Errorf("unsupported index value type %T (should be clause.Expression at 1)", v)
+			return nil, fmt.Errorf("unsupported index value type %T (should be []JsonEq at 1)", v)
 		}
-		metricKeyExpression := pq.metricSubscriptStringExpression(metricKey)
-		pq.conditions = append(pq.conditions, clause.And(metricKeyExpression, metricContextExpression))
-		return metricAttributeGetter(TableLatestMetrics)
+		latestMetricJoin := pq.latestMetricsKeyJoin(metricKey, table)
+		pq.latestMetricsContextJoin(metricContextExpression, latestMetricJoin)
+		return metricAttributeGetter(latestMetricJoin.alias)
 	default:
 		return nil, fmt.Errorf("unsupported index value type %T", v)
 	}
 }
 
-func (pq *parsedQuery) metricSubscriptStringExpression(v string) clause.Expression {
-	return clause.Eq{
-		Column: fmt.Sprintf("%s.%s", TableLatestMetrics, "key"),
-		Value:  v,
+func (pq *parsedQuery) latestMetricsKeyJoin(key, table string) join {
+	joinsKey := fmt.Sprintf("metrics:%s", key)
+	j, ok := pq.joins[joinsKey]
+	if !ok {
+		alias := fmt.Sprintf("metrics_%d", len(pq.joins))
+		j = join{
+			alias: alias,
+			query: fmt.Sprintf(
+				"LEFT JOIN latest_metrics %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?",
+				alias, table, alias, alias,
+			),
+			args: []any{key},
+			key:  joinsKey,
+		}
+		pq.AddJoin(joinsKey, j)
 	}
+	return j
+}
+
+func (pq *parsedQuery) latestMetricsContextJoin(exps []JsonEq, latestMetricsJoin join) (join, join) {
+	latestMetricsJoin, ok := pq.joins[latestMetricsJoin.key]
+	if !ok {
+		alias := fmt.Sprintf("metrics_%d", len(pq.joins))
+		latestMetricsJoin = join{
+			alias: alias,
+			query: fmt.Sprintf(
+				"LEFT JOIN latest_metrics %s USING(run_uuid)",
+				alias,
+			),
+			key: alias,
+		}
+		pq.AddJoin(alias, latestMetricsJoin)
+	}
+
+	contextsJoinKey := fmt.Sprintf("metrics_contexts:%s", latestMetricsJoin.alias)
+	contextJoin, ok := pq.joins[contextsJoinKey]
+	if !ok {
+		alias := fmt.Sprintf("contexts_%d", len(pq.joins))
+		contextJoin = join{
+			alias: alias,
+			query: fmt.Sprintf(
+				"LEFT JOIN contexts %s ON %s.context_id = %s.id",
+				alias, latestMetricsJoin.alias, alias,
+			),
+			key: contextsJoinKey,
+		}
+		pq.AddJoin(contextsJoinKey, contextJoin)
+	}
+
+	clauses := make([]clause.Expression, len(exps))
+	for idx := range exps {
+		exps[idx].Left.Table = contextJoin.alias
+		clauses[idx] = exps[idx]
+	}
+
+	if len(exps) > 0 {
+	}
+	return latestMetricsJoin, contextJoin
 }
 
 func metricAttributeGetter(table string) (any, error) {

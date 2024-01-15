@@ -997,7 +997,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	var valuesStmt strings.Builder
 	length := len(values) / 4
 	for i := 0; i < length; i++ {
-		valuesStmt.WriteString("(?, ?, ?, CAST(? AS numeric))")
+		valuesStmt.WriteString("(?, ?, CAST(? AS numeric), CAST(? AS float))")
 		if i < length-1 {
 			valuesStmt.WriteString(",")
 		}
@@ -1032,8 +1032,8 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			"		 INNER JOIN experiments AS e ON r.experiment_id = e.experiment_id AND e.namespace_id = ?"+
 			"        WHERE m.key = ?"+
 			"          AND m.iter <= rm.max"+
-			"          AND COALESCE(MOD(m.iter + 1 + rm.interval / 2, rm.interval), 0) < 1"+
-			"        ORDER BY m.run_uuid, rm.key, rm.context_id, m.iter",
+			"          AND MOD(m.iter + 1 + rm.interval / 2, rm.interval) < 1"+
+			"        ORDER BY r.row_num DESC, rm.key, rm.context_id, m.iter",
 		values...,
 	).Rows()
 	if err != nil {

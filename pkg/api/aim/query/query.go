@@ -791,6 +791,7 @@ func (pq *parsedQuery) latestMetricsKeyJoin(key, table string) join {
 }
 
 // latestMetrics joins the latest_metrics and contexts tables, reusing the latestMetricsJoin param when given.
+// returns the latest_metrics and contexts join structs.
 func (pq *parsedQuery) latestMetricsContextJoin(exps []JsonEq, latestMetricsJoin join) (join, join) {
 	latestMetricsJoin, ok := pq.joins[latestMetricsJoin.key]
 	if !ok {

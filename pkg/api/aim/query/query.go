@@ -421,8 +421,7 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 	}, nil
 }
 
-// parseDictionary will return `clause.And` having joined JsonEq conditions
-// derived from the dictionary
+// parseDictionary returns []JsonEq conditions derived from the dictionary.
 func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 	clauses := make([]JsonEq, len(node.Keys))
 	for i, key := range node.Keys {
@@ -441,6 +440,7 @@ func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 	return clauses, nil
 }
 
+// parseTuple converts a tuple node to slice of parsed nodes.
 func (pq *parsedQuery) parseTuple(node *ast.Tuple) (any, error) {
 	var err error
 	list := make([]any, len(node.Elts))
@@ -770,6 +770,7 @@ func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {
 	}
 }
 
+// latestMetricsKeyJoin joins the latest_metrics table by run_uuid and metric key, returning the join struct.
 func (pq *parsedQuery) latestMetricsKeyJoin(key, table string) join {
 	joinsKey := fmt.Sprintf("metrics:%s", key)
 	j, ok := pq.joins[joinsKey]
@@ -789,6 +790,7 @@ func (pq *parsedQuery) latestMetricsKeyJoin(key, table string) join {
 	return j
 }
 
+// latestMetrics joins the latest_metrics and contexts tables, reusing the latestMetricsJoin param when given.
 func (pq *parsedQuery) latestMetricsContextJoin(exps []JsonEq, latestMetricsJoin join) (join, join) {
 	latestMetricsJoin, ok := pq.joins[latestMetricsJoin.key]
 	if !ok {
@@ -804,7 +806,7 @@ func (pq *parsedQuery) latestMetricsContextJoin(exps []JsonEq, latestMetricsJoin
 		pq.AddJoin(alias, latestMetricsJoin)
 	}
 
-	contextsJoinKey := fmt.Sprintf("metrics_contexts:%s", latestMetricsJoin.alias)
+	contextsJoinKey := fmt.Sprintf("contexts:%s", latestMetricsJoin.alias)
 	contextJoin, ok := pq.joins[contextsJoinKey]
 	if !ok {
 		alias := fmt.Sprintf("contexts_%d", len(pq.joins))
@@ -819,6 +821,7 @@ func (pq *parsedQuery) latestMetricsContextJoin(exps []JsonEq, latestMetricsJoin
 		pq.AddJoin(contextsJoinKey, contextJoin)
 	}
 
+	// adjust the expressions to reference the new context alias created for the join
 	clauses := make([]clause.Expression, len(exps))
 	for idx := range exps {
 		exps[idx].Left.Table = contextJoin.alias

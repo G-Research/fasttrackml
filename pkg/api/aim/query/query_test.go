@@ -162,6 +162,18 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5))`,
 			expectedVars: []interface{}{"my_metric", "{key1}", "value1", -1, models.LifecycleStageDeleted},
 		},
+		{
+			name:  "TestMetricCompound",
+			query: `run.metrics["my_metric"].last < -1 and run.metrics[{"key1": "value1"}].last > -1`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
+				`LEFT JOIN latest_metrics metrics_1 USING(run_uuid) ` +
+				`LEFT JOIN contexts contexts_2 ON metrics_1.context_id = contexts_2.id ` +
+				`WHERE ("contexts_2"."json"#>>$2 = $3 ` +
+				`AND (("metrics_0"."value" < $4 AND "metrics_1"."value" > $5) ` +
+				`AND "runs"."lifecycle_stage" <> $6))`,
+			expectedVars: []interface{}{"my_metric", "{key1}", "value1", -1, -1, models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {
@@ -332,6 +344,18 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				`WHERE (IFNULL("contexts_1"."json", JSON('{}'))->>$2 = $3 ` +
 				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5))`,
 			expectedVars: []interface{}{"my_metric", "key1", "value1", -1, models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestMetricCompound",
+			query: `run.metrics["my_metric"].last < -1 and run.metrics[{"key1": "value1"}].last > -1`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
+				`LEFT JOIN latest_metrics metrics_1 USING(run_uuid) ` +
+				`LEFT JOIN contexts contexts_2 ON metrics_1.context_id = contexts_2.id ` +
+				`WHERE (IFNULL("contexts_2"."json", JSON('{}'))->>$2 = $3 ` +
+				`AND (("metrics_0"."value" < $4 AND "metrics_1"."value" > $5) ` +
+				`AND "runs"."lifecycle_stage" <> $6))`,
+			expectedVars: []interface{}{"my_metric", "key1", "value1", -1, -1, models.LifecycleStageDeleted},
 		},
 	}
 

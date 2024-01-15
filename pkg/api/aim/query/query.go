@@ -16,7 +16,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-
 type DefaultExpression struct {
 	Contains   string
 	Expression string
@@ -157,7 +156,7 @@ func (qp *QueryParser) Parse(q string) (ParsedQuery, error) {
 	return pq, nil
 }
 
-// AddJoin will append a query join and retain the order added
+// AddJoin will append a query join and retain the order added.
 func (pq *parsedQuery) AddJoin(key string, j join) {
 	_, ok := pq.joins[key]
 	if !ok {
@@ -826,7 +825,8 @@ func (pq *parsedQuery) latestMetricsContextJoin(exps []JsonEq, latestMetricsJoin
 		clauses[idx] = exps[idx]
 	}
 
-	if len(exps) > 0 {
+	if len(clauses) > 0 {
+		pq.conditions = append(pq.conditions, clause.And(clauses...))
 	}
 	return latestMetricsJoin, contextJoin
 }

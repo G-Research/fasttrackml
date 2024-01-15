@@ -302,7 +302,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			expectedSQL: `SELECT ID FROM "metrics" ` +
 				`LEFT JOIN latest_metrics metrics_0 USING(run_uuid) ` +
 				`LEFT JOIN contexts contexts_1 ON metrics_0.context_id = contexts_1.id ` +
-				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`WHERE (IFNULL("contexts_1"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
 		},
 		{

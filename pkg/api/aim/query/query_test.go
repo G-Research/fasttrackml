@@ -319,11 +319,10 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			query: `run.metrics["my_metric"].last < -1 and metric.context.key1 == "value1"`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE (("metrics_0"."value" < $2 AND IFNULL("contexts"."json", JSON('{}'))->>$3 = $4) ` +
+				`WHERE (("metrics_0"."value" < $2 AND IFNULL("contexts"."Json", JSON('{}'))->>$3 = $4) ` +
 				`AND "runs"."lifecycle_stage" <> $5)`,
 			expectedVars: []interface{}{"my_metric", -1, "key1", "value1", models.LifecycleStageDeleted},
 		},
-
 	}
 
 	for _, tt := range tests {

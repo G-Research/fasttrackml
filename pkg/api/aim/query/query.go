@@ -16,6 +16,11 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
+const (
+	TableContexts = "contexts"
+)
+
+
 type DefaultExpression struct {
 	Contains   string
 	Expression string
@@ -628,11 +633,10 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 					case "context":
 						return attributeGetter(
 							func(contextKey string) (any, error) {
-								_, contextJoin := pq.latestMetricsContextJoin([]JsonEq{}, join{})
 								// Add a WHERE clause for the context key
 								return Json{
 									Column: clause.Column{
-										Table: contextJoin.alias,
+										Table: TableContexts,
 										Name:  "json",
 									},
 									JsonPath:  contextKey,
@@ -744,10 +748,6 @@ func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {
 	case string:
 		// case of metric key
 		latestMetricJoin := pq.latestMetricsKeyJoin(v, table)
-		return metricAttributeGetter(latestMetricJoin.alias)
-	case []JsonEq:
-		// case of metric context dictionary
-		latestMetricJoin, _ := pq.latestMetricsContextJoin(v, join{})
 		return metricAttributeGetter(latestMetricJoin.alias)
 	case []any:
 		// case of subscript tuple (string and context dictionary)

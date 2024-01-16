@@ -323,7 +323,6 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				`AND "runs"."lifecycle_stage" <> $5)`,
 			expectedVars: []interface{}{"my_metric", -1, "key1", "value1", models.LifecycleStageDeleted},
 		},
-
 	}
 
 	for _, tt := range tests {

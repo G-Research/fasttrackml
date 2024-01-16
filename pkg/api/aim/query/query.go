@@ -20,7 +20,6 @@ const (
 	TableContexts = "contexts"
 )
 
-
 type DefaultExpression struct {
 	Contains   string
 	Expression string

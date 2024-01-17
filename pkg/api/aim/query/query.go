@@ -746,6 +746,7 @@ func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {
 	switch v := v.(type) {
 	case string:
 		// case of metric key
+		pq.metricSelected = true
 		latestMetricJoin := pq.latestMetricsKeyJoin(v, table)
 		return metricAttributeGetter(latestMetricJoin.alias)
 	case []any:
@@ -761,6 +762,7 @@ func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {
 		if !ok {
 			return nil, fmt.Errorf("unsupported index value type %T (should be []JsonEq at 1)", v)
 		}
+		pq.metricSelected = true
 		latestMetricJoin := pq.latestMetricsKeyJoin(metricKey, table)
 		pq.latestMetricsContextJoin(metricContextExpression, latestMetricJoin)
 		return metricAttributeGetter(latestMetricJoin.alias)

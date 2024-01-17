@@ -2,6 +2,7 @@ package query
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -121,19 +122,18 @@ func (eq JsonEq) Build(builder clause.Builder) {
 		rv := reflect.ValueOf(eq.Value)
 		if rv.Len() == 0 {
 			//nolint:errcheck,gosec
-			builder.WriteString(" IN (NULL)")
+			builder.WriteString(" IS NULL")
 		} else {
 			//nolint:errcheck,gosec
-			builder.WriteString(" IN (")
+			builder.WriteString(" = '[")
+			tmpl := strings.Repeat("%v,", rv.Len() -1) + "%v"
+			vals := make([]any, rv.Len())
 			for i := 0; i < rv.Len(); i++ {
-				if i > 0 {
-					//nolint:errcheck,gosec
-					builder.WriteByte(',')
-				}
-				builder.AddVar(builder, rv.Index(i).Interface())
+				vals[i] = rv.Index(i).Interface()
 			}
+			builder.WriteString(fmt.Sprintf(tmpl, vals...))
 			//nolint:errcheck,gosec
-			builder.WriteByte(')')
+			builder.WriteString("]'")
 		}
 	default:
 		if eqNil(eq.Value) {
@@ -158,18 +158,22 @@ func (neq JsonNeq) Build(builder clause.Builder) {
 	neq.Left.Build(builder)
 	switch neq.Value.(type) {
 	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:
-		//nolint:errcheck,gosec
-		builder.WriteString(" NOT IN (")
 		rv := reflect.ValueOf(neq.Value)
-		for i := 0; i < rv.Len(); i++ {
-			if i > 0 {
-				//nolint:errcheck,gosec
-				builder.WriteByte(',')
+		if rv.Len() == 0 {
+			//nolint:errcheck,gosec
+			builder.WriteString(" IS NULL")
+		} else {
+			//nolint:errcheck,gosec
+			builder.WriteString(" <> '[")
+			tmpl := strings.Repeat("%v,", rv.Len() -1) + "%v"
+			vals := make([]any, rv.Len())
+			for i := 0; i < rv.Len(); i++ {
+				vals[i] = rv.Index(i).Interface()
 			}
-			builder.AddVar(builder, rv.Index(i).Interface())
+			builder.WriteString(fmt.Sprintf(tmpl, vals...))
+			//nolint:errcheck,gosec
+			builder.WriteString("]'")
 		}
-		//nolint:errcheck,gosec
-		builder.WriteByte(')')
 	default:
 		if eqNil(neq.Value) {
 			//nolint:errcheck,gosec

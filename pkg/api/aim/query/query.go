@@ -432,7 +432,7 @@ func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 		clauses[i] = JsonEq{
 			Left: Json{
 				Column: clause.Column{
-					Table: "contexts",
+					Table: TableContexts,
 					Name:  "json",
 				},
 				JsonPath:  string(key.(*ast.Str).S),

@@ -162,7 +162,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			query:         `metric.context.key1 == [1,2,3]`,
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE ("contexts"."json"#>>$1 = '[1,2,3]' AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE ("contexts"."json"#>>$1 = '[1, 2, 3]' AND "runs"."lifecycle_stage" <> $2)`,
 			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
 		},
 

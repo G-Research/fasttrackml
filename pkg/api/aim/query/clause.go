@@ -111,8 +111,9 @@ func (json Json) writeColumn(builder clause.Builder) {
 }
 
 type JsonEq struct {
-	Left  Json
-	Value any
+	Left      Json
+	Value     any
+	Dialector string
 }
 
 func (eq JsonEq) Build(builder clause.Builder) {
@@ -126,7 +127,13 @@ func (eq JsonEq) Build(builder clause.Builder) {
 		} else {
 			//nolint:errcheck,gosec
 			builder.WriteString(" = '[")
-			tmpl := strings.Repeat("%v,", rv.Len() -1) + "%v"
+			tmpl := strings.Repeat("%v,", rv.Len()-1) + "%v"
+
+			switch eq.Dialector {
+			case postgres.Dialector{}.Name():
+				tmpl = strings.ReplaceAll(tmpl, ",", ", ")
+			}
+
 			vals := make([]any, rv.Len())
 			for i := 0; i < rv.Len(); i++ {
 				vals[i] = rv.Index(i).Interface()
@@ -165,7 +172,7 @@ func (neq JsonNeq) Build(builder clause.Builder) {
 		} else {
 			//nolint:errcheck,gosec
 			builder.WriteString(" <> '[")
-			tmpl := strings.Repeat("%v,", rv.Len() -1) + "%v"
+			tmpl := strings.Repeat("%v,", rv.Len()-1) + "%v"
 			vals := make([]any, rv.Len())
 			for i := 0; i < rv.Len(); i++ {
 				vals[i] = rv.Index(i).Interface()

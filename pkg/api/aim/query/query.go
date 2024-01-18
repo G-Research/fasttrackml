@@ -438,7 +438,7 @@ func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 				JsonPath:  string(key.(*ast.Str).S),
 				Dialector: pq.qp.Dialector,
 			},
-			Value: string(node.Values[i].(*ast.Str).S),
+			Value:     string(node.Values[i].(*ast.Str).S),
 			Dialector: pq.qp.Dialector,
 		}
 	}
@@ -1002,14 +1002,14 @@ func (pq *parsedQuery) newSqlJsonPathComparison(op ast.CmpOp, left Json, right a
 	switch op {
 	case ast.Eq:
 		return JsonEq{
-			Left:  left,
-			Value: right,
+			Left:      left,
+			Value:     right,
 			Dialector: pq.qp.Dialector,
 		}, nil
 	case ast.NotEq:
 		return JsonNeq{
-			Left:  left,
-			Value: right,
+			Left:      left,
+			Value:     right,
 			Dialector: pq.qp.Dialector,
 		}, nil
 	default:

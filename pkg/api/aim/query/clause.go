@@ -229,7 +229,6 @@ func renderArrayValue(builder clause.Builder, dialector string, rv reflect.Value
 	builder.WriteString("]'")
 }
 
-
 func renderDictValue(builder clause.Builder, dialector string, rv reflect.Value) {
 	builder.WriteString("'{")
 	tmpl := strings.Repeat(`"%v":"%v",`, rv.Len()-1) + `"%v":"%v"`
@@ -240,7 +239,7 @@ func renderDictValue(builder clause.Builder, dialector string, rv reflect.Value)
 		tmpl = strings.ReplaceAll(tmpl, ",", ", ")
 	}
 
-	vals := make([]any, rv.Len() * 2)
+	vals := make([]any, rv.Len()*2)
 	dictIndex := 0
 	for i := 0; i < rv.Len(); i++ {
 		jsonEq := rv.Index(i).Interface().(JsonEq)

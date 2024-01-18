@@ -165,6 +165,22 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`WHERE ("contexts"."json"#>>$1 = '[1, 2, 3]' AND "runs"."lifecycle_stage" <> $2)`,
 			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
 		},
+		{
+			name:          "TestMetricContextObject",
+			query:         `metric.context.key1 == {"subkey": "val"}`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE ("contexts"."json"#>>$1 = '{"subkey": "val"}' AND "runs"."lifecycle_stage" <> $2)`,
+			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextObject2",
+			query:         `metric.context.key1 == {"subkey": "val", "subkey2": "val"}`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE ("contexts"."json"#>>$1 = '{"subkey": "val", "subkey2": "val"}' AND "runs"."lifecycle_stage" <> $2)`,
+			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
+		},
 
 	}
 
@@ -338,6 +354,24 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
 				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 = '[1,2,3]' AND "runs"."lifecycle_stage" <> $2)`,
+			expectedVars: []interface{}{"key1", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextObject",
+			query:         `metric.context.key1 == {"subkey": "val"}`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 = '{"subkey":"val"}' ` +
+				`AND "runs"."lifecycle_stage" <> $2)`,
+			expectedVars: []interface{}{"key1", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextObject2",
+			query:         `metric.context.key1 == {"subkey": "val", "subkey2": "val"}`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 = '{"subkey":"val","subkey2":"val"}' ` +
+				`AND "runs"."lifecycle_stage" <> $2)`,
 			expectedVars: []interface{}{"key1", models.LifecycleStageDeleted},
 		},
 	}

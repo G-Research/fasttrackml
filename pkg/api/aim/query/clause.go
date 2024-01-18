@@ -119,6 +119,16 @@ type JsonEq struct {
 func (eq JsonEq) Build(builder clause.Builder) {
 	eq.Left.Build(builder)
 	switch eq.Value.(type) {
+	case []JsonEq:
+		rv := reflect.ValueOf(eq.Value)
+		if rv.Len() == 0 {
+			//nolint:errcheck,gosec
+			builder.WriteString(" IS NULL")
+		} else {
+			//nolint:errcheck,gosec
+			builder.WriteString(" = ")
+			renderDictValue(builder, eq.Dialector, rv)
+		}
 	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:
 		rv := reflect.ValueOf(eq.Value)
 		if rv.Len() == 0 {
@@ -151,6 +161,16 @@ type JsonNeq JsonEq
 func (neq JsonNeq) Build(builder clause.Builder) {
 	neq.Left.Build(builder)
 	switch neq.Value.(type) {
+	case []JsonEq:
+		rv := reflect.ValueOf(neq.Value)
+		if rv.Len() == 0 {
+			//nolint:errcheck,gosec
+			builder.WriteString(" IS NOT NULL")
+		} else {
+			//nolint:errcheck,gosec
+			builder.WriteString(" <> ")
+			renderDictValue(builder, neq.Dialector, rv)
+		}
 	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:
 		rv := reflect.ValueOf(neq.Value)
 		if rv.Len() == 0 {
@@ -207,4 +227,28 @@ func renderArrayValue(builder clause.Builder, dialector string, rv reflect.Value
 	builder.WriteString(fmt.Sprintf(tmpl, vals...))
 
 	builder.WriteString("]'")
+}
+
+
+func renderDictValue(builder clause.Builder, dialector string, rv reflect.Value) {
+	builder.WriteString("'{")
+	tmpl := strings.Repeat(`"%v":"%v",`, rv.Len()-1) + `"%v":"%v"`
+
+	switch dialector {
+	case postgres.Dialector{}.Name():
+		tmpl = strings.ReplaceAll(tmpl, ":", ": ")
+		tmpl = strings.ReplaceAll(tmpl, ",", ", ")
+	}
+
+	vals := make([]any, rv.Len() * 2)
+	dictIndex := 0
+	for i := 0; i < rv.Len(); i++ {
+		jsonEq := rv.Index(i).Interface().(JsonEq)
+		vals[dictIndex] = jsonEq.Left.JsonPath
+		vals[dictIndex+1] = jsonEq.Value
+		dictIndex = dictIndex + 2
+	}
+	builder.WriteString(fmt.Sprintf(tmpl, vals...))
+
+	builder.WriteString("}'")
 }

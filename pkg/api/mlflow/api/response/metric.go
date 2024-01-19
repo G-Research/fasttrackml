@@ -39,7 +39,7 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 		Metrics: make([]MetricPartialResponse, len(metrics)),
 	}
 
-	var mappedContext map[string]map[string]interface{}
+	mappedContext := map[string]map[string]interface{}{}
 	for n, m := range metrics {
 		resp.Metrics[n] = MetricPartialResponse{
 			Key:       m.Key,

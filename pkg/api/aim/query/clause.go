@@ -197,6 +197,41 @@ func (neq JsonNeq) NegationBuild(builder clause.Builder) {
 	JsonEq(neq).Build(builder)
 }
 
+// JsonLike like for where clause.
+type JsonLike struct {
+	Json  Json
+	Value any
+}
+
+// Build renders the Json like expression.
+func (jl JsonLike) Build(builder clause.Builder) {
+	jl.Json.Build(builder)
+	//nolint:errcheck,gosec
+	builder.WriteString(" LIKE ")
+	builder.AddVar(builder, jl.Value)
+}
+
+// NegationBuild renders the Json not-like expression.
+func (jl JsonLike) NegationBuild(builder clause.Builder) {
+	JsonNotLike(jl).Build(builder)
+}
+
+// JsonNeq not like for where.
+type JsonNotLike JsonLike
+
+// Build renders the Json not-like expression.
+func (jnl JsonNotLike) Build(builder clause.Builder) {
+	jnl.Json.Build(builder)
+	//nolint:errcheck,gosec
+	builder.WriteString(" NOT LIKE ")
+	builder.AddVar(builder, jnl.Value)
+}
+
+// NegationBuild renders the Json like expression.
+func (neq JsonNotLike) NegationBuild(builder clause.Builder) {
+	JsonLike(neq).Build(builder)
+}
+
 func eqNil(value interface{}) bool {
 	if valuer, ok := value.(driver.Valuer); ok && !eqNilReflect(valuer) {
 		//nolint:errcheck

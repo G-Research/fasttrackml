@@ -48,8 +48,8 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 			Timestamp: m.Timestamp,
 		}
 
-		// avoid serialization of the same context.
-		// if context has been already serialized just use it.
+		// avoid deserialized of the same context many times.
+		// if context has been already deserialized, then just use it.
 		if context, ok := mappedContext[m.Context.GetJsonHash()]; ok {
 			resp.Metrics[n].Context = context
 		} else {

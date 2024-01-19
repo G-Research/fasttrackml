@@ -491,7 +491,7 @@ func (s Service) LogMetric(
 		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
-	metric, err := convertors.ConvertMetricParamRequestToDBModel(run.ID, req)
+	metric, err := convertors.ConvertLogMetricRequestToDBModel(run.ID, req)
 	if err != nil {
 		return api.NewInvalidParameterValueError(err.Error())
 	}
@@ -518,7 +518,7 @@ func (s Service) LogParam(
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
 	if run == nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
+		return api.NewResourceDoesNotExistError("Run '%s' not found", req.RunID)
 	}
 
 	param := convertors.ConvertLogParamRequestToDBModel(run.ID, req)
@@ -548,7 +548,7 @@ func (s Service) SetRunTag(
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
 	if run == nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
+		return api.NewResourceDoesNotExistError("Run '%s' not found", req.RunID)
 	}
 
 	tag := convertors.ConvertSetRunTagRequestToDBModel(run.ID, req)
@@ -574,12 +574,15 @@ func (s Service) DeleteRunTag(
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
 	if run == nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
+		return api.NewResourceDoesNotExistError("Run '%s' not found", req.RunID)
 	}
 
 	tag, err := s.tagRepository.GetByRunIDAndKey(ctx, run.ID, req.Key)
 	if err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find tag '%s' for run '%s': %s", req.Key, req.RunID, err)
+		return api.NewInternalError("Unable to find tag '%s' for run '%s': %s", req.Key, req.RunID, err)
+	}
+	if tag == nil {
+		return api.NewResourceDoesNotExistError("No tag with name: %s", req.Key)
 	}
 
 	if err := s.tagRepository.Delete(ctx, tag); err != nil {
@@ -605,7 +608,7 @@ func (s Service) LogBatch(
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
 	if run == nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
+		return api.NewResourceDoesNotExistError("Run '%s' not found", req.RunID)
 	}
 
 	metrics, params, tags, err := convertors.ConvertLogBatchRequestToDBModel(run.ID, req)

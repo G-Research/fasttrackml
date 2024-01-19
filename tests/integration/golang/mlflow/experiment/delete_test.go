@@ -1,5 +1,3 @@
-//go:build integration
-
 package experiment
 
 import (
@@ -23,11 +21,7 @@ type DeleteExperimentTestSuite struct {
 }
 
 func TestDeleteExperimentTestSuite(t *testing.T) {
-	suite.Run(t, &DeleteExperimentTestSuite{
-		helpers.BaseTestSuite{
-			SkipCreateDefaultExperiment: true,
-		},
-	})
+	suite.Run(t, &DeleteExperimentTestSuite{})
 }
 
 func (s *DeleteExperimentTestSuite) Test_Ok() {
@@ -96,6 +90,13 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 			),
 			request: &request.DeleteExperimentRequest{
 				ID: "123",
+			},
+		},
+		{
+			name:  "DeleteDefaultExperiment",
+			error: api.NewBadRequestError("unable to delete default experiment"),
+			request: &request.DeleteExperimentRequest{
+				ID: "0",
 			},
 		},
 	}

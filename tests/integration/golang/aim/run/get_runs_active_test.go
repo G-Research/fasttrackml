@@ -1,5 +1,3 @@
-//go:build integration
-
 package run
 
 import (
@@ -32,10 +30,6 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 		beforeRunFn  func()
 	}{
 		{
-			name:         "GetActiveRunsWithNoData",
-			wantRunCount: 0,
-		},
-		{
 			name:         "GetActiveRuns",
 			wantRunCount: 3,
 			beforeRunFn: func() {
@@ -59,7 +53,19 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), s.runs[2]))
 			},
 		},
+		{
+			name:         "GetActiveRunsWithNoData",
+			wantRunCount: 0,
+			beforeRunFn: func() {
+				// set 1t and 2d run to status = StatusFinished
+				s.runs[1].Status = models.StatusFinished
+				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), s.runs[1]))
+				s.runs[0].Status = models.StatusFinished
+				s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), s.runs[0]))
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			if tt.beforeRunFn != nil {
@@ -73,13 +79,14 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 					resp,
 				).DoRequest("/runs/active"),
 			)
-			decodedData, err := encoding.Decode(resp)
+			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
 
 			responseCount := 0
 			for _, run := range s.runs {
 				respNameKey := fmt.Sprintf("%v.props.name", run.ID)
 				expIdKey := fmt.Sprintf("%v.props.experiment.id", run.ID)
+				expNameKey := fmt.Sprintf("%v.props.experiment.name", run.ID)
 				startTimeKey := fmt.Sprintf("%v.props.creation_time", run.ID)
 				endTimeKey := fmt.Sprintf("%v.props.end_time", run.ID)
 				activeKey := fmt.Sprintf("%v.props.active", run.ID)
@@ -88,6 +95,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 					models.LifecycleStageActive {
 					s.Equal(run.Name, decodedData[respNameKey])
 					s.Equal(fmt.Sprintf("%v", run.ExperimentID), decodedData[expIdKey])
+					s.Equal(run.Experiment.Name, decodedData[expNameKey])
 					s.Equal(run.Status == models.StatusRunning, decodedData[activeKey])
 					s.Equal(false, decodedData[archivedKey])
 					s.Equal(float64(run.StartTime.Int64)/1000, decodedData[startTimeKey])
@@ -96,6 +104,7 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 				} else {
 					s.Nil(decodedData[respNameKey])
 					s.Nil(decodedData[expIdKey])
+					s.Nil(decodedData[expNameKey])
 					s.Nil(decodedData[activeKey])
 					s.Nil(decodedData[archivedKey])
 					s.Nil(decodedData[startTimeKey])

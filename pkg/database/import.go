@@ -15,8 +15,8 @@ import (
 )
 
 type experimentInfo struct {
-	destID   int64
-	sourceID int64
+	destID   int32
+	sourceID int32
 }
 
 var uuidRegexp = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
@@ -48,6 +48,7 @@ func (s *Importer) Import() error {
 		"runs",
 		"tags",
 		"params",
+		"contexts",
 		"metrics",
 		"latest_metrics",
 	}
@@ -168,8 +169,8 @@ func (s *Importer) importTable(table string) error {
 // saveExperimentInfo maps source and destination experiment for later id mapping.
 func (s *Importer) saveExperimentInfo(source, dest Experiment) {
 	s.experimentInfos = append(s.experimentInfos, experimentInfo{
-		destID:   int64(*dest.ID),
-		sourceID: int64(*source.ID),
+		destID:   *dest.ID,
+		sourceID: *source.ID,
 	})
 }
 
@@ -189,9 +190,14 @@ func (s *Importer) translateFields(item map[string]any) (map[string]any, error) 
 	}
 	// items with experiment_id need to reference the new ID
 	if expID, ok := item["experiment_id"]; ok {
-		id, ok := expID.(int64)
-		if !ok {
-			return nil, eris.Errorf("unable to assert %s as int64: %d", "experiment_id", expID)
+		var id int32
+		switch v := expID.(type) {
+		case int32:
+			id = v
+		case int64:
+			id = int32(v)
+		default:
+			return nil, eris.Errorf("unable to assert %s as int32: %d", "experiment_id", expID)
 		}
 		for _, expInfo := range s.experimentInfos {
 			if expInfo.sourceID == id {
@@ -230,8 +236,8 @@ func (s Importer) updateNamespaceDefaultExperiment() error {
 		for _, ns := range namespaces {
 			updatedExperimentID := ns.DefaultExperimentID
 			for _, expInfo := range s.experimentInfos {
-				if ns.DefaultExperimentID != nil && expInfo.sourceID == int64(*ns.DefaultExperimentID) {
-					updatedExperimentID = common.GetPointer[int32](int32(expInfo.destID))
+				if ns.DefaultExperimentID != nil && expInfo.sourceID == *ns.DefaultExperimentID {
+					updatedExperimentID = common.GetPointer[int32](expInfo.destID)
 					break
 				}
 			}

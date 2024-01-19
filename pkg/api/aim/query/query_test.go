@@ -37,10 +37,11 @@ func (s *QueryTestSuite) SetupTest() {
 
 func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 	tests := []struct {
-		name         string
-		query        string
-		expectedSQL  string
-		expectedVars []interface{}
+		name          string
+		query         string
+		selectMetrics bool
+		expectedSQL   string
+		expectedVars  []interface{}
 	}{
 		{
 			name:  "TestRunNameWithoutFunction",
@@ -121,6 +122,24 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
+		{
+			name:          "TestMetricContext",
+			query:         `metric.context.key1 == 'value1'`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
+				`WHERE ("contexts"."json"#>>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
+			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextNegative",
+			query:         `metric.context.key1 != 'value1'`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
+				`WHERE ("contexts"."json"#>>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
+			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {
@@ -133,27 +152,37 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				Tables: map[string]string{
 					"runs":        "runs",
 					"experiments": "Experiment",
+					"metrics":     "metrics",
 				},
 				Dialector: postgres.Dialector{}.Name(),
 			}
 			parsedQuery, err := pq.Parse(tt.query)
 			require.Nil(s.T(), err)
-			result := parsedQuery.Filter(
-				s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
-			).Select("ID").Find(&models.Run{})
-			require.Nil(s.T(), result.Error)
-			assert.Equal(s.T(), tt.expectedSQL, result.Statement.SQL.String())
-			assert.Equal(s.T(), tt.expectedVars, result.Statement.Vars)
+			var tx *gorm.DB
+			if tt.selectMetrics {
+				tx = parsedQuery.Filter(
+					s.db.Session(&gorm.Session{DryRun: true}).Model(models.Metric{}),
+				).Select("ID").Find(models.Metric{})
+			} else {
+				tx = parsedQuery.Filter(
+					s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
+				).Select("ID").Find(&models.Run{})
+			}
+
+			require.Nil(s.T(), tx.Error)
+			assert.Equal(s.T(), tt.expectedSQL, tx.Statement.SQL.String())
+			assert.Equal(s.T(), tt.expectedVars, tx.Statement.Vars)
 		})
 	}
 }
 
 func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 	tests := []struct {
-		name         string
-		query        string
-		expectedSQL  string
-		expectedVars []interface{}
+		name          string
+		query         string
+		selectMetrics bool
+		expectedSQL   string
+		expectedVars  []interface{}
 	}{
 		{
 			name:  "TestRunNameWithoutFunction",
@@ -234,6 +263,24 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
+		{
+			name:          "TestMetricContext",
+			query:         `metric.context.key1 == 'value1'`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
+				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
+			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextNegative",
+			query:         `metric.context.key1 != 'value1'`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
+				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
+			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {
@@ -246,19 +293,59 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				Tables: map[string]string{
 					"runs":        "runs",
 					"experiments": "Experiment",
+					"metrics":     "metrics",
 				},
 				Dialector: sqlite.Dialector{}.Name(),
 			}
 			parsedQuery, err := pq.Parse(tt.query)
 			require.Nil(s.T(), err)
-			result := parsedQuery.Filter(
-				s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
-			).Select("ID").Find(&models.Run{})
-			require.Nil(s.T(), result.Error)
-			assert.Equal(s.T(), tt.expectedSQL, result.Statement.SQL.String())
-			assert.Equal(s.T(), tt.expectedVars, result.Statement.Vars)
+			var tx *gorm.DB
+			if tt.selectMetrics {
+				tx = parsedQuery.Filter(
+					s.db.Session(&gorm.Session{DryRun: true}).Model(models.Metric{}),
+				).Select("ID").Find(models.Metric{})
+			} else {
+				tx = parsedQuery.Filter(
+					s.db.Session(&gorm.Session{DryRun: true}).Model(models.Run{}),
+				).Select("ID").Find(&models.Run{})
+			}
+
+			require.Nil(s.T(), tx.Error)
+			assert.Equal(s.T(), tt.expectedSQL, tx.Statement.SQL.String())
+			assert.Equal(s.T(), tt.expectedVars, tx.Statement.Vars)
 		})
 	}
 }
 
-func (s *QueryTestSuite) Test_Error() {}
+func (s *QueryTestSuite) Test_Error() {
+	tests := []struct {
+		name          string
+		query         string
+		expectedError error
+	}{
+		{
+			name:          "TestMetricContextNested",
+			query:         `metric.context.parent.nested == 'value1'`,
+			expectedError: SyntaxError{},
+		},
+	}
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			pq := QueryParser{
+				Default: DefaultExpression{
+					Contains:   "run.archived",
+					Expression: "not run.archived",
+				},
+				Tables: map[string]string{
+					"runs":        "runs",
+					"experiments": "Experiment",
+					"metrics":     "metrics",
+				},
+				Dialector: sqlite.Dialector{}.Name(),
+			}
+			parsedQuery, err := pq.Parse(tt.query)
+			require.IsType(s.T(), tt.expectedError, err)
+			require.Nil(s.T(), parsedQuery)
+		})
+	}
+}

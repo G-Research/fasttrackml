@@ -4,19 +4,23 @@ import (
 	"context"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/server"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 )
 
-var db *gorm.DB
-
 type BaseTestSuite struct {
 	suite.Suite
+	server                      server.Server
+	db                          database.DBProvider
+	setupHooks                  []func()
+	tearDownHooks               []func()
 	AIMClient                   func() *HttpClient
 	MlflowClient                func() *HttpClient
 	AdminClient                 func() *HttpClient
@@ -24,6 +28,7 @@ type BaseTestSuite struct {
 	RunFixtures                 *fixtures.RunFixtures
 	TagFixtures                 *fixtures.TagFixtures
 	MetricFixtures              *fixtures.MetricFixtures
+	ContextFixtures             *fixtures.ContextFixtures
 	ParamFixtures               *fixtures.ParamFixtures
 	ProjectFixtures             *fixtures.ProjectFixtures
 	DashboardFixtures           *fixtures.DashboardFixtures
@@ -34,8 +39,6 @@ type BaseTestSuite struct {
 	ResetOnSubTest              bool
 	SkipCreateDefaultNamespace  bool
 	SkipCreateDefaultExperiment bool
-	setupHooks                  []func()
-	tearDownHooks               []func()
 }
 
 func (s *BaseTestSuite) runSetupHooks() {
@@ -50,64 +53,27 @@ func (s *BaseTestSuite) runTearDownHooks() {
 	}
 }
 
-func (s *BaseTestSuite) setup() {
-	s.Require().Nil(s.NamespaceFixtures.TruncateTables())
-
-	if !s.SkipCreateDefaultNamespace {
-		var err error
-		s.DefaultNamespace, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-			Code:                "default",
-			DefaultExperimentID: common.GetPointer(int32(0)),
-		})
-		s.Require().Nil(err)
-
-		if !s.SkipCreateDefaultExperiment {
-			s.DefaultExperiment, err = s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				Name:           "Default",
-				LifecycleStage: models.LifecycleStageActive,
-				NamespaceID:    s.DefaultNamespace.ID,
-			})
-			s.Require().Nil(err)
-
-			s.DefaultNamespace.DefaultExperimentID = s.DefaultExperiment.ID
-			_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), s.DefaultNamespace)
-			s.Require().Nil(err)
-		}
-	}
+func (s *BaseTestSuite) initLogger() {
+	levelString := GetLogLevel()
+	level, err := logrus.ParseLevel(levelString)
+	s.Require().Nil(err)
+	logrus.SetLevel(level)
 }
 
-func (s *BaseTestSuite) tearDown() {
-	s.Require().Nil(s.NamespaceFixtures.TruncateTables())
+func (s *BaseTestSuite) initDB() {
+	dsn, err := GenerateDatabaseURI(s.T(), GetDatabaseBackend())
+	s.Require().Nil(err)
+
+	s.db, err = database.NewDBProvider(
+		dsn,
+		1*time.Second,
+		20,
+	)
+	s.Require().Nil(err)
 }
 
-func (s *BaseTestSuite) AddSetupHook(hook func()) {
-	s.setupHooks = append(s.setupHooks, hook)
-}
-
-func (s *BaseTestSuite) AddTearDownHook(hook func()) {
-	s.tearDownHooks = append([]func(){hook}, s.tearDownHooks...)
-}
-
-func (s *BaseTestSuite) SetupSuite() {
-	if db == nil {
-		instance, err := database.NewDBProvider(
-			GetDatabaseUri(),
-			1*time.Second,
-			20,
-		)
-		s.Require().Nil(err)
-		db = instance.GormDB()
-	}
-
-	s.AIMClient = func() *HttpClient {
-		return NewAimApiClient(GetServiceUri())
-	}
-	s.MlflowClient = func() *HttpClient {
-		return NewMlflowApiClient(GetServiceUri())
-	}
-	s.AdminClient = func() *HttpClient {
-		return NewAdminApiClient(GetServiceUri())
-	}
+func (s *BaseTestSuite) initFixtures() {
+	db := s.db.GormDB()
 
 	appFixtures, err := fixtures.NewAppFixtures(db)
 	s.Require().Nil(err)
@@ -124,6 +90,10 @@ func (s *BaseTestSuite) SetupSuite() {
 	metricFixtures, err := fixtures.NewMetricFixtures(db)
 	s.Require().Nil(err)
 	s.MetricFixtures = metricFixtures
+
+	contextFixtures, err := fixtures.NewContextFixtures(db)
+	s.Require().Nil(err)
+	s.ContextFixtures = contextFixtures
 
 	namespaceFixtures, err := fixtures.NewNamespaceFixtures(db)
 	s.Require().Nil(err)
@@ -144,9 +114,93 @@ func (s *BaseTestSuite) SetupSuite() {
 	tagFixtures, err := fixtures.NewTagFixtures(db)
 	s.Require().Nil(err)
 	s.TagFixtures = tagFixtures
+}
 
-	s.AddSetupHook(s.setup)
-	s.AddTearDownHook(s.tearDown)
+func (s *BaseTestSuite) closeDB() {
+	s.Require().Nil(s.db.Close())
+}
+
+func (s *BaseTestSuite) startServer() {
+	var err error
+	s.server, err = server.NewServer(context.Background(), &config.ServiceConfig{
+		DatabaseURI:           s.db.Dsn(),
+		DatabasePoolMax:       10,
+		DatabaseSlowThreshold: 1 * time.Second,
+		DatabaseMigrate:       true,
+		DefaultArtifactRoot:   s.T().TempDir(),
+		S3EndpointURI:         GetS3EndpointUri(),
+		GSEndpointURI:         GetGSEndpointUri(),
+	})
+	s.Require().Nil(err)
+
+	s.AIMClient = func() *HttpClient {
+		return NewAimApiClient(s.server)
+	}
+	s.MlflowClient = func() *HttpClient {
+		return NewMlflowApiClient(s.server)
+	}
+	s.AdminClient = func() *HttpClient {
+		return NewAdminApiClient(s.server)
+	}
+}
+
+func (s *BaseTestSuite) stopServer() {
+	s.Require().Nil(s.server.ShutdownWithTimeout(5 * time.Second))
+}
+
+func (s *BaseTestSuite) setupDatabase() {
+	s.resetDatabase()
+
+	if !s.SkipCreateDefaultNamespace {
+		var err error
+		s.DefaultNamespace, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+			ID:                  1,
+			Code:                "default",
+			DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
+		})
+		s.Require().Nil(err)
+
+		if !s.SkipCreateDefaultExperiment {
+			s.DefaultExperiment, err = s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+				ID:             common.GetPointer(models.DefaultExperimentID),
+				Name:           "Default",
+				LifecycleStage: models.LifecycleStageActive,
+				NamespaceID:    s.DefaultNamespace.ID,
+			})
+			s.Require().Nil(err)
+
+			s.DefaultNamespace.DefaultExperimentID = s.DefaultExperiment.ID
+			_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), s.DefaultNamespace)
+			s.Require().Nil(err)
+		}
+	}
+	s.Require().Nil(database.CreateDefaultMetricContext(s.db.GormDB()))
+}
+
+func (s *BaseTestSuite) resetDatabase() {
+	s.Require().Nil(s.NamespaceFixtures.TruncateTables())
+}
+
+func (s *BaseTestSuite) AddSetupHook(hook func()) {
+	s.setupHooks = append(s.setupHooks, hook)
+}
+
+func (s *BaseTestSuite) AddTearDownHook(hook func()) {
+	s.tearDownHooks = append([]func(){hook}, s.tearDownHooks...)
+}
+
+func (s *BaseTestSuite) SetupSuite() {
+	s.initLogger()
+	s.initDB()
+	s.initFixtures()
+	s.AddSetupHook(s.startServer)
+	s.AddSetupHook(s.setupDatabase)
+	s.AddTearDownHook(s.resetDatabase)
+	s.AddTearDownHook(s.stopServer)
+}
+
+func (s *BaseTestSuite) TearDownSuite() {
+	s.closeDB()
 }
 
 func (s *BaseTestSuite) SetupTest() {

@@ -1,5 +1,3 @@
-//go:build integration
-
 package run
 
 import (
@@ -42,7 +40,7 @@ func (s *SearchTestSuite) Test_CustomNamespace_Ok() {
 	// create custom namespace and experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		Code:                "custom",
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
 
@@ -60,7 +58,7 @@ func (s *SearchTestSuite) Test_CustomNamespaceExperimentZero_Ok() {
 	// create custom namespace and experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		Code:                "custom",
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
 

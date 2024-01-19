@@ -1,5 +1,3 @@
-//go:build integration
-
 package namespace
 
 import (
@@ -28,7 +26,7 @@ func (s *UpdateNamespaceTestSuite) Test_Ok() {
 		ID:                  2,
 		Code:                "test2",
 		Description:         "test namespace 2 description",
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
 
@@ -56,7 +54,7 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 		ID:                  2,
 		Code:                "test2",
 		Description:         "test namespace 2 description",
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
 	expectedNamespaces, err := s.NamespaceFixtures.GetNamespaces(context.Background())
@@ -76,7 +74,7 @@ func (s *UpdateNamespaceTestSuite) Test_Error() {
 				Description: "test namespace updated",
 			},
 			response: map[string]any{
-				"message": "An unexepected error was encountered: namespace not found by id: 10",
+				"message": "An unexpected error was encountered: namespace not found by id: 10",
 				"status":  "error",
 			},
 		},

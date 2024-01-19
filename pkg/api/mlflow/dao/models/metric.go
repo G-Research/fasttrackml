@@ -1,5 +1,15 @@
 package models
 
+import (
+	"crypto/sha256"
+	"fmt"
+
+	"gorm.io/datatypes"
+)
+
+// DefaultContext is the default metric context
+var DefaultContext = Context{Json: datatypes.JSON("{}")}
+
 // Metric represents model to work with `metrics` table.
 type Metric struct {
 	Key       string  `gorm:"type:varchar(250);not null;primaryKey"`
@@ -9,6 +19,13 @@ type Metric struct {
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
 	Iter      int64   `gorm:"index"`
+	ContextID uint    `gorm:"not null;primaryKey"`
+	Context   Context
+}
+
+// UniqueKey is a compound unique key for this metric series.
+func (m Metric) UniqueKey() string {
+	return fmt.Sprintf("%v-%v-%v", m.RunID, m.Key, m.ContextID)
 }
 
 // LatestMetric represents model to work with `last_metrics` table.
@@ -20,4 +37,23 @@ type LatestMetric struct {
 	IsNan     bool   `gorm:"not null"`
 	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
 	LastIter  int64
+	ContextID uint `gorm:"not null;primaryKey"`
+	Context   Context
+}
+
+// UniqueKey is a compound unique key for this metric series.
+func (m LatestMetric) UniqueKey() string {
+	return fmt.Sprintf("%v-%v-%v", m.RunID, m.Key, m.ContextID)
+}
+
+// Context represents model to work with `contexts` table.
+type Context struct {
+	ID   uint           `gorm:"primaryKey;autoIncrement"`
+	Json datatypes.JSON `gorm:"not null;unique;index"`
+}
+
+// GetJsonHash returns hash of the Context.Json
+func (c Context) GetJsonHash() string {
+	hash := sha256.Sum256(c.Json)
+	return string(hash[:])
 }

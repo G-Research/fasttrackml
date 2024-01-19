@@ -1,13 +1,10 @@
-//go:build integration
-
 package run
 
 import (
 	"context"
+	"slices"
 	"testing"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -43,29 +40,23 @@ func (s *GetDashboardsTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
-				Base: database.Base{
-					ID:         uuid.New(),
-					IsArchived: false,
-					CreatedAt:  time.Now(),
-				},
-				Type:        "mpi",
-				State:       database.AppState{},
-				NamespaceID: s.DefaultNamespace.ID,
-			})
-			s.Require().Nil(err)
-
 			dashboards, err := s.DashboardFixtures.CreateDashboards(
-				context.Background(), tt.expectedDashboardCount, &app.ID,
+				context.Background(), s.DefaultNamespace, tt.expectedDashboardCount,
 			)
 			s.Require().Nil(err)
+
+			// Sort dashboards by App.UpdateAt time in descending order
+			slices.SortFunc(dashboards, func(a, b *database.Dashboard) int {
+				return b.App.UpdatedAt.Compare(a.App.UpdatedAt)
+			})
 
 			var resp []response.Dashboard
 			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/dashboards"))
 			s.Equal(tt.expectedDashboardCount, len(resp))
 			for idx := 0; idx < tt.expectedDashboardCount; idx++ {
-				s.Equal(dashboards[idx].ID.String(), resp[idx].ID)
-				s.Equal(app.ID, resp[idx].AppID)
+				s.Equal(dashboards[idx].ID, resp[idx].ID)
+				s.Equal(dashboards[idx].App.ID, resp[idx].AppID)
+				s.Equal(dashboards[idx].App.Type, resp[idx].AppType)
 				s.Equal(dashboards[idx].Name, resp[idx].Name)
 				s.Equal(dashboards[idx].Description, resp[idx].Description)
 				s.NotEmpty(resp[idx].CreatedAt)

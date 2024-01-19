@@ -1,9 +1,8 @@
-//go:build integration
-
 package run
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -176,6 +175,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 		name                  string
 		request               *request.LogBatchRequest
 		latestMetricIteration map[string]int64
+		latestMetricKeyCount  map[string]int
 	}{
 		{
 			name: "LogOne",
@@ -183,15 +183,19 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				RunID: run.ID,
 				Metrics: []request.MetricPartialRequest{
 					{
-						Key:       "key1",
+						Key:       "key0",
 						Value:     1.0,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key1": "value1",
+							"key2": 2,
+						},
 					},
 				},
 			},
 			latestMetricIteration: map[string]int64{
-				"key1": 1,
+				"key0": 1,
 			},
 		},
 		{
@@ -204,46 +208,58 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						Value:     1.1,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key1": "value1",
+							"key2": 2,
+						},
+					},
+					{
+						Key:       "key2",
+						Value:     1.1,
+						Timestamp: 1687325991,
+						Step:      1,
+						Context: map[string]any{
+							"key3": "value3",
+						},
 					},
 					{
 						Key:       "key1",
 						Value:     1.1,
 						Timestamp: 1687325991,
 						Step:      1,
-					},
-					{
-						Key:       "key2",
-						Value:     1.1,
-						Timestamp: 1687325991,
-						Step:      1,
+						Context: map[string]any{
+							"key1": "value1",
+							"key2": 2,
+						},
 					},
 					{
 						Key:       "key2",
 						Value:     1.2,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key3": "value3",
+						},
 					},
 					{
-						Key:       "key2",
+						Key:       "key1",
 						Value:     1.3,
 						Timestamp: 1687325991,
 						Step:      1,
-					},
-					{
-						Key:       "key2",
-						Value:     1.4,
-						Timestamp: 1687325991,
-						Step:      1,
+						Context: map[string]any{
+							"key1": "value1",
+							"key2": 2,
+						},
 					},
 				},
 			},
 			latestMetricIteration: map[string]int64{
 				"key1": 3,
-				"key2": 4,
+				"key2": 2,
 			},
 		},
 		{
-			name: "LogDuplicate",
+			name: "LogDuplicateSameContext",
 			request: &request.LogBatchRequest{
 				RunID: run.ID,
 				Metrics: []request.MetricPartialRequest{
@@ -252,17 +268,58 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 						Value:     1.0,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key3": "value3",
+						},
 					},
 					{
 						Key:       "key3",
 						Value:     1.0,
 						Timestamp: 1687325991,
 						Step:      1,
+						Context: map[string]any{
+							"key3": "value3",
+						},
 					},
 				},
 			},
 			latestMetricIteration: map[string]int64{
 				"key3": 2,
+			},
+			latestMetricKeyCount: map[string]int{
+				"key3": 1,
+			},
+		},
+		{
+			name: "LogDuplicateDifferentContext",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key4",
+						Value:     1.0,
+						Timestamp: 1687325991,
+						Step:      1,
+						Context: map[string]any{
+							"key3": "value3",
+						},
+					},
+					{
+						Key:       "key4",
+						Value:     1.0,
+						Timestamp: 1687325991,
+						Step:      1,
+						Context: map[string]any{
+							"key4": "value4",
+						},
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key4": 1,
+			},
+			latestMetricKeyCount: map[string]int{
+				"key4": 2,
 			},
 		},
 		{
@@ -279,6 +336,9 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 								Value:     float64(i) + 0.1,
 								Timestamp: 1687325991,
 								Step:      1,
+								Context: map[string]any{
+									"key1": "value1",
+								},
 							}
 						}
 					}
@@ -293,6 +353,57 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				}
 				return metrics
 			}(),
+		},
+		{
+			name: "LogNaNValue",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key4",
+						Value:     "NaN",
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key4": 1,
+			},
+		},
+		{
+			name: "LogPositiveInfinityValue",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key5",
+						Value:     "Infinity",
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key5": 1,
+			},
+		},
+		{
+			name: "LogNegativeInfinityValue",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key6",
+						Value:     "-Infinity",
+						Timestamp: 1687325991,
+						Step:      1,
+					},
+				},
+			},
+			latestMetricIteration: map[string]int64{
+				"key6": 1,
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -317,6 +428,20 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				lastMetric, err := s.MetricFixtures.GetLatestMetricByKey(context.Background(), key)
 				s.Require().Nil(err)
 				s.Equal(iteration, lastMetric.LastIter)
+			}
+			for key, count := range tt.latestMetricKeyCount {
+				latestMetrics, err := s.MetricFixtures.GetLatestMetricsByKey(context.Background(), key)
+				s.Require().Nil(err)
+				s.Equal(count, len(latestMetrics))
+			}
+			for _, metric := range tt.request.Metrics {
+				if metric.Context != nil {
+					metricContextJson, err := json.Marshal(metric.Context)
+					s.Require().Nil(err)
+					context, err := s.ContextFixtures.GetContextByJSON(context.Background(), string(metricContextJson))
+					s.Require().Nil(err)
+					s.Require().NotNil(context)
+				}
 			}
 		})
 	}

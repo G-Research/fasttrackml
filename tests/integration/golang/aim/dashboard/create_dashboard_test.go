@@ -1,12 +1,9 @@
-//go:build integration
-
 package run
 
 import (
 	"context"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
@@ -27,11 +24,6 @@ func TestCreateDashboardTestSuite(t *testing.T) {
 
 func (s *CreateDashboardTestSuite) Test_Ok() {
 	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
-		Base: database.Base{
-			ID:         uuid.New(),
-			IsArchived: false,
-			CreatedAt:  time.Now(),
-		},
 		Type:        "mpi",
 		State:       database.AppState{},
 		NamespaceID: s.DefaultNamespace.ID,
@@ -70,7 +62,7 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 			s.Equal(tt.requestBody.Description, resp.Description)
 			s.Equal(dashboards[0].Name, resp.Name)
 			s.Equal(dashboards[0].Description, resp.Description)
-			s.Equal(dashboards[0].ID.String(), resp.ID)
+			s.Equal(dashboards[0].ID, resp.ID)
 			s.Equal(dashboards[0].AppID, &resp.AppID)
 			s.NotEmpty(resp.ID)
 		})

@@ -13,9 +13,6 @@ venv
 fasttrackml.db*
 encrypted.db*
 
-# Imported integration tests
-tests/integration/python/*/*.src
-
 # Quick start
 outputs
 poetry.lock
@@ -32,4 +29,9 @@ python/build/
 python/*.egg-info/
 wheelhouse/
 
+# Benchmark results
 benchmark_outputs/
+
+# Python package
+!python/fasttrackml/
+__pycache__/

@@ -128,7 +128,7 @@ func TestValidateLogMetricRequest_Ok(t *testing.T) {
 		RunID:     "id",
 		RunUUID:   "uuid",
 		Key:       "key",
-		Timestamp: 123,
+		Timestamp: 123456789,
 	})
 	require.Nil(t, err)
 }
@@ -288,6 +288,74 @@ func TestValidateLogBatchRequest_Error(t *testing.T) {
 			name:    "EmptyRunID",
 			error:   api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
 			request: &request.LogBatchRequest{},
+		},
+		{
+			name:  "EmptyMetricsKey",
+			error: api.NewInvalidParameterValueError("Invalid value for parameter 'metrics' supplied"),
+			request: &request.LogBatchRequest{
+				RunID: "id",
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key1",
+						Timestamp: 123456789,
+						Value:     1.0,
+					},
+					{
+						Timestamp: 123456789,
+						Value:     1.0,
+					},
+				},
+			},
+		},
+		{
+			name:  "EmptyMetricsTimestamp",
+			error: api.NewInvalidParameterValueError("Invalid value for parameter 'metrics' supplied"),
+			request: &request.LogBatchRequest{
+				RunID: "id",
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key1",
+						Timestamp: 123456789,
+						Value:     1.0,
+					},
+					{
+						Key:   "key2",
+						Value: 1.0,
+					},
+				},
+			},
+		},
+		{
+			name:  "EmptyParamsKey",
+			error: api.NewInvalidParameterValueError("Invalid value for parameter 'params' supplied"),
+			request: &request.LogBatchRequest{
+				RunID: "id",
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key1",
+						Value: "value1",
+					},
+					{
+						Value: "value2",
+					},
+				},
+			},
+		},
+		{
+			name:  "EmptyTagsKey",
+			error: api.NewInvalidParameterValueError("Invalid value for parameter 'tags' supplied"),
+			request: &request.LogBatchRequest{
+				RunID: "id",
+				Tags: []request.TagPartialRequest{
+					{
+						Key:   "key1",
+						Value: "value1",
+					},
+					{
+						Value: "value2",
+					},
+				},
+			},
 		},
 	}
 

@@ -4,15 +4,21 @@ import subprocess
 from setuptools import find_packages, setup
 from wheel.bdist_wheel import bdist_wheel
 
+install_requires=[
+    "mlflow",
+],
 
 def get_data_files():
     os = subprocess.check_output(["go", "env", "GOOS"]).strip().decode("utf-8")
-    return [("Scripts", ["../fml.exe"])] if os == "windows" else [("bin", ["../fml"])]
+    return [("Scripts", ["../../fml.exe"])] if os == "windows" else [("bin", ["../../fml"])]
 
 
 def get_version():
     version = os.environ.get("VERSION")
-    return version.replace("-", "+", 1)
+    # Translate from semver to Python version specifier
+    # see https://semver.org
+    # see https://packaging.python.org/en/latest/specifications/version-specifiers/#pre-releases
+    return version.replace("-alpha.", "a", 1).replace("-beta.", "b", 1).replace("-rc.", "rc", 1).replace("-", "+", 1)
 
 
 def get_platform():

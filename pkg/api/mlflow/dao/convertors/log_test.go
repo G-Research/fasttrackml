@@ -1,6 +1,8 @@
 package convertors
 
 import (
+	"errors"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,49 +24,275 @@ func TestConvertLogParamRequestToDBModel_Ok(t *testing.T) {
 }
 
 func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
-	req := request.LogBatchRequest{
-		Tags: []request.TagPartialRequest{{
-			Key:   "key",
-			Value: "value",
-		}},
-		Params: []request.ParamPartialRequest{
-			{
-				Key:   "key",
-				Value: "value",
+	testData := []struct {
+		name            string
+		request         *request.LogBatchRequest
+		expectedTags    []models.Tag
+		expectedParams  []models.Param
+		expectedMetrics []models.Metric
+	}{
+		{
+			name: "WithMetricNormalValue",
+			request: &request.LogBatchRequest{
+				Tags: []request.TagPartialRequest{{
+					Key:   "key",
+					Value: "value",
+				}},
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key",
+						Value:     1.1,
+						Timestamp: 1234567890,
+						Step:      1,
+					},
+				},
+			},
+			expectedTags: []models.Tag{
+				{
+					RunID: "run_id",
+					Key:   "key",
+					Value: "value",
+				},
+			},
+			expectedParams: []models.Param{
+				{
+					RunID: "run_id",
+					Key:   "key",
+					Value: "value",
+				},
+			},
+			expectedMetrics: []models.Metric{
+				{
+					Key:       "key",
+					Value:     1.1,
+					Timestamp: 1234567890,
+					RunID:     "run_id",
+					Step:      1,
+					Context:   models.DefaultContext,
+				},
 			},
 		},
-		Metrics: []request.MetricPartialRequest{
-			{
-				Key:       "key",
-				Value:     1.1,
-				Timestamp: 1234567890,
-				Step:      1,
+		{
+			name: "WithMetricNaNValue",
+			request: &request.LogBatchRequest{
+				Tags: []request.TagPartialRequest{{
+					Key:   "key",
+					Value: "value",
+				}},
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key",
+						Value:     "NaN",
+						Timestamp: 1234567890,
+						Step:      1,
+					},
+				},
+			},
+			expectedTags: []models.Tag{
+				{
+					RunID: "run_id",
+					Key:   "key",
+					Value: "value",
+				},
+			},
+			expectedParams: []models.Param{
+				{
+					RunID: "run_id",
+					Key:   "key",
+					Value: "value",
+				},
+			},
+			expectedMetrics: []models.Metric{
+				{
+					Key:       "key",
+					Value:     0,
+					IsNan:     true,
+					Timestamp: 1234567890,
+					RunID:     "run_id",
+					Step:      1,
+					Context:   models.DefaultContext,
+				},
+			},
+		},
+		{
+			name: "WithMetricPositiveInfinityValue",
+			request: &request.LogBatchRequest{
+				Tags: []request.TagPartialRequest{{
+					Key:   "key",
+					Value: "value",
+				}},
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key",
+						Value:     "Infinity",
+						Timestamp: 1234567890,
+						Step:      1,
+					},
+				},
+			},
+			expectedTags: []models.Tag{
+				{
+					RunID: "run_id",
+					Key:   "key",
+					Value: "value",
+				},
+			},
+			expectedParams: []models.Param{
+				{
+					RunID: "run_id",
+					Key:   "key",
+					Value: "value",
+				},
+			},
+			expectedMetrics: []models.Metric{
+				{
+					Key:       "key",
+					Value:     math.MaxFloat64,
+					Timestamp: 1234567890,
+					RunID:     "run_id",
+					Step:      1,
+					Context:   models.DefaultContext,
+				},
+			},
+		},
+		{
+			name: "WithMetricNegativeInfinityValue",
+			request: &request.LogBatchRequest{
+				Tags: []request.TagPartialRequest{{
+					Key:   "key",
+					Value: "value",
+				}},
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key",
+						Value:     "-Infinity",
+						Timestamp: 1234567890,
+						Step:      1,
+					},
+				},
+			},
+			expectedTags: []models.Tag{
+				{
+					RunID: "run_id",
+					Key:   "key",
+					Value: "value",
+				},
+			},
+			expectedParams: []models.Param{
+				{
+					RunID: "run_id",
+					Key:   "key",
+					Value: "value",
+				},
+			},
+			expectedMetrics: []models.Metric{
+				{
+					Key:       "key",
+					Value:     -math.MaxFloat64,
+					Timestamp: 1234567890,
+					RunID:     "run_id",
+					Step:      1,
+					Context:   models.DefaultContext,
+				},
 			},
 		},
 	}
-	metrics, params, tags, err := ConvertLogBatchRequestToDBModel("run_id", &req)
-	require.Nil(t, err)
-	assert.Equal(t, []models.Tag{
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			metrics, params, tags, err := ConvertLogBatchRequestToDBModel("run_id", tt.request)
+			require.Nil(t, err)
+			assert.Equal(t, tt.expectedTags, tags)
+			assert.Equal(t, tt.expectedParams, params)
+			assert.Equal(t, tt.expectedMetrics, metrics)
+		})
+	}
+}
+
+func TestConvertLogBatchRequestToDBModel_Error(t *testing.T) {
+	testData := []struct {
+		name    string
+		request *request.LogBatchRequest
+		error   error
+	}{
 		{
-			RunID: "run_id",
-			Key:   "key",
-			Value: "value",
+			name: "WithUnsupportedMetricValue",
+			request: &request.LogBatchRequest{
+				Tags: []request.TagPartialRequest{{
+					Key:   "key",
+					Value: "value",
+				}},
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key",
+						Value:     struct{}{},
+						Timestamp: 1234567890,
+						Step:      1,
+					},
+				},
+			},
+			error: errors.New("invalid metric value '{}'"),
 		},
-	}, tags)
-	assert.Equal(t, []models.Param{
 		{
-			RunID: "run_id",
-			Key:   "key",
-			Value: "value",
+			name: "WithUnsupportedNaNMetricValue",
+			request: &request.LogBatchRequest{
+				Tags: []request.TagPartialRequest{{
+					Key:   "key",
+					Value: "value",
+				}},
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+				Metrics: []request.MetricPartialRequest{
+					{
+						Key:       "key",
+						Value:     "UnsupportedNaNValue",
+						Timestamp: 1234567890,
+						Step:      1,
+					},
+				},
+			},
+			error: errors.New("invalid metric value 'UnsupportedNaNValue'"),
 		},
-	}, params)
-	assert.Equal(t, []models.Metric{
-		{
-			Key:       "key",
-			Value:     1.1,
-			Timestamp: 1234567890,
-			RunID:     "run_id",
-			Step:      1,
-		},
-	}, metrics)
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, _, err := ConvertLogBatchRequestToDBModel("run_id", tt.request)
+			assert.Equal(t, tt.error.Error(), err.Error())
+		})
+	}
 }

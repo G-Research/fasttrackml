@@ -1,5 +1,3 @@
-//go:build integration
-
 package flows
 
 import (
@@ -61,7 +59,7 @@ func (s *DashboardFlowTestSuite) Test_Ok() {
 			for _, nsCode := range []string{"default", tt.namespace1Code, tt.namespace2Code} {
 				_, err := s.NamespaceFixtures.UpsertNamespace(context.Background(), &models.Namespace{
 					Code:                nsCode,
-					DefaultExperimentID: common.GetPointer(int32(0)),
+					DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 				})
 				s.Require().Nil(err)
 			}
@@ -94,13 +92,13 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 	dashboard1ID := s.createDashboard(namespace1Code, &request.CreateDashboard{
 		Name:        "dashboard1-name",
 		Description: "dashboard1-description",
-		AppID:       uuid.MustParse(app1ID),
+		AppID:       app1ID,
 	})
 
 	dashboard2ID := s.createDashboard(namespace2Code, &request.CreateDashboard{
 		Name:        "dashboard2-name",
 		Description: "dashboard2-description",
-		AppID:       uuid.MustParse(app2ID),
+		AppID:       app2ID,
 	})
 
 	// test `GET /dashboards` endpoint with namespace 1
@@ -170,7 +168,9 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 	s.Equal(fiber.ErrNotFound.Code, client.GetStatusCode())
 }
 
-func (s *DashboardFlowTestSuite) deleteDashboardAndCompare(namespaceCode string, dashboardID string) {
+func (s *DashboardFlowTestSuite) deleteDashboardAndCompare(
+	namespaceCode string, dashboardID uuid.UUID,
+) {
 	client := s.AIMClient()
 	dashboardResp := response.Dashboard{}
 	s.Require().Nil(
@@ -187,7 +187,9 @@ func (s *DashboardFlowTestSuite) deleteDashboardAndCompare(namespaceCode string,
 	s.Equal(fiber.StatusOK, client.GetStatusCode())
 }
 
-func (s *DashboardFlowTestSuite) updateDashboardAndCompare(namespaceCode string, dashboardID string) {
+func (s *DashboardFlowTestSuite) updateDashboardAndCompare(
+	namespaceCode string, dashboardID uuid.UUID,
+) {
 	client := s.AIMClient()
 	dashboardResp := response.Dashboard{}
 	s.Require().Nil(
@@ -210,7 +212,9 @@ func (s *DashboardFlowTestSuite) updateDashboardAndCompare(namespaceCode string,
 	s.Equal(fiber.StatusOK, client.GetStatusCode())
 }
 
-func (s *DashboardFlowTestSuite) getDashboardAndCompare(namespaceCode string, dashboardID string) response.Dashboard {
+func (s *DashboardFlowTestSuite) getDashboardAndCompare(
+	namespaceCode string, dashboardID uuid.UUID,
+) response.Dashboard {
 	dashboardResp := response.Dashboard{}
 	client := s.AIMClient()
 	s.Require().Nil(
@@ -245,7 +249,7 @@ func (s *DashboardFlowTestSuite) getDashboards(namespaceCode string) []response.
 	return resp
 }
 
-func (s *DashboardFlowTestSuite) createApp(namespace string, req *request.CreateApp) string {
+func (s *DashboardFlowTestSuite) createApp(namespace string, req *request.CreateApp) uuid.UUID {
 	var resp response.App
 	s.Require().Nil(
 		s.AIMClient().WithMethod(
@@ -263,7 +267,7 @@ func (s *DashboardFlowTestSuite) createApp(namespace string, req *request.Create
 	return resp.ID
 }
 
-func (s *DashboardFlowTestSuite) createDashboard(namespace string, req *request.CreateDashboard) string {
+func (s *DashboardFlowTestSuite) createDashboard(namespace string, req *request.CreateDashboard) uuid.UUID {
 	var resp response.Dashboard
 	s.Require().Nil(
 		s.AIMClient().WithMethod(

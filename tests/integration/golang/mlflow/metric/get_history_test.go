@@ -1,5 +1,3 @@
-//go:build integration
-
 package metric
 
 import (
@@ -7,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -50,6 +49,9 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 		Step:      1,
 		IsNan:     false,
 		Iter:      1,
+		Context: models.Context{
+			Json: datatypes.JSON(`{"key": "key", "value": "value"}`),
+		},
 	})
 	s.Require().Nil(err)
 
@@ -75,6 +77,10 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 				Step:      1,
 				Value:     1.1,
 				Timestamp: 1234567890,
+				Context: map[string]any{
+					"key":   "key",
+					"value": "value",
+				},
 			},
 		},
 	}, resp)

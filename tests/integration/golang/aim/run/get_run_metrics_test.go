@@ -1,9 +1,8 @@
-//go:build integration
-
 package run
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"testing"
 
@@ -18,7 +17,6 @@ import (
 
 type GetRunMetricsTestSuite struct {
 	helpers.BaseTestSuite
-	run *models.Run
 }
 
 func TestGetRunMetricsTestSuite(t *testing.T) {
@@ -27,13 +25,86 @@ func TestGetRunMetricsTestSuite(t *testing.T) {
 
 func (s *GetRunMetricsTestSuite) SetupTest() {
 	s.BaseTestSuite.SetupTest()
-
-	var err error
-	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), s.DefaultExperiment)
-	s.Require().Nil(err)
 }
 
 func (s *GetRunMetricsTestSuite) Test_Ok() {
+	// create test data
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    s.DefaultNamespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
+	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:             "id",
+		Name:           "TestRun",
+		Status:         models.StatusScheduled,
+		StartTime:      sql.NullInt64{Int64: 123456789, Valid: true},
+		EndTime:        sql.NullInt64{Int64: 123456789, Valid: true},
+		SourceType:     "JOB",
+		ExperimentID:   *experiment.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
+	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+		Key:       "key1",
+		Value:     123.1,
+		Timestamp: 123456789,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run.ID,
+		Iter:      1,
+		Context: models.Context{
+			Json: []byte(`{"key1": "key1", "value1": "value1"}`),
+		},
+	})
+	s.Require().Nil(err)
+
+	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+		Key:       "key1",
+		Value:     123.2,
+		Timestamp: 123456789,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run.ID,
+		Iter:      2,
+		Context: models.Context{
+			Json: []byte(`{"key2": "key2", "value2": "value2"}`),
+		},
+	})
+	s.Require().Nil(err)
+
+	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+		Key:       "key2",
+		Value:     124.1,
+		Timestamp: 123456789,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run.ID,
+		Iter:      3,
+		Context: models.Context{
+			Json: []byte(`{"key3": "key3", "value3": "value3"}`),
+		},
+	})
+	s.Require().Nil(err)
+
+	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+		Key:       "key2",
+		Value:     124.2,
+		Timestamp: 123456789,
+		Step:      2,
+		IsNan:     false,
+		RunID:     run.ID,
+		Iter:      4,
+		Context: models.Context{
+			Json: []byte(`{"key4": "key4", "value4": "value4"}`),
+		},
+	})
+	s.Require().Nil(err)
+
+	// runs tests over test data.
 	tests := []struct {
 		name             string
 		runID            string
@@ -42,29 +113,41 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	}{
 		{
 			name:  "GetOneRun",
-			runID: s.run.ID,
+			runID: run.ID,
 			request: request.GetRunMetrics{
 				{
-					Context: map[string]string{},
 					Name:    "key1",
+					Context: map[string]string{},
 				},
 				{
-					Context: map[string]string{},
 					Name:    "key2",
+					Context: map[string]string{},
 				},
 			},
 			expectedResponse: response.GetRunMetrics{
 				response.RunMetrics{
 					Name:    "key1",
-					Context: map[string]interface{}{},
-					Values:  []float64{124.1, 125.1},
-					Iters:   []int64{1, 2},
+					Iters:   []int64{1},
+					Values:  []float64{123.1},
+					Context: []byte(`{"key1":"key1","value1":"value1"}`),
+				},
+				response.RunMetrics{
+					Name:    "key1",
+					Iters:   []int64{2},
+					Values:  []float64{123.2},
+					Context: []byte(`{"key2":"key2","value2":"value2"}`),
 				},
 				response.RunMetrics{
 					Name:    "key2",
-					Context: map[string]interface{}{},
-					Values:  []float64{124.1, 125.1},
-					Iters:   []int64{1, 2},
+					Iters:   []int64{3},
+					Values:  []float64{124.1},
+					Context: []byte(`{"key3":"key3","value3":"value3"}`),
+				},
+				response.RunMetrics{
+					Name:    "key2",
+					Iters:   []int64{4},
+					Values:  []float64{124.2},
+					Context: []byte(`{"key4":"key4","value4":"value4"}`),
 				},
 			},
 		},

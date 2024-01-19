@@ -1,11 +1,8 @@
-//go:build integration
-
 package run
 
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
@@ -24,34 +21,22 @@ func TestGetDashboardTestSuite(t *testing.T) {
 }
 
 func (s *GetDashboardTestSuite) Test_Ok() {
-	app, err := s.AppFixtures.CreateApp(context.Background(), &database.App{
-		Base: database.Base{
-			ID:         uuid.New(),
-			IsArchived: false,
-			CreatedAt:  time.Now(),
-		},
-		Type:        "mpi",
-		State:       database.AppState{},
-		NamespaceID: s.DefaultNamespace.ID,
-	})
-	s.Require().Nil(err)
-
 	dashboard, err := s.DashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
-		Base: database.Base{
-			ID:         uuid.New(),
-			IsArchived: false,
-			CreatedAt:  time.Now(),
+		Name: "dashboard-exp",
+		App: database.App{
+			Type:        "mpi",
+			State:       database.AppState{},
+			NamespaceID: s.DefaultNamespace.ID,
 		},
-		Name:        "dashboard-exp",
-		AppID:       &app.ID,
 		Description: "dashboard for experiment",
 	})
 	s.Require().Nil(err)
 
-	var resp database.Dashboard
+	var resp response.Dashboard
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/dashboards/%s", dashboard.ID))
 	s.Equal(dashboard.ID, resp.ID)
-	s.Equal(&app.ID, resp.AppID)
+	s.Equal(dashboard.App.ID, resp.AppID)
+	s.Equal(dashboard.App.Type, resp.AppType)
 	s.Equal(dashboard.Name, resp.Name)
 	s.Equal(dashboard.Description, resp.Description)
 	s.NotEmpty(resp.CreatedAt)

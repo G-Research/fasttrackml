@@ -1,5 +1,7 @@
 package response
 
+import "encoding/json"
+
 // GetRunInfo represents the response struct for GetRunInfo endpoint
 type GetRunInfo struct {
 	Params GetRunInfoParams `json:"params"`
@@ -10,17 +12,25 @@ type GetRunInfo struct {
 // GetRunsActive represents the response struct for GetRunsActive endpoint
 type GetRunsActive map[string]GetRunInfo
 
-// GetRunInfoParams params
+// GetRunInfoParams is a partial response object for GetRunInfo.
 type GetRunInfoParams struct {
 	Tags map[string]string `json:"tags"`
 }
 
-// GetRunInfoTraces traces
+// GetRunInfoTraces is a partial response object for GetRunInfo.
 type GetRunInfoTraces struct {
-	Tags map[string]string `json:"tags"`
+	Tags   map[string]string        `json:"tags"`
+	Metric []GetRunInfoTracesMetric `json:"metric"`
 }
 
-// GetRunInfoProps run properties
+// GetRunInfoTracesMetric is a partial response object for GetRunInfoTraces.
+type GetRunInfoTracesMetric struct {
+	Name      string          `json:"name"`
+	Context   json.RawMessage `json:"context"`
+	LastValue float64         `json:"last_value"`
+}
+
+// GetRunInfoProps is a partial response object for GetRunInfo.
 type GetRunInfoProps struct {
 	Name         string               `json:"name"`
 	Description  string               `json:"description"`
@@ -43,8 +53,8 @@ type GetRunMetrics []RunMetrics
 
 // RunMetrics is one run metrics
 type RunMetrics struct {
-	Name    string         `json:"name"`
-	Context map[string]any `json:"context"`
-	Values  []float64      `json:"values"`
-	Iters   []int64        `json:"iters"`
+	Name    string          `json:"name"`
+	Context json.RawMessage `json:"context"`
+	Values  []float64       `json:"values"`
+	Iters   []int64         `json:"iters"`
 }

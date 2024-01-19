@@ -1,5 +1,3 @@
-//go:build integration
-
 package run
 
 import (
@@ -136,7 +134,7 @@ func (s *DeleteRunTagTestSuite) Test_Error() {
 			request: request.DeleteRunTagRequest{
 				RunID: "id",
 			},
-			error: api.NewResourceDoesNotExistError("Unable to find active run 'id'"),
+			error: api.NewResourceDoesNotExistError("Run 'id' not found"),
 		},
 		{
 			name: "NotFoundTag",
@@ -144,11 +142,7 @@ func (s *DeleteRunTagTestSuite) Test_Error() {
 				Key:   "not_found_tag",
 				RunID: run.ID,
 			},
-			error: api.NewResourceDoesNotExistError(
-				`Unable to find tag 'not_found_tag' for run '%s': error getting tag by run id: %s and `+
-					`tag key: not_found_tag: record not found`,
-				run.ID, run.ID,
-			),
+			error: api.NewResourceDoesNotExistError("No tag with name: not_found_tag"),
 		},
 	}
 	for _, tt := range tests {

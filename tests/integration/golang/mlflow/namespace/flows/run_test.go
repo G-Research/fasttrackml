@@ -1,5 +1,3 @@
-//go:build integration
-
 package flows
 
 import (
@@ -57,10 +55,10 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}, &models.Namespace{
 						Code:                "namespace-2",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}
 			},
 			namespace1Code: "namespace-1",
@@ -71,10 +69,10 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}, &models.Namespace{
 						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}
 			},
 			namespace1Code: "default",
@@ -85,10 +83,10 @@ func (s *RunFlowTestSuite) Test_Ok() {
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}, &models.Namespace{
 						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}
 			},
 			namespace1Code: "",
@@ -883,13 +881,13 @@ func (s *RunFlowTestSuite) getRunAndCompare(
 	s.Equal(expectedResponse.Run.Info.ExperimentID, resp.Run.Info.ExperimentID)
 	s.Equal(expectedResponse.Run.Info.LifecycleStage, resp.Run.Info.LifecycleStage)
 	if expectedResponse.Run.Data.Tags != nil {
-		s.Equal(expectedResponse.Run.Data.Tags, resp.Run.Data.Tags)
+		s.ElementsMatch(expectedResponse.Run.Data.Tags, resp.Run.Data.Tags)
 	}
 	if expectedResponse.Run.Data.Params != nil {
-		s.Equal(expectedResponse.Run.Data.Params, resp.Run.Data.Params)
+		s.ElementsMatch(expectedResponse.Run.Data.Params, resp.Run.Data.Params)
 	}
 	if expectedResponse.Run.Data.Metrics != nil {
-		s.Equal(expectedResponse.Run.Data.Metrics, resp.Run.Data.Metrics)
+		s.ElementsMatch(expectedResponse.Run.Data.Metrics, resp.Run.Data.Metrics)
 	}
 	return &resp
 }

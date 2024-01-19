@@ -1,5 +1,3 @@
-//go:build integration
-
 package database
 
 import (
@@ -35,6 +33,8 @@ type ImportTestSuite struct {
 	runs               []*models.Run
 	inputRunFixtures   *fixtures.RunFixtures
 	outputRunFixtures  *fixtures.RunFixtures
+	inputBackend       string
+	outputBackend      string
 	inputDB            *gorm.DB
 	outputDB           *gorm.DB
 	populatedRowCounts rowCounts
@@ -44,10 +44,12 @@ func TestImportTestSuite(t *testing.T) {
 	suite.Run(t, new(ImportTestSuite))
 }
 
-func (s *ImportTestSuite) SetupTest() {
+func (s *ImportTestSuite) SetupSubTest() {
 	// prepare input database.
+	dsn, err := helpers.GenerateDatabaseURI(s.T(), s.inputBackend)
+	s.Require().Nil(err)
 	db, err := database.NewDBProvider(
-		helpers.GetInputDatabaseUri(),
+		dsn,
 		1*time.Second,
 		20,
 	)
@@ -63,8 +65,10 @@ func (s *ImportTestSuite) SetupTest() {
 	s.populateDB(s.inputDB)
 
 	// prepare output database.
+	dsn, err = helpers.GenerateDatabaseURI(s.T(), s.outputBackend)
+	s.Require().Nil(err)
 	db, err = database.NewDBProvider(
-		helpers.GetOutputDatabaseUri(),
+		dsn,
 		1*time.Second,
 		20,
 	)
@@ -88,7 +92,7 @@ func (s *ImportTestSuite) SetupTest() {
 		tags:                     10,
 		params:                   20,
 		dashboards:               2,
-		apps:                     1,
+		apps:                     2,
 	}
 }
 
@@ -123,83 +127,79 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 	s.Require().Nil(err)
 	s.runs = runs
 
-	appFixtures, err := fixtures.NewAppFixtures(db)
-	s.Require().Nil(err)
-	app, err := appFixtures.CreateApp(context.Background(), &database.App{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-		},
-		NamespaceID: 1,
-		Type:        "mpi",
-		State:       database.AppState{},
-	})
-	s.Require().Nil(err)
-
 	dashboardFixtures, err := fixtures.NewDashboardFixtures(db)
 	s.Require().Nil(err)
 
 	// dashboard 1
 	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+		App: database.App{
+			Type:        "mpi",
+			State:       database.AppState{},
+			NamespaceID: 1,
 		},
-		AppID: &app.ID,
-		Name:  uuid.NewString(),
+		Name: uuid.NewString(),
 	})
 	s.Require().Nil(err)
 
 	// dashboard 2
 	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
+		App: database.App{
+			Type:        "mpi",
+			State:       database.AppState{},
+			NamespaceID: 1,
 		},
-		AppID: &app.ID,
-		Name:  uuid.NewString(),
+		Name: uuid.NewString(),
 	})
 	s.Require().Nil(err)
 }
 
-func (s *ImportTestSuite) TearDownTest() {
+func (s *ImportTestSuite) TearDownSubTest() {
 	s.Require().Nil(s.inputRunFixtures.TruncateTables())
 	s.Require().Nil(s.outputRunFixtures.TruncateTables())
 }
 
 func (s *ImportTestSuite) Test_Ok() {
-	// source DB should have expected
-	s.validateRowCounts(s.inputDB, s.populatedRowCounts)
+	backends := []string{"sqlite", "sqlcipher", "postgres"}
+	for _, inputBackend := range backends {
+		for _, outputBackend := range backends {
+			s.inputBackend = inputBackend
+			s.outputBackend = outputBackend
+			s.Run(inputBackend+"->"+outputBackend, func() {
+				// source DB should have expected
+				s.validateRowCounts(s.inputDB, s.populatedRowCounts)
 
-	// initially, dest DB is empty
-	s.validateRowCounts(s.outputDB, rowCounts{namespaces: 1, experiments: 1})
+				// initially, dest DB is empty
+				s.validateRowCounts(s.outputDB, rowCounts{namespaces: 1, experiments: 1})
 
-	// invoke the Importer.Import() method
-	importer := database.NewImporter(s.inputDB, s.outputDB)
-	s.Require().Nil(importer.Import())
+				// invoke the Importer.Import() method
+				importer := database.NewImporter(s.inputDB, s.outputDB)
+				s.Require().Nil(importer.Import())
 
-	// dest DB should now have the expected
-	s.validateRowCounts(s.outputDB, s.populatedRowCounts)
+				// dest DB should now have the expected
+				s.validateRowCounts(s.outputDB, s.populatedRowCounts)
 
-	// invoke the Importer.Import method a 2nd time
-	s.Require().Nil(importer.Import())
+				// invoke the Importer.Import method a 2nd time
+				s.Require().Nil(importer.Import())
 
-	// dest DB should still only have the expected (idempotent)
-	s.validateRowCounts(s.outputDB, s.populatedRowCounts)
+				// dest DB should still only have the expected (idempotent)
+				s.validateRowCounts(s.outputDB, s.populatedRowCounts)
 
-	// confirm row-for-row equality
-	for _, table := range []string{
-		"namespaces",
-		"apps",
-		"dashboards",
-		"experiment_tags",
-		"runs",
-		"tags",
-		"params",
-		"metrics",
-		"latest_metrics",
-	} {
-		s.validateTable(s.inputDB, s.outputDB, table)
+				// confirm row-for-row equality
+				for _, table := range []string{
+					"namespaces",
+					"apps",
+					"dashboards",
+					"experiment_tags",
+					"runs",
+					"tags",
+					"params",
+					"metrics",
+					"latest_metrics",
+				} {
+					s.validateTable(s.inputDB, s.outputDB, table)
+				}
+			})
+		}
 	}
 }
 
@@ -259,6 +259,30 @@ func (s *ImportTestSuite) validateTable(source, dest *gorm.DB, table string) {
 		var sourceRow, destRow map[string]any
 		s.Require().Nil(source.ScanRows(sourceRows, &sourceRow))
 		s.Require().Nil(dest.ScanRows(destRows, &destRow))
+
+		// translate some types to make comparison easier
+		for _, row := range []map[string]any{sourceRow, destRow} {
+			for k, v := range row {
+				switch k {
+				case "is_nan", "is_archived":
+					if v, ok := v.(float64); ok {
+						row[k] = v != 0
+					}
+				case "default_experiment_id", "experiment_id":
+					if v, ok := v.(int64); ok {
+						row[k] = int32(v)
+					}
+				case "id", "app_id":
+					switch v := v.(type) {
+					case *interface{}:
+						switch s := (*v).(type) {
+						case string:
+							row[k] = s
+						}
+					}
+				}
+			}
+		}
 
 		// TODO:DSuhinin delete this fields right now, because they
 		// cause comparison error when we compare `namespace` entities. Let's find smarter way to do that.

@@ -1,5 +1,3 @@
-//go:build integration
-
 package run
 
 import (
@@ -7,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"net/http"
 	"testing"
 
@@ -737,7 +736,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 				"/runs/search/metric/align/",
 			))
 
-			decodedData, err := encoding.Decode(resp)
+			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
 
 			xValues := make(map[int][]float64)
@@ -747,14 +746,20 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 				for decodedData[fmt.Sprintf("%v.%d.name", run.ID, metricCount)] != nil {
 					valueKey := fmt.Sprintf("%v.%d.x_axis_values.blob", run.ID, metricCount)
 					xValues[metricCount] = append(xValues[metricCount], decodedData[valueKey].([]float64)[0])
-
 					metricCount++
 				}
 			}
 
 			// Check if the received values for each metric match the expected ones
 			for _, metricValues := range xValues {
-				s.Equal(tt.response, metricValues)
+				for i := 0; i < len(tt.response); i++ {
+					// we can't compare `NaN` values, so this is only one way to do that.
+					if math.IsNaN(metricValues[i]) {
+						s.Equal(math.IsNaN(metricValues[i]), math.IsNaN(tt.response[i]))
+					} else {
+						s.Equal(tt.response[i], metricValues[i])
+					}
+				}
 			}
 		})
 	}

@@ -1,5 +1,3 @@
-//go:build integration
-
 package experiment
 
 import (
@@ -20,11 +18,7 @@ type DeleteExperimentTestSuite struct {
 }
 
 func TestDeleteExperimentTestSuite(t *testing.T) {
-	suite.Run(t, &DeleteExperimentTestSuite{
-		helpers.BaseTestSuite{
-			SkipCreateDefaultExperiment: true,
-		},
-	})
+	suite.Run(t, &DeleteExperimentTestSuite{})
 }
 
 func (s *DeleteExperimentTestSuite) Test_Ok() {
@@ -67,10 +61,15 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 			error: "Not Found",
 		},
 		{
+			ID:   "incorrect_experiment_id",
 			name: "DeleteIncorrectExperimentID",
 			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt:` +
 				` parsing "incorrect_experiment_id": invalid syntax`,
-			ID: "incorrect_experiment_id",
+		},
+		{
+			ID:    "0",
+			name:  "DeleteDefaultExperiment",
+			error: `unable to delete default experiment`,
 		},
 	}
 	for _, tt := range tests {

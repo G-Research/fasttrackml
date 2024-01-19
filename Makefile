@@ -10,11 +10,13 @@ ifeq ($(shell go env GOOS),windows)
   APP:=$(APP).exe
 endif
 # Version.
-VERSION?=$(shell git describe --tags --always --dirty --match='v*' 2> /dev/null | sed 's/^v//')
-# Enable Go Modules.
-GO111MODULE=on
+# Use git describe to get the version.
+# If the git describe fails, fallback to a version based on the git commit.
+VERSION?=$(shell git describe --tags --dirty --match='v*' 2> /dev/null | sed 's/^v//')
+ifeq ($(VERSION),)
+  VERSION=0.0.0-g$(shell git describe --always --dirty 2> /dev/null)
+endif
 # Go ldflags.
-# Set version to git tag if available, otherwise use commit hash.
 # Strip debug symbols and disable DWARF generation.
 # Build static binaries on Linux.
 GO_LDFLAGS=-s -w -X github.com/G-Research/fasttrackml/pkg/version.Version=$(VERSION)
@@ -113,7 +115,7 @@ python-env: ## create python virtual environment.
 .PHONY: python-dist
 python-dist: go-build python-env ## build python wheels.
 	@echo '>>> Building Python Wheels.'
-	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python --wheel-dir=wheelhouse --no-deps
+	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python/fasttrackml --wheel-dir=wheelhouse --no-deps
 
 .PHONY: python-format
 python-format: python-env ## format python code.
@@ -131,17 +133,17 @@ python-lint: python-env ## check python code formatting.
 # Tests targets.
 #
 .PHONY: test
-test: test-go-unit service-test test-python-integration ## run all the tests.
+test: test-go-unit container-test test-python-integration ## run all the tests.
 
 .PHONY: test-go-unit
 test-go-unit: ## run go unit tests.
 	@echo ">>> Running unit tests."
-	@go test -v ./...
+	@go test -tags="$(GO_BUILDTAGS)" ./pkg/...
 
 .PHONY: test-go-integration
 test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
-	@go test -v -p 1 -count=1 -tags="integration" ./tests/integration/golang/...
+	@go test -tags="$(GO_BUILDTAGS)" ./tests/integration/golang/...
 
 .PHONY: test-python-integration
 test-python-integration: ## run all the python integration tests.
@@ -159,31 +161,16 @@ test-python-integration-aim: ## run the Aim python integration tests.
 	@go run tests/integration/python/main.go -targets aim
 
 #
-# Service test targets.
+# Container test targets.
 #
-.PHONY: service-start
-service-start: ## start service in container.
-	@echo ">>> Starting up service container."
-	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose up -d service
-
-.PHONY: service-stop
-service-stop: ## stop service in container.
-	@echo ">>> Stopping service container."
-	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose stop service
-
-.PHONY: service-restart
-service-restart: service-stop service-start ## restart service in container.
-
-.PHONY: service-test
-service-test: service-restart ## run integration tests in container.
+.PHONY: container-test
+container-test: ## run integration tests in container.
 	@echo ">>> Running integration tests in container."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-	    docker-compose run integration-tests
+		docker-compose run integration-tests
 
-.PHONY: service-clean
-service-clean: ## clean containers.
+.PHONY: container-clean
+container-clean: ## clean containers.
 	@echo ">>> Cleaning containers."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
 		docker-compose down -v --remove-orphans

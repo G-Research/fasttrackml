@@ -1,5 +1,3 @@
-//go:build integration
-
 package run
 
 import (
@@ -11,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
+	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -162,6 +161,13 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run2.ID,
 		Iter:      3,
+		Context: models.Context{
+			Json: datatypes.JSON([]byte(`
+				{
+					"testkey": "testvalue"
+				}`,
+			)),
+		},
 	})
 	s.Require().Nil(err)
 	metric1Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -172,6 +178,13 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		IsNan:     false,
 		RunID:     run2.ID,
 		LastIter:  3,
+		Context: models.Context{
+			Json: datatypes.JSON([]byte(`
+				{
+					"testkey": "testvalue"
+				}`,
+			)),
+		},
 	})
 	s.Require().Nil(err)
 	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
@@ -5862,6 +5875,32 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				metric1Run2,
 			},
 		},
+		{
+			name: "SearchMetricContext",
+			request: request.SearchMetricsRequest{
+				Query: `metric.name == "TestMetric1" and metric.context.testkey == "testvalue"`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run2,
+			},
+		},
+		{
+			name: "SearchMetricContextWithXAxis",
+			request: request.SearchMetricsRequest{
+				Query: `metric.name == "TestMetric1" and metric.context.testkey == "testvalue"`,
+				XAxis: `TestMetric2`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run2,
+			},
+		},
+		{
+			name: "NegativeSearchMetricContext",
+			request: request.SearchMetricsRequest{
+				Query: `metric.name == "TestMetric1" and metric.context.testkey != "testvalue"`,
+			},
+			metrics: []*models.LatestMetric(nil),
+		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
@@ -5875,7 +5914,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 					resp,
 				).DoRequest("/runs/search/metric"),
 			)
-			decodedData, err := encoding.Decode(resp)
+
+			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
 
 			var decodedMetrics []*models.LatestMetric
@@ -5897,6 +5937,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 						IsNan:     false,
 						RunID:     run.ID,
 						LastIter:  int64(decodedData[itersKey].([]float64)[0]),
+						Context:   models.DefaultContext,
+						ContextID: models.DefaultContext.ID,
 					}
 					decodedMetrics = append(decodedMetrics, &m)
 					metricCount++
@@ -5904,7 +5946,13 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			}
 
 			// Check if the received metrics match the expected ones
-			s.Equal(tt.metrics, decodedMetrics)
+			s.Equal(len(tt.metrics), len(decodedMetrics))
+			for i, metric := range tt.metrics {
+				// TODO when encoding.Decoder handles the context object, we can include it in the comparison
+				metric.Context = models.DefaultContext
+				metric.ContextID = models.DefaultContext.ID
+				s.Equal(metric, decodedMetrics[i])
+			}
 		})
 	}
 }

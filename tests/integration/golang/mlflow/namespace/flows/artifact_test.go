@@ -1,5 +1,3 @@
-//go:build integration
-
 package flows
 
 import (
@@ -33,7 +31,7 @@ type ArtifactFlowTestSuite struct {
 // - `GET /artifacts/list`
 func TestArtifactFlowTestSuite(t *testing.T) {
 	s := &ArtifactFlowTestSuite{
-		helpers.NewS3TestSuite("bucket1", "bucket2"),
+		helpers.NewS3TestSuite("flow-bucket1", "flow-bucket2"),
 	}
 	s.S3TestSuite.ResetOnSubTest = true
 	s.S3TestSuite.SkipCreateDefaultNamespace = true
@@ -52,10 +50,10 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}, &models.Namespace{
 						Code:                "namespace-2",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}
 			},
 			namespace1Code: "namespace-1",
@@ -66,10 +64,10 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}, &models.Namespace{
 						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}
 			},
 			namespace1Code: "default",
@@ -80,10 +78,10 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 			setup: func() (*models.Namespace, *models.Namespace) {
 				return &models.Namespace{
 						Code:                "default",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}, &models.Namespace{
 						Code:                "namespace-1",
-						DefaultExperimentID: common.GetPointer(int32(0)),
+						DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 					}
 			},
 			namespace1Code: "",
@@ -102,7 +100,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 
 			experiment1, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment1",
-				ArtifactLocation: "s3://bucket1/1",
+				ArtifactLocation: "s3://flow-bucket1/1",
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace1.ID,
 			})
@@ -110,7 +108,7 @@ func (s *ArtifactFlowTestSuite) Test_Ok() {
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             "Experiment2",
-				ArtifactLocation: "s3://bucket2/2",
+				ArtifactLocation: "s3://flow-bucket2/2",
 				LifecycleStage:   models.LifecycleStageActive,
 				NamespaceID:      namespace2.ID,
 			})
@@ -134,7 +132,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	_, err := s.Client.PutObject(context.Background(), &s3.PutObjectInput{
 		Key:    aws.String(fmt.Sprintf("1/%s/artifacts/artifact1.file", run1ID)),
 		Body:   strings.NewReader("content1"),
-		Bucket: aws.String("bucket1"),
+		Bucket: aws.String("flow-bucket1"),
 	})
 	s.Require().Nil(err)
 
@@ -146,7 +144,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	_, err = s.Client.PutObject(context.Background(), &s3.PutObjectInput{
 		Key:    aws.String(fmt.Sprintf("2/%s/artifacts/artifact2.file", run2ID)),
 		Body:   strings.NewReader("content2"),
-		Bucket: aws.String("bucket2"),
+		Bucket: aws.String("flow-bucket2"),
 	})
 	s.Require().Nil(err)
 

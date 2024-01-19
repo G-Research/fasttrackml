@@ -162,17 +162,21 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	}
 
 	var b []struct {
-		Name    string            `json:"name"`
-		Context map[string]string `json:"context"`
+		Name    string    `json:"name"`
+		Context fiber.Map `json:"context"`
 	}
 
 	if err := c.BodyParser(&b); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	metricKeysMap, contexts := make(fiber.Map, len(b)), make([]map[string]string, 0, len(b))
+	metricKeysMap, contexts := make(fiber.Map, len(b)), make([]string, 0, len(b))
 	for _, m := range b {
-		contexts = append(contexts, m.Context)
+		serializedContext, err := json.Marshal(m.Context)
+		if err != nil {
+			return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+		}
+		contexts = append(contexts, string(serializedContext))
 		metricKeysMap[m.Name] = nil
 	}
 	metricKeys := make([]string, len(metricKeysMap))
@@ -209,12 +213,11 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	).InnerJoins(
 		"Context",
 		func() *gorm.DB {
-			subQuery := database.DB
+			query := database.DB
 			for _, context := range contexts {
-				sql, args := repositories.BuildJsonCondition(database.DB.Dialector.Name(), "json", context)
-				subQuery = subQuery.Or(sql, args...)
+				query = query.Or("json = ?", context)
 			}
-			return subQuery
+			return query
 		}(),
 	).Where(
 		"key IN ?", metricKeys,
@@ -941,9 +944,9 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		Runs    []struct {
 			ID     string `json:"run_id"`
 			Traces []struct {
-				Name    string            `json:"name"`
-				Slice   [3]int            `json:"slice"`
-				Context map[string]string `json:"context"`
+				Name    string    `json:"name"`
+				Slice   [3]int    `json:"slice"`
+				Context fiber.Map `json:"context"`
 			} `json:"traces"`
 		} `json:"runs"`
 	}{}
@@ -952,7 +955,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	values, capacity, contextsMap := []any{}, 0, map[string]map[string]string{}
+	values, capacity, contextsMap := []any{}, 0, map[string]string{}
 	for _, r := range b.Runs {
 		for _, t := range r.Traces {
 			l := t.Slice[2]
@@ -968,7 +971,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			contextHash := fmt.Sprintf("%x", sum)
 			_, ok := contextsMap[contextHash]
 			if !ok {
-				contextsMap[contextHash] = t.Context
+				contextsMap[contextHash] = string(data)
 			}
 			values = append(values, r.ID, t.Name, string(data), float32(l))
 		}
@@ -977,8 +980,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	// map context values to context ids
 	query := database.DB
 	for _, context := range contextsMap {
-		sql, args := repositories.BuildJsonCondition(database.DB.Dialector.Name(), "contexts.json", context)
-		query = query.Or(sql, args...)
+		query = query.Or("contexts.json = ?", datatypes.JSON(context))
 	}
 	var contexts []database.Context
 	if err := query.Find(&contexts).Error; err != nil {

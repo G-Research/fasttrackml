@@ -172,11 +172,13 @@ func GetRunMetrics(c *fiber.Ctx) error {
 
 	metricKeysMap, contexts := make(fiber.Map, len(b)), make([]string, 0, len(b))
 	for _, m := range b {
-		serializedContext, err := json.Marshal(m.Context)
-		if err != nil {
-			return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+		if m.Context != nil {
+			serializedContext, err := json.Marshal(m.Context)
+			if err != nil {
+				return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+			}
+			contexts = append(contexts, string(serializedContext))
 		}
-		contexts = append(contexts, string(serializedContext))
 		metricKeysMap[m.Name] = nil
 	}
 	metricKeys := make([]string, len(metricKeysMap))
@@ -215,7 +217,11 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		func() *gorm.DB {
 			query := database.DB
 			for _, context := range contexts {
-				query = query.Or("json = ?", context)
+				if query.Dialector.Name() == database.SQLiteDialectorName {
+					query = query.Or("json(json) = json(?)", context)
+				} else {
+					query = query.Or("json = ?", context)
+				}
 			}
 			return query
 		}(),

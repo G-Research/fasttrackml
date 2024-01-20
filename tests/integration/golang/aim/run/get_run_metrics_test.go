@@ -156,24 +156,28 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 				{
 					Name: "key1",
 					Context: map[string]string{
-						"key1": "key1",
+						"key1":   "key1",
+						"value1": "value1",
 					},
 				},
 				{
 					Name: "key1",
 					Context: map[string]string{
+						"key2":   "key2",
 						"value2": "value2",
 					},
 				},
 				{
 					Name: "key2",
 					Context: map[string]string{
-						"key3": "key3",
+						"key3":   "key3",
+						"value3": "value3",
 					},
 				},
 				{
 					Name: "key2",
 					Context: map[string]string{
+						"key4":   "key4",
 						"value4": "value4",
 					},
 				},
@@ -212,13 +216,15 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 				{
 					Name: "key1",
 					Context: map[string]string{
-						"key1": "key1",
+						"key1":   "key1",
+						"value1": "value1",
 					},
 				},
 				{
 					Name: "key2",
 					Context: map[string]string{
-						"key3": "key3",
+						"key3":   "key3",
+						"value3": "value3",
 					},
 				},
 			},

@@ -270,7 +270,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		Iter:      1,
 		Context: models.Context{
-			Json: []byte(`{"key32": "value32"}`),
+			Json: []byte(`{"key32":"value32"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -293,7 +293,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		RunID:     run3.ID,
 		Iter:      1,
 		Context: models.Context{
-			Json: []byte(`{"key33": "value33"}`),
+			Json: []byte(`{"key33":"value33"}`),
 		},
 	})
 	s.Require().Nil(err)

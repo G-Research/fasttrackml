@@ -2,6 +2,7 @@ package fixtures
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
@@ -33,6 +34,13 @@ func (f MetricFixtures) CreateMetric(ctx context.Context, metric *models.Metric)
 	if metric.Context.Json == nil {
 		metric.Context = models.DefaultContext
 	} else {
+		// important: serialise context object before insert. it guarantees that
+		// all whitespaces will be removed and correct ordering will be applied.
+		serializedContext, err := json.Marshal(metric.Context.Json)
+		if err != nil {
+			return nil, eris.Wrap(err, "error marshaling context object")
+		}
+		metric.Context.Json = serializedContext
 		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
 			&metric.Context, metric.Context,
 		).Error; err != nil {
@@ -84,6 +92,13 @@ func (f MetricFixtures) CreateLatestMetric(
 	if metric.Context.Json == nil {
 		metric.Context = models.DefaultContext
 	} else {
+		// important: serialise context object before insert. it guarantees that
+		// all whitespaces will be removed and correct ordering will be applied.
+		serializedContext, err := json.Marshal(metric.Context.Json)
+		if err != nil {
+			return nil, eris.Wrap(err, "error marshaling context object")
+		}
+		metric.Context.Json = serializedContext
 		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
 			&metric.Context, metric.Context,
 		).Error; err != nil {

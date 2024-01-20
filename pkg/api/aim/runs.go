@@ -986,7 +986,11 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	// map context values to context ids
 	query := database.DB
 	for _, context := range contextsMap {
-		query = query.Or("contexts.json = ?", datatypes.JSON(context))
+		if query.Dialector.Name() == database.SQLiteDialectorName {
+			query = query.Or("json(contexts.json) = json(?)", context)
+		} else {
+			query = query.Or("contexts.json = ?", context)
+		}
 	}
 	var contexts []database.Context
 	if err := query.Find(&contexts).Error; err != nil {
@@ -995,7 +999,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 
 	// add context ids to `values`
 	for _, context := range contexts {
-		for i := 2; i < len(values); i += 2 {
+		for i := 2; i < len(values); i += 4 {
 			if values[i] == context.Json.String() {
 				values[i] = context.ID
 			}

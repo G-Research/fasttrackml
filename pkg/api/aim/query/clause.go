@@ -128,6 +128,7 @@ func (eq JsonEq) Build(builder clause.Builder) {
 		} else {
 			//nolint:errcheck,gosec
 			builder.WriteString(" = ")
+			//nolint:errcheck,gosec
 			renderDictValue(builder, eq.Dialector, rv)
 		}
 	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:
@@ -236,6 +237,7 @@ func renderArrayValue(builder clause.Builder, dialector string, rv reflect.Value
 }
 
 func renderDictValue(builder clause.Builder, dialector string, rv reflect.Value) error {
+	//nolint:errcheck,gosec
 	builder.WriteString("'{")
 	tmpl := strings.Repeat(`"%v":"%v",`, rv.Len()-1) + `"%v":"%v"`
 

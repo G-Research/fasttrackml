@@ -181,7 +181,6 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`WHERE ("contexts"."json"#>>$1 = '{"subkey": "val", "subkey2": "val"}' AND "runs"."lifecycle_stage" <> $2)`,
 			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
 		},
-
 	}
 
 	for _, tt := range tests {

@@ -172,7 +172,7 @@ func (neq JsonNeq) Build(builder clause.Builder) {
 		} else {
 			//nolint:errcheck,gosec
 			builder.WriteString(" <> ")
-			//nolint:errcheck
+			//nolint:errcheck,gosec
 			renderDictValue(builder, neq.Dialector, rv)
 		}
 	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:

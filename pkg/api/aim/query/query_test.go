@@ -199,7 +199,6 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`AND "runs"."lifecycle_stage" <> $3)`,
 			expectedVars: []interface{}{"{key1}", "%val1%", models.LifecycleStageDeleted},
 		},
-
 	}
 
 	for _, tt := range tests {

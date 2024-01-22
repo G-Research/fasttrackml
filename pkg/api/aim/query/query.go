@@ -10,6 +10,7 @@ import (
 	"github.com/go-python/gpython/parser"
 	"github.com/go-python/gpython/py"
 	"github.com/gofiber/fiber/v2"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -172,8 +173,13 @@ func (pq *parsedQuery) AddJoin(key string, j join) {
 // Filter will add the appropriate Joins and Where clauses to the tx.
 func (pq *parsedQuery) Filter(tx *gorm.DB) *gorm.DB {
 	for _, k := range pq.joinKeys {
-		j := pq.joins[k]
-		tx.Joins(j.query, j.args...)
+		j, ok := pq.joins[k]
+		// prevents panic, but something is wrong if not okay here
+		if ok {
+			tx.Joins(j.query, j.args...)
+		} else {
+			log.Errorf("error preparing query filter, join key not found in joins map: %s", k)
+		}
 	}
 	if len(pq.conditions) > 0 {
 		tx.Where(clause.And(pq.conditions...))

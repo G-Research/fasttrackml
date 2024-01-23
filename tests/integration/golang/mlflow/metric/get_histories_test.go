@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -68,13 +69,13 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 		Step:      1,
 		Iter:      1,
 		Context: models.Context{
-			Json: []byte(`
+			Json: datatypes.JSON([]byte(`
 				{
 					"metrickey1": "metricvalue1",
 					"metrickey2": "metricvalue2",
 					"metricnested": { "metricnestedkey": "metricnestedvalue" }
 				}`,
-			),
+			)),
 		},
 	})
 	s.Require().Nil(err)

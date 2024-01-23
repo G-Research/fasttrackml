@@ -24,6 +24,8 @@ const (
 	StatusKilled    Status = "KILLED"
 )
 
+var DefaultContext = Context{ID: 1, Json: datatypes.JSON("{}")}
+
 type LifecycleStage string
 
 const (

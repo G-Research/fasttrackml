@@ -27,21 +27,13 @@ func NewMetricFixtures(db *gorm.DB) (*MetricFixtures, error) {
 
 // CreateMetric creates new test Metric.
 func (f MetricFixtures) CreateMetric(ctx context.Context, metric *models.Metric) (*models.Metric, error) {
-	defaultContext := models.DefaultContext
-	if err := f.baseFixtures.db.WithContext(
-		ctx,
-	).FirstOrCreate(
-		&defaultContext, defaultContext,
-	).Error; err != nil {
+	if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&models.DefaultContext).Error; err != nil {
 		return nil, eris.Wrap(err, "error creating or finding default context")
 	}
-
 	if metric.Context.Json == nil {
-		metric.Context = defaultContext
+		metric.Context = models.DefaultContext
 	} else {
-		if err := f.baseFixtures.db.WithContext(
-			ctx,
-		).FirstOrCreate(
+		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
 			&metric.Context, metric.Context,
 		).Error; err != nil {
 			return nil, eris.Wrap(err, "error creating metric context")
@@ -86,21 +78,13 @@ func (f MetricFixtures) GetMetricsByContext(
 func (f MetricFixtures) CreateLatestMetric(
 	ctx context.Context, metric *models.LatestMetric,
 ) (*models.LatestMetric, error) {
-	defaultContext := models.DefaultContext
-	if err := f.baseFixtures.db.WithContext(
-		ctx,
-	).FirstOrCreate(
-		&defaultContext, defaultContext,
-	).Error; err != nil {
+	if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&models.DefaultContext).Error; err != nil {
 		return nil, eris.Wrap(err, "error creating or finding default context")
 	}
-
 	if metric.Context.Json == nil {
-		metric.Context = defaultContext
+		metric.Context = models.DefaultContext
 	} else {
-		if err := f.baseFixtures.db.WithContext(
-			ctx,
-		).FirstOrCreate(
+		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(
 			&metric.Context, metric.Context,
 		).Error; err != nil {
 			return nil, eris.Wrap(err, "error creating metric context")

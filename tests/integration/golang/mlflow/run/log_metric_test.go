@@ -79,6 +79,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				IsNan:     true,
 				RunID:     run.ID,
 				LastIter:  2,
+				ContextID: models.DefaultContext.ID,
 				Context:   models.DefaultContext,
 			},
 		},
@@ -98,6 +99,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				Step:      1,
 				RunID:     run.ID,
 				LastIter:  3,
+				ContextID: models.DefaultContext.ID,
 				Context:   models.DefaultContext,
 			},
 		},
@@ -117,6 +119,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 				Step:      1,
 				RunID:     run.ID,
 				LastIter:  4,
+				ContextID: models.DefaultContext.ID,
 				Context:   models.DefaultContext,
 			},
 		},
@@ -141,13 +144,7 @@ func (s *LogMetricTestSuite) Test_Ok() {
 			metric, err := s.MetricFixtures.GetLatestMetricByRunID(context.Background(), run.ID)
 			s.Require().Nil(err)
 
-			s.Equal(tt.expectedMetric.Key, metric.Key)
-			s.Equal(tt.expectedMetric.Value, metric.Value)
-			s.Equal(tt.expectedMetric.Timestamp, metric.Timestamp)
-			s.Equal(tt.expectedMetric.Step, metric.Step)
-			s.Equal(tt.expectedMetric.RunID, metric.RunID)
-			s.Equal(tt.expectedMetric.LastIter, metric.LastIter)
-			s.Equal(tt.expectedMetric.Context.Json, metric.Context.Json)
+			s.Equal(tt.expectedMetric, metric)
 		})
 	}
 }

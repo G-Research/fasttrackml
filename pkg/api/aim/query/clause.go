@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/rotisserie/eris"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm/clause"
@@ -127,6 +128,7 @@ func (eq JsonEq) Build(builder clause.Builder) {
 		} else {
 			//nolint:errcheck,gosec
 			builder.WriteString(" = ")
+			//nolint:errcheck,gosec
 			renderDictValue(builder, eq.Dialector, rv)
 		}
 	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:
@@ -137,6 +139,7 @@ func (eq JsonEq) Build(builder clause.Builder) {
 		} else {
 			//nolint:errcheck,gosec
 			builder.WriteString(" = ")
+			//nolint:errcheck
 			renderArrayValue(builder, eq.Dialector, rv)
 		}
 	default:
@@ -169,6 +172,7 @@ func (neq JsonNeq) Build(builder clause.Builder) {
 		} else {
 			//nolint:errcheck,gosec
 			builder.WriteString(" <> ")
+			//nolint:errcheck,gosec
 			renderDictValue(builder, neq.Dialector, rv)
 		}
 	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:
@@ -247,6 +251,7 @@ func eqNilReflect(value interface{}) bool {
 }
 
 func renderArrayValue(builder clause.Builder, dialector string, rv reflect.Value) {
+	//nolint:errcheck,gosec
 	builder.WriteString("'[")
 	tmpl := strings.Repeat("%v,", rv.Len()-1) + "%v"
 
@@ -259,12 +264,15 @@ func renderArrayValue(builder clause.Builder, dialector string, rv reflect.Value
 	for i := 0; i < rv.Len(); i++ {
 		vals[i] = rv.Index(i).Interface()
 	}
+	//nolint:errcheck,gosec
 	builder.WriteString(fmt.Sprintf(tmpl, vals...))
 
+	//nolint:errcheck,gosec
 	builder.WriteString("]'")
 }
 
-func renderDictValue(builder clause.Builder, dialector string, rv reflect.Value) {
+func renderDictValue(builder clause.Builder, dialector string, rv reflect.Value) error {
+	//nolint:errcheck,gosec
 	builder.WriteString("'{")
 	tmpl := strings.Repeat(`"%v":"%v",`, rv.Len()-1) + `"%v":"%v"`
 
@@ -277,12 +285,17 @@ func renderDictValue(builder clause.Builder, dialector string, rv reflect.Value)
 	vals := make([]any, rv.Len()*2)
 	dictIndex := 0
 	for i := 0; i < rv.Len(); i++ {
-		jsonEq := rv.Index(i).Interface().(JsonEq)
+		jsonEq, ok := rv.Index(i).Interface().(JsonEq)
+		if !ok {
+			return eris.New("unable to cast reflect value to JsonEq")
+		}
 		vals[dictIndex] = jsonEq.Left.JsonPath
 		vals[dictIndex+1] = jsonEq.Value
 		dictIndex = dictIndex + 2
 	}
+	//nolint:errcheck,gosec
 	builder.WriteString(fmt.Sprintf(tmpl, vals...))
-
+	//nolint:errcheck,gosec
 	builder.WriteString("}'")
+	return nil
 }

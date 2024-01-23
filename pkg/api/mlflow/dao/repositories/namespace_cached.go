@@ -49,15 +49,6 @@ func NewNamespaceCachedRepository(
 		return nil, eris.Wrap(err, "error creating lru cache for namespace entities")
 	}
 
-	// pre load all namespaces into cache.
-	var namespaces []models.Namespace
-	if err := db.Find(&namespaces).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting namespaces")
-	}
-	for _, namespace := range namespaces {
-		cache.Add(namespace.Code, namespace)
-	}
-
 	repository := NamespaceCachedRepository{
 		db:                  db,
 		cache:               cache,
@@ -107,12 +98,10 @@ func (r NamespaceCachedRepository) Update(ctx context.Context, namespace *models
 func (r NamespaceCachedRepository) GetByCode(
 	ctx context.Context, code string,
 ) (*models.Namespace, error) {
-	/*
-		result, ok := r.cache.Get(code)
-		if ok {
-			return &result, nil
-		}
-	*/
+	result, ok := r.cache.Get(code)
+	if ok {
+		return &result, nil
+	}
 
 	namespace, err := r.namespaceRepository.GetByCode(ctx, code)
 	if err != nil {

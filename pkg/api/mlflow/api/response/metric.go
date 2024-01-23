@@ -39,6 +39,7 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 		Metrics: make([]MetricPartialResponse, len(metrics)),
 	}
 
+	mappedContext := map[string]map[string]any{}
 	for n, m := range metrics {
 		resp.Metrics[n] = MetricPartialResponse{
 			Key:       m.Key,
@@ -46,11 +47,19 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 			Value:     m.Value,
 			Timestamp: m.Timestamp,
 		}
-		var context map[string]interface{}
-		if err := json.Unmarshal(m.Context.Json, &context); err != nil {
-			return nil, eris.Wrap(err, "error unmarshaling context")
+
+		// avoid deserialized of the same context many times.
+		// if context has been already deserialized, then just use it.
+		if context, ok := mappedContext[m.Context.GetJsonHash()]; ok {
+			resp.Metrics[n].Context = context
+		} else {
+			var deserializedContext map[string]any
+			if err := json.Unmarshal(m.Context.Json, &deserializedContext); err != nil {
+				return nil, eris.Wrap(err, "error unmarshaling context")
+			}
+			resp.Metrics[n].Context = deserializedContext
+			mappedContext[m.Context.GetJsonHash()] = deserializedContext
 		}
-		resp.Metrics[n].Context = context
 		if m.IsNan {
 			resp.Metrics[n].Value = common.NANValue
 		}

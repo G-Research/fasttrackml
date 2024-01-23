@@ -182,11 +182,17 @@ func (f RunFixtures) CreateTag(
 
 // CreateMetric creates a new test Metric.
 func (f RunFixtures) CreateMetric(ctx context.Context, metric *models.Metric) error {
+	defaultContext := models.DefaultContext
+	if err := f.baseFixtures.db.WithContext(
+		ctx,
+	).FirstOrCreate(
+		&defaultContext, defaultContext,
+	).Error; err != nil {
+		return eris.Wrap(err, "error creating or finding default context")
+	}
+
 	if metric.Context.Json == nil {
-		if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&models.DefaultContext).Error; err != nil {
-			return eris.Wrap(err, "error creating or finding default context")
-		}
-		metric.ContextID = models.DefaultContext.ID
+		metric.ContextID = defaultContext.ID
 	}
 	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
 		return eris.Wrap(err, "error creating test metric")
@@ -198,13 +204,21 @@ func (f RunFixtures) CreateMetric(ctx context.Context, metric *models.Metric) er
 func (f RunFixtures) CreateMetrics(
 	ctx context.Context, run *models.Run, count int,
 ) error {
-	if err := f.baseFixtures.db.WithContext(ctx).FirstOrCreate(&models.DefaultContext).Error; err != nil {
+	defaultContext := models.DefaultContext
+	if err := f.baseFixtures.db.WithContext(
+		ctx,
+	).FirstOrCreate(
+		&defaultContext, defaultContext,
+	).Error; err != nil {
 		return eris.Wrap(err, "error creating or finding default context")
 	}
+
 	for i := 1; i <= count; i++ {
 		// create test `metric` and test `latest metric` and connect to run.
 		for iter := 1; iter <= count; iter++ {
-			if err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
+			if err := f.baseFixtures.db.WithContext(
+				ctx,
+			).Create(&models.Metric{
 				Key:       fmt.Sprintf("key%d", i),
 				Value:     123.1 + float64(iter),
 				Timestamp: 1234567890 + int64(iter),
@@ -212,12 +226,14 @@ func (f RunFixtures) CreateMetrics(
 				Step:      int64(iter),
 				IsNan:     false,
 				Iter:      int64(iter),
-				Context:   models.DefaultContext,
+				ContextID: defaultContext.ID,
 			}).Error; err != nil {
 				return err
 			}
 		}
-		if err := f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
+		if err := f.baseFixtures.db.WithContext(
+			ctx,
+		).Create(&models.LatestMetric{
 			Key:       fmt.Sprintf("key%d", i),
 			Value:     123.1 + float64(count),
 			Timestamp: 1234567890 + int64(count),
@@ -225,7 +241,7 @@ func (f RunFixtures) CreateMetrics(
 			IsNan:     false,
 			RunID:     run.ID,
 			LastIter:  int64(count),
-			Context:   models.DefaultContext,
+			ContextID: defaultContext.ID,
 		}).Error; err != nil {
 			return err
 		}

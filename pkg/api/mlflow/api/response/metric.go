@@ -39,7 +39,7 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 		Metrics: make([]MetricPartialResponse, len(metrics)),
 	}
 
-	mappedContext := map[string]map[string]interface{}{}
+	mappedContext := map[string]map[string]any{}
 	for n, m := range metrics {
 		resp.Metrics[n] = MetricPartialResponse{
 			Key:       m.Key,
@@ -53,7 +53,7 @@ func NewMetricHistoryResponse(metrics []models.Metric) (*GetMetricHistoryRespons
 		if context, ok := mappedContext[m.Context.GetJsonHash()]; ok {
 			resp.Metrics[n].Context = context
 		} else {
-			var deserializedContext map[string]interface{}
+			var deserializedContext map[string]any
 			if err := json.Unmarshal(m.Context.Json, &deserializedContext); err != nil {
 				return nil, eris.Wrap(err, "error unmarshaling context")
 			}

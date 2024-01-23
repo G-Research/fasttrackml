@@ -31,8 +31,6 @@ const (
 	LifecycleStageDeleted LifecycleStage = "deleted"
 )
 
-var DefaultContext = Context{ID: 1, Json: datatypes.JSON("{}")}
-
 type Namespace struct {
 	ID                  uint           `gorm:"primaryKey;autoIncrement" json:"id"`
 	Apps                []App          `gorm:"constraint:OnDelete:CASCADE" json:"apps"`

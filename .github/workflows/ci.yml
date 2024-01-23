@@ -33,7 +33,7 @@ jobs:
           echo make-hash=$(make -n install-tools | sha256sum | cut -d' ' -f1) >> $GITHUB_OUTPUT
 
       - name: Setup tools cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: tools-cache
         with:
           path: ${{ steps.tools-cache-info.outputs.path }}
@@ -91,7 +91,7 @@ jobs:
           echo path=${BASH_REMATCH[1]} >> $GITHUB_OUTPUT
 
       - name: Setup golangci-lint cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.golangci-lint-cache-info.outputs.path }}
           key: golangci-lint-${{ steps.golangci-lint-cache-info.outputs.version }}-go-${{ steps.setup-go.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
@@ -157,7 +157,7 @@ jobs:
 
       - name: Setup cache
         id: cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/go-cache/go-build.tar
           key: go-integration-tests-${{ matrix.database-backend }}-image-${{ steps.cache-info.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
@@ -201,7 +201,7 @@ jobs:
 
       - name: Setup cache
         id: cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/go-cache
           key: python-integration-tests-image-${{ steps.cache-info.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}

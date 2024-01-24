@@ -1039,7 +1039,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			"          FROM params AS p"+
 			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key, context_id)"+
 			"          INNER JOIN contexts ON contexts.id = lm.context_id"+
-			"        ) rm USING(run_uuid)"+
+			"        ) rm USING(run_uuid, context_id)"+
 			"		 INNER JOIN runs AS r ON m.run_uuid = r.run_uuid"+
 			"		 INNER JOIN experiments AS e ON r.experiment_id = e.experiment_id AND e.namespace_id = ?"+
 			"        WHERE m.key = ?"+

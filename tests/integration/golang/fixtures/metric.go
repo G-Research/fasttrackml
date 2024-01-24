@@ -2,7 +2,6 @@ package fixtures
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"

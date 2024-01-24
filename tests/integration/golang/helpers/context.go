@@ -22,4 +22,3 @@ func ExtractContext(contextPrefix string, decodedData map[string]any) map[string
 	}
 	return contx
 }
-

@@ -5,14 +5,14 @@ import (
 	"strings"
 )
 
-// ExtractContextBytes will find the context from the decoded data, using the given key prefix.
+// ExtractContextBytes finds the metric context in decoded data, using the given key prefix.
 func ExtractContextBytes(contextPrefix string, decodedData map[string]any) ([]byte, error) {
 	contx := ExtractContext(contextPrefix, decodedData)
 	return json.Marshal(contx)
 }
 
-// ExtractContextBytes will find the context from the decoded data, using the given key prefix,
-// and marshal to bytes.
+// ExtractContextBytes finds the metric context in the decoded data, using the given key prefix,
+// and marshals to bytes.
 func ExtractContext(contextPrefix string, decodedData map[string]any) map[string]any {
 	contx := map[string]any{}
 	for key := range decodedData {

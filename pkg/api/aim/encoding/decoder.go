@@ -163,6 +163,9 @@ func (d *Decoder) Decode() (map[string]interface{}, error) {
 		data, err := d.Next()
 		if len(data) > 0 {
 			for key, value := range data {
+				if _, ok := result[key]; ok {
+					return nil, eris.Errorf("duplicate key %s", key)
+				}
 				result[key] = value
 			}
 		}

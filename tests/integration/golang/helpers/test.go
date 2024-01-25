@@ -153,20 +153,26 @@ func (s *BaseTestSuite) setupDatabase() {
 
 	if !s.SkipCreateDefaultNamespace {
 		var err error
-		s.DefaultNamespace, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-			ID:                  1,
-			Code:                "default",
-			DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
-		})
+		s.DefaultNamespace, err = s.NamespaceFixtures.CreateNamespace(
+			context.Background(),
+			&models.Namespace{
+				ID:                  1,
+				Code:                models.DefaultNamespaceCode,
+				DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
+			},
+		)
 		s.Require().Nil(err)
 
 		if !s.SkipCreateDefaultExperiment {
-			s.DefaultExperiment, err = s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-				ID:             common.GetPointer(models.DefaultExperimentID),
-				Name:           "Default",
-				LifecycleStage: models.LifecycleStageActive,
-				NamespaceID:    s.DefaultNamespace.ID,
-			})
+			s.DefaultExperiment, err = s.ExperimentFixtures.CreateExperiment(
+				context.Background(),
+				&models.Experiment{
+					ID:             common.GetPointer(models.DefaultExperimentID),
+					Name:           "Default",
+					LifecycleStage: models.LifecycleStageActive,
+					NamespaceID:    s.DefaultNamespace.ID,
+				},
+			)
 			s.Require().Nil(err)
 
 			s.DefaultNamespace.DefaultExperimentID = s.DefaultExperiment.ID

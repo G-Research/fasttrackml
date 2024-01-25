@@ -28,7 +28,11 @@ func (f baseFixtures) TruncateTables() error {
 		models.Experiment{},
 		models.Namespace{},
 	} {
-		if err := f.db.Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(table).Error; err != nil {
+		if err := f.db.Session(
+			&gorm.Session{AllowGlobalUpdate: true},
+		).Unscoped().Delete(
+			table,
+		).Error; err != nil {
 			return errors.Wrap(err, "error deleting data")
 		}
 	}

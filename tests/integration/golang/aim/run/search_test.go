@@ -782,9 +782,9 @@ func (s *SearchTestSuite) Test_Ok() {
 				).DoRequest("/runs/search/run"),
 			)
 
-			decodedData, err := encoding.NewDecoder(resp).Decode()
-			// this error will be not-nil if we are returning duplicate run rows
+			decodedData, duplicates, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
+			s.Require().Empty(duplicates)
 
 			for _, run := range runs {
 				respNameKey := fmt.Sprintf("%v.props.name", run.ID)

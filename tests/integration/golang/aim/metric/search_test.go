@@ -162,7 +162,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		Iter:      3,
 		Context: models.Context{
-			Json: datatypes.JSON([]byte(`{"testkey":"testvalue"}`)),
+			Json: datatypes.JSON(`{"testkey":"testvalue"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -175,7 +175,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  3,
 		Context: models.Context{
-			Json: datatypes.JSON([]byte(`{"testkey":"testvalue"}`)),
+			Json: datatypes.JSON(`{"testkey":"testvalue"}`),
 		},
 	})
 	s.Require().Nil(err)

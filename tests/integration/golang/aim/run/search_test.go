@@ -785,6 +785,11 @@ func (s *SearchTestSuite) Test_Ok() {
 			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
 
+			// verify encoding progress counter does not exceed expectation for number of runs
+			s.Require().Nil(
+				decodedData[fmt.Sprintf("progress_%d", len(tt.runs) + 1)],
+			)
+
 			for _, run := range runs {
 				respNameKey := fmt.Sprintf("%v.props.name", run.ID)
 				expIdKey := fmt.Sprintf("%v.props.experiment.id", run.ID)

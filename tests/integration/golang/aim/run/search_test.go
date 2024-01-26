@@ -788,6 +788,7 @@ func (s *SearchTestSuite) Test_Ok() {
 			// verify encoding progress counter does not exceed expectation for number of runs
 			s.Require().Nil(
 				decodedData[fmt.Sprintf("progress_%d", len(tt.runs) + 1)],
+				"progress element indicates more runs than expected",
 			)
 
 			for _, run := range runs {

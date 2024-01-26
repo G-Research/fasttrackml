@@ -472,10 +472,8 @@ func (s *RunFlowTestSuite) searchRunsAndCompare(
 		).DoRequest("/runs/search/run"),
 	)
 
-	decodedData, duplicates, err := encoding.NewDecoder(resp).Decode()
+	decodedData, err := encoding.NewDecoder(resp).Decode()
 	s.Require().Nil(err)
-	s.Require().Empty(duplicates)
-
 	for _, expectedRun := range expectedRunList {
 		s.Equal(
 			expectedRun.Name,
@@ -508,10 +506,8 @@ func (s *RunFlowTestSuite) getActiveRunsAndCompare(namespace string, expectedRun
 		).DoRequest("/runs/active"),
 	)
 
-	decodedData, duplicates, err := encoding.NewDecoder(resp).Decode()
+	decodedData, err := encoding.NewDecoder(resp).Decode()
 	s.Require().Nil(err)
-	s.Require().Empty(duplicates)
-
 	for _, expectedRun := range expectedRunList {
 		s.Equal(
 			expectedRun.Name,

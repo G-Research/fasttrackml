@@ -79,9 +79,8 @@ func (s *GetRunsActiveTestSuite) Test_Ok() {
 					resp,
 				).DoRequest("/runs/active"),
 			)
-			decodedData, duplicates, err := encoding.NewDecoder(resp).Decode()
+			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
-			s.Require().Empty(duplicates)
 
 			responseCount := 0
 			for _, run := range s.runs {

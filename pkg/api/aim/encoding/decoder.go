@@ -156,26 +156,21 @@ func (d *Decoder) Next() (map[string]interface{}, error) {
 	}
 }
 
-// Decode decodes all the data stream at once. Duplicate keys are returned
-// in the second return value.
-func (d *Decoder) Decode() (map[string]interface{}, []string, error) {
+// Decode decodes all the data stream at once.
+func (d *Decoder) Decode() (map[string]interface{}, error) {
 	result := map[string]interface{}{}
-	duplicates := []string{}
 	for {
 		data, err := d.Next()
 		if len(data) > 0 {
 			for key, value := range data {
-				if _, ok := result[key]; ok {
-					duplicates = append(duplicates, key)
-				}
 				result[key] = value
 			}
 		}
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				return result, duplicates, nil
+				return result, nil
 			}
-			return nil, nil, eris.Wrap(err, "error decoding binary AIM stream")
+			return nil, eris.Wrap(err, "error decoding binary AIM stream")
 		}
 	}
 }

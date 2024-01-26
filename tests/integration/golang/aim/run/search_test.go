@@ -782,9 +782,8 @@ func (s *SearchTestSuite) Test_Ok() {
 				).DoRequest("/runs/search/run"),
 			)
 
-			decodedData, duplicates, err := encoding.NewDecoder(resp).Decode()
+			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
-			s.Require().Empty(duplicates)
 
 			for _, run := range runs {
 				respNameKey := fmt.Sprintf("%v.props.name", run.ID)

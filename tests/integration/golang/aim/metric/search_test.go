@@ -5915,9 +5915,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				).DoRequest("/runs/search/metric"),
 			)
 
-			decodedData, duplicates, err := encoding.NewDecoder(resp).Decode()
+			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
-			s.Require().Empty(duplicates)
 
 			var decodedMetrics []*models.LatestMetric
 			for _, run := range runs {

@@ -773,7 +773,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 		tx.
 			Select("metrics.*", "runmetrics.context_json", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
 			Joins(
-				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND metrics.iter = x_axis.iter AND x_axis.key = ?",
+				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND "+
+					"metrics.iter = x_axis.iter AND x_axis.context_id = metrics.context_id AND x_axis.key = ?",
 				q.XAxis,
 			)
 		xAxis = true

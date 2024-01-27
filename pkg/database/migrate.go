@@ -9,6 +9,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
@@ -307,16 +308,17 @@ func CreateDefaultExperiment(db *gorm.DB, defaultArtifactRoot string) error {
 
 // CreateDefaultMetricContext creates the default metric context if it doesn't exist.
 func CreateDefaultMetricContext(db *gorm.DB) error {
-	if err := db.First(&DefaultContext).Error; err != nil {
+	defaultContext := Context{Json: datatypes.JSON("{}")}
+	if err := db.First(&defaultContext).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Creating default context")
-			if err := db.Create(&DefaultContext).Error; err != nil {
+			if err := db.Create(&defaultContext).Error; err != nil {
 				return fmt.Errorf("error creating default context: %s", err)
 			}
 		} else {
 			return fmt.Errorf("unable to find default context: %s", err)
 		}
 	}
-	log.Debugf("default metric context: %v", DefaultContext)
+	log.Debugf("default metric context: %v", defaultContext)
 	return nil
 }

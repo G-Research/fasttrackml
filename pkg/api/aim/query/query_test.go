@@ -270,7 +270,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			expectedSQL: `SELECT ID FROM "metrics" ` +
 				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
 				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
-			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
+			expectedVars: []interface{}{"$.key1", "value1", models.LifecycleStageDeleted},
 		},
 		{
 			name:          "TestMetricContextNegative",
@@ -279,7 +279,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			expectedSQL: `SELECT ID FROM "metrics" ` +
 				`LEFT JOIN contexts ON latest_metrics.context_id = contexts.id ` +
 				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
-			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
+			expectedVars: []interface{}{"$.key1", "value1", models.LifecycleStageDeleted},
 		},
 	}
 

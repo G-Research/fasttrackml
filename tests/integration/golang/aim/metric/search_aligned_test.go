@@ -101,7 +101,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		},
 	})
 	s.Require().Nil(err)
-	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+	metric2Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric2",
 		Value:     2.1,
 		Timestamp: 123456789,
@@ -127,7 +127,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		},
 	})
 	s.Require().Nil(err)
-	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+	metric3Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric3",
 		Value:     3.1,
 		Timestamp: 123456789,
@@ -198,7 +198,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		},
 	})
 	s.Require().Nil(err)
-	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+	metric2Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric2",
 		Value:     2.1,
 		Timestamp: 222222222,
@@ -224,7 +224,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		},
 	})
 	s.Require().Nil(err)
-	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+	metric3Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric3",
 		Value:     3.1,
 		Timestamp: 333333333,
@@ -295,7 +295,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		},
 	})
 	s.Require().Nil(err)
-	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+	metric2Run3, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric2",
 		Value:     1.6,
 		Timestamp: 2522222222,
@@ -321,7 +321,7 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 		},
 	})
 	s.Require().Nil(err)
-	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+	metric3Run3, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "TestMetric3",
 		Value:     2.6,
 		Timestamp: 2522222222,
@@ -429,440 +429,438 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 			},
 			response: []float64{metric1Run1.Value, metric1Run2.Value, metric1Run3.Value},
 		},
-		/*
-			{
-				name: "TestSearchAlignedByMetric1",
-				request: &request.GetAlignedMetricRequest{
-					AlignBy: "TestMetric1",
-					Runs: []request.AlignedMetricRunRequest{
-						{
-							ID: run1.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric3",
-									Slice: []int{0, 0, 500},
-								},
+		{
+			name: "TestSearchAlignedByMetric1",
+			request: &request.GetAlignedMetricRequest{
+				AlignBy: "TestMetric1",
+				Runs: []request.AlignedMetricRunRequest{
+					{
+						ID: run1.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run2.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric3",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run2.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run3.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric3",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run3.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
 							},
 						},
 					},
 				},
-				response: []float64{metric1Run1.Value, metric1Run2.Value, metric1Run3.Value},
 			},
-			{
-				name: "TestSearchAlignedByMetric2",
-				request: &request.GetAlignedMetricRequest{
-					AlignBy: "TestMetric2",
-					Runs: []request.AlignedMetricRunRequest{
-						{
-							ID: run1.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric3",
-									Slice: []int{0, 0, 500},
-								},
+			response: []float64{metric1Run1.Value, metric1Run2.Value, metric1Run3.Value},
+		},
+		{
+			name: "TestSearchAlignedByMetric2",
+			request: &request.GetAlignedMetricRequest{
+				AlignBy: "TestMetric2",
+				Runs: []request.AlignedMetricRunRequest{
+					{
+						ID: run1.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run2.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric3",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run2.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run3.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric3",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run3.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
 							},
 						},
 					},
 				},
-				response: []float64{metric2Run1.Value, metric2Run2.Value, metric2Run3.Value},
 			},
-			{
-				name: "TestSearchAlignedByMetric3",
-				request: &request.GetAlignedMetricRequest{
-					AlignBy: "TestMetric3",
-					Runs: []request.AlignedMetricRunRequest{
-						{
-							ID: run1.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric3",
-									Slice: []int{0, 0, 500},
-								},
+			response: []float64{metric2Run1.Value, metric2Run2.Value, metric2Run3.Value},
+		},
+		{
+			name: "TestSearchAlignedByMetric3",
+			request: &request.GetAlignedMetricRequest{
+				AlignBy: "TestMetric3",
+				Runs: []request.AlignedMetricRunRequest{
+					{
+						ID: run1.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run2.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric3",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run2.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run3.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric3",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run3.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric3",
+								Slice: []int{0, 0, 500},
 							},
 						},
 					},
 				},
-				response: []float64{metric3Run1.Value, metric3Run2.Value, metric3Run3.Value},
 			},
-			{
-				name: "TestSearchMetric1Metric2AlignedByMetric1",
-				request: &request.GetAlignedMetricRequest{
-					AlignBy: "TestMetric1",
-					Runs: []request.AlignedMetricRunRequest{
-						{
-							ID: run1.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
+			response: []float64{metric3Run1.Value, metric3Run2.Value, metric3Run3.Value},
+		},
+		{
+			name: "TestSearchMetric1Metric2AlignedByMetric1",
+			request: &request.GetAlignedMetricRequest{
+				AlignBy: "TestMetric1",
+				Runs: []request.AlignedMetricRunRequest{
+					{
+						ID: run1.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run2.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run2.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run3.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run3.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
 							},
 						},
 					},
 				},
-				response: []float64{metric1Run1.Value, metric1Run2.Value, metric1Run3.Value},
 			},
-			{
-				name: "TestSearchMetric1Metric2AlignedByMetric2",
-				request: &request.GetAlignedMetricRequest{
-					AlignBy: "TestMetric2",
-					Runs: []request.AlignedMetricRunRequest{
-						{
-							ID: run1.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
+			response: []float64{metric1Run1.Value, metric1Run2.Value, metric1Run3.Value},
+		},
+		{
+			name: "TestSearchMetric1Metric2AlignedByMetric2",
+			request: &request.GetAlignedMetricRequest{
+				AlignBy: "TestMetric2",
+				Runs: []request.AlignedMetricRunRequest{
+					{
+						ID: run1.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run2.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run2.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run3.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run3.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
 							},
 						},
 					},
 				},
-				response: []float64{metric2Run1.Value, metric2Run2.Value, metric2Run3.Value},
 			},
-			{
-				name: "TestSearchMetric1Metric2AlignedByMetric3",
-				request: &request.GetAlignedMetricRequest{
-					AlignBy: "TestMetric3",
-					Runs: []request.AlignedMetricRunRequest{
-						{
-							ID: run1.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
+			response: []float64{metric2Run1.Value, metric2Run2.Value, metric2Run3.Value},
+		},
+		{
+			name: "TestSearchMetric1Metric2AlignedByMetric3",
+			request: &request.GetAlignedMetricRequest{
+				AlignBy: "TestMetric3",
+				Runs: []request.AlignedMetricRunRequest{
+					{
+						ID: run1.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run2.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run2.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run3.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
-								{
-									Name:  "TestMetric2",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run3.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
+							},
+							{
+								Name:  "TestMetric2",
+								Slice: []int{0, 0, 500},
 							},
 						},
 					},
 				},
-				response: []float64{metric3Run1.Value, metric3Run2.Value, metric3Run3.Value},
 			},
-			{
-				name: "TestSearchMetric1AlignedByMetric1",
-				request: &request.GetAlignedMetricRequest{
-					AlignBy: "TestMetric1",
-					Runs: []request.AlignedMetricRunRequest{
-						{
-							ID: run1.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
+			response: []float64{metric3Run1.Value, metric3Run2.Value, metric3Run3.Value},
+		},
+		{
+			name: "TestSearchMetric1AlignedByMetric1",
+			request: &request.GetAlignedMetricRequest{
+				AlignBy: "TestMetric1",
+				Runs: []request.AlignedMetricRunRequest{
+					{
+						ID: run1.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run2.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run2.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run3.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run3.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
 							},
 						},
 					},
 				},
-				response: []float64{metric1Run1.Value, metric1Run2.Value, metric1Run3.Value},
 			},
-			{
-				name: "TestSearchMetric1AlignedByMetric2",
-				request: &request.GetAlignedMetricRequest{
-					AlignBy: "TestMetric2",
-					Runs: []request.AlignedMetricRunRequest{
-						{
-							ID: run1.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
+			response: []float64{metric1Run1.Value, metric1Run2.Value, metric1Run3.Value},
+		},
+		{
+			name: "TestSearchMetric1AlignedByMetric2",
+			request: &request.GetAlignedMetricRequest{
+				AlignBy: "TestMetric2",
+				Runs: []request.AlignedMetricRunRequest{
+					{
+						ID: run1.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run2.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run2.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run3.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run3.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
 							},
 						},
 					},
 				},
-				response: []float64{metric2Run1.Value, metric2Run2.Value, metric2Run3.Value},
 			},
-			{
-				name: "TestSearchMetric1AlignedByMetric3",
-				request: &request.GetAlignedMetricRequest{
-					AlignBy: "TestMetric3",
-					Runs: []request.AlignedMetricRunRequest{
-						{
-							ID: run1.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
+			response: []float64{metric2Run1.Value, metric2Run2.Value, metric2Run3.Value},
+		},
+		{
+			name: "TestSearchMetric1AlignedByMetric3",
+			request: &request.GetAlignedMetricRequest{
+				AlignBy: "TestMetric3",
+				Runs: []request.AlignedMetricRunRequest{
+					{
+						ID: run1.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run2.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run2.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
 							},
 						},
-						{
-							ID: run3.ID,
-							Traces: []request.AlignedMetricTraceRequest{
-								{
-									Name:  "TestMetric1",
-									Slice: []int{0, 0, 500},
-								},
+					},
+					{
+						ID: run3.ID,
+						Traces: []request.AlignedMetricTraceRequest{
+							{
+								Name:  "TestMetric1",
+								Slice: []int{0, 0, 500},
 							},
 						},
 					},
 				},
-				response: []float64{metric3Run1.Value, metric3Run2.Value, metric3Run3.Value},
 			},
-		*/
+			response: []float64{metric3Run1.Value, metric3Run2.Value, metric3Run3.Value},
+		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {

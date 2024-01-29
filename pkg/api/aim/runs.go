@@ -1046,7 +1046,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			"		 INNER JOIN experiments AS e ON r.experiment_id = e.experiment_id AND e.namespace_id = ?"+
 			"        WHERE m.key = ?"+
 			"          AND m.iter <= rm.max"+
-			"          AND MOD(m.iter + 1 + rm.interval / 2, CAST(rm.interval)) < 1"+
+			"          AND MOD(m.iter + 1 + rm.interval / 2, rm.interval) < 1"+
 			"        ORDER BY r.row_num DESC, rm.key, rm.context_id, m.iter",
 		values...,
 	).Rows()

@@ -79,6 +79,16 @@ func (s *SearchTestSuite) Test_Ok() {
 		LastIter:  1,
 	})
 	s.Require().Nil(err)
+	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+		Key:       "TestMetric2",
+		Value:     1.1,
+		Timestamp: 1234567890,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run1.ID,
+		LastIter:  1,
+	})
+	s.Require().Nil(err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:   "param1",
 		Value: "value1",
@@ -774,6 +784,12 @@ func (s *SearchTestSuite) Test_Ok() {
 
 			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
+
+			// verify encoding progress counter does not exceed expectation for number of runs
+			s.Require().Nil(
+				decodedData[fmt.Sprintf("progress_%d", len(tt.runs)+1)],
+				"progress element indicates more runs than expected",
+			)
 
 			for _, run := range runs {
 				respNameKey := fmt.Sprintf("%v.props.name", run.ID)

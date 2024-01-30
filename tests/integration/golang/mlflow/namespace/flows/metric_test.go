@@ -24,7 +24,7 @@ type MetricFlowTestSuite struct {
 // Flow contains next endpoints:
 // - `GET /metrics/get-history`
 // - `GET /metrics/get-history-bulk`
-// - `POST /metrics/get-histories` - TODO:dsuhinin we need firstly to create proper decoder.
+// - `POST /metrics/get-histories`
 func TestMetricFlowTestSuite(t *testing.T) {
 	suite.Run(t, &MetricFlowTestSuite{
 		helpers.BaseTestSuite{

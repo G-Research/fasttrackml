@@ -69,33 +69,29 @@ type Json struct {
 // Build builds positive statement.
 func (json Json) Build(builder clause.Builder) {
 	json.writeColumn(builder)
-	jsonPath := json.JsonPath
 	switch json.Dialector {
 	case postgres.Dialector{}.Name():
 		//nolint:errcheck,gosec
 		builder.WriteString("#>>")
-		jsonPath = "{" + strings.ReplaceAll(jsonPath, ",", ".") + "}"
 	default:
 		//nolint:errcheck,gosec
 		builder.WriteString("->>")
 	}
-	builder.AddVar(builder, jsonPath)
+	builder.AddVar(builder, json.jsonPathForDialect())
 }
 
 // NegationBuild builds negative statement.
 func (json Json) NegationBuild(builder clause.Builder) {
 	json.writeColumn(builder)
-	jsonPath := json.JsonPath
 	switch json.Dialector {
 	case postgres.Dialector{}.Name():
 		//nolint:errcheck,gosec
 		builder.WriteString("#>>")
-		jsonPath = "{" + strings.ReplaceAll(jsonPath, ",", ".") + "}"
 	default:
 		//nolint:errcheck,gosec
 		builder.WriteString("->>")
 	}
-	builder.AddVar(builder, jsonPath)
+	builder.AddVar(builder, json.jsonPathForDialect())
 }
 
 func (json Json) writeColumn(builder clause.Builder) {
@@ -108,6 +104,16 @@ func (json Json) writeColumn(builder clause.Builder) {
 		builder.WriteString(", JSON('{}'))")
 	default:
 		builder.WriteQuoted(json.Column)
+	}
+}
+
+func (json Json) jsonPathForDialect() string {
+	switch json.Dialector {
+	case postgres.Dialector{}.Name():
+		jsonPath := removePrefix(json.JsonPath)
+		return "{" + strings.ReplaceAll(jsonPath, ",", ".") + "}"
+	default:
+		return addPrefix(json.JsonPath)
 	}
 }
 
@@ -234,6 +240,19 @@ func (jnl JsonNotLike) Build(builder clause.Builder) {
 // NegationBuild renders the Json like expression.
 func (neq JsonNotLike) NegationBuild(builder clause.Builder) {
 	JsonLike(neq).Build(builder)
+}
+
+// addPrefix adds leading $. to a jsonPath if needed
+func addPrefix(jsonPath string) string {
+	if strings.HasPrefix(jsonPath, "$.") {
+		return jsonPath
+	}
+	return fmt.Sprintf("$.%s", jsonPath)
+}
+
+// removePrefix removes a leading $. for a jsonPath
+func removePrefix(jsonPath string) string {
+	return strings.TrimPrefix(jsonPath, "$.")
 }
 
 func eqNil(value interface{}) bool {

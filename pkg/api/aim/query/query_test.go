@@ -47,63 +47,63 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			name:  "TestRunNameWithoutFunction",
 			query: `(run.name == 'run')`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" = $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" = $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithInFunction",
 			query: `('run' in run.name)`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithNotInFunction",
 			query: `('run' not in run.name)`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" NOT LIKE $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" NOT LIKE $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithStartWithFunction",
 			query: `(run.name.startswith('run'))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"run%", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithEndWithFunction",
 			query: `(run.name.endswith('run'))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"%run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithRegexpMatchFunction",
 			query: `(re.match('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" ~ $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" ~ $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithRegexpSearchFunction",
 			query: `(re.search('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" ~ $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" ~ $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithNegatedRegexpMatchFunction",
 			query: `not (re.match('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" !~ $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" !~ $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithNegatedRegexpSearchFunction",
 			query: `not (re.search('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" !~ $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" !~ $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
@@ -111,7 +111,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			query: `run.metrics['my_metric'].last < -1`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`WHERE "metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3`,
 			expectedVars: []interface{}{"my_metric", -1, models.LifecycleStageDeleted},
 		},
 		{
@@ -119,7 +119,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			query: `run.metrics['my_metric'].last < -1.0`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`WHERE "metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3`,
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
 		{
@@ -127,7 +127,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			query:         `metric.context.key1 == 'value1'`,
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE ("contexts"."json"#>>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`WHERE "contexts"."json"#>>$1 = $2 AND "runs"."lifecycle_stage" <> $3`,
 			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
 		},
 		{
@@ -135,7 +135,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			query:         `metric.context.key1 != 'value1'`,
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE ("contexts"."json"#>>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`WHERE "contexts"."json"#>>$1 <> $2 AND "runs"."lifecycle_stage" <> $3`,
 			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
 		},
 		{
@@ -144,8 +144,8 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
 				`LEFT JOIN contexts contexts_1 ON metrics_0.context_id = contexts_1.id ` +
-				`WHERE ("contexts_1"."json"#>>$2 = $3 ` +
-				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5))`,
+				`WHERE "contexts_1"."json"#>>$2 = $3 ` +
+				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5)`,
 			expectedVars: []interface{}{"my_metric", "{key1}", "value1", -1, models.LifecycleStageDeleted},
 		},
 		{
@@ -153,8 +153,8 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			query: `run.metrics["my_metric"].last < -1 and metric.context.key1 == "value1"`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE (("metrics_0"."value" < $2 AND "contexts"."json"#>>$3 = $4) ` +
-				`AND "runs"."lifecycle_stage" <> $5)`,
+				`WHERE ("metrics_0"."value" < $2 AND "contexts"."json"#>>$3 = $4) ` +
+				`AND "runs"."lifecycle_stage" <> $5`,
 			expectedVars: []interface{}{"my_metric", -1, "{key1}", "value1", models.LifecycleStageDeleted},
 		},
 		{
@@ -229,63 +229,63 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			name:  "TestRunNameWithoutFunction",
 			query: `(run.name == 'run')`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" = $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" = $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithInFunction",
 			query: `('run' in run.name)`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithNotInFunction",
 			query: `('run' not in run.name)`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" NOT LIKE $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" NOT LIKE $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"%run%", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithStartWithFunction",
 			query: `(run.name.startswith('run'))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"run%", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithEndWithFunction",
 			query: `(run.name.endswith('run'))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE ("runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE "runs"."name" LIKE $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"%run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithRegexpMatchFunction",
 			query: `(re.match('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE (IFNULL("runs"."name", '') REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE IFNULL("runs"."name", '') REGEXP $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithRegexpSearchFunction",
 			query: `(re.search('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE (IFNULL("runs"."name", '') REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE IFNULL("runs"."name", '') REGEXP $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithNegatedRegexpMatchFunction",
 			query: `not (re.match('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE (IFNULL("runs"."name", '') NOT REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE IFNULL("runs"."name", '') NOT REGEXP $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"^run", models.LifecycleStageDeleted},
 		},
 		{
 			name:  "TestRunNameWithNegatedRegexpSearchFunction",
 			query: `not (re.search('run', run.name))`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`WHERE (IFNULL("runs"."name", '') NOT REGEXP $1 AND "runs"."lifecycle_stage" <> $2)`,
+				`WHERE IFNULL("runs"."name", '') NOT REGEXP $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"run", models.LifecycleStageDeleted},
 		},
 		{
@@ -293,7 +293,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			query: `run.metrics['my_metric'].last < -1`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`WHERE "metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3`,
 			expectedVars: []interface{}{"my_metric", -1, models.LifecycleStageDeleted},
 		},
 		{
@@ -301,7 +301,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			query: `run.metrics['my_metric'].last < -1.0`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`WHERE "metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3`,
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
 		{
@@ -309,7 +309,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			query:         `metric.context.key1 == 'value1'`,
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 = $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 = $2 AND "runs"."lifecycle_stage" <> $3`,
 			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
 		},
 		{
@@ -317,7 +317,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			query:         `metric.context.key1 != 'value1'`,
 			selectMetrics: true,
 			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE (IFNULL("contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3`,
 			expectedVars: []interface{}{"key1", "value1", models.LifecycleStageDeleted},
 		},
 		{
@@ -325,7 +325,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			query: `run.metrics["key1"].last < -1`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE ("metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3)`,
+				`WHERE "metrics_0"."value" < $2 AND "runs"."lifecycle_stage" <> $3`,
 			expectedVars: []interface{}{"key1", -1, models.LifecycleStageDeleted},
 		},
 		{
@@ -334,8 +334,8 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
 				`LEFT JOIN contexts contexts_1 ON metrics_0.context_id = contexts_1.id ` +
-				`WHERE (IFNULL("contexts_1"."json", JSON('{}'))->>$2 = $3 ` +
-				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5))`,
+				`WHERE IFNULL("contexts_1"."json", JSON('{}'))->>$2 = $3 ` +
+				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5)`,
 			expectedVars: []interface{}{"my_metric", "key1", "value1", -1, models.LifecycleStageDeleted},
 		},
 		{
@@ -343,8 +343,8 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			query: `run.metrics["my_metric"].last < -1 and metric.context.key1 == "value1"`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE (("metrics_0"."value" < $2 AND IFNULL("contexts"."json", JSON('{}'))->>$3 = $4) ` +
-				`AND "runs"."lifecycle_stage" <> $5)`,
+				`WHERE ("metrics_0"."value" < $2 AND IFNULL("contexts"."json", JSON('{}'))->>$3 = $4) ` +
+				`AND "runs"."lifecycle_stage" <> $5`,
 			expectedVars: []interface{}{"my_metric", -1, "key1", "value1", models.LifecycleStageDeleted},
 		},
 		{

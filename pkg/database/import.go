@@ -149,7 +149,7 @@ func (s *Importer) importTable(table string) error {
 				}
 				if err := destTX.
 					Table(table).
-					Clauses(clause.OnConflict{DoNothing: true}).
+					Clauses(clause.OnConflict{DoNothing: true}, clause.Returning{}).
 					Create(&item).Error; err != nil {
 					return eris.Wrap(err, "error creating destination row")
 				}

@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/rotisserie/eris"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm/clause"
@@ -117,30 +118,35 @@ func (json Json) jsonPathForDialect() string {
 }
 
 type JsonEq struct {
-	Left  Json
-	Value any
+	Left      Json
+	Value     any
+	Dialector string
 }
 
 func (eq JsonEq) Build(builder clause.Builder) {
 	eq.Left.Build(builder)
 	switch eq.Value.(type) {
+	case []JsonEq:
+		rv := reflect.ValueOf(eq.Value)
+		if rv.Len() == 0 {
+			//nolint:errcheck,gosec
+			builder.WriteString(" IS NULL")
+		} else {
+			//nolint:errcheck,gosec
+			builder.WriteString(" = ")
+			//nolint:errcheck,gosec
+			renderDictValue(builder, eq.Dialector, rv)
+		}
 	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:
 		rv := reflect.ValueOf(eq.Value)
 		if rv.Len() == 0 {
 			//nolint:errcheck,gosec
-			builder.WriteString(" IN (NULL)")
+			builder.WriteString(" IS NULL")
 		} else {
 			//nolint:errcheck,gosec
-			builder.WriteString(" IN (")
-			for i := 0; i < rv.Len(); i++ {
-				if i > 0 {
-					//nolint:errcheck,gosec
-					builder.WriteByte(',')
-				}
-				builder.AddVar(builder, rv.Index(i).Interface())
-			}
-			//nolint:errcheck,gosec
-			builder.WriteByte(')')
+			builder.WriteString(" = ")
+			//nolint:errcheck
+			renderArrayValue(builder, eq.Dialector, rv)
 		}
 	default:
 		if eqNil(eq.Value) {
@@ -164,19 +170,27 @@ type JsonNeq JsonEq
 func (neq JsonNeq) Build(builder clause.Builder) {
 	neq.Left.Build(builder)
 	switch neq.Value.(type) {
-	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:
-		//nolint:errcheck,gosec
-		builder.WriteString(" NOT IN (")
+	case []JsonEq:
 		rv := reflect.ValueOf(neq.Value)
-		for i := 0; i < rv.Len(); i++ {
-			if i > 0 {
-				//nolint:errcheck,gosec
-				builder.WriteByte(',')
-			}
-			builder.AddVar(builder, rv.Index(i).Interface())
+		if rv.Len() == 0 {
+			//nolint:errcheck,gosec
+			builder.WriteString(" IS NOT NULL")
+		} else {
+			//nolint:errcheck,gosec
+			builder.WriteString(" <> ")
+			//nolint:errcheck,gosec
+			renderDictValue(builder, neq.Dialector, rv)
 		}
-		//nolint:errcheck,gosec
-		builder.WriteByte(')')
+	case []string, []int, []int32, []int64, []uint, []uint32, []uint64, []interface{}:
+		rv := reflect.ValueOf(neq.Value)
+		if rv.Len() == 0 {
+			//nolint:errcheck,gosec
+			builder.WriteString(" IS NULL")
+		} else {
+			//nolint:errcheck,gosec
+			builder.WriteString(" <> ")
+			renderArrayValue(builder, neq.Dialector, rv)
+		}
 	default:
 		if eqNil(neq.Value) {
 			//nolint:errcheck,gosec
@@ -218,4 +232,54 @@ func eqNil(value interface{}) bool {
 func eqNilReflect(value interface{}) bool {
 	reflectValue := reflect.ValueOf(value)
 	return reflectValue.Kind() == reflect.Ptr && reflectValue.IsNil()
+}
+
+func renderArrayValue(builder clause.Builder, dialector string, rv reflect.Value) {
+	//nolint:errcheck,gosec
+	builder.WriteString("'[")
+	tmpl := strings.Repeat("%v,", rv.Len()-1) + "%v"
+
+	switch dialector {
+	case postgres.Dialector{}.Name():
+		tmpl = strings.ReplaceAll(tmpl, ",", ", ")
+	}
+
+	vals := make([]any, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		vals[i] = rv.Index(i).Interface()
+	}
+	//nolint:errcheck,gosec
+	builder.WriteString(fmt.Sprintf(tmpl, vals...))
+
+	//nolint:errcheck,gosec
+	builder.WriteString("]'")
+}
+
+func renderDictValue(builder clause.Builder, dialector string, rv reflect.Value) error {
+	//nolint:errcheck,gosec
+	builder.WriteString("'{")
+	tmpl := strings.Repeat(`"%v":"%v",`, rv.Len()-1) + `"%v":"%v"`
+
+	switch dialector {
+	case postgres.Dialector{}.Name():
+		tmpl = strings.ReplaceAll(tmpl, ":", ": ")
+		tmpl = strings.ReplaceAll(tmpl, ",", ", ")
+	}
+
+	vals := make([]any, rv.Len()*2)
+	dictIndex := 0
+	for i := 0; i < rv.Len(); i++ {
+		jsonEq, ok := rv.Index(i).Interface().(JsonEq)
+		if !ok {
+			return eris.New("unable to cast reflect value to JsonEq")
+		}
+		vals[dictIndex] = jsonEq.Left.JsonPath
+		vals[dictIndex+1] = jsonEq.Value
+		dictIndex = dictIndex + 2
+	}
+	//nolint:errcheck,gosec
+	builder.WriteString(fmt.Sprintf(tmpl, vals...))
+	//nolint:errcheck,gosec
+	builder.WriteString("}'")
+	return nil
 }

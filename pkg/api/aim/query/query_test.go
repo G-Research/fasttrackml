@@ -167,6 +167,30 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`AND "runs"."lifecycle_stage" <> $5`,
 			expectedVars: []interface{}{"my_metric", -1, "{key1}", "value1", models.LifecycleStageDeleted},
 		},
+		{
+			name:          "TestMetricContextArray",
+			query:         `metric.context.key1 == [1,2,3]`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE "contexts"."json"#>>$1 = '[1, 2, 3]' AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextObject",
+			query:         `metric.context.key1 == {"subkey": "val"}`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE "contexts"."json"#>>$1 = '{"subkey": "val"}' AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextObject2",
+			query:         `metric.context.key1 == {"subkey": "val", "subkey2": "val"}`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE "contexts"."json"#>>$1 = '{"subkey": "val", "subkey2": "val"}' AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {
@@ -343,6 +367,32 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				`WHERE ("metrics_0"."value" < $2 AND IFNULL("contexts"."json", JSON('{}'))->>$3 = $4) ` +
 				`AND "runs"."lifecycle_stage" <> $5`,
 			expectedVars: []interface{}{"my_metric", -1, "$.key1", "value1", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextArray",
+			query:         `metric.context.key1 == [1,2,3]`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 = '[1,2,3]' AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{"$.key1", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextObject",
+			query:         `metric.context.key1 == {"subkey": "val"}`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 = '{"subkey":"val"}' ` +
+				`AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{"$.key1", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextObject2",
+			query:         `metric.context.key1 == {"subkey": "val", "subkey2": "val"}`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 = '{"subkey":"val","subkey2":"val"}' ` +
+				`AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{"$.key1", models.LifecycleStageDeleted},
 		},
 	}
 

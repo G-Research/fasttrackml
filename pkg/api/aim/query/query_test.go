@@ -154,8 +154,8 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
 				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
 				`LEFT JOIN contexts contexts_1 ON metrics_0.context_id = contexts_1.id ` +
-				`WHERE ("contexts_1"."json"#>>$2 = $3 ` +
-				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5))`,
+				`WHERE "contexts_1"."json"#>>$2 = $3 ` +
+				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5)`,
 			expectedVars: []interface{}{"my_metric", "{key1}", "value1", -1, models.LifecycleStageDeleted},
 		},
 		{

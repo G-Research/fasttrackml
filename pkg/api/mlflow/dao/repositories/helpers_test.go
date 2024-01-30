@@ -84,7 +84,7 @@ func TestBuildJsonCondition(t *testing.T) {
 				"key2.nested": "value2",
 			},
 			expectedSQL:  "contexts.json->>? = ? AND contexts.json->>? = ?",
-			expectedArgs: []interface{}{"key1", "value1", "key2.nested", "value2"},
+			expectedArgs: []interface{}{"$.key1", "value1", "$.key2.nested", "value2"},
 		},
 		{
 			name:             "SqliteEmptyMap",

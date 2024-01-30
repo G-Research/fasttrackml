@@ -238,8 +238,8 @@ func (jnl JsonNotLike) Build(builder clause.Builder) {
 }
 
 // NegationBuild renders the Json like expression.
-func (neq JsonNotLike) NegationBuild(builder clause.Builder) {
-	JsonLike(neq).Build(builder)
+func (jnl JsonNotLike) NegationBuild(builder clause.Builder) {
+	JsonLike(jnl).Build(builder)
 }
 
 // addPrefix adds leading $. to a jsonPath if needed

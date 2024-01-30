@@ -466,9 +466,6 @@ func SearchRuns(c *fiber.Ctx) error {
 	}
 
 	var runs []database.Run
-	// add joins needed by pq.Filter
-	tx.Joins("JOIN latest_metrics USING(run_uuid)").
-		Joins("JOIN contexts ON latest_metrics.context_id = contexts.id")
 	pq.Filter(tx).Find(&runs)
 	if tx.Error != nil {
 		return fmt.Errorf("error searching runs: %w", tx.Error)

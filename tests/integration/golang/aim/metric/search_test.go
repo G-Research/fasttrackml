@@ -162,11 +162,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		Iter:      3,
 		Context: models.Context{
-			Json: datatypes.JSON([]byte(`
-				{
-					"testkey": "testvalue"
-				}`,
-			)),
+			Json: datatypes.JSON(`{"testkey":"testvalue"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -179,11 +175,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  3,
 		Context: models.Context{
-			Json: datatypes.JSON([]byte(`
-				{
-					"testkey": "testvalue"
-				}`,
-			)),
+			Json: datatypes.JSON(`{"testkey":"testvalue"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -5929,6 +5921,16 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 					timestampsKey := prefix + ".timestamps.blob"
 					valuesKey := prefix + ".values.blob"
 
+					contextPrefix := prefix + ".context"
+					contx, err := helpers.ExtractContextBytes(contextPrefix, decodedData)
+					s.Require().Nil(err)
+
+					decodedContext, err := s.ContextFixtures.GetContextByJSON(
+						context.Background(),
+						string(contx),
+					)
+					s.Require().Nil(err)
+
 					m := models.LatestMetric{
 						Key:       decodedData[nameKey].(string),
 						Value:     decodedData[valuesKey].([]float64)[0],
@@ -5937,20 +5939,16 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 						IsNan:     false,
 						RunID:     run.ID,
 						LastIter:  int64(decodedData[itersKey].([]float64)[0]),
-						Context:   models.DefaultContext,
-						ContextID: models.DefaultContext.ID,
+						ContextID: decodedContext.ID,
+						Context:   *decodedContext,
 					}
 					decodedMetrics = append(decodedMetrics, &m)
 					metricCount++
 				}
 			}
-
 			// Check if the received metrics match the expected ones
 			s.Equal(len(tt.metrics), len(decodedMetrics))
 			for i, metric := range tt.metrics {
-				// TODO when encoding.Decoder handles the context object, we can include it in the comparison
-				metric.Context = models.DefaultContext
-				metric.ContextID = models.DefaultContext.ID
 				s.Equal(metric, decodedMetrics[i])
 			}
 		})

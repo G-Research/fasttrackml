@@ -226,7 +226,7 @@ func (jl JsonLike) NegationBuild(builder clause.Builder) {
 	JsonNotLike(jl).Build(builder)
 }
 
-// JsonNeq not like for where.
+// JsonNotLike not like for where.
 type JsonNotLike JsonLike
 
 // Build renders the Json not-like expression.

@@ -1,6 +1,8 @@
 package response
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // GetRunInfo represents the response struct for GetRunInfo endpoint
 type GetRunInfo struct {

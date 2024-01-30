@@ -372,8 +372,8 @@ func GetRunsActive(c *fiber.Ctx) error {
 // TODO:get back and fix `gocyclo` problem.
 //
 //nolint:gocyclo
-func SearchRuns(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func SearchRuns(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -383,6 +383,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		Query  string `query:"q"`
 		Limit  int    `query:"limit"`
 		Offset string `query:"offset"`
+		Action string `query:"action"`
 		// TODO skip_system is unused - should we keep it?
 		SkipSystem     bool `query:"skip_system"`
 		ReportProgress bool `query:"report_progress"`
@@ -390,15 +391,15 @@ func SearchRuns(c *fiber.Ctx) error {
 		ExcludeTraces  bool `query:"exclude_traces"`
 	}{}
 
-	if err = c.QueryParser(&q); err != nil {
+	if err = ctx.QueryParser(&q); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if c.Query("report_progress") == "" {
+	if ctx.Query("report_progress") == "" {
 		q.ReportProgress = true
 	}
 
-	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
+	tzOffset, err := strconv.Atoi(ctx.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
@@ -440,22 +441,6 @@ func SearchRuns(c *fiber.Ctx) error {
 		).
 		Order("row_num DESC")
 
-	if q.Limit > 0 {
-		tx.Limit(q.Limit)
-	}
-
-	if q.Offset != "" {
-		run := &database.Run{
-			ID: q.Offset,
-		}
-		// TODO:DSuhinin -> do we need `namespace` restriction? it seems like yyyyess, but ....
-		if err := database.DB.Select("row_num").First(&run).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, err)
-		}
-
-		tx.Where("row_num < ?", run.RowNum)
-	}
-
 	if !q.ExcludeParams {
 		tx.Preload("Params")
 		tx.Preload("Tags")
@@ -465,117 +450,38 @@ func SearchRuns(c *fiber.Ctx) error {
 		tx.Preload("LatestMetrics.Context")
 	}
 
-	var runs []database.Run
-	pq.Filter(tx).Find(&runs)
-	if tx.Error != nil {
-		return fmt.Errorf("error searching runs: %w", tx.Error)
-	}
-
-	log.Debugf("Found %d runs", len(runs))
-
-	c.Set("Content-Type", "application/octet-stream")
-	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		start := time.Now()
-		if err = func() error {
-			for i, r := range runs {
-				run := fiber.Map{
-					"props": fiber.Map{
-						"name":        r.Name,
-						"description": nil,
-						"experiment": fiber.Map{
-							"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-							"name": r.Experiment.Name,
-						},
-						"tags":          []string{}, // TODO insert real tags
-						"creation_time": float64(r.StartTime.Int64) / 1000,
-						"end_time":      float64(r.EndTime.Int64) / 1000,
-						"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
-						"active":        r.Status == database.StatusRunning,
-					},
-				}
-
-				if !q.ExcludeTraces {
-					metrics := make([]fiber.Map, len(r.LatestMetrics))
-					for i, m := range r.LatestMetrics {
-						v := m.Value
-						if m.IsNan {
-							v = math.NaN()
-						}
-						data := fiber.Map{
-							"name": m.Key,
-							"last_value": fiber.Map{
-								"dtype":      "float",
-								"first_step": 0,
-								"last_step":  m.LastIter,
-								"last":       v,
-								"version":    2,
-							},
-							"context": fiber.Map{},
-						}
-						// to be properly decoded by AIM UI, json should be represented as a key:value object.
-						context := fiber.Map{}
-						if err := json.Unmarshal(m.Context.Json, &context); err != nil {
-							return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
-						}
-						data["context"] = context
-						metrics[i] = data
-					}
-					run["traces"] = fiber.Map{
-						"metric": metrics,
-					}
-				}
-
-				if !q.ExcludeParams {
-					params := make(fiber.Map, len(r.Params)+1)
-					for _, p := range r.Params {
-						params[p.Key] = p.Value
-					}
-					tags := make(map[string]string, len(r.Tags))
-					for _, t := range r.Tags {
-						tags[t.Key] = t.Value
-					}
-					params["tags"] = tags
-					run["params"] = params
-				}
-
-				err = encoding.EncodeTree(w, fiber.Map{
-					r.ID: run,
-				})
-				if err != nil {
-					return err
-				}
-
-				if q.ReportProgress {
-					err = encoding.EncodeTree(w, fiber.Map{
-						fmt.Sprintf("progress_%d", i): []int64{total - int64(r.RowNum), total},
-					})
-					if err != nil {
-						return err
-					}
-				}
-
-				err = w.Flush()
-				if err != nil {
-					return err
-				}
-			}
-
-			if q.ReportProgress && err == nil {
-				err = encoding.EncodeTree(w, fiber.Map{
-					fmt.Sprintf("progress_%d", len(runs)): []int64{total, total},
-				})
-				if err != nil {
-					err = w.Flush()
-				}
-			}
-
-			return nil
-		}(); err != nil {
-			log.Errorf("Error encountered in %s %s: error streaming runs: %s", c.Method(), c.Path(), err)
+	switch q.Action {
+	case "export":
+		var runs []database.Run
+		if err := pq.Filter(tx).Find(&runs).Error; err != nil {
+			return fmt.Errorf("error searching runs: %w", err)
 		}
-
-		log.Infof("body - %s %s %s", time.Since(start), c.Method(), c.Path())
-	})
+		log.Debugf("found %d runs", len(runs))
+		FormatRunsSearchResponseAsCSV(ctx, runs, q.ExcludeTraces, q.ExcludeParams)
+	default:
+		if q.Limit > 0 {
+			tx.Limit(q.Limit)
+		}
+		if q.Offset != "" {
+			run := &database.Run{
+				ID: q.Offset,
+			}
+			if err := database.DB.Select(
+				"row_num",
+			).First(
+				&run,
+			).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, err)
+			}
+			tx.Where("row_num < ?", run.RowNum)
+		}
+		var runs []database.Run
+		if err := pq.Filter(tx).Find(&runs).Error; err != nil {
+			return fmt.Errorf("error searching runs: %w", err)
+		}
+		log.Debugf("found %d runs", len(runs))
+		FormatRunsSearchResponseAsStream(ctx, runs, total, q.ExcludeTraces, q.ExcludeParams, q.ReportProgress)
+	}
 
 	return nil
 }

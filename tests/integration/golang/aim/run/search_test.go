@@ -25,7 +25,9 @@ func TestSearchTestSuite(t *testing.T) {
 	suite.Run(t, new(SearchTestSuite))
 }
 
-func (s *SearchTestSuite) Test_Ok() {
+func (s *SearchTestSuite) TestCSVReport_Ok() {}
+
+func (s *SearchTestSuite) TestStreamData_Ok() {
 	// create test experiments.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),

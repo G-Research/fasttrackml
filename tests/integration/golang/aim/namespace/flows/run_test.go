@@ -133,6 +133,18 @@ func (s *RunFlowTestSuite) Test_Ok() {
 					},
 				),
 			)
+			_, err = s.MetricFixtures.CreateLatestMetric(
+				context.Background(),
+				&models.LatestMetric{
+					Key:       "key1",
+					Value:     1111.1,
+					Timestamp: 1234567890,
+					RunID:     run1.ID,
+					Step:      1,
+					IsNan:     false,
+				},
+			)
+			s.Require().Nil(err)
 
 			experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:           "Experiment2",
@@ -166,6 +178,18 @@ func (s *RunFlowTestSuite) Test_Ok() {
 					},
 				),
 			)
+			_, err = s.MetricFixtures.CreateLatestMetric(
+				context.Background(),
+				&models.LatestMetric{
+					Key:       "key2",
+					Value:     2222.2,
+					Timestamp: 1234567890,
+					RunID:     run2.ID,
+					Step:      2,
+					IsNan:     false,
+				},
+			)
+			s.Require().Nil(err)
 
 			// 2. run actual flow test over the test data.
 			s.testRunFlow(tt.namespace1Code, tt.namespace2Code, experiment1, experiment2, run1, run2)

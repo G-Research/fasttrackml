@@ -3,7 +3,7 @@ module github.com/G-Research/fasttrackml
 go 1.21.0
 
 replace (
-	github.com/mattn/go-sqlite3 v1.14.16 => github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20230327164124-765f25ea5431
+	github.com/mattn/go-sqlite3 v1.14.16 => github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20240122133042-fb824c8e339e
 	gorm.io/driver/sqlite v1.4.3 => github.com/jgiannuzzi/gorm-sqlite v1.4.4-0.20221215225833-42389ad31305
 )
 

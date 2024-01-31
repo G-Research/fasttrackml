@@ -7,9 +7,6 @@ fml
 *.exe
 __debug_bin*
 
-# Helm chart
-!helm/**
-
 # Local database
 fasttrackml.db*
 encrypted.db*

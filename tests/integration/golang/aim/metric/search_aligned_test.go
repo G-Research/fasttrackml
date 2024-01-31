@@ -438,16 +438,19 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run1.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric3",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric3",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -455,16 +458,19 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run2.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric3",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric3",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -472,16 +478,19 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run3.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric3",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric3",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -498,16 +507,19 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run1.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric3",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric3",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -515,16 +527,19 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run2.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric3",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric3",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -532,16 +547,19 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run3.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric3",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric3",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -558,16 +576,19 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run1.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric3",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric3",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -575,16 +596,19 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run2.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric3",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric3",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -592,16 +616,19 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run3.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric3",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric3",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -618,12 +645,14 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run1.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -631,12 +660,14 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run2.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -644,12 +675,14 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run3.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -666,12 +699,14 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run1.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -679,12 +714,14 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run2.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -692,12 +729,14 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run3.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -714,12 +753,14 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run1.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -727,12 +768,14 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run2.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -740,12 +783,14 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run3.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 							{
-								Name:  "TestMetric2",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric2",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -762,8 +807,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run1.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -771,8 +817,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run2.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -780,8 +827,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run3.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -798,8 +846,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run1.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -807,8 +856,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run2.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -816,8 +866,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run3.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -834,8 +885,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run1.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -843,8 +895,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run2.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},
@@ -852,8 +905,9 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 						ID: run3.ID,
 						Traces: []request.AlignedMetricTraceRequest{
 							{
-								Name:  "TestMetric1",
-								Slice: []int{0, 0, 500},
+								Name:    "TestMetric1",
+								Slice:   []int{0, 0, 500},
+								Context: map[string]interface{}{},
 							},
 						},
 					},

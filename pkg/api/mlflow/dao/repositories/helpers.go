@@ -59,7 +59,7 @@ func BuildJsonCondition(
 		conditionTemplate = "%s->>? = ?"
 		idx := 0
 		for k, v := range jsonPathValueMap {
-			args[idx] = k
+			args[idx] = fmt.Sprintf("$.%s", k)
 			args[idx+1] = v
 			idx = idx + 2
 		}

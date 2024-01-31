@@ -973,7 +973,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			// collect map of unique contexts.
 			data, err := json.Marshal(t.Context)
 			if err != nil {
-				return api.NewInternalError("error serializing provided context: %s", err)
+				return api.NewInternalError("error serializing context: %s", err)
 			}
 			sum := sha256.Sum256(data)
 			contextHash := fmt.Sprintf("%x", sum)
@@ -1002,7 +1002,11 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	// add context ids to `values`
 	for _, context := range contexts {
 		for i := 2; i < len(values); i += 4 {
-			if values[i] == context.Json.String() {
+			json, err := json.Marshal(context.Json)
+			if err != nil {
+				return api.NewInternalError("error serializing context: %s", err)
+			}
+			if values[i] == string(json) {
 				values[i] = context.ID
 			}
 		}
@@ -1011,7 +1015,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	var valuesStmt strings.Builder
 	length := len(values) / 4
 	for i := 0; i < length; i++ {
-		valuesStmt.WriteString("(?, ?, CAST(? AS numeric), CAST(? AS float))")
+		valuesStmt.WriteString("(?, ?, CAST(? AS numeric), CAST(? AS numeric))")
 		if i < length-1 {
 			valuesStmt.WriteString(",")
 		}

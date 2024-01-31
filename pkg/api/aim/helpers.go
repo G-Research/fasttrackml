@@ -39,7 +39,7 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 						if metric.IsNan {
 							v = math.NaN()
 						}
-						key := fmt.Sprintf("%s_%d", metric.Key, metric.ContextID)
+						key := fmt.Sprintf("%s %s", metric.Key, metric.Context.Json.String())
 						if _, ok := metricData[key]; ok {
 							metricData[key][run.ID] = v
 						} else {
@@ -75,12 +75,11 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 					run.Experiment.Name,
 					"-",
 					time.Unix(run.StartTime.Int64/1000, 0).Format("15:04:05 2006-01-02"),
-					fmt.Sprintf("%d", run.EndTime.Int64-run.StartTime.Int64),
+					fmt.Sprintf("%dms", run.EndTime.Int64-run.StartTime.Int64),
 				}
 			}
 
 			// process headers.
-			slices.Sort(metricKeys)
 			headers := []string{
 				"run",
 				"experiment",
@@ -89,14 +88,17 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 				"duration",
 			}
 			// add metrics headers.
+			slices.Sort(metricKeys)
 			for _, metricKey := range metricKeys {
 				headers = append(headers, metricKey)
 			}
 			// add params as headers.
+			slices.Sort(paramKeys)
 			for _, paramKey := range paramKeys {
 				headers = append(headers, fmt.Sprintf("params[%s]", paramKey))
 			}
 			// add tags as headers.
+			slices.Sort(tagKeys)
 			for _, tagKey := range tagKeys {
 				headers = append(headers, fmt.Sprintf("tags[%s]", tagKey))
 			}
@@ -106,7 +108,7 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 			}
 
 			// process data.
-			chunkSize, counter := 5, 0
+			chunkSize, counter := 500, 0
 			for i, run := range runs {
 				record := records[i]
 				// add metrics data.

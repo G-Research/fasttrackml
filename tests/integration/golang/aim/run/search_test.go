@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
-	"fmt"
-	"slices"
+	"encoding/csv"
+	"io"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
+	"gorm.io/datatypes"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -25,8 +25,290 @@ func TestSearchTestSuite(t *testing.T) {
 	suite.Run(t, new(SearchTestSuite))
 }
 
-func (s *SearchTestSuite) TestCSVReport_Ok() {}
+func (s *SearchTestSuite) TestCSVReport_Ok() {
+	// create test experiments.
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		LifecycleStage: models.LifecycleStageActive,
+		NamespaceID:    s.DefaultNamespace.ID,
+	})
+	s.Require().Nil(err)
 
+	experiment2, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		LifecycleStage: models.LifecycleStageActive,
+		NamespaceID:    s.DefaultNamespace.ID,
+	})
+	s.Require().Nil(err)
+
+	// create 3 different test runs and attach tags, metrics, params, etc.
+	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:         "id1",
+		Name:       "TestRun1",
+		UserID:     "1",
+		Status:     models.StatusRunning,
+		RowNum:     1,
+		SourceType: "JOB",
+		StartTime: sql.NullInt64{
+			Int64: 123456789,
+			Valid: true,
+		},
+		EndTime: sql.NullInt64{
+			Int64: 123456789,
+			Valid: true,
+		},
+		ExperimentID:   *experiment.ID,
+		ArtifactURI:    "artifact_uri1",
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	run1.Experiment = *experiment
+	s.Require().Nil(err)
+	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
+		Key:   "mlflow.runName",
+		Value: "TestRunTag1",
+		RunID: run1.ID,
+	})
+	s.Require().Nil(err)
+	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+		Key:       "TestMetric",
+		Value:     1.1,
+		Timestamp: 1234567890,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run1.ID,
+		LastIter:  1,
+		Context: models.Context{
+			Json: datatypes.JSON(`{"key":"value"}`),
+		},
+	})
+	s.Require().Nil(err)
+	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+		Key:       "TestMetric2",
+		Value:     1.1,
+		Timestamp: 1234567890,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run1.ID,
+		LastIter:  1,
+		Context: models.Context{
+			Json: datatypes.JSON(`{"key":"value"}`),
+		},
+	})
+	s.Require().Nil(err)
+	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
+		Key:   "param1",
+		Value: "value1",
+		RunID: run1.ID,
+	})
+	s.Require().Nil(err)
+
+	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:         "id2",
+		Name:       "TestRun2",
+		UserID:     "2",
+		Status:     models.StatusScheduled,
+		RowNum:     2,
+		SourceType: "JOB",
+		StartTime: sql.NullInt64{
+			Int64: 111111111,
+			Valid: true,
+		},
+		EndTime: sql.NullInt64{
+			Int64: 222222222,
+			Valid: true,
+		},
+		ExperimentID:   *experiment.ID,
+		ArtifactURI:    "artifact_uri2",
+		LifecycleStage: models.LifecycleStageDeleted,
+	})
+	run2.Experiment = *experiment
+	s.Require().Nil(err)
+	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
+		Key:   "mlflow.runName",
+		Value: "TestRunTag2",
+		RunID: run2.ID,
+	})
+	s.Require().Nil(err)
+	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+		Key:       "TestMetric",
+		Value:     2.1,
+		Timestamp: 1234567890,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run2.ID,
+		LastIter:  1,
+		Context: models.Context{
+			Json: datatypes.JSON(`{"key":"value"}`),
+		},
+	})
+	s.Require().Nil(err)
+	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
+		Key:   "param2",
+		Value: "value2",
+		RunID: run2.ID,
+	})
+	s.Require().Nil(err)
+
+	run3, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:         "id3",
+		Name:       "TestRun3",
+		UserID:     "3",
+		Status:     models.StatusRunning,
+		RowNum:     3,
+		SourceType: "JOB",
+		StartTime: sql.NullInt64{
+			Int64: 333444444,
+			Valid: true,
+		},
+		EndTime: sql.NullInt64{
+			Int64: 444555555,
+			Valid: true,
+		},
+		ExperimentID:   *experiment2.ID,
+		ArtifactURI:    "artifact_uri3",
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	run3.Experiment = *experiment2
+	s.Require().Nil(err)
+	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
+		Key:   "mlflow.runName",
+		Value: "TestRunTag3",
+		RunID: run3.ID,
+	})
+	s.Require().Nil(err)
+	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+		Key:       "TestMetric",
+		Value:     3.1,
+		Timestamp: 1234567890,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run3.ID,
+		LastIter:  3,
+		Context: models.Context{
+			Json: datatypes.JSON(`{"key":"value"}`),
+		},
+	})
+	s.Require().Nil(err)
+	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
+		Key:   "param3",
+		Value: "value3",
+		RunID: run3.ID,
+	})
+	s.Require().Nil(err)
+
+	run4, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:         "id4",
+		Name:       "TestRun4",
+		UserID:     "4",
+		Status:     models.StatusScheduled,
+		RowNum:     4,
+		SourceType: "JOB",
+		StartTime: sql.NullInt64{
+			Int64: 111111111,
+			Valid: true,
+		},
+		EndTime: sql.NullInt64{
+			Int64: 150000000,
+			Valid: true,
+		},
+		ExperimentID:   *experiment2.ID,
+		ArtifactURI:    "artifact_uri4",
+		LifecycleStage: models.LifecycleStageDeleted,
+	})
+	run4.Experiment = *experiment2
+	s.Require().Nil(err)
+	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
+		Key:   "mlflow.runName",
+		Value: "TestRunTag4",
+		RunID: run4.ID,
+	})
+	s.Require().Nil(err)
+	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+		Key:       "TestMetric",
+		Value:     4.1,
+		Timestamp: 1234567890,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run4.ID,
+		LastIter:  1,
+		Context: models.Context{
+			Json: datatypes.JSON(`{"key":"value"}`),
+		},
+	})
+	s.Require().Nil(err)
+	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
+		Key:   "param4",
+		Value: "value4",
+		RunID: run4.ID,
+	})
+	s.Require().Nil(err)
+
+	resp := new(bytes.Buffer)
+	s.Require().Nil(
+		s.AIMClient().WithResponseType(
+			helpers.ResponseTypeBuffer,
+		).WithQuery(
+			request.SearchRunsRequest{
+				Action: "export",
+			},
+		).WithResponse(
+			resp,
+		).DoRequest("/runs/search/run"),
+	)
+
+	reader := csv.NewReader(resp)
+	var records [][]string
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else {
+			s.Require().Nil(err)
+		}
+		records = append(records, record)
+	}
+
+	s.Require().Equal([][]string{
+		{
+			"run",
+			"experiment",
+			"experiment_description",
+			"date",
+			"duration",
+			"TestMetric {\"key\": \"value\"}",
+			"TestMetric2 {\"key\": \"value\"}",
+			"params[param1]",
+			"params[param3]",
+			"tags[mlflow.runName]",
+		},
+		{
+			run3.Name,
+			run3.Experiment.Name,
+			"-",
+			"20:37:24 1970-01-04",
+			"111111111",
+			"3.100000",
+			"-",
+			"-",
+			"value3",
+			"TestRunTag3",
+		},
+		{
+			run1.Name,
+			run1.Experiment.Name,
+			"-",
+			"10:17:36 1970-01-02",
+			"0",
+			"1.100000",
+			"1.100000",
+			"value1",
+			"-",
+			"TestRunTag1",
+		},
+	}, records)
+}
+
+/*
 func (s *SearchTestSuite) TestStreamData_Ok() {
 	// create test experiments.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -271,7 +553,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.archived == True`,
 			},
-
 			runs: []*models.Run{
 				run2,
 				run4,
@@ -282,7 +563,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.archived == False`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -293,7 +573,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.active == True`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -304,7 +583,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.active == False`,
 			},
-
 			runs: []*models.Run{},
 		},
 		{
@@ -312,7 +590,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.duration > 0`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -322,7 +599,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.duration >= 0`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -333,7 +609,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: fmt.Sprintf("run.duration < %d", (run3.EndTime.Int64-run3.StartTime.Int64)/1000),
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -343,7 +618,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: fmt.Sprintf("run.duration <= %d", (run3.EndTime.Int64-run3.StartTime.Int64)/1000),
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -354,7 +628,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.duration == 0`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -364,7 +637,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.duration != 0`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -374,7 +646,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.created_at > 123456789`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -384,7 +655,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.created_at >= 123456789`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -395,7 +665,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.created_at != 123456789`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -405,7 +674,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.created_at == 123456789`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -415,7 +683,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.created_at < 333444444`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -425,7 +692,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.created_at <= 333444444`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -436,7 +702,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.finalized_at > 123456789`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -446,7 +711,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.finalized_at >= 123456789`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -457,7 +721,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.finalized_at != 123456789`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -467,7 +730,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.finalized_at == 123456789`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -477,7 +739,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.finalized_at < 333444444`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -487,7 +748,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.finalized_at <= 444555555`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -498,7 +758,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: fmt.Sprintf(`run.hash == "%s"`, run1.ID),
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -508,7 +767,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: fmt.Sprintf(`run.hash != "%s"`, run1.ID),
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -518,7 +776,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.name != "TestRun1"`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -528,7 +785,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.name == "TestRun1"`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -538,7 +794,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `"Run3" in run.name`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -548,7 +803,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `"Run3" not in run.name`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -558,7 +812,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.name.startswith("Test")`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -569,7 +822,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.name.endswith('3')`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -579,7 +831,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: fmt.Sprintf(`run.experiment == "%s"`, experiment.Name),
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -589,7 +840,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: fmt.Sprintf(`run.experiment != "%s"`, experiment.Name),
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -599,7 +849,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last == 3.1`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -609,7 +858,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last != 3.1`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -619,7 +867,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last > 1.1`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -629,7 +876,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last >= 1.1`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -640,7 +886,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last < 3.1`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -650,7 +895,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last <= 3.1`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -661,7 +905,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last_step == 1`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -671,7 +914,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last_step != 1`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -681,7 +923,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last_step > 1`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -691,7 +932,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last_step >= 1`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -702,7 +942,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last_step < 3`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -712,7 +951,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.metrics['TestMetric'].last_step <= 3`,
 			},
-
 			runs: []*models.Run{
 				run1,
 				run3,
@@ -723,7 +961,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.tags['mlflow.runName'] == "TestRunTag1"`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -733,7 +970,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `run.tags['mlflow.runName'] != "TestRunTag1"`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -744,7 +980,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `re.match('TestRun1', run.name)`,
 			},
-
 			runs: []*models.Run{
 				run1,
 			},
@@ -754,7 +989,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `re.search('TestRun3', run.name)`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -765,7 +999,6 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 				Query: `(run.archived == True or run.archived == False) and run.duration > 0` +
 					`and run.metrics['TestMetric'].last > 2.5 and not run.name.endswith('4')`,
 			},
-
 			runs: []*models.Run{
 				run3,
 			},
@@ -838,3 +1071,4 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 		})
 	}
 }
+*/

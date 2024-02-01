@@ -250,44 +250,54 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 				if len(args) != 1 {
 					return nil, errors.New("`endwith` function support exactly one argument")
 				}
-				c, ok := parsedNode.(clause.Column)
-				if !ok {
-					return nil, errors.New("unsupported node type. has to be clause.Column")
-				}
-
 				arg, ok := args[0].(*ast.Str)
 				if !ok {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
-				return clause.Like{
-					Value: fmt.Sprintf("%%%s", arg.S),
-					Column: clause.Column{
-						Table: c.Table,
-						Name:  c.Name,
-					},
-				}, nil
+				switch c := parsedNode.(type) {
+				case clause.Column:
+					return clause.Like{
+						Value: fmt.Sprintf("%%%s", arg.S),
+						Column: clause.Column{
+							Table: c.Table,
+							Name:  c.Name,
+						},
+					}, nil
+				case Json:
+					return JsonLike{
+						Value: fmt.Sprintf("%%%s", arg.S),
+						Json:  c,
+					}, nil
+				default:
+					return nil, errors.New("unsupported node type. has to be clause.Column or Json")
+				}
 			}), nil
 		case "startswith":
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
-					return nil, errors.New("`startwith` function support exactly one argument")
+					return nil, errors.New("`endwith` function support exactly one argument")
 				}
-				c, ok := parsedNode.(clause.Column)
-				if !ok {
-					return nil, errors.New("unsupported node type. has to be clause.Column")
-				}
-
 				arg, ok := args[0].(*ast.Str)
 				if !ok {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
-				return clause.Like{
-					Value: fmt.Sprintf("%s%%", arg.S),
-					Column: clause.Column{
-						Table: c.Table,
-						Name:  c.Name,
-					},
-				}, nil
+				switch c := parsedNode.(type) {
+				case clause.Column:
+					return clause.Like{
+						Value: fmt.Sprintf("%s%%", arg.S),
+						Column: clause.Column{
+							Table: c.Table,
+							Name:  c.Name,
+						},
+					}, nil
+				case Json:
+					return JsonLike{
+						Value: fmt.Sprintf("%s%%", arg.S),
+						Json:  c,
+					}, nil
+				default:
+					return nil, errors.New("unsupported node type. has to be clause.Column or Json")
+				}
 			}), nil
 		}
 

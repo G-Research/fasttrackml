@@ -55,6 +55,8 @@ services:
       - .env
     command:
       - postgres
+    ports:
+      - "5432:5432"
       # - -c
       # - log_statement=all
 

@@ -108,7 +108,7 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 			}
 
 			// process data.
-			chunkSize, counter := 500, 0
+			chunkSize, recordCounter := 500, 0
 			for i, run := range runs {
 				record := records[i]
 				// add metrics data.
@@ -143,13 +143,13 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 				}
 
 				// divide data by chunks.
-				if counter >= chunkSize {
+				if recordCounter >= chunkSize {
 					if err := w.Flush(); err != nil {
 						return err
 					}
-					counter = 0
+					recordCounter = 0
 				}
-				counter++
+				recordCounter++
 			}
 
 			if err := w.Flush(); err != nil {
@@ -157,7 +157,7 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 			}
 			return nil
 		}(); err != nil {
-			log.Errorf("error encountered in %s %s: error streaming runs: %s", ctx.Method(), ctx.Path(), err)
+			log.Errorf("error encountered in %s %s: error streaming runs export: %s", ctx.Method(), ctx.Path(), err)
 		}
 
 		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())

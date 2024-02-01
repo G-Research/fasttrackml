@@ -18,6 +18,8 @@ import (
 )
 
 // FormatRunsSearchResponseAsCSV formats and sends Runs search response as a CSV file.
+//
+//nolint:gocyclo
 func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeTraces, excludeParams bool) {
 	ctx.Set("Transfer-Encoding", "chunked")
 	ctx.Set("Content-Type", "text/csv")
@@ -51,21 +53,19 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 				// group params and tags information for further usage.
 				if !excludeParams {
 					for _, param := range run.Params {
-						key := fmt.Sprintf("%s", param.Key)
-						if _, ok := paramData[key]; ok {
-							paramData[key][run.ID] = param.Value
+						if _, ok := paramData[param.Key]; ok {
+							paramData[param.Key][run.ID] = param.Value
 						} else {
-							paramKeys = append(paramKeys, key)
-							paramData[key] = map[string]string{run.ID: param.Value}
+							paramKeys = append(paramKeys, param.Key)
+							paramData[param.Key] = map[string]string{run.ID: param.Value}
 						}
 					}
 					for _, tag := range run.Tags {
-						key := fmt.Sprintf("%s", tag.Key)
-						if _, ok := tagData[key]; ok {
-							tagData[key][run.ID] = tag.Value
+						if _, ok := tagData[tag.Key]; ok {
+							tagData[tag.Key][run.ID] = tag.Value
 						} else {
-							tagKeys = append(tagKeys, key)
-							tagData[key] = map[string]string{run.ID: tag.Value}
+							tagKeys = append(tagKeys, tag.Key)
+							tagData[tag.Key] = map[string]string{run.ID: tag.Value}
 						}
 					}
 				}
@@ -89,9 +89,8 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 			}
 			// add metrics as headers.
 			slices.Sort(metricKeys)
-			for _, metricKey := range metricKeys {
-				headers = append(headers, metricKey)
-			}
+			headers = append(headers, metricKeys...)
+
 			// add params as headers.
 			slices.Sort(paramKeys)
 			for _, paramKey := range paramKeys {
@@ -165,6 +164,8 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 }
 
 // FormatRunsSearchResponseAsStream formats and sends Runs search response as a stream.
+//
+//nolint:gocyclo
 func FormatRunsSearchResponseAsStream(
 	ctx *fiber.Ctx, runs []database.Run, total int64, excludeTraces, excludeParams, reportProgress bool,
 ) {

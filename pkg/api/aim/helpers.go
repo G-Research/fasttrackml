@@ -147,8 +147,9 @@ func RunsSearchAsCSVResponse(ctx *fiber.Ctx, runs []database.Run, excludeTraces,
 						return err
 					}
 					recordCounter = 0
+				} else {
+					recordCounter++
 				}
-				recordCounter++
 			}
 
 			if err := w.Flush(); err != nil {

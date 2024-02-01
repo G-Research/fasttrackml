@@ -191,6 +191,24 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`WHERE "contexts"."json"#>>$1 = '{"subkey": "val", "subkey2": "val"}' AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
 		},
+		{
+			name:          "TestMetricContextIn",
+			query:         `"val1" in metric.context.key1`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE "contexts"."json"#>>$1 LIKE $2 ` +
+				`AND "runs"."lifecycle_stage" <> $3`,
+			expectedVars: []interface{}{"{key1}", "%val1%", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextNotIn",
+			query:         `"val1" not in metric.context.key1`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE "contexts"."json"#>>$1 NOT LIKE $2 ` +
+				`AND "runs"."lifecycle_stage" <> $3`,
+			expectedVars: []interface{}{"{key1}", "%val1%", models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {
@@ -393,6 +411,24 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 = '{"subkey":"val","subkey2":"val"}' ` +
 				`AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{"$.key1", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextIn",
+			query:         `"val1" in metric.context.key1`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 LIKE $2 ` +
+				`AND "runs"."lifecycle_stage" <> $3`,
+			expectedVars: []interface{}{"$.key1", "%val1%", models.LifecycleStageDeleted},
+		},
+		{
+			name:          "TestMetricContextNotIn",
+			query:         `"val1" not in metric.context.key1`,
+			selectMetrics: true,
+			expectedSQL: `SELECT ID FROM "metrics" ` +
+				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 NOT LIKE $2 ` +
+				`AND "runs"."lifecycle_stage" <> $3`,
+			expectedVars: []interface{}{"$.key1", "%val1%", models.LifecycleStageDeleted},
 		},
 	}
 

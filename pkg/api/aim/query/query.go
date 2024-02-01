@@ -248,16 +248,17 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 		case "endswith":
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
-					return nil, errors.New("`endwith` function support exactly one argument")
+					return nil, errors.New("`endswith` function support exactly one argument")
 				}
 				arg, ok := args[0].(*ast.Str)
 				if !ok {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
+				value := fmt.Sprintf("%%%s", arg.S)
 				switch c := parsedNode.(type) {
 				case clause.Column:
 					return clause.Like{
-						Value: fmt.Sprintf("%%%s", arg.S),
+						Value: value,
 						Column: clause.Column{
 							Table: c.Table,
 							Name:  c.Name,
@@ -265,7 +266,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					}, nil
 				case Json:
 					return JsonLike{
-						Value: fmt.Sprintf("%%%s", arg.S),
+						Value: value,
 						Json:  c,
 					}, nil
 				default:
@@ -275,16 +276,17 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 		case "startswith":
 			return callable(func(args []ast.Expr) (any, error) {
 				if len(args) != 1 {
-					return nil, errors.New("`endwith` function support exactly one argument")
+					return nil, errors.New("`startswith` function support exactly one argument")
 				}
 				arg, ok := args[0].(*ast.Str)
 				if !ok {
 					return nil, errors.New("unsupported argument type. has to be `string` only")
 				}
+				value := fmt.Sprintf("%s%%", arg.S)
 				switch c := parsedNode.(type) {
 				case clause.Column:
 					return clause.Like{
-						Value: fmt.Sprintf("%s%%", arg.S),
+						Value: value,
 						Column: clause.Column{
 							Table: c.Table,
 							Name:  c.Name,
@@ -292,7 +294,7 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 					}, nil
 				case Json:
 					return JsonLike{
-						Value: fmt.Sprintf("%s%%", arg.S),
+						Value: value,
 						Json:  c,
 					}, nil
 				default:

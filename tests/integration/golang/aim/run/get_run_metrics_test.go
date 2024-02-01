@@ -116,12 +116,10 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 			runID: run.ID,
 			request: request.GetRunMetrics{
 				{
-					Name:    "key1",
-					Context: map[string]string{},
+					Name: "key1",
 				},
 				{
-					Name:    "key2",
-					Context: map[string]string{},
+					Name: "key2",
 				},
 			},
 			expectedResponse: response.GetRunMetrics{
@@ -148,6 +146,100 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					Iters:   []int64{4},
 					Values:  []float64{124.2},
 					Context: []byte(`{"key4":"key4","value4":"value4"}`),
+				},
+			},
+		},
+		{
+			name:  "GetOneRunWithContextCase1",
+			runID: run.ID,
+			request: request.GetRunMetrics{
+				{
+					Name: "key1",
+					Context: map[string]string{
+						"key1":   "key1",
+						"value1": "value1",
+					},
+				},
+				{
+					Name: "key1",
+					Context: map[string]string{
+						"key2":   "key2",
+						"value2": "value2",
+					},
+				},
+				{
+					Name: "key2",
+					Context: map[string]string{
+						"key3":   "key3",
+						"value3": "value3",
+					},
+				},
+				{
+					Name: "key2",
+					Context: map[string]string{
+						"key4":   "key4",
+						"value4": "value4",
+					},
+				},
+			},
+			expectedResponse: response.GetRunMetrics{
+				response.RunMetrics{
+					Name:    "key1",
+					Iters:   []int64{1},
+					Values:  []float64{123.1},
+					Context: []byte(`{"key1":"key1","value1":"value1"}`),
+				},
+				response.RunMetrics{
+					Name:    "key1",
+					Iters:   []int64{2},
+					Values:  []float64{123.2},
+					Context: []byte(`{"key2":"key2","value2":"value2"}`),
+				},
+				response.RunMetrics{
+					Name:    "key2",
+					Iters:   []int64{3},
+					Values:  []float64{124.1},
+					Context: []byte(`{"key3":"key3","value3":"value3"}`),
+				},
+				response.RunMetrics{
+					Name:    "key2",
+					Iters:   []int64{4},
+					Values:  []float64{124.2},
+					Context: []byte(`{"key4":"key4","value4":"value4"}`),
+				},
+			},
+		},
+		{
+			name:  "GetOneRunWithContextCase2",
+			runID: run.ID,
+			request: request.GetRunMetrics{
+				{
+					Name: "key1",
+					Context: map[string]string{
+						"key1":   "key1",
+						"value1": "value1",
+					},
+				},
+				{
+					Name: "key2",
+					Context: map[string]string{
+						"key3":   "key3",
+						"value3": "value3",
+					},
+				},
+			},
+			expectedResponse: response.GetRunMetrics{
+				response.RunMetrics{
+					Name:    "key1",
+					Iters:   []int64{1},
+					Values:  []float64{123.1},
+					Context: []byte(`{"key1":"key1","value1":"value1"}`),
+				},
+				response.RunMetrics{
+					Name:    "key2",
+					Iters:   []int64{3},
+					Values:  []float64{124.1},
+					Context: []byte(`{"key3":"key3","value3":"value3"}`),
 				},
 			},
 		},

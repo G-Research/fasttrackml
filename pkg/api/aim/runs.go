@@ -3,6 +3,7 @@ package aim
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -160,17 +161,24 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	b := []struct {
+	var b []struct {
 		Name    string    `json:"name"`
 		Context fiber.Map `json:"context"`
-	}{}
+	}
 
 	if err := c.BodyParser(&b); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	metricKeysMap := make(fiber.Map, len(b))
+	metricKeysMap, contexts := make(fiber.Map, len(b)), make([]string, 0, len(b))
 	for _, m := range b {
+		if m.Context != nil {
+			serializedContext, err := json.Marshal(m.Context)
+			if err != nil {
+				return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+			}
+			contexts = append(contexts, string(serializedContext))
+		}
 		metricKeysMap[m.Name] = nil
 	}
 	metricKeys := make([]string, len(metricKeysMap))
@@ -181,30 +189,50 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		i++
 	}
 
-	r := database.Run{
+	// check that requested run actually exists.
+	if err := database.DB.Select(
+		"ID",
+	).InnerJoins(
+		"Experiment",
+		database.DB.Select(
+			"ID",
+		).Where(
+			&models.Experiment{NamespaceID: ns.ID},
+		),
+	).First(&database.Run{
 		ID: p.ID,
-	}
-	if err := database.DB.
-		Select("ID").
-		InnerJoins(
-			"Experiment",
-			database.DB.Select(
-				"ID",
-			).Where(
-				&models.Experiment{NamespaceID: ns.ID},
-			),
-		).
-		Preload("Metrics", func(db *gorm.DB) *gorm.DB {
-			return db.
-				Where("key IN ?", metricKeys).
-				Order("iter")
-		}).
-		Preload("Metrics.Context").
-		First(&r).Error; err != nil {
+	}).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fmt.Errorf("unable to find run %q: %w", p.ID, err)
+	}
+
+	// fetch run metrics based on provided criteria.
+	var data []database.Metric
+	if err := database.DB.Where(
+		"run_uuid = ?", p.ID,
+	).InnerJoins(
+		"Context",
+		func() *gorm.DB {
+			query := database.DB
+			for _, context := range contexts {
+				if query.Dialector.Name() == database.SQLiteDialectorName {
+					query = query.Or("json(json) = json(?)", context)
+				} else {
+					query = query.Or("json = ?", context)
+				}
+			}
+			return query
+		}(),
+	).Where(
+		"key IN ?", metricKeys,
+	).Order(
+		"iter",
+	).Find(
+		&data,
+	).Error; err != nil {
+		return fmt.Errorf("unable to find run metrics: %w", err)
 	}
 
 	metrics := make(map[string]struct {
@@ -213,7 +241,8 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		values  []*float64
 		context datatypes.JSON
 	}, len(metricKeys))
-	for _, m := range r.Metrics {
+
+	for _, m := range data {
 		v := m.Value
 		pv := &v
 		if m.IsNan {
@@ -231,13 +260,12 @@ func GetRunMetrics(c *fiber.Ctx) error {
 
 	resp := make([]fiber.Map, 0, len(metrics))
 	for _, m := range metrics {
-		data := fiber.Map{
+		resp = append(resp, fiber.Map{
 			"name":    m.name,
 			"iters":   m.iters,
 			"values":  m.values,
 			"context": m.context,
-		}
-		resp = append(resp, data)
+		})
 	}
 
 	return c.JSON(resp)
@@ -648,7 +676,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 		tx.
 			Select("metrics.*", "runmetrics.context_json", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
 			Joins(
-				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND metrics.iter = x_axis.iter AND x_axis.key = ?",
+				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND "+
+					"metrics.iter = x_axis.iter AND x_axis.context_id = metrics.context_id AND x_axis.key = ?",
 				q.XAxis,
 			)
 		xAxis = true
@@ -840,22 +869,59 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	var capacity int
-	var values []any
+	values, capacity, contextsMap := []any{}, 0, map[string]string{}
 	for _, r := range b.Runs {
 		for _, t := range r.Traces {
 			l := t.Slice[2]
 			if l > capacity {
 				capacity = l
 			}
-			values = append(values, r.ID, t.Name, float32(l))
+			// collect map of unique contexts.
+			data, err := json.Marshal(t.Context)
+			if err != nil {
+				return api.NewInternalError("error serializing context: %s", err)
+			}
+			sum := sha256.Sum256(data)
+			contextHash := fmt.Sprintf("%x", sum)
+			_, ok := contextsMap[contextHash]
+			if !ok {
+				contextsMap[contextHash] = string(data)
+			}
+			values = append(values, r.ID, t.Name, string(data), float32(l))
+		}
+	}
+
+	// map context values to context ids
+	query := database.DB
+	for _, context := range contextsMap {
+		if query.Dialector.Name() == database.SQLiteDialectorName {
+			query = query.Or("json(contexts.json) = json(?)", context)
+		} else {
+			query = query.Or("contexts.json = ?", context)
+		}
+	}
+	var contexts []database.Context
+	if err := query.Find(&contexts).Error; err != nil {
+		return api.NewInternalError("error getting context information: %s", err)
+	}
+
+	// add context ids to `values`
+	for _, context := range contexts {
+		for i := 2; i < len(values); i += 4 {
+			json, err := json.Marshal(context.Json)
+			if err != nil {
+				return api.NewInternalError("error serializing context: %s", err)
+			}
+			if values[i] == string(json) {
+				values[i] = context.ID
+			}
 		}
 	}
 
 	var valuesStmt strings.Builder
-	length := len(values) / 3
+	length := len(values) / 4
 	for i := 0; i < length; i++ {
-		valuesStmt.WriteString("(?, ?, CAST(? AS numeric))")
+		valuesStmt.WriteString("(?, ?, CAST(? AS numeric), CAST(? AS numeric))")
 		if i < length-1 {
 			valuesStmt.WriteString(",")
 		}
@@ -864,21 +930,34 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	// TODO this should probably be batched
 
 	values = append(values, ns.ID, b.AlignBy)
+
 	rows, err := database.DB.Raw(
-		fmt.Sprintf("WITH params(run_uuid, key, steps) AS (VALUES %s)", &valuesStmt)+
-			"        SELECT m.run_uuid, rm.key, m.iter, m.value, m.is_nan, c.json AS context_json FROM metrics AS m"+
+		fmt.Sprintf("WITH params(run_uuid, key, context_id, steps) AS (VALUES %s)", &valuesStmt)+
+			"        SELECT m.run_uuid, "+
+			"				rm.key, "+
+			"				m.iter, "+
+			"				m.value, "+
+			"				m.is_nan, "+
+			"				rm.context_id, "+
+			"				rm.context_json"+
+			"		 FROM metrics AS m"+
 			"        RIGHT JOIN ("+
-			"          SELECT p.run_uuid, p.key, lm.last_iter AS max, (lm.last_iter + 1) / p.steps AS interval"+
+			"          SELECT p.run_uuid, "+
+			"				  p.key, "+
+			"				  p.context_id, "+
+			"				  lm.last_iter AS max, "+
+			"				  (lm.last_iter + 1) / p.steps AS interval, "+
+			"				  contexts.json AS context_json"+
 			"          FROM params AS p"+
-			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key)"+
-			"        ) rm USING(run_uuid)"+
-			"		 LEFT JOIN contexts AS c ON c.id = m.context_id"+
+			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key, context_id)"+
+			"          INNER JOIN contexts ON contexts.id = lm.context_id"+
+			"        ) rm USING(run_uuid, context_id)"+
 			"		 INNER JOIN runs AS r ON m.run_uuid = r.run_uuid"+
 			"		 INNER JOIN experiments AS e ON r.experiment_id = e.experiment_id AND e.namespace_id = ?"+
 			"        WHERE m.key = ?"+
 			"          AND m.iter <= rm.max"+
 			"          AND MOD(m.iter + 1 + rm.interval / 2, rm.interval) < 1"+
-			"        ORDER BY m.run_uuid, rm.key, m.iter",
+			"        ORDER BY r.row_num DESC, rm.key, rm.context_id, m.iter",
 		values...,
 	).Rows()
 	if err != nil {
@@ -898,6 +977,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			var id string
 			var key string
 			var context fiber.Map
+			var contextID uint
 			metrics := make([]fiber.Map, 0)
 			values := make([]float64, 0, capacity)
 			iters := make([]float64, 0, capacity)
@@ -936,7 +1016,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 				}
 
 				// New series of metrics
-				if metric.Key != key || metric.RunID != id {
+				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
 					addMetrics()
 
 					if metric.RunID != id {
@@ -950,6 +1030,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 					key = metric.Key
 					values = values[:0]
 					iters = iters[:0]
+					context = fiber.Map{}
 				}
 
 				v := metric.Value
@@ -963,6 +1044,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 					if err := json.Unmarshal(metric.Context, &context); err != nil {
 						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
 					}
+					contextID = metric.ContextID
 				}
 			}
 

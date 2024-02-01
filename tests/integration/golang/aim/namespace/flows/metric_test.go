@@ -129,6 +129,9 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				IsNan:     false,
 				RunID:     run1.ID,
 				Iter:      1,
+				Context: models.Context{
+					Json: []byte(`{"key":"value"}`),
+				},
 			})
 			s.Require().Nil(err)
 			metric1Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -139,6 +142,9 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				IsNan:     false,
 				RunID:     run1.ID,
 				LastIter:  1,
+				Context: models.Context{
+					Json: []byte(`{"key":"value"}`),
+				},
 			})
 			s.Require().Nil(err)
 			_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
@@ -188,6 +194,9 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				IsNan:     false,
 				RunID:     run2.ID,
 				Iter:      3,
+				Context: models.Context{
+					Json: []byte(`{"key":"value"}`),
+				},
 			})
 			s.Require().Nil(err)
 			metric1Run2, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
@@ -198,6 +207,9 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 				IsNan:     false,
 				RunID:     run2.ID,
 				LastIter:  3,
+				Context: models.Context{
+					Json: []byte(`{"key":"value"}`),
+				},
 			})
 			s.Require().Nil(err)
 			_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
@@ -246,6 +258,9 @@ func (s *MetricFlowTestSuite) testRunFlow(
 					{
 						Name:  "TestMetric1",
 						Slice: []int{0, 0, 500},
+						Context: map[string]interface{}{
+							"key": "value",
+						},
 					},
 				},
 			},
@@ -260,6 +275,9 @@ func (s *MetricFlowTestSuite) testRunFlow(
 					{
 						Name:  "TestMetric2",
 						Slice: []int{0, 0, 500},
+						Context: map[string]interface{}{
+							"key": "value",
+						},
 					},
 				},
 			},

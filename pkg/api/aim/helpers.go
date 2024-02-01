@@ -87,7 +87,7 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 				"date",
 				"duration",
 			}
-			// add metrics headers.
+			// add metrics as headers.
 			slices.Sort(metricKeys)
 			for _, metricKey := range metricKeys {
 				headers = append(headers, metricKey)

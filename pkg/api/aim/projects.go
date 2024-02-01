@@ -191,7 +191,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 			).Joins(
 				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 				ns.ID,
-			).Preload(
+			).Joins(
 				"Context",
 			).Where(
 				"runs.lifecycle_stage = ?", database.LifecycleStageActive,
@@ -199,16 +199,21 @@ func GetProjectParams(c *fiber.Ctx) error {
 				return fmt.Errorf("error retrieving metric keys: %w", tx.Error)
 			}
 
-			data := make(map[string][]fiber.Map, len(metrics))
+			data, mapped := make(map[string][]fiber.Map, len(metrics)), make(map[string]map[string]fiber.Map, len(metrics))
 			for _, metric := range metrics {
-				// to be properly decoded by AIM UI, json should be represented as a key:value object.
-				context := fiber.Map{}
-				if err := json.Unmarshal(metric.Context.Json, &context); err != nil {
-					return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+				if mapped[metric.Key] == nil {
+					mapped[metric.Key] = map[string]fiber.Map{}
 				}
-				data[metric.Key] = append(data[metric.Key], context)
+				if _, ok := mapped[metric.Key][metric.Context.GetJsonHash()]; !ok {
+					// to be properly decoded by AIM UI, json should be represented as a key:value object.
+					context := fiber.Map{}
+					if err := json.Unmarshal(metric.Context.Json, &context); err != nil {
+						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+					}
+					mapped[metric.Key][metric.Context.GetJsonHash()] = context
+					data[metric.Key] = append(data[metric.Key], context)
+				}
 			}
-
 			resp[s] = data
 		default:
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("%q is not a valid Sequence", s))

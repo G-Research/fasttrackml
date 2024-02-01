@@ -5,13 +5,16 @@ import (
 	"context"
 	"database/sql"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/exp/slices"
 	"gorm.io/datatypes"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -275,8 +278,8 @@ func (s *SearchTestSuite) TestCSVReport_Ok() {
 			"experiment_description",
 			"date",
 			"duration",
-			"TestMetric {\"key\": \"value\"}",
-			"TestMetric2 {\"key\": \"value\"}",
+			"TestMetric {\"key\":\"value\"}",
+			"TestMetric2 {\"key\":\"value\"}",
 			"params[param1]",
 			"params[param3]",
 			"tags[mlflow.runName]",
@@ -286,7 +289,7 @@ func (s *SearchTestSuite) TestCSVReport_Ok() {
 			run3.Experiment.Name,
 			"-",
 			"20:37:24 1970-01-04",
-			"111111111",
+			"111111111ms",
 			"3.100000",
 			"-",
 			"-",
@@ -298,7 +301,7 @@ func (s *SearchTestSuite) TestCSVReport_Ok() {
 			run1.Experiment.Name,
 			"-",
 			"10:17:36 1970-01-02",
-			"0",
+			"0ms",
 			"1.100000",
 			"1.100000",
 			"value1",
@@ -308,7 +311,6 @@ func (s *SearchTestSuite) TestCSVReport_Ok() {
 	}, records)
 }
 
-/*
 func (s *SearchTestSuite) TestStreamData_Ok() {
 	// create test experiments.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
@@ -1071,4 +1073,3 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 		})
 	}
 }
-*/

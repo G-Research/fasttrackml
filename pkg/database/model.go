@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"database/sql/driver"
 	"encoding/hex"
@@ -163,6 +164,12 @@ type LatestMetric struct {
 type Context struct {
 	ID   uint           `gorm:"primaryKey;autoIncrement"`
 	Json datatypes.JSON `gorm:"not null;unique;index"`
+}
+
+// GetJsonHash returns hash of the Context.Json
+func (c Context) GetJsonHash() string {
+	hash := sha256.Sum256(c.Json)
+	return string(hash[:])
 }
 
 type AlembicVersion struct {

@@ -257,7 +257,9 @@ func FormatRunsSearchResponseAsStream(
 				if err := encoding.EncodeTree(w, fiber.Map{
 					fmt.Sprintf("progress_%d", len(runs)): []int64{total, total},
 				}); err != nil {
-					err = w.Flush()
+					if err = w.Flush(); err != nil {
+						return err
+					}
 				}
 			}
 			return nil

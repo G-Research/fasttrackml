@@ -17,10 +17,10 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-// FormatRunsSearchResponseAsCSV formats and sends Runs search response as a CSV file.
+// RunsSearchAsCSVResponse formats and sends Runs search response as a CSV file.
 //
 //nolint:gocyclo
-func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeTraces, excludeParams bool) {
+func RunsSearchAsCSVResponse(ctx *fiber.Ctx, runs []database.Run, excludeTraces, excludeParams bool) {
 	ctx.Set("Transfer-Encoding", "chunked")
 	ctx.Set("Content-Type", "text/csv")
 	ctx.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="runs-reports-%d.csv"`, time.Now().Unix()))
@@ -163,10 +163,10 @@ func FormatRunsSearchResponseAsCSV(ctx *fiber.Ctx, runs []database.Run, excludeT
 	})
 }
 
-// FormatRunsSearchResponseAsStream formats and sends Runs search response as a stream.
+// RunsSearchAsStreamResponse formats and sends Runs search response as a stream.
 //
 //nolint:gocyclo
-func FormatRunsSearchResponseAsStream(
+func RunsSearchAsStreamResponse(
 	ctx *fiber.Ctx, runs []database.Run, total int64, excludeTraces, excludeParams, reportProgress bool,
 ) {
 	ctx.Set("Content-Type", "application/octet-stream")

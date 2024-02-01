@@ -485,7 +485,7 @@ func SearchRuns(ctx *fiber.Ctx) error {
 			return fmt.Errorf("error searching runs: %w", err)
 		}
 		log.Debugf("found %d runs", len(runs))
-		FormatRunsSearchResponseAsCSV(ctx, runs, q.ExcludeTraces, q.ExcludeParams)
+		RunsSearchAsCSVResponse(ctx, runs, q.ExcludeTraces, q.ExcludeParams)
 	default:
 		if q.Limit > 0 {
 			tx.Limit(q.Limit)
@@ -508,7 +508,7 @@ func SearchRuns(ctx *fiber.Ctx) error {
 			return fmt.Errorf("error searching runs: %w", err)
 		}
 		log.Debugf("found %d runs", len(runs))
-		FormatRunsSearchResponseAsStream(ctx, runs, total, q.ExcludeTraces, q.ExcludeParams, q.ReportProgress)
+		RunsSearchAsStreamResponse(ctx, runs, total, q.ExcludeTraces, q.ExcludeParams, q.ReportProgress)
 	}
 
 	return nil

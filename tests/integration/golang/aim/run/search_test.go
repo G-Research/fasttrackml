@@ -36,7 +36,8 @@ func TestSearchTestSuite(t *testing.T) {
 }
 
 func (s *SearchTestSuite) SetupSuite() {
-	s.SetupSuite()
+	s.BaseTestSuite.SetupSuite()
+
 	// create test experiments.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),

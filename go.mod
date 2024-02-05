@@ -33,7 +33,7 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
 	google.golang.org/api v0.161.0
-	gorm.io/driver/postgres v1.5.4
+	gorm.io/driver/postgres v1.5.5
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.25.6
 	gorm.io/plugin/dbresolver v1.5.0

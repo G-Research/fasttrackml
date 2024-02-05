@@ -374,7 +374,7 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 				return nil, fmt.Errorf("unsupported comparison %q", ast.Dump(node))
 			}
 		case Json:
-			exprs[i], err = newSqlJsonPathComparison(op, left, right)
+			exprs[i], err = pq.newSqlJsonPathComparison(op, left, right)
 			if err != nil {
 				return nil, err
 			}
@@ -411,6 +411,28 @@ func (pq *parsedQuery) parseCompare(node *ast.Compare) (any, error) {
 					}
 					exprs[i] = expression
 				}
+			case Json:
+				switch op {
+				case ast.In:
+					// for `IN` statement, left parameter has to be always `string`.
+					if _, ok := left.(string); !ok {
+						return nil, errors.New("left parameter has to be a string")
+					}
+					return JsonLike{
+						Value: fmt.Sprintf("%%%s%%", left),
+						Json:  right,
+					}, nil
+				case ast.NotIn:
+					// for `NOT IN` statement, left parameter has to be always `string`.
+					if _, ok := left.(string); !ok {
+						return nil, errors.New("left parameter has to be a string")
+					}
+					return negativeClause(JsonLike{
+						Value: fmt.Sprintf("%%%s%%", left),
+						Json:  right,
+					}), nil
+				default:
+				}
 			case clause.Eq:
 				switch left := left.(type) {
 				case bool:
@@ -444,7 +466,8 @@ func (pq *parsedQuery) parseDictionary(node *ast.Dict) (any, error) {
 				JsonPath:  string(key.(*ast.Str).S),
 				Dialector: pq.qp.Dialector,
 			},
-			Value: string(node.Values[i].(*ast.Str).S),
+			Value:     string(node.Values[i].(*ast.Str).S),
+			Dialector: pq.qp.Dialector,
 		}
 	}
 	return clauses, nil
@@ -1005,17 +1028,19 @@ func newSqlComparison(op ast.CmpOp, left clause.Column, right any) (clause.Expre
 	}
 }
 
-func newSqlJsonPathComparison(op ast.CmpOp, left Json, right any) (clause.Expression, error) {
+func (pq *parsedQuery) newSqlJsonPathComparison(op ast.CmpOp, left Json, right any) (clause.Expression, error) {
 	switch op {
 	case ast.Eq:
 		return JsonEq{
-			Left:  left,
-			Value: right,
+			Left:      left,
+			Value:     right,
+			Dialector: pq.qp.Dialector,
 		}, nil
 	case ast.NotEq:
 		return JsonNeq{
-			Left:  left,
-			Value: right,
+			Left:      left,
+			Value:     right,
+			Dialector: pq.qp.Dialector,
 		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported comparison operation %q", op)

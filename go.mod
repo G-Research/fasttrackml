@@ -3,15 +3,15 @@ module github.com/G-Research/fasttrackml
 go 1.21.0
 
 replace (
-	github.com/mattn/go-sqlite3 v1.14.16 => github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20230327164124-765f25ea5431
+	github.com/mattn/go-sqlite3 v1.14.16 => github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20240122133042-fb824c8e339e
 	gorm.io/driver/sqlite v1.4.3 => github.com/jgiannuzzi/gorm-sqlite v1.4.4-0.20221215225833-42389ad31305
 )
 
 require (
 	cloud.google.com/go/storage v1.37.0
-	dagger.io/dagger v0.9.7
+	dagger.io/dagger v0.9.8
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/G-Research/fasttrackml-ui-aim v0.31705.4
+	github.com/G-Research/fasttrackml-ui-aim v0.31705.6
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.3
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/apache/arrow/go/v14 v14.0.2
@@ -32,10 +32,10 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
-	google.golang.org/api v0.160.0
+	google.golang.org/api v0.161.0
 	gorm.io/driver/postgres v1.5.4
 	gorm.io/driver/sqlite v1.4.3
-	gorm.io/gorm v1.25.5
+	gorm.io/gorm v1.25.6
 	gorm.io/plugin/dbresolver v1.5.0
 )
 
@@ -120,15 +120,15 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
-	golang.org/x/mod v0.13.0 // indirect
+	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
+	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	golang.org/x/tools v0.14.0 // indirect
+	golang.org/x/tools v0.15.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240116215550-a9fa1716bcac // indirect

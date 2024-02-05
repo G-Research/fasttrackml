@@ -11,7 +11,7 @@ require (
 	cloud.google.com/go/storage v1.37.0
 	dagger.io/dagger v0.9.8
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/G-Research/fasttrackml-ui-aim v0.31705.6
+	github.com/G-Research/fasttrackml-ui-aim v0.31705.8
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.3
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/apache/arrow/go/v14 v14.0.2
@@ -24,7 +24,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hetiansu5/urlquery v1.2.7
-	github.com/jackc/pgx/v5 v5.5.2
+	github.com/jackc/pgx/v5 v5.5.3
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/pkg/errors v0.9.1
 	github.com/rotisserie/eris v0.5.4

@@ -16,8 +16,8 @@ github.com/99designs/gqlgen v0.17.31/go.mod h1:i4rEatMrzzu6RXaHydq1nmEPZkb3bKQsn
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DATA-DOG/go-sqlmock v1.5.2 h1:OcvFkGmslmlZibjAjaHm3L//6LiuBgolP7OputlJIzU=
 github.com/DATA-DOG/go-sqlmock v1.5.2/go.mod h1:88MAG/4G7SMwSE3CeA0ZKzrT5CiOU3OJ+JlNzwDqpNU=
-github.com/G-Research/fasttrackml-ui-aim v0.31705.6 h1:KaB6WMrZoTR9FQAGVswyNwZ8WJVbh2/5vqeKkInmErs=
-github.com/G-Research/fasttrackml-ui-aim v0.31705.6/go.mod h1:1ydj5zgJgklq4gf3jkKMh+OrBXRz/5hZtx+1aROuWaM=
+github.com/G-Research/fasttrackml-ui-aim v0.31705.8 h1:Ql5TVSD96cNsK2Steh1WyTOHmPI8VOOb4b/I6iem4c0=
+github.com/G-Research/fasttrackml-ui-aim v0.31705.8/go.mod h1:1ydj5zgJgklq4gf3jkKMh+OrBXRz/5hZtx+1aROuWaM=
 github.com/G-Research/fasttrackml-ui-mlflow v0.20902.3 h1:8O2MsiqHdBQ4yVFXXJ+xXe3LRioKY33CGhDP+XXAOqo=
 github.com/G-Research/fasttrackml-ui-mlflow v0.20902.3/go.mod h1:Bg/xSCP6KzFDVDBSfJfrGmXuU6H8lFtboy+bTiHK6c4=
 github.com/Khan/genqlient v0.6.0 h1:Bwb1170ekuNIVIwTJEqvO8y7RxBxXu639VJOkKSrwAk=
@@ -171,8 +171,8 @@ github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsI
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a h1:bbPeKD0xmW/Y25WS6cokEszi5g+S0QxI/d45PkRi7Nk=
 github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a/go.mod h1:5TJZWKEWniPve33vlWYSoGYefn3gLQRzjfDlhSJ9ZKM=
-github.com/jackc/pgx/v5 v5.5.2 h1:iLlpgp4Cp/gC9Xuscl7lFL1PhhW+ZLtXZcrfCt4C3tA=
-github.com/jackc/pgx/v5 v5.5.2/go.mod h1:ez9gk+OAat140fv9ErkZDYFWmXLfV+++K0uAOiwgm1A=
+github.com/jackc/pgx/v5 v5.5.3 h1:Ces6/M3wbDXYpM8JyyPD57ivTtJACFZJd885pdIaV2s=
+github.com/jackc/pgx/v5 v5.5.3/go.mod h1:ez9gk+OAat140fv9ErkZDYFWmXLfV+++K0uAOiwgm1A=
 github.com/jackc/puddle/v2 v2.2.1 h1:RhxXJtFG022u4ibrCSMSiu5aOq1i77R3OHKNJj77OAk=
 github.com/jackc/puddle/v2 v2.2.1/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
 github.com/jgiannuzzi/go-sqlite3 v1.14.17-0.20240122133042-fb824c8e339e h1:0s+RSCZSEaZ3IM4fqMH1Nf5UDpttrn1R2QDutqiL2Zc=

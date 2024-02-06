@@ -20,7 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
-	{{ range .packages }}"github.com/G-Research/fasttrackml/pkg/database/migrations/{{ . }}"
+	{{ range packages }}"github.com/G-Research/fasttrackml/pkg/database/migrations/{{ . }}"
         {{ end }}
 )
 
@@ -30,12 +30,11 @@ func currentVersion() string {
 
 func generatedMigrations(db *gorm.DB, schemaVersion string) error {
 	switch schemaVersion {
-        {{- $packages := .packages }}
-	{{- range $i, $package := .packages }}
+	{{- range $i, $package := packages }}
         {{- if eq $i 0 }}
         case "":
 	{{- else if le $i maxIndex }}
-	case {{ index $packages (sub $i 1)}}.Version:
+	case {{ package (sub $i 1)}}.Version:
 	{{- end }}{{ template "migration" $i }}{{- end }}
 	default:
 		return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion)
@@ -92,6 +91,9 @@ func rebuildMigrations() error {
 		"package": func(index int) string {
 			return packages[index]
 		},
+		"packages": func() []string {
+			return packages
+		},
 		"maxPackage": func() string {
 			return packages[len(packages) - 1]
 		},
@@ -100,17 +102,13 @@ func rebuildMigrations() error {
 		},
 	}
 	
-	data := map[string]any{
-		"packages":   packages,
-	}
-
 	tmpl, err := template.New("migrations").Funcs(funcs).Parse(migrationTemplate)
 	if err != nil {
 		return fmt.Errorf("error parsing template: %w", err)
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
+	if err := tmpl.Execute(&buf, nil); err != nil {
 		return fmt.Errorf("error executing template: %w", err)
 	}
 

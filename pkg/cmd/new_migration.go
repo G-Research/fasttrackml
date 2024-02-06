@@ -40,7 +40,6 @@ func Migrate(db *gorm.DB) error {
 }
 `
 
-
 var NewMigrationCmd = &cobra.Command{
 	Use:   "new-migration",
 	Short: "Creates a blank migration at the next available number",
@@ -109,22 +108,21 @@ func createNewMigration(module, uniqueID string) error {
 		fmt.Sprintf("package %s", module),
 		1,
 	))
-	
+
 	modelsFile := fmt.Sprintf("%s/model.go", newModuleFolder)
 	if err := os.WriteFile(modelsFile, modelsBytes, 0o644); err != nil {
 		return err
 	}
-		
-	
+
 	tmpl, err := template.New("migrations").Parse(newMigrateTemplate)
 	if err != nil {
 		return fmt.Errorf("error parsing template: %w", err)
 	}
 	data := map[string]any{
-		"module": module,
+		"module":   module,
 		"uniqueID": uniqueID,
 	}
-		
+
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
 		return fmt.Errorf("error executing template: %w", err)

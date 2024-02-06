@@ -95,13 +95,13 @@ func rebuildMigrations() error {
 			return packages
 		},
 		"maxPackage": func() string {
-			return packages[len(packages) - 1]
+			return packages[len(packages)-1]
 		},
 		"maxIndex": func() int {
 			return len(packages) - 1
 		},
 	}
-	
+
 	tmpl, err := template.New("migrations").Funcs(funcs).Parse(migrationTemplate)
 	if err != nil {
 		return fmt.Errorf("error parsing template: %w", err)

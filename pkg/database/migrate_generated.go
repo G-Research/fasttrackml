@@ -29,48 +29,56 @@ func generatedMigrations(db *gorm.DB, schemaVersion string) error {
 		if err := v_0001.Migrate(db); err != nil {
 			return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0001.Version, err)
 		}
+		fallthrough
 
 	case v_0001.Version:
 		log.Infof("Migrating database to FastTrackML schema %s", v_0002.Version)
 		if err := v_0002.Migrate(db); err != nil {
 			return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0002.Version, err)
 		}
+		fallthrough
 
 	case v_0002.Version:
 		log.Infof("Migrating database to FastTrackML schema %s", v_0003.Version)
 		if err := v_0003.Migrate(db); err != nil {
 			return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0003.Version, err)
 		}
+		fallthrough
 
 	case v_0003.Version:
 		log.Infof("Migrating database to FastTrackML schema %s", v_0004.Version)
 		if err := v_0004.Migrate(db); err != nil {
 			return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0004.Version, err)
 		}
+		fallthrough
 
 	case v_0004.Version:
 		log.Infof("Migrating database to FastTrackML schema %s", v_0005.Version)
 		if err := v_0005.Migrate(db); err != nil {
 			return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0005.Version, err)
 		}
+		fallthrough
 
 	case v_0005.Version:
 		log.Infof("Migrating database to FastTrackML schema %s", v_0006.Version)
 		if err := v_0006.Migrate(db); err != nil {
 			return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0006.Version, err)
 		}
+		fallthrough
 
 	case v_0006.Version:
 		log.Infof("Migrating database to FastTrackML schema %s", v_0007.Version)
 		if err := v_0007.Migrate(db); err != nil {
 			return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0007.Version, err)
 		}
+		fallthrough
 
 	case v_0007.Version:
 		log.Infof("Migrating database to FastTrackML schema %s", v_0008.Version)
 		if err := v_0008.Migrate(db); err != nil {
 			return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0008.Version, err)
 		}
+		fallthrough
 
 	case v_0008.Version:
 		log.Infof("Migrating database to FastTrackML schema %s", v_0009.Version)
@@ -81,4 +89,5 @@ func generatedMigrations(db *gorm.DB, schemaVersion string) error {
 	default:
 		return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion)
 	}
+	return nil
 }

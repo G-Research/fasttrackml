@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/format"
 	"html/template"
-	"io/fs"
 	"os"
 	"sort"
 
@@ -26,29 +25,29 @@ import (
 )
 
 func currentVersion() string {
-	return {{ index .packages .maxPackage }}.Version
+	return {{ maxPackage }}.Version
 }
 
 func generatedMigrations(db *gorm.DB, schemaVersion string) error {
 	switch schemaVersion {
-        {{- $maxPackage := .maxPackage }}
         {{- $packages := .packages }}
 	{{- range $i, $package := .packages }}
         {{- if eq $i 0 }}
         case "":
-	{{- else if le $i $maxPackage }}
+	{{- else if le $i maxIndex }}
 	case {{ index $packages (sub $i 1)}}.Version:
-	{{- end }}{{ template "migration" $package }}{{- end }}
+	{{- end }}{{ template "migration" $i }}{{- end }}
 	default:
 		return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion)
         }
         return nil
 }
 {{ define "migration" }}
-log.Infof("Migrating database to FastTrackML schema %s", {{ . }}.Version)
-if err := {{ . }}.Migrate(db); err != nil {
-	return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", {{ . }}.Version, err)
+log.Infof("Migrating database to FastTrackML schema %s", {{ package . }}.Version)
+if err := {{ package . }}.Migrate(db); err != nil {
+	return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", {{ package . }}.Version, err)
 }
+{{ if ne (package .) (maxPackage) }}fallthrough{{ end }}
 {{ end }}
 `
 
@@ -90,11 +89,19 @@ func rebuildMigrations() error {
 		"sub": func(n1, n2 int) int {
 			return n1 - n2
 		},
+		"package": func(index int) string {
+			return packages[index]
+		},
+		"maxPackage": func() string {
+			return packages[len(packages) - 1]
+		},
+		"maxIndex": func() int {
+			return len(packages) - 1
+		},
 	}
 	
 	data := map[string]any{
 		"packages":   packages,
-		"maxPackage": len(packages) - 1,
 	}
 
 	tmpl, err := template.New("migrations").Funcs(funcs).Parse(migrationTemplate)

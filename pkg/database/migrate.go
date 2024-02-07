@@ -14,6 +14,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 )
 
 var supportedAlembicVersions = []string{

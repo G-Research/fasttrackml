@@ -13,7 +13,6 @@ import (
 func TestNewMigrationCmd(t *testing.T) {
 	tests := []struct {
 		name string
-		args []string
 	}{
 		{
 			name: "MigrationModuleIsGenerated",

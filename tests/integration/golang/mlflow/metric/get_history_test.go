@@ -4,15 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-	"gorm.io/datatypes"
-
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
+	"github.com/stretchr/testify/suite"
 )
 
 type GetHistoryTestSuite struct {
@@ -50,7 +48,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 		IsNan:     false,
 		Iter:      1,
 		Context: models.Context{
-			Json: datatypes.JSON(`{"key": "key", "value": "value"}`),
+			Json: models.JSONB(`{"key": "key", "value": "value"}`),
 		},
 	})
 	s.Require().Nil(err)

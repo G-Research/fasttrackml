@@ -7,14 +7,11 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"strings"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/exp/slices"
-	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -92,7 +89,7 @@ func (s *SearchTestSuite) SetupTest() {
 		RunID:     run1.ID,
 		LastIter:  1,
 		Context: models.Context{
-			Json: datatypes.JSON(`{"key":"value"}`),
+			Json: models.JSONB(`{"key": "value"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -105,7 +102,7 @@ func (s *SearchTestSuite) SetupTest() {
 		RunID:     run1.ID,
 		LastIter:  1,
 		Context: models.Context{
-			Json: datatypes.JSON(`{"key":"value"}`),
+			Json: models.JSONB(`{"key": "value"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -154,7 +151,7 @@ func (s *SearchTestSuite) SetupTest() {
 		RunID:     run2.ID,
 		LastIter:  1,
 		Context: models.Context{
-			Json: datatypes.JSON(`{"key":"value"}`),
+			Json: models.JSONB(`{"key": "value"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -203,7 +200,7 @@ func (s *SearchTestSuite) SetupTest() {
 		RunID:     run3.ID,
 		LastIter:  3,
 		Context: models.Context{
-			Json: datatypes.JSON(`{"key":"value"}`),
+			Json: models.JSONB(`{"key": "value"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -252,7 +249,7 @@ func (s *SearchTestSuite) SetupTest() {
 		RunID:     run4.ID,
 		LastIter:  1,
 		Context: models.Context{
-			Json: datatypes.JSON(`{"key":"value"}`),
+			Json: models.JSONB(`{"key": "value"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -297,8 +294,8 @@ func (s *SearchTestSuite) TestCSVReport_Ok() {
 			"experiment_description",
 			"date",
 			"duration",
-			"TestMetric {\"key\":\"value\"}",
-			"TestMetric2 {\"key\":\"value\"}",
+			"TestMetric {\"key\": \"value\"}",
+			"TestMetric2 {\"key\": \"value\"}",
 			"params[param1]",
 			"params[param3]",
 			"tags[mlflow.runName]",
@@ -329,18 +326,8 @@ func (s *SearchTestSuite) TestCSVReport_Ok() {
 		},
 	}
 
-	// check headers separately. headers could include information about metric + context and
-	// because of difference in `json` serialisation between `sqlite` and `postgres` could be
-	// some problems in comparing. remove all whitespaces for now.
-	// TODO remove such a case when when we will use `JSONB` instead of `JSON` for both `sqlite` and `postgres`.
-	for i, expectedRecord := range expectedResult[0] {
-		assert.Equal(
-			s.T(), strings.Replace(expectedRecord, " ", "", -1), strings.Replace(records[0][i], " ", "", -1),
-		)
-	}
-
 	// check other data records normally.
-	s.Require().Equal(expectedResult[1:], records[1:])
+	s.Require().Equal(expectedResult, records)
 }
 
 func (s *SearchTestSuite) TestStreamData_Ok() {

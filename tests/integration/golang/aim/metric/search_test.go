@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
@@ -162,7 +161,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		Iter:      3,
 		Context: models.Context{
-			Json: datatypes.JSON(`{"testkey":"testvalue"}`),
+			Json: models.JSONB(`{"testkey":"testvalue"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -175,7 +174,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  3,
 		Context: models.Context{
-			Json: datatypes.JSON(`{"testkey":"testvalue"}`),
+			Json: models.JSONB(`{"testkey":"testvalue"}`),
 		},
 	})
 	s.Require().Nil(err)

@@ -114,6 +114,8 @@ func (JSONB) GormDBDataType(db *gorm.DB, field *schema.Field) string {
 	return "JSONB"
 }
 
+// GormValue gorm db actual value
+// nolint
 func (js JSONB) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 	if len(js) == 0 {
 		return gorm.Expr("NULL")

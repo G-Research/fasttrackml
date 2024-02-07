@@ -7,11 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
@@ -214,20 +212,14 @@ func (JSONB) GormDBDataType(db *gorm.DB, field *schema.Field) string {
 	return "JSONB"
 }
 
+// GormValue gorm db actual value
+// nolint
 func (js JSONB) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 	if len(js) == 0 {
 		return gorm.Expr("NULL")
 	}
 
 	data, _ := js.MarshalJSON()
-
-	switch db.Dialector.Name() {
-	case "mysql":
-		if v, ok := db.Dialector.(*mysql.Dialector); ok && !strings.Contains(v.ServerVersion, "MariaDB") {
-			return gorm.Expr("CAST(? AS JSONB)", string(data))
-		}
-	}
-
 	return gorm.Expr("?", string(data))
 }
 

@@ -10,13 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/driver/mysql"
-
-	"gorm.io/gorm/schema"
-
 	"github.com/google/uuid"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/schema"
 )
 
 type Status string

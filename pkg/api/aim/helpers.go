@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"reflect"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -42,7 +41,7 @@ func RunsSearchAsCSVResponse(ctx *fiber.Ctx, runs []database.Run, excludeTraces,
 						if metric.IsNan {
 							v = math.NaN()
 						}
-						key := fmt.Sprintf("%s %s", metric.Key, string(metric.Context.Json))
+						key := fmt.Sprintf("%s %s", metric.Key, metric.Context.Json.String())
 						if _, ok := metricData[key]; ok {
 							metricData[key][run.ID] = v
 						} else {
@@ -270,16 +269,4 @@ func RunsSearchAsStreamResponse(
 		}
 		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
 	})
-}
-
-// CompareJson compares two json objects.
-func CompareJson(json1, json2 []byte) bool {
-	var j, j2 interface{}
-	if err := json.Unmarshal(json1, &j); err != nil {
-		return false
-	}
-	if err := json.Unmarshal(json2, &j2); err != nil {
-		return false
-	}
-	return reflect.DeepEqual(j2, j)
 }

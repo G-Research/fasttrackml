@@ -170,14 +170,14 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	metricKeysMap, contexts := make(fiber.Map, len(b)), make([]models.JSONB, 0, len(b))
+	metricKeysMap, contexts := make(fiber.Map, len(b)), make([]string, 0, len(b))
 	for _, m := range b {
 		if m.Context != nil {
 			serializedContext, err := json.Marshal(m.Context)
 			if err != nil {
 				return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 			}
-			contexts = append(contexts, serializedContext)
+			contexts = append(contexts, string(serializedContext))
 		}
 		metricKeysMap[m.Name] = nil
 	}
@@ -217,7 +217,11 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		func() *gorm.DB {
 			query := database.DB
 			for _, context := range contexts {
-				query = query.Or("json = ?", context)
+				if query.Dialector.Name() == database.SQLiteDialectorName {
+					query = query.Or("json(json) = json(?)", context)
+				} else {
+					query = query.Or("json = ?", context)
+				}
 			}
 			return query
 		}(),
@@ -235,7 +239,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		name    string
 		iters   []int
 		values  []*float64
-		context json.RawMessage
+		context datatypes.JSON
 	}, len(metricKeys))
 
 	for _, m := range data {
@@ -250,7 +254,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		k.name = m.Key
 		k.iters = append(k.iters, int(m.Iter))
 		k.values = append(k.values, pv)
-		k.context = json.RawMessage(m.Context.Json)
+		k.context = m.Context.Json
 		metrics[key] = k
 	}
 
@@ -865,7 +869,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	values, capacity, contextsMap := []any{}, 0, map[string]models.JSONB{}
+	values, capacity, contextsMap := []any{}, 0, map[string]string{}
 	for _, r := range b.Runs {
 		for _, t := range r.Traces {
 			l := t.Slice[2]
@@ -881,16 +885,20 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			contextHash := fmt.Sprintf("%x", sum)
 			_, ok := contextsMap[contextHash]
 			if !ok {
-				contextsMap[contextHash] = data
+				contextsMap[contextHash] = string(data)
 			}
-			values = append(values, r.ID, t.Name, data, float32(l))
+			values = append(values, r.ID, t.Name, string(data), float32(l))
 		}
 	}
 
 	// map context values to context ids
 	query := database.DB
 	for _, context := range contextsMap {
-		query = query.Or("contexts.json = ?", context)
+		if query.Dialector.Name() == database.SQLiteDialectorName {
+			query = query.Or("json(contexts.json) = json(?)", context)
+		} else {
+			query = query.Or("contexts.json = ?", context)
+		}
 	}
 	var contexts []database.Context
 	if err := query.Find(&contexts).Error; err != nil {
@@ -900,7 +908,11 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 	// add context ids to `values`
 	for _, context := range contexts {
 		for i := 2; i < len(values); i += 4 {
-			if CompareJson(values[i].([]byte), context.Json) {
+			json, err := json.Marshal(context.Json)
+			if err != nil {
+				return api.NewInternalError("error serializing context: %s", err)
+			}
+			if values[i] == string(json) {
 				values[i] = context.ID
 			}
 		}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0007"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0008"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0009"
-	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0010"
 )
 
 var supportedAlembicVersions = []string{
@@ -45,7 +45,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 		tx.First(&schemaVersion)
 	}
 
-	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != v_0010.Version {
+	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != v_0009.Version {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf(
 				"unsupported database schema versions alembic %s, FastTrackML %s",
@@ -190,13 +190,6 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				if err := v_0009.Migrate(db); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0009.Version, err)
 				}
-				fallthrough
-
-			case v_0009.Version:
-				log.Infof("Migrating database to FastTrackML schema %s", v_0010.Version)
-				if err := v_0010.Migrate(db); err != nil {
-					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0010.Version, err)
-				}
 
 			default:
 				return fmt.Errorf("unsupported database FastTrackML schema version %s", schemaVersion.Version)
@@ -228,7 +221,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				Version: "97727af70f4d",
 			})
 			tx.Create(&SchemaVersion{
-				Version: v_0010.Version,
+				Version: v_0009.Version,
 			})
 			tx.Commit()
 			if tx.Error != nil {
@@ -315,7 +308,7 @@ func CreateDefaultExperiment(db *gorm.DB, defaultArtifactRoot string) error {
 
 // CreateDefaultMetricContext creates the default metric context if it doesn't exist.
 func CreateDefaultMetricContext(db *gorm.DB) error {
-	defaultContext := Context{Json: JSONB("{}")}
+	defaultContext := Context{Json: datatypes.JSON("{}")}
 	if err := db.First(&defaultContext).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Creating default context")

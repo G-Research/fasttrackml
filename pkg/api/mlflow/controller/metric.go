@@ -133,7 +133,7 @@ func (c Controller) GetMetricHistories(ctx *fiber.Ctx) error {
 				} else {
 					b.Field(4).(*array.Float64Builder).Append(m.Value)
 				}
-				b.Field(5).(*array.StringBuilder).Append(string(m.Context.Json))
+				b.Field(5).(*array.StringBuilder).Append(m.Context.Json.String())
 				if (i+1)%100000 == 0 {
 					if err := WriteStreamingRecord(writer, b.NewRecord()); err != nil {
 						return fmt.Errorf("unable to write Arrow record batch: %w", err)

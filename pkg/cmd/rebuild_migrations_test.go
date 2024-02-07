@@ -30,7 +30,9 @@ func TestRebuildMigrationsCmd(t *testing.T) {
 			// Create a temporary directories for the command to use
 			databaseTmpDir := t.TempDir()
 			migrationsTmpDir := t.TempDir()
+			//nolint:gosec
 			assert.Nil(t, os.Mkdir(filepath.Join(migrationsTmpDir, "v_0001"), 0o755))
+			//nolint:gosec
 			assert.Nil(t, os.Mkdir(filepath.Join(migrationsTmpDir, "v_0002"), 0o755))
 
 			// Set the command flags as needed
@@ -42,6 +44,7 @@ func TestRebuildMigrationsCmd(t *testing.T) {
 			}
 
 			// Verify
+			//nolint:gosec
 			bytes, err := os.ReadFile(filepath.Join(databaseTmpDir, "migrate_generated.go"))
 			assert.Nil(t, err)
 			assert.Contains(t, string(bytes), "return v_0002.Version")

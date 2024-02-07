@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -57,7 +58,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		RunID:     run.ID,
 		Iter:      1,
 		Context: models.Context{
-			Json: []byte(`{"key1": "key1", "value1": "value1"}`),
+			Json: models.JSONB(`{"key1":"key1","value1":"value1"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -71,7 +72,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		RunID:     run.ID,
 		Iter:      2,
 		Context: models.Context{
-			Json: []byte(`{"key2": "key2", "value2": "value2"}`),
+			Json: models.JSONB(`{"key2":"key2","value2":"value2"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -85,7 +86,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		RunID:     run.ID,
 		Iter:      3,
 		Context: models.Context{
-			Json: []byte(`{"key3": "key3", "value3": "value3"}`),
+			Json: models.JSONB(`{"key3":"key3","value3":"value3"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -99,7 +100,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		RunID:     run.ID,
 		Iter:      4,
 		Context: models.Context{
-			Json: []byte(`{"key4": "key4", "value4": "value4"}`),
+			Json: models.JSONB(`{"key4":"key4","value4":"value4"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -127,25 +128,25 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					Name:    "key1",
 					Iters:   []int64{1},
 					Values:  []float64{123.1},
-					Context: []byte(`{"key1":"key1","value1":"value1"}`),
+					Context: json.RawMessage(`{"key1":"key1","value1":"value1"}`),
 				},
 				response.RunMetrics{
 					Name:    "key1",
 					Iters:   []int64{2},
 					Values:  []float64{123.2},
-					Context: []byte(`{"key2":"key2","value2":"value2"}`),
+					Context: json.RawMessage(`{"key2":"key2","value2":"value2"}`),
 				},
 				response.RunMetrics{
 					Name:    "key2",
 					Iters:   []int64{3},
 					Values:  []float64{124.1},
-					Context: []byte(`{"key3":"key3","value3":"value3"}`),
+					Context: json.RawMessage(`{"key3":"key3","value3":"value3"}`),
 				},
 				response.RunMetrics{
 					Name:    "key2",
 					Iters:   []int64{4},
 					Values:  []float64{124.2},
-					Context: []byte(`{"key4":"key4","value4":"value4"}`),
+					Context: json.RawMessage(`{"key4":"key4","value4":"value4"}`),
 				},
 			},
 		},
@@ -187,25 +188,25 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					Name:    "key1",
 					Iters:   []int64{1},
 					Values:  []float64{123.1},
-					Context: []byte(`{"key1":"key1","value1":"value1"}`),
+					Context: json.RawMessage(`{"key1":"key1","value1":"value1"}`),
 				},
 				response.RunMetrics{
 					Name:    "key1",
 					Iters:   []int64{2},
 					Values:  []float64{123.2},
-					Context: []byte(`{"key2":"key2","value2":"value2"}`),
+					Context: json.RawMessage(`{"key2":"key2","value2":"value2"}`),
 				},
 				response.RunMetrics{
 					Name:    "key2",
 					Iters:   []int64{3},
 					Values:  []float64{124.1},
-					Context: []byte(`{"key3":"key3","value3":"value3"}`),
+					Context: json.RawMessage(`{"key3":"key3","value3":"value3"}`),
 				},
 				response.RunMetrics{
 					Name:    "key2",
 					Iters:   []int64{4},
 					Values:  []float64{124.2},
-					Context: []byte(`{"key4":"key4","value4":"value4"}`),
+					Context: json.RawMessage(`{"key4":"key4","value4":"value4"}`),
 				},
 			},
 		},
@@ -233,13 +234,13 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					Name:    "key1",
 					Iters:   []int64{1},
 					Values:  []float64{123.1},
-					Context: []byte(`{"key1":"key1","value1":"value1"}`),
+					Context: json.RawMessage(`{"key1":"key1","value1":"value1"}`),
 				},
 				response.RunMetrics{
 					Name:    "key2",
 					Iters:   []int64{3},
 					Values:  []float64{124.1},
-					Context: []byte(`{"key3":"key3","value3":"value3"}`),
+					Context: json.RawMessage(`{"key3":"key3","value3":"value3"}`),
 				},
 			},
 		},

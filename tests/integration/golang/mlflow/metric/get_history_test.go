@@ -11,6 +11,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -49,7 +50,7 @@ func (s *GetHistoryTestSuite) Test_Ok() {
 		IsNan:     false,
 		Iter:      1,
 		Context: models.Context{
-			Json: models.JSONB(`{"key": "key", "value": "value"}`),
+			Json: types.JSONB(`{"key": "key", "value": "value"}`),
 		},
 	})
 	s.Require().Nil(err)

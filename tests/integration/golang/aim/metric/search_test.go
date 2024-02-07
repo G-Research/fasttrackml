@@ -13,6 +13,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -161,7 +162,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		Iter:      3,
 		Context: models.Context{
-			Json: models.JSONB(`{"testkey":"testvalue"}`),
+			Json: types.JSONB(`{"testkey":"testvalue"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -174,7 +175,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		RunID:     run2.ID,
 		LastIter:  3,
 		Context: models.Context{
-			Json: models.JSONB(`{"testkey":"testvalue"}`),
+			Json: types.JSONB(`{"testkey":"testvalue"}`),
 		},
 	})
 	s.Require().Nil(err)

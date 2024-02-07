@@ -14,6 +14,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0001"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0002"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0003"
@@ -315,7 +316,7 @@ func CreateDefaultExperiment(db *gorm.DB, defaultArtifactRoot string) error {
 
 // CreateDefaultMetricContext creates the default metric context if it doesn't exist.
 func CreateDefaultMetricContext(db *gorm.DB) error {
-	defaultContext := Context{Json: JSONB("{}")}
+	defaultContext := Context{Json: types.JSONB("{}")}
 	if err := db.First(&defaultContext).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Creating default context")

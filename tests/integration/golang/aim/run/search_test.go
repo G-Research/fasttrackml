@@ -16,6 +16,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -89,7 +90,7 @@ func (s *SearchTestSuite) SetupTest() {
 		RunID:     run1.ID,
 		LastIter:  1,
 		Context: models.Context{
-			Json: models.JSONB(`{"key": "value"}`),
+			Json: types.JSONB(`{"key": "value"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -102,7 +103,7 @@ func (s *SearchTestSuite) SetupTest() {
 		RunID:     run1.ID,
 		LastIter:  1,
 		Context: models.Context{
-			Json: models.JSONB(`{"key": "value"}`),
+			Json: types.JSONB(`{"key": "value"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -151,7 +152,7 @@ func (s *SearchTestSuite) SetupTest() {
 		RunID:     run2.ID,
 		LastIter:  1,
 		Context: models.Context{
-			Json: models.JSONB(`{"key": "value"}`),
+			Json: types.JSONB(`{"key": "value"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -200,7 +201,7 @@ func (s *SearchTestSuite) SetupTest() {
 		RunID:     run3.ID,
 		LastIter:  3,
 		Context: models.Context{
-			Json: models.JSONB(`{"key": "value"}`),
+			Json: types.JSONB(`{"key": "value"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -249,7 +250,7 @@ func (s *SearchTestSuite) SetupTest() {
 		RunID:     run4.ID,
 		LastIter:  1,
 		Context: models.Context{
-			Json: models.JSONB(`{"key": "value"}`),
+			Json: types.JSONB(`{"key": "value"}`),
 		},
 	})
 	s.Require().Nil(err)

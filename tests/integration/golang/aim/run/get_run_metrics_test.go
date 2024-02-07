@@ -13,6 +13,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -58,7 +59,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		RunID:     run.ID,
 		Iter:      1,
 		Context: models.Context{
-			Json: models.JSONB(`{"key1":"key1","value1":"value1"}`),
+			Json: types.JSONB(`{"key1":"key1","value1":"value1"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -72,7 +73,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		RunID:     run.ID,
 		Iter:      2,
 		Context: models.Context{
-			Json: models.JSONB(`{"key2":"key2","value2":"value2"}`),
+			Json: types.JSONB(`{"key2":"key2","value2":"value2"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -86,7 +87,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		RunID:     run.ID,
 		Iter:      3,
 		Context: models.Context{
-			Json: models.JSONB(`{"key3":"key3","value3":"value3"}`),
+			Json: types.JSONB(`{"key3":"key3","value3":"value3"}`),
 		},
 	})
 	s.Require().Nil(err)
@@ -100,7 +101,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		RunID:     run.ID,
 		Iter:      4,
 		Context: models.Context{
-			Json: models.JSONB(`{"key4":"key4","value4":"value4"}`),
+			Json: types.JSONB(`{"key4":"key4","value4":"value4"}`),
 		},
 	})
 	s.Require().Nil(err)

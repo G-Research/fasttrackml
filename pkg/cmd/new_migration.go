@@ -100,6 +100,7 @@ func getNextModuleAndUniqueID(cmd *cobra.Command) (module string, uniqueID strin
 func createNewMigration(cmd *cobra.Command, module, uniqueID string) error {
 	newModuleFolder := fmt.Sprintf("%s/%s",
 		cmd.Flag(MigrationsSourcesFlag).Value.String(), module)
+	//nolint:gosec
 	if err := os.Mkdir(newModuleFolder, 0o755); err != nil {
 		return err
 	}
@@ -117,6 +118,7 @@ func createNewMigration(cmd *cobra.Command, module, uniqueID string) error {
 	))
 
 	modelsFile := fmt.Sprintf("%s/model.go", newModuleFolder)
+	//nolint:gosec
 	if err := os.WriteFile(modelsFile, modelsBytes, 0o644); err != nil {
 		return err
 	}
@@ -140,6 +142,7 @@ func createNewMigration(cmd *cobra.Command, module, uniqueID string) error {
 		return err
 	}
 	newFile := fmt.Sprintf("%s/migrate.go", newModuleFolder)
+	// nolint:gosec
 	if err := os.WriteFile(newFile, src, 0o644); err != nil {
 		return err
 	}

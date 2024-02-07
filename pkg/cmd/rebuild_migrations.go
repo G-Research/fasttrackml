@@ -117,6 +117,7 @@ func rebuildMigrations(cmd *cobra.Command) error {
 		return err
 	}
 	dbSources := cmd.Flag(DatabaseSourcesFlag).Value.String()
+	//nolint:gosec
 	if err := os.WriteFile(fmt.Sprintf("%s/migrate_generated.go", dbSources), src, 0o644); err != nil {
 		return err
 	}

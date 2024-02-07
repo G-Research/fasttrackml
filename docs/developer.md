@@ -31,16 +31,16 @@ make build
 
 FastTrackML introduces database changes via migration packages, which can be found
 at `pkg/database/migrations`. Each migration is given a unique package name so that
-we can retain a snapshot of the `database/models.go` file that was accurate at the time
+we can retain a snapshot of the `database/model.go` file that was accurate at the time
 of the migration. The package names are expected to be sequential in order of application.
 
-Some make targets have been set up to make this a little less cumbersome:
+Make targets have been set up to make this a little less cumbersome:
 ```bash
 make new-migration
 ```
 This target will create a new migration package and setup the two files you need 
 (`model.go` and `migrate.go`). You will need to fill in the actual migration logic
-in the `Migrate` function of the new migrate.go file. Everything else is handled by
+in the `Migrate` function of the new migrate.go file -- everything else is handled by
 the make target. It's assumed that `database/model.go` and `<your new migration>/model.go`
 will be identical (for the time being) and include the database schema changes you want to see.
 

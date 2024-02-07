@@ -74,7 +74,6 @@ func newMigrationCmd(cmd *cobra.Command, args []string) error {
 
 func getNextModuleAndUniqueID(cmd *cobra.Command) (module string, uniqueID string, err error) {
 	// find next migration number
-
 	files, err := os.ReadDir(cmd.Flag(MigrationsSourcesFlag).Value.String())
 	if err != nil {
 		return
@@ -90,7 +89,7 @@ func getNextModuleAndUniqueID(cmd *cobra.Command) (module string, uniqueID strin
 	maxModule := strings.Split(max, "_")[1]
 	number, err := strconv.Atoi(maxModule)
 	if err != nil {
-		return
+		number = 0
 	}
 	module = fmt.Sprintf("v_%04d", number+1)
 	uniqueID = time.Now().Format("20060102030405")

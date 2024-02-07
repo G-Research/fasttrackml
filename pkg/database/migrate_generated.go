@@ -16,10 +16,11 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0007"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0008"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0009"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0010"
 )
 
 func currentVersion() string {
-	return v_0009.Version
+	return v_0010.Version
 }
 
 func generatedMigrations(db *gorm.DB, schemaVersion string) error {
@@ -84,6 +85,13 @@ func generatedMigrations(db *gorm.DB, schemaVersion string) error {
 		log.Infof("Migrating database to FastTrackML schema %s", v_0009.Version)
 		if err := v_0009.Migrate(db); err != nil {
 			return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0009.Version, err)
+		}
+		fallthrough
+
+	case v_0009.Version:
+		log.Infof("Migrating database to FastTrackML schema %s", v_0010.Version)
+		if err := v_0010.Migrate(db); err != nil {
+			return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0010.Version, err)
 		}
 
 	default:

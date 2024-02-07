@@ -8,9 +8,8 @@ import (
 	"errors"
 	"fmt"
 
-	"gorm.io/gorm/clause"
-
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 )
 
@@ -112,13 +111,7 @@ func (JSONB) GormDataType() string {
 
 // GormDBDataType gorm db data type
 func (JSONB) GormDBDataType(db *gorm.DB, field *schema.Field) string {
-	switch db.Dialector.Name() {
-	case "sqlite":
-		return "JSONB"
-	case "postgres":
-		return "JSONB"
-	}
-	return ""
+	return "JSONB"
 }
 
 func (js JSONB) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {

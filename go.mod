@@ -139,5 +139,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/datatypes v1.2.0
-	gorm.io/driver/mysql v1.4.7
+	gorm.io/driver/mysql v1.4.7 // indirect
 )

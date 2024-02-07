@@ -84,7 +84,7 @@ func rebuildMigrations() error {
 		return packages[i] < packages[j]
 	})
 
-	var funcs = template.FuncMap{
+	funcs := template.FuncMap{
 		"sub": func(n1, n2 int) int {
 			return n1 - n2
 		},

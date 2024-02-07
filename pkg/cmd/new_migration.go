@@ -92,7 +92,6 @@ func getNextModuleAndUniqueID() (module string, uniqueID string, err error) {
 }
 
 func createNewMigration(module, uniqueID string) error {
-
 	newModuleFolder := fmt.Sprintf("pkg/database/migrations/%s", module)
 	if err := os.Mkdir(newModuleFolder, 0o755); err != nil {
 		return err
@@ -137,7 +136,6 @@ func createNewMigration(module, uniqueID string) error {
 		return err
 	}
 	return nil
-
 }
 
 // nolint:errcheck,gosec

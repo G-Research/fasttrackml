@@ -14,8 +14,4 @@ var MigrationsCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(MigrationsCmd)
 	MigrationsCmd.AddCommand(migrations.CreateCmd, migrations.RebuildCmd)
-	MigrationsCmd.PersistentFlags().StringP(migrations.DatabaseSourcesFlag,
-		"d", "./pkg/database", "Location for database package sources")
-	MigrationsCmd.PersistentFlags().StringP(migrations.MigrationsSourcesFlag,
-		"m", "./pkg/database/migrations", "Location for migration sources")
 }

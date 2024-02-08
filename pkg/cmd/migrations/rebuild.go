@@ -60,16 +60,16 @@ var RebuildCmd = &cobra.Command{
 }
 
 func rebuildMigrationsCmd(cmd *cobra.Command, args []string) error {
-	if err := rebuildMigrations(cmd); err != nil {
+	if err := rebuildMigrations(MigrationsSources, DatabaseSources); err != nil {
 		return eris.Wrap(err, "error creating migrate_generated.go file")
 	}
 
 	return nil
 }
 
-func rebuildMigrations(cmd *cobra.Command) error {
+func rebuildMigrations(migrationsSources, databaseSources string) error {
 	// find next migration number
-	files, err := os.ReadDir(cmd.Flag(MigrationsSourcesFlag).Value.String())
+	files, err := os.ReadDir(migrationsSources)
 	if err != nil {
 		return eris.Wrap(err, "error reading migrations source folder")
 	}
@@ -117,9 +117,8 @@ func rebuildMigrations(cmd *cobra.Command) error {
 	if err != nil {
 		return eris.Wrap(err, "error formatting generated source file")
 	}
-	dbSources := cmd.Flag(DatabaseSourcesFlag).Value.String()
 	//nolint:gosec
-	if err := os.WriteFile(fmt.Sprintf("%s/migrate_generated.go", dbSources), src, 0o644); err != nil {
+	if err := os.WriteFile(fmt.Sprintf("%s/migrate_generated.go", databaseSources), src, 0o644); err != nil {
 		return eris.Wrap(err, "error writing generated source file")
 	}
 	return nil

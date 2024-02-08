@@ -55,7 +55,6 @@ var CreateCmd = &cobra.Command{
 }
 
 func newMigrationCmd(cmd *cobra.Command, args []string) error {
-
 	if err := createNewMigration(MigrationsSources, DatabaseSources); err != nil {
 		return eris.Wrap(err, "error creating new migration")
 	}

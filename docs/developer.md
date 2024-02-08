@@ -36,7 +36,7 @@ of the migration. The package names are expected to be sequential in order of ap
 
 Make targets have been set up to make this a little less cumbersome:
 ```bash
-make new-migration
+make migrations-create
 ```
 This target will create a new migration package and setup the two files you need 
 (`model.go` and `migrate.go`). You will need to fill in the actual migration logic
@@ -45,7 +45,7 @@ the make target. It's assumed that `database/model.go` and `<your new migration>
 will be identical (for the time being) and include the database schema changes you want to see.
 
 ```bash
-make rebuild-migrations
+make migrations-rebuild
 ```
 This target will rebuild the `database/migrate_generated.go` file to include execution of all
 the packages in `database/migrations`.

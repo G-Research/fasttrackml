@@ -8,6 +8,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/rotisserie/eris"
 	"github.com/spf13/cobra"
 )
 
@@ -60,7 +61,7 @@ var RebuildMigrationsCmd = &cobra.Command{
 
 func rebuildMigrationsCmd(cmd *cobra.Command, args []string) error {
 	if err := rebuildMigrations(cmd); err != nil {
-		return err
+		return eris.Wrap(err, "error creating migrate_generated.go file")
 	}
 
 	return nil
@@ -70,7 +71,7 @@ func rebuildMigrations(cmd *cobra.Command) error {
 	// find next migration number
 	files, err := os.ReadDir(cmd.Flag(MigrationsSourcesFlag).Value.String())
 	if err != nil {
-		return err
+		return eris.Wrap(err, "error reading migrations source folder")
 	}
 
 	packages := []string{}
@@ -104,22 +105,22 @@ func rebuildMigrations(cmd *cobra.Command) error {
 
 	tmpl, err := template.New("migrations").Funcs(funcs).Parse(migrationsTemplate)
 	if err != nil {
-		return fmt.Errorf("error parsing template: %w", err)
+		return eris.Wrap(err, "error parsing template")
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, nil); err != nil {
-		return fmt.Errorf("error executing template: %w", err)
+		return eris.Wrap(err, "error executing template")
 	}
 
 	src, err := format.Source(buf.Bytes())
 	if err != nil {
-		return err
+		return eris.Wrap(err, "error formatting generated source file")
 	}
 	dbSources := cmd.Flag(DatabaseSourcesFlag).Value.String()
 	//nolint:gosec
 	if err := os.WriteFile(fmt.Sprintf("%s/migrate_generated.go", dbSources), src, 0o644); err != nil {
-		return err
+		return eris.Wrap(err, "error writing generated source file")
 	}
 	return nil
 }

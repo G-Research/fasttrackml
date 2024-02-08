@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rotisserie/eris"
 	"github.com/spf13/cobra"
 )
 
@@ -56,27 +57,27 @@ var NewMigrationCmd = &cobra.Command{
 func newMigrationCmd(cmd *cobra.Command, args []string) error {
 	module, uniqueID, err := getNextModuleAndUniqueID(cmd)
 	if err != nil {
-		return err
+		return eris.Wrap(err, "error finding next module name")
 	}
 	fmt.Printf("next migration module is: %s\n", module)
 	fmt.Printf("next uniqueID is: %s\n", uniqueID)
 
 	if err := createNewMigration(cmd, module, uniqueID); err != nil {
-		return err
+		return eris.Wrap(err, "error creating new migration")
 	}
 
 	if err := rebuildMigrations(cmd); err != nil {
-		return err
+		return eris.Wrap(err, "error rebuilding migrations")
 	}
 
 	return nil
 }
 
-func getNextModuleAndUniqueID(cmd *cobra.Command) (module string, uniqueID string, err error) {
+func getNextModuleAndUniqueID(cmd *cobra.Command) (string, string, error) {
 	// find next migration number
 	files, err := os.ReadDir(cmd.Flag(MigrationsSourcesFlag).Value.String())
 	if err != nil {
-		return
+		return "", "", eris.Wrap(err, "error reading migration sources dir")
 	}
 
 	max := ""
@@ -86,14 +87,18 @@ func getNextModuleAndUniqueID(cmd *cobra.Command) (module string, uniqueID strin
 		}
 	}
 
-	maxModule := strings.Split(max, "_")[1]
-	number, err := strconv.Atoi(maxModule)
-	if err != nil {
-		number = 0
+	number := 0
+	if len(max) > 0 {
+		maxModule := strings.Split(max, "_")[1]
+		number, err = strconv.Atoi(maxModule)
+		if err != nil {
+			return "", "",
+				eris.Wrapf(err, "error parsing module name, should have pattern 'v_NNNN' but is '%s'", maxModule)
+		}
 	}
-	module = fmt.Sprintf("v_%04d", number+1)
-	uniqueID = time.Now().Format("20060102030405")
-	return
+	module := fmt.Sprintf("v_%04d", number+1)
+	uniqueID := time.Now().Format("20060102030405")
+	return module, uniqueID, nil
 }
 
 func createNewMigration(cmd *cobra.Command, module, uniqueID string) error {
@@ -101,13 +106,13 @@ func createNewMigration(cmd *cobra.Command, module, uniqueID string) error {
 		cmd.Flag(MigrationsSourcesFlag).Value.String(), module)
 	//nolint:gosec
 	if err := os.Mkdir(newModuleFolder, 0o755); err != nil {
-		return err
+		return eris.Wrap(err, "error creating director")
 	}
 
 	modelsBytes, err := os.ReadFile(fmt.Sprintf("%s/model.go",
 		cmd.Flag(DatabaseSourcesFlag).Value.String()))
 	if err != nil {
-		return err
+		return eris.Wrap(err, "error reading the database/model.go file")
 	}
 	modelsBytes = []byte(strings.Replace(
 		string(modelsBytes),
@@ -119,12 +124,12 @@ func createNewMigration(cmd *cobra.Command, module, uniqueID string) error {
 	modelsFile := fmt.Sprintf("%s/model.go", newModuleFolder)
 	//nolint:gosec
 	if err := os.WriteFile(modelsFile, modelsBytes, 0o644); err != nil {
-		return err
+		return eris.Wrap(err, "error writing file")
 	}
 
 	tmpl, err := template.New("migrations").Parse(newMigrateTemplate)
 	if err != nil {
-		return fmt.Errorf("error parsing template: %w", err)
+		return eris.Wrap(err, "error parsing template")
 	}
 	data := map[string]any{
 		"module":   module,
@@ -133,17 +138,17 @@ func createNewMigration(cmd *cobra.Command, module, uniqueID string) error {
 
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
-		return fmt.Errorf("error executing template: %w", err)
+		return eris.Wrap(err, "error executing template")
 	}
 
 	src, err := format.Source(buf.Bytes())
 	if err != nil {
-		return err
+		return eris.Wrap(err, "error formatting generated file")
 	}
 	newFile := fmt.Sprintf("%s/migrate.go", newModuleFolder)
 	// nolint:gosec
 	if err := os.WriteFile(newFile, src, 0o644); err != nil {
-		return err
+		return eris.Wrap(err, "error writing generated file")
 	}
 	return nil
 }

@@ -246,12 +246,12 @@ run: build ## run the FastTrackML server.
 	@echo ">>> Running the FasttrackML server."
 	@./$(APP) server
 
-.PHONY: new-migration
-new-migration: ## generate a new database migration
-	@echo ">>> Running the FastTrackML new-migration."
-	@go run main.go new-migration
+.PHONY: migrations-create
+migrations-create: ## generate a new database migration.
+	@echo ">>> Running FastTrackML migrations create."
+	@go run main.go migrations create
 
-.PHONY: rebuild-migrations
-rebuild-migrations: ## rebuild the migrations script to detect new migrations
-	@echo ">>> Running the FastTrackML rebuild-migrations."
-	@go run main.go rebuild-migrations
+.PHONY: migrations-rebuild
+migrations-rebuild: ## rebuild the migrations script to detect new migrations.
+	@echo ">>> Running FastTrackML migrations rebuild."
+	@go run main.go migrations rebuild

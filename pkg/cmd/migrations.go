@@ -18,5 +18,4 @@ func init() {
 		"d", "./pkg/database", "Location for database package sources")
 	MigrationsCmd.PersistentFlags().StringP(migrations.MigrationsSourcesFlag,
 		"m", "./pkg/database/migrations", "Location for migration sources")
-
 }

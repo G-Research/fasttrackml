@@ -9,12 +9,12 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0001"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0002"
 	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0003"
@@ -194,6 +194,13 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				if err := v_0009.Migrate(db); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0009.Version, err)
 				}
+				fallthrough
+
+			case v_0009.Version:
+				log.Infof("Migrating database to FastTrackML schema %s", v_0010.Version)
+				if err := v_0010.Migrate(db); err != nil {
+					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0010.Version, err)
+				}
 			case v_0010.Version:
 				log.Infof("Migrating database to FastTrackML schema %s", v_0011.Version)
 				if err := v_0011.Migrate(db); err != nil {
@@ -317,7 +324,7 @@ func CreateDefaultExperiment(db *gorm.DB, defaultArtifactRoot string) error {
 
 // CreateDefaultMetricContext creates the default metric context if it doesn't exist.
 func CreateDefaultMetricContext(db *gorm.DB) error {
-	defaultContext := Context{Json: datatypes.JSON("{}")}
+	defaultContext := Context{Json: types.JSONB("{}")}
 	if err := db.First(&defaultContext).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Creating default context")

@@ -14,6 +14,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -68,7 +69,7 @@ func (s *GetHistoriesTestSuite) Test_Ok() {
 		Step:      1,
 		Iter:      1,
 		Context: models.Context{
-			Json: []byte(`
+			Json: types.JSONB(`
 				{
 					"metrickey1": "metricvalue1",
 					"metrickey2": "metricvalue2",

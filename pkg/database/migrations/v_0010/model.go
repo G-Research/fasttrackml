@@ -1,11 +1,9 @@
-package database
+package v_0010
 
 import (
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"database/sql/driver"
-	"encoding/hex"
 	"encoding/json"
 	"time"
 
@@ -33,12 +31,6 @@ const (
 	LifecycleStageDeleted LifecycleStage = "deleted"
 )
 
-// Default Experiment properties.
-const (
-	DefaultExperimentID   = int32(0)
-	DefaultExperimentName = "Default"
-)
-
 type Namespace struct {
 	ID                  uint           `gorm:"primaryKey;autoIncrement" json:"id"`
 	Apps                []App          `gorm:"constraint:OnDelete:CASCADE" json:"apps"`
@@ -62,11 +54,6 @@ type Experiment struct {
 	Namespace        Namespace
 	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
 	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
-}
-
-// IsDefault makes check that Experiment is default.
-func (e Experiment) IsDefault() bool {
-	return e.ID != nil && *e.ID == DefaultExperimentID && e.Name == DefaultExperimentName
 }
 
 type ExperimentTag struct {
@@ -167,12 +154,6 @@ type Context struct {
 	Json types.JSONB `gorm:"not null;unique;index"`
 }
 
-// GetJsonHash returns hash of the Context.Json
-func (c Context) GetJsonHash() string {
-	hash := sha256.Sum256(c.Json)
-	return string(hash[:])
-}
-
 type AlembicVersion struct {
 	Version string `gorm:"column:version_num;type:varchar(32);not null;primaryKey"`
 }
@@ -257,11 +238,4 @@ func (s *AppState) Scan(v interface{}) error {
 
 func (s AppState) GormDataType() string {
 	return "text"
-}
-
-func NewUUID() string {
-	var r [32]byte
-	u := uuid.New()
-	hex.Encode(r[:], u[:])
-	return string(r[:])
 }

@@ -7,8 +7,8 @@ import (
 )
 
 var MigrationsCmd = &cobra.Command{
-	Use:    "migrations",
-	Short:  "Top-level command for migrations",
+	Use:   "migrations",
+	Short: "Top-level command for migrations",
 }
 
 func init() {

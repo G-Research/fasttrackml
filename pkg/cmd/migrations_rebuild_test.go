@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRebuildMigrationsCmd(t *testing.T) {
+func TestRebuildCmd(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -36,7 +36,7 @@ func TestRebuildMigrationsCmd(t *testing.T) {
 			assert.Nil(t, os.Mkdir(filepath.Join(migrationsTmpDir, "v_0002"), 0o755))
 
 			// Set the command flags as needed
-			cmd.SetArgs([]string{"rebuild-migrations", "-d", databaseTmpDir, "-m", migrationsTmpDir})
+			cmd.SetArgs([]string{"migrations", "rebuild", "-d", databaseTmpDir, "-m", migrationsTmpDir})
 
 			// Exec command
 			if err := cmd.Execute(); err != nil {

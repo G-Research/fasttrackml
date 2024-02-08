@@ -1,4 +1,4 @@
-package cmd
+package migrations
 
 import (
 	"bytes"
@@ -51,8 +51,8 @@ if err := {{ package . }}.Migrate(db); err != nil {
 {{ end }}
 `
 
-var RebuildMigrationsCmd = &cobra.Command{
-	Use:   "rebuild-migrations",
+var RebuildCmd = &cobra.Command{
+	Use:   "rebuild",
 	Short: "Rebuilds the migration_generated.go file with the current state of pkg/database/migrations",
 	Long: `The rebuild-migrations command rebuilds the migration_generated.go file using the
                current state of the pkg/database/migrations folder.`,
@@ -123,13 +123,4 @@ func rebuildMigrations(cmd *cobra.Command) error {
 		return eris.Wrap(err, "error writing generated source file")
 	}
 	return nil
-}
-
-// nolint:errcheck,gosec
-func init() {
-	RootCmd.AddCommand(RebuildMigrationsCmd)
-	RebuildMigrationsCmd.Flags().StringP(DatabaseSourcesFlag,
-		"d", "./pkg/database", "Location for database package sources")
-	RebuildMigrationsCmd.Flags().StringP(MigrationsSourcesFlag,
-		"m", "./pkg/database/migrations", "Location for migration sources")
 }

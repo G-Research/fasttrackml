@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewMigrationCmd(t *testing.T) {
+func TestCreateCmd(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -40,11 +40,11 @@ func TestNewMigrationCmd(t *testing.T) {
 			assert.Nil(t, os.WriteFile(sourceModel, originalModelContent, 0o664))
 
 			// Set the command flags as needed
-			cmd.SetArgs([]string{"new-migration", "-d", databaseTmpDir, "-m", migrationsTmpDir})
+			cmd.SetArgs([]string{"migrations", "create", "-d", databaseTmpDir, "-m", migrationsTmpDir})
 
 			// Exec command
 			if err := cmd.Execute(); err != nil {
-				t.Errorf("NewMigrationCmd() error = %v, output: %v", err, b.String())
+				t.Errorf("CreateCmd() error = %v, output: %v", err, b.String())
 			}
 
 			// Verify

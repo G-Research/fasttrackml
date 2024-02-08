@@ -1,4 +1,4 @@
-package cmd
+package migrations
 
 import (
 	"bytes"
@@ -46,8 +46,8 @@ func Migrate(db *gorm.DB) error {
 }
 `
 
-var NewMigrationCmd = &cobra.Command{
-	Use:   "new-migration",
+var CreateCmd = &cobra.Command{
+	Use:   "create",
 	Short: "Creates a blank migration at the next available number",
 	Long: `The new-migration command will create a new, blank database
                migration using the next available migration number.`,
@@ -151,13 +151,4 @@ func createNewMigration(cmd *cobra.Command, module, uniqueID string) error {
 		return eris.Wrap(err, "error writing generated file")
 	}
 	return nil
-}
-
-// nolint:errcheck,gosec
-func init() {
-	RootCmd.AddCommand(NewMigrationCmd)
-	NewMigrationCmd.Flags().StringP(DatabaseSourcesFlag,
-		"d", "./pkg/database", "Location for database package sources")
-	NewMigrationCmd.Flags().StringP(MigrationsSourcesFlag,
-		"m", "./pkg/database/migrations", "Location for migration sources")
 }

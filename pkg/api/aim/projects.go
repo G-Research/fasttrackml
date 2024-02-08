@@ -114,7 +114,6 @@ func GetProjectParams(c *fiber.Ctx) error {
 	if err := c.QueryParser(&q); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	fmt.Println("query", q)
 
 	resp := fiber.Map{}
 

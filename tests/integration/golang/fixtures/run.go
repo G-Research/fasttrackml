@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"gorm.io/gorm"
-
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
+	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -43,9 +42,8 @@ func (f RunFixtures) CreateRun(
 }
 
 // ArchiveRun archive existing runs by their ids.
-func (f RunFixtures) ArchiveRun(ctx context.Context, ids []string) error {
-	err := f.runRepository.ArchiveBatch(ctx, ids)
-	return err
+func (f RunFixtures) ArchiveRun(ctx context.Context, namespaceID uint, ids []string) error {
+	return f.runRepository.ArchiveBatch(ctx, namespaceID, ids)
 }
 
 // UpdateRun updates existing Run.
@@ -60,9 +58,9 @@ func (f RunFixtures) UpdateRun(
 
 // ArchiveRuns soft-deletes existing Runs.
 func (f RunFixtures) ArchiveRuns(
-	ctx context.Context, runIDs []string,
+	ctx context.Context, namespaceID uint, runIDs []string,
 ) error {
-	if err := f.runRepository.ArchiveBatch(ctx, runIDs); err != nil {
+	if err := f.runRepository.ArchiveBatch(ctx, namespaceID, runIDs); err != nil {
 		return eris.Wrap(err, "error archiving runs")
 	}
 	return nil
@@ -99,6 +97,7 @@ func (f RunFixtures) CreateExampleRuns(
 		if err != nil {
 			return nil, err
 		}
+		run.Experiment = *exp
 		tag := models.Tag{
 			Key:   "my tag key",
 			Value: "my tag value",
@@ -181,15 +180,45 @@ func (f RunFixtures) CreateTag(
 	return nil
 }
 
+// CreateMetric creates a new test Metric.
+func (f RunFixtures) CreateMetric(ctx context.Context, metric *models.Metric) error {
+	defaultContext := models.DefaultContext
+	if err := f.baseFixtures.db.WithContext(
+		ctx,
+	).FirstOrCreate(
+		&defaultContext, defaultContext,
+	).Error; err != nil {
+		return eris.Wrap(err, "error creating or finding default context")
+	}
+
+	if metric.Context.Json == nil {
+		metric.ContextID = defaultContext.ID
+	}
+	if err := f.baseFixtures.db.WithContext(ctx).Create(metric).Error; err != nil {
+		return eris.Wrap(err, "error creating test metric")
+	}
+	return nil
+}
+
 // CreateMetrics creates some example metrics for a Run, up to count.
 func (f RunFixtures) CreateMetrics(
 	ctx context.Context, run *models.Run, count int,
 ) error {
+	defaultContext := models.DefaultContext
+	if err := f.baseFixtures.db.WithContext(
+		ctx,
+	).FirstOrCreate(
+		&defaultContext, defaultContext,
+	).Error; err != nil {
+		return eris.Wrap(err, "error creating or finding default context")
+	}
+
 	for i := 1; i <= count; i++ {
 		// create test `metric` and test `latest metric` and connect to run.
-
 		for iter := 1; iter <= count; iter++ {
-			err := f.baseFixtures.db.WithContext(ctx).Create(&models.Metric{
+			if err := f.baseFixtures.db.WithContext(
+				ctx,
+			).Create(&models.Metric{
 				Key:       fmt.Sprintf("key%d", i),
 				Value:     123.1 + float64(iter),
 				Timestamp: 1234567890 + int64(iter),
@@ -197,12 +226,14 @@ func (f RunFixtures) CreateMetrics(
 				Step:      int64(iter),
 				IsNan:     false,
 				Iter:      int64(iter),
-			}).Error
-			if err != nil {
+				ContextID: defaultContext.ID,
+			}).Error; err != nil {
 				return err
 			}
 		}
-		err := f.baseFixtures.db.WithContext(ctx).Create(&models.LatestMetric{
+		if err := f.baseFixtures.db.WithContext(
+			ctx,
+		).Create(&models.LatestMetric{
 			Key:       fmt.Sprintf("key%d", i),
 			Value:     123.1 + float64(count),
 			Timestamp: 1234567890 + int64(count),
@@ -210,8 +241,8 @@ func (f RunFixtures) CreateMetrics(
 			IsNan:     false,
 			RunID:     run.ID,
 			LastIter:  int64(count),
-		}).Error
-		if err != nil {
+			ContextID: defaultContext.ID,
+		}).Error; err != nil {
 			return err
 		}
 	}

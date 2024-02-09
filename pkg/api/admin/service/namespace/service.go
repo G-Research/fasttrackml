@@ -2,26 +2,37 @@ package namespace
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"net/url"
+	"time"
 
 	"github.com/rotisserie/eris"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 )
 
 // Service provides service layer to work with `namespace` business logic.
 type Service struct {
-	namespaceRepository repositories.NamespaceRepositoryProvider
+	config               *config.ServiceConfig
+	namespaceRepository  repositories.NamespaceRepositoryProvider
+	experimentRepository repositories.ExperimentRepositoryProvider
 }
 
 // NewService creates new Service instance.
 func NewService(
+	config *config.ServiceConfig,
 	namespaceRepository repositories.NamespaceRepositoryProvider,
+	experimentRepository repositories.ExperimentRepositoryProvider,
 ) *Service {
 	return &Service{
-		namespaceRepository: namespaceRepository,
+		config:               config,
+		namespaceRepository:  namespaceRepository,
+		experimentRepository: experimentRepository,
 	}
 }
 
@@ -48,25 +59,49 @@ func (s Service) CreateNamespace(ctx context.Context, code, description string) 
 	if err := ValidateNamespace(code); err != nil {
 		return nil, eris.Wrap(err, "error validating namespace")
 	}
-	exp := &models.Experiment{
-		Name:           fmt.Sprintf("%s-exp", code),
-		LifecycleStage: models.LifecycleStageActive,
-	}
+
 	namespace := &models.Namespace{
 		Code:                code,
 		Description:         description,
-		Experiments:         []models.Experiment{*exp},
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	}
 	if err := s.namespaceRepository.Create(ctx, namespace); err != nil {
 		return nil, eris.Wrap(err, "error creating namespace")
 	}
+
+	timestamp := time.Now().UTC().UnixMilli()
+	experiment := models.Experiment{
+		Name:           models.DefaultExperimentName,
+		NamespaceID:    namespace.ID,
+		CreationTime:   sql.NullInt64{Int64: timestamp, Valid: true},
+		LifecycleStage: models.LifecycleStageActive,
+		LastUpdateTime: sql.NullInt64{Int64: timestamp, Valid: true},
+	}
+
+	if err := s.experimentRepository.Create(ctx, &experiment); err != nil {
+		return nil, eris.Wrap(err, "error creating experiment")
+	}
+
 	// update Namespace with correct DefaultExperimentID now that it is known
-	namespace.DefaultExperimentID = namespace.Experiments[0].ID
-	err := s.namespaceRepository.Update(ctx, namespace)
-	if err != nil {
+	namespace.DefaultExperimentID = experiment.ID
+	if err := s.namespaceRepository.Update(ctx, namespace); err != nil {
 		return nil, eris.Wrap(err, "error setting namespace default experiment id during create")
 	}
+
+	// setup ArtifactLocation for default experiment.
+	path, err := url.JoinPath(s.config.DefaultArtifactRoot, fmt.Sprintf("%d", *experiment.ID))
+	if err != nil {
+		return nil, api.NewInternalError(
+			"error creating artifact_location for experiment'%s': %s", experiment.Name, err,
+		)
+	}
+	experiment.ArtifactLocation = path
+	if err := s.experimentRepository.Update(ctx, &experiment); err != nil {
+		return nil, api.NewInternalError(
+			"error updating artifact_location for experiment '%s': %s", experiment.Name, err,
+		)
+	}
+
 	return namespace, nil
 }
 
@@ -100,7 +135,10 @@ func (s Service) DeleteNamespace(ctx context.Context, id uint) error {
 	if namespace == nil {
 		return eris.Errorf("namespace not found by id: %d", id)
 	}
-	if err := s.namespaceRepository.Delete(ctx, id); err != nil {
+	if namespace.IsDefault() {
+		return eris.Errorf("unable to delete default namespace")
+	}
+	if err := s.namespaceRepository.Delete(ctx, namespace); err != nil {
 		return eris.Wrap(err, "error deleting namespace")
 	}
 	return nil

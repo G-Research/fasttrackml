@@ -3,7 +3,9 @@ package aim
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -12,7 +14,9 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -21,6 +25,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
@@ -54,7 +59,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 		InnerJoins(
 			"Experiment",
 			database.DB.Select(
-				"ID",
+				"ID", "Name",
 			).Where(
 				&models.Experiment{NamespaceID: ns.ID},
 			),
@@ -82,10 +87,10 @@ func GetRunInfo(c *fiber.Ctx) error {
 			traces[s] = []fiber.Map{}
 		case "metric":
 			tx.Preload("LatestMetrics", func(db *gorm.DB) *gorm.DB {
-				return db.Select("RunID", "Key")
-			})
+				return db.Select("RunID", "Key", "ContextID")
+			}).Preload("LatestMetrics.Context")
 		default:
-			return fmt.Errorf("%q is not a valid Sequence", s)
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("%q is not a valid Sequence", s))
 		}
 	}
 
@@ -125,11 +130,13 @@ func GetRunInfo(c *fiber.Ctx) error {
 
 	metrics := make([]fiber.Map, len(r.LatestMetrics))
 	for i, m := range r.LatestMetrics {
-		metrics[i] = fiber.Map{
+		metric := fiber.Map{
 			"name":       m.Key,
-			"last_value": 0.1,
 			"context":    fiber.Map{},
+			"last_value": 0.1,
 		}
+		metric["context"] = m.Context.Json
+		metrics[i] = metric
 	}
 	traces["metric"] = metrics
 
@@ -155,17 +162,24 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	b := []struct {
-		Context fiber.Map `json:"context"`
+	var b []struct {
 		Name    string    `json:"name"`
-	}{}
+		Context fiber.Map `json:"context"`
+	}
 
 	if err := c.BodyParser(&b); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	metricKeysMap := make(fiber.Map, len(b))
+	metricKeysMap, contexts := make(fiber.Map, len(b)), make([]types.JSONB, 0, len(b))
 	for _, m := range b {
+		if m.Context != nil {
+			serializedContext, err := json.Marshal(m.Context)
+			if err != nil {
+				return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+			}
+			contexts = append(contexts, serializedContext)
+		}
 		metricKeysMap[m.Name] = nil
 	}
 	metricKeys := make([]string, len(metricKeysMap))
@@ -176,57 +190,79 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		i++
 	}
 
-	r := database.Run{
+	// check that requested run actually exists.
+	if err := database.DB.Select(
+		"ID",
+	).InnerJoins(
+		"Experiment",
+		database.DB.Select(
+			"ID",
+		).Where(
+			&models.Experiment{NamespaceID: ns.ID},
+		),
+	).First(&database.Run{
 		ID: p.ID,
-	}
-	if err := database.DB.
-		Select("ID").
-		InnerJoins(
-			"Experiment",
-			database.DB.Select(
-				"ID",
-			).Where(
-				&models.Experiment{NamespaceID: ns.ID},
-			),
-		).
-		Preload("Metrics", func(db *gorm.DB) *gorm.DB {
-			return db.
-				Where("key IN ?", metricKeys).
-				Order("iter")
-		}).
-		First(&r).Error; err != nil {
+	}).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
 		return fmt.Errorf("unable to find run %q: %w", p.ID, err)
 	}
 
-	metrics := make(map[string]struct {
-		values []*float64
-		iters  []int
-	}, len(metricKeys))
-	for _, m := range r.Metrics {
-		k := metrics[m.Key]
+	// fetch run metrics based on provided criteria.
+	var data []database.Metric
+	if err := database.DB.Where(
+		"run_uuid = ?", p.ID,
+	).InnerJoins(
+		"Context",
+		func() *gorm.DB {
+			query := database.DB
+			for _, context := range contexts {
+				query = query.Or("json = ?", context)
+			}
+			return query
+		}(),
+	).Where(
+		"key IN ?", metricKeys,
+	).Order(
+		"iter",
+	).Find(
+		&data,
+	).Error; err != nil {
+		return fmt.Errorf("unable to find run metrics: %w", err)
+	}
 
+	metrics := make(map[string]struct {
+		name    string
+		iters   []int
+		values  []*float64
+		context json.RawMessage
+	}, len(metricKeys))
+
+	for _, m := range data {
 		v := m.Value
 		pv := &v
 		if m.IsNan {
 			pv = nil
 		}
 
-		k.values = append(k.values, pv)
+		key := fmt.Sprintf("%s%d", m.Key, m.ContextID)
+		k := metrics[key]
+		k.name = m.Key
 		k.iters = append(k.iters, int(m.Iter))
-		metrics[m.Key] = k
+		k.values = append(k.values, pv)
+		k.context = json.RawMessage(m.Context.Json)
+		metrics[key] = k
 	}
 
-	resp := make([]fiber.Map, len(metrics))
-	for i, k := range metricKeys {
-		resp[i] = fiber.Map{
-			"name":    k,
-			"context": fiber.Map{},
-			"values":  metrics[k].values,
-			"iters":   metrics[k].iters,
-		}
+	resp := make([]fiber.Map, 0, len(metrics))
+	for _, m := range metrics {
+		resp = append(resp, fiber.Map{
+			"name":    m.name,
+			"iters":   m.iters,
+			"values":  m.values,
+			"context": m.context,
+		})
 	}
 
 	return c.JSON(resp)
@@ -252,19 +288,21 @@ func GetRunsActive(c *fiber.Ctx) error {
 	}
 
 	var runs []database.Run
-	if tx := database.DB.
+	if err := database.DB.
 		Where("status = ?", database.StatusRunning).
 		InnerJoins(
 			"Experiment",
 			database.DB.Select(
-				"ID",
+				"ID", "Name",
 			).Where(
 				&models.Experiment{NamespaceID: ns.ID},
 			),
 		).
-		Preload("LatestMetrics").
-		Find(&runs); tx.Error != nil {
-		return fmt.Errorf("error retrieving active runs: %w", tx.Error)
+		Preload("LatestMetrics.Context").
+		Limit(50).
+		Order("start_time DESC").
+		Find(&runs).Error; err != nil {
+		return fmt.Errorf("error retrieving active runs: %w", err)
 	}
 
 	c.Set("Content-Type", "application/octet-stream")
@@ -292,17 +330,24 @@ func GetRunsActive(c *fiber.Ctx) error {
 					if m.IsNan {
 						v = math.NaN()
 					}
-					metrics[i] = fiber.Map{
-						"context": fiber.Map{},
-						"name":    m.Key,
+					data := fiber.Map{
+						"name": m.Key,
 						"last_value": fiber.Map{
 							"dtype":      "float",
 							"first_step": 0,
 							"last_step":  m.LastIter,
 							"last":       v,
 							"version":    2,
+							"context":    fiber.Map{},
 						},
 					}
+					// to be properly decoded by AIM UI, json should be represented as a key:value object.
+					context := fiber.Map{}
+					if err := json.Unmarshal(m.Context.Json, &context); err != nil {
+						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+					}
+					data["context"] = context
+					metrics[i] = data
 				}
 
 				if err := encoding.EncodeTree(w, fiber.Map{
@@ -352,8 +397,8 @@ func GetRunsActive(c *fiber.Ctx) error {
 // TODO:get back and fix `gocyclo` problem.
 //
 //nolint:gocyclo
-func SearchRuns(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func SearchRuns(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -363,6 +408,7 @@ func SearchRuns(c *fiber.Ctx) error {
 		Query  string `query:"q"`
 		Limit  int    `query:"limit"`
 		Offset string `query:"offset"`
+		Action string `query:"action"`
 		// TODO skip_system is unused - should we keep it?
 		SkipSystem     bool `query:"skip_system"`
 		ReportProgress bool `query:"report_progress"`
@@ -370,15 +416,15 @@ func SearchRuns(c *fiber.Ctx) error {
 		ExcludeTraces  bool `query:"exclude_traces"`
 	}{}
 
-	if err = c.QueryParser(&q); err != nil {
+	if err = ctx.QueryParser(&q); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if c.Query("report_progress") == "" {
+	if ctx.Query("report_progress") == "" {
 		q.ReportProgress = true
 	}
 
-	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
+	tzOffset, err := strconv.Atoi(ctx.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
@@ -413,28 +459,12 @@ func SearchRuns(c *fiber.Ctx) error {
 		InnerJoins(
 			"Experiment",
 			database.DB.Select(
-				"ID",
+				"ID", "Name",
 			).Where(
 				&models.Experiment{NamespaceID: ns.ID},
 			),
 		).
 		Order("row_num DESC")
-
-	if q.Limit > 0 {
-		tx.Limit(q.Limit)
-	}
-
-	if q.Offset != "" {
-		run := &database.Run{
-			ID: q.Offset,
-		}
-		// TODO:DSuhinin -> do we need `namespace` restriction? it seems like yyyyess, but ....
-		if err := database.DB.Select("row_num").First(&run).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, err)
-		}
-
-		tx.Where("row_num < ?", run.RowNum)
-	}
 
 	if !q.ExcludeParams {
 		tx.Preload("Params")
@@ -442,113 +472,41 @@ func SearchRuns(c *fiber.Ctx) error {
 	}
 
 	if !q.ExcludeTraces {
-		tx.Preload("LatestMetrics")
+		tx.Preload("LatestMetrics.Context")
 	}
 
-	var runs []database.Run
-	pq.Filter(tx).Find(&runs)
-	if tx.Error != nil {
-		return fmt.Errorf("error searching runs: %w", tx.Error)
-	}
-
-	log.Debugf("Found %d runs", len(runs))
-
-	c.Set("Content-Type", "application/octet-stream")
-	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		start := time.Now()
-		if err = func() error {
-			for i, r := range runs {
-				run := fiber.Map{
-					"props": fiber.Map{
-						"name":        r.Name,
-						"description": nil,
-						"experiment": fiber.Map{
-							"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-							"name": r.Experiment.Name,
-						},
-						"tags":          []string{}, // TODO insert real tags
-						"creation_time": float64(r.StartTime.Int64) / 1000,
-						"end_time":      float64(r.EndTime.Int64) / 1000,
-						"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
-						"active":        r.Status == database.StatusRunning,
-					},
-				}
-
-				if !q.ExcludeTraces {
-					metrics := make([]fiber.Map, len(r.LatestMetrics))
-					for i, m := range r.LatestMetrics {
-						v := m.Value
-						if m.IsNan {
-							v = math.NaN()
-						}
-						metrics[i] = fiber.Map{
-							"context": fiber.Map{},
-							"name":    m.Key,
-							"last_value": fiber.Map{
-								"dtype":      "float",
-								"first_step": 0,
-								"last_step":  m.LastIter,
-								"last":       v,
-								"version":    2,
-							},
-						}
-					}
-					run["traces"] = fiber.Map{
-						"metric": metrics,
-					}
-				}
-
-				if !q.ExcludeParams {
-					params := make(fiber.Map, len(r.Params)+1)
-					for _, p := range r.Params {
-						params[p.Key] = p.Value
-					}
-					tags := make(map[string]string, len(r.Tags))
-					for _, t := range r.Tags {
-						tags[t.Key] = t.Value
-					}
-					params["tags"] = tags
-					run["params"] = params
-				}
-
-				err = encoding.EncodeTree(w, fiber.Map{
-					r.ID: run,
-				})
-				if err != nil {
-					return err
-				}
-
-				if q.ReportProgress {
-					err = encoding.EncodeTree(w, fiber.Map{
-						fmt.Sprintf("progress_%d", i): []int64{total - int64(r.RowNum), total},
-					})
-					if err != nil {
-						return err
-					}
-				}
-
-				err = w.Flush()
-				if err != nil {
-					return err
-				}
-			}
-
-			if q.ReportProgress && err == nil {
-				err = encoding.EncodeTree(w, fiber.Map{
-					fmt.Sprintf("progress_%d", len(runs)): []int64{total, total},
-				})
-				if err != nil {
-					err = w.Flush()
-				}
-			}
-
-			return nil
-		}(); err != nil {
-			log.Errorf("Error encountered in %s %s: error streaming runs: %s", c.Method(), c.Path(), err)
+	switch q.Action {
+	case "export":
+		var runs []database.Run
+		if err := pq.Filter(tx).Find(&runs).Error; err != nil {
+			return fmt.Errorf("error searching runs: %w", err)
 		}
-
-		log.Infof("body - %s %s %s", time.Since(start), c.Method(), c.Path())
-	})
+		log.Debugf("found %d runs", len(runs))
+		RunsSearchAsCSVResponse(ctx, runs, q.ExcludeTraces, q.ExcludeParams)
+	default:
+		if q.Limit > 0 {
+			tx.Limit(q.Limit)
+		}
+		if q.Offset != "" {
+			run := &database.Run{
+				ID: q.Offset,
+			}
+			if err := database.DB.Select(
+				"row_num",
+			).First(
+				&run,
+			).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, err)
+			}
+			tx.Where("row_num < ?", run.RowNum)
+		}
+		var runs []database.Run
+		if err := pq.Filter(tx).Find(&runs).Error; err != nil {
+			return fmt.Errorf("error searching runs: %w", err)
+		}
+		log.Debugf("found %d runs", len(runs))
+		RunsSearchAsStreamResponse(ctx, runs, total, q.ExcludeTraces, q.ExcludeParams, q.ReportProgress)
+	}
 
 	return nil
 }
@@ -621,7 +579,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 		InnerJoins(
 			"Experiment",
 			database.DB.Select(
-				"ID",
+				"ID", "Name",
 			).Where(&models.Experiment{NamespaceID: ns.ID}),
 		).
 		Preload("Params").
@@ -633,7 +591,9 @@ func SearchMetrics(c *fiber.Ctx) error {
 				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 				ns.ID,
 			).
-			Joins("LEFT JOIN latest_metrics USING(run_uuid)"))).
+			Joins("JOIN latest_metrics USING(run_uuid)").
+			Joins("JOIN contexts ON latest_metrics.context_id = contexts.id"),
+		)).
 		Order("runs.row_num DESC").
 		Find(&runs); tx.Error != nil {
 		return fmt.Errorf("error searching run metrics: %w", tx.Error)
@@ -678,15 +638,20 @@ func SearchMetrics(c *fiber.Ctx) error {
 	}
 
 	tx := database.DB.
-		Select("metrics.*").
+		Select(`
+			metrics.*,
+			runmetrics.context_json`,
+		).
 		Table("metrics").
 		Joins(
-			"INNER JOIN (?) runmetrics USING(run_uuid, key)",
+			"INNER JOIN (?) runmetrics USING(run_uuid, key, context_id)",
 			pq.Filter(database.DB.
 				Select(
 					"runs.run_uuid",
 					"runs.row_num",
 					"latest_metrics.key",
+					"latest_metrics.context_id",
+					"contexts.json AS context_json",
 					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
 				).
 				Table("runs").
@@ -694,19 +659,22 @@ func SearchMetrics(c *fiber.Ctx) error {
 					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 					ns.ID,
 				).
-				Joins("LEFT JOIN latest_metrics USING(run_uuid)")),
+				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
+				Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id")),
 		).
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").
 		Order("metrics.key").
+		Order("metrics.context_id").
 		Order("metrics.iter")
 
 	var xAxis bool
 	if q.XAxis != "" {
 		tx.
-			Select("metrics.*", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
+			Select("metrics.*", "runmetrics.context_json", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
 			Joins(
-				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND metrics.iter = x_axis.iter AND x_axis.key = ?",
+				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND "+
+					"metrics.iter = x_axis.iter AND x_axis.context_id = metrics.context_id AND x_axis.key = ?",
 				q.XAxis,
 			)
 		xAxis = true
@@ -730,6 +698,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 			var (
 				id          string
 				key         string
+				context     fiber.Map
+				contextID   uint
 				metrics     []fiber.Map
 				values      []float64
 				iters       []float64
@@ -755,7 +725,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 				if key != "" {
 					metric := fiber.Map{
 						"name":          key,
-						"context":       fiber.Map{},
+						"context":       context,
 						"slice":         []int{0, 0, q.Steps},
 						"values":        toNumpy(values),
 						"iters":         toNumpy(iters),
@@ -790,15 +760,15 @@ func SearchMetrics(c *fiber.Ctx) error {
 			for rows.Next() {
 				var metric struct {
 					database.Metric
-					XAxisValue float64 `gorm:"column:x_axis_value"`
-					XAxisIsNaN bool    `gorm:"column:x_axis_is_nan"`
+					Context    datatypes.JSON `gorm:"column:context_json"`
+					XAxisValue float64        `gorm:"column:x_axis_value"`
+					XAxisIsNaN bool           `gorm:"column:x_axis_is_nan"`
 				}
 				if err := database.DB.ScanRows(rows, &metric); err != nil {
 					return err
 				}
 
-				// New series of metrics
-				if metric.Key != key || metric.RunID != id {
+				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
 					addMetrics()
 
 					if metric.RunID != id {
@@ -820,6 +790,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 					values = make([]float64, 0, q.Steps)
 					iters = make([]float64, 0, q.Steps)
 					epochs = make([]float64, 0, q.Steps)
+					context = fiber.Map{}
 					timestamps = make([]float64, 0, q.Steps)
 					if xAxis {
 						xAxisValues = make([]float64, 0, q.Steps)
@@ -842,6 +813,11 @@ func SearchMetrics(c *fiber.Ctx) error {
 					}
 					xAxisValues = append(xAxisValues, x)
 				}
+				// to be properly decoded by AIM UI, json should be represented as a key:value object.
+				if err := json.Unmarshal(metric.Context, &context); err != nil {
+					return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+				}
+				contextID = metric.ContextID
 			}
 
 			addMetrics()
@@ -868,14 +844,20 @@ func SearchMetrics(c *fiber.Ctx) error {
 //
 //nolint:gocyclo
 func SearchAlignedMetrics(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("searchAlignedMetrics namespace: %s", ns.Code)
+
 	b := struct {
 		AlignBy string `json:"align_by"`
 		Runs    []struct {
 			ID     string `json:"run_id"`
 			Traces []struct {
-				Context fiber.Map `json:"context"`
 				Name    string    `json:"name"`
 				Slice   [3]int    `json:"slice"`
+				Context fiber.Map `json:"context"`
 			} `json:"traces"`
 		} `json:"runs"`
 	}{}
@@ -884,22 +866,51 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	var capacity int
-	var values []any
+	values, capacity, contextsMap := []any{}, 0, map[string]types.JSONB{}
 	for _, r := range b.Runs {
 		for _, t := range r.Traces {
 			l := t.Slice[2]
 			if l > capacity {
 				capacity = l
 			}
-			values = append(values, r.ID, t.Name, float32(l))
+			// collect map of unique contexts.
+			data, err := json.Marshal(t.Context)
+			if err != nil {
+				return api.NewInternalError("error serializing context: %s", err)
+			}
+			sum := sha256.Sum256(data)
+			contextHash := fmt.Sprintf("%x", sum)
+			_, ok := contextsMap[contextHash]
+			if !ok {
+				contextsMap[contextHash] = data
+			}
+			values = append(values, r.ID, t.Name, data, float32(l))
+		}
+	}
+
+	// map context values to context ids
+	query := database.DB
+	for _, context := range contextsMap {
+		query = query.Or("contexts.json = ?", context)
+	}
+	var contexts []database.Context
+	if err := query.Find(&contexts).Error; err != nil {
+		return api.NewInternalError("error getting context information: %s", err)
+	}
+
+	// add context ids to `values`
+	for _, context := range contexts {
+		for i := 2; i < len(values); i += 4 {
+			if CompareJson(values[i].([]byte), context.Json) {
+				values[i] = context.ID
+			}
 		}
 	}
 
 	var valuesStmt strings.Builder
-	length := len(values) / 3
+	length := len(values) / 4
 	for i := 0; i < length; i++ {
-		valuesStmt.WriteString("(?, ?, CAST(? AS numeric))")
+		valuesStmt.WriteString("(?, ?, CAST(? AS numeric), CAST(? AS numeric))")
 		if i < length-1 {
 			valuesStmt.WriteString(",")
 		}
@@ -907,19 +918,35 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 
 	// TODO this should probably be batched
 
-	values = append(values, b.AlignBy)
+	values = append(values, ns.ID, b.AlignBy)
+
 	rows, err := database.DB.Raw(
-		fmt.Sprintf("WITH params(run_uuid, key, steps) AS (VALUES %s)", &valuesStmt)+
-			"        SELECT m.run_uuid, rm.key, m.iter, m.value, m.is_nan FROM metrics AS m"+
+		fmt.Sprintf("WITH params(run_uuid, key, context_id, steps) AS (VALUES %s)", &valuesStmt)+
+			"        SELECT m.run_uuid, "+
+			"				rm.key, "+
+			"				m.iter, "+
+			"				m.value, "+
+			"				m.is_nan, "+
+			"				rm.context_id, "+
+			"				rm.context_json"+
+			"		 FROM metrics AS m"+
 			"        RIGHT JOIN ("+
-			"          SELECT p.run_uuid, p.key, lm.last_iter AS max, (lm.last_iter + 1) / p.steps AS interval"+
+			"          SELECT p.run_uuid, "+
+			"				  p.key, "+
+			"				  p.context_id, "+
+			"				  lm.last_iter AS max, "+
+			"				  (lm.last_iter + 1) / p.steps AS interval, "+
+			"				  contexts.json AS context_json"+
 			"          FROM params AS p"+
-			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key)"+
-			"        ) rm USING(run_uuid)"+
+			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key, context_id)"+
+			"          INNER JOIN contexts ON contexts.id = lm.context_id"+
+			"        ) rm USING(run_uuid, context_id)"+
+			"		 INNER JOIN runs AS r ON m.run_uuid = r.run_uuid"+
+			"		 INNER JOIN experiments AS e ON r.experiment_id = e.experiment_id AND e.namespace_id = ?"+
 			"        WHERE m.key = ?"+
 			"          AND m.iter <= rm.max"+
 			"          AND MOD(m.iter + 1 + rm.interval / 2, rm.interval) < 1"+
-			"        ORDER BY m.run_uuid, rm.key, m.iter",
+			"        ORDER BY r.row_num DESC, rm.key, rm.context_id, m.iter",
 		values...,
 	).Rows()
 	if err != nil {
@@ -938,6 +965,8 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		if err := func() error {
 			var id string
 			var key string
+			var context fiber.Map
+			var contextID uint
 			metrics := make([]fiber.Map, 0)
 			values := make([]float64, 0, capacity)
 			iters := make([]float64, 0, capacity)
@@ -946,7 +975,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 				if key != "" {
 					metric := fiber.Map{
 						"name":          key,
-						"context":       fiber.Map{},
+						"context":       context,
 						"x_axis_values": toNumpy(values),
 						"x_axis_iters":  toNumpy(iters),
 					}
@@ -967,20 +996,22 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 			}
 
 			for rows.Next() {
-				var metric database.Metric
+				var metric struct {
+					database.Metric
+					Context datatypes.JSON `gorm:"column:context_json"`
+				}
 				if err := database.DB.ScanRows(rows, &metric); err != nil {
 					return err
 				}
 
 				// New series of metrics
-				if metric.Key != key || metric.RunID != id {
+				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
 					addMetrics()
 
 					if metric.RunID != id {
 						if err := flushMetrics(); err != nil {
 							return err
 						}
-
 						metrics = metrics[:0]
 						id = metric.RunID
 					}
@@ -988,6 +1019,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 					key = metric.Key
 					values = values[:0]
 					iters = iters[:0]
+					context = fiber.Map{}
 				}
 
 				v := metric.Value
@@ -996,6 +1028,13 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 				}
 				values = append(values, v)
 				iters = append(iters, float64(metric.Iter))
+				if metric.Context != nil {
+					// to be properly decoded by AIM UI, json should be represented as a key:value object.
+					if err := json.Unmarshal(metric.Context, &context); err != nil {
+						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+					}
+					contextID = metric.ContextID
+				}
 			}
 
 			addMetrics()
@@ -1043,7 +1082,7 @@ func DeleteRun(c *fiber.Ctx) error {
 	}
 
 	// TODO this code should move to service with injected repository
-	if err = runRepository.Delete(c.Context(), run); err != nil {
+	if err = runRepository.Delete(c.Context(), ns.ID, run); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
 			fmt.Sprintf("unable to delete run %q: %s", params.ID, err),
 		)
@@ -1122,6 +1161,12 @@ func UpdateRun(c *fiber.Ctx) error {
 }
 
 func ArchiveBatch(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("archiveBatch namespace: %s", ns.Code)
+
 	var ids []string
 	if err := c.BodyParser(&ids); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
@@ -1130,11 +1175,11 @@ func ArchiveBatch(c *fiber.Ctx) error {
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB)
 	if c.Query("archive") == "true" {
-		if err := runRepo.ArchiveBatch(c.Context(), ids); err != nil {
+		if err := runRepo.ArchiveBatch(c.Context(), ns.ID, ids); err != nil {
 			return err
 		}
 	} else {
-		if err := runRepo.RestoreBatch(c.Context(), ids); err != nil {
+		if err := runRepo.RestoreBatch(c.Context(), ns.ID, ids); err != nil {
 			return err
 		}
 	}
@@ -1145,6 +1190,12 @@ func ArchiveBatch(c *fiber.Ctx) error {
 }
 
 func DeleteBatch(c *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("deleteBatch namespace: %s", ns.Code)
+
 	var ids []string
 	if err := c.BodyParser(&ids); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
@@ -1152,7 +1203,7 @@ func DeleteBatch(c *fiber.Ctx) error {
 
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB)
-	if err := runRepo.DeleteBatch(c.Context(), ids); err != nil {
+	if err := runRepo.DeleteBatch(c.Context(), ns.ID, ids); err != nil {
 		return err
 	}
 	return c.JSON(fiber.Map{

@@ -34,15 +34,15 @@ type RunRepositoryProvider interface {
 	// Archive marks existing models.Run entity as archived.
 	Archive(ctx context.Context, run *models.Run) error
 	// Delete removes the existing models.Run
-	Delete(ctx context.Context, run *models.Run) error
+	Delete(ctx context.Context, namespaceID uint, run *models.Run) error
 	// Restore marks existing models.Run entity as active.
 	Restore(ctx context.Context, run *models.Run) error
 	// ArchiveBatch marks existing models.Run entities as archived.
-	ArchiveBatch(ctx context.Context, ids []string) error
+	ArchiveBatch(ctx context.Context, namespaceID uint, ids []string) error
 	// DeleteBatch removes the existing models.Run from the db.
-	DeleteBatch(ctx context.Context, ids []string) error
+	DeleteBatch(ctx context.Context, namespaceID uint, ids []string) error
 	// RestoreBatch marks existing models.Run entities as active.
-	RestoreBatch(ctx context.Context, ids []string) error
+	RestoreBatch(ctx context.Context, namespaceID uint, ids []string) error
 	// SetRunTagsBatch sets Run tags in batch.
 	SetRunTagsBatch(ctx context.Context, run *models.Run, batchSize int, tags []models.Tag) error
 	// UpdateWithTransaction updates existing models.Run entity in scope of transaction.
@@ -171,15 +171,30 @@ func (r RunRepository) Archive(ctx context.Context, run *models.Run) error {
 }
 
 // ArchiveBatch marks existing models.Run entities as archived.
-func (r RunRepository) ArchiveBatch(ctx context.Context, ids []string) error {
-	run := models.Run{
+func (r RunRepository) ArchiveBatch(ctx context.Context, namespaceID uint, ids []string) error {
+	if err := r.db.WithContext(
+		ctx,
+	).Model(
+		models.Run{},
+	).Where(
+		"run_uuid IN (?)",
+		r.db.Model(
+			models.Run{},
+		).Select(
+			"run_uuid",
+		).Joins(
+			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+			namespaceID,
+		).Where(
+			"run_uuid IN (?)", ids,
+		),
+	).Updates(models.Run{
 		DeletedTime: sql.NullInt64{
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
 		},
 		LifecycleStage: models.LifecycleStageDeleted,
-	}
-	if err := r.db.WithContext(ctx).Model(&run).Where("run_uuid IN ?", ids).Updates(run).Error; err != nil {
+	}).Error; err != nil {
 		return eris.Wrapf(err, "error updating existing runs with ids: %s", ids)
 	}
 
@@ -187,17 +202,31 @@ func (r RunRepository) ArchiveBatch(ctx context.Context, ids []string) error {
 }
 
 // Delete removes the existing models.Run from the db.
-func (r RunRepository) Delete(ctx context.Context, run *models.Run) error {
-	return r.DeleteBatch(ctx, []string{run.ID})
+func (r RunRepository) Delete(ctx context.Context, namespaceID uint, run *models.Run) error {
+	return r.DeleteBatch(ctx, namespaceID, []string{run.ID})
 }
 
 // DeleteBatch removes existing models.Run from the db.
-func (r RunRepository) DeleteBatch(ctx context.Context, ids []string) error {
+func (r RunRepository) DeleteBatch(ctx context.Context, namespaceID uint, ids []string) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		runs := make([]models.Run, 0, len(ids))
-		if err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "row_num"}}}).
-			Where("run_uuid IN ?", ids).
-			Delete(&runs).Error; err != nil {
+		if err := tx.Clauses(
+			clause.Returning{Columns: []clause.Column{{Name: "row_num"}}},
+		).Where(
+			"run_uuid IN (?)",
+			r.db.Model(
+				models.Run{},
+			).Select(
+				"run_uuid",
+			).Joins(
+				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+				namespaceID,
+			).Where(
+				"run_uuid IN (?)", ids,
+			),
+		).Delete(
+			&runs,
+		).Error; err != nil {
 			return eris.Wrapf(err, "error deleting existing runs with ids: %s", ids)
 		}
 
@@ -233,12 +262,25 @@ func (r RunRepository) Restore(ctx context.Context, run *models.Run) error {
 }
 
 // RestoreBatch marks existing models.Run entities as active.
-func (r RunRepository) RestoreBatch(ctx context.Context, ids []string) error {
-	run := models.Run{
+func (r RunRepository) RestoreBatch(ctx context.Context, namespaceID uint, ids []string) error {
+	if err := r.db.WithContext(
+		ctx,
+	).Where(
+		"run_uuid IN (?)",
+		r.db.Model(
+			models.Run{},
+		).Select(
+			"run_uuid",
+		).Joins(
+			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+			namespaceID,
+		).Where(
+			"run_uuid IN (?)", ids,
+		),
+	).Updates(models.Run{
 		DeletedTime:    sql.NullInt64{},
 		LifecycleStage: models.LifecycleStageActive,
-	}
-	if err := r.db.WithContext(ctx).Model(&run).Where("run_uuid IN ?", ids).Updates(run).Error; err != nil {
+	}).Error; err != nil {
 		return eris.Wrapf(err, "error updating existing runs with ids: %s", ids)
 	}
 
@@ -250,7 +292,6 @@ func (r RunRepository) UpdateWithTransaction(ctx context.Context, tx *gorm.DB, r
 	if err := tx.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
 		return eris.Wrapf(err, "error updating existing run with id: %s", run.ID)
 	}
-
 	return nil
 }
 

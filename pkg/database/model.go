@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"database/sql/driver"
 	"encoding/hex"
@@ -11,6 +12,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 )
 
 type Status string
@@ -30,29 +33,40 @@ const (
 	LifecycleStageDeleted LifecycleStage = "deleted"
 )
 
+// Default Experiment properties.
+const (
+	DefaultExperimentID   = int32(0)
+	DefaultExperimentName = "Default"
+)
+
 type Namespace struct {
-	ID                  uint   `gorm:"primaryKey;autoIncrement"`
-	Apps                []App  `gorm:"constraint:OnDelete:CASCADE"`
-	Code                string `gorm:"unique;index;not null"`
-	Description         string
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
-	DeletedAt           gorm.DeletedAt `gorm:"index"`
-	DefaultExperimentID *int32         `gorm:"not null"`
-	Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE"`
+	ID                  uint           `gorm:"primaryKey;autoIncrement" json:"id"`
+	Apps                []App          `gorm:"constraint:OnDelete:CASCADE" json:"apps"`
+	Code                string         `gorm:"unique;index;not null" json:"code"`
+	Description         string         `json:"description"`
+	CreatedAt           time.Time      `json:"created_at"`
+	UpdatedAt           time.Time      `json:"updated_at"`
+	DeletedAt           gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	DefaultExperimentID *int32         `gorm:"not null" json:"default_experiment_id"`
+	Experiments         []Experiment   `gorm:"constraint:OnDelete:CASCADE" json:"experiments"`
 }
 
 type Experiment struct {
 	ID               *int32         `gorm:"column:experiment_id;not null;primaryKey"`
-	Name             string         `gorm:"type:varchar(256);not null;index:idx_namespace_name,unique"`
+	Name             string         `gorm:"type:varchar(256);not null;index:,unique,composite:name"`
 	ArtifactLocation string         `gorm:"type:varchar(256)"`
 	LifecycleStage   LifecycleStage `gorm:"type:varchar(32);check:lifecycle_stage IN ('active', 'deleted')"`
 	CreationTime     sql.NullInt64  `gorm:"type:bigint"`
 	LastUpdateTime   sql.NullInt64  `gorm:"type:bigint"`
-	NamespaceID      uint           `gorm:"index:idx_namespace_name,unique"`
+	NamespaceID      uint           `gorm:"not null;index:,unique,composite:name"`
 	Namespace        Namespace
 	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
 	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
+}
+
+// IsDefault makes check that Experiment is default.
+func (e Experiment) IsDefault() bool {
+	return e.ID != nil && *e.ID == DefaultExperimentID && e.Name == DefaultExperimentName
 }
 
 type ExperimentTag struct {
@@ -132,6 +146,8 @@ type Metric struct {
 	Step      int64   `gorm:"default:0;not null;primaryKey"`
 	IsNan     bool    `gorm:"default:false;not null;primaryKey"`
 	Iter      int64   `gorm:"index"`
+	ContextID uint    `gorm:"not null;primaryKey"`
+	Context   Context
 }
 
 type LatestMetric struct {
@@ -142,6 +158,19 @@ type LatestMetric struct {
 	IsNan     bool   `gorm:"not null"`
 	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
 	LastIter  int64
+	ContextID uint `gorm:"not null;primaryKey"`
+	Context   Context
+}
+
+type Context struct {
+	ID   uint        `gorm:"primaryKey;autoIncrement"`
+	Json types.JSONB `gorm:"not null;unique;index"`
+}
+
+// GetJsonHash returns hash of the Context.Json
+func (c Context) GetJsonHash() string {
+	hash := sha256.Sum256(c.Json)
+	return string(hash[:])
 }
 
 type AlembicVersion struct {
@@ -202,7 +231,7 @@ type App struct {
 	Type        string    `gorm:"not null" json:"type"`
 	State       AppState  `json:"state"`
 	Namespace   Namespace `json:"-"`
-	NamespaceID uint      `gorm:"column:namespace_id" json:"-"`
+	NamespaceID uint      `gorm:"not null" json:"-"`
 }
 
 type AppState map[string]any

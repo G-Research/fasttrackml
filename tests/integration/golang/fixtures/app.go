@@ -2,9 +2,7 @@ package fixtures
 
 import (
 	"context"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 
@@ -40,10 +38,6 @@ func (f AppFixtures) CreateApps(ctx context.Context, namespace *models.Namespace
 	// create apps for the experiment
 	for i := 0; i < num; i++ {
 		app := &database.App{
-			Base: database.Base{
-				ID:        uuid.New(),
-				CreatedAt: time.Now(),
-			},
 			Type:        "mpi",
 			State:       database.AppState{},
 			NamespaceID: namespace.ID,

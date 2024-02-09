@@ -10,11 +10,13 @@ ifeq ($(shell go env GOOS),windows)
   APP:=$(APP).exe
 endif
 # Version.
-VERSION?=$(shell git describe --tags --always --dirty --match='v*' 2> /dev/null | sed 's/^v//')
-# Enable Go Modules.
-GO111MODULE=on
+# Use git describe to get the version.
+# If the git describe fails, fallback to a version based on the git commit.
+VERSION?=$(shell git describe --tags --dirty --match='v*' 2> /dev/null | sed 's/^v//')
+ifeq ($(VERSION),)
+  VERSION=0.0.0-g$(shell git describe --always --dirty 2> /dev/null)
+endif
 # Go ldflags.
-# Set version to git tag if available, otherwise use commit hash.
 # Strip debug symbols and disable DWARF generation.
 # Build static binaries on Linux.
 GO_LDFLAGS=-s -w -X github.com/G-Research/fasttrackml/pkg/version.Version=$(VERSION)
@@ -44,20 +46,21 @@ COMPOSE_FILE=tests/integration/docker-compose.yml
 COMPOSE_PROJECT_NAME=$(APP)-integration-tests
 
 #
-# Default target (help)
+# Default target (help).
 #
 .PHONY: help
-help: ## display this help
+help: ## display this help.
 	@echo "Please use \`make <target>' where <target> is one of:"
 	@echo
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-24s\033[0m - %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-30s\033[0m - %s\n", $$1, $$2}'
 	@echo
 
 #
 # Tools targets.
+# This needs to be kept in sync with .devcontainer/Dockerfile.
 #
-.PHONY: install-tools ## install tools.
-install-tools:
+.PHONY: install-tools
+install-tools: ## install tools.
 	@echo '>>> Installing tools.'
 	@go install github.com/vektra/mockery/v2@v2.34.0
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.2
@@ -67,8 +70,8 @@ install-tools:
 #
 # Linter targets.
 #
-lint: ## run set of linters over the code.
-	@golangci-lint run -v --build-tags $(GO_BUILDTAGS)
+.PHONY: lint
+lint: go-lint python-lint ## run set of linters over the code.
 
 #
 # Go targets.
@@ -89,6 +92,11 @@ go-format: ## format go code.
 	@gofumpt -w .
 	@goimports -w -local github.com/G-Research/fasttrackml $(shell find . -type f -name '*.go' -not -name 'mock_*.go')
 
+.PHONY: go-lint
+go-lint: ## run go linters.
+	@echo '>>> Running go linters.'
+	@golangci-lint run -v --build-tags $(GO_BUILDTAGS)
+
 .PHONY: go-dist
 go-dist: go-build ## archive app binary.
 	@echo '>>> Archiving go binary.'
@@ -107,7 +115,7 @@ python-env: ## create python virtual environment.
 .PHONY: python-dist
 python-dist: go-build python-env ## build python wheels.
 	@echo '>>> Building Python Wheels.'
-	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python --wheel-dir=wheelhouse --no-deps
+	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python/fasttrackml --wheel-dir=wheelhouse --no-deps
 
 .PHONY: python-format
 python-format: python-env ## format python code.
@@ -124,55 +132,45 @@ python-lint: python-env ## check python code formatting.
 #
 # Tests targets.
 #
+.PHONY: test
+test: test-go-unit container-test test-python-integration ## run all the tests.
+
 .PHONY: test-go-unit
 test-go-unit: ## run go unit tests.
 	@echo ">>> Running unit tests."
-	go test -v ./...
+	@go test -tags="$(GO_BUILDTAGS)" ./pkg/...
 
 .PHONY: test-go-integration
 test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
-	go test -v -p 1 -count=1 -tags="integration" ./tests/integration/golang/...
+	@go test -tags="$(GO_BUILDTAGS)" ./tests/integration/golang/...
 
-PHONY: test-python-integration
-test-python-integration: test-python-integration-mlflow test-python-integration-aim  ## run all the python integration tests.
+.PHONY: test-python-integration
+test-python-integration: ## run all the python integration tests.
+	@echo ">>> Running all python integration tests."
+	@go run tests/integration/python/main.go
 
-PHONY: test-python-integration-mlflow
-test-python-integration-mlflow: build ## run the MLFlow python integration tests.
+.PHONY: test-python-integration-mlflow
+test-python-integration-mlflow: ## run the MLFlow python integration tests.
 	@echo ">>> Running MLFlow python integration tests."
-	tests/integration/python/mlflow/test.sh
+	@go run tests/integration/python/main.go -targets mlflow
 
-PHONY: test-python-integration-aim
-test-python-integration-aim: build ## run the Aim python integration tests.
+.PHONY: test-python-integration-aim
+test-python-integration-aim: ## run the Aim python integration tests.
 	@echo ">>> Running Aim python integration tests."
-	tests/integration/python/aim/test.sh
+	@go run tests/integration/python/main.go -targets aim
 
 #
-# Service test targets
+# Container test targets.
 #
-.PHONY: service-start
-service-start: ## start service in container.
-	@echo ">>> Starting up service container."
-	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose up -d service
-
-.PHONY: service-stop
-service-stop: ## stop service in container.
-	@echo ">>> Stopping service container."
-	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose stop service
-
-.PHONY: service-restart
-service-restart: service-stop service-start ## restart service in container.
-
-.PHONY: service-test
-service-test: service-restart ## run integration tests in container.
+.PHONY: container-test
+container-test: ## run integration tests in container.
 	@echo ">>> Running integration tests in container."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-	    docker-compose run integration-tests
+		docker-compose run integration-tests
 
-.PHONY: service-clean
-service-clean: ## clean containers.
+.PHONY: container-clean
+container-clean: ## clean containers.
 	@echo ">>> Cleaning containers."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
 		docker-compose down -v --remove-orphans
@@ -191,23 +189,69 @@ mocks-generate: mocks-clean ## generate mock based on all project interfaces.
 	@mockery
 
 #
-# Build targets
+# Docker targets (Only available on Linux).
+#
+ifeq ($(shell go env GOOS),linux)
+# Load into the Docker daemon by default.
+DOCKER_OUTPUT?=type=docker
+ifneq ($(origin DOCKER_METADATA), undefined)
+  # If DOCKER_METADATA is defined, use it to set the tags and labels.
+  # DOCKER_METADATA should be a JSON object with the following structure:
+  # {
+  #   "tags": ["image:tag1", "image:tag2"],
+  #   "labels": {
+  #     "label1": "value1",
+  #     "label2": "value2"
+  #   }
+  # }
+  DOCKER_TAGS=$(shell echo $$DOCKER_METADATA | jq -r '.tags | map("--tag \(.)") | join(" ")')
+  DOCKER_LABELS=$(shell echo $$DOCKER_METADATA | jq -r '.labels | to_entries | map("--label \(.key)=\"\(.value)\"") | join(" ")')
+else
+  # Otherwise, use DOCKER_TAGS if defined, otherwise use the default.
+  # DOCKER_TAGS should be a space-separated list of tags.
+  # e.g. DOCKER_TAGS="image:tag1 image:tag2"
+  # We do not set DOCKER_LABELS because of the way make handles spaces
+  # in variable values. Use DOCKER_METADATA if you need to set labels.
+  DOCKER_TAGS?=fasttrackml:$(VERSION) fasttrackml:latest
+  DOCKER_TAGS:=$(addprefix --tag ,$(DOCKER_TAGS))
+endif
+.PHONY: docker-dist
+docker-dist: go-build ## build docker image.
+	@echo ">>> Building Docker image."
+	@docker buildx build --provenance false --sbom false --platform linux/$(shell go env GOARCH) --output $(DOCKER_OUTPUT) $(DOCKER_TAGS) $(DOCKER_LABELS) .
+endif
+
+#
+# Build targets.
 # 
-PHONY: clean
-clean: ## clean the go build artifacts
-	@echo ">>> Cleaning go build artifacts."
-	rm -Rf $(APP)
+.PHONY: clean
+clean: ## clean build artifacts.
+	@echo ">>> Cleaning build artifacts."
+	@rm -rf $(APP) dist wheelhouse
 
-PHONY: build
-build: go-build ## build the go components
+.PHONY: build
+build: go-build ## build the app.
 
-PHONY: dist
-dist: go-dist python-dist ## build the software archives
+.PHONY: dist
+dist: go-dist python-dist ## build the software archives.
+ifeq ($(shell go env GOOS),linux)
+dist: docker-dist
+endif
 
-PHONY: format
-format: go-format python-format ## format the code
+.PHONY: format
+format: go-format python-format ## format the code.
 
-PHONY: run
-run: build ## run the FastTrackML server
+.PHONY: run
+run: build ## run the FastTrackML server.
 	@echo ">>> Running the FasttrackML server."
-	./$(APP) server
+	@./$(APP) server
+
+.PHONY: migrations-create
+migrations-create: ## generate a new database migration.
+	@echo ">>> Running FastTrackML migrations create."
+	@go run main.go migrations create
+
+.PHONY: migrations-rebuild
+migrations-rebuild: ## rebuild the migrations script to detect new migrations.
+	@echo ">>> Running FastTrackML migrations rebuild."
+	@go run main.go migrations rebuild

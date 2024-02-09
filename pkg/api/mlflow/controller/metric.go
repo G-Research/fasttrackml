@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/apache/arrow/go/v12/arrow"
-	"github.com/apache/arrow/go/v12/arrow/array"
-	"github.com/apache/arrow/go/v12/arrow/ipc"
-	"github.com/apache/arrow/go/v12/arrow/memory"
+	"github.com/apache/arrow/go/v14/arrow"
+	"github.com/apache/arrow/go/v14/arrow/array"
+	"github.com/apache/arrow/go/v14/arrow/ipc"
+	"github.com/apache/arrow/go/v14/arrow/memory"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
@@ -37,7 +37,10 @@ func (c Controller) GetMetricHistory(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	resp := response.NewMetricHistoryResponse(metrics)
+	resp, err := response.NewMetricHistoryResponse(metrics)
+	if err != nil {
+		return err
+	}
 	log.Debugf("getMetricHistory response: %#v", resp)
 
 	return ctx.JSON(resp)
@@ -105,6 +108,7 @@ func (c Controller) GetMetricHistories(ctx *fiber.Ctx) error {
 					{Name: "step", Type: arrow.PrimitiveTypes.Int64},
 					{Name: "timestamp", Type: arrow.PrimitiveTypes.Int64},
 					{Name: "value", Type: arrow.PrimitiveTypes.Float64},
+					{Name: "context", Type: arrow.BinaryTypes.String},
 				},
 				nil,
 			)
@@ -129,6 +133,7 @@ func (c Controller) GetMetricHistories(ctx *fiber.Ctx) error {
 				} else {
 					b.Field(4).(*array.Float64Builder).Append(m.Value)
 				}
+				b.Field(5).(*array.StringBuilder).Append(string(m.Context.Json))
 				if (i+1)%100000 == 0 {
 					if err := WriteStreamingRecord(writer, b.NewRecord()); err != nil {
 						return fmt.Errorf("unable to write Arrow record batch: %w", err)

@@ -1,11 +1,13 @@
 package aim
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
@@ -104,8 +106,8 @@ func GetProjectParams(c *fiber.Ctx) error {
 	log.Debugf("getProjectParams namespace: %s", ns.Code)
 
 	q := struct {
-		ExcludeParams bool     `query:"exclude_params"`
 		Sequences     []string `query:"sequence"`
+		ExcludeParams bool     `query:"exclude_params"`
 	}{}
 
 	if err := c.QueryParser(&q); err != nil {
@@ -162,7 +164,6 @@ func GetProjectParams(c *fiber.Ctx) error {
 		}
 
 		params["tags"] = tags
-
 		resp["params"] = params
 	}
 
@@ -182,7 +183,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 		case "images", "texts", "figures", "distributions", "audios":
 			resp[s] = fiber.Map{}
 		case "metric":
-			var metricKeys []string
+			var metrics []database.LatestMetric
 			if tx := database.DB.Distinct().Model(
 				&database.LatestMetric{},
 			).Joins(
@@ -190,22 +191,32 @@ func GetProjectParams(c *fiber.Ctx) error {
 			).Joins(
 				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 				ns.ID,
+			).Joins(
+				"Context",
 			).Where(
 				"runs.lifecycle_stage = ?", database.LifecycleStageActive,
-			).Pluck(
-				"Key", &metricKeys,
-			); tx.Error != nil {
+			).Find(&metrics); tx.Error != nil {
 				return fmt.Errorf("error retrieving metric keys: %w", tx.Error)
 			}
 
-			metrics := make(map[string][]fiber.Map, len(metricKeys))
-			for _, m := range metricKeys {
-				metrics[m] = []fiber.Map{{}}
+			data, mapped := make(map[string][]fiber.Map, len(metrics)), make(map[string]map[string]fiber.Map, len(metrics))
+			for _, metric := range metrics {
+				if mapped[metric.Key] == nil {
+					mapped[metric.Key] = map[string]fiber.Map{}
+				}
+				if _, ok := mapped[metric.Key][metric.Context.GetJsonHash()]; !ok {
+					// to be properly decoded by AIM UI, json should be represented as a key:value object.
+					context := fiber.Map{}
+					if err := json.Unmarshal(metric.Context.Json, &context); err != nil {
+						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+					}
+					mapped[metric.Key][metric.Context.GetJsonHash()] = context
+					data[metric.Key] = append(data[metric.Key], context)
+				}
 			}
-
-			resp[s] = metrics
+			resp[s] = data
 		default:
-			return fmt.Errorf("%q is not a valid Sequence", s)
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("%q is not a valid Sequence", s))
 		}
 	}
 

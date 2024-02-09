@@ -1,6 +1,7 @@
 package convertors
 
 import (
+	"encoding/json"
 	"math"
 
 	"github.com/rotisserie/eris"
@@ -10,13 +11,24 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-// ConvertMetricParamRequestToDBModel converts request.LogMetricRequest into actual models.Metric model.
-func ConvertMetricParamRequestToDBModel(runID string, req *request.LogMetricRequest) (*models.Metric, error) {
+// ConvertLogMetricRequestToDBModel converts request.LogMetricRequest into actual models.Metric model.
+func ConvertLogMetricRequestToDBModel(runID string, req *request.LogMetricRequest) (*models.Metric, error) {
 	metric := models.Metric{
 		Key:       req.Key,
 		Timestamp: req.Timestamp,
 		Step:      req.Step,
 		RunID:     runID,
+	}
+	if req.Context == nil || len(req.Context) == 0 {
+		metric.Context = models.DefaultContext
+	} else {
+		contextJSON, err := json.Marshal(req.Context)
+		if err != nil {
+			return nil, eris.Wrap(err, "error marshalling context")
+		}
+		metric.Context = models.Context{
+			Json: contextJSON,
+		}
 	}
 	if v, ok := req.Value.(float64); ok {
 		metric.Value = v
@@ -33,7 +45,7 @@ func ConvertMetricParamRequestToDBModel(runID string, req *request.LogMetricRequ
 			return nil, eris.Errorf("invalid metric value '%s'", v)
 		}
 	} else {
-		return nil, eris.Errorf("invalid metric value '%s'", v)
+		return nil, eris.Errorf("invalid metric value '%v'", req.Value)
 	}
 	return &metric, nil
 }

@@ -107,6 +107,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 
 	q := struct {
 		Sequences     []string `query:"sequence"`
+		Experiments   []int    `query:"experiments"`
 		ExcludeParams bool     `query:"exclude_params"`
 	}{}
 
@@ -117,8 +118,8 @@ func GetProjectParams(c *fiber.Ctx) error {
 	resp := fiber.Map{}
 
 	if !q.ExcludeParams {
-		var paramKeys []string
-		if tx := database.DB.Distinct().Model(
+		// fetch and process params.
+		query := database.DB.Distinct().Model(
 			&database.Param{},
 		).Joins(
 			"JOIN runs USING(run_uuid)",
@@ -127,10 +128,13 @@ func GetProjectParams(c *fiber.Ctx) error {
 			ns.ID,
 		).Where(
 			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
-		).Pluck(
-			"Key", &paramKeys,
-		); tx.Error != nil {
-			return fmt.Errorf("error retrieving param keys: %w", tx.Error)
+		)
+		if len(q.Experiments) != 0 {
+			query.Where("experiments.experiment_id IN ?", q.Experiments)
+		}
+		var paramKeys []string
+		if err = query.Pluck("Key", &paramKeys).Error; err != nil {
+			return fmt.Errorf("error retrieving param keys: %w", err)
 		}
 
 		params := make(map[string]any, len(paramKeys)+1)
@@ -140,8 +144,8 @@ func GetProjectParams(c *fiber.Ctx) error {
 			}
 		}
 
-		var tagKeys []string
-		if tx := database.DB.Distinct().Model(
+		// fetch and process tags.
+		query = database.DB.Distinct().Model(
 			&database.Tag{},
 		).Joins(
 			"JOIN runs USING(run_uuid)",
@@ -150,10 +154,13 @@ func GetProjectParams(c *fiber.Ctx) error {
 			ns.ID,
 		).Where(
 			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
-		).Pluck(
-			"Key", &tagKeys,
-		); tx.Error != nil {
-			return fmt.Errorf("error retrieving tag keys: %w", tx.Error)
+		)
+		if len(q.Experiments) != 0 {
+			query.Where("experiments.experiment_id IN ?", q.Experiments)
+		}
+		var tagKeys []string
+		if err = query.Pluck("Key", &tagKeys).Error; err != nil {
+			return fmt.Errorf("error retrieving tag keys: %w", err)
 		}
 
 		tags := make(map[string]map[string]string, len(tagKeys))
@@ -183,8 +190,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 		case "images", "texts", "figures", "distributions", "audios":
 			resp[s] = fiber.Map{}
 		case "metric":
-			var metrics []database.LatestMetric
-			if tx := database.DB.Distinct().Model(
+			query := database.DB.Distinct().Model(
 				&database.LatestMetric{},
 			).Joins(
 				"JOIN runs USING(run_uuid)",
@@ -195,8 +201,13 @@ func GetProjectParams(c *fiber.Ctx) error {
 				"Context",
 			).Where(
 				"runs.lifecycle_stage = ?", database.LifecycleStageActive,
-			).Find(&metrics); tx.Error != nil {
-				return fmt.Errorf("error retrieving metric keys: %w", tx.Error)
+			)
+			if len(q.Experiments) != 0 {
+				query.Where("experiments.experiment_id IN ?", q.Experiments)
+			}
+			var metrics []database.LatestMetric
+			if err = query.Find(&metrics).Error; err != nil {
+				return fmt.Errorf("error retrieving metric keys: %w", err)
 			}
 
 			data, mapped := make(map[string][]fiber.Map, len(metrics)), make(map[string]map[string]fiber.Map, len(metrics))

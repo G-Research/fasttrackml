@@ -63,7 +63,93 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	// check that response contains metric from previous step.
+	tests := []struct {
+		name     string
+		request  map[any]any
+		response response.ProjectParamsResponse
+	}{
+		{
+			name:    "RequestProjectParamsWithoutExperimentFilter",
+			request: map[any]any{"sequence": "metric"},
+			response: response.ProjectParamsResponse{
+				Metric: map[string][]fiber.Map{
+					"key": {
+						{
+							"key": "value",
+						},
+					},
+				},
+				Params: map[string]interface{}{
+					param.Key: map[string]interface{}{
+						"__example_type__": "<class 'str'>",
+					},
+					"tags": map[string]interface{}{
+						tag.Key: map[string]interface{}{
+							"__example_type__": "<class 'str'>",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "RequestProjectParamsFilteredByExistingExperiment",
+			request: map[any]any{
+				"experiments": *s.DefaultExperiment.ID,
+			},
+			response: response.ProjectParamsResponse{
+				Metric: map[string][]fiber.Map{
+					"key": {
+						{
+							"key": "value",
+						},
+					},
+				},
+				Params: map[string]interface{}{
+					param.Key: map[string]interface{}{
+						"__example_type__": "<class 'str'>",
+					},
+					"tags": map[string]interface{}{
+						tag.Key: map[string]interface{}{
+							"__example_type__": "<class 'str'>",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "RequestProjectParamsFilteredByNotExistingExperiment",
+			request: map[any]any{
+				"experiments": 999,
+			},
+			response: response.ProjectParamsResponse{
+				Metric: map[string][]fiber.Map{},
+				Params: map[string]interface{}{
+					"tags": map[string]interface{}{},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			resp := response.ProjectParamsResponse{}
+			s.Require().Nil(
+				s.AIMClient().WithQuery(
+					tt.request,
+				).WithResponse(
+					&resp,
+				).DoRequest("/projects/params"),
+			)
+			s.Equal(tt.response.Metric, resp.Metric)
+			s.Equal(tt.response.Params, resp.Params)
+		})
+	}
+
+	// mark run as `deleted`.
+	run.LifecycleStage = models.LifecycleStageDeleted
+	s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), run))
+
+	// check that endpoint returns an empty response.
 	resp := response.ProjectParamsResponse{}
 	s.Require().Nil(
 		s.AIMClient().WithQuery(
@@ -72,43 +158,8 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 			&resp,
 		).DoRequest("/projects/params"),
 	)
-
-	s.Equal(1, len(resp.Metric))
-	_, ok := resp.Metric[metric.Key]
-	s.True(ok)
-	s.Equal(map[string][]fiber.Map{
-		"key": {
-			{
-				"key": "value",
-			},
-		},
-	}, resp.Metric)
-	s.Equal(map[string]interface{}{
-		param.Key: map[string]interface{}{
-			"__example_type__": "<class 'str'>",
-		},
-		"tags": map[string]interface{}{
-			tag.Key: map[string]interface{}{
-				"__example_type__": "<class 'str'>",
-			},
-		},
-	}, resp.Params)
-
-	// mark run as `deleted`.
-	run.LifecycleStage = models.LifecycleStageDeleted
-	s.Require().Nil(s.RunFixtures.UpdateRun(context.Background(), run))
-
-	// check that endpoint returns an empty response.
-	resp = response.ProjectParamsResponse{}
-	s.Require().Nil(
-		s.AIMClient().WithQuery(
-			map[any]any{"sequence": "metric"},
-		).WithResponse(
-			&resp,
-		).DoRequest("/projects/params"),
-	)
 	s.Equal(0, len(resp.Metric))
-	_, ok = resp.Metric[metric.Key]
+	_, ok := resp.Metric[metric.Key]
 	s.False(ok)
 	s.Equal(map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
 }

@@ -118,7 +118,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 	resp := fiber.Map{}
 
 	if !q.ExcludeParams {
-		// process params.
+		// fetch and process params.
 		query := database.DB.Distinct().Model(
 			&database.Param{},
 		).Joins(
@@ -144,7 +144,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 			}
 		}
 
-		// process tags.
+		// fetch and process tags.
 		query = database.DB.Distinct().Model(
 			&database.Tag{},
 		).Joins(

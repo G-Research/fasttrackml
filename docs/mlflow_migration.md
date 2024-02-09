@@ -11,14 +11,14 @@
 
 ### Database Compatibility
 
--   When integrating an existing MLFlow database, FastTrackML will transition its schema to align with MLFlow version 1.29.0-2.10.0. Consequently, the database will no longer be compatible with earlier MLFlow versions. If compatibility with prior versions is essential, it's advisable to utilize a copy of the database instead.
+-   When integrating an existing MLFlow database, FastTrackML will transition its schema to align with MLFlow version 1.29.0-2.10.0. Consequently, the database will no longer be compatible with earlier MLFlow versions. If compatibility with prior versions is needed, use a copy of the database instead.
 -   FastTrackML may introduce schema alterations in other places that have remained compatible with MLFlow so far. However, complete compatibility cannot be assured in every scenario. In case of uncertainty, it's recommended to use a copy of the database.
 
 ### Setting Up FastTrackML
 
 -   To point FastTrackML to an existing database, specify your current database URI using the `--database-uri` parameter or the `FML_DATABASE_URI` environment variable.
--   The default artifact root can be designated via the `--artifact-root` parameter or the `FML_ARTIFACT_ROOT` environment variable. Note that this functionality is available only in FastTrackML 0.3.0 or in nightly releases, accessible through the `gresearch/fasttrackml:edge` Docker image.
--   FastTrackML currently facilitates artifact storage on either a filesystem or on S3 or S3-compatible storage platforms.
+-   The default artifact root can be set via the `--artifact-root` parameter or the `FML_ARTIFACT_ROOT` environment variable. Note that this functionality is available only in FastTrackML 0.3.0 or later.
+-   FastTrackML currently supports artifact storage on either a filesystem or on S3 or S3-compatible storage platforms.
 -   In case of utilizing an S3-compatible storage platform (e.g., Minio), configure the `FML_S3_ENDPOINT_URI` environment variable to correspond with your `MLFLOW_S3_ENDPOINT_URL`.
 
 ### Example

@@ -9,7 +9,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	models "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	models "github.com/G-Research/fasttrackml/pkg/common/dao/models"
 
 	request "github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 

@@ -3,7 +3,7 @@ filename: "mock_{{ .InterfaceNameSnake }}.go"
 with-expecter: false
 inpackage: true
 packages:
-  github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories:
+  github.com/G-Research/fasttrackml/pkg/common/dao/repositories:
     interfaces:
       BaseRepositoryProvider:
       ExperimentRepositoryProvider:

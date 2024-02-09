@@ -9,8 +9,8 @@ import (
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 )
 
 // RunFixtures represents data fixtures object.

@@ -5,7 +5,7 @@ package repositories
 import (
 	context "context"
 
-	models "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	models "github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	mock "github.com/stretchr/testify/mock"
 )
 

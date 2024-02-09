@@ -6,7 +6,7 @@ import (
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // ParamFixtures represents data fixtures object.

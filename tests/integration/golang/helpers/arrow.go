@@ -8,7 +8,7 @@ import (
 	"github.com/apache/arrow/go/v14/arrow/memory"
 	"github.com/rotisserie/eris"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 func DecodeArrowMetrics(buf *bytes.Buffer) ([]models.Metric, error) {

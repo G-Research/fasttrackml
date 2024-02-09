@@ -22,7 +22,7 @@ var DecodeCmd = &cobra.Command{
 			var err error
 			f, err = os.Open(args[0])
 			if err != nil {
-				return err
+				return eris.Wrap(err, "error opening file")
 			}
 			//nolint:errcheck
 			defer f.Close()

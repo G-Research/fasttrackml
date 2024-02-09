@@ -201,6 +201,8 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				if err := v_0010.Migrate(db); err != nil {
 					return fmt.Errorf("error migrating database to FastTrackML schema %s: %w", v_0010.Version, err)
 				}
+				fallthrough
+
 			case v_0010.Version:
 				log.Infof("Migrating database to FastTrackML schema %s", v_0011.Version)
 				if err := v_0011.Migrate(db); err != nil {

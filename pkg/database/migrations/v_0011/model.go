@@ -1,19 +1,18 @@
-package database
+package v_0011
 
 import (
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"database/sql/driver"
-	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+	"gorm.io/gorm/schema"
 )
 
 type Status string
@@ -31,12 +30,6 @@ type LifecycleStage string
 const (
 	LifecycleStageActive  LifecycleStage = "active"
 	LifecycleStageDeleted LifecycleStage = "deleted"
-)
-
-// Default Experiment properties.
-const (
-	DefaultExperimentID   = int32(0)
-	DefaultExperimentName = "Default"
 )
 
 type Namespace struct {
@@ -62,11 +55,6 @@ type Experiment struct {
 	Namespace        Namespace
 	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
 	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
-}
-
-// IsDefault makes check that Experiment is default.
-func (e Experiment) IsDefault() bool {
-	return e.ID != nil && *e.ID == DefaultExperimentID && e.Name == DefaultExperimentName
 }
 
 type ExperimentTag struct {
@@ -128,7 +116,7 @@ func (rn RowNum) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 
 type Param struct {
 	Key   string `gorm:"type:varchar(250);not null;primaryKey"`
-	Value string `gorm:"type:varchar(500);not null"`
+	Value string `gorm:"type:varchar(8000);not null"`
 	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 
@@ -162,15 +150,82 @@ type LatestMetric struct {
 	Context   Context
 }
 
-type Context struct {
-	ID   uint        `gorm:"primaryKey;autoIncrement"`
-	Json types.JSONB `gorm:"not null;unique;index"`
+// JSONB defined JSONB data type, need to implements driver.Valuer, sql.Scanner interface
+type JSONB json.RawMessage
+
+// Value return json value, implement driver.Valuer interface
+func (j JSONB) Value() (driver.Value, error) {
+	if len(j) == 0 {
+		return nil, nil
+	}
+	return string(j), nil
 }
 
-// GetJsonHash returns hash of the Context.Json
-func (c Context) GetJsonHash() string {
-	hash := sha256.Sum256(c.Json)
-	return string(hash[:])
+// Scan scan value into Jsonb, implements sql.Scanner interface
+func (j *JSONB) Scan(value interface{}) error {
+	if value == nil {
+		*j = JSONB("null")
+		return nil
+	}
+	var bytes []byte
+	switch v := value.(type) {
+	case []byte:
+		if len(v) > 0 {
+			bytes = make([]byte, len(v))
+			copy(bytes, v)
+		}
+	case string:
+		bytes = []byte(v)
+	default:
+		return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
+	}
+
+	result := json.RawMessage(bytes)
+	*j = JSONB(result)
+	return nil
+}
+
+// MarshalJSON to output non base64 encoded []byte
+func (j JSONB) MarshalJSON() ([]byte, error) {
+	return json.RawMessage(j).MarshalJSON()
+}
+
+// UnmarshalJSON to deserialize []byte
+func (j *JSONB) UnmarshalJSON(b []byte) error {
+	result := json.RawMessage{}
+	err := result.UnmarshalJSON(b)
+	*j = JSONB(result)
+	return err
+}
+
+func (j JSONB) String() string {
+	return string(j)
+}
+
+// GormDataType gorm common data type
+func (JSONB) GormDataType() string {
+	return "json"
+}
+
+// GormDBDataType gorm db data type
+func (JSONB) GormDBDataType(db *gorm.DB, field *schema.Field) string {
+	return "JSONB"
+}
+
+// GormValue gorm db actual value
+// nolint
+func (js JSONB) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
+	if len(js) == 0 {
+		return gorm.Expr("NULL")
+	}
+
+	data, _ := js.MarshalJSON()
+	return gorm.Expr("?", string(data))
+}
+
+type Context struct {
+	ID   uint  `gorm:"primaryKey;autoIncrement"`
+	Json JSONB `gorm:"not null;unique;index"`
 }
 
 type AlembicVersion struct {
@@ -257,11 +312,4 @@ func (s *AppState) Scan(v interface{}) error {
 
 func (s AppState) GormDataType() string {
 	return "text"
-}
-
-func NewUUID() string {
-	var r [32]byte
-	u := uuid.New()
-	hex.Encode(r[:], u[:])
-	return string(r[:])
 }

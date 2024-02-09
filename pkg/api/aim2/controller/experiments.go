@@ -19,8 +19,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-func GetExperiments(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetExperiments(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -62,11 +62,11 @@ func GetExperiments(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(resp)
+	return ctx.JSON(resp)
 }
 
-func GetExperiment(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetExperiment(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -76,7 +76,7 @@ func GetExperiment(c *fiber.Ctx) error {
 		ID string `params:"id"`
 	}{}
 
-	if err = c.ParamsParser(&p); err != nil {
+	if err = ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -121,7 +121,7 @@ func GetExperiment(c *fiber.Ctx) error {
 		}
 		return fmt.Errorf("error fetching experiment %q: %w", p.ID, err)
 	}
-	return c.JSON(fiber.Map{
+	return ctx.JSON(fiber.Map{
 		"id":            strconv.Itoa(int(id)),
 		"name":          exp.Name,
 		"description":   exp.Description,
@@ -131,8 +131,8 @@ func GetExperiment(c *fiber.Ctx) error {
 	})
 }
 
-func GetExperimentRuns(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetExperimentRuns(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -143,7 +143,7 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 		Offset string `query:"offset"`
 	}{}
 
-	if err = c.QueryParser(&q); err != nil {
+	if err = ctx.QueryParser(&q); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -151,7 +151,7 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 		ID string `params:"id"`
 	}{}
 
-	if err = c.ParamsParser(&p); err != nil {
+	if err = ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -212,20 +212,20 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(fiber.Map{
+	return ctx.JSON(fiber.Map{
 		"id":   p.ID,
 		"runs": runs,
 	})
 }
 
-func GetExperimentActivity(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetExperimentActivity(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
 	log.Debugf("GetExperimentActivity namespace: %s", ns.Code)
 
-	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
+	tzOffset, err := strconv.Atoi(ctx.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
@@ -234,7 +234,7 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 		ID string `params:"id"`
 	}{}
 
-	if err = c.ParamsParser(&p); err != nil {
+	if err = ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -278,7 +278,7 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(fiber.Map{
+	return ctx.JSON(fiber.Map{
 		"num_runs":          len(runs),
 		"num_archived_runs": numArchivedRuns,
 		"num_active_runs":   numActiveRuns,
@@ -286,8 +286,8 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 	})
 }
 
-func DeleteExperiment(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -297,7 +297,7 @@ func DeleteExperiment(c *fiber.Ctx) error {
 		ID string `params:"id"`
 	}{}
 
-	if err = c.ParamsParser(&params); err != nil {
+	if err = ctx.ParamsParser(&params); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 	id, err := strconv.ParseInt(params.ID, 10, 32)
@@ -328,21 +328,21 @@ func DeleteExperiment(c *fiber.Ctx) error {
 
 	// TODO this code should move to service with injected repository
 	experimentRepo := repositories.NewExperimentRepository(database.DB)
-	if err = experimentRepo.Delete(c.Context(), &models.Experiment{
+	if err = experimentRepo.Delete(ctx.Context(), &models.Experiment{
 		ID: common.GetPointer(int32(id)),
 	}); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
 			fmt.Sprintf("unable to delete experiment %q: %s", params.ID, err))
 	}
 
-	return c.JSON(fiber.Map{
+	return ctx.JSON(fiber.Map{
 		"id":     params.ID,
 		"status": "OK",
 	})
 }
 
-func UpdateExperiment(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) UpdateExperiment(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -351,7 +351,7 @@ func UpdateExperiment(c *fiber.Ctx) error {
 	params := struct {
 		ID string `params:"id"`
 	}{}
-	if err = c.ParamsParser(&params); err != nil {
+	if err = ctx.ParamsParser(&params); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 	id, err := strconv.ParseInt(params.ID, 10, 32)
@@ -360,13 +360,13 @@ func UpdateExperiment(c *fiber.Ctx) error {
 	}
 
 	var updateRequest request.UpdateExperimentRequest
-	if err = c.BodyParser(&updateRequest); err != nil {
+	if err = ctx.BodyParser(&updateRequest); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	experimentRepository := repositories.NewExperimentRepository(database.DB)
 	tagRepository := repositories.NewTagRepository(database.DB)
-	experiment, err := experimentRepository.GetByNamespaceIDAndExperimentID(c.Context(), ns.ID, int32(id))
+	experiment, err := experimentRepository.GetByNamespaceIDAndExperimentID(ctx.Context(), ns.ID, int32(id))
 	if err != nil {
 		return fiber.NewError(
 			fiber.StatusInternalServerError, fmt.Sprintf("unable to find experiment '%s': %s", params.ID, err),
@@ -389,7 +389,7 @@ func UpdateExperiment(c *fiber.Ctx) error {
 
 	if updateRequest.Archived != nil || updateRequest.Name != nil {
 		if err := database.DB.Transaction(func(tx *gorm.DB) error {
-			if err := experimentRepository.UpdateWithTransaction(c.Context(), tx, experiment); err != nil {
+			if err := experimentRepository.UpdateWithTransaction(ctx.Context(), tx, experiment); err != nil {
 				return err
 			}
 			return nil
@@ -404,12 +404,12 @@ func UpdateExperiment(c *fiber.Ctx) error {
 			Value:        *updateRequest.Description,
 			ExperimentID: *experiment.ID,
 		}
-		if err := tagRepository.CreateExperimentTag(c.Context(), &description); err != nil {
+		if err := tagRepository.CreateExperimentTag(ctx.Context(), &description); err != nil {
 			return err
 		}
 	}
 
-	return c.JSON(fiber.Map{
+	return ctx.JSON(fiber.Map{
 		"id":     params.ID,
 		"status": "OK",
 	})

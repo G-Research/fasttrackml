@@ -15,8 +15,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-func GetApps(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetApps(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -31,11 +31,11 @@ func GetApps(c *fiber.Ctx) error {
 		return fmt.Errorf("error fetching apps: %w", err)
 	}
 
-	return c.JSON(apps)
+	return ctx.JSON(apps)
 }
 
-func CreateApp(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) CreateApp(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -46,7 +46,7 @@ func CreateApp(c *fiber.Ctx) error {
 		State database.AppState
 	}
 
-	if err := c.BodyParser(&a); err != nil {
+	if err := ctx.BodyParser(&a); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -62,11 +62,11 @@ func CreateApp(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error inserting app: %s", err))
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(app)
+	return ctx.Status(fiber.StatusCreated).JSON(app)
 }
 
-func GetApp(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetApp(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -76,7 +76,7 @@ func GetApp(c *fiber.Ctx) error {
 		ID uuid.UUID `params:"id"`
 	}{}
 
-	if err := c.ParamsParser(&p); err != nil {
+	if err := ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -97,11 +97,11 @@ func GetApp(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))
 	}
 
-	return c.JSON(app)
+	return ctx.JSON(app)
 }
 
-func UpdateApp(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) UpdateApp(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -111,7 +111,7 @@ func UpdateApp(c *fiber.Ctx) error {
 		ID uuid.UUID `params:"id"`
 	}{}
 
-	if err := c.ParamsParser(&p); err != nil {
+	if err := ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -120,7 +120,7 @@ func UpdateApp(c *fiber.Ctx) error {
 		State database.AppState
 	}
 
-	if err := c.BodyParser(&a); err != nil {
+	if err := ctx.BodyParser(&a); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -151,11 +151,11 @@ func UpdateApp(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error updating app %q: %s", p.ID, err))
 	}
 
-	return c.JSON(app)
+	return ctx.JSON(app)
 }
 
-func DeleteApp(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) DeleteApp(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -165,7 +165,7 @@ func DeleteApp(c *fiber.Ctx) error {
 		ID uuid.UUID `params:"id"`
 	}{}
 
-	if err := c.ParamsParser(&p); err != nil {
+	if err := ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -194,5 +194,5 @@ func DeleteApp(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to delete app %q: %s", p.ID, err))
 	}
 
-	return c.Status(http.StatusOK).JSON(nil)
+	return ctx.Status(http.StatusOK).JSON(nil)
 }

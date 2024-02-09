@@ -15,8 +15,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-func GetDashboards(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetDashboards(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -48,11 +48,11 @@ func GetDashboards(c *fiber.Ctx) error {
 		return fmt.Errorf("error fetching dashboards: %w", err)
 	}
 
-	return c.JSON(dashboards)
+	return ctx.JSON(dashboards)
 }
 
-func CreateDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) CreateDashboard(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -64,7 +64,7 @@ func CreateDashboard(c *fiber.Ctx) error {
 		Description string
 	}
 
-	if err := c.BodyParser(&d); err != nil {
+	if err := ctx.BodyParser(&d); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -99,11 +99,11 @@ func CreateDashboard(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error inserting dashboard: %s", err))
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(dash)
+	return ctx.Status(fiber.StatusCreated).JSON(dash)
 }
 
-func GetDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetDashboard(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -113,7 +113,7 @@ func GetDashboard(c *fiber.Ctx) error {
 		ID uuid.UUID `params:"id"`
 	}{}
 
-	if err := c.ParamsParser(&p); err != nil {
+	if err := ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -143,11 +143,11 @@ func GetDashboard(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find dashboard %q: %s", p.ID, err))
 	}
 
-	return c.JSON(dashboard)
+	return ctx.JSON(dashboard)
 }
 
-func UpdateDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) UpdateDashboard(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -157,7 +157,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 		ID uuid.UUID `params:"id"`
 	}{}
 
-	if err := c.ParamsParser(&p); err != nil {
+	if err := ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -166,7 +166,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 		Description string
 	}
 
-	if err := c.BodyParser(&d); err != nil {
+	if err := ctx.BodyParser(&d); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -207,11 +207,11 @@ func UpdateDashboard(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error updating dashboard %q: %s", p.ID, err))
 	}
 
-	return c.JSON(dash)
+	return ctx.JSON(dash)
 }
 
-func DeleteDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) DeleteDashboard(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -221,7 +221,7 @@ func DeleteDashboard(c *fiber.Ctx) error {
 		ID uuid.UUID `params:"id"`
 	}{}
 
-	if err := c.ParamsParser(&p); err != nil {
+	if err := ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -260,5 +260,5 @@ func DeleteDashboard(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to delete app %q: %s", p.ID, err))
 	}
 
-	return c.Status(200).JSON(nil)
+	return ctx.Status(200).JSON(nil)
 }

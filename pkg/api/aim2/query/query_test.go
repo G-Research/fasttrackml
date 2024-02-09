@@ -11,7 +11,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 )
 
 type QueryTestSuite struct {

@@ -15,8 +15,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-func GetProject(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
+func (c Controller) GetProject(ctx *fiber.Ctx) error {
+	return ctx.JSON(fiber.Map{
 		"name":              "FastTrackML",
 		"path":              database.DB.Dialector.Name(),
 		"description":       "",
@@ -24,14 +24,14 @@ func GetProject(c *fiber.Ctx) error {
 	})
 }
 
-func GetProjectActivity(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetProjectActivity(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
 	log.Debugf("getProjectActivity namespace: %s", ns.Code)
 
-	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
+	tzOffset, err := strconv.Atoi(ctx.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
@@ -75,7 +75,7 @@ func GetProjectActivity(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(fiber.Map{
+	return ctx.JSON(fiber.Map{
 		"num_runs":          len(runs),
 		"activity_map":      activity,
 		"num_active_runs":   numActiveRuns,
@@ -85,21 +85,21 @@ func GetProjectActivity(c *fiber.Ctx) error {
 }
 
 // TODO
-func GetProjectPinnedSequences(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
+func (c Controller) GetProjectPinnedSequences(ctx *fiber.Ctx) error {
+	return ctx.JSON(fiber.Map{
 		"sequences": []string{},
 	})
 }
 
 // TODO
-func UpdateProjectPinnedSequences(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
+func (c Controller) UpdateProjectPinnedSequences(ctx *fiber.Ctx) error {
+	return ctx.JSON(fiber.Map{
 		"sequences": []string{},
 	})
 }
 
-func GetProjectParams(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetProjectParams(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -111,7 +111,7 @@ func GetProjectParams(c *fiber.Ctx) error {
 		ExcludeParams bool     `query:"exclude_params"`
 	}{}
 
-	if err := c.QueryParser(&q); err != nil {
+	if err := ctx.QueryParser(&q); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -231,9 +231,9 @@ func GetProjectParams(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(resp)
+	return ctx.JSON(resp)
 }
 
-func GetProjectStatus(c *fiber.Ctx) error {
-	return c.JSON("up-to-date")
+func (c Controller) GetProjectStatus(ctx *fiber.Ctx) error {
+	return ctx.JSON("up-to-date")
 }

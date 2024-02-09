@@ -30,8 +30,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-func GetRunInfo(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -43,7 +43,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 		Sequences  []string `query:"sequence"`
 	}{}
 
-	if err := c.QueryParser(&q); err != nil {
+	if err := ctx.QueryParser(&q); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -51,7 +51,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 		ID string `params:"id"`
 	}{}
 
-	if err := c.ParamsParser(&p); err != nil {
+	if err := ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -140,15 +140,15 @@ func GetRunInfo(c *fiber.Ctx) error {
 	}
 	traces["metric"] = metrics
 
-	return c.JSON(fiber.Map{
+	return ctx.JSON(fiber.Map{
 		"params": params,
 		"traces": traces,
 		"props":  props,
 	})
 }
 
-func GetRunMetrics(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -158,7 +158,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		ID string `params:"id"`
 	}{}
 
-	if err := c.ParamsParser(&p); err != nil {
+	if err := ctx.ParamsParser(&p); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -167,7 +167,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		Context fiber.Map `json:"context"`
 	}
 
-	if err := c.BodyParser(&b); err != nil {
+	if err := ctx.BodyParser(&b); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -265,11 +265,11 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(resp)
+	return ctx.JSON(resp)
 }
 
-func GetRunsActive(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -279,11 +279,11 @@ func GetRunsActive(c *fiber.Ctx) error {
 		ReportProgress bool `query:"report_progress"`
 	}{}
 
-	if err := c.QueryParser(&q); err != nil {
+	if err := ctx.QueryParser(&q); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if c.Query("report_progress") == "" {
+	if ctx.Query("report_progress") == "" {
 		q.ReportProgress = true
 	}
 
@@ -305,8 +305,8 @@ func GetRunsActive(c *fiber.Ctx) error {
 		return fmt.Errorf("error retrieving active runs: %w", err)
 	}
 
-	c.Set("Content-Type", "application/octet-stream")
-	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+	ctx.Set("Content-Type", "application/octet-stream")
+	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		start := time.Now()
 		if err := func() error {
 			for i, r := range runs {
@@ -385,10 +385,10 @@ func GetRunsActive(c *fiber.Ctx) error {
 
 			return nil
 		}(); err != nil {
-			log.Errorf("Error encountered in %s %s: error streaming active runs: %s", c.Method(), c.Path(), err)
+			log.Errorf("Error encountered in %s %s: error streaming active runs: %s", ctx.Method(), ctx.Path(), err)
 		}
 
-		log.Infof("body - %s %s %s", time.Since(start), c.Method(), c.Path())
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
 	})
 
 	return nil
@@ -397,7 +397,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 // TODO:get back and fix `gocyclo` problem.
 //
 //nolint:gocyclo
-func SearchRuns(ctx *fiber.Ctx) error {
+func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
@@ -514,8 +514,8 @@ func SearchRuns(ctx *fiber.Ctx) error {
 // TODO:get back and fix `gocyclo` problem.
 //
 //nolint:gocyclo
-func SearchMetrics(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -530,19 +530,19 @@ func SearchMetrics(c *fiber.Ctx) error {
 		ReportProgress bool `query:"report_progress"`
 	}{}
 
-	if err = c.QueryParser(&q); err != nil {
+	if err = ctx.QueryParser(&q); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if c.Query("report_progress") == "" {
+	if ctx.Query("report_progress") == "" {
 		q.ReportProgress = true
 	}
 
-	if c.Query("p") == "" {
+	if ctx.Query("p") == "" {
 		q.Steps = 50
 	}
 
-	tzOffset, err := strconv.Atoi(c.Get("x-timezone-offset", "0"))
+	tzOffset, err := strconv.Atoi(ctx.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
@@ -688,8 +688,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 		return api.NewInternalError("error getting query result: %s", err)
 	}
 
-	c.Set("Content-Type", "application/octet-stream")
-	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+	ctx.Set("Content-Type", "application/octet-stream")
+	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		//nolint:errcheck
 		defer rows.Close()
 
@@ -831,10 +831,10 @@ func SearchMetrics(c *fiber.Ctx) error {
 
 			return nil
 		}(); err != nil {
-			log.Errorf("Error encountered in %s %s: error streaming metrics: %s", c.Method(), c.Path(), err)
+			log.Errorf("Error encountered in %s %s: error streaming metrics: %s", ctx.Method(), ctx.Path(), err)
 		}
 
-		log.Infof("body - %s %s %s", time.Since(start), c.Method(), c.Path())
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
 	})
 
 	return nil
@@ -843,8 +843,8 @@ func SearchMetrics(c *fiber.Ctx) error {
 // TODO:get back and fix `gocyclo` problem.
 //
 //nolint:gocyclo
-func SearchAlignedMetrics(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -862,7 +862,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		} `json:"runs"`
 	}{}
 
-	if err := c.BodyParser(&b); err != nil {
+	if err := ctx.BodyParser(&b); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -956,8 +956,8 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 		return api.NewInternalError("error getting query result: %s", err)
 	}
 
-	c.Set("Content-Type", "application/octet-stream")
-	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+	ctx.Set("Content-Type", "application/octet-stream")
+	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		//nolint:errcheck
 		defer rows.Close()
 
@@ -1044,18 +1044,18 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 
 			return nil
 		}(); err != nil {
-			log.Errorf("Error encountered in %s %s: error streaming metrics: %s", c.Method(), c.Path(), err)
+			log.Errorf("Error encountered in %s %s: error streaming metrics: %s", ctx.Method(), ctx.Path(), err)
 		}
 
-		log.Infof("body - %s %s %s", time.Since(start), c.Method(), c.Path())
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
 	})
 
 	return nil
 }
 
 // DeleteRun will remove the Run from the repo
-func DeleteRun(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) DeleteRun(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -1065,13 +1065,13 @@ func DeleteRun(c *fiber.Ctx) error {
 		ID string `params:"id"`
 	}{}
 
-	if err = c.ParamsParser(&params); err != nil {
+	if err = ctx.ParamsParser(&params); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	// TODO this code should move to service
 	runRepository := repositories.NewRunRepository(database.DB)
-	run, err := runRepository.GetByNamespaceIDAndRunID(c.Context(), ns.ID, params.ID)
+	run, err := runRepository.GetByNamespaceIDAndRunID(ctx.Context(), ns.ID, params.ID)
 	if err != nil {
 		return fiber.NewError(
 			fiber.StatusInternalServerError, fmt.Sprintf("unable to find run '%s': %s", params.ID, err),
@@ -1082,21 +1082,21 @@ func DeleteRun(c *fiber.Ctx) error {
 	}
 
 	// TODO this code should move to service with injected repository
-	if err = runRepository.Delete(c.Context(), ns.ID, run); err != nil {
+	if err = runRepository.Delete(ctx.Context(), ns.ID, run); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
 			fmt.Sprintf("unable to delete run %q: %s", params.ID, err),
 		)
 	}
 
-	return c.JSON(fiber.Map{
+	return ctx.JSON(fiber.Map{
 		"id":     params.ID,
 		"status": "OK",
 	})
 }
 
 // UpdateRun will update the run name, description, and lifecycle stage
-func UpdateRun(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) UpdateRun(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -1105,18 +1105,18 @@ func UpdateRun(c *fiber.Ctx) error {
 	params := struct {
 		ID string `params:"id"`
 	}{}
-	if err = c.ParamsParser(&params); err != nil {
+	if err = ctx.ParamsParser(&params); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	var updateRequest request.UpdateRunRequest
-	if err = c.BodyParser(&updateRequest); err != nil {
+	if err = ctx.BodyParser(&updateRequest); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	// TODO this code should move to service
 	runRepository := repositories.NewRunRepository(database.DB)
-	run, err := runRepository.GetByNamespaceIDAndRunID(c.Context(), ns.ID, params.ID)
+	run, err := runRepository.GetByNamespaceIDAndRunID(ctx.Context(), ns.ID, params.ID)
 	if err != nil {
 		return fiber.NewError(
 			fiber.StatusInternalServerError, fmt.Sprintf("unable to find run '%s': %s", params.ID, err),
@@ -1128,12 +1128,12 @@ func UpdateRun(c *fiber.Ctx) error {
 
 	if updateRequest.Archived != nil {
 		if *updateRequest.Archived {
-			if err := runRepository.Archive(c.Context(), run); err != nil {
+			if err := runRepository.Archive(ctx.Context(), run); err != nil {
 				return fiber.NewError(fiber.StatusInternalServerError,
 					fmt.Sprintf("unable to archive/restore run %q: %s", params.ID, err))
 			}
 		} else {
-			if err := runRepository.Restore(c.Context(), run); err != nil {
+			if err := runRepository.Restore(ctx.Context(), run); err != nil {
 				return fiber.NewError(fiber.StatusInternalServerError,
 					fmt.Sprintf("unable to archive/restore run %q: %s", params.ID, err))
 			}
@@ -1144,7 +1144,7 @@ func UpdateRun(c *fiber.Ctx) error {
 		run.Name = *updateRequest.Name
 		// TODO:DSuhinin - transaction?
 		if err := database.DB.Transaction(func(tx *gorm.DB) error {
-			if err := runRepository.UpdateWithTransaction(c.Context(), tx, run); err != nil {
+			if err := runRepository.UpdateWithTransaction(ctx.Context(), tx, run); err != nil {
 				return err
 			}
 			return nil
@@ -1154,59 +1154,59 @@ func UpdateRun(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(fiber.Map{
+	return ctx.JSON(fiber.Map{
 		"id":     params.ID,
 		"status": "OK",
 	})
 }
 
-func ArchiveBatch(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) ArchiveBatch(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
 	log.Debugf("archiveBatch namespace: %s", ns.Code)
 
 	var ids []string
-	if err := c.BodyParser(&ids); err != nil {
+	if err := ctx.BodyParser(&ids); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB)
-	if c.Query("archive") == "true" {
-		if err := runRepo.ArchiveBatch(c.Context(), ns.ID, ids); err != nil {
+	if ctx.Query("archive") == "true" {
+		if err := runRepo.ArchiveBatch(ctx.Context(), ns.ID, ids); err != nil {
 			return err
 		}
 	} else {
-		if err := runRepo.RestoreBatch(c.Context(), ns.ID, ids); err != nil {
+		if err := runRepo.RestoreBatch(ctx.Context(), ns.ID, ids); err != nil {
 			return err
 		}
 	}
 
-	return c.JSON(fiber.Map{
+	return ctx.JSON(fiber.Map{
 		"status": "OK",
 	})
 }
 
-func DeleteBatch(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+func (c Controller) DeleteBatch(ctx *fiber.Ctx) error {
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
 	log.Debugf("deleteBatch namespace: %s", ns.Code)
 
 	var ids []string
-	if err := c.BodyParser(&ids); err != nil {
+	if err := ctx.BodyParser(&ids); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB)
-	if err := runRepo.DeleteBatch(c.Context(), ns.ID, ids); err != nil {
+	if err := runRepo.DeleteBatch(ctx.Context(), ns.ID, ids); err != nil {
 		return err
 	}
-	return c.JSON(fiber.Map{
+	return ctx.JSON(fiber.Map{
 		"status": "OK",
 	})
 }

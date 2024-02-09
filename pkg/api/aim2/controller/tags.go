@@ -2,6 +2,6 @@ package controller
 
 import "github.com/gofiber/fiber/v2"
 
-func GetTags(c *fiber.Ctx) error {
-	return c.JSON([]string{})
+func (c Controller) GetTags(ctx *fiber.Ctx) error {
+	return ctx.JSON([]string{})
 }

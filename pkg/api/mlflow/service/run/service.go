@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -73,6 +74,7 @@ func NewService(
 func (s Service) CreateRun(
 	ctx context.Context, ns *models.Namespace, req *request.CreateRunRequest,
 ) (*models.Run, error) {
+	adjustCreateRunRequestForNamespace(ns, req)
 	experimentID, err := strconv.ParseInt(req.ExperimentID, 10, 32)
 	if err != nil {
 		return nil, api.NewBadRequestError("unable to parse experiment id '%s': %s", req.ExperimentID, err)
@@ -159,6 +161,7 @@ func (s Service) SearchRuns(
 	if err := ValidateSearchRunsRequest(req); err != nil {
 		return nil, 0, 0, err
 	}
+	adjustSearchRunsRequestForNamespace(namespace, req)
 
 	// ViewType
 	var lifecyleStages []database.LifecycleStage
@@ -488,7 +491,7 @@ func (s Service) LogMetric(
 		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
-	metric, err := convertors.ConvertMetricParamRequestToDBModel(run.ID, req)
+	metric, err := convertors.ConvertLogMetricRequestToDBModel(run.ID, req)
 	if err != nil {
 		return api.NewInvalidParameterValueError(err.Error())
 	}
@@ -515,11 +518,14 @@ func (s Service) LogParam(
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
 	if run == nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
+		return api.NewResourceDoesNotExistError("Run '%s' not found", req.RunID)
 	}
 
 	param := convertors.ConvertLogParamRequestToDBModel(run.ID, req)
 	if err := s.paramRepository.CreateBatch(ctx, 1, []models.Param{*param}); err != nil {
+		if errors.As(err, &repositories.ParamConflictError{}) {
+			return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
+		}
 		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 	}
 
@@ -542,7 +548,7 @@ func (s Service) SetRunTag(
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
 	if run == nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
+		return api.NewResourceDoesNotExistError("Run '%s' not found", req.RunID)
 	}
 
 	tag := convertors.ConvertSetRunTagRequestToDBModel(run.ID, req)
@@ -568,12 +574,15 @@ func (s Service) DeleteRunTag(
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
 	if run == nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
+		return api.NewResourceDoesNotExistError("Run '%s' not found", req.RunID)
 	}
 
 	tag, err := s.tagRepository.GetByRunIDAndKey(ctx, run.ID, req.Key)
 	if err != nil {
-		return api.NewResourceDoesNotExistError("Unable to find tag '%s' for run '%s': %s", req.Key, req.RunID, err)
+		return api.NewInternalError("Unable to find tag '%s' for run '%s': %s", req.Key, req.RunID, err)
+	}
+	if tag == nil {
+		return api.NewResourceDoesNotExistError("No tag with name: %s", req.Key)
 	}
 
 	if err := s.tagRepository.Delete(ctx, tag); err != nil {
@@ -599,7 +608,7 @@ func (s Service) LogBatch(
 		return api.NewInternalError("Unable to find run '%s': %s", req.RunID, err)
 	}
 	if run == nil {
-		return api.NewResourceDoesNotExistError("Unable to find active run '%s'", req.RunID)
+		return api.NewResourceDoesNotExistError("Run '%s' not found", req.RunID)
 	}
 
 	metrics, params, tags, err := convertors.ConvertLogBatchRequestToDBModel(run.ID, req)
@@ -607,6 +616,9 @@ func (s Service) LogBatch(
 		return api.NewInvalidParameterValueError(err.Error())
 	}
 	if err := s.paramRepository.CreateBatch(ctx, 100, params); err != nil {
+		if errors.As(err, &repositories.ParamConflictError{}) {
+			return api.NewInvalidParameterValueError("unable to insert params for run '%s': %s", run.ID, err)
+		}
 		return api.NewInternalError("unable to insert params for run '%s': %s", run.ID, err)
 	}
 	if err := s.metricRepository.CreateBatch(ctx, run, 100, metrics); err != nil {

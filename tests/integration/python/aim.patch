@@ -1,0 +1,384 @@
+diff --git a/tests/api/test_dashboards_api.py b/tests/api/test_dashboards_api.py
+index 94bc29c..85000fc 100644
+--- a/tests/api/test_dashboards_api.py
++++ b/tests/api/test_dashboards_api.py
+@@ -1,7 +1,7 @@
+-from tests.base import PrefilledDataApiTestBase
++from tests.fml import ApiTestBase, db_fixtures
+ 
+-
+-class TestDashboardAppsApi(PrefilledDataApiTestBase):
++@db_fixtures()
++class TestDashboardAppsApi(ApiTestBase):
+     @classmethod
+     def setUpClass(cls) -> None:
+         super().setUpClass()
+@@ -53,7 +53,8 @@ class TestDashboardAppsApi(PrefilledDataApiTestBase):
+         self.assertEqual(app_data['type'], data['type'])
+ 
+ 
+-class TestDashboardsApi(PrefilledDataApiTestBase):
++@db_fixtures()
++class TestDashboardsApi(ApiTestBase):
+     @classmethod
+     def setUpClass(cls) -> None:
+         super().setUpClass()
+@@ -61,7 +62,7 @@ class TestDashboardsApi(PrefilledDataApiTestBase):
+         response = cls.client.post('/api/apps/', json=app_data)
+         cls.app_id = response.json()['id']
+         for i in range(5):
+-            cls.client.post('/api/dashboards/', json={'name': f'dashboard_{i}'})
++            cls.client.post('/api/dashboards/', json={'name': f'dashboard_{i}', 'app_id': cls.app_id})
+ 
+     def test_list_dashboards_api(self):
+         response = self.client.get('/api/dashboards/')
+diff --git a/tests/api/test_project_api.py b/tests/api/test_project_api.py
+index 31d3654..060d528 100644
+--- a/tests/api/test_project_api.py
++++ b/tests/api/test_project_api.py
+@@ -1,21 +1,17 @@
+ import pytz
+ 
+-from tests.base import PrefilledDataApiTestBase, ApiTestBase
+-from tests.utils import generate_image_set
++from tests.fml import ApiTestBase, db_fixtures
+ 
+ from parameterized import parameterized
+ import datetime
+ 
+-from aim.sdk.run import Run
+-
+-
+-class TestProjectApi(PrefilledDataApiTestBase):
++@db_fixtures()
++class TestProjectApi(ApiTestBase):
+     def test_project_activity_api(self):
+-        with self.repo.structured_db as db:
+-            db.create_experiment('My experiment')
++        self.create_experiment('My experiment')
+ 
+-        experiment_count = len(self.repo.structured_db.experiments())
+-        run_count = len(self.repo.structured_db.runs())
++        experiment_count = 2  # default experiment and my experiment
++        run_count = 10
+         client = self.client
+         response = client.get('/api/projects/activity')
+         self.assertEqual(200, response.status_code)
+@@ -36,25 +32,24 @@ class TestProjectApi(PrefilledDataApiTestBase):
+         self.assertEqual({}, data['images'])
+         self.assertSetEqual({'accuracy', 'loss'}, set(data['metric']))
+         self.assertIn('hparams', data['params'])
+-        self.assertIn('batch_size', data['params']['hparams'])
+-        self.assertIn('lr', data['params']['hparams'])
++        # TODO requires nested params support
++        # self.assertIn('batch_size', data['params']['hparams'])
++        # self.assertIn('lr', data['params']['hparams'])
+         self.assertIn('name', data['params'])
+         self.assertIn('run_index', data['params'])
+         self.assertIn('start_time', data['params'])
+ 
+ 
++@db_fixtures()
+ class TestProjectParamsWithImagesApi(ApiTestBase):
+     @classmethod
+     def setUpClass(cls) -> None:
+         super().setUpClass()
+-        run1 = Run(system_tracking_interval=None)
+-        run1.track(1., name='metric1', context={'a': True})
+-        run1.track(generate_image_set(1), name='images1', context={'a': True})
+-        run1.track(generate_image_set(1), name='images1', context={'b': True})
++        run1 = cls.create_run("Run # 1", "0")
++        cls.log_metric(run1, "metric1", 1, 0)
+ 
+-        run2 = Run(system_tracking_interval=None)
+-        run2.track(1, name='metric2', context={'a': True})
+-        run2.track(generate_image_set(1)[0], name='images2', context={'b': True})
++        run2 = cls.create_run("Run # 2", "0")
++        cls.log_metric(run2, "metric2", 1, 0)
+ 
+     @parameterized.expand([
+         ({'sequence': ('metric', 'images')},),  # metrics only
+@@ -70,18 +65,20 @@ class TestProjectParamsWithImagesApi(ApiTestBase):
+         self.assertIn('images', data)
+ 
+         self.assertTrue({'metric1', 'metric2'}.issubset(set(data['metric'].keys())))
+-        self.assertTrue({'images1', 'images2'}.issubset(set(data['images'].keys())))
++        # TODO requires image support
++        # self.assertTrue({'images1', 'images2'}.issubset(set(data['images'].keys())))
+ 
+         self.assertEqual(1, len(data['metric']['metric1']))
+-        self.assertDictEqual({'a': 1}, data['metric']['metric1'][0])
+-
+-        self.assertEqual(2, len(data['images']['images1']))
+-
++        # TODO requires context support
++        # self.assertDictEqual({'a': 1}, data['metric']['metric1'][0])
++        # TODO requires image support
++        # self.assertEqual(2, len(data['images']['images1']))
+         self.assertEqual(1, len(data['metric']['metric2']))
+-        self.assertDictEqual({'a': 1}, data['metric']['metric2'][0])
+-
+-        self.assertEqual(1, len(data['images']['images2']))
+-        self.assertDictEqual({'b': 1}, data['images']['images2'][0])
++        # TODO requires context support
++        # self.assertDictEqual({'a': 1}, data['metric']['metric2'][0])
++        # TODO requires image support
++        # self.assertEqual(1, len(data['images']['images2']))
++        # self.assertDictEqual({'b': 1}, data['images']['images2'][0])
+ 
+     def test_project_images_info_only_api(self):
+         client = self.client
+diff --git a/tests/conftest.py b/tests/conftest.py
+index 8cdd353..e69de29 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -1,44 +0,0 @@
+-import os
+-import shutil
+-
+-from aim.sdk.repo import Repo, _get_tracking_queue
+-from aim.web.utils import exec_cmd
+-from aim.cli.up.utils import build_db_upgrade_command
+-from aim.web.configs import AIM_ENV_MODE_KEY
+-from aim.sdk.configs import AIM_ENABLE_TRACKING_THREAD, AIM_REPO_NAME
+-from aim.utils.tracking import analytics
+-
+-TEST_REPO_PATH = '.aim-test-repo'
+-
+-
+-def _init_test_repo():
+-    repo = Repo.default_repo(init=True)
+-    # some unittests check sequence tracking in a separate thread
+-    # need to make sure task_queue is there
+-    os.environ[AIM_ENABLE_TRACKING_THREAD] = 'ON'
+-    Repo.tracking_queue = _get_tracking_queue()
+-    del os.environ[AIM_ENABLE_TRACKING_THREAD]
+-
+-
+-def _cleanup_test_repo(path):
+-    shutil.rmtree(TEST_REPO_PATH)
+-
+-
+-def _upgrade_api_db():
+-    db_cmd = build_db_upgrade_command()
+-    exec_cmd(db_cmd, stream_output=True)
+-
+-
+-def pytest_sessionstart(session):
+-    analytics.dev_mode = True
+-
+-    os.environ[AIM_REPO_NAME] = TEST_REPO_PATH
+-    os.environ[AIM_ENV_MODE_KEY] = 'test'
+-
+-    _init_test_repo()
+-    _upgrade_api_db()
+-
+-
+-def pytest_sessionfinish(session, exitstatus):
+-    _cleanup_test_repo(TEST_REPO_PATH)
+-    del os.environ[AIM_REPO_NAME]
+diff --git a/tests/fml.py b/tests/fml.py
+new file mode 100644
+index 0000000..099cab0
+--- /dev/null
++++ b/tests/fml.py
+@@ -0,0 +1,199 @@
++import datetime
++import itertools
++import os
++import socket
++import tempfile
++import time
++import unittest
++from subprocess import Popen
++
++import httpx
++from parameterized import parameterized_class
++
++LOCALHOST = "127.0.0.1"
++
++
++def get_safe_port():
++    """Returns an ephemeral port that is very likely to be free to bind to."""
++    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
++    sock.bind((LOCALHOST, 0))
++    port = sock.getsockname()[1]
++    sock.close()
++    return port
++
++
++def init_server(backend_uri, root_artifact_uri):
++    port = get_safe_port()
++    address = f"{LOCALHOST}:{port}"
++    process = Popen(
++        [
++            "fml",
++            "server",
++        ],
++        env={
++            **os.environ,
++            "FML_LISTEN_ADDRESS": address,
++            "FML_DATABASE_URI": backend_uri,
++            "FML_DEFAULT_ARTIFACT_ROOT": root_artifact_uri,
++            "FML_LOG_LEVEL": "debug",
++            "FML_DATABASE_RESET": str(backend_uri.startswith("postgres")),
++        },
++    )
++    await_server_up_or_die(port)
++    return address, process
++
++
++def await_server_up_or_die(port, timeout=60):
++    """Waits until the local flask server is listening on the given port."""
++    start_time = time.time()
++    connected = False
++    while not connected and time.time() - start_time < timeout:
++        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
++        sock.settimeout(2)
++        result = sock.connect_ex((LOCALHOST, port))
++        if result == 0:
++            connected = True
++        else:
++            time.sleep(0.5)
++    if not connected:
++        raise Exception(
++            f"Failed to connect on {LOCALHOST}:{port} after {timeout} seconds"
++        )
++
++
++def get_current_timestamp():
++    return int(datetime.datetime.utcnow().timestamp() * 1000)
++
++
++def db_fixtures():
++    return parameterized_class(
++        "db",
++        [
++            ["sqlite+memory"],
++            ["sqlite+file"],
++            ["sqlite+key"],
++            ["postgres"],
++        ],
++    )
++
++
++class ApiTestBase(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls) -> None:
++        super().setUpClass()
++
++        cls.temp_dir = tempfile.TemporaryDirectory()
++        dir_name = cls.temp_dir.name
++
++        if cls.db == "sqlite+memory":
++            db_path = f"sqlite://{dir_name}/fml.db?mode=memory&cache=shared"
++        elif cls.db == "sqlite+file":
++            db_path = f"sqlite://{dir_name}/fml.db"
++        elif cls.db == "sqlite+key":
++            db_path = f"sqlite://{dir_name}/fml.db?_key=passphrase"
++        elif cls.db == "postgres":
++            db_path = "postgres://postgres:postgres@postgres/postgres"
++        else:
++            raise ValueError(f"Database '{cls.db}' not supported.")
++
++        address, cls.process = init_server(db_path, dir_name)
++
++        cls.client = httpx.Client(base_url=f"http://{address}/aim")
++        cls.mlflow_client = httpx.Client(base_url=f"http://{address}/api/2.0/mlflow")
++
++        cls.fill_up_fml_data()
++
++    @classmethod
++    def tearDownClass(cls):
++        super().tearDownClass()
++        cls.process.terminate()
++        cls.temp_dir.cleanup()
++
++    @classmethod
++    def create_experiment(cls, name):
++        response = cls.mlflow_client.post("/experiments/create", json={"name": name})
++        return response.json()["experiment_id"]
++
++    @classmethod
++    def create_run(cls, name, experiment_id):
++        response = cls.mlflow_client.post(
++            "/runs/create",
++            json={
++                "name": name,
++                "experiment_id": experiment_id,
++                "start_time": get_current_timestamp(),
++            },
++        )
++        return response.json()["run"]["info"]["run_uuid"]
++
++    @classmethod
++    def log_metric(cls, run_id, key, value, step):
++        cls.mlflow_client.post(
++            "/runs/log-metric",
++            json={
++                "key": key,
++                "value": value,
++                "timestamp": get_current_timestamp(),
++                "run_id": run_id,
++                "step": step,
++            },
++        )
++
++    @classmethod
++    def log_param(cls, run_id, key, value):
++        cls.mlflow_client.post(
++            "/runs/log-parameter",
++            json={
++                "key": key,
++                "value": value,
++                "run_id": run_id,
++            },
++        )
++
++    @classmethod
++    def log_metrics(cls, run_id, metrics):
++        cls.mlflow_client.post(
++            "/runs/log-batch",
++            json={
++                "run_id": run_id,
++                "metrics": metrics,
++            },
++        )
++
++    @classmethod
++    def log_params(cls, run_id, params):
++        cls.mlflow_client.post(
++            "/runs/log-batch",
++            json={
++                "run_id": run_id,
++                "params": [{"key": k, "value": v} for k, v in params.items()],
++            },
++        )
++
++    @classmethod
++    def fill_up_fml_data(cls):
++        for idx in range(10):
++            run_id = cls.create_run(f"Run # {idx}", "0")
++            cls.log_params(
++                run_id,
++                {
++                    "hparams": "",
++                    "run_index": str(idx),
++                    "start_time": datetime.datetime.utcnow().ctime(),
++                    "name": f"Run # {idx}",
++                },
++            )
++            metrics = []
++            for metric in ["loss", "accuracy"]:
++                # track 100 values per run
++                for step in range(100):
++                    val = 1.0 - 1.0 / (step + 1)
++                    metrics.append(
++                        {
++                            "key": metric,
++                            "value": val,
++                            "timestamp": get_current_timestamp(),
++                            "step": step,
++                        }
++                    )
++            cls.log_metrics(run_id, metrics)

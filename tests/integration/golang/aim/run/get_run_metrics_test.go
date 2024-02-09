@@ -1,27 +1,24 @@
-//go:build integration
-
 package run
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetRunMetricsTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
-	run *models.Run
 }
 
 func TestGetRunMetricsTestSuite(t *testing.T) {
@@ -29,30 +26,87 @@ func TestGetRunMetricsTestSuite(t *testing.T) {
 }
 
 func (s *GetRunMetricsTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	assert.Nil(s.T(), err)
-
-	s.run, err = s.RunFixtures.CreateExampleRun(context.Background(), experiment)
-	assert.Nil(s.T(), err)
+	s.BaseTestSuite.SetupTest()
 }
 
 func (s *GetRunMetricsTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
+	// create test data
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    s.DefaultNamespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
+	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:             "id",
+		Name:           "TestRun",
+		Status:         models.StatusScheduled,
+		StartTime:      sql.NullInt64{Int64: 123456789, Valid: true},
+		EndTime:        sql.NullInt64{Int64: 123456789, Valid: true},
+		SourceType:     "JOB",
+		ExperimentID:   *experiment.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
+	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+		Key:       "key1",
+		Value:     123.1,
+		Timestamp: 123456789,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run.ID,
+		Iter:      1,
+		Context: models.Context{
+			Json: types.JSONB(`{"key1":"key1","value1":"value1"}`),
+		},
+	})
+	s.Require().Nil(err)
+
+	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+		Key:       "key1",
+		Value:     123.2,
+		Timestamp: 123456789,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run.ID,
+		Iter:      2,
+		Context: models.Context{
+			Json: types.JSONB(`{"key2":"key2","value2":"value2"}`),
+		},
+	})
+	s.Require().Nil(err)
+
+	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+		Key:       "key2",
+		Value:     124.1,
+		Timestamp: 123456789,
+		Step:      1,
+		IsNan:     false,
+		RunID:     run.ID,
+		Iter:      3,
+		Context: models.Context{
+			Json: types.JSONB(`{"key3":"key3","value3":"value3"}`),
+		},
+	})
+	s.Require().Nil(err)
+
+	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
+		Key:       "key2",
+		Value:     124.2,
+		Timestamp: 123456789,
+		Step:      2,
+		IsNan:     false,
+		RunID:     run.ID,
+		Iter:      4,
+		Context: models.Context{
+			Json: types.JSONB(`{"key4":"key4","value4":"value4"}`),
+		},
+	})
+	s.Require().Nil(err)
+
+	// runs tests over test data.
 	tests := []struct {
 		name             string
 		runID            string
@@ -61,39 +115,142 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	}{
 		{
 			name:  "GetOneRun",
-			runID: s.run.ID,
+			runID: run.ID,
 			request: request.GetRunMetrics{
 				{
-					Context: map[string]string{},
-					Name:    "key1",
+					Name: "key1",
 				},
 				{
-					Context: map[string]string{},
-					Name:    "key2",
+					Name: "key2",
 				},
 			},
 			expectedResponse: response.GetRunMetrics{
 				response.RunMetrics{
 					Name:    "key1",
-					Context: map[string]interface{}{},
-					Values:  []float64{124.1, 125.1},
-					Iters:   []int64{1, 2},
+					Iters:   []int64{1},
+					Values:  []float64{123.1},
+					Context: json.RawMessage(`{"key1":"key1","value1":"value1"}`),
+				},
+				response.RunMetrics{
+					Name:    "key1",
+					Iters:   []int64{2},
+					Values:  []float64{123.2},
+					Context: json.RawMessage(`{"key2":"key2","value2":"value2"}`),
 				},
 				response.RunMetrics{
 					Name:    "key2",
-					Context: map[string]interface{}{},
-					Values:  []float64{124.1, 125.1},
-					Iters:   []int64{1, 2},
+					Iters:   []int64{3},
+					Values:  []float64{124.1},
+					Context: json.RawMessage(`{"key3":"key3","value3":"value3"}`),
+				},
+				response.RunMetrics{
+					Name:    "key2",
+					Iters:   []int64{4},
+					Values:  []float64{124.2},
+					Context: json.RawMessage(`{"key4":"key4","value4":"value4"}`),
+				},
+			},
+		},
+		{
+			name:  "GetOneRunWithContextCase1",
+			runID: run.ID,
+			request: request.GetRunMetrics{
+				{
+					Name: "key1",
+					Context: map[string]string{
+						"key1":   "key1",
+						"value1": "value1",
+					},
+				},
+				{
+					Name: "key1",
+					Context: map[string]string{
+						"key2":   "key2",
+						"value2": "value2",
+					},
+				},
+				{
+					Name: "key2",
+					Context: map[string]string{
+						"key3":   "key3",
+						"value3": "value3",
+					},
+				},
+				{
+					Name: "key2",
+					Context: map[string]string{
+						"key4":   "key4",
+						"value4": "value4",
+					},
+				},
+			},
+			expectedResponse: response.GetRunMetrics{
+				response.RunMetrics{
+					Name:    "key1",
+					Iters:   []int64{1},
+					Values:  []float64{123.1},
+					Context: json.RawMessage(`{"key1":"key1","value1":"value1"}`),
+				},
+				response.RunMetrics{
+					Name:    "key1",
+					Iters:   []int64{2},
+					Values:  []float64{123.2},
+					Context: json.RawMessage(`{"key2":"key2","value2":"value2"}`),
+				},
+				response.RunMetrics{
+					Name:    "key2",
+					Iters:   []int64{3},
+					Values:  []float64{124.1},
+					Context: json.RawMessage(`{"key3":"key3","value3":"value3"}`),
+				},
+				response.RunMetrics{
+					Name:    "key2",
+					Iters:   []int64{4},
+					Values:  []float64{124.2},
+					Context: json.RawMessage(`{"key4":"key4","value4":"value4"}`),
+				},
+			},
+		},
+		{
+			name:  "GetOneRunWithContextCase2",
+			runID: run.ID,
+			request: request.GetRunMetrics{
+				{
+					Name: "key1",
+					Context: map[string]string{
+						"key1":   "key1",
+						"value1": "value1",
+					},
+				},
+				{
+					Name: "key2",
+					Context: map[string]string{
+						"key3":   "key3",
+						"value3": "value3",
+					},
+				},
+			},
+			expectedResponse: response.GetRunMetrics{
+				response.RunMetrics{
+					Name:    "key1",
+					Iters:   []int64{1},
+					Values:  []float64{123.1},
+					Context: json.RawMessage(`{"key1":"key1","value1":"value1"}`),
+				},
+				response.RunMetrics{
+					Name:    "key2",
+					Iters:   []int64{3},
+					Values:  []float64{124.1},
+					Context: json.RawMessage(`{"key3":"key3","value3":"value3"}`),
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp response.GetRunMetrics
-			assert.Nil(
-				s.T(),
-				s.AIMClient.WithMethod(
+			s.Require().Nil(
+				s.AIMClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
@@ -103,15 +260,12 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					"/runs/%s/metric/get-batch", tt.runID,
 				),
 			)
-			assert.ElementsMatch(s.T(), tt.expectedResponse, resp)
+			s.ElementsMatch(tt.expectedResponse, resp)
 		})
 	}
 }
 
 func (s *GetRunMetricsTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name  string
 		runID string
@@ -124,13 +278,12 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			var resp response.Error
-			assert.Nil(
-				s.T(),
-				s.AIMClient.WithResponse(&resp).DoRequest("/runs/%s/metric/get-batch", tt.runID),
+			s.Require().Nil(
+				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/metric/get-batch", tt.runID),
 			)
-			assert.Equal(s.T(), tt.error, resp.Message)
+			s.Equal(tt.error, resp.Message)
 		})
 	}
 }

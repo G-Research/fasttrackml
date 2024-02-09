@@ -1,35 +1,4 @@
 services:
-  service:
-    image: golang:1.21
-    command: sh -c 'rm -rf /tmp/* && exec make run'
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 2s
-      timeout: 5s
-      start_period: 5m
-    volumes:
-      - ../../:/src
-      - go-cache:/cache
-      - tmp:/tmp
-    working_dir: /src
-    depends_on:
-      minio:
-        condition: service_healthy
-      google-storage:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    environment:
-      GOCACHE: /cache/go-build
-      GOMODCACHE: /cache/go-mod
-      FML_LISTEN_ADDRESS: ":5000"
-      FML_LOG_LEVEL: debug
-      FML_DATABASE_URI: ${FML_DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
-      FML_S3_ENDPOINT_URI: http://minio:9000
-      FML_GS_ENDPOINT_URI: http://google-storage:4443/storage/v1/
-      AWS_ACCESS_KEY_ID: "user"
-      AWS_SECRET_ACCESS_KEY: "password"
-
   postgres:
     image: postgres:latest
     healthcheck:
@@ -43,7 +12,7 @@ services:
     image: minio/minio:latest
     command: server /data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "bash", "-c", ":> /dev/tcp/127.0.0.1/9000"]
       interval: 5s
       timeout: 5s
     environment:
@@ -57,7 +26,7 @@ services:
       - -public-host=google-storage
       - -scheme=http
     healthcheck:
-      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:4443/storage/v1/b" ]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:4443/storage/v1/b"]
       interval: 5s
       timeout: 5s
 
@@ -67,7 +36,6 @@ services:
     volumes:
       - ../../:/src
       - go-cache:/cache
-      - tmp:/tmp
     working_dir: /src
     depends_on:
       minio:
@@ -76,13 +44,12 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-      service:
-        condition: service_healthy
     environment:
       GOCACHE: /cache/go-build
       GOMODCACHE: /cache/go-mod
-      FML_SERVICE_URI: http://service:5000
-      FML_DATABASE_URI: ${FML_DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
+      FML_LOG_LEVEL: ${FML_LOG_LEVEL:-fatal}
+      FML_DATABASE_BACKEND: ${FML_DATABASE_BACKEND:-postgres}
+      FML_POSTGRES_URI: postgres://postgres:postgres@postgres/postgres
       FML_S3_ENDPOINT_URI: http://minio:9000
       FML_GS_ENDPOINT_URI: http://google-storage:4443/storage/v1/
       AWS_ACCESS_KEY_ID: "user"
@@ -90,4 +57,3 @@ services:
 
 volumes:
   go-cache:
-  tmp:

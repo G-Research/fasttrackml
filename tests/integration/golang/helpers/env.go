@@ -2,28 +2,30 @@ package helpers
 
 import "os"
 
-func GetDatabaseUri() string {
-	uri, ok := os.LookupEnv("FML_DATABASE_URI")
+const defaultDatabaseBackend = "sqlite"
+
+func GetLogLevel() string {
+	level, ok := os.LookupEnv("FML_LOG_LEVEL")
 	if ok {
-		return uri
+		return level
 	}
-	return "sqlite:///tmp/fasttrackml.db"
+	return "info"
 }
 
-func GetServiceUri() string {
-	uri, ok := os.LookupEnv("FML_SERVICE_URI")
+func GetDatabaseBackend() string {
+	uri, ok := os.LookupEnv("FML_DATABASE_BACKEND")
 	if ok {
 		return uri
 	}
-	return "http://localhost:5000"
+	return defaultDatabaseBackend
 }
 
-func GetS3EndpointUri() string {
-	uri, ok := os.LookupEnv("FML_S3_ENDPOINT_URI")
+func GetPostgresUri() string {
+	uri, ok := os.LookupEnv("FML_POSTGRES_URI")
 	if ok {
 		return uri
 	}
-	return "http://localhost:9000"
+	return "postgres://postgres:postgres@localhost/postgres"
 }
 
 func GetGSEndpointUri() string {
@@ -34,18 +36,10 @@ func GetGSEndpointUri() string {
 	return "http://localhost:4443/storage/v1/"
 }
 
-func GetInputDatabaseUri() string {
-	uri, ok := os.LookupEnv("FML_INPUT_DATABASE_URI")
+func GetS3EndpointUri() string {
+	uri, ok := os.LookupEnv("FML_S3_ENDPOINT_URI")
 	if ok {
 		return uri
 	}
-	return "sqlite:///tmp/fasttrackml-in.db"
-}
-
-func GetOutputDatabaseUri() string {
-	uri, ok := os.LookupEnv("FML_OUTPUT_DATABASE_URI")
-	if ok {
-		return uri
-	}
-	return "sqlite:///tmp/fasttrackml-out.db"
+	return "http://localhost:9000"
 }

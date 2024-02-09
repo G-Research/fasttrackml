@@ -30,6 +30,7 @@ type MetricRepositoryProvider interface {
 		experimentIDs []string, runIDs []string, metricKeys []string,
 		viewType request.ViewType,
 		limit int32,
+		jsonPathValueMap map[string]string,
 	) (*sql.Rows, func(*sql.Rows, interface{}) error, error)
 	// GetMetricHistoryBulk returns metrics history bulk.
 	GetMetricHistoryBulk(
@@ -81,26 +82,53 @@ func (r MetricRepository) CreateBatch(
 
 	lastIters := make(map[string]int64)
 	for _, lastMetric := range lastMetrics {
-		lastIters[lastMetric.Key] = lastMetric.LastIter
+		lastIters[lastMetric.UniqueKey()] = lastMetric.LastIter
+	}
+	allContexts := make([]*models.Context, len(metrics))
+	uniqueContexts := make([]*models.Context, 0, len(metrics))
+	contextProcessed := make(map[string]*models.Context)
+	latestMetrics := make(map[string]models.LatestMetric)
+	for n := range metrics {
+		ctxHash := metrics[n].Context.GetJsonHash()
+		ctxRef, ok := contextProcessed[ctxHash]
+		if ok {
+			allContexts[n] = ctxRef
+		} else {
+			uniqueContexts = append(uniqueContexts, &metrics[n].Context)
+			allContexts[n] = &metrics[n].Context
+			contextProcessed[ctxHash] = &metrics[n].Context
+		}
 	}
 
-	latestMetrics := make(map[string]models.LatestMetric)
-	for n, metric := range metrics {
-		metrics[n].Iter = lastIters[metric.Key] + 1
-		lastIters[metric.Key] = metrics[n].Iter
-		lm, ok := latestMetrics[metric.Key]
+	if err := r.db.WithContext(ctx).Clauses(
+		clause.OnConflict{
+			Columns:   []clause.Column{{Name: "json"}},
+			UpdateAll: true,
+		},
+	).CreateInBatches(&uniqueContexts, batchSize).Error; err != nil {
+		return eris.Wrapf(err, "error creating contexts")
+	}
+
+	for n := range metrics {
+		metrics[n].ContextID = allContexts[n].ID
+		metrics[n].Context = *allContexts[n]
+		metrics[n].Iter = lastIters[metrics[n].UniqueKey()] + 1
+		lastIters[metrics[n].UniqueKey()] = metrics[n].Iter
+		lm, ok := latestMetrics[metrics[n].UniqueKey()]
 		if !ok ||
-			metric.Step > lm.Step ||
-			(metric.Step == lm.Step && metric.Timestamp > lm.Timestamp) ||
-			(metric.Step == lm.Step && metric.Timestamp == lm.Timestamp && metric.Value > lm.Value) {
-			latestMetrics[metric.Key] = models.LatestMetric{
-				RunID:     metric.RunID,
-				Key:       metric.Key,
-				Value:     metric.Value,
-				Timestamp: metric.Timestamp,
-				Step:      metric.Step,
-				IsNan:     metric.IsNan,
-				LastIter:  metric.Iter,
+			metrics[n].Step > lm.Step ||
+			(metrics[n].Step == lm.Step && metrics[n].Timestamp > lm.Timestamp) ||
+			(metrics[n].Step == lm.Step && metrics[n].Timestamp == lm.Timestamp && metrics[n].Value > lm.Value) {
+			latestMetrics[metrics[n].UniqueKey()] = models.LatestMetric{
+				RunID:     metrics[n].RunID,
+				Key:       metrics[n].Key,
+				Value:     metrics[n].Value,
+				Timestamp: metrics[n].Timestamp,
+				Step:      metrics[n].Step,
+				IsNan:     metrics[n].IsNan,
+				LastIter:  metrics[n].Iter,
+				ContextID: allContexts[n].ID,
+				Context:   *allContexts[n],
 			}
 		}
 	}
@@ -112,10 +140,9 @@ func (r MetricRepository) CreateBatch(
 	}
 
 	// TODO update latest metrics in the background?
-
 	currentLatestMetricsMap := make(map[string]models.LatestMetric, len(latestMetrics))
-	for _, m := range latestMetrics {
-		currentLatestMetricsMap[m.Key] = m
+	for k, m := range latestMetrics {
+		currentLatestMetricsMap[k] = m
 	}
 
 	updatedLatestMetrics := make([]models.LatestMetric, 0, len(latestMetrics))
@@ -134,12 +161,12 @@ func (r MetricRepository) CreateBatch(
 
 	if len(updatedLatestMetrics) > 0 {
 		if err := r.db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "run_uuid"}, {Name: "key"}, {Name: "context_id"}},
 			UpdateAll: true,
 		}).Create(&updatedLatestMetrics).Error; err != nil {
 			return eris.Wrapf(err, "error updating latest metrics for run: %s", run.ID)
 		}
 	}
-
 	return nil
 }
 
@@ -151,6 +178,7 @@ func (r MetricRepository) GetMetricHistories(
 	experimentIDs []string, runIDs []string, metricKeys []string,
 	viewType request.ViewType,
 	limit int32,
+	jsonPathValueMap map[string]string,
 ) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
 	// if experimentIDs has been provided then firstly get the runs by provided experimentIDs.
 	if len(experimentIDs) > 0 {
@@ -196,6 +224,8 @@ func (r MetricRepository) GetMetricHistories(
 	).Joins(
 		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 		namespaceID,
+	).Joins(
+		"Context",
 	).Order(
 		"runs.start_time DESC",
 	).Order(
@@ -217,6 +247,12 @@ func (r MetricRepository) GetMetricHistories(
 
 	if len(metricKeys) > 0 {
 		query.Where("metrics.key IN ?", metricKeys)
+	}
+
+	if len(jsonPathValueMap) > 0 {
+		query.Joins("LEFT JOIN contexts on metrics.context_id = contexts.id")
+		sql, args := BuildJsonCondition(query.Dialector.Name(), "contexts.json", jsonPathValueMap)
+		query.Where(sql, args...)
 	}
 
 	rows, err := query.Rows()
@@ -252,7 +288,11 @@ func (r MetricRepository) GetMetricHistoryByRunIDAndKey(
 	ctx context.Context, runID, key string,
 ) ([]models.Metric, error) {
 	var metrics []models.Metric
-	if err := r.db.WithContext(ctx).Where(
+	if err := r.db.WithContext(
+		ctx,
+	).Joins(
+		"Context",
+	).Where(
 		"run_uuid = ?", runID,
 	).Where(
 		"key = ?", key,

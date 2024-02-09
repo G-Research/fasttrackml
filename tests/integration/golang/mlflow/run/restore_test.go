@@ -1,30 +1,24 @@
-//go:build integration
-
 package run
 
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type RestoreRunTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -32,31 +26,8 @@ func TestRestoreRunTestSuite(t *testing.T) {
 	suite.Run(t, new(RestoreRunTestSuite))
 }
 
-func (s *RestoreRunTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
-}
-
 func (s *RestoreRunTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	// create test experiment.
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	assert.Nil(s.T(), err)
-
-	// create test run for the experiment
+	// create test run.
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:     strings.ReplaceAll(uuid.New().String(), "-", ""),
 		Name:   "TestRun",
@@ -71,10 +42,10 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 		},
 		SourceType:     "JOB",
 		ArtifactURI:    "artifact_uri",
-		ExperimentID:   *experiment.ID,
+		ExperimentID:   *s.DefaultExperiment.ID,
 		LifecycleStage: models.LifecycleStageDeleted,
 	})
-	assert.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create tags, metrics, params.
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
@@ -82,7 +53,7 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 		Value: "value1",
 		RunID: run.ID,
 	})
-	assert.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "metric1",
@@ -92,40 +63,32 @@ func (s *RestoreRunTestSuite) Test_Ok() {
 		Step:      1,
 		IsNan:     false,
 	})
-	assert.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	req := request.RestoreRunRequest{
 		RunID: run.ID,
 	}
 	resp := fiber.Map{}
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
 			http.MethodPost,
 		).WithRequest(
 			req,
 		).WithResponse(
 			&resp,
 		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute),
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute,
 		),
 	)
-	assert.Equal(s.T(), fiber.Map{}, resp)
+	s.Equal(fiber.Map{}, resp)
 
 	// check that run has been updated in database.
 	run, err = s.RunFixtures.GetRun(context.Background(), run.ID)
-	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), models.LifecycleStageActive, run.LifecycleStage)
+	s.Require().Nil(err)
+	s.Equal(models.LifecycleStageActive, run.LifecycleStage)
 }
 
 func (s *RestoreRunTestSuite) Test_Error() {
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	tests := []struct {
 		name    string
 		error   *api.ErrorResponse
@@ -147,21 +110,20 @@ func (s *RestoreRunTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			assert.Nil(
-				s.T(),
-				s.MlflowClient.WithMethod(
+			s.Require().Nil(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.request,
 				).WithResponse(
 					&resp,
 				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute),
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsRestoreRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

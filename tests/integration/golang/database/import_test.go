@@ -1,5 +1,3 @@
-//go:build integration
-
 package database
 
 import (
@@ -8,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 
@@ -36,6 +33,8 @@ type ImportTestSuite struct {
 	runs               []*models.Run
 	inputRunFixtures   *fixtures.RunFixtures
 	outputRunFixtures  *fixtures.RunFixtures
+	inputBackend       string
+	outputBackend      string
 	inputDB            *gorm.DB
 	outputDB           *gorm.DB
 	populatedRowCounts rowCounts
@@ -45,88 +44,42 @@ func TestImportTestSuite(t *testing.T) {
 	suite.Run(t, new(ImportTestSuite))
 }
 
-func (s *ImportTestSuite) SetupTest() {
+func (s *ImportTestSuite) SetupSubTest() {
 	// prepare input database.
+	dsn, err := helpers.GenerateDatabaseURI(s.T(), s.inputBackend)
+	s.Require().Nil(err)
 	db, err := database.NewDBProvider(
-		helpers.GetInputDatabaseUri(),
+		dsn,
 		1*time.Second,
 		20,
 	)
-	assert.Nil(s.T(), err)
-	assert.Nil(s.T(), database.CheckAndMigrateDB(true, db.GormDB()))
-	assert.Nil(s.T(), database.CreateDefaultNamespace(db.GormDB()))
-	assert.Nil(s.T(), database.CreateDefaultExperiment(db.GormDB(), "s3://fasttrackml"))
+	s.Require().Nil(err)
+	s.Require().Nil(database.CheckAndMigrateDB(true, db.GormDB()))
+	s.Require().Nil(database.CreateDefaultNamespace(db.GormDB()))
+	s.Require().Nil(database.CreateDefaultExperiment(db.GormDB(), "s3://fasttrackml"))
 	s.inputDB = db.GormDB()
 
-	inputExperimentFixtures, err := fixtures.NewExperimentFixtures(db.GormDB())
-	assert.Nil(s.T(), err)
 	inputRunFixtures, err := fixtures.NewRunFixtures(db.GormDB())
-	assert.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.inputRunFixtures = inputRunFixtures
-
-	// experiment 1
-	experiment, err := inputExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    1,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	assert.Nil(s.T(), err)
-
-	runs, err := inputRunFixtures.CreateExampleRuns(context.Background(), experiment, 5)
-	assert.Nil(s.T(), err)
-	s.runs = runs
-
-	// experiment 2
-	experiment, err = inputExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    1,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	assert.Nil(s.T(), err)
-
-	runs, err = inputRunFixtures.CreateExampleRuns(context.Background(), experiment, 5)
-	assert.Nil(s.T(), err)
-	s.runs = runs
-
-	appFixtures, err := fixtures.NewAppFixtures(db.GormDB())
-	assert.Nil(s.T(), err)
-	app, err := appFixtures.CreateApp(context.Background(), &database.App{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-		},
-		NamespaceID: 1,
-		Type:        "mpi",
-		State:       database.AppState{},
-	})
-	assert.Nil(s.T(), err)
-
-	dashboardFixtures, err := fixtures.NewDashboardFixtures(db.GormDB())
-	assert.Nil(s.T(), err)
-	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
-		Base: database.Base{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-		},
-		AppID: &app.ID,
-		Name:  uuid.NewString(),
-	})
-	assert.Nil(s.T(), err)
+	s.populateDB(s.inputDB)
 
 	// prepare output database.
+	dsn, err = helpers.GenerateDatabaseURI(s.T(), s.outputBackend)
+	s.Require().Nil(err)
 	db, err = database.NewDBProvider(
-		helpers.GetOutputDatabaseUri(),
+		dsn,
 		1*time.Second,
 		20,
 	)
-	assert.Nil(s.T(), err)
-	assert.Nil(s.T(), database.CheckAndMigrateDB(true, db.GormDB()))
-	assert.Nil(s.T(), database.CreateDefaultNamespace(db.GormDB()))
-	assert.Nil(s.T(), database.CreateDefaultExperiment(db.GormDB(), "s3://fasttrackml"))
+	s.Require().Nil(err)
+	s.Require().Nil(database.CheckAndMigrateDB(true, db.GormDB()))
+	s.Require().Nil(database.CreateDefaultNamespace(db.GormDB()))
+	s.Require().Nil(database.CreateDefaultExperiment(db.GormDB(), "s3://fasttrackml"))
 	s.outputDB = db.GormDB()
 
 	outputRunFixtures, err := fixtures.NewRunFixtures(db.GormDB())
-	assert.Nil(s.T(), err)
+	s.Require().Nil(err)
 	s.outputRunFixtures = outputRunFixtures
 
 	s.populatedRowCounts = rowCounts{
@@ -138,130 +91,208 @@ func (s *ImportTestSuite) SetupTest() {
 		latestMetrics:            20,
 		tags:                     10,
 		params:                   20,
-		dashboards:               1,
-		apps:                     1,
+		dashboards:               2,
+		apps:                     2,
 	}
 }
 
+func (s *ImportTestSuite) populateDB(db *gorm.DB) {
+	experimentFixtures, err := fixtures.NewExperimentFixtures(db)
+	s.Require().Nil(err)
+
+	runFixtures, err := fixtures.NewRunFixtures(db)
+	s.Require().Nil(err)
+
+	// experiment 1
+	experiment, err := experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    1,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
+	runs, err := runFixtures.CreateExampleRuns(context.Background(), experiment, 5)
+	s.Require().Nil(err)
+	s.runs = runs
+
+	// experiment 2
+	experiment, err = experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    1,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
+	runs, err = runFixtures.CreateExampleRuns(context.Background(), experiment, 5)
+	s.Require().Nil(err)
+	s.runs = runs
+
+	dashboardFixtures, err := fixtures.NewDashboardFixtures(db)
+	s.Require().Nil(err)
+
+	// dashboard 1
+	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
+		App: database.App{
+			Type:        "mpi",
+			State:       database.AppState{},
+			NamespaceID: 1,
+		},
+		Name: uuid.NewString(),
+	})
+	s.Require().Nil(err)
+
+	// dashboard 2
+	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
+		App: database.App{
+			Type:        "mpi",
+			State:       database.AppState{},
+			NamespaceID: 1,
+		},
+		Name: uuid.NewString(),
+	})
+	s.Require().Nil(err)
+}
+
+func (s *ImportTestSuite) TearDownSubTest() {
+	s.Require().Nil(s.inputRunFixtures.TruncateTables())
+	s.Require().Nil(s.outputRunFixtures.TruncateTables())
+}
+
 func (s *ImportTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.inputRunFixtures.UnloadFixtures())
-		assert.Nil(s.T(), s.outputRunFixtures.UnloadFixtures())
-	}()
+	backends := []string{"sqlite", "sqlcipher", "postgres"}
+	for _, inputBackend := range backends {
+		for _, outputBackend := range backends {
+			s.inputBackend = inputBackend
+			s.outputBackend = outputBackend
+			s.Run(inputBackend+"->"+outputBackend, func() {
+				// source DB should have expected
+				s.validateRowCounts(s.inputDB, s.populatedRowCounts)
 
-	// source DB should have expected
-	validateRowCounts(s.T(), s.inputDB, s.populatedRowCounts)
+				// initially, dest DB is empty
+				s.validateRowCounts(s.outputDB, rowCounts{namespaces: 1, experiments: 1})
 
-	// initially, dest DB is empty
-	validateRowCounts(s.T(), s.outputDB, rowCounts{namespaces: 1, experiments: 1})
+				// invoke the Importer.Import() method
+				importer := database.NewImporter(s.inputDB, s.outputDB)
+				s.Require().Nil(importer.Import())
 
-	// invoke the Importer.Import() method
-	importer := database.NewImporter(s.inputDB, s.outputDB)
-	err := importer.Import()
-	assert.Nil(s.T(), err)
+				// dest DB should now have the expected
+				s.validateRowCounts(s.outputDB, s.populatedRowCounts)
 
-	// dest DB should now have the expected
-	validateRowCounts(s.T(), s.outputDB, s.populatedRowCounts)
+				// invoke the Importer.Import method a 2nd time
+				s.Require().Nil(importer.Import())
 
-	// invoke the Importer.Import method a 2nd time
-	err = importer.Import()
-	assert.Nil(s.T(), err)
+				// dest DB should still only have the expected (idempotent)
+				s.validateRowCounts(s.outputDB, s.populatedRowCounts)
 
-	// dest DB should still only have the expected
-	validateRowCounts(s.T(), s.outputDB, s.populatedRowCounts)
-
-	// confirm row-for-row equality
-	for _, table := range []string{
-		"namespaces",
-		// "apps",
-		// "dashboards",
-		"experiment_tags",
-		"runs",
-		"tags",
-		"params",
-		"metrics",
-		"latest_metrics",
-	} {
-		validateTable(s.T(), s.inputDB, s.outputDB, table)
+				// confirm row-for-row equality
+				for _, table := range []string{
+					"namespaces",
+					"apps",
+					"dashboards",
+					"experiment_tags",
+					"runs",
+					"tags",
+					"params",
+					"metrics",
+					"latest_metrics",
+				} {
+					s.validateTable(s.inputDB, s.outputDB, table)
+				}
+			})
+		}
 	}
 }
 
 // validateRowCounts will make assertions about the db based on the test setup.
 // a db imported from the test setup db should also pass these
 // assertions.
-func validateRowCounts(t *testing.T, db *gorm.DB, counts rowCounts) {
+func (s *ImportTestSuite) validateRowCounts(db *gorm.DB, counts rowCounts) {
 	var countVal int64
-	tx := db.Model(&models.Namespace{}).Count(&countVal)
-	assert.Nil(t, tx.Error)
-	assert.Equal(t, counts.namespaces, int(countVal), "Namespaces count incorrect")
+	s.Require().Nil(db.Model(&models.Namespace{}).Count(&countVal).Error)
+	s.Equal(counts.namespaces, int(countVal), "Namespaces count incorrect")
 
-	tx = db.Model(&models.Experiment{}).Count(&countVal)
-	assert.Nil(t, tx.Error)
-	assert.Equal(t, counts.experiments, int(countVal), "Experiments count incorrect")
+	s.Require().Nil(db.Model(&models.Experiment{}).Count(&countVal).Error)
+	s.Equal(counts.experiments, int(countVal), "Experiments count incorrect")
 
-	tx = db.Model(&models.Run{}).Count(&countVal)
-	assert.Nil(t, tx.Error)
-	assert.Equal(t, counts.runs, int(countVal), "Runs count incorrect")
+	s.Require().Nil(db.Model(&models.Run{}).Count(&countVal).Error)
+	s.Equal(counts.runs, int(countVal), "Runs count incorrect")
 
-	tx = db.Model(&models.Metric{}).Count(&countVal)
-	assert.Nil(t, tx.Error)
-	assert.Equal(t, counts.metrics, int(countVal), "Metrics count incorrect")
+	s.Require().Nil(db.Model(&models.Metric{}).Count(&countVal).Error)
+	s.Equal(counts.metrics, int(countVal), "Metrics count incorrect")
 
-	tx = db.Model(&models.LatestMetric{}).Count(&countVal)
-	assert.Nil(t, tx.Error)
-	assert.Equal(t, counts.latestMetrics, int(countVal), "Latest metrics count incorrect")
+	s.Require().Nil(db.Model(&models.LatestMetric{}).Count(&countVal).Error)
+	s.Equal(counts.latestMetrics, int(countVal), "Latest metrics count incorrect")
 
-	tx = db.Model(&models.Tag{}).Count(&countVal)
-	assert.Nil(t, tx.Error)
-	assert.Equal(t, counts.tags, int(countVal), "Run tags count incorrect")
+	s.Require().Nil(db.Model(&models.Tag{}).Count(&countVal).Error)
+	s.Equal(counts.tags, int(countVal), "Run tags count incorrect")
 
-	tx = db.Model(&models.Param{}).Count(&countVal)
-	assert.Nil(t, tx.Error)
-	assert.Equal(t, counts.params, int(countVal), "Run params count incorrect")
+	s.Require().Nil(db.Model(&models.Param{}).Count(&countVal).Error)
+	s.Equal(counts.params, int(countVal), "Run params count incorrect")
 
-	tx = db.Model(&models.Run{}).Distinct("experiment_id").Count(&countVal)
-	assert.Nil(t, tx.Error)
-	assert.Equal(t, counts.distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
+	s.Require().Nil(db.Model(&models.Run{}).Distinct("experiment_id").Count(&countVal).Error)
+	s.Equal(counts.distinctRunExperimentIDs, int(countVal), "Runs experiment association incorrect")
 
-	// tx = db.DB.Model(&database.App{}).Count(&countVal)
-	// assert.Nil(t, tx.Error)
-	// assert.Equal(t, counts.apps, int(countVal), "Apps count incorrect")
+	s.Require().Nil(db.Model(&database.App{}).Count(&countVal).Error)
+	s.Equal(counts.apps, int(countVal), "Apps count incorrect")
 
-	// tx = db.DB.Model(&database.Dashboard{}).Count(&countVal)
-	// assert.Nil(t, tx.Error)
-	// assert.Equal(t, counts.dashboards, int(countVal), "Dashboard count incorrect")
+	s.Require().Nil(db.Model(&database.Dashboard{}).Count(&countVal).Error)
+	s.Equal(counts.dashboards, int(countVal), "Dashboard count incorrect")
 }
 
 // validateTable will scan source and dest table and confirm they are identical
-func validateTable(t *testing.T, source, dest *gorm.DB, table string) {
+func (s *ImportTestSuite) validateTable(source, dest *gorm.DB, table string) {
 	sourceRows, err := source.Table(table).Rows()
-	assert.Nil(t, err)
-	assert.Nil(t, sourceRows.Err())
+	s.Require().Nil(err)
+	s.Require().Nil(sourceRows.Err())
 	destRows, err := dest.Table(table).Rows()
-	assert.Nil(t, err)
-	assert.Nil(t, destRows.Err())
+	s.Require().Nil(err)
+	s.Require().Nil(destRows.Err())
 	//nolint:errcheck
 	defer sourceRows.Close()
 	//nolint:errcheck
 	defer destRows.Close()
 
 	for sourceRows.Next() {
-		var sourceItem, destItem map[string]any
+		// dest should have the same number of rows as source
+		s.Require().True(destRows.Next())
 
-		err := source.ScanRows(sourceRows, &sourceItem)
-		assert.Nil(t, err)
+		var sourceRow, destRow map[string]any
+		s.Require().Nil(source.ScanRows(sourceRows, &sourceRow))
+		s.Require().Nil(dest.ScanRows(destRows, &destRow))
 
-		destRows.Next()
-		err = dest.ScanRows(destRows, &destItem)
-		assert.Nil(t, err)
+		// translate some types to make comparison easier
+		for _, row := range []map[string]any{sourceRow, destRow} {
+			for k, v := range row {
+				switch k {
+				case "is_nan", "is_archived":
+					if v, ok := v.(float64); ok {
+						row[k] = v != 0
+					}
+				case "default_experiment_id", "experiment_id":
+					if v, ok := v.(int64); ok {
+						row[k] = int32(v)
+					}
+				case "id", "app_id":
+					switch v := v.(type) {
+					case *interface{}:
+						switch s := (*v).(type) {
+						case string:
+							row[k] = s
+						}
+					}
+				}
+			}
+		}
 
 		// TODO:DSuhinin delete this fields right now, because they
 		// cause comparison error when we compare `namespace` entities. Let's find smarter way to do that.
-		delete(destItem, "updated_at")
-		delete(destItem, "created_at")
-		delete(sourceItem, "updated_at")
-		delete(sourceItem, "created_at")
+		delete(destRow, "updated_at")
+		delete(destRow, "created_at")
+		delete(sourceRow, "updated_at")
+		delete(sourceRow, "created_at")
 
-		assert.Equal(t, sourceItem, destItem)
+		s.Equal(sourceRow, destRow)
 	}
+	// dest should have the same number of rows as source
+	s.Require().False(destRows.Next())
 }

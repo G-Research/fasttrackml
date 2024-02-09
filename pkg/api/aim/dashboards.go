@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
@@ -35,7 +36,13 @@ func GetDashboards(c *fiber.Ctx) error {
 			),
 		).
 		Where("NOT dashboards.is_archived").
-		Order("dashboards.updated_at").
+		Order(clause.OrderByColumn{
+			Column: clause.Column{
+				Table: "App",
+				Name:  "updated_at",
+			},
+			Desc: true,
+		}).
 		Find(&dashboards).
 		Error; err != nil {
 		return fmt.Errorf("error fetching dashboards: %w", err)

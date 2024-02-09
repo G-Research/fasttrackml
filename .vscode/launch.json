@@ -57,16 +57,18 @@
             ],
         },
         {
-            "name": "Launch server (supports integration tests)",
+            "name": "Launch database import (sqlite to pg)",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
             "buildFlags": "-tags '${config:go.buildTags}'",
             "args": [
-                "server",
-                "--database-uri",
-                "sqlite:///tmp/fasttrackml.db"
+                "import",
+                "--input-database-uri",
+                "sqlite://fasttrackml.db",
+                "--output-database-uri",
+                "postgres://postgres:postgres@localhost/postgres"
             ],
         }
     ]

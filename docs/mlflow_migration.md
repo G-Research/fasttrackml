@@ -1,8 +1,3 @@
-
-  
-  
-ChatGPT
-
 ## Using FastTrackML with an Existing MLFlow Database
 
 ### Prerequisites

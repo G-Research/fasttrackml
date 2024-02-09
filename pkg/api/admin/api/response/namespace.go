@@ -1,6 +1,6 @@
 package response
 
-import "github.com/G-Research/fasttrackml/pkg/common/dao/models"
+import "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 
 // Namespace is the response struct for the GetCurrentNamespace endpoint.
 type Namespace struct {

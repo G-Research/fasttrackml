@@ -6,7 +6,7 @@ import (
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // MetricPartialResponseBulk is a partial response object for GetMetricHistoryBulkResponse.

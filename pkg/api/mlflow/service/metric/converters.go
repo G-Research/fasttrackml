@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // adjustGetMetricHistoriesRequestForNamespace preprocesses the GetMetricHistoriesRequest for the given namespace.

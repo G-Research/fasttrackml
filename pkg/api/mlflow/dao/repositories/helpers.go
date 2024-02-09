@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/driver/postgres"
 
-	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // makeSqlPlaceholders collects a string of "(?,?,?), (?,?,?)" and so on,

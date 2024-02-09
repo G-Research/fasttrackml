@@ -3,6 +3,7 @@ package convertors
 // TODO:DSuhinin not fully sure about naming of this file. Any suggestions?
 
 import (
+	"encoding/json"
 	"math"
 
 	"github.com/rotisserie/eris"
@@ -66,7 +67,18 @@ func ConvertLogBatchRequestToDBModel(
 				return nil, nil, nil, eris.Errorf("invalid metric value '%s'", v)
 			}
 		} else {
-			return nil, nil, nil, eris.Errorf("invalid metric value '%s'", v)
+			return nil, nil, nil, eris.Errorf("invalid metric value '%v'", metric.Value)
+		}
+		if metric.Context == nil || len(metric.Context) == 0 {
+			m.Context = models.DefaultContext
+		} else {
+			contextJSON, err := json.Marshal(metric.Context)
+			if err != nil {
+				return nil, nil, nil, eris.Wrap(err, "error marshalling context")
+			}
+			m.Context = models.Context{
+				Json: contextJSON,
+			}
 		}
 		metrics[n] = m
 	}

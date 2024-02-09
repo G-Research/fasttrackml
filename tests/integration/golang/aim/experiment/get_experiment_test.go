@@ -1,14 +1,12 @@
-//go:build integration
-
 package experiment
 
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
@@ -19,35 +17,23 @@ import (
 )
 
 type GetExperimentTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
 func TestGetExperimentTestSuite(t *testing.T) {
-	suite.Run(t, new(GetExperimentTestSuite))
-}
-
-func (s *GetExperimentTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	suite.Run(t, &GetExperimentTestSuite{
+		helpers.BaseTestSuite{
+			SkipCreateDefaultExperiment: true,
+		},
+	})
 }
 
 func (s *GetExperimentTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
 			{
-				Key:   "key1",
+				Key:   common.DescriptionTagKey,
 				Value: "value1",
 			},
 		},
@@ -55,39 +41,22 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 			Int64: time.Now().UTC().UnixMilli(),
 			Valid: true,
 		},
-		NamespaceID: namespace.ID,
-		LastUpdateTime: sql.NullInt64{
-			Int64: time.Now().UTC().UnixMilli(),
-			Valid: true,
-		},
-		LifecycleStage:   models.LifecycleStageActive,
-		ArtifactLocation: "/artifact/location",
+		NamespaceID:    s.DefaultNamespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	var resp response.GetExperiment
-	assert.Nil(s.T(), s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
-
-	assert.Equal(s.T(), *experiment.ID, resp.ID)
-	assert.Equal(s.T(), experiment.Name, resp.Name)
-	assert.Equal(s.T(), "", resp.Description)
-	assert.Equal(s.T(), float64(experiment.CreationTime.Int64)/1000, resp.CreationTime)
-	assert.Equal(s.T(), false, resp.Archived)
-	assert.Equal(s.T(), len(experiment.Runs), resp.RunCount)
+	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
+	s.Equal(fmt.Sprintf("%d", *experiment.ID), resp.ID)
+	s.Equal(experiment.Name, resp.Name)
+	s.Equal(helpers.GetDescriptionFromExperiment(*experiment), resp.Description)
+	s.Equal(float64(experiment.CreationTime.Int64)/1000, resp.CreationTime)
+	s.Equal(false, resp.Archived)
+	s.Equal(len(experiment.Runs), resp.RunCount)
 }
 
 func (s *GetExperimentTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	tests := []struct {
 		name  string
 		error string
@@ -107,10 +76,10 @@ func (s *GetExperimentTestSuite) Test_Error() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
-			assert.Nil(t, s.AIMClient.WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
-			assert.Equal(s.T(), tt.error, resp.Error())
+			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
+			s.Equal(tt.error, resp.Error())
 		})
 	}
 }

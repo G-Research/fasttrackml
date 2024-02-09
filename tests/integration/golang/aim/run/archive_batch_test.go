@@ -1,5 +1,3 @@
-//go:build integration
-
 package run
 
 import (
@@ -8,17 +6,13 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type ArchiveBatchTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 	runs []*models.Run
 }
@@ -28,31 +22,14 @@ func TestArchiveBatchTestSuite(t *testing.T) {
 }
 
 func (s *ArchiveBatchTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+	s.BaseTestSuite.SetupTest()
 
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
-	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		NamespaceID:    namespace.ID,
-		LifecycleStage: models.LifecycleStageActive,
-	})
-	assert.Nil(s.T(), err)
-
-	s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 10)
-	assert.Nil(s.T(), err)
+	var err error
+	s.runs, err = s.RunFixtures.CreateExampleRuns(context.Background(), s.DefaultExperiment, 10)
+	s.Require().Nil(err)
 }
 
 func (s *ArchiveBatchTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
 	tests := []struct {
 		name                 string
 		runIDs               []string
@@ -79,16 +56,15 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			originalMinRowNum, originalMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
-			assert.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			resp := map[string]any{}
-			assert.Nil(
-				s.T(),
-				s.AIMClient.WithMethod(http.MethodPost).WithQuery(map[any]any{
+			s.Require().Nil(
+				s.AIMClient().WithMethod(http.MethodPost).WithQuery(map[any]any{
 					"archive": tt.archiveParam,
 				}).WithRequest(
 					tt.runIDs,
@@ -98,33 +74,30 @@ func (s *ArchiveBatchTestSuite) Test_Ok() {
 					"/runs/archive-batch",
 				),
 			)
-			assert.Equal(s.T(), map[string]interface{}{"status": "OK"}, resp)
+			s.Equal(map[string]interface{}{"status": "OK"}, resp)
 
 			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
-			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), 10, len(runs))
+			s.Require().Nil(err)
+			s.Equal(10, len(runs))
 			archiveCount := 0
 			for _, run := range runs {
 				if run.LifecycleStage == models.LifecycleStageDeleted {
 					archiveCount++
 				}
 			}
-			assert.Equal(s.T(), tt.expectedArchiveCount, archiveCount)
+			s.Equal(tt.expectedArchiveCount, archiveCount)
 
 			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
-			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
-			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
+			s.Require().Nil(err)
+			s.Equal(originalMinRowNum, newMinRowNum)
+			s.Equal(originalMaxRowNum, newMaxRowNum)
 		})
 	}
 }
 
 func (s *ArchiveBatchTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
 	tests := []struct {
 		name             string
 		request          []string
@@ -137,16 +110,15 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			originalMinRowNum, originalMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
-			assert.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			var resp fiber.Map
-			assert.Nil(
-				s.T(),
-				s.AIMClient.WithMethod(http.MethodPost).WithQuery(map[any]any{
+			s.Require().Nil(
+				s.AIMClient().WithMethod(http.MethodPost).WithQuery(map[any]any{
 					"archive": true,
 				}).WithRequest(
 					tt.request,
@@ -156,18 +128,18 @@ func (s *ArchiveBatchTestSuite) Test_Error() {
 					"/runs/archive-batch",
 				),
 			)
-			assert.Equal(s.T(), fiber.Map{"status": "OK"}, resp)
+			s.Equal(fiber.Map{"status": "OK"}, resp)
 
 			runs, err := s.RunFixtures.GetRuns(context.Background(), s.runs[0].ExperimentID)
-			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), tt.expectedRunCount, len(runs))
+			s.Require().Nil(err)
+			s.Equal(tt.expectedRunCount, len(runs))
 
 			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,
 			)
-			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), originalMinRowNum, newMinRowNum)
-			assert.Equal(s.T(), originalMaxRowNum, newMaxRowNum)
+			s.Require().Nil(err)
+			s.Equal(originalMinRowNum, newMinRowNum)
+			s.Equal(originalMaxRowNum, newMaxRowNum)
 		})
 	}
 }

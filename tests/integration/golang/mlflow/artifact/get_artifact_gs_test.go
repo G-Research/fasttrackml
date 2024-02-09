@@ -1,5 +1,3 @@
-//go:build integration
-
 package artifact
 
 import (
@@ -9,60 +7,27 @@ import (
 	"strings"
 	"testing"
 
-	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type GetArtifactGSTestSuite struct {
-	suite.Suite
-	helpers.BaseTestSuite
-	gsClient    *storage.Client
-	testBuckets []string
+	helpers.GSTestSuite
 }
 
 func TestGetArtifactGSTestSuite(t *testing.T) {
 	suite.Run(t, &GetArtifactGSTestSuite{
-		testBuckets: []string{"bucket1", "bucket2"},
+		helpers.NewGSTestSuite("bucket1", "bucket2"),
 	})
-}
-
-func (s *GetArtifactGSTestSuite) SetupSuite() {
-	s.BaseTestSuite.SetupTest(s.T())
-
-	gsClient, err := helpers.NewGSClient(helpers.GetGSEndpointUri())
-	assert.Nil(s.T(), err)
-	s.gsClient = gsClient
-}
-
-func (s *GetArtifactGSTestSuite) SetupTest() {
-	assert.Nil(s.T(), helpers.CreateGSBuckets(s.gsClient, s.testBuckets))
-}
-
-func (s *GetArtifactGSTestSuite) TearDownTest() {
-	assert.Nil(s.T(), helpers.DeleteGSBuckets(s.gsClient, s.testBuckets))
 }
 
 func (s *GetArtifactGSTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	tests := []struct {
 		name   string
 		bucket string
@@ -78,15 +43,15 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			// create test experiment
 			experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 				Name:             fmt.Sprintf("Test Experiment In Bucket %s", tt.bucket),
-				NamespaceID:      namespace.ID,
+				NamespaceID:      s.DefaultNamespace.ID,
 				LifecycleStage:   models.LifecycleStageActive,
 				ArtifactLocation: fmt.Sprintf("gs://%s/1", tt.bucket),
 			})
-			assert.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// create test run
 			runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -98,23 +63,23 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 				ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 				LifecycleStage: models.LifecycleStageActive,
 			})
-			assert.Nil(s.T(), err)
+			s.Require().Nil(err)
 
 			// upload artifact root object to GS
-			writer := s.gsClient.Bucket(tt.bucket).Object(
+			writer := s.Client.Bucket(tt.bucket).Object(
 				fmt.Sprintf("/1/%s/artifacts/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("content"))
-			assert.Nil(s.T(), err)
-			assert.Nil(s.T(), writer.Close())
+			s.Require().Nil(err)
+			s.Require().Nil(writer.Close())
 
 			// upload artifact subdir object to GS
-			writer = s.gsClient.Bucket(tt.bucket).Object(
+			writer = s.Client.Bucket(tt.bucket).Object(
 				fmt.Sprintf("/1/%s/artifacts/artifact/artifact.txt", runID),
 			).NewWriter(context.Background())
 			_, err = writer.Write([]byte("subdir-object-content"))
-			assert.Nil(s.T(), err)
-			assert.Nil(s.T(), writer.Close())
+			s.Require().Nil(err)
+			s.Require().Nil(writer.Close())
 
 			// make API call for root object
 			query := request.GetArtifactRequest{
@@ -123,7 +88,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			}
 
 			resp := new(bytes.Buffer)
-			assert.Nil(s.T(), s.MlflowClient.WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
@@ -132,7 +97,7 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			).DoRequest(
 				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
 			))
-			assert.Equal(s.T(), "content", resp.String())
+			s.Equal("content", resp.String())
 
 			// make API call for subdir object
 			query = request.GetArtifactRequest{
@@ -141,40 +106,29 @@ func (s *GetArtifactGSTestSuite) Test_Ok() {
 			}
 
 			resp = new(bytes.Buffer)
-			assert.Nil(s.T(), s.MlflowClient.WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				query,
 			).WithResponseType(
 				helpers.ResponseTypeBuffer,
 			).WithResponse(
 				resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
-			assert.Equal(s.T(), "subdir-object-content", resp.String())
+			s.Equal("subdir-object-content", resp.String())
 		})
 	}
 }
 
 func (s *GetArtifactGSTestSuite) Test_Error() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
-
-	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	// create test experiment
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:             "Test Experiment In Bucket bucket1",
-		NamespaceID:      namespace.ID,
+		NamespaceID:      s.DefaultNamespace.ID,
 		LifecycleStage:   models.LifecycleStageActive,
 		ArtifactLocation: "gs://bucket1/1",
 	})
-	assert.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// create test run
 	runID := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -186,16 +140,16 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 		ArtifactURI:    fmt.Sprintf("%s/%s/artifacts", experiment.ArtifactLocation, runID),
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	// upload artifact subdir object to GS
-	assert.Nil(s.T(), err)
-	writer := s.gsClient.Bucket("bucket1").Object(
+	s.Require().Nil(err)
+	writer := s.Client.Bucket("bucket1").Object(
 		fmt.Sprintf("1/%s/artifacts/artifact/artifact.file", runID),
 	).NewWriter(context.Background())
 	_, err = writer.Write([]byte("content"))
-	assert.Nil(s.T(), err)
-	assert.Nil(s.T(), writer.Close())
+	s.Require().Nil(err)
+	s.Require().Nil(writer.Close())
 
 	tests := []struct {
 		name    string
@@ -209,7 +163,7 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 		},
 		{
 			name:  "IncorrectPathProvidedCase1",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "..",
@@ -217,7 +171,7 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 		},
 		{
 			name:  "IncorrectPathProvidedCase2",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./..",
@@ -225,7 +179,7 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 		},
 		{
 			name:  "IncorrectPathProvidedCase3",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "./../",
@@ -233,7 +187,7 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 		},
 		{
 			name:  "IncorrectPathProvidedCase4",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "foo/../bar",
@@ -241,7 +195,7 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 		},
 		{
 			name:  "IncorrectPathProvidedCase5",
-			error: api.NewInvalidParameterValueError("provided 'path' parameter is invalid"),
+			error: api.NewInvalidParameterValueError("Invalid path"),
 			request: request.GetArtifactRequest{
 				RunID: "run_id",
 				Path:  "/foo/../bar",
@@ -270,16 +224,16 @@ func (s *GetArtifactGSTestSuite) Test_Error() {
 	}
 
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			assert.Nil(t, s.MlflowClient.WithQuery(
+			s.Require().Nil(s.MlflowClient().WithQuery(
 				tt.request,
 			).WithResponse(
 				&resp,
 			).DoRequest(
-				fmt.Sprintf("%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute),
+				"%s%s", mlflow.ArtifactsRoutePrefix, mlflow.ArtifactsGetRoute,
 			))
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

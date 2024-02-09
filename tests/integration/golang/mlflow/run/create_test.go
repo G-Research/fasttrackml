@@ -1,5 +1,3 @@
-//go:build integration
-
 package run
 
 import (
@@ -9,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
@@ -22,7 +19,6 @@ import (
 )
 
 type CreateRunTestSuite struct {
-	suite.Suite
 	helpers.BaseTestSuite
 }
 
@@ -30,30 +26,61 @@ func TestCreateRunTestSuite(t *testing.T) {
 	suite.Run(t, new(CreateRunTestSuite))
 }
 
-func (s *CreateRunTestSuite) SetupTest() {
-	s.BaseTestSuite.SetupTest(s.T())
+func (s *CreateRunTestSuite) Test_DefaultNamespace_Ok() {
+	s.successCases(s.DefaultNamespace, s.DefaultExperiment, false, *s.DefaultExperiment.ID)
 }
 
-func (s *CreateRunTestSuite) Test_Ok() {
-	defer func() {
-		assert.Nil(s.T(), s.NamespaceFixtures.UnloadFixtures())
-	}()
+func (s *CreateRunTestSuite) Test_DefaultNamespaceExperimentZero_Ok() {
+	s.successCases(s.DefaultNamespace, s.DefaultExperiment, false, int32(0))
+}
 
+func (s *CreateRunTestSuite) Test_CustomNamespace_Ok() {
 	// create test experiment.
 	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
+		Code:                "custom",
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
-	assert.Nil(s.T(), err)
+	s.Require().Nil(err)
 
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
-	assert.Nil(s.T(), err)
+	s.Require().Nil(err)
 
+	s.successCases(namespace, experiment, true, *experiment.ID)
+}
+
+func (s *CreateRunTestSuite) Test_CustomNamespaceExperimentZero_Ok() {
+	// create test experiment.
+	namespace, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		Code:                "custom",
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
+	})
+	s.Require().Nil(err)
+
+	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
+	// update default experiment id.
+	namespace.DefaultExperimentID = experiment.ID
+	_, err = s.NamespaceFixtures.UpdateNamespace(context.Background(), namespace)
+	s.Require().Nil(err)
+
+	s.successCases(namespace, experiment, true, int32(0))
+}
+
+func (s *CreateRunTestSuite) successCases(
+	namespace *models.Namespace,
+	experiment *models.Experiment,
+	useNamespaceInRequest bool,
+	experimentIDInRequest int32,
+) {
 	req := request.CreateRunRequest{
 		Name: "TestRun",
 		Tags: []request.RunTagPartialRequest{
@@ -67,32 +94,37 @@ func (s *CreateRunTestSuite) Test_Ok() {
 			},
 		},
 		StartTime:    1234567890,
-		ExperimentID: fmt.Sprintf("%d", *experiment.ID),
+		ExperimentID: fmt.Sprintf("%d", experimentIDInRequest),
 	}
 
 	resp := response.CreateRunResponse{}
-	assert.Nil(
-		s.T(),
-		s.MlflowClient.WithMethod(
-			http.MethodPost,
-		).WithRequest(
-			req,
-		).WithResponse(
-			&resp,
-		).DoRequest(
-			fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+	client := s.MlflowClient().WithMethod(
+		http.MethodPost,
+	).WithRequest(
+		req,
+	).WithResponse(
+		&resp,
+	)
+	if useNamespaceInRequest {
+		client = client.WithNamespace(
+			namespace.Code,
+		)
+	}
+	s.Require().Nil(
+		client.DoRequest(
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 		),
 	)
-	assert.NotEmpty(s.T(), resp.Run.Info.ID)
-	assert.NotEmpty(s.T(), resp.Run.Info.UUID)
-	assert.Equal(s.T(), "TestRun", resp.Run.Info.Name)
-	assert.Equal(s.T(), fmt.Sprintf("%d", *experiment.ID), resp.Run.Info.ExperimentID)
-	assert.Equal(s.T(), int64(1234567890), resp.Run.Info.StartTime)
-	assert.Equal(s.T(), int64(0), resp.Run.Info.EndTime)
-	assert.Equal(s.T(), string(models.StatusRunning), resp.Run.Info.Status)
-	assert.NotEmpty(s.T(), resp.Run.Info.ArtifactURI)
-	assert.Equal(s.T(), string(models.LifecycleStageActive), resp.Run.Info.LifecycleStage)
-	assert.Equal(s.T(), []response.RunTagPartialResponse{
+	s.NotEmpty(resp.Run.Info.ID)
+	s.NotEmpty(resp.Run.Info.UUID)
+	s.Equal("TestRun", resp.Run.Info.Name)
+	s.Equal(fmt.Sprintf("%d", *experiment.ID), resp.Run.Info.ExperimentID)
+	s.Equal(int64(1234567890), resp.Run.Info.StartTime)
+	s.Equal(int64(0), resp.Run.Info.EndTime)
+	s.Equal(string(models.StatusRunning), resp.Run.Info.Status)
+	s.NotEmpty(resp.Run.Info.ArtifactURI)
+	s.Equal(string(models.LifecycleStageActive), resp.Run.Info.LifecycleStage)
+	s.Equal([]response.RunTagPartialResponse{
 		{
 			Key:   "key1",
 			Value: "value1",
@@ -105,17 +137,11 @@ func (s *CreateRunTestSuite) Test_Ok() {
 }
 
 func (s *CreateRunTestSuite) Test_Error() {
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
-		ID:                  1,
-		Code:                "default",
-		DefaultExperimentID: common.GetPointer(int32(0)),
-	})
-	assert.Nil(s.T(), err)
-
 	tests := []struct {
-		name    string
-		error   *api.ErrorResponse
-		request request.CreateRunRequest
+		name      string
+		error     *api.ErrorResponse
+		namespace string
+		request   request.CreateRunRequest
 	}{
 		{
 			name: "CreateRunWithInvalidExperimentID",
@@ -128,31 +154,60 @@ func (s *CreateRunTestSuite) Test_Error() {
 			),
 		},
 		{
-			name: "CreateRunWithNotExistingExperiment",
+			name:      "CreateRunWithNotExistingNamespaceAndExistingExperimentID",
+			namespace: "not_existing_namespace",
 			request: request.CreateRunRequest{
-				ExperimentID: "1",
+				ExperimentID: fmt.Sprintf("%d", *s.DefaultExperiment.ID),
 			},
 			error: api.NewResourceDoesNotExistError(
-				`unable to find experiment with id '1': error getting experiment by id: 1: record not found`,
+				`unable to find namespace with code: not_existing_namespace`,
+			),
+		},
+		{
+			name: "CreateRunWithNotExistingExperiment",
+			request: request.CreateRunRequest{
+				ExperimentID: fmt.Sprintf("%d", -1),
+			},
+			error: api.NewResourceDoesNotExistError(
+				fmt.Sprintf(
+					`unable to find experiment with id '%d': error getting experiment by id: %d: record not found`,
+					-1,
+					-1,
+				),
+			),
+		},
+		{
+			name: "CreateRunWithExistingNamespaceAndNotExistingExperiment",
+			request: request.CreateRunRequest{
+				ExperimentID: fmt.Sprintf("%d", -1),
+			},
+			error: api.NewResourceDoesNotExistError(
+				fmt.Sprintf(
+					`unable to find experiment with id '%d': error getting experiment by id: %d: record not found`,
+					-1,
+					-1,
+				),
 			),
 		},
 	}
 	for _, tt := range tests {
-		s.T().Run(tt.name, func(T *testing.T) {
+		s.Run(tt.name, func() {
 			resp := api.ErrorResponse{}
-			assert.Nil(
-				s.T(),
-				s.MlflowClient.WithMethod(
-					http.MethodPost,
-				).WithRequest(
-					tt.request,
-				).WithResponse(
-					&resp,
-				).DoRequest(
-					fmt.Sprintf("%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute),
+			client := s.MlflowClient().WithMethod(
+				http.MethodPost,
+			).WithRequest(
+				tt.request,
+			).WithNamespace(
+				tt.namespace,
+			).WithResponse(
+				&resp,
+			)
+			s.Require().Nil(
+				client.DoRequest(
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsCreateRoute,
 				),
 			)
-			assert.Equal(s.T(), tt.error.Error(), resp.Error())
+			s.Equal(tt.error.Error(), resp.Error())
 		})
 	}
 }

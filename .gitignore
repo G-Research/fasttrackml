@@ -12,9 +12,6 @@ __debug_bin*
 fasttrackml.db*
 encrypted.db*
 
-# Imported integration tests
-tests/integration/python/*/*.src
-
 # Quick start
 outputs
 poetry.lock
@@ -30,3 +27,7 @@ go.work*
 python/build/
 python/*.egg-info/
 wheelhouse/
+
+# Python package
+!python/fasttrackml/
+__pycache__/

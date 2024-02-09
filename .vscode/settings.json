@@ -1,6 +1,6 @@
 {
-    // Please keep the content of go.buildTags identical to the content of the authoritative file .go-build-tags (but add integration tests tag here)
-    "go.buildTags": "netgo,osusergo,sqlite_foreign_keys,sqlite_math_functions,sqlite_omit_load_extension,sqlite_unlock_notify,sqlite_vacuum_incr,integration",
+    // Please keep the content of go.buildTags identical to the content of the authoritative file .go-build-tags
+    "go.buildTags": "netgo,osusergo,sqlite_foreign_keys,sqlite_math_functions,sqlite_omit_load_extension,sqlite_unlock_notify,sqlite_vacuum_incr",
     "gopls": {
         "formatting.local": "github.com/G-Research/fasttrackml",
         "formatting.gofumpt": true
@@ -12,7 +12,7 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.codeActionsOnSave": {
-            "source.organizeImports": true
+            "source.organizeImports": "explicit"
         }
     },
     "black-formatter.args": [

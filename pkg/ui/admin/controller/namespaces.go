@@ -111,7 +111,7 @@ func (c Controller) renderIndex(ctx *fiber.Ctx, msg string) error {
 		return ctx.Render("namespaces/index", fiber.Map{
 			"Namespaces": namespaces,
 			"Status":     StatusError,
-			"Message":    err.Error(),
+			"Message":    common.ErrorMessageForUI("namespace", err.Error()),
 		})
 	}
 	return ctx.Render("namespaces/index", fiber.Map{

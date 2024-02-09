@@ -4,6 +4,7 @@ FROM mcr.microsoft.com/devcontainers/go:1-${VARIANT} AS base
 
 # ==================================================================
 
+# This needs to be kept in sync with the install-tools target of the Makefile
 FROM base AS tools
 RUN export GOBIN=/tmp/tools \
  && go install github.com/vektra/mockery/v2@v2.34.0 \

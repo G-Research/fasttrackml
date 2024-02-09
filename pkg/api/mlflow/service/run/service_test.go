@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
@@ -19,8 +20,9 @@ import (
 func TestService_CreateRun_Ok(t *testing.T) {
 	// initialise namespace to which experiment under the test belongs to.
 	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
+		ID:                  1,
+		Code:                "code",
+		DefaultExperimentID: common.GetPointer(int32(1)),
 	}
 
 	// init repository mocks.
@@ -67,7 +69,7 @@ func TestService_CreateRun_Ok(t *testing.T) {
 		&experimentRepository,
 	)
 	run, err := service.CreateRun(context.TODO(), &ns, &request.CreateRunRequest{
-		ExperimentID: "1",
+		ExperimentID: "0", // default experiment id provided by the client is "0"
 		UserID:       "1",
 		Name:         "name",
 		StartTime:    12345,
@@ -80,11 +82,11 @@ func TestService_CreateRun_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.NotEmpty(t, run.ID)
 	assert.Equal(t, "name", run.Name)
 	assert.Equal(t, "1", run.UserID)
-	assert.Equal(t, int32(1), run.ExperimentID)
+	assert.Equal(t, int32(1), run.ExperimentID) // default experiment id "0" is translated to namespace default.
 	assert.Equal(t, models.StatusRunning, run.Status)
 	assert.Equal(t, int64(12345), run.StartTime.Int64)
 	assert.Equal(t, models.LifecycleStageActive, run.LifecycleStage)
@@ -298,7 +300,7 @@ func TestService_RestoreRun_Ok(t *testing.T) {
 	err := service.RestoreRun(context.TODO(), &models.Namespace{ID: 1}, &request.RestoreRunRequest{RunID: "1"})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_RestoreRun_Error(t *testing.T) {
@@ -428,7 +430,7 @@ func TestService_SetRunTag_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 func TestService_SetRunTag_Error(t *testing.T) {}
 
@@ -458,7 +460,7 @@ func TestService_DeleteRun_Ok(t *testing.T) {
 	err := service.DeleteRun(context.TODO(), &models.Namespace{ID: 1}, &request.DeleteRunRequest{RunID: "1"})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_DeleteRun_Error(t *testing.T) {
@@ -622,7 +624,7 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "ActiveRunNotFound",
-			error: api.NewResourceDoesNotExistError("Unable to find active run '1'"),
+			error: api.NewResourceDoesNotExistError("Run '1' not found"),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 			},
@@ -646,7 +648,42 @@ func TestService_DeleteRunTag_Error(t *testing.T) {
 		},
 		{
 			name:  "NotFoundTag",
-			error: api.NewResourceDoesNotExistError("Unable to find tag 'key' for run '1': database error"),
+			error: api.NewResourceDoesNotExistError("No tag with name: key"),
+			request: &request.DeleteRunTagRequest{
+				RunID: "1",
+				Key:   "key",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByNamespaceIDRunIDAndLifecycleStage",
+					context.TODO(),
+					uint(1),
+					"1",
+					models.LifecycleStageActive,
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
+				tagRepository := repositories.MockTagRepositoryProvider{}
+				tagRepository.On(
+					"GetByRunIDAndKey",
+					context.TODO(),
+					"1",
+					"key",
+				).Return(nil, nil)
+				return NewService(
+					&tagRepository,
+					&runRepository,
+					&repositories.MockParamRepositoryProvider{},
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "NotFoundTagDatabaseError",
+			error: api.NewInternalError("Unable to find tag 'key' for run '1': database error"),
 			request: &request.DeleteRunTagRequest{
 				RunID: "1",
 				Key:   "key",
@@ -797,7 +834,7 @@ func TestService_GetRun_Ok(t *testing.T) {
 	}, &request.GetRunRequest{RunID: "1"})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, "1", run.ID)
 	assert.Equal(t, "name", run.Name)
 	assert.Equal(t, "source_type", run.SourceType)
@@ -979,7 +1016,7 @@ func TestService_LogBatch_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_LogBatch_Error(t *testing.T) {
@@ -1029,7 +1066,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 		},
 		{
 			name:  "RunNotFoundDatabaseNotFoundError",
-			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError("Run '1' not found"),
 			request: &request.LogBatchRequest{
 				RunID: "1",
 			},
@@ -1053,7 +1090,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 		},
 		{
 			name:  "NoActiveRunFound",
-			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError("Run '1' not found"),
 			request: &request.LogBatchRequest{
 				RunID: "1",
 			},
@@ -1077,13 +1114,14 @@ func TestService_LogBatch_Error(t *testing.T) {
 		},
 		{
 			name:  "IncorrectMetricValue",
-			error: api.NewInvalidParameterValueError(`invalid metric value 'incorrect_value'`),
+			error: api.NewInvalidParameterValueError("invalid metric value 'incorrect_value'"),
 			request: &request.LogBatchRequest{
 				RunID: "1",
 				Metrics: []request.MetricPartialRequest{
 					{
-						Key:   "key",
-						Value: "incorrect_value",
+						Key:       "key",
+						Value:     "incorrect_value",
+						Timestamp: 1234567890,
 					},
 				},
 			},
@@ -1143,6 +1181,51 @@ func TestService_LogBatch_Error(t *testing.T) {
 						},
 					},
 				).Return(errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&paramRepository,
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "CreateBatchParamsConflictError",
+			error: api.NewInvalidParameterValueError(`unable to insert params for run '1': param conflict!`),
+			request: &request.LogBatchRequest{
+				RunID: "1",
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByNamespaceIDRunIDAndLifecycleStage",
+					context.TODO(),
+					uint(1),
+					"1",
+					models.LifecycleStageActive,
+				).Return(&models.Run{
+					ID: "1",
+				}, nil)
+				paramRepository := repositories.MockParamRepositoryProvider{}
+				paramRepository.On(
+					"CreateBatch",
+					context.TODO(),
+					100,
+					[]models.Param{
+						{
+							Key:   "key",
+							Value: "value",
+							RunID: "1",
+						},
+					},
+				).Return(repositories.ParamConflictError{Message: "param conflict!"})
 				return NewService(
 					&repositories.MockTagRepositoryProvider{},
 					&runRepository,
@@ -1213,6 +1296,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 							Value:     1.1,
 							RunID:     "1",
 							Timestamp: 123456789,
+							ContextID: models.DefaultContext.ID,
+							Context:   models.DefaultContext,
 						},
 					},
 				).Return(errors.New("database error"))
@@ -1308,6 +1393,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 							Value:     1.1,
 							RunID:     "1",
 							Timestamp: 123456789,
+							ContextID: models.DefaultContext.ID,
+							Context:   models.DefaultContext,
 						},
 					},
 				).Return(nil)
@@ -1378,7 +1465,7 @@ func TestService_LogMetric_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_LogMetric_Error(t *testing.T) {
@@ -1591,7 +1678,7 @@ func TestService_LogParam_Ok(t *testing.T) {
 	})
 
 	// compare results.
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func TestService_LogParam_Error(t *testing.T) {
@@ -1659,7 +1746,7 @@ func TestService_LogParam_Error(t *testing.T) {
 		},
 		{
 			name:  "NoActiveRunFound",
-			error: api.NewResourceDoesNotExistError(`Unable to find active run '1'`),
+			error: api.NewResourceDoesNotExistError("Run '1' not found"),
 			request: &request.LogParamRequest{
 				RunID: "1",
 				Key:   "key",
@@ -1716,6 +1803,48 @@ func TestService_LogParam_Error(t *testing.T) {
 						return true
 					}),
 				).Return(errors.New("database error"))
+				return NewService(
+					&repositories.MockTagRepositoryProvider{},
+					&runRepository,
+					&paramRepository,
+					&repositories.MockMetricRepositoryProvider{},
+					&repositories.MockExperimentRepositoryProvider{},
+				)
+			},
+		},
+		{
+			name:  "LogParamConflictError",
+			error: api.NewInvalidParameterValueError(`unable to insert params for run '1': conflict!`),
+			request: &request.LogParamRequest{
+				RunID: "1",
+				Key:   "key",
+				Value: "value",
+			},
+			service: func() *Service {
+				runRepository := repositories.MockRunRepositoryProvider{}
+				runRepository.On(
+					"GetByNamespaceIDRunIDAndLifecycleStage",
+					context.TODO(),
+					uint(1),
+					"1",
+					models.LifecycleStageActive,
+				).Return(&models.Run{
+					ID:             "1",
+					LifecycleStage: models.LifecycleStageActive,
+				}, nil)
+				paramRepository := repositories.MockParamRepositoryProvider{}
+				paramRepository.On(
+					"CreateBatch",
+					context.TODO(),
+					1,
+					mock.MatchedBy(func(params []models.Param) bool {
+						assert.Equal(t, 1, len(params))
+						assert.Equal(t, "key", params[0].Key)
+						assert.Equal(t, "value", params[0].Value)
+						assert.Equal(t, "1", params[0].RunID)
+						return true
+					}),
+				).Return(repositories.ParamConflictError{Message: "conflict!"})
 				return NewService(
 					&repositories.MockTagRepositoryProvider{},
 					&runRepository,

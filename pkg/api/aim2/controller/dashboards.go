@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )

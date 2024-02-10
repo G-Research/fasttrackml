@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
 func TestService_CreateExperiment_Ok(t *testing.T) {

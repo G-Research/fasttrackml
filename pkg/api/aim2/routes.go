@@ -1,4 +1,4 @@
-package aim
+package aim2
 
 import (
 	"github.com/gofiber/fiber/v2"

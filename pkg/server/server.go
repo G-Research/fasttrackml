@@ -221,7 +221,6 @@ func createApp(
 	// init `aim` api and ui routes.
 	router := app.Group("/aim/api/")
 	aimAPI.AddRoutes(router)
-	aimUI.AddRoutes(app)
 
 	// init `aim2` api routes.
 	aim2API.NewRouter(
@@ -263,6 +262,7 @@ func createApp(
 		),
 	).Init(app)
 	mlflowUI.AddRoutes(app)
+	aimUI.AddRoutes(app)
 
 	// init `admin` api routes.
 	adminAPI.NewRouter(

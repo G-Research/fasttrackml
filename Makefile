@@ -138,12 +138,12 @@ test: test-go-unit container-test test-python-integration ## run all the tests.
 .PHONY: test-go-unit
 test-go-unit: ## run go unit tests.
 	@echo ">>> Running unit tests."
-	@go test -tags="$(GO_BUILDTAGS)" ./pkg/...
+	@go test -count 1 -tags="$(GO_BUILDTAGS)" ./pkg/...
 
 .PHONY: test-go-integration
 test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
-	@go test -tags="$(GO_BUILDTAGS)" ./tests/integration/golang/...
+	@go test -count 1 -tags="$(GO_BUILDTAGS)" ./tests/integration/golang/...
 
 .PHONY: test-python-integration
 test-python-integration: ## run all the python integration tests.

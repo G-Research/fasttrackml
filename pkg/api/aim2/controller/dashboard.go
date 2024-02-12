@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
@@ -58,19 +58,14 @@ func (c Controller) CreateDashboard(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("createDashboard namespace: %s", ns.Code)
 
-	var d struct {
-		AppID       uuid.UUID `json:"app_id"`
-		Name        string
-		Description string
-	}
-
-	if err := ctx.BodyParser(&d); err != nil {
+	req := request.CreateDashboardRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	app := database.App{
 		Base: database.Base{
-			ID: d.AppID,
+			ID: req.AppID,
 		},
 		NamespaceID: ns.ID,
 	}
@@ -82,14 +77,14 @@ func (c Controller) CreateDashboard(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", d.AppID, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", req.AppID, err))
 	}
 
 	dash := database.Dashboard{
-		AppID:       &d.AppID,
+		AppID:       &req.AppID,
 		App:         app,
-		Name:        d.Name,
-		Description: d.Description,
+		Name:        req.Name,
+		Description: req.Description,
 	}
 
 	if err := database.DB.
@@ -109,17 +104,14 @@ func (c Controller) GetDashboard(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getDashboard namespace: %s", ns.Code)
 
-	p := struct {
-		ID uuid.UUID `params:"id"`
-	}{}
-
-	if err := ctx.ParamsParser(&p); err != nil {
+	req := request.GetDashboardRequest{}
+	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	dashboard := database.Dashboard{
 		Base: database.Base{
-			ID: p.ID,
+			ID: req.ID,
 		},
 	}
 	if err := database.DB.
@@ -140,7 +132,7 @@ func (c Controller) GetDashboard(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find dashboard %q: %s", p.ID, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find dashboard %q: %s", req.ID, err))
 	}
 
 	return ctx.JSON(dashboard)
@@ -153,26 +145,18 @@ func (c Controller) UpdateDashboard(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("updateDashboard namespace: %s", ns.Code)
 
-	p := struct {
-		ID uuid.UUID `params:"id"`
-	}{}
-
-	if err := ctx.ParamsParser(&p); err != nil {
+	req := request.UpdateDashboardRequest{}
+	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	var d struct {
-		Name        string
-		Description string
-	}
-
-	if err := ctx.BodyParser(&d); err != nil {
+	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	dash := database.Dashboard{
 		Base: database.Base{
-			ID: p.ID,
+			ID: req.ID,
 		},
 	}
 	if err := database.DB.
@@ -193,18 +177,18 @@ func (c Controller) UpdateDashboard(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find dashboard %q: %s", p.ID, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find dashboard %q: %s", req.ID, err))
 	}
 
 	if err := database.DB.
 		Omit("App").
 		Model(&dash).
 		Updates(database.Dashboard{
-			Name:        d.Name,
-			Description: d.Description,
+			Name:        req.Name,
+			Description: req.Description,
 		}).
 		Error; err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error updating dashboard %q: %s", p.ID, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error updating dashboard %q: %s", req.ID, err))
 	}
 
 	return ctx.JSON(dash)
@@ -217,17 +201,14 @@ func (c Controller) DeleteDashboard(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("deleteDashboard namespace: %s", ns.Code)
 
-	p := struct {
-		ID uuid.UUID `params:"id"`
-	}{}
-
-	if err := ctx.ParamsParser(&p); err != nil {
+	req := request.DeleteDashboardRequest{}
+	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	dash := database.Dashboard{
 		Base: database.Base{
-			ID: p.ID,
+			ID: req.ID,
 		},
 	}
 	if err := database.DB.
@@ -249,7 +230,7 @@ func (c Controller) DeleteDashboard(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", req.ID, err))
 	}
 
 	if err := database.DB.
@@ -257,7 +238,7 @@ func (c Controller) DeleteDashboard(ctx *fiber.Ctx) error {
 		Model(&dash).
 		Update("IsArchived", true).
 		Error; err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to delete app %q: %s", p.ID, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to delete app %q: %s", req.ID, err))
 	}
 
 	return ctx.Status(200).JSON(nil)

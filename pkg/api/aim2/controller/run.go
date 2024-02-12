@@ -21,7 +21,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
@@ -37,21 +37,12 @@ func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getRunInfo namespace: %s", ns.Code)
 
-	q := struct {
-		// TODO skip_system is unused - should we keep it?
-		SkipSystem bool     `query:"skip_system"`
-		Sequences  []string `query:"sequence"`
-	}{}
-
-	if err := ctx.QueryParser(&q); err != nil {
+	req := request.GetRunInfoRequest{}
+	if err := ctx.QueryParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	p := struct {
-		ID string `params:"id"`
-	}{}
-
-	if err := ctx.ParamsParser(&p); err != nil {
+	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -67,8 +58,8 @@ func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
 		Preload("Params").
 		Preload("Tags")
 
-	if len(q.Sequences) == 0 {
-		q.Sequences = []string{
+	if len(req.Sequences) == 0 {
+		req.Sequences = []string{
 			"audios",
 			"distributions",
 			"figures",
@@ -80,8 +71,8 @@ func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
 		}
 	}
 
-	traces := make(map[string][]fiber.Map, len(q.Sequences))
-	for _, s := range q.Sequences {
+	traces := make(map[string][]fiber.Map, len(req.Sequences))
+	for _, s := range req.Sequences {
 		switch s {
 		case "audios", "distributions", "figures", "images", "log_records", "logs", "texts":
 			traces[s] = []fiber.Map{}
@@ -95,14 +86,14 @@ func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
 	}
 
 	r := database.Run{
-		ID: p.ID,
+		ID: req.ID,
 	}
 
 	if err := tx.First(&r).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fmt.Errorf("error retrieving run %q: %w", p.ID, err)
+		return fmt.Errorf("error retrieving run %q: %w", req.ID, err)
 	}
 
 	props := fiber.Map{
@@ -154,25 +145,13 @@ func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getRunMetrics namespace: %s", ns.Code)
 
-	p := struct {
-		ID string `params:"id"`
-	}{}
-
-	if err := ctx.ParamsParser(&p); err != nil {
+	req := request.GetRunMetricsRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	var b []struct {
-		Name    string    `json:"name"`
-		Context fiber.Map `json:"context"`
-	}
-
-	if err := ctx.BodyParser(&b); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-	}
-
-	metricKeysMap, contexts := make(fiber.Map, len(b)), make([]types.JSONB, 0, len(b))
-	for _, m := range b {
+	metricKeysMap, contexts := make(fiber.Map, len(req)), make([]types.JSONB, 0, len(req))
+	for _, m := range req {
 		if m.Context != nil {
 			serializedContext, err := json.Marshal(m.Context)
 			if err != nil {
@@ -191,6 +170,7 @@ func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 	}
 
 	// check that requested run actually exists.
+	runID := ctx.Params("id")
 	if err := database.DB.Select(
 		"ID",
 	).InnerJoins(
@@ -201,18 +181,18 @@ func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 			&models.Experiment{NamespaceID: ns.ID},
 		),
 	).First(&database.Run{
-		ID: p.ID,
+		ID: runID,
 	}).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fmt.Errorf("unable to find run %q: %w", p.ID, err)
+		return fmt.Errorf("unable to find run %q: %w", runID, err)
 	}
 
 	// fetch run metrics based on provided criteria.
 	var data []database.Metric
 	if err := database.DB.Where(
-		"run_uuid = ?", p.ID,
+		"run_uuid = ?", runID,
 	).InnerJoins(
 		"Context",
 		func() *gorm.DB {
@@ -275,16 +255,13 @@ func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getRunsActive namespace: %s", ns.Code)
 
-	q := struct {
-		ReportProgress bool `query:"report_progress"`
-	}{}
-
-	if err := ctx.QueryParser(&q); err != nil {
+	req := request.GetRunsActiveRequest{}
+	if err := ctx.QueryParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	if ctx.Query("report_progress") == "" {
-		q.ReportProgress = true
+		req.ReportProgress = true
 	}
 
 	var runs []database.Run
@@ -361,7 +338,7 @@ func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
 					return err
 				}
 
-				if q.ReportProgress {
+				if req.ReportProgress {
 					if err := encoding.EncodeTree(w, fiber.Map{
 						fmt.Sprintf("progress_%d", i): []int{i + 1, len(runs)},
 					}); err != nil {
@@ -404,24 +381,13 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("searchRuns namespace: %s", ns.Code)
 
-	q := struct {
-		Query  string `query:"q"`
-		Limit  int    `query:"limit"`
-		Offset string `query:"offset"`
-		Action string `query:"action"`
-		// TODO skip_system is unused - should we keep it?
-		SkipSystem     bool `query:"skip_system"`
-		ReportProgress bool `query:"report_progress"`
-		ExcludeParams  bool `query:"exclude_params"`
-		ExcludeTraces  bool `query:"exclude_traces"`
-	}{}
-
-	if err = ctx.QueryParser(&q); err != nil {
+	req := request.SearchRunsRequest{}
+	if err = ctx.QueryParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	if ctx.Query("report_progress") == "" {
-		q.ReportProgress = true
+		req.ReportProgress = true
 	}
 
 	tzOffset, err := strconv.Atoi(ctx.Get("x-timezone-offset", "0"))
@@ -441,7 +407,7 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 		TzOffset:  tzOffset,
 		Dialector: database.DB.Dialector.Name(),
 	}
-	pq, err := qp.Parse(q.Query)
+	pq, err := qp.Parse(req.Query)
 	if err != nil {
 		return err
 	}
@@ -466,37 +432,37 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 		).
 		Order("row_num DESC")
 
-	if !q.ExcludeParams {
+	if !req.ExcludeParams {
 		tx.Preload("Params")
 		tx.Preload("Tags")
 	}
 
-	if !q.ExcludeTraces {
+	if !req.ExcludeTraces {
 		tx.Preload("LatestMetrics.Context")
 	}
 
-	switch q.Action {
+	switch req.Action {
 	case "export":
 		var runs []database.Run
 		if err := pq.Filter(tx).Find(&runs).Error; err != nil {
 			return fmt.Errorf("error searching runs: %w", err)
 		}
 		log.Debugf("found %d runs", len(runs))
-		RunsSearchAsCSVResponse(ctx, runs, q.ExcludeTraces, q.ExcludeParams)
+		RunsSearchAsCSVResponse(ctx, runs, req.ExcludeTraces, req.ExcludeParams)
 	default:
-		if q.Limit > 0 {
-			tx.Limit(q.Limit)
+		if req.Limit > 0 {
+			tx.Limit(req.Limit)
 		}
-		if q.Offset != "" {
+		if req.Offset != "" {
 			run := &database.Run{
-				ID: q.Offset,
+				ID: req.Offset,
 			}
 			if err := database.DB.Select(
 				"row_num",
 			).First(
 				&run,
 			).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				return fmt.Errorf("unable to find search runs offset %q: %w", q.Offset, err)
+				return fmt.Errorf("unable to find search runs offset %q: %w", req.Offset, err)
 			}
 			tx.Where("row_num < ?", run.RowNum)
 		}
@@ -505,7 +471,7 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 			return fmt.Errorf("error searching runs: %w", err)
 		}
 		log.Debugf("found %d runs", len(runs))
-		RunsSearchAsStreamResponse(ctx, runs, total, q.ExcludeTraces, q.ExcludeParams, q.ReportProgress)
+		RunsSearchAsStreamResponse(ctx, runs, total, req.ExcludeTraces, req.ExcludeParams, req.ReportProgress)
 	}
 
 	return nil
@@ -521,25 +487,17 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("searchMetrics namespace: %s", ns.Code)
 
-	q := struct {
-		Query string `query:"q"`
-		Steps int    `query:"p"`
-		XAxis string `query:"x_axis"`
-		// TODO skip_system is unused - should we keep it?
-		SkipSystem     bool `query:"skip_system"`
-		ReportProgress bool `query:"report_progress"`
-	}{}
-
-	if err = ctx.QueryParser(&q); err != nil {
+	req := request.SearchMetricsRequest{}
+	if err = ctx.QueryParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	if ctx.Query("report_progress") == "" {
-		q.ReportProgress = true
+		req.ReportProgress = true
 	}
 
 	if ctx.Query("p") == "" {
-		q.Steps = 50
+		req.Steps = 50
 	}
 
 	tzOffset, err := strconv.Atoi(ctx.Get("x-timezone-offset", "0"))
@@ -560,7 +518,7 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 		TzOffset:  tzOffset,
 		Dialector: database.DB.Dialector.Name(),
 	}
-	pq, err := qp.Parse(q.Query)
+	pq, err := qp.Parse(req.Query)
 	if err != nil {
 		return err
 	}
@@ -652,7 +610,7 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 					"latest_metrics.key",
 					"latest_metrics.context_id",
 					"contexts.json AS context_json",
-					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(q.Steps)),
+					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(req.Steps)),
 				).
 				Table("runs").
 				Joins(
@@ -669,13 +627,13 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 		Order("metrics.iter")
 
 	var xAxis bool
-	if q.XAxis != "" {
+	if req.XAxis != "" {
 		tx.
 			Select("metrics.*", "runmetrics.context_json", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
 			Joins(
 				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND "+
 					"metrics.iter = x_axis.iter AND x_axis.context_id = metrics.context_id AND x_axis.key = ?",
-				q.XAxis,
+				req.XAxis,
 			)
 		xAxis = true
 	}
@@ -709,7 +667,7 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 				progress    int
 			)
 			reportProgress := func(cur int64) error {
-				if !q.ReportProgress {
+				if !req.ReportProgress {
 					return nil
 				}
 				err := encoding.EncodeTree(w, fiber.Map{
@@ -726,7 +684,7 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 					metric := fiber.Map{
 						"name":          key,
 						"context":       context,
-						"slice":         []int{0, 0, q.Steps},
+						"slice":         []int{0, 0, req.Steps},
 						"values":        toNumpy(values),
 						"iters":         toNumpy(iters),
 						"epochs":        toNumpy(epochs),
@@ -787,13 +745,13 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 						id = metric.RunID
 					}
 
-					values = make([]float64, 0, q.Steps)
-					iters = make([]float64, 0, q.Steps)
-					epochs = make([]float64, 0, q.Steps)
+					values = make([]float64, 0, req.Steps)
+					iters = make([]float64, 0, req.Steps)
+					epochs = make([]float64, 0, req.Steps)
 					context = fiber.Map{}
-					timestamps = make([]float64, 0, q.Steps)
+					timestamps = make([]float64, 0, req.Steps)
 					if xAxis {
-						xAxisValues = make([]float64, 0, q.Steps)
+						xAxisValues = make([]float64, 0, req.Steps)
 					}
 					key = metric.Key
 				}
@@ -850,24 +808,13 @@ func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("searchAlignedMetrics namespace: %s", ns.Code)
 
-	b := struct {
-		AlignBy string `json:"align_by"`
-		Runs    []struct {
-			ID     string `json:"run_id"`
-			Traces []struct {
-				Name    string    `json:"name"`
-				Slice   [3]int    `json:"slice"`
-				Context fiber.Map `json:"context"`
-			} `json:"traces"`
-		} `json:"runs"`
-	}{}
-
-	if err := ctx.BodyParser(&b); err != nil {
+	req := request.SearchAlignedMetricsRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	values, capacity, contextsMap := []any{}, 0, map[string]types.JSONB{}
-	for _, r := range b.Runs {
+	for _, r := range req.Runs {
 		for _, t := range r.Traces {
 			l := t.Slice[2]
 			if l > capacity {
@@ -918,7 +865,7 @@ func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 
 	// TODO this should probably be batched
 
-	values = append(values, ns.ID, b.AlignBy)
+	values = append(values, ns.ID, req.AlignBy)
 
 	rows, err := database.DB.Raw(
 		fmt.Sprintf("WITH params(run_uuid, key, context_id, steps) AS (VALUES %s)", &valuesStmt)+
@@ -1061,35 +1008,32 @@ func (c Controller) DeleteRun(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("deleteRun namespace: %s", ns.Code)
 
-	params := struct {
-		ID string `params:"id"`
-	}{}
-
-	if err = ctx.ParamsParser(&params); err != nil {
+	req := request.DeleteRunRequest{}
+	if err = ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	// TODO this code should move to service
 	runRepository := repositories.NewRunRepository(database.DB)
-	run, err := runRepository.GetByNamespaceIDAndRunID(ctx.Context(), ns.ID, params.ID)
+	run, err := runRepository.GetByNamespaceIDAndRunID(ctx.Context(), ns.ID, req.ID)
 	if err != nil {
 		return fiber.NewError(
-			fiber.StatusInternalServerError, fmt.Sprintf("unable to find run '%s': %s", params.ID, err),
+			fiber.StatusInternalServerError, fmt.Sprintf("unable to find run '%s': %s", req.ID, err),
 		)
 	}
 	if run == nil {
-		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("unable to find run '%s'", params.ID))
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("unable to find run '%s'", req.ID))
 	}
 
 	// TODO this code should move to service with injected repository
 	if err = runRepository.Delete(ctx.Context(), ns.ID, run); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError,
-			fmt.Sprintf("unable to delete run %q: %s", params.ID, err),
+			fmt.Sprintf("unable to delete run %q: %s", req.ID, err),
 		)
 	}
 
 	return ctx.JSON(fiber.Map{
-		"id":     params.ID,
+		"id":     req.ID,
 		"status": "OK",
 	})
 }
@@ -1102,46 +1046,43 @@ func (c Controller) UpdateRun(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("updateRun namespace: %s", ns.Code)
 
-	params := struct {
-		ID string `params:"id"`
-	}{}
-	if err = ctx.ParamsParser(&params); err != nil {
+	req := request.UpdateRunRequest{}
+	if err = ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	var updateRequest request.UpdateRunRequest
-	if err = ctx.BodyParser(&updateRequest); err != nil {
+	if err = ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	// TODO this code should move to service
 	runRepository := repositories.NewRunRepository(database.DB)
-	run, err := runRepository.GetByNamespaceIDAndRunID(ctx.Context(), ns.ID, params.ID)
+	run, err := runRepository.GetByNamespaceIDAndRunID(ctx.Context(), ns.ID, req.ID)
 	if err != nil {
 		return fiber.NewError(
-			fiber.StatusInternalServerError, fmt.Sprintf("unable to find run '%s': %s", params.ID, err),
+			fiber.StatusInternalServerError, fmt.Sprintf("unable to find run '%s': %s", req.ID, err),
 		)
 	}
 	if run == nil {
-		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("unable to find run '%s'", params.ID))
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("unable to find run '%s'", req.ID))
 	}
 
-	if updateRequest.Archived != nil {
-		if *updateRequest.Archived {
+	if req.Archived != nil {
+		if *req.Archived {
 			if err := runRepository.Archive(ctx.Context(), run); err != nil {
 				return fiber.NewError(fiber.StatusInternalServerError,
-					fmt.Sprintf("unable to archive/restore run %q: %s", params.ID, err))
+					fmt.Sprintf("unable to archive/restore run %q: %s", req.ID, err))
 			}
 		} else {
 			if err := runRepository.Restore(ctx.Context(), run); err != nil {
 				return fiber.NewError(fiber.StatusInternalServerError,
-					fmt.Sprintf("unable to archive/restore run %q: %s", params.ID, err))
+					fmt.Sprintf("unable to archive/restore run %q: %s", req.ID, err))
 			}
 		}
 	}
 
-	if updateRequest.Name != nil {
-		run.Name = *updateRequest.Name
+	if req.Name != nil {
+		run.Name = *req.Name
 		// TODO:DSuhinin - transaction?
 		if err := database.DB.Transaction(func(tx *gorm.DB) error {
 			if err := runRepository.UpdateWithTransaction(ctx.Context(), tx, run); err != nil {
@@ -1150,12 +1091,12 @@ func (c Controller) UpdateRun(ctx *fiber.Ctx) error {
 			return nil
 		}); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError,
-				fmt.Sprintf("unable to update run %q: %s", params.ID, err))
+				fmt.Sprintf("unable to update run %q: %s", req.ID, err))
 		}
 	}
 
 	return ctx.JSON(fiber.Map{
-		"id":     params.ID,
+		"id":     req.ID,
 		"status": "OK",
 	})
 }
@@ -1167,19 +1108,19 @@ func (c Controller) ArchiveBatch(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("archiveBatch namespace: %s", ns.Code)
 
-	var ids []string
-	if err := ctx.BodyParser(&ids); err != nil {
+	req := request.ArchiveBatchRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB)
 	if ctx.Query("archive") == "true" {
-		if err := runRepo.ArchiveBatch(ctx.Context(), ns.ID, ids); err != nil {
+		if err := runRepo.ArchiveBatch(ctx.Context(), ns.ID, req); err != nil {
 			return err
 		}
 	} else {
-		if err := runRepo.RestoreBatch(ctx.Context(), ns.ID, ids); err != nil {
+		if err := runRepo.RestoreBatch(ctx.Context(), ns.ID, req); err != nil {
 			return err
 		}
 	}
@@ -1196,14 +1137,14 @@ func (c Controller) DeleteBatch(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("deleteBatch namespace: %s", ns.Code)
 
-	var ids []string
-	if err := ctx.BodyParser(&ids); err != nil {
+	req := request.DeleteBatchRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	// TODO this code should move to service
 	runRepo := repositories.NewRunRepository(database.DB)
-	if err := runRepo.DeleteBatch(ctx.Context(), ns.ID, ids); err != nil {
+	if err := runRepo.DeleteBatch(ctx.Context(), ns.ID, req); err != nil {
 		return err
 	}
 	return ctx.JSON(fiber.Map{

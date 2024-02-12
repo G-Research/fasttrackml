@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
@@ -41,24 +41,17 @@ func (c Controller) CreateApp(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("createApp namespace: %s", ns.Code)
 
-	var a struct {
-		Type  string
-		State database.AppState
-	}
-
-	if err := ctx.BodyParser(&a); err != nil {
+	req := request.CreateAppRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	app := database.App{
-		Type:        a.Type,
-		State:       a.State,
+		Type:        req.Type,
+		State:       database.AppState(req.State),
 		NamespaceID: ns.ID,
 	}
-
-	if err := database.DB.
-		Create(&app).
-		Error; err != nil {
+	if err := database.DB.Create(&app).Error; err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error inserting app: %s", err))
 	}
 
@@ -72,17 +65,14 @@ func (c Controller) GetApp(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getApp namespace: %s", ns.Code)
 
-	p := struct {
-		ID uuid.UUID `params:"id"`
-	}{}
-
-	if err := ctx.ParamsParser(&p); err != nil {
+	req := request.GetAppRequest{}
+	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	app := database.App{
 		Base: database.Base{
-			ID: p.ID,
+			ID: req.ID,
 		},
 		NamespaceID: ns.ID,
 	}
@@ -94,7 +84,7 @@ func (c Controller) GetApp(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", req.ID, err))
 	}
 
 	return ctx.JSON(app)
@@ -107,26 +97,18 @@ func (c Controller) UpdateApp(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("updateApp namespace: %s", ns.Code)
 
-	p := struct {
-		ID uuid.UUID `params:"id"`
-	}{}
-
-	if err := ctx.ParamsParser(&p); err != nil {
+	req := request.UpdateAppRequest{}
+	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	var a struct {
-		Type  string
-		State database.AppState
-	}
-
-	if err := ctx.BodyParser(&a); err != nil {
+	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	app := database.App{
 		Base: database.Base{
-			ID: p.ID,
+			ID: req.ID,
 		},
 		NamespaceID: ns.ID,
 	}
@@ -138,17 +120,17 @@ func (c Controller) UpdateApp(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", req.ID, err))
 	}
 
 	if err := database.DB.
 		Model(&app).
 		Updates(database.App{
-			Type:  a.Type,
-			State: a.State,
+			Type:  req.Type,
+			State: database.AppState(req.State),
 		}).
 		Error; err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error updating app %q: %s", p.ID, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error updating app %q: %s", req.ID, err))
 	}
 
 	return ctx.JSON(app)
@@ -161,17 +143,14 @@ func (c Controller) DeleteApp(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("deleteApp namespace: %s", ns.Code)
 
-	p := struct {
-		ID uuid.UUID `params:"id"`
-	}{}
-
-	if err := ctx.ParamsParser(&p); err != nil {
+	req := request.DeleteAppRequest{}
+	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	app := database.App{
 		Base: database.Base{
-			ID: p.ID,
+			ID: req.ID,
 		},
 		NamespaceID: ns.ID,
 	}
@@ -184,14 +163,14 @@ func (c Controller) DeleteApp(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fiber.ErrNotFound
 		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", p.ID, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", req.ID, err))
 	}
 
 	if err := database.DB.
 		Model(&app).
 		Update("IsArchived", true).
 		Error; err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to delete app %q: %s", p.ID, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to delete app %q: %s", req.ID, err))
 	}
 
 	return ctx.Status(http.StatusOK).JSON(nil)

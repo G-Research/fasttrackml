@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
@@ -105,19 +107,14 @@ func (c Controller) GetProjectParams(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getProjectParams namespace: %s", ns.Code)
 
-	q := struct {
-		Sequences     []string `query:"sequence"`
-		Experiments   []int    `query:"experiments"`
-		ExcludeParams bool     `query:"exclude_params"`
-	}{}
-
-	if err := ctx.QueryParser(&q); err != nil {
+	req := request.GetProjectParamsRequest{}
+	if err := ctx.QueryParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	resp := fiber.Map{}
 
-	if !q.ExcludeParams {
+	if !req.ExcludeParams {
 		// fetch and process params.
 		query := database.DB.Distinct().Model(
 			&database.Param{},
@@ -129,8 +126,8 @@ func (c Controller) GetProjectParams(ctx *fiber.Ctx) error {
 		).Where(
 			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
 		)
-		if len(q.Experiments) != 0 {
-			query.Where("experiments.experiment_id IN ?", q.Experiments)
+		if len(req.Experiments) != 0 {
+			query.Where("experiments.experiment_id IN ?", req.Experiments)
 		}
 		var paramKeys []string
 		if err = query.Pluck("Key", &paramKeys).Error; err != nil {
@@ -155,8 +152,8 @@ func (c Controller) GetProjectParams(ctx *fiber.Ctx) error {
 		).Where(
 			"runs.lifecycle_stage = ?", database.LifecycleStageActive,
 		)
-		if len(q.Experiments) != 0 {
-			query.Where("experiments.experiment_id IN ?", q.Experiments)
+		if len(req.Experiments) != 0 {
+			query.Where("experiments.experiment_id IN ?", req.Experiments)
 		}
 		var tagKeys []string
 		if err = query.Pluck("Key", &tagKeys).Error; err != nil {
@@ -174,8 +171,8 @@ func (c Controller) GetProjectParams(ctx *fiber.Ctx) error {
 		resp["params"] = params
 	}
 
-	if len(q.Sequences) == 0 {
-		q.Sequences = []string{
+	if len(req.Sequences) == 0 {
+		req.Sequences = []string{
 			"metric",
 			"images",
 			"texts",
@@ -185,7 +182,7 @@ func (c Controller) GetProjectParams(ctx *fiber.Ctx) error {
 		}
 	}
 
-	for _, s := range q.Sequences {
+	for _, s := range req.Sequences {
 		switch s {
 		case "images", "texts", "figures", "distributions", "audios":
 			resp[s] = fiber.Map{}
@@ -202,8 +199,8 @@ func (c Controller) GetProjectParams(ctx *fiber.Ctx) error {
 			).Where(
 				"runs.lifecycle_stage = ?", database.LifecycleStageActive,
 			)
-			if len(q.Experiments) != 0 {
-				query.Where("experiments.experiment_id IN ?", q.Experiments)
+			if len(req.Experiments) != 0 {
+				query.Where("experiments.experiment_id IN ?", req.Experiments)
 			}
 			var metrics []database.LatestMetric
 			if err = query.Find(&metrics).Error; err != nil {

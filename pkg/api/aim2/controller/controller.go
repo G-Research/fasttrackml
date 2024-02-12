@@ -10,10 +10,6 @@ type Controller struct {
 }
 
 // NewController creates new Controller instance.
-func NewController(
-	svc *service.Service,
-) *Controller {
-	return &Controller{
-		svc: svc,
-	}
+func NewController(svc *service.Service) *Controller {
+	return &Controller{svc: svc}
 }

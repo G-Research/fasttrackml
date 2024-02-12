@@ -164,8 +164,8 @@ func createApp(
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			p := string(c.Request().URI().Path())
 			switch {
-			case strings.HasPrefix(p, "/aim/api/"):
-				return aimAPI.ErrorHandler(c, err)
+			case strings.HasPrefix(p, "/aim"):
+				return aim2API.ErrorHandler(c, err)
 			case strings.HasPrefix(p, "/api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/mlflow/ajax-api/2.0/mlflow/"):

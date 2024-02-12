@@ -25,8 +25,8 @@ type Experiment struct {
 }
 
 // IsDefault makes check that Experiment is default.
-func (e Experiment) IsDefault() bool {
-	return e.ID != nil && *e.ID == DefaultExperimentID && e.Name == DefaultExperimentName
+func (e Experiment) IsDefault(namespace *Namespace) bool {
+	return e.ID != nil && namespace.DefaultExperimentID != nil && *e.ID == *namespace.DefaultExperimentID
 }
 
 // ExperimentTag represents model to work with `experiment_tags` table.

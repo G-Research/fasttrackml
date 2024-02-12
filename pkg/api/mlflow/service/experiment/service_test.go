@@ -251,8 +251,9 @@ func TestService_DeleteExperiment_Ok(t *testing.T) {
 func TestService_DeleteExperiment_Error(t *testing.T) {
 	// initialise namespace to which experiment under the test belongs to.
 	ns := models.Namespace{
-		ID:   1,
-		Code: "code",
+		ID:                  1,
+		Code:                "code",
+		DefaultExperimentID: common.GetPointer(int32(0)),
 	}
 
 	testData := []struct {

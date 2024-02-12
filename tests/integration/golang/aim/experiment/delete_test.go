@@ -2,6 +2,7 @@ package experiment
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -67,7 +68,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 				` parsing "incorrect_experiment_id": invalid syntax`,
 		},
 		{
-			ID:    "0",
+			ID:    fmt.Sprintf("%d", *s.DefaultExperiment.ID),
 			name:  "DeleteDefaultExperiment",
 			error: `unable to delete default experiment`,
 		},

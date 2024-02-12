@@ -322,7 +322,7 @@ func DeleteExperiment(c *fiber.Ctx) error {
 		return fmt.Errorf("unable to find experiment %q: %w", params.ID, err)
 	}
 
-	if experiment.IsDefault() {
+	if experiment.IsDefault(ns) {
 		return fiber.NewError(fiber.StatusBadRequest, "unable to delete default experiment")
 	}
 

@@ -193,7 +193,7 @@ func (s Service) DeleteExperiment(
 		return api.NewResourceDoesNotExistError("unable to find experiment '%d': %s", parsedID, err)
 	}
 
-	if experiment.IsDefault() {
+	if experiment.IsDefault(ns) {
 		return api.NewBadRequestError("unable to delete default experiment")
 	}
 

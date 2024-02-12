@@ -69,3 +69,19 @@ After running this script, you should see the following output from http://local
 ![FastTrackML UI](images/runs_ui.png)
 
 From here you can check out the metrics and run information to see more details about the run.
+
+## Running a real ML experiment
+
+An example is included that uses Stable Baseline 3 - a popular reinforcement learning library. It is running the CartPole Environment with a PPO agent.
+
+You can read about the how it works [here](https://gsurma.medium.com/cartpole-introduction-to-reinforcement-learning-ed0eb5b58288#c876).
+
+Run the example with:
+
+```bash
+poetry run python3 stable_baseline.py
+```
+
+And then you will see the experiment `cartpole-ppo-v1` and be able to view the metrics.
+
+You can also see the videos of the model in `docs/example/vidcap` as it trains, as well as the final model weights in `ckpt`

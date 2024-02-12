@@ -1,13 +1,31 @@
 [tool.poetry]
 name = "fasttrackml-test"
 version = "0.1.0"
-description = "Python Example for FastTrackML"
+description = "A Stable Baselines Example for FastTrackML"
 authors = ["Sharpz7 <adam.mcarthur62@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-mlflow-skinny = "^2.6.0"
+mlflow = "^2.9.1"
+stable-baselines3 = {extras = ["extra"], version = "^2.2.1"}
+moviepy = "^1.0.3"
+gymnasium = {extras = ["classic-control"], version = "^0.29.1"}
+pynvml = "^11.5.0"
+torch = [
+  {version = "^2.1.0+cu118", source = "pytorch", markers = "sys_platform == 'linux'"},
+  {version = "^2.1.0", source = "PyPI", markers = "sys_platform == 'darwin'"}
+]
+
 [tool.poetry.dev-dependencies]
+
+[[tool.poetry.source]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu118"
+priority = "explicit"
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

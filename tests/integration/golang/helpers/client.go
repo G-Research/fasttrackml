@@ -15,7 +15,6 @@ import (
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/server"
-	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 // ResponseType represents HTTP response type.
@@ -63,7 +62,7 @@ func NewMlflowApiClient(server server.Server) *HttpClient {
 
 // NewAimApiClient creates new HTTP client for the aim api
 func NewAimApiClient(server server.Server) *HttpClient {
-	return NewClient(server, helpers.GetAimEndpointPath())
+	return NewClient(server, GetAimEndpointPath())
 }
 
 // NewAdminApiClient creates new HTTP client for the admin api

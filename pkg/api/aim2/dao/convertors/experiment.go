@@ -2,7 +2,7 @@ package convertors
 
 import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 )
 
 // ConvertUpdateExperimentToDBModel converts request.CreateExperimentRequest into actual models.Experiment model.

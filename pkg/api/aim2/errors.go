@@ -7,7 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-
 type DetailedError interface {
 	error
 	Detail() any

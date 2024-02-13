@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 )
 
 // App represents the response json in App endpoints
@@ -21,7 +21,7 @@ type App struct {
 type AppState map[string]any
 
 // NewGetAppsResponse creates new response object for `GET /apps` endpoint.
-func NewGetAppsResponse(apps []database.App) []App {
+func NewGetAppsResponse(apps []models.App) []App {
 	resp := make([]App, len(apps))
 	for i, app := range apps {
 		resp[i] = NewCreateAppResponse(&app)
@@ -30,7 +30,7 @@ func NewGetAppsResponse(apps []database.App) []App {
 }
 
 // NewCreateAppResponse creates new response object for `POST /apps` endpoint.
-func NewCreateAppResponse(app *database.App) App {
+func NewCreateAppResponse(app *models.App) App {
 	return App{
 		ID:        app.ID,
 		Type:      app.Type,

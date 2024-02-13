@@ -2,17 +2,17 @@ package convertors
 
 import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/database"
+	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	mlflowModels "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // ConvertCreateAppRequestToDBModel converts request.CreateAppRequest into actual models.App model.
 func ConvertCreateAppRequestToDBModel(
-	namespace *models.Namespace, req *request.CreateAppRequest,
-) *database.App {
-	return &database.App{
+	namespace *mlflowModels.Namespace, req *request.CreateAppRequest,
+) *aimModels.App {
+	return &aimModels.App{
 		Type:        req.Type,
-		State:       database.AppState(req.State),
+		State:       aimModels.AppState(req.State),
 		NamespaceID: namespace.ID,
 	}
 }

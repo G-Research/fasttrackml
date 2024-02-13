@@ -172,6 +172,42 @@ jobs:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_BACKEND: ${{ matrix.database-backend }}
 
+      - name: Save cache
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: docker run --rm -v fml-integration-tests_go-cache:/cache -v /tmp/go-cache:/dst alpine tar cf /dst/go-build.tar -C /cache go-build
+
+  go-integration-tests-aim-refactor:
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
+    name: Go Integration Tests For Aim Refactor (${{ matrix.database-backend }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        database-backend: [sqlite, sqlcipher, postgres]
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Compute cache info
+        id: cache-info
+        run: |
+          image=$(yq .services.service.image < tests/integration/docker-compose.yml)
+          echo go-version=$(skopeo inspect docker://${image} | jq -r .Digest | cut -d: -f2) >> $GITHUB_OUTPUT
+
+      - name: Setup cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/go-cache/go-build.tar
+          key: go-integration-tests-${{ matrix.database-backend }}-image-${{ steps.cache-info.outputs.go-version }}-mod-${{ hashFiles('.go-build-tags', 'go.sum') }}
+
+      - name: Restore cache
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: docker run --rm -v fml-integration-tests_go-cache:/cache -v /tmp/go-cache:/src alpine tar xf /src/go-build.tar -C /cache
+
       - name: Run Integration Tests (Aim Refactor)
         run: make container-test
         env:

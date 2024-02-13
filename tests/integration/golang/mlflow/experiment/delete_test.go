@@ -96,7 +96,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 			name:  "DeleteDefaultExperiment",
 			error: api.NewBadRequestError("unable to delete default experiment"),
 			request: &request.DeleteExperimentRequest{
-				ID: "0",
+				ID: fmt.Sprintf("%d", *s.DefaultExperiment.ID),
 			},
 		},
 	}

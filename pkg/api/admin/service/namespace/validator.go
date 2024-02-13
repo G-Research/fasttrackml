@@ -3,7 +3,7 @@ package namespace
 import (
 	"regexp"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
 const namespaceValidationMessage = "namespace code is invalid -- must be 2-12 letters, numbers, dash, or underscore"

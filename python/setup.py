@@ -4,13 +4,10 @@ import subprocess
 from setuptools import find_packages, setup
 from wheel.bdist_wheel import bdist_wheel
 
-install_requires=[
-    "mlflow",
-],
 
 def get_data_files():
     os = subprocess.check_output(["go", "env", "GOOS"]).strip().decode("utf-8")
-    return [("Scripts", ["../../fml.exe"])] if os == "windows" else [("bin", ["../../fml"])]
+    return [("Scripts", ["../fml.exe"])] if os == "windows" else [("bin", ["../fml"])]
 
 
 def get_version():

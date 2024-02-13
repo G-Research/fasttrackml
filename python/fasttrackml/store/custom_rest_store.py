@@ -2,7 +2,7 @@ import json
 from typing import Dict, Optional, Sequence
 
 import pyarrow as pa
-from fasttrackml.entities.metric import Metric
+from .entities.metric import Metric
 from mlflow import MlflowException
 from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException

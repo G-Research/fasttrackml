@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Sequence
 
-from fasttrackml.entities.metric import Metric
-from fasttrackml.store.custom_rest_store import CustomRestStore
+from .entities.metric import Metric
+from .store.custom_rest_store import CustomRestStore
 from mlflow.entities import Param, RunTag
 from mlflow.store.tracking import GET_METRIC_HISTORY_MAX_RESULTS
 from mlflow.tracking._tracking_service.client import TrackingServiceClient

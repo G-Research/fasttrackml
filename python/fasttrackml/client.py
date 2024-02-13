@@ -1,8 +1,8 @@
 from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
-from fasttrackml._tracking_service.client import FasttrackmlTrackingServiceClient
-from fasttrackml.entities.metric import Metric
+from ._tracking_service.client import FasttrackmlTrackingServiceClient
+from .entities.metric import Metric
 from mlflow import MlflowClient
 from mlflow.entities import Param, RunTag, ViewType
 from mlflow.tracking._tracking_service import utils

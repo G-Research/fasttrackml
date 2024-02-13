@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 
-from fasttrackml.client import FasttrackmlClient
-from fasttrackml.entities.metric import Metric
+from .client import FasttrackmlClient
+from .entities.metric import Metric
 from mlflow.tracking.fluent import _get_or_start_run
 from mlflow.utils.time import get_current_time_millis
 

@@ -1,18 +1,20 @@
 package controller
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-// GetApps handles `GET /apps` endpoint.
 func (c Controller) GetApps(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -20,18 +22,18 @@ func (c Controller) GetApps(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getApps namespace: %s", ns.Code)
 
-	apps, err := c.appService.GetApps(ctx.Context(), ns)
-	if err != nil {
-		return err
+	var apps []database.App
+	if err := database.DB.
+		Where("NOT is_archived").
+		Where("namespace_id = ?", ns.ID).
+		Find(&apps).
+		Error; err != nil {
+		return fmt.Errorf("error fetching apps: %w", err)
 	}
 
-	resp := response.NewGetAppsResponse(apps)
-	log.Debugf("getApps response: %#v", resp)
-
-	return ctx.JSON(resp)
+	return ctx.JSON(apps)
 }
 
-// CreateApp handles `POST /apps` endpoint.
 func (c Controller) CreateApp(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -44,18 +46,18 @@ func (c Controller) CreateApp(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	app, err := c.appService.Create(ctx.Context(), ns, &req)
-	if err != nil {
-		return err
+	app := database.App{
+		Type:        req.Type,
+		State:       database.AppState(req.State),
+		NamespaceID: ns.ID,
 	}
-
-	resp := response.NewCreateAppResponse(app)
-	log.Debugf("createApp response: %#v", resp)
+	if err := database.DB.Create(&app).Error; err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error inserting app: %s", err))
+	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(app)
 }
 
-// GetApp handles `GET /apps/:id` endpoint.
 func (c Controller) GetApp(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -68,18 +70,26 @@ func (c Controller) GetApp(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	app, err := c.appService.Get(ctx.Context(), ns, &req)
-	if err != nil {
-		return err
+	app := database.App{
+		Base: database.Base{
+			ID: req.ID,
+		},
+		NamespaceID: ns.ID,
+	}
+	if err := database.DB.
+		Where("NOT is_archived").
+		Where("namespace_id = ?", ns.ID).
+		First(&app).
+		Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fiber.ErrNotFound
+		}
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", req.ID, err))
 	}
 
-	resp := response.NewGetAppResponse(app)
-	log.Debugf("getApp response: %#v", resp)
-
-	return ctx.JSON(resp)
+	return ctx.JSON(app)
 }
 
-// UpdateApp handles `PUT /apps/:id` endpoint.
 func (c Controller) UpdateApp(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -96,18 +106,36 @@ func (c Controller) UpdateApp(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	app, err := c.appService.Update(ctx.Context(), ns, &req)
-	if err != nil {
-		return err
+	app := database.App{
+		Base: database.Base{
+			ID: req.ID,
+		},
+		NamespaceID: ns.ID,
+	}
+	if err := database.DB.
+		Where("NOT is_archived").
+		Where("namespace_id = ?", ns.ID).
+		First(&app).
+		Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fiber.ErrNotFound
+		}
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", req.ID, err))
 	}
 
-	resp := response.NewUpdateAppResponse(app)
-	log.Debugf("updateApp response: %#v", resp)
+	if err := database.DB.
+		Model(&app).
+		Updates(database.App{
+			Type:  req.Type,
+			State: database.AppState(req.State),
+		}).
+		Error; err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error updating app %q: %s", req.ID, err))
+	}
 
-	return ctx.JSON(resp)
+	return ctx.JSON(app)
 }
 
-// DeleteApp handles `DELETE /apps/:id` endpoint.
 func (c Controller) DeleteApp(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -120,8 +148,29 @@ func (c Controller) DeleteApp(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if err := c.appService.Delete(ctx.Context(), ns, &req); err != nil {
-		return err
+	app := database.App{
+		Base: database.Base{
+			ID: req.ID,
+		},
+		NamespaceID: ns.ID,
+	}
+	if err := database.DB.
+		Select("ID").
+		Where("NOT is_archived").
+		Where("namespace_id = ?", ns.ID).
+		First(&app).
+		Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fiber.ErrNotFound
+		}
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", req.ID, err))
+	}
+
+	if err := database.DB.
+		Model(&app).
+		Update("IsArchived", true).
+		Error; err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to delete app %q: %s", req.ID, err))
 	}
 
 	return ctx.Status(http.StatusOK).JSON(nil)

@@ -22,25 +22,21 @@ import (
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	aim2API "github.com/G-Research/fasttrackml/pkg/api/aim2"
 	aim2Controller "github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
-	aimRepositories "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
-	aimAppService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/app"
-	aimDashboardService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/dashboard"
-	aimExperimentService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/experiment"
-	aimProjectService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/project"
-	aimRunService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/run"
-	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/tag"
+	aim2Repositories "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
+	aim2Service "github.com/G-Research/fasttrackml/pkg/api/aim2/service"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
-	mlflowArtifactService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
-	mlflowExperimentService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
-	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
-	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
-	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
 	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
@@ -132,7 +128,7 @@ func createDBProvider(config *mlflowConfig.ServiceConfig) (database.DBProvider, 
 // createNamespaceRepository creates a new namespace repository.
 func createNamespaceRepository(
 	ctx context.Context, db database.DBProvider,
-) (mlflowRepositories.NamespaceRepositoryProvider, error) {
+) (repositories.NamespaceRepositoryProvider, error) {
 	// create namespace notification listener.
 	listener, err := dao.NewNamespaceListener(ctx, db.GormDB())
 	if err != nil {
@@ -140,8 +136,8 @@ func createNamespaceRepository(
 	}
 
 	// create cached namespace repository.
-	repo, err := mlflowRepositories.NewNamespaceCachedRepository(
-		db.GormDB(), listener, mlflowRepositories.NewNamespaceRepository(db.GormDB()),
+	repo, err := repositories.NewNamespaceCachedRepository(
+		db.GormDB(), listener, repositories.NewNamespaceRepository(db.GormDB()),
 	)
 	if err != nil {
 		return nil, eris.Wrap(err, "error creating namespace repository")
@@ -155,7 +151,7 @@ func createApp(
 	config *mlflowConfig.ServiceConfig,
 	db database.DBProvider,
 	artifactStorageFactory storage.ArtifactStorageFactoryProvider,
-	namespaceRepository mlflowRepositories.NamespaceRepositoryProvider,
+	namespaceRepository repositories.NamespaceRepositoryProvider,
 ) *fiber.App {
 	app := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
@@ -229,14 +225,12 @@ func createApp(
 	// init `aim2` api routes.
 	aim2API.NewRouter(
 		aim2Controller.NewController(
-			aimTagService.NewService(),
-			aimAppService.NewService(
-				aimRepositories.NewAppRepository(db.GormDB()),
+			aim2Service.NewService(
+				aim2Repositories.NewRunRepository(db.GormDB()),
+				aim2Repositories.NewParamRepository(db.GormDB()),
+				aim2Repositories.NewMetricRepository(db.GormDB()),
+				aim2Repositories.NewExperimentRepository(db.GormDB()),
 			),
-			aimRunService.NewService(),
-			aimProjectService.NewService(),
-			aimDashboardService.NewService(),
-			aimExperimentService.NewService(),
 		),
 	).Init(app)
 
@@ -244,23 +238,23 @@ func createApp(
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
 		mlflowController.NewController(
-			mlflowRunService.NewService(
+			run.NewService(
 				mlflowRepositories.NewTagRepository(db.GormDB()),
 				mlflowRepositories.NewRunRepository(db.GormDB()),
 				mlflowRepositories.NewParamRepository(db.GormDB()),
 				mlflowRepositories.NewMetricRepository(db.GormDB()),
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
-			mlflowModelService.NewService(),
-			mlflowMetricService.NewService(
+			model.NewService(),
+			metric.NewService(
 				mlflowRepositories.NewRunRepository(db.GormDB()),
 				mlflowRepositories.NewMetricRepository(db.GormDB()),
 			),
-			mlflowArtifactService.NewService(
+			artifact.NewService(
 				mlflowRepositories.NewRunRepository(db.GormDB()),
 				artifactStorageFactory,
 			),
-			mlflowExperimentService.NewService(
+			experiment.NewService(
 				config,
 				mlflowRepositories.NewTagRepository(db.GormDB()),
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),

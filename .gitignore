@@ -7,6 +7,7 @@ fml
 fasttrackml
 *.exe
 __debug_bin*
+venv
 
 # Local database
 fasttrackml.db*
@@ -27,6 +28,9 @@ go.work*
 python/build/
 python/*.egg-info/
 wheelhouse/
+
+# Benchmark results
+benchmark_outputs/
 
 # Python package
 !python/fasttrackml/

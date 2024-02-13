@@ -4,7 +4,6 @@
 # Binaries
 dist/
 fml
-fasttrackml
 *.exe
 __debug_bin*
 
@@ -29,5 +28,4 @@ python/*.egg-info/
 wheelhouse/
 
 # Python package
-!python/fasttrackml/
 __pycache__/

@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
 // Service provides service layer to work with `artifact` business logic.

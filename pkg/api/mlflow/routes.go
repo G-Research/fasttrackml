@@ -3,8 +3,8 @@ package mlflow
 import (
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
 // List of route prefixes.

@@ -171,16 +171,15 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	metricKeysMap, contexts := make(fiber.Map, len(b)), make([]types.JSONB, 0, len(b))
+	metricKeysMap := make(map[string]types.JSONB, len(b))
 	for _, m := range b {
 		if m.Context != nil {
 			serializedContext, err := json.Marshal(m.Context)
 			if err != nil {
 				return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 			}
-			contexts = append(contexts, serializedContext)
+			metricKeysMap[m.Name] = serializedContext
 		}
-		metricKeysMap[m.Name] = nil
 	}
 	metricKeys := make([]string, len(metricKeysMap))
 
@@ -209,26 +208,22 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		return fmt.Errorf("unable to find run %q: %w", p.ID, err)
 	}
 
+	subQuery := database.DB
+	for metricKey, metricContext := range metricKeysMap {
+		subQuery = subQuery.Or("key = ? AND json = ?", metricKey, metricContext)
+	}
+
 	// fetch run metrics based on provided criteria.
 	var data []database.Metric
-	if err := database.DB.Where(
-		"run_uuid = ?", p.ID,
-	).InnerJoins(
+	if err := database.DB.InnerJoins(
 		"Context",
-		func() *gorm.DB {
-			query := database.DB
-			for _, context := range contexts {
-				query = query.Or("json = ?", context)
-			}
-			return query
-		}(),
-	).Where(
-		"key IN ?", metricKeys,
 	).Order(
 		"iter",
-	).Find(
-		&data,
-	).Error; err != nil {
+	).Where(
+		"run_uuid = ?", p.ID,
+	).Where(
+		subQuery,
+	).Find(&data).Error; err != nil {
 		return fmt.Errorf("unable to find run metrics: %w", err)
 	}
 

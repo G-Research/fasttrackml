@@ -4,11 +4,11 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"gorm.io/datatypes"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 )
 
 // DefaultContext is the default metric context
-var DefaultContext = Context{Json: datatypes.JSON("{}")}
+var DefaultContext = Context{Json: types.JSONB("{}")}
 
 // Metric represents model to work with `metrics` table.
 type Metric struct {
@@ -48,8 +48,8 @@ func (m LatestMetric) UniqueKey() string {
 
 // Context represents model to work with `contexts` table.
 type Context struct {
-	ID   uint           `gorm:"primaryKey;autoIncrement"`
-	Json datatypes.JSON `gorm:"not null;unique;index"`
+	ID   uint        `gorm:"primaryKey;autoIncrement"`
+	Json types.JSONB `gorm:"not null;unique;index"`
 }
 
 // GetJsonHash returns hash of the Context.Json

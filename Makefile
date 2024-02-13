@@ -245,3 +245,13 @@ format: go-format python-format ## format the code.
 run: build ## run the FastTrackML server.
 	@echo ">>> Running the FasttrackML server."
 	@./$(APP) server
+
+.PHONY: migrations-create
+migrations-create: ## generate a new database migration.
+	@echo ">>> Running FastTrackML migrations create."
+	@go run main.go migrations create
+
+.PHONY: migrations-rebuild
+migrations-rebuild: ## rebuild the migrations script to detect new migrations.
+	@echo ">>> Running FastTrackML migrations rebuild."
+	@go run main.go migrations rebuild

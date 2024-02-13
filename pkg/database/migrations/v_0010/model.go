@@ -1,11 +1,9 @@
-package database
+package v_0010
 
 import (
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"database/sql/driver"
-	"encoding/hex"
 	"encoding/json"
 	"time"
 
@@ -13,7 +11,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 )
 
@@ -32,12 +29,6 @@ type LifecycleStage string
 const (
 	LifecycleStageActive  LifecycleStage = "active"
 	LifecycleStageDeleted LifecycleStage = "deleted"
-)
-
-// Default Experiment properties.
-const (
-	DefaultExperimentID   = int32(0)
-	DefaultExperimentName = "Default"
 )
 
 type Namespace struct {
@@ -63,11 +54,6 @@ type Experiment struct {
 	Namespace        Namespace
 	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
 	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
-}
-
-// IsDefault makes check that Experiment is default.
-func (e Experiment) IsDefault(namespace *models.Namespace) bool {
-	return e.ID != nil && namespace.DefaultExperimentID != nil && *e.ID == *namespace.DefaultExperimentID
 }
 
 type ExperimentTag struct {
@@ -168,12 +154,6 @@ type Context struct {
 	Json types.JSONB `gorm:"not null;unique;index"`
 }
 
-// GetJsonHash returns hash of the Context.Json
-func (c Context) GetJsonHash() string {
-	hash := sha256.Sum256(c.Json)
-	return string(hash[:])
-}
-
 type AlembicVersion struct {
 	Version string `gorm:"column:version_num;type:varchar(32);not null;primaryKey"`
 }
@@ -258,11 +238,4 @@ func (s *AppState) Scan(v interface{}) error {
 
 func (s AppState) GormDataType() string {
 	return "text"
-}
-
-func NewUUID() string {
-	var r [32]byte
-	u := uuid.New()
-	hex.Encode(r[:], u[:])
-	return string(r[:])
 }

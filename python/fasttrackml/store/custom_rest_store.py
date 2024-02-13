@@ -16,7 +16,7 @@ from mlflow.tracking.fluent import (
 from mlflow.utils.rest_utils import http_request
 from mlflow.utils.string_utils import is_string_type
 
-from .entities.metric import Metric
+from ..entities.metric import Metric
 
 
 class CustomRestStore(RestStore):

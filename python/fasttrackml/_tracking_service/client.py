@@ -11,8 +11,8 @@ from mlflow.utils.rest_utils import MlflowHostCreds
 from mlflow.utils.time import get_current_time_millis
 from mlflow.utils.validation import MAX_METRICS_PER_BATCH
 
-from .entities.metric import Metric
-from .store.custom_rest_store import CustomRestStore
+from ..entities.metric import Metric
+from ..store.custom_rest_store import CustomRestStore
 
 
 class FasttrackmlTrackingServiceClient(TrackingServiceClient):

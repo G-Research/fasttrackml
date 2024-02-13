@@ -20,6 +20,10 @@ import (
 	adminAPIController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
+	aim2API "github.com/G-Research/fasttrackml/pkg/api/aim2"
+	aim2Controller "github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
+	aim2Repositories "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
+	aim2Service "github.com/G-Research/fasttrackml/pkg/api/aim2/service"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
@@ -160,8 +164,8 @@ func createApp(
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			p := string(c.Request().URI().Path())
 			switch {
-			case strings.HasPrefix(p, "/aim/api/"):
-				return aimAPI.ErrorHandler(c, err)
+			case strings.HasPrefix(p, "/aim"):
+				return aim2API.ErrorHandler(c, err)
 			case strings.HasPrefix(p, "/api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/mlflow/ajax-api/2.0/mlflow/"):
@@ -217,7 +221,18 @@ func createApp(
 	// init `aim` api and ui routes.
 	router := app.Group("/aim/api/")
 	aimAPI.AddRoutes(router)
-	aimUI.AddRoutes(app)
+
+	// init `aim2` api routes.
+	aim2API.NewRouter(
+		aim2Controller.NewController(
+			aim2Service.NewService(
+				aim2Repositories.NewRunRepository(db.GormDB()),
+				aim2Repositories.NewParamRepository(db.GormDB()),
+				aim2Repositories.NewMetricRepository(db.GormDB()),
+				aim2Repositories.NewExperimentRepository(db.GormDB()),
+			),
+		),
+	).Init(app)
 
 	// init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
@@ -247,6 +262,7 @@ func createApp(
 		),
 	).Init(app)
 	mlflowUI.AddRoutes(app)
+	aimUI.AddRoutes(app)
 
 	// init `admin` api routes.
 	adminAPI.NewRouter(

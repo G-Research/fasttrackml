@@ -6,8 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
 // ValidateListArtifactsRequest validates `GET /mlflow/artifacts/list` request.

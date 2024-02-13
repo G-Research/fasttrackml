@@ -171,23 +171,17 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	metricKeysMap := make(map[string]types.JSONB, len(b))
+	metricKeysMap := make(map[string][]types.JSONB, len(b))
 	for _, m := range b {
 		if m.Context != nil {
 			serializedContext, err := json.Marshal(m.Context)
 			if err != nil {
 				return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 			}
-			metricKeysMap[m.Name] = serializedContext
+			metricKeysMap[m.Name] = append(metricKeysMap[m.Name], serializedContext)
 		}
 	}
 	metricKeys := make([]string, len(metricKeysMap))
-
-	i := 0
-	for k := range metricKeysMap {
-		metricKeys[i] = k
-		i++
-	}
 
 	// check that requested run actually exists.
 	if err := database.DB.Select(
@@ -209,8 +203,10 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	}
 
 	subQuery := database.DB
-	for metricKey, metricContext := range metricKeysMap {
-		subQuery = subQuery.Or("key = ? AND json = ?", metricKey, metricContext)
+	for metricKey, metricContexts := range metricKeysMap {
+		for _, metricContext := range metricContexts {
+			subQuery = subQuery.Or("key = ? AND json = ?", metricKey, metricContext)
+		}
 	}
 
 	// fetch run metrics based on provided criteria.

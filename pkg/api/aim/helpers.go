@@ -2,6 +2,7 @@ package aim
 
 import (
 	"bufio"
+	"crypto/sha256"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -282,4 +283,10 @@ func CompareJson(json1, json2 []byte) bool {
 		return false
 	}
 	return reflect.DeepEqual(j2, j)
+}
+
+// GetHash returns hash of the provided data.
+func GetHash(data []byte) string {
+	hash := sha256.Sum256(data)
+	return string(hash[:])
 }

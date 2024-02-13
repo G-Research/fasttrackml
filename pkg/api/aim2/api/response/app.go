@@ -24,13 +24,13 @@ type AppState map[string]any
 func NewGetAppsResponse(apps []models.App) []App {
 	resp := make([]App, len(apps))
 	for i, app := range apps {
-		resp[i] = NewCreateAppResponse(&app)
+		resp[i] = NewCreateAppResponse(app)
 	}
 	return resp
 }
 
 // NewCreateAppResponse creates new response object for `POST /apps` endpoint.
-func NewCreateAppResponse(app *models.App) App {
+func NewCreateAppResponse(app models.App) App {
 	return App{
 		ID:        app.ID,
 		Type:      app.Type,

@@ -181,13 +181,6 @@ func GetRunMetrics(c *fiber.Ctx) error {
 			metricKeysMap[m.Name] = append(metricKeysMap[m.Name], serializedContext)
 		}
 	}
-	metricKeys := make([]string, len(metricKeysMap))
-
-	i := 0
-	for k := range metricKeysMap {
-		metricKeys[i] = k
-		i++
-	}
 
 	// check that requested run actually exists.
 	if err := database.DB.Select(
@@ -234,7 +227,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		iters   []int
 		values  []*float64
 		context json.RawMessage
-	}, len(metricKeys))
+	})
 
 	for _, m := range data {
 		v := m.Value

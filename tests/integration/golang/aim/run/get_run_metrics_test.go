@@ -187,9 +187,21 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 			expectedResponse: response.GetRunMetrics{
 				response.RunMetrics{
 					Name:    "key1",
+					Iters:   []int64{1},
+					Values:  []float64{123.1},
+					Context: json.RawMessage(`{"key1":"key1","value1":"value1"}`),
+				},
+				response.RunMetrics{
+					Name:    "key1",
 					Iters:   []int64{2},
 					Values:  []float64{123.2},
 					Context: json.RawMessage(`{"key2":"key2","value2":"value2"}`),
+				},
+				response.RunMetrics{
+					Name:    "key2",
+					Iters:   []int64{3},
+					Values:  []float64{124.1},
+					Context: json.RawMessage(`{"key3":"key3","value3":"value3"}`),
 				},
 				response.RunMetrics{
 					Name:    "key2",

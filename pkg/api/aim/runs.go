@@ -183,6 +183,12 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	}
 	metricKeys := make([]string, len(metricKeysMap))
 
+	i := 0
+	for k := range metricKeysMap {
+		metricKeys[i] = k
+		i++
+	}
+
 	// check that requested run actually exists.
 	if err := database.DB.Select(
 		"ID",

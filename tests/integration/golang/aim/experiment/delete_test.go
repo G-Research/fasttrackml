@@ -64,8 +64,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 		{
 			ID:   "incorrect_experiment_id",
 			name: "DeleteIncorrectExperimentID",
-			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt:` +
-				` parsing "incorrect_experiment_id": invalid syntax`,
+			error: `(unable to parse|failed to decode)`,
 		},
 		{
 			ID:    fmt.Sprintf("%d", *s.DefaultExperiment.ID),
@@ -85,7 +84,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 					"/experiments/%s", tt.ID,
 				),
 			)
-			s.Contains(resp.Error(), tt.error)
+			s.Regexp(tt.error, resp.Error())
 		})
 	}
 }

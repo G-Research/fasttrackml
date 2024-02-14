@@ -93,7 +93,7 @@ func (r ExperimentRepository) GetByNamespaceIDAndName(
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, eris.Wrapf(err, "error getting experiment by id: %s", name)
+		return nil, eris.Wrapf(err, "error getting experiment by name: %s", name)
 	}
 	return &experiment, nil
 }

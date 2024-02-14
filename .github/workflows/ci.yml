@@ -210,7 +210,7 @@ jobs:
 
       - name: Run Integration Tests (Aim Refactor)
         run: |
-              make container-test
+              make container-test > $GITHUB_STEP_SUMMARY
               ret_val=$?
               if [ $ret_val -ne 0 ]; then
                   echo "Warning: The tests exited with a non-zero status."

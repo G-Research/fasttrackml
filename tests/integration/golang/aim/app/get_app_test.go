@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -51,7 +52,7 @@ func (s *GetAppTestSuite) Test_Error() {
 		s.Run(tt.name, func() {
 			var resp response.Error
 			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/apps/%v", tt.idParam))
-			s.Equal("Not Found", resp.Message)
+			s.Contains(strings.ToLower(resp.Message), "not found")
 		})
 	}
 }

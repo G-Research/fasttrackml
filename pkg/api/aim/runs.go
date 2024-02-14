@@ -212,7 +212,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	}
 
 	subQuery := database.DB
-	for metricKey, _ := range metricKeysMap {
+	for metricKey := range metricKeysMap {
 		subQuery = subQuery.Or("key = ? AND json = ?", metricKey.name, types.JSONB(metricKey.context))
 	}
 

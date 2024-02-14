@@ -62,8 +62,8 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 			error: "Not Found",
 		},
 		{
-			ID:   "incorrect_experiment_id",
-			name: "DeleteIncorrectExperimentID",
+			ID:    "incorrect_experiment_id",
+			name:  "DeleteIncorrectExperimentID",
 			error: `(unable to parse|failed to decode)`,
 		},
 		{

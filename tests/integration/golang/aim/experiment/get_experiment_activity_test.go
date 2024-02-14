@@ -62,9 +62,9 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 			error: "Not Found",
 		},
 		{
-			name: "DeleteIncorrectExperimentID",
+			name:  "DeleteIncorrectExperimentID",
 			error: `(unable to parse|failed to decode)`,
-			ID: "incorrect_experiment_id",
+			ID:    "incorrect_experiment_id",
 		},
 	}
 	for _, tt := range tests {

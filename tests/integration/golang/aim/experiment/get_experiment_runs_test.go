@@ -64,9 +64,9 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 		ID    string
 	}{
 		{
-			name: "IncorrectExperimentID",
+			name:  "IncorrectExperimentID",
 			error: `(unable to parse|failed to decode)`,
-			ID: "incorrect_experiment_id",
+			ID:    "incorrect_experiment_id",
 		},
 		{
 			name:  "NotFoundExperiment",

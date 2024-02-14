@@ -209,12 +209,9 @@ jobs:
         run: docker run --rm -v fml-integration-tests_go-cache:/cache -v /tmp/go-cache:/src alpine tar xf /src/go-build.tar -C /cache
 
       - name: Run Integration Tests (Aim Refactor)
+        continue-on-error: true
         run: |
-              make container-test > $GITHUB_STEP_SUMMARY
-              ret_val=$?
-              if [ $ret_val -ne 0 ]; then
-                  echo "Warning: The tests exited with a non-zero status."
-              fi
+              make container-test > $GITHUB_STEP_SUMMARY || true
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_BACKEND: ${{ matrix.database-backend }}

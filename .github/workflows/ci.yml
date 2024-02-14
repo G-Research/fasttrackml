@@ -211,7 +211,7 @@ jobs:
       - name: Run Integration Tests (Aim Refactor)
         continue-on-error: true
         run: |
-              make container-test > $GITHUB_STEP_SUMMARY || true
+              make container-test || true
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_BACKEND: ${{ matrix.database-backend }}

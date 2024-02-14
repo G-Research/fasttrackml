@@ -37,7 +37,7 @@ class Metric(_MLflowObject):
     def context(self):
         """Metric context as a Dict."""
         return self._context
-    
+
     def __eq__(self, __o):
         if isinstance(__o, self.__class__):
             return self.__dict__ == __o.__dict__

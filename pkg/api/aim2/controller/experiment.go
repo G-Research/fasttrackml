@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/convertors"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
@@ -20,6 +20,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
+// GetExperiments handles `GET /experiments` endpoint.
 func (c Controller) GetExperiments(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -27,45 +28,18 @@ func (c Controller) GetExperiments(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getExperiments namespace: %s", ns.Code)
 
-	var experiments []struct {
-		database.Experiment
-		RunCount    int
-		Description string `gorm:"column:description"`
-	}
-	if tx := database.DB.Model(&database.Experiment{}).
-		Select(
-			"experiments.experiment_id",
-			"experiments.name",
-			"experiments.lifecycle_stage",
-			"experiments.creation_time",
-			"COUNT(runs.run_uuid) AS run_count",
-			"COALESCE(MAX(experiment_tags.value), '') AS description",
-		).
-		Where("experiments.namespace_id = ?", ns.ID).
-		Where("experiments.lifecycle_stage = ?", database.LifecycleStageActive).
-		Joins("LEFT JOIN runs USING(experiment_id)").
-		Joins("LEFT JOIN experiment_tags ON experiments.experiment_id = experiment_tags.experiment_id AND"+
-			" experiment_tags.key = ?", common.DescriptionTagKey).
-		Group("experiments.experiment_id").
-		Find(&experiments); tx.Error != nil {
-		return fmt.Errorf("error fetching experiments: %w", tx.Error)
+	experiments, err := c.experimentService.GetExperiments(ctx.Context(), ns)
+	if err != nil {
+		return err
 	}
 
-	resp := make([]fiber.Map, len(experiments))
-	for i, e := range experiments {
-		resp[i] = fiber.Map{
-			"id":            strconv.Itoa(int(*e.ID)),
-			"name":          e.Name,
-			"description":   e.Description,
-			"archived":      e.LifecycleStage == database.LifecycleStageDeleted,
-			"run_count":     e.RunCount,
-			"creation_time": float64(e.CreationTime.Int64) / 1000,
-		}
-	}
+	resp := response.NewGetExperimentsResponse(experiments)
+	log.Debugf("getExperiments response: %#v", resp)
 
 	return ctx.JSON(resp)
 }
 
+// GetExperiment handles `GET /experiments/:id` endpoint.
 func (c Controller) GetExperiment(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -78,52 +52,18 @@ func (c Controller) GetExperiment(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if err := database.DB.Select("ID").First(&database.Experiment{
-		ID:          common.GetPointer(req.ID),
-		NamespaceID: ns.ID,
-	}).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("unable to find experiment %q: %w", req.ID, err)
+	experiment, err := c.experimentService.GetExperiment(ctx.Context(), ns, &req)
+	if err != nil {
+		return err
 	}
 
-	var exp struct {
-		database.Experiment
-		RunCount    int
-		Description string `gorm:"column:description"`
-	}
-	if err := database.DB.Model(&database.Experiment{}).
-		Select(
-			"experiments.experiment_id",
-			"experiments.name",
-			"experiments.lifecycle_stage",
-			"experiments.creation_time",
-			"COUNT(runs.run_uuid) AS run_count",
-			"COALESCE(MAX(experiment_tags.value), '') AS description",
-		).
-		Joins("LEFT JOIN runs USING(experiment_id)").
-		Joins("LEFT JOIN experiment_tags ON experiments.experiment_id = experiment_tags.experiment_id AND"+
-			" experiment_tags.key = ?", common.DescriptionTagKey).
-		Where("experiments.namespace_id = ?", ns.ID).
-		Where("experiments.experiment_id = ?", req.ID).
-		Group("experiments.experiment_id").
-		First(&exp).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("error fetching experiment %q: %w", req.ID, err)
-	}
-	return ctx.JSON(fiber.Map{
-		"id":            fmt.Sprintf("%d", req.ID),
-		"name":          exp.Name,
-		"description":   exp.Description,
-		"archived":      exp.LifecycleStage == database.LifecycleStageDeleted,
-		"run_count":     exp.RunCount,
-		"creation_time": float64(exp.CreationTime.Int64) / 1000,
-	})
+	resp := response.NewGetExperimentResponse(experiment)
+	log.Debugf("getExperiment response: %#v", resp)
+
+	return ctx.JSON(resp)
 }
 
+// GetExperimentRuns handles `GET /experiments/:id/runs` endpoint.
 func (c Controller) GetExperimentRuns(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -140,70 +80,24 @@ func (c Controller) GetExperimentRuns(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if err := database.DB.Select("ID").First(&database.Experiment{
-		ID:          common.GetPointer(req.ID),
-		NamespaceID: ns.ID,
-	}).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("unable to find experiment %q: %w", req.ID, err)
+	runs, err := c.experimentService.GetExperimentRuns(ctx.Context(), ns, &req)
+	if err != nil {
+		return err
 	}
 
-	tx := database.DB.
-		Where("experiment_id = ?", req.ID).
-		Order("row_num DESC")
+	resp := response.NewGetExperimentRunsResponse(req.ID, runs)
+	log.Debugf("getExperimentRuns response: %#v", resp)
 
-	if req.Limit > 0 {
-		tx.Limit(req.Limit)
-	}
-
-	if req.Offset != "" {
-		run := &database.Run{
-			ID: req.Offset,
-		}
-		if err = database.DB.Select(
-			"row_num",
-		).First(
-			&run,
-		).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			return fmt.Errorf("unable to find search runs offset %q: %w", req.Offset, err)
-		}
-
-		tx.Where("row_num < ?", run.RowNum)
-	}
-
-	var sqlRuns []database.Run
-	if err := tx.Find(&sqlRuns).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("error fetching runs of experiment %q: %w", req.ID, err)
-	}
-
-	runs := make([]fiber.Map, len(sqlRuns))
-	for i, r := range sqlRuns {
-		runs[i] = fiber.Map{
-			"run_id":        r.ID,
-			"name":          r.Name,
-			"creation_time": float64(r.StartTime.Int64) / 1000,
-			"end_time":      float64(r.EndTime.Int64) / 1000,
-			"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
-		}
-	}
-
-	return ctx.JSON(fiber.Map{
-		"id":   req.ID,
-		"runs": runs,
-	})
+	return ctx.JSON(resp)
 }
 
+// GetExperimentActivity handles `GET /experiments/:id/activity` endpoint.
 func (c Controller) GetExperimentActivity(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
-	log.Debugf("GetExperimentActivity namespace: %s", ns.Code)
+	log.Debugf("getExperimentActivity namespace: %s", ns.Code)
 
 	tzOffset, err := strconv.Atoi(ctx.Get("x-timezone-offset", "0"))
 	if err != nil {
@@ -215,49 +109,18 @@ func (c Controller) GetExperimentActivity(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if err := database.DB.Select(
-		"ID",
-	).First(&database.Experiment{
-		ID:          common.GetPointer(req.ID),
-		NamespaceID: ns.ID,
-	}).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("unable to find experiment %q: %w", req.ID, err)
+	activity, err := c.experimentService.GetExperimentActivity(ctx.Context(), ns, &req, tzOffset)
+	if err != nil {
+		return err
 	}
 
-	var runs []database.Run
-	if tx := database.DB.
-		Select("runs.start_time", "runs.lifecycle_stage", "runs.status").
-		Joins("LEFT JOIN experiments USING(experiment_id)").
-		Where("experiments.namespace_id = ?", ns.ID).
-		Where("experiments.experiment_id = ?", req.ID).
-		Find(&runs); tx.Error != nil {
-		return fmt.Errorf("error retrieving runs for experiment %q: %w", req.ID, tx.Error)
-	}
+	resp := response.NewGetExperimentActivityResponse(activity)
+	log.Debugf("getExperimentActivity response: %#v", resp)
 
-	numActiveRuns, numArchivedRuns := 0, 0
-	activity := map[string]int{}
-	for _, r := range runs {
-		key := time.UnixMilli(r.StartTime.Int64).Add(time.Duration(-tzOffset) * time.Minute).Format("2006-01-02T15:00:00")
-		activity[key] += 1
-		switch {
-		case r.LifecycleStage == database.LifecycleStageDeleted:
-			numArchivedRuns += 1
-		case r.Status == database.StatusRunning:
-			numActiveRuns += 1
-		}
-	}
-
-	return ctx.JSON(fiber.Map{
-		"num_runs":          len(runs),
-		"num_archived_runs": numArchivedRuns,
-		"num_active_runs":   numActiveRuns,
-		"activity_map":      activity,
-	})
+	return ctx.JSON(resp)
 }
 
+// DeleteExperiment handles `DELETE /experiments/:id` endpoint.
 func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -304,6 +167,7 @@ func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
 	})
 }
 
+// UpdateExperiment handles `PUT /experiments/:id` endpoint.
 func (c Controller) UpdateExperiment(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {

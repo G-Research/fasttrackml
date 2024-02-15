@@ -2,11 +2,13 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/common"
@@ -16,6 +18,10 @@ import (
 
 // ExperimentRepositoryProvider provides an interface to work with `experiment` entity.
 type ExperimentRepositoryProvider interface {
+	// Update updates existing experiment.
+	Update(ctx context.Context, experiment *models.Experiment) error
+	// Delete deletes existing experiment.
+	Delete(ctx context.Context, experiment *models.Experiment) error
 	// GetExperiments returns list of experiments.
 	GetExperiments(ctx context.Context, namespaceID uint) ([]models.ExperimentExtended, error)
 	// GetExperimentRuns returns list of runs which belong to experiment.
@@ -28,6 +34,10 @@ type ExperimentRepositoryProvider interface {
 	) (*models.ExperimentActivity, error)
 	// GetExperimentByNamespaceIDAndExperimentID returns experiment by Namespace ID and Experiment ID.
 	GetExperimentByNamespaceIDAndExperimentID(
+		ctx context.Context, namespaceID uint, experimentID int32,
+	) (*models.Experiment, error)
+	// GetExtendedExperimentByNamespaceIDAndExperimentID returns extended experiment by Namespace ID and Experiment ID.
+	GetExtendedExperimentByNamespaceIDAndExperimentID(
 		ctx context.Context, namespaceID uint, experimentID int32,
 	) (*models.ExperimentExtended, error)
 }
@@ -42,6 +52,96 @@ func NewExperimentRepository(db *gorm.DB) *ExperimentRepository {
 	return &ExperimentRepository{
 		db: db,
 	}
+}
+
+// Update updates existing experiment.
+func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Experiment) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.WithContext(ctx).Model(&experiment).Updates(experiment).Error; err != nil {
+			return eris.Wrapf(err, "error updating experiment with id: %d", *experiment.ID)
+		}
+
+		// also archive experiment runs if experiment is being archived
+		if experiment.LifecycleStage == models.LifecycleStageDeleted {
+			run := models.Run{
+				LifecycleStage: experiment.LifecycleStage,
+				DeletedTime:    experiment.LastUpdateTime,
+			}
+
+			if err := tx.WithContext(
+				ctx,
+			).Model(
+				&run,
+			).Where(
+				"experiment_id = ?", experiment.ID,
+			).Updates(&run).Error; err != nil {
+				return eris.Wrapf(err, "error updating existing runs with experiment id: %d", *experiment.ID)
+			}
+		}
+		return nil
+	})
+}
+
+// Delete deletes existing experiment.
+func (r ExperimentRepository) Delete(ctx context.Context, experiment *models.Experiment) error {
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		// finding all the related runs.
+		var minRowNum sql.NullInt64
+		if err := tx.Model(
+			&models.Run{},
+		).Where(
+			experiment,
+		).Pluck(
+			"MIN(row_num)", &minRowNum,
+		).Error; err != nil {
+			return err
+		}
+
+		// delete current experiment.
+		if err := tx.Clauses(
+			clause.Returning{Columns: []clause.Column{{Name: "experiment_id"}}},
+		).Where(
+			experiment,
+		).Delete(
+			&models.Experiment{},
+		).Error; err != nil {
+			return eris.Wrapf(err, "error deleting existing experiment with id: %d", *experiment.ID)
+		}
+
+		// renumbering the remainder runs.
+		if minRowNum.Valid {
+			if models.RowNum(minRowNum.Int64) < models.RowNum(0) {
+				return eris.New("attempting to renumber with less than 0 row number value")
+			}
+
+			if tx.Dialector.Name() == database.PostgresDialectorName {
+				if err := tx.Exec("LOCK TABLE runs").Error; err != nil {
+					return eris.Wrap(err, "unable to lock table")
+				}
+			}
+
+			if err := tx.Exec(
+				`UPDATE runs
+				 SET row_num = rows.new_row_num
+					 FROM (
+					   SELECT run_uuid, ROW_NUMBER() OVER (ORDER BY start_time) + ? - 1 as new_row_num
+					   FROM runs
+					   WHERE runs.row_num >= ?
+					 ) as rows
+				 WHERE runs.run_uuid = rows.run_uuid`,
+				minRowNum.Int64,
+				minRowNum.Int64,
+			).Error; err != nil {
+				return eris.Wrap(err, "error updating runs.row_num")
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return eris.Wrapf(err, "error deleting experiment with id: %d", *experiment.ID)
+	}
+
+	return nil
 }
 
 // GetExperiments returns list of experiments.
@@ -150,6 +250,22 @@ func (r ExperimentRepository) GetExperimentActivity(
 
 // GetExperimentByNamespaceIDAndExperimentID returns experiment by Namespace ID and Experiment ID.
 func (r ExperimentRepository) GetExperimentByNamespaceIDAndExperimentID(
+	ctx context.Context, namespaceID uint, experimentID int32,
+) (*models.Experiment, error) {
+	var experiment models.Experiment
+	if err := r.db.WithContext(ctx).Preload(
+		"Tags",
+	).Where(
+		models.Experiment{ID: &experimentID, NamespaceID: namespaceID},
+	).First(&experiment).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting experiment by id: %d", experimentID)
+	}
+	return &experiment, nil
+}
+
+// GetExtendedExperimentByNamespaceIDAndExperimentID returns experiment by Namespace ID and Experiment ID.
+// TODO:dsuhinin this moment needs to be discussed.
+func (r ExperimentRepository) GetExtendedExperimentByNamespaceIDAndExperimentID(
 	ctx context.Context, namespaceID uint, experimentID int32,
 ) (*models.ExperimentExtended, error) {
 	var experiment models.ExperimentExtended

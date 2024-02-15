@@ -1,23 +1,15 @@
 package controller
 
 import (
-	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/convertors"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/common"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // GetExperiments handles `GET /experiments` endpoint.
@@ -133,38 +125,11 @@ func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	// validate that requested experiment exists and is not a default experiment.
-	experiment := database.Experiment{}
-	if err := database.DB.Select(
-		"ID", "Name",
-	).Where(
-		"experiments.experiment_id = ?", req.ID,
-	).Where(
-		"experiments.namespace_id = ?", ns.ID,
-	).First(&experiment).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("unable to find experiment %q: %w", req.ID, err)
+	if err := c.experimentService.DeleteExperiment(ctx.Context(), ns, &req); err != nil {
+		return err
 	}
 
-	if experiment.IsDefault(ns) {
-		return fiber.NewError(fiber.StatusBadRequest, "unable to delete default experiment")
-	}
-
-	// TODO this code should move to service with injected repository
-	experimentRepo := repositories.NewExperimentRepository(database.DB)
-	if err = experimentRepo.Delete(ctx.Context(), &models.Experiment{
-		ID: common.GetPointer(req.ID),
-	}); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError,
-			fmt.Sprintf("unable to delete experiment %q: %s", req.ID, err))
-	}
-
-	return ctx.JSON(fiber.Map{
-		"id":     req.ID,
-		"status": "OK",
-	})
+	return ctx.JSON(response.NewDeleteExperimentResponse(req.ID, "OK"))
 }
 
 // UpdateExperiment handles `PUT /experiments/:id` endpoint.
@@ -184,42 +149,9 @@ func (c Controller) UpdateExperiment(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	experimentRepository := repositories.NewExperimentRepository(database.DB)
-	experiment, err := experimentRepository.GetByNamespaceIDAndExperimentID(ctx.Context(), ns.ID, req.ID)
-	if err != nil {
-		return fiber.NewError(
-			fiber.StatusInternalServerError, fmt.Sprintf("unable to find experiment '%d': %s", req.ID, err),
-		)
-	}
-	if experiment == nil {
-		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("unable to find experiment '%d'", req.ID))
+	if err := c.experimentService.UpdateExperiment(ctx.Context(), ns, &req); err != nil {
+		return err
 	}
 
-	experiment = convertors.ConvertUpdateExperimentToDBModel(&req, experiment)
-	if req.Archived != nil || req.Name != nil {
-		if err := database.DB.Transaction(func(tx *gorm.DB) error {
-			if err := experimentRepository.UpdateWithTransaction(ctx.Context(), tx, experiment); err != nil {
-				return err
-			}
-			return nil
-		}); err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError,
-				fmt.Sprintf("unable to update experiment %q: %s", req.ID, err))
-		}
-	}
-	if req.Description != nil {
-		tagRepository := repositories.NewTagRepository(database.DB)
-		if err := tagRepository.CreateExperimentTag(ctx.Context(), &models.ExperimentTag{
-			Key:          common.DescriptionTagKey,
-			Value:        *req.Description,
-			ExperimentID: *experiment.ID,
-		}); err != nil {
-			return err
-		}
-	}
-
-	return ctx.JSON(fiber.Map{
-		"id":     req.ID,
-		"status": "OK",
-	})
+	return ctx.JSON(response.NewUpdateExperimentResponse(req.ID, "OK"))
 }

@@ -2,6 +2,8 @@ package models
 
 import (
 	"database/sql"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // Default Experiment properties.
@@ -25,8 +27,8 @@ type Experiment struct {
 }
 
 // IsDefault makes check that Experiment is default.
-func (e Experiment) IsDefault() bool {
-	return e.ID != nil && *e.ID == DefaultExperimentID && e.Name == DefaultExperimentName
+func (e Experiment) IsDefault(namespace *models.Namespace) bool {
+	return e.ID != nil && namespace.DefaultExperimentID != nil && *e.ID == *namespace.DefaultExperimentID
 }
 
 // ExperimentTag represents model to work with `experiment_tags` table.

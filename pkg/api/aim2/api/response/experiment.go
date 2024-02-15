@@ -88,3 +88,31 @@ func NewGetExperimentActivityResponse(activity *models.ExperimentActivity) *Expe
 		NumArchivedRuns: activity.NumArchivedRuns,
 	}
 }
+
+// UpdateExperimentResponse is a response object to hold response data for `PUT experiments/:id` endpoint.
+type UpdateExperimentResponse struct {
+	ID     int32  `json:"ID"`
+	Status string `json:"status"`
+}
+
+// NewUpdateExperimentResponse creates new response object for `PUT experiments/:id` endpoint.
+func NewUpdateExperimentResponse(id int32, status string) *UpdateExperimentResponse {
+	return &UpdateExperimentResponse{
+		ID:     id,
+		Status: status,
+	}
+}
+
+// DeleteExperimentResponse is a response object to hold response data for `DELETE experiments/:id` endpoint.
+type DeleteExperimentResponse struct {
+	ID     int32  `json:"ID"`
+	Status string `json:"status"`
+}
+
+// NewDeleteExperimentResponse creates new response object for `DELETE experiments/:id` endpoint.
+func NewDeleteExperimentResponse(id int32, status string) *DeleteExperimentResponse {
+	return &DeleteExperimentResponse{
+		ID:     id,
+		Status: status,
+	}
+}

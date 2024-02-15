@@ -35,18 +35,3 @@ type ExperimentTag struct {
 	Value        string `gorm:"type:varchar(5000)"`
 	ExperimentID int32  `gorm:"not null;primaryKey"`
 }
-
-// ExperimentExtended represents model to work with `experiments` table and hold extended information.
-type ExperimentExtended struct {
-	Experiment
-	RunCount    int    `gorm:"column:run_count"`
-	Description string `gorm:"column:description"`
-}
-
-// ExperimentActivity represents model to hold experiment activity information.
-type ExperimentActivity struct {
-	NumRuns         int            `json:"num_runs"`
-	ActivityMap     map[string]int `json:"activity_map"`
-	NumActiveRuns   int            `json:"num_active_runs"`
-	NumArchivedRuns int            `json:"num_archived_runs"`
-}

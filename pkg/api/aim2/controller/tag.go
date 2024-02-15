@@ -15,13 +15,13 @@ func (c Controller) GetTags(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getTags namespace: %s", ns.Code)
 
-	apps, err := c.tagService.
+	tags, err := c.tagService.GetTags(ctx.Context(), ns)
 	if err != nil {
 		return err
 	}
 
-	resp := response.NewGetAppsResponse(apps)
-	log.Debugf("getApps response: %#v", resp)
+	resp := response.NewGetTagsResponse(tags)
+	log.Debugf("getTags response: %#v", resp)
 
 	return ctx.JSON(resp)
 }

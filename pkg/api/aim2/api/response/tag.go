@@ -1,8 +1,9 @@
 package response
 
 import (
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/google/uuid"
+
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 )
 
 // TagResponse represents a run tag.

@@ -1,11 +1,12 @@
 package controller
 
 import (
+	"github.com/gofiber/fiber/v2"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
-	"github.com/gofiber/fiber/v2"
-	log "github.com/sirupsen/logrus"
 )
 
 func (c Controller) GetTags(ctx *fiber.Ctx) error {

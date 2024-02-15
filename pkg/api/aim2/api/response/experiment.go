@@ -1,6 +1,7 @@
 package response
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
@@ -49,7 +50,7 @@ type ExperimentRunPartial struct {
 
 // ExperimentRuns represents the response object to hold models.Runs data.
 type ExperimentRuns struct {
-	ID   int32                  `json:"id"`
+	ID   string                 `json:"id"`
 	Runs []ExperimentRunPartial `json:"runs"`
 }
 
@@ -66,7 +67,7 @@ func NewGetExperimentRunsResponse(experimentID int32, runs []models.Run) *Experi
 		}
 	}
 	return &ExperimentRuns{
-		ID:   experimentID,
+		ID:   fmt.Sprintf("%d", experimentID),
 		Runs: experimentRuns,
 	}
 }
@@ -91,28 +92,28 @@ func NewGetExperimentActivityResponse(activity *models.ExperimentActivity) *Expe
 
 // UpdateExperimentResponse is a response object to hold response data for `PUT experiments/:id` endpoint.
 type UpdateExperimentResponse struct {
-	ID     int32  `json:"ID"`
+	ID     string `json:"ID"`
 	Status string `json:"status"`
 }
 
 // NewUpdateExperimentResponse creates new response object for `PUT experiments/:id` endpoint.
 func NewUpdateExperimentResponse(id int32, status string) *UpdateExperimentResponse {
 	return &UpdateExperimentResponse{
-		ID:     id,
+		ID:     fmt.Sprintf("%d", id),
 		Status: status,
 	}
 }
 
 // DeleteExperimentResponse is a response object to hold response data for `DELETE experiments/:id` endpoint.
 type DeleteExperimentResponse struct {
-	ID     int32  `json:"ID"`
+	ID     string `json:"ID"`
 	Status string `json:"status"`
 }
 
 // NewDeleteExperimentResponse creates new response object for `DELETE experiments/:id` endpoint.
 func NewDeleteExperimentResponse(id int32, status string) *DeleteExperimentResponse {
 	return &DeleteExperimentResponse{
-		ID:     id,
+		ID:     fmt.Sprintf("%d", id),
 		Status: status,
 	}
 }

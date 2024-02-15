@@ -25,9 +25,7 @@ type ExperimentRepositoryProvider interface {
 	// GetExperiments returns list of experiments.
 	GetExperiments(ctx context.Context, namespaceID uint) ([]models.ExperimentExtended, error)
 	// GetExperimentRuns returns list of runs which belong to experiment.
-	GetExperimentRuns(
-		ctx context.Context, namespaceID uint, req *request.GetExperimentRunsRequest,
-	) ([]models.Run, error)
+	GetExperimentRuns(ctx context.Context, req *request.GetExperimentRunsRequest) ([]models.Run, error)
 	// GetExperimentActivity returns experiment activity.
 	GetExperimentActivity(
 		ctx context.Context, namespaceID uint, experimentID int32, tzOffset int,
@@ -88,7 +86,7 @@ func (r ExperimentRepository) Delete(ctx context.Context, experiment *models.Exp
 		if err := tx.Model(
 			&models.Run{},
 		).Where(
-			experiment,
+			"experiment_id  = ?", *experiment.ID,
 		).Pluck(
 			"MIN(row_num)", &minRowNum,
 		).Error; err != nil {
@@ -178,9 +176,9 @@ func (r ExperimentRepository) GetExperiments(
 
 // GetExperimentRuns returns list of runs which belong to experiment.
 func (r ExperimentRepository) GetExperimentRuns(
-	ctx context.Context, namespaceID uint, req *request.GetExperimentRunsRequest,
+	ctx context.Context, req *request.GetExperimentRunsRequest,
 ) ([]models.Run, error) {
-	query := r.db
+	query := r.db.WithContext(ctx)
 	if req.Limit > 0 {
 		query.Limit(req.Limit)
 	}
@@ -256,6 +254,9 @@ func (r ExperimentRepository) GetExperimentByNamespaceIDAndExperimentID(
 	).Where(
 		models.Experiment{ID: &experimentID, NamespaceID: namespaceID},
 	).First(&experiment).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, eris.Wrapf(err, "error getting experiment by id: %d", experimentID)
 	}
 	return &experiment, nil

@@ -61,7 +61,15 @@ func (s Service) GetExperiments(
 func (s Service) GetExperimentActivity(
 	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetExperimentActivityRequest, tzOffset int,
 ) (*aimModels.ExperimentActivity, error) {
-	activity, err := s.experimentRepository.GetExperimentActivity(ctx, namespace.ID, req.ID, tzOffset)
+	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespace.ID, req.ID)
+	if err != nil {
+		return nil, api.NewInternalError("unable to find experiment by id %q: %s", req.ID, err)
+	}
+	if experiment == nil {
+		return nil, api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)
+	}
+
+	activity, err := s.experimentRepository.GetExperimentActivity(ctx, namespace.ID, *experiment.ID, tzOffset)
 	if err != nil {
 		return nil, api.NewInternalError("unable to get experiment activity: %s", err)
 	}
@@ -72,7 +80,14 @@ func (s Service) GetExperimentActivity(
 func (s Service) GetExperimentRuns(
 	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetExperimentRunsRequest,
 ) ([]aimModels.Run, error) {
-	runs, err := s.experimentRepository.GetExperimentRuns(ctx, namespace.ID, req)
+	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespace.ID, req.ID)
+	if err != nil {
+		return nil, api.NewInternalError("unable to find experiment by id %q: %s", req.ID, err)
+	}
+	if experiment == nil {
+		return nil, api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)
+	}
+	runs, err := s.experimentRepository.GetExperimentRuns(ctx, req)
 	if err != nil {
 		return nil, api.NewInternalError("unable to find experiment runs")
 	}
@@ -115,7 +130,7 @@ func (s Service) DeleteExperiment(
 ) error {
 	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespace.ID, req.ID)
 	if err != nil {
-		return api.NewInternalError("unable to find experiment by id %q: %s", req.ID, err)
+		return api.NewInternalError("unable to find experiment by id %d: %s", req.ID, err)
 	}
 	if experiment == nil {
 		return api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)
@@ -126,7 +141,7 @@ func (s Service) DeleteExperiment(
 	}
 
 	if err := s.experimentRepository.Delete(ctx, experiment); err != nil {
-		return api.NewInternalError("unable to delete experiment by id %q: %s", req.ID, err)
+		return api.NewInternalError("unable to delete experiment by id %d: %s", req.ID, err)
 	}
 
 	return nil

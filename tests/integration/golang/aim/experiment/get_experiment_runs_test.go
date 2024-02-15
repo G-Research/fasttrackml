@@ -70,7 +70,7 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 		},
 		{
 			name:  "NotFoundExperiment",
-			error: `Not Found`,
+			error: `(Not Found|not found)`,
 			ID:    "123",
 		},
 	}

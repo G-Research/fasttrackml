@@ -163,8 +163,8 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	}
 
 	var b []struct {
-		Name    string    `json:"name"`
-		Context fiber.Map `json:"context"`
+		Name    string          `json:"name"`
+		Context json.RawMessage `json:"context"`
 	}
 
 	if err := c.BodyParser(&b); err != nil {
@@ -181,13 +181,9 @@ func GetRunMetrics(c *fiber.Ctx) error {
 	metricKeysMap := make(map[metric]any, len(b))
 	for _, m := range b {
 		if m.Context != nil {
-			serializedContext, err := json.Marshal(m.Context)
-			if err != nil {
-				return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-			}
 			metricKeysMap[metric{
 				name:    m.Name,
-				context: string(serializedContext),
+				context: string(m.Context),
 			}] = nil
 		}
 	}

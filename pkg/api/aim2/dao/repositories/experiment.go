@@ -203,7 +203,7 @@ func (r ExperimentRepository) GetExperimentRuns(
 	).Order(
 		"row_num DESC",
 	).Find(&runs).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting runs of experiment: %s", req.ID)
+		return nil, eris.Wrapf(err, "error getting runs of experiment: %d", req.ID)
 	}
 	return runs, nil
 }
@@ -222,7 +222,7 @@ func (r ExperimentRepository) GetExperimentActivity(
 	).Where(
 		"experiments.experiment_id = ?", experimentID,
 	).Find(&runs).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting runs of experiment: %s", experimentID)
+		return nil, eris.Wrapf(err, "error getting runs of experiment: %d", experimentID)
 	}
 
 	activity := models.ExperimentActivity{
@@ -291,7 +291,7 @@ func (r ExperimentRepository) GetExtendedExperimentByNamespaceIDAndExperimentID(
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, eris.Wrapf(err, "error getting experiment by id: %s", experimentID)
+		return nil, eris.Wrapf(err, "error getting experiment by id: %d", experimentID)
 	}
 	return &experiment, nil
 }

@@ -41,7 +41,7 @@ func (s Service) GetExperiment(
 		return nil, api.NewInternalError("unable to find experiment by id %q: %s", req.ID, err)
 	}
 	if experiment == nil {
-		return nil, api.NewResourceDoesNotExistError("experiment '%s' not found", req.ID)
+		return nil, api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)
 	}
 	return experiment, nil
 }
@@ -88,7 +88,7 @@ func (s Service) UpdateExperiment(
 		return api.NewInternalError("unable to find experiment by id %q: %s", req.ID, err)
 	}
 	if experiment == nil {
-		return api.NewResourceDoesNotExistError("experiment '%s' not found", req.ID)
+		return api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)
 	}
 
 	experiment = convertors.ConvertUpdateExperimentToDBModel(req, experiment)
@@ -103,7 +103,7 @@ func (s Service) UpdateExperiment(
 			Value:        *req.Description,
 			ExperimentID: *experiment.ID,
 		}); err != nil {
-			return api.NewInternalError("unable to create experiment tag", err)
+			return api.NewInternalError("unable to create experiment tag: %s", err)
 		}
 	}
 	return nil
@@ -118,7 +118,7 @@ func (s Service) DeleteExperiment(
 		return api.NewInternalError("unable to find experiment by id %q: %s", req.ID, err)
 	}
 	if experiment == nil {
-		return api.NewResourceDoesNotExistError("experiment '%s' not found", req.ID)
+		return api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)
 	}
 
 	if experiment.IsDefault(namespace) {

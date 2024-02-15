@@ -193,7 +193,7 @@ func (c Controller) GetExperimentRuns(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(fiber.Map{
-		"id":   req.ID,
+		"id":   fmt.Sprintf("%d", req.ID),
 		"runs": runs,
 	})
 }
@@ -299,7 +299,7 @@ func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(fiber.Map{
-		"id":     req.ID,
+		"id":     fmt.Sprintf("%d", req.ID),
 		"status": "OK",
 	})
 }
@@ -355,7 +355,7 @@ func (c Controller) UpdateExperiment(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(fiber.Map{
-		"id":     req.ID,
+		"id":     fmt.Sprintf("%d", req.ID),
 		"status": "OK",
 	})
 }

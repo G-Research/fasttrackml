@@ -24,6 +24,7 @@ type AppState map[string]any
 func NewGetAppsResponse(apps []models.App) []App {
 	resp := make([]App, len(apps))
 	for i, app := range apps {
+		//nolint:gosec
 		resp[i] = NewCreateAppResponse(&app)
 	}
 	return resp

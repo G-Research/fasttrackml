@@ -87,11 +87,11 @@ func (r TagRepository) Delete(ctx context.Context, tag *models.Tag) error {
 }
 
 // GetTagsByNamespace returns the list of tags.
-// TODO not really implemented
+// TODO fix stub implementation
 func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.Tag, error) {
 	var tags []models.Tag
 	if err := r.db.WithContext(ctx).Find(&tags).Error; err != nil {
 		return nil, err
 	}
-	return tags, nil
+	return []models.Tag{}, nil
 }

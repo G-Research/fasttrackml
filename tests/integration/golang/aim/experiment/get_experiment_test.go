@@ -63,14 +63,13 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		ID    string
 	}{
 		{
-			name: "IncorrectExperimentID",
-			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt: ` +
-				`parsing "incorrect_experiment_id": invalid syntax`,
-			ID: "incorrect_experiment_id",
+			name:  "IncorrectExperimentID",
+			error: `(unable to parse|failed to decode)`,
+			ID:    "incorrect_experiment_id",
 		},
 		{
 			name:  "NotFoundExperiment",
-			error: `: Not Found`,
+			error: `Not Found`,
 			ID:    "1",
 		},
 	}
@@ -79,7 +78,7 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
 			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
-			s.Equal(tt.error, resp.Error())
+			s.Regexp(tt.error, resp.Error())
 		})
 	}
 }

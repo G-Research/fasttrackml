@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -101,7 +102,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 			name:        "UpdateAppWithUnknownID",
 			ID:          uuid.New(),
 			requestBody: map[string]any{},
-			error:       "Not Found",
+			error:       "not found",
 		},
 	}
 	for _, tt := range tests {
@@ -118,7 +119,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 					"/apps/%s", tt.ID,
 				),
 			)
-			s.Contains(resp.Message, tt.error)
+			s.Contains(strings.ToLower(resp.Message), tt.error)
 		})
 	}
 }

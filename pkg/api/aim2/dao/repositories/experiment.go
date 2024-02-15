@@ -63,18 +63,16 @@ func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Exp
 
 		// also archive experiment runs if experiment is being archived
 		if experiment.LifecycleStage == models.LifecycleStageDeleted {
-			run := models.Run{
-				LifecycleStage: experiment.LifecycleStage,
-				DeletedTime:    experiment.LastUpdateTime,
-			}
-
 			if err := tx.WithContext(
 				ctx,
 			).Model(
-				&run,
+				&models.Run{},
 			).Where(
 				"experiment_id = ?", experiment.ID,
-			).Updates(&run).Error; err != nil {
+			).Updates(&models.Run{
+				LifecycleStage: experiment.LifecycleStage,
+				DeletedTime:    experiment.LastUpdateTime,
+			}).Error; err != nil {
 				return eris.Wrapf(err, "error updating existing runs with experiment id: %d", *experiment.ID)
 			}
 		}

@@ -1,6 +1,8 @@
 package convertors
 
 import (
+	"github.com/google/uuid"
+
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	mlflowModels "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -11,6 +13,7 @@ func ConvertCreateAppRequestToDBModel(
 	namespace *mlflowModels.Namespace, req *request.CreateAppRequest,
 ) *aimModels.App {
 	return &aimModels.App{
+		Base:        aimModels.Base{ID: uuid.New()},
 		Type:        req.Type,
 		State:       aimModels.AppState(req.State),
 		NamespaceID: namespace.ID,

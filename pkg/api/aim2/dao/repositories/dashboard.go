@@ -1,4 +1,4 @@
-package dashboard
+package repositories
 
 // Service provides service layer to work with `dashboard` business logic.
 type Service struct{}

@@ -81,7 +81,7 @@ func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Exp
 // Delete deletes existing experiment.
 func (r ExperimentRepository) Delete(ctx context.Context, experiment *models.Experiment) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
-		// finding all the related runs.
+		// finding all the related runs
 		var minRowNum sql.NullInt64
 		if err := tx.Model(
 			&models.Run{},
@@ -93,7 +93,7 @@ func (r ExperimentRepository) Delete(ctx context.Context, experiment *models.Exp
 			return err
 		}
 
-		// delete current experiment.
+		// delete current experiment
 		if err := tx.Clauses(
 			clause.Returning{Columns: []clause.Column{{Name: "experiment_id"}}},
 		).Where(
@@ -104,7 +104,7 @@ func (r ExperimentRepository) Delete(ctx context.Context, experiment *models.Exp
 			return eris.Wrapf(err, "error deleting existing experiment with id: %d", *experiment.ID)
 		}
 
-		// renumbering the remainder runs.
+		// renumbering the remainder runs
 		if minRowNum.Valid {
 			if models.RowNum(minRowNum.Int64) < models.RowNum(0) {
 				return eris.New("attempting to renumber with less than 0 row number value")

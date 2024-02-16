@@ -1,47 +1,47 @@
 package controller
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
+// GetDashboards handles `GET /dashboards` endpoint.
 func (c Controller) GetDashboards(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
 	log.Debugf("getDashboards namespace: %s", ns.Code)
-
-
+	dashboards, err := c.dashboardService.GetDashboards(ctx.Context(), ns)
+	if err != nil {
+		return api.NewInternalError("error getting dashboards")
+	}
 	return ctx.JSON(dashboards)
 }
 
+// CreateDashboard handles `POST /dashboards` endpoint.
 func (c Controller) CreateDashboard(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
 	log.Debugf("createDashboard namespace: %s", ns.Code)
-
 	req := request.CreateDashboardRequest{}
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-
-
+	dash, err := c.dashboardService.Create(ctx.Context(), ns, req)
+	if err != nil {
+		return api.NewInternalError("error creating dashboard")
+	}
 	return ctx.Status(fiber.StatusCreated).JSON(dash)
 }
 
+// GetDashboard handles `GET /dashboard/:id` endpoint.
 func (c Controller) GetDashboard(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -50,10 +50,17 @@ func (c Controller) GetDashboard(ctx *fiber.Ctx) error {
 	log.Debugf("getDashboard namespace: %s", ns.Code)
 
 	req := request.GetDashboardRequest{}
-
+	if err := ctx.ParamsParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+	dashboard, err := c.dashboardService.Get(ctx.Context(),ns, req)
+	if err != nil {
+		return api.NewInternalError("error getting dashboards")
+	}
 	return ctx.JSON(dashboard)
 }
 
+// UpdateDashboard handles `PUT /dashboard/:id` endpoint.
 func (c Controller) UpdateDashboard(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -62,10 +69,20 @@ func (c Controller) UpdateDashboard(ctx *fiber.Ctx) error {
 	log.Debugf("updateDashboard namespace: %s", ns.Code)
 
 	req := request.UpdateDashboardRequest{}
-
+	if err := ctx.ParamsParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+	if err := ctx.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+	dash, err := c.dashboardService.Update(ctx.Context(), ns, req)
+	if err != nil {
+		return api.NewInternalError("error updating dashboard")
+	}
 	return ctx.JSON(dash)
 }
 
+// DeleteDashboard handles `DELETE /dashboards/:id` endpoint.
 func (c Controller) DeleteDashboard(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -74,6 +91,12 @@ func (c Controller) DeleteDashboard(ctx *fiber.Ctx) error {
 	log.Debugf("deleteDashboard namespace: %s", ns.Code)
 
 	req := request.DeleteDashboardRequest{}
-
+	if err := ctx.ParamsParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+	err = c.dashboardService.Delete(ctx.Context(), ns, req)
+	if err != nil {
+		return api.NewInternalError("error deleting dashboard")
+	}
 	return ctx.Status(200).JSON(nil)
 }

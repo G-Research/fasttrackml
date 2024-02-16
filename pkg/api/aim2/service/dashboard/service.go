@@ -1,192 +1,105 @@
 package dashboard
 
+import (
+	"context"
+
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
+	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
+	mlflowModels "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
+)
+
 // Service provides service layer to work with `dashboard` business logic.
-type Service struct{}
+type Service struct{
+	appRepository repositories.AppRepositoryProvider
+	dashboardRepository repositories.DashboardRepositoryProvider
+}
 
 // NewService creates new Service instance.
-func NewService() *Service {
-	return &Service{}
-}
-
-func (s Service) GetDashboards() {
-	var dashboards []database.Dashboard
-	if err := database.DB.
-		InnerJoins(
-			"App",
-			database.DB.Select(
-				"ID", "Type",
-			).Where(
-				&database.App{
-					NamespaceID: ns.ID,
-				},
-				"NamespaceID",
-			),
-		).
-		Where("NOT dashboards.is_archived").
-		Order(clause.OrderByColumn{
-			Column: clause.Column{
-				Table: "App",
-				Name:  "updated_at",
-			},
-			Desc: true,
-		}).
-		Find(&dashboards).
-		Error; err != nil {
-		return fmt.Errorf("error fetching dashboards: %w", err)
+func NewService(
+	dashboardRepo repositories.DashboardRepositoryProvider,
+	appRepo repositories.AppRepositoryProvider,
+) *Service {
+	return &Service{
+		appRepository: appRepo,
+		dashboardRepository: dashboardRepo,
 	}
 }
 
-func (s Service) Create() {
-	app := database.App{
-		Base: database.Base{
-			ID: req.AppID,
-		},
-		NamespaceID: ns.ID,
+// Get returns dashboard object.
+func (s Service) Get(
+	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetDashboardRequest,
+) (*aimModels.Dashboard, error) {
+	dashboard, err := s.dashboardRepository.GetByNamespaceIDAndDashboardID(ctx, namespace.ID, req.ID.String())
+	if err != nil {
+		return nil, api.NewInternalError("unable to find dashboard by id %q: %s", req.ID, err)
 	}
-	if err := database.DB.
-		Select("ID", "Type").
-		Where("NOT is_archived").
-		First(&app).
-		Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", req.AppID, err))
+	if dashboard == nil {
+		return nil, api.NewResourceDoesNotExistError("dashboard '%s' not found", req.ID)
 	}
-
-	dash := database.Dashboard{
-		AppID:       &req.AppID,
-		App:         app,
-		Name:        req.Name,
-		Description: req.Description,
-	}
-
-	if err := database.DB.
-		Omit("App").
-		Create(&dash).
-		Error; err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error inserting dashboard: %s", err))
-	}
+	return dashboard, nil
 }
 
-func (s Service) Get() {
-	if err := ctx.ParamsParser(&req); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-	}
+// Create creates new dashboard object.
+func (s Service) Create(
+	ctx context.Context, namespace *mlflowModels.Namespace, req *request.CreateDashboardRequest,
+) (*aimModels.Dashboard, error) {
 
-	dashboard := database.Dashboard{
-		Base: database.Base{
-			ID: req.ID,
-		},
+	app, err := s.appRepository.GetByNamespaceIDAndAppID(ctx, namespace.ID, req.AppID.String())
+	if err != nil || app.IsArchived {
+		return nil, api.NewInternalError("unable to find app %q for dashboard: %s", req.AppID, err)
 	}
-	if err := database.DB.
-		InnerJoins(
-			"App",
-			database.DB.Select(
-				"ID", "Type",
-			).Where(
-				&database.App{
-					NamespaceID: ns.ID,
-				},
-				"NamespaceID",
-			),
-		).
-		Where("NOT dashboards.is_archived").
-		First(&dashboard).
-		Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find dashboard %q: %s", req.ID, err))
+	dashboard := convertCreateDashboardRequestToDBModel(*req)
+	dashboard.App = *app
+	if err := s.dashboardRepository.Create(ctx, &dashboard); err != nil {
+		return nil, api.NewInternalError("unable to create dashboard: %v", err)
 	}
+	return &dashboard, nil
 }
 
-func (s Service) Update() {
-	if err := ctx.ParamsParser(&req); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+// Update updates existing dashboard object.
+func (s Service) Update(
+	ctx context.Context, namespace *mlflowModels.Namespace, req *request.UpdateDashboardRequest,
+) (*aimModels.Dashboard, error) {
+	dashboard, err := s.dashboardRepository.GetByNamespaceIDAndDashboardID(ctx, namespace.ID, req.ID.String())
+	if err != nil {
+		return nil, api.NewInternalError("unable to find dashboard by id %s: %s", req.ID, err)
+	}
+	if dashboard == nil {
+		return nil, api.NewResourceDoesNotExistError("dashboard with id '%s' not found", req.ID)
 	}
 
-	if err := ctx.BodyParser(&req); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-	}
+	dashboard.Name = req.Name
+	dashboard.Description = req.Description
 
-	dash := database.Dashboard{
-		Base: database.Base{
-			ID: req.ID,
-		},
+	if err := s.dashboardRepository.Update(ctx, dashboard); err != nil {
+		return nil, api.NewInternalError("unable to update dashboard '%s': %s", dashboard.ID, err)
 	}
-	if err := database.DB.
-		InnerJoins(
-			"App",
-			database.DB.Select(
-				"ID", "Type",
-			).Where(
-				&database.App{
-					NamespaceID: ns.ID,
-				},
-				"NamespaceID",
-			),
-		).
-		Where("NOT dashboards.is_archived").
-		First(&dash).
-		Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find dashboard %q: %s", req.ID, err))
-	}
-
-	if err := database.DB.
-		Omit("App").
-		Model(&dash).
-		Updates(database.Dashboard{
-			Name:        req.Name,
-			Description: req.Description,
-		}).
-		Error; err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error updating dashboard %q: %s", req.ID, err))
-	}
+	return dashboard, nil
 }
 
-func (s Service) Delete() {
-	if err := ctx.ParamsParser(&req); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+// GetDashboards returns the list of active dashboards.
+func (s Service) GetDashboards(ctx context.Context, namespace *mlflowModels.Namespace) ([]aimModels.Dashboard, error) {
+	dashboards, err := s.dashboardRepository.GetActiveDashboardsByNamespace(ctx, namespace.ID)
+	if err != nil {
+		return nil, api.NewInternalError("unable to get active dashboards: %v", err)
 	}
-
-	dash := database.Dashboard{
-		Base: database.Base{
-			ID: req.ID,
-		},
-	}
-	if err := database.DB.
-		Select("dashboards.id").
-		InnerJoins(
-			"App",
-			database.DB.Select(
-				"ID", "Type",
-			).Where(
-				&database.App{
-					NamespaceID: ns.ID,
-				},
-				"NamespaceID",
-			),
-		).
-		Where("NOT dashboards.is_archived").
-		First(&dash).
-		Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to find app %q: %s", req.ID, err))
-	}
-
-	if err := database.DB.
-		Omit("App").
-		Model(&dash).
-		Update("IsArchived", true).
-		Error; err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("unable to delete app %q: %s", req.ID, err))
-	}
+	return dashboards, nil
 }
 
+// Delete deletes existing object.
+func (s Service) Delete(ctx context.Context, namespace *mlflowModels.Namespace, req *request.DeleteDashboardRequest) error {
+	dashboard, err := s.dashboardRepository.GetByNamespaceIDAndDashboardID(ctx, namespace.ID, req.ID.String())
+	if err != nil {
+		return api.NewInternalError("unable to find dashboard by id %s: %s", req.ID, err)
+	}
+	if dashboard == nil {
+		return api.NewResourceDoesNotExistError("dashboard with id '%s' not found", req.ID)
+	}
 
+	if err := s.dashboardRepository.Delete(ctx, dashboard); err != nil {
+		return api.NewInternalError("unable to delete dashboard by id %s: %s", req.ID, err)
+	}
+	return nil
+}

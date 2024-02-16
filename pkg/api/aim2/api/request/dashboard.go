@@ -24,6 +24,4 @@ type UpdateDashboardRequest struct {
 }
 
 // DeleteDashboardRequest is a request object for `DELETE /aim/dashboards/:id` endpoint.
-type DeleteDashboardRequest struct {
-	ID uuid.UUID `params:"id"`
-}
+type DeleteDashboardRequest = GetDashboardRequest

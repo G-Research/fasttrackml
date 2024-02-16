@@ -1,22 +1,53 @@
 package repositories
 
-// Service provides service layer to work with `dashboard` business logic.
-type Service struct{}
+import (
+	"context"
+	"errors"
+	"fmt"
 
-// NewService creates new Service instance.
-func NewService() *Service {
-	return &Service{}
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+)
+
+// DashboardRepositoryProvider provides an interface to work with `dashboard` entity.
+type DashboardRepositoryProvider interface {
+	// Update updates existing models.Dashboard object.
+	Update(cxt context.Context, dashboard *models.Dashboard) error
+	// Create creates new models.Dashboard object.
+	Create(ctx context.Context, dashboard *models.Dashboard) error
+	// Delete deletes existing models.Dashboard object.
+	Delete(ctx context.Context, dashboard *models.Dashboard) error
+	// GetByNamespaceIDAndDashboardID returns models.Dashboard by Namespace and Dashboard ID.
+	GetByNamespaceIDAndDashboardID(ctx context.Context, namespaceID uint, dashboardID string) (*models.Dashboard, error)
+	// GetDashboardsByNamespace returns the list of active models.Dashboard by provided Namespace ID.
+	GetDashboardsByNamespace(ctx context.Context, namespaceID uint) ([]models.Dashboard, error)
 }
 
-func (s Service) GetDashboards() {
-	var dashboards []database.Dashboard
-	if err := database.DB.
+// DashboardRepository repository to work with `dashboard` entity.
+type DashboardRepository struct {
+	db *gorm.DB
+}
+
+// NewDashboardRepository creates repository to work with `dashboard` entity.
+func NewDashboardRepository(db *gorm.DB) *DashboardRepository {
+	return &DashboardRepository{
+		db: db,
+	}
+}
+
+// GetDashboardsByNamespace returns the list of active models.Dashboard by provided Namespace ID.
+func (d DashboardRepository) GetDashboardsByNamespace(ctx context.Context, namespaceID uint) ([]models.Dashboard, error) {
+	var dashboards []models.Dashboard
+	if err := d.db.
 		InnerJoins(
 			"App",
 			database.DB.Select(
 				"ID", "Type",
 			).Where(
-				&database.App{
+				&models.App{
 					NamespaceID: ns.ID,
 				},
 				"NamespaceID",
@@ -32,11 +63,13 @@ func (s Service) GetDashboards() {
 		}).
 		Find(&dashboards).
 		Error; err != nil {
-		return fmt.Errorf("error fetching dashboards: %w", err)
+		return nil, fmt.Errorf("error fetching dashboards: %w", err)
 	}
+	return dashboards, nil
 }
 
-func (s Service) Create() {
+// GetByNamespaceIDAndDashboardID returns models.Dashboard by Namespace and Dashboard ID.
+func (d DashboardRepository) GetByNamespaceIDAndDashboardID(ctx context.Context, nsID uint, dashboardID string) (models.Dashboard, error) {
 	app := database.App{
 		Base: database.Base{
 			ID: req.AppID,
@@ -69,7 +102,8 @@ func (s Service) Create() {
 	}
 }
 
-func (s Service) Get() {
+// Create creates new models.Dashboard object.
+func (d DashboardRepository) Create(ctx context.Context, dashboard *models.Dashboard) error {
 	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
@@ -101,7 +135,8 @@ func (s Service) Get() {
 	}
 }
 
-func (s Service) Update() {
+// Update updates existing models.Dashboard object.
+func (d DashboardRepository) Update(ctx context.Context, dashboard *models.Dashboard) error {
 	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
@@ -148,7 +183,8 @@ func (s Service) Update() {
 	}
 }
 
-func (s Service) Delete() {
+// Delete deletes a models.Dashboard object.
+func (d DashboardRepository) Delete(ctx context.Context, dashboard *models.Dashboard) error {
 	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}

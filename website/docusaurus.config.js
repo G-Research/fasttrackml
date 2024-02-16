@@ -16,7 +16,8 @@ module.exports = async function configCreatorAsync() {
     );
     const releaseVersion = data.tag_name.substring(1);
     const releaseUrl = data.html_url;
-    const slackUrl = 'https://join.slack.com/t/mlops-community/shared_invite/zt-258yl6ifq-zZNzBaddwlhifj56yt7ONg';
+    const slackWorkspaceInviteUrl = 'https://join.slack.com/t/mlops-community/shared_invite/zt-258yl6ifq-zZNzBaddwlhifj56yt7ONg';
+    const slackChannelUrl = 'https://mlops-community.slack.com/archives/C05ALNZ1XJN';
 
     /** @type {import('@docusaurus/types').Config} */
     return {
@@ -39,7 +40,8 @@ module.exports = async function configCreatorAsync() {
 
         customFields: {
             email: 'fasttrackml@gr-oss.io',
-            slackInviteUrl: slackUrl,
+            slackWorkspaceInviteUrl: slackWorkspaceInviteUrl,
+            slackChannelUrl: slackChannelUrl,
         },
 
         presets: [
@@ -73,14 +75,20 @@ module.exports = async function configCreatorAsync() {
                     items: [
                         // left
                         {
-                            to: '/#quickstart',
+                            to: '#quickstart',
                             label: 'Quickstart',
                             position: 'left',
                             activeBaseRegex: `dummy-never-match`,
                         },
                         {
-                            to: '/#contact-us',
+                            to: '#contact-us',
                             label: 'Contact Us',
+                            position: 'left',
+                            activeBaseRegex: `dummy-never-match`,
+                        },
+                        {
+                            to: '#community',
+                            label: 'Community',
                             position: 'left',
                             activeBaseRegex: `dummy-never-match`,
                         },
@@ -91,7 +99,7 @@ module.exports = async function configCreatorAsync() {
                             position: 'right',
                         },
                         {
-                            href: slackUrl,
+                            to: '#community',
                             label: 'Join our Slack',
                             position: 'right',
                         },
@@ -109,19 +117,19 @@ module.exports = async function configCreatorAsync() {
                             items: [
                                 {
                                     label: 'Quickstart',
-                                    to: '/#quickstart',
+                                    to: '#quickstart',
                                 },
                                 {
                                     label: `Contact Us`,
-                                    to: '/#contact-us',
+                                    to: '#contact-us',
                                 },
                                 {
                                     label: `Report an Issue`,
-                                    to: 'https://github.com/G-Research/fasttrackml/issues',
+                                    href: 'https://github.com/G-Research/fasttrackml/issues',
                                 },
                                 {
                                     label: `Create a Pull Request`,
-                                    to: 'https://github.com/G-Research/fasttrackml/pulls',
+                                    href: 'https://github.com/G-Research/fasttrackml/pulls',
                                 },
                             ],
                         },
@@ -134,7 +142,7 @@ module.exports = async function configCreatorAsync() {
                                 },
                                 {
                                     label: 'Join our Slack',
-                                    href: slackUrl,
+                                    to: '#community',
                                 },
                                 {
                                     label: 'Twitter',

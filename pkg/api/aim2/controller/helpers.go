@@ -15,6 +15,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -282,4 +283,15 @@ func CompareJson(json1, json2 []byte) bool {
 		return false
 	}
 	return reflect.DeepEqual(j2, j)
+}
+
+// convertError converts api.ErrorResponse to fiber error.
+func convertError(err error) error {
+	switch v := err.(type) {
+	case *api.ErrorResponse:
+		if v.ErrorCode == api.ErrorCodeResourceDoesNotExist {
+			return fiber.ErrNotFound
+		}
+	}
+	return err
 }

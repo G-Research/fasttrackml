@@ -70,7 +70,7 @@ func (c Controller) GetApp(ctx *fiber.Ctx) error {
 
 	app, err := c.appService.Get(ctx.Context(), ns, &req)
 	if err != nil {
-		return err
+		return convertError(err)
 	}
 
 	resp := response.NewGetAppResponse(app)
@@ -98,7 +98,7 @@ func (c Controller) UpdateApp(ctx *fiber.Ctx) error {
 
 	app, err := c.appService.Update(ctx.Context(), ns, &req)
 	if err != nil {
-		return err
+		return convertError(err)
 	}
 
 	resp := response.NewUpdateAppResponse(app)
@@ -121,7 +121,7 @@ func (c Controller) DeleteApp(ctx *fiber.Ctx) error {
 	}
 
 	if err := c.appService.Delete(ctx.Context(), ns, &req); err != nil {
-		return err
+		return convertError(err)
 	}
 
 	return ctx.Status(http.StatusOK).JSON(nil)

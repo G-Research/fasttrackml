@@ -59,7 +59,7 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 		{
 			name:  "GetInvalidExperimentID",
 			ID:    "123",
-			error: "(Not Found|)",
+			error: "(Not Found|not found)",
 		},
 		{
 			name:  "DeleteIncorrectExperimentID",

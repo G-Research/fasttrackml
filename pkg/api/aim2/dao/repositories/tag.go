@@ -6,8 +6,9 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/rotisserie/eris"
+
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 )
 
 // TagRepositoryProvider provides an interface to work with models.Tag entity.

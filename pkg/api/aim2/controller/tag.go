@@ -9,6 +9,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
+// GetTags fetches run tags for the current namespace.
 func (c Controller) GetTags(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {

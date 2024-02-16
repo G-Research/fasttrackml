@@ -21,7 +21,7 @@ func NewService(tagRepository repositories.TagRepositoryProvider) *Service {
 	}
 }
 
-// GetTags returns the list of active apps.
+// GetTags returns the list of tags.
 func (s Service) GetTags(ctx context.Context, namespace *mlflowModels.Namespace) ([]aimModels.Tag, error) {
 	tags, err := s.tagRepository.GetTagsByNamespace(ctx, namespace.ID)
 	if err != nil {

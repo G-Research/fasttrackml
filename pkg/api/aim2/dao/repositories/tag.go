@@ -13,6 +13,8 @@ import (
 // TagRepositoryProvider provides an interface to work with models.Tag entity.
 type TagRepositoryProvider interface {
 	BaseRepositoryProvider
+	// GetTagsByNamespace returns the list of tags.
+	GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.Tag, error)
 	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
 	// CreateRunTagWithTransaction creates new models.Tag entity connected to models.Run.
@@ -81,4 +83,14 @@ func (r TagRepository) Delete(ctx context.Context, tag *models.Tag) error {
 		return eris.Wrapf(err, "error deleting tag by run id: %s and key: %s", tag.RunID, tag.Key)
 	}
 	return nil
+}
+
+// GetTagsByNamespace returns the list of tags.
+// TODO fix stub implementation
+func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.Tag, error) {
+	var tags []models.Tag
+	if err := r.db.WithContext(ctx).Find(&tags).Error; err != nil {
+		return nil, err
+	}
+	return []models.Tag{}, nil
 }

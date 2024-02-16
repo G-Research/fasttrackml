@@ -41,7 +41,7 @@ func NewGetExperimentsResponse(experiments []models.ExperimentExtended) []Experi
 
 // ExperimentRunPartial represents partial object of ExperimentRuns.
 type ExperimentRunPartial struct {
-	ID           string `json:"id"`
+	ID           string `json:"run_id"`
 	Name         string `json:"name"`
 	CreationTime int64  `json:"creationTime"`
 	EndTime      int64  `json:"endTime"`

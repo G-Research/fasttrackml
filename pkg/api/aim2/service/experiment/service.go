@@ -38,7 +38,7 @@ func (s Service) GetExperiment(
 		ctx, namespace.ID, req.ID,
 	)
 	if err != nil {
-		return nil, api.NewInternalError("unable to find experiment by id %q: %s", req.ID, err)
+		return nil, api.NewInternalError("unable to find experiment by id %d: %s", req.ID, err)
 	}
 	if experiment == nil {
 		return nil, api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)
@@ -63,7 +63,7 @@ func (s Service) GetExperimentActivity(
 ) (*aimModels.ExperimentActivity, error) {
 	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespace.ID, req.ID)
 	if err != nil {
-		return nil, api.NewInternalError("unable to find experiment by id %q: %s", req.ID, err)
+		return nil, api.NewInternalError("unable to find experiment by id %d: %s", req.ID, err)
 	}
 	if experiment == nil {
 		return nil, api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)
@@ -82,7 +82,7 @@ func (s Service) GetExperimentRuns(
 ) ([]aimModels.Run, error) {
 	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespace.ID, req.ID)
 	if err != nil {
-		return nil, api.NewInternalError("unable to find experiment by id %q: %s", req.ID, err)
+		return nil, api.NewInternalError("unable to find experiment by id %d: %s", req.ID, err)
 	}
 	if experiment == nil {
 		return nil, api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)
@@ -100,7 +100,7 @@ func (s Service) UpdateExperiment(
 ) error {
 	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespace.ID, req.ID)
 	if err != nil {
-		return api.NewInternalError("unable to find experiment by id %q: %s", req.ID, err)
+		return api.NewInternalError("unable to find experiment by id %d: %s", req.ID, err)
 	}
 	if experiment == nil {
 		return api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)

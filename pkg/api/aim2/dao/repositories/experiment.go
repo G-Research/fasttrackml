@@ -180,7 +180,7 @@ func (r ExperimentRepository) GetExperimentRuns(
 ) ([]models.Run, error) {
 	query := r.db.WithContext(ctx)
 	if req.Limit > 0 {
-		query.Limit(req.Limit)
+		query = query.Limit(req.Limit)
 	}
 
 	if req.Offset != "" {
@@ -192,7 +192,7 @@ func (r ExperimentRepository) GetExperimentRuns(
 		).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, eris.Wrapf(err, "error getting runs offset: %q", req.Offset)
 		}
-		query.Where("row_num < ?", run.RowNum)
+		query = query.Where("row_num < ?", run.RowNum)
 	}
 
 	var runs []models.Run

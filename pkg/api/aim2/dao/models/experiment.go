@@ -45,6 +45,11 @@ type ExperimentExtended struct {
 	Description string `gorm:"column:description"`
 }
 
+// TableName returns table name.
+func (a ExperimentExtended) TableName() string {
+	return "experiments"
+}
+
 // ExperimentActivity represents model to hold experiment activity information.
 type ExperimentActivity struct {
 	NumRuns         int            `json:"num_runs"`

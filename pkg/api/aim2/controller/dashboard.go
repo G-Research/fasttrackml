@@ -55,7 +55,7 @@ func (c Controller) GetDashboard(ctx *fiber.Ctx) error {
 	}
 	dashboard, err := c.dashboardService.Get(ctx.Context(), ns, &req)
 	if err != nil {
-		return api.NewInternalError("error getting dashboards")
+		return convertError(err)
 	}
 	return ctx.JSON(dashboard)
 }
@@ -96,7 +96,7 @@ func (c Controller) DeleteDashboard(ctx *fiber.Ctx) error {
 	}
 	err = c.dashboardService.Delete(ctx.Context(), ns, &req)
 	if err != nil {
-		return api.NewInternalError("error deleting dashboard")
+		return convertError(err)
 	}
 	return ctx.Status(200).JSON(nil)
 }

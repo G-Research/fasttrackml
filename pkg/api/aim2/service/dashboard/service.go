@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/convertors"
 	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
 	mlflowModels "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -11,8 +12,8 @@ import (
 )
 
 // Service provides service layer to work with `dashboard` business logic.
-type Service struct{
-	appRepository repositories.AppRepositoryProvider
+type Service struct {
+	appRepository       repositories.AppRepositoryProvider
 	dashboardRepository repositories.DashboardRepositoryProvider
 }
 
@@ -22,7 +23,7 @@ func NewService(
 	appRepo repositories.AppRepositoryProvider,
 ) *Service {
 	return &Service{
-		appRepository: appRepo,
+		appRepository:       appRepo,
 		dashboardRepository: dashboardRepo,
 	}
 }
@@ -45,12 +46,11 @@ func (s Service) Get(
 func (s Service) Create(
 	ctx context.Context, namespace *mlflowModels.Namespace, req *request.CreateDashboardRequest,
 ) (*aimModels.Dashboard, error) {
-
 	app, err := s.appRepository.GetByNamespaceIDAndAppID(ctx, namespace.ID, req.AppID.String())
 	if err != nil || app.IsArchived {
 		return nil, api.NewInternalError("unable to find app %q for dashboard: %s", req.AppID, err)
 	}
-	dashboard := convertCreateDashboardRequestToDBModel(*req)
+	dashboard := convertors.ConvertCreateDashboardRequestToDBModel(*req)
 	dashboard.App = *app
 	if err := s.dashboardRepository.Create(ctx, &dashboard); err != nil {
 		return nil, api.NewInternalError("unable to create dashboard: %v", err)
@@ -81,7 +81,7 @@ func (s Service) Update(
 
 // GetDashboards returns the list of active dashboards.
 func (s Service) GetDashboards(ctx context.Context, namespace *mlflowModels.Namespace) ([]aimModels.Dashboard, error) {
-	dashboards, err := s.dashboardRepository.GetActiveDashboardsByNamespace(ctx, namespace.ID)
+	dashboards, err := s.dashboardRepository.GetDashboardsByNamespace(ctx, namespace.ID)
 	if err != nil {
 		return nil, api.NewInternalError("unable to get active dashboards: %v", err)
 	}

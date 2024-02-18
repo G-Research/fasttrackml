@@ -34,7 +34,7 @@ func (c Controller) CreateDashboard(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	dash, err := c.dashboardService.Create(ctx.Context(), ns, req)
+	dash, err := c.dashboardService.Create(ctx.Context(), ns, &req)
 	if err != nil {
 		return api.NewInternalError("error creating dashboard")
 	}
@@ -53,7 +53,7 @@ func (c Controller) GetDashboard(ctx *fiber.Ctx) error {
 	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	dashboard, err := c.dashboardService.Get(ctx.Context(),ns, req)
+	dashboard, err := c.dashboardService.Get(ctx.Context(), ns, &req)
 	if err != nil {
 		return api.NewInternalError("error getting dashboards")
 	}
@@ -75,7 +75,7 @@ func (c Controller) UpdateDashboard(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	dash, err := c.dashboardService.Update(ctx.Context(), ns, req)
+	dash, err := c.dashboardService.Update(ctx.Context(), ns, &req)
 	if err != nil {
 		return api.NewInternalError("error updating dashboard")
 	}
@@ -94,7 +94,7 @@ func (c Controller) DeleteDashboard(ctx *fiber.Ctx) error {
 	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	err = c.dashboardService.Delete(ctx.Context(), ns, req)
+	err = c.dashboardService.Delete(ctx.Context(), ns, &req)
 	if err != nil {
 		return api.NewInternalError("error deleting dashboard")
 	}

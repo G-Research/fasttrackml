@@ -27,4 +27,3 @@ type UpdateDashboardRequest struct {
 type DeleteDashboardRequest struct {
 	ID uuid.UUID `params:"id"`
 }
-

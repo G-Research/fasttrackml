@@ -1,9 +1,10 @@
 package convertors
 
 import (
+	"github.com/google/uuid"
+
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
-	"github.com/google/uuid"
 )
 
 // ConvertCreateDashboardRequestToDBModel translates the request to a model.

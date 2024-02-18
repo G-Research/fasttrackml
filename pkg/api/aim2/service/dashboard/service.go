@@ -89,7 +89,9 @@ func (s Service) GetDashboards(ctx context.Context, namespace *mlflowModels.Name
 }
 
 // Delete deletes existing object.
-func (s Service) Delete(ctx context.Context, namespace *mlflowModels.Namespace, req *request.DeleteDashboardRequest) error {
+func (s Service) Delete(ctx context.Context, namespace *mlflowModels.Namespace,
+	req *request.DeleteDashboardRequest,
+) error {
 	dashboard, err := s.dashboardRepository.GetByNamespaceIDAndDashboardID(ctx, namespace.ID, req.ID.String())
 	if err != nil {
 		return api.NewInternalError("unable to find dashboard by id %s: %s", req.ID, err)

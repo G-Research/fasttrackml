@@ -39,7 +39,9 @@ func NewDashboardRepository(db *gorm.DB) *DashboardRepository {
 }
 
 // GetDashboardsByNamespace returns the list of active models.Dashboard by provided Namespace ID.
-func (d DashboardRepository) GetDashboardsByNamespace(ctx context.Context, namespaceID uint) ([]models.Dashboard, error) {
+func (d DashboardRepository) GetDashboardsByNamespace(ctx context.Context,
+	namespaceID uint,
+) ([]models.Dashboard, error) {
 	var dashboards []models.Dashboard
 	if err := d.db.
 		InnerJoins(
@@ -69,7 +71,9 @@ func (d DashboardRepository) GetDashboardsByNamespace(ctx context.Context, names
 }
 
 // GetByNamespaceIDAndDashboardID returns models.Dashboard by Namespace and Dashboard ID.
-func (d DashboardRepository) GetByNamespaceIDAndDashboardID(ctx context.Context, namespaceID uint, dashboardID string) (*models.Dashboard, error) {
+func (d DashboardRepository) GetByNamespaceIDAndDashboardID(ctx context.Context,
+	namespaceID uint, dashboardID string,
+) (*models.Dashboard, error) {
 	var dashboard models.Dashboard
 	if err := d.db.WithContext(ctx).
 		InnerJoins("App").

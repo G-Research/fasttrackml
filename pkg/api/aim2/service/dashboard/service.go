@@ -47,8 +47,11 @@ func (s Service) Create(
 	ctx context.Context, namespace *mlflowModels.Namespace, req *request.CreateDashboardRequest,
 ) (*aimModels.Dashboard, error) {
 	app, err := s.appRepository.GetByNamespaceIDAndAppID(ctx, namespace.ID, req.AppID.String())
-	if err != nil || app.IsArchived {
+	if err != nil {
 		return nil, api.NewInternalError("unable to find app %q for dashboard: %s", req.AppID, err)
+	}
+	if app == nil || app.IsArchived {
+		return nil, api.NewResourceDoesNotExistError("app with id '%s' not found", req.AppID)
 	}
 	dashboard := convertors.ConvertCreateDashboardRequestToDBModel(*req)
 	dashboard.App = *app

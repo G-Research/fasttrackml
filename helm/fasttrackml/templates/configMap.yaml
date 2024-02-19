@@ -7,4 +7,4 @@ metadata:
   labels:
     {{- include "fasttrackml.labels" . | nindent 4 }}
 data:
-  {{- toYaml .Values.data | nindent 2 }}
+  {{- toYaml .Values.data |  nindent 2 }}

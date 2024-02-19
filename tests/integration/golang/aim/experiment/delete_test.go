@@ -59,7 +59,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 		{
 			ID:    "123",
 			name:  "DeleteWithUnknownIDFails",
-			error: "Not Found",
+			error: "(Not Found|not found)",
 		},
 		{
 			ID:    "incorrect_experiment_id",

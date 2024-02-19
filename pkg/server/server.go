@@ -229,14 +229,19 @@ func createApp(
 	// init `aim2` api routes.
 	aim2API.NewRouter(
 		aim2Controller.NewController(
-			aimTagService.NewService(),
+			aimTagService.NewService(
+				aimRepositories.NewTagRepository(db.GormDB()),
+			),
 			aimAppService.NewService(
 				aimRepositories.NewAppRepository(db.GormDB()),
 			),
 			aimRunService.NewService(),
 			aimProjectService.NewService(),
 			aimDashboardService.NewService(),
-			aimExperimentService.NewService(),
+			aimExperimentService.NewService(
+				aimRepositories.NewTagRepository(db.GormDB()),
+				aimRepositories.NewExperimentRepository(db.GormDB()),
+			),
 		),
 	).Init(app)
 

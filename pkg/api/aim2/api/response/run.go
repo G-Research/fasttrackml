@@ -94,7 +94,7 @@ func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
 		Props: GetRunInfoPropsPartial{
 			Name: run.Name,
 			Experiment: GetRunInfoExperimentPartial{
-				ID:   fmt.Sprintf("%d", run.Experiment.ID),
+				ID:   fmt.Sprintf("%d", *run.Experiment.ID),
 				Name: run.Experiment.Name,
 			},
 			Tags:         []string{},

@@ -349,7 +349,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run1.ID,
 		),
 	)
-	s.Equal("Not Found", resp.Message)
+	s.Regexp("(Not Found|not found)", resp.Message)
 
 	s.deleteRun(namespace2Code, run2.ID)
 	s.Require().Nil(

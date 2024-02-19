@@ -17,12 +17,13 @@ type Dashboard struct {
 
 // MarshalJSON marshals the dashboard model to json.
 func (d Dashboard) MarshalJSON() ([]byte, error) {
+	type localDashboard Dashboard
 	type jsonDashboard struct {
-		Dashboard
+		localDashboard
 		AppType *string `json:"app_type"`
 	}
 	jd := jsonDashboard{
-		Dashboard: d,
+		localDashboard: localDashboard(d),
 	}
 	if d.App.IsArchived {
 		jd.AppID = nil

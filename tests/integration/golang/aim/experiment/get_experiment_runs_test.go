@@ -41,7 +41,9 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 		s.AIMClient().WithQuery(map[any]any{
 			"limit":  4,
 			"offset": runs[8].ID,
-		}).WithResponse(&resp).DoRequest(
+		}).WithResponse(
+			&resp,
+		).DoRequest(
 			"/experiments/%d/runs", *experiment.ID,
 		),
 	)
@@ -70,7 +72,7 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 		},
 		{
 			name:  "NotFoundExperiment",
-			error: `Not Found`,
+			error: `(Not Found|not found)`,
 			ID:    "123",
 		},
 	}

@@ -2,6 +2,8 @@ package models
 
 import (
 	"database/sql"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // Default Experiment properties.
@@ -25,8 +27,8 @@ type Experiment struct {
 }
 
 // IsDefault makes check that Experiment is default.
-func (e Experiment) IsDefault() bool {
-	return e.ID != nil && *e.ID == DefaultExperimentID && e.Name == DefaultExperimentName
+func (e Experiment) IsDefault(namespace *models.Namespace) bool {
+	return e.ID != nil && namespace.DefaultExperimentID != nil && *e.ID == *namespace.DefaultExperimentID
 }
 
 // ExperimentTag represents model to work with `experiment_tags` table.
@@ -34,4 +36,24 @@ type ExperimentTag struct {
 	Key          string `gorm:"type:varchar(250);not null;primaryKey"`
 	Value        string `gorm:"type:varchar(5000)"`
 	ExperimentID int32  `gorm:"not null;primaryKey"`
+}
+
+// ExperimentExtended represents model to work with `experiments` table and hold extended information.
+type ExperimentExtended struct {
+	Experiment
+	RunCount    int    `gorm:"column:run_count"`
+	Description string `gorm:"column:description"`
+}
+
+// TableName returns table name.
+func (a ExperimentExtended) TableName() string {
+	return "experiments"
+}
+
+// ExperimentActivity represents model to hold experiment activity information.
+type ExperimentActivity struct {
+	NumRuns         int            `json:"num_runs"`
+	ActivityMap     map[string]int `json:"activity_map"`
+	NumActiveRuns   int            `json:"num_active_runs"`
+	NumArchivedRuns int            `json:"num_archived_runs"`
 }

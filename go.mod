@@ -11,13 +11,13 @@ require (
 	cloud.google.com/go/storage v1.38.0
 	dagger.io/dagger v0.9.10
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/G-Research/fasttrackml-ui-aim v0.31705.8
+	github.com/G-Research/fasttrackml-ui-aim v0.31705.9
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.4
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/apache/arrow/go/v14 v14.0.2
 	github.com/aws/aws-sdk-go-v2 v1.25.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.0
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.49.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.50.0
 	github.com/go-python/gpython v0.2.0
 	github.com/gofiber/fiber/v2 v2.52.0
 	github.com/gofiber/template/html/v2 v2.1.0

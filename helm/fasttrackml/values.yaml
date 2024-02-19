@@ -1,5 +1,6 @@
 ---
 replicaCount: 1
+namespace: default
 
 image:
   repository: gresearch/fasttrackml
@@ -12,22 +13,21 @@ nameOverride: ""
 fullnameOverride: ""
 
 data:
+  # NOTE: Make sure you qoute values for all keys
+
   # common service settings.
-  FML_DEV_MODE: true
-  FML_LOG_LEVEL: DEBUG
+  FML_DEV_MODE: "true"
+  FML_DATABASE_URI: "postgresql://admin:admin@localhost:5432" # /data/mydatabase.db
+  FML_LOG_LEVEL: "DEBUG"
 
   # database settings.
-  LC_COLLATE: POSIX
-  POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: postgres
-  POSTGRES_DB: postgres
-  POSTGRES_HOSTNAME: localhost
+  LC_COLLATE: "POSIX"
 
   # s3 compatible storage settings.
-  AWS_ACCESS_KEY_ID: user
-  AWS_SECRET_ACCESS_KEY: password
-  FML_S3_ENDPOINT_URI: http://localhost:9000
-  FML_GS_ENDPOINT_URI: http://localhost:4443/storage/v1/
+  AWS_ACCESS_KEY_ID: "user"
+  AWS_SECRET_ACCESS_KEY: "password"
+  FML_S3_ENDPOINT_URI: "http://localhost:9000"
+  FML_GS_ENDPOINT_URI: "http://localhost:4443/storage/v1/"
 
 env: []
   # - name: MY_NODE_NAME
@@ -80,19 +80,21 @@ autoscaling:
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
+  
+# For mounting SQLite database, set to `true` and uncoment `volumes` and `volumeMounts`
+sqlite:
+  enabled: false
 
 # Additional volumes on the output Deployment definition.
 volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
+  # - name: sqlite-db
+  #   persistentVolumeClaim:
+  #     claimName: sqlite-pvc
 
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
+  # - name: sqlite-db
+  #   mountPath: /data
 
 nodeSelector: {}
 

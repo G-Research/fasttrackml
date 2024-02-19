@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Dashboard represents the dashboard model.
 type Dashboard struct {
 	Base
 	Name        string     `json:"name"`
@@ -14,14 +15,14 @@ type Dashboard struct {
 	App         App        `json:"-"`
 }
 
+// MarshalJSON marshals the dashboard model to json.
 func (d Dashboard) MarshalJSON() ([]byte, error) {
-	type localDashboard Dashboard
 	type jsonDashboard struct {
-		localDashboard
+		Dashboard
 		AppType *string `json:"app_type"`
 	}
 	jd := jsonDashboard{
-		localDashboard: localDashboard(d),
+		Dashboard: d,
 	}
 	if d.App.IsArchived {
 		jd.AppID = nil

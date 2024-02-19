@@ -43,7 +43,7 @@ func (d DashboardRepository) GetDashboardsByNamespace(ctx context.Context,
 	namespaceID uint,
 ) ([]models.Dashboard, error) {
 	var dashboards []models.Dashboard
-	if err := d.db.
+	if err := d.db.WithContext(ctx).
 		InnerJoins(
 			"App",
 			d.db.Select(
@@ -105,7 +105,7 @@ func (d DashboardRepository) Create(ctx context.Context, dashboard *models.Dashb
 
 // Update updates existing models.Dashboard object.
 func (d DashboardRepository) Update(ctx context.Context, dashboard *models.Dashboard) error {
-	if err := database.DB.
+	if err := d.db.WithContext(ctx).
 		Omit("App").
 		Model(&dashboard).
 		Updates(database.Dashboard{
@@ -120,7 +120,7 @@ func (d DashboardRepository) Update(ctx context.Context, dashboard *models.Dashb
 
 // Delete deletes a models.Dashboard object.
 func (d DashboardRepository) Delete(ctx context.Context, dashboard *models.Dashboard) error {
-	if err := database.DB.
+	if err := d.db.WithContext(ctx).
 		Omit("App").
 		Model(&dashboard).
 		Update("IsArchived", true).

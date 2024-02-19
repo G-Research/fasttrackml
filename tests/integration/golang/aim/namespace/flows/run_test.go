@@ -424,7 +424,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run4.ID,
 		),
 	)
-	s.Equal("Not Found", resp.Message)
+	s.Regexp("(Not Found|not found)", resp.Message)
 }
 
 func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunRequest) {

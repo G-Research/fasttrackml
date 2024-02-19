@@ -33,7 +33,7 @@ type RunRepositoryProvider interface {
 	GetByNamespaceIDRunIDAndLifecycleStage(
 		ctx context.Context, namespaceID uint, runID string, lifecycleStage models.LifecycleStage,
 	) (*models.Run, error)
-	// GetByNamespaceIDAndRunID returns models.Run entity by Namespace ID and its ID.
+	// 	GetByNamespaceIDAndRunID returns models.Run entity by Namespace ID and its ID.
 	GetByNamespaceIDAndRunID(
 		ctx context.Context, namespaceID uint, runID string,
 	) (*models.Run, error)
@@ -105,7 +105,7 @@ func (r RunRepository) GetRunInfo(
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, eris.Wrapf(err, "error getting run info id: %d", req.ID)
+		return nil, eris.Wrapf(err, "error getting run info id: %s", req.ID)
 	}
 	return &run, nil
 }
@@ -155,7 +155,7 @@ func (r RunRepository) GetRunByNamespaceIDAndRunID(
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, eris.Wrapf(err, "error getting run by id: %d", runID)
+		return nil, eris.Wrapf(err, "error getting run by id: %s", runID)
 	}
 	return &run, nil
 }

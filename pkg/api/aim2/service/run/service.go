@@ -35,10 +35,10 @@ func (s Service) GetRunInfo(
 
 	runInfo, err := s.runRepository.GetRunInfo(ctx, namespace.ID, req)
 	if err != nil {
-		return nil, api.NewInternalError("unable to find run by id %d: %s", req.ID, err)
+		return nil, api.NewInternalError("unable to find run by id %s: %s", req.ID, err)
 	}
 	if runInfo == nil {
-		return nil, api.NewResourceDoesNotExistError("run '%d' not found", req.ID)
+		return nil, api.NewResourceDoesNotExistError("run '%s' not found", req.ID)
 	}
 
 	return runInfo, nil
@@ -50,11 +50,11 @@ func (s Service) GetRunMetrics(
 ) ([]models.Metric, dto.MetricKeysMapDTO, error) {
 	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespace.ID, runID)
 	if err != nil {
-		return nil, nil, api.NewInternalError("error getting run by id %d: %s", runID, err)
+		return nil, nil, api.NewInternalError("error getting run by id %s: %s", runID, err)
 	}
 
 	if run == nil {
-		return nil, nil, api.NewResourceDoesNotExistError("run '%d' not found", runID)
+		return nil, nil, api.NewResourceDoesNotExistError("run '%s' not found", runID)
 	}
 
 	metricKeysMap, err := ConvertRunMetricsRequestToMetricKeysMapDTO(req)
@@ -63,7 +63,7 @@ func (s Service) GetRunMetrics(
 	}
 	metrics, err := s.runRepository.GetRunMetrics(ctx, runID, metricKeysMap)
 	if err != nil {
-		return nil, nil, api.NewInternalError("error getting run metrics by id %d: %s", runID, err)
+		return nil, nil, api.NewInternalError("error getting run metrics by id %s: %s", runID, err)
 	}
 
 	return metrics, metricKeysMap, nil

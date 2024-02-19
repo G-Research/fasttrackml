@@ -28,7 +28,6 @@ func NewService(runRepository repositories.RunRepositoryProvider) *Service {
 func (s Service) GetRunInfo(
 	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetRunInfoRequest,
 ) (*aimModels.Run, error) {
-
 	req = NormaliseGetRunInfoRequest(req)
 	if err := ValidateGetRunInfoRequest(req); err != nil {
 		return nil, err

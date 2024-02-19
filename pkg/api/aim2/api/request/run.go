@@ -42,6 +42,8 @@ type SearchRunsRequest struct {
 	ReportProgress bool   `query:"report_progress"`
 	ExcludeParams  bool   `query:"exclude_params"`
 	ExcludeTraces  bool   `query:"exclude_traces"`
+	TimeZoneOffset int
+	NamespaceID    uint
 }
 
 // SearchMetricsRequest is a request struct for `GET /runs/search/metric` endpoint.

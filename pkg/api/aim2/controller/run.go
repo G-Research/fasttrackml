@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -105,9 +104,7 @@ func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
 	return ActiveRunsStreamResponse(ctx, runs, req.ReportProgress)
 }
 
-// TODO:get back and fix `gocyclo` problem.
-//
-//nolint:gocyclo
+// SearchRuns handles `GET /runs/search` endpoint.
 func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -115,95 +112,34 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("searchRuns namespace: %s", ns.Code)
 
-	req := request.SearchRunsRequest{}
-	if err = ctx.QueryParser(&req); err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-	}
-
-	if ctx.Query("report_progress") == "" {
-		req.ReportProgress = true
-	}
-
 	tzOffset, err := strconv.Atoi(ctx.Get("x-timezone-offset", "0"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
 
-	qp := query.QueryParser{
-		Default: query.DefaultExpression{
-			Contains:   "run.archived",
-			Expression: "not run.archived",
-		},
-		Tables: map[string]string{
-			"runs":        "runs",
-			"experiments": "Experiment",
-		},
-		TzOffset:  tzOffset,
-		Dialector: database.DB.Dialector.Name(),
+	// Complete the request
+	req := request.SearchRunsRequest{}
+	if err = ctx.QueryParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	pq, err := qp.Parse(req.Query)
+	if ctx.Query("report_progress") == "" {
+		req.ReportProgress = true
+	}
+	req.TimeZoneOffset = tzOffset
+	req.NamespaceID = ns.ID
+
+	// Search runs
+	runs, total, err := c.runService.SearchRuns(ctx.Context(), ns, req)
 	if err != nil {
-		return err
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	var total int64
-	if tx := database.DB.
-		Model(&database.Run{}).
-		Count(&total); tx.Error != nil {
-		return fmt.Errorf("unable to count total runs: %w", tx.Error)
-	}
-
-	log.Debugf("Total runs: %d", total)
-
-	tx := database.DB.
-		InnerJoins(
-			"Experiment",
-			database.DB.Select(
-				"ID", "Name",
-			).Where(
-				&models.Experiment{NamespaceID: ns.ID},
-			),
-		).
-		Order("row_num DESC")
-
-	if !req.ExcludeParams {
-		tx.Preload("Params")
-		tx.Preload("Tags")
-	}
-
-	if !req.ExcludeTraces {
-		tx.Preload("LatestMetrics.Context")
-	}
-
+	// Choose response
 	switch req.Action {
 	case "export":
-		var runs []database.Run
-		if err := pq.Filter(tx).Find(&runs).Error; err != nil {
-			return fmt.Errorf("error searching runs: %w", err)
-		}
 		log.Debugf("found %d runs", len(runs))
 		RunsSearchAsCSVResponse(ctx, runs, req.ExcludeTraces, req.ExcludeParams)
 	default:
-		if req.Limit > 0 {
-			tx.Limit(req.Limit)
-		}
-		if req.Offset != "" {
-			run := &database.Run{
-				ID: req.Offset,
-			}
-			if err := database.DB.Select(
-				"row_num",
-			).First(
-				&run,
-			).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				return fmt.Errorf("unable to find search runs offset %q: %w", req.Offset, err)
-			}
-			tx.Where("row_num < ?", run.RowNum)
-		}
-		var runs []database.Run
-		if err := pq.Filter(tx).Find(&runs).Error; err != nil {
-			return fmt.Errorf("error searching runs: %w", err)
-		}
 		log.Debugf("found %d runs", len(runs))
 		RunsSearchAsStreamResponse(ctx, runs, total, req.ExcludeTraces, req.ExcludeParams, req.ReportProgress)
 	}

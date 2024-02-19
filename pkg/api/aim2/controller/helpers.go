@@ -14,16 +14,15 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/encoding"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // RunsSearchAsCSVResponse formats and sends Runs search response as a CSV file.
 //
 //nolint:gocyclo
-func RunsSearchAsCSVResponse(ctx *fiber.Ctx, runs []database.Run, excludeTraces, excludeParams bool) {
+func RunsSearchAsCSVResponse(ctx *fiber.Ctx, runs []models.Run, excludeTraces, excludeParams bool) {
 	ctx.Set("Transfer-Encoding", "chunked")
 	ctx.Set("Content-Type", "text/csv")
 	ctx.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="runs-reports-%d.csv"`, time.Now().Unix()))
@@ -171,7 +170,7 @@ func RunsSearchAsCSVResponse(ctx *fiber.Ctx, runs []database.Run, excludeTraces,
 //
 //nolint:gocyclo
 func RunsSearchAsStreamResponse(
-	ctx *fiber.Ctx, runs []database.Run, total int64, excludeTraces, excludeParams, reportProgress bool,
+	ctx *fiber.Ctx, runs []models.Run, total int64, excludeTraces, excludeParams, reportProgress bool,
 ) {
 	ctx.Set("Content-Type", "application/octet-stream")
 	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
@@ -189,8 +188,8 @@ func RunsSearchAsStreamResponse(
 						"tags":          []string{}, // TODO insert real tags
 						"creation_time": float64(r.StartTime.Int64) / 1000,
 						"end_time":      float64(r.EndTime.Int64) / 1000,
-						"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
-						"active":        r.Status == database.StatusRunning,
+						"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
+						"active":        r.Status == models.StatusRunning,
 					},
 				}
 

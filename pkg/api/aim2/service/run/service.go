@@ -80,3 +80,13 @@ func (s Service) GetRunsActive(
 	return runs, nil
 }
 
+// SearchRuns returns the list of runs by provided search criteria.
+func (s Service) SearchRuns(
+	ctx context.Context, namespace *mlflowModels.Namespace, req request.SearchRunsRequest,
+) ([]models.Run, int64, error) {
+	runs, total, err := s.runRepository.SearchRuns(ctx, req)
+	if err != nil {
+		return nil, 0, api.NewInternalError("error searching runs: %s", err)
+	}
+	return runs, total, nil
+}

@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/rotisserie/eris"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
@@ -58,6 +60,8 @@ type RunRepositoryProvider interface {
 	SetRunTagsBatch(ctx context.Context, run *models.Run, batchSize int, tags []models.Tag) error
 	// UpdateWithTransaction updates existing models.Run entity in scope of transaction.
 	UpdateWithTransaction(ctx context.Context, tx *gorm.DB, run *models.Run) error
+	// SearchRuns returns the list of runs by provided search request.
+	SearchRuns(ctx context.Context, req request.SearchRunsRequest) ([]models.Run, int64, error)
 }
 
 // RunRepository repository to work with models.Run entity.
@@ -445,6 +449,78 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 		return err
 	}
 	return nil
+}
+
+// SearchRuns returns the list of runs by provided search request.
+func (r RunRepository) SearchRuns(ctx context.Context, req request.SearchRunsRequest) ([]models.Run, int64, error) {
+	qp := query.QueryParser{
+		Default: query.DefaultExpression{
+			Contains:   "run.archived",
+			Expression: "not run.archived",
+		},
+		Tables: map[string]string{
+			"runs":        "runs",
+			"experiments": "Experiment",
+		},
+		TzOffset:  req.TimeZoneOffset,
+		Dialector: r.db.Dialector.Name(),
+	}
+	pq, err := qp.Parse(req.Query)
+	if err != nil {
+		return nil, 0, eris.Wrap(err, "problem parsing query")
+	}
+
+	var total int64
+	if tx := r.db.WithContext(ctx).
+		Model(&database.Run{}).
+		Count(&total); tx.Error != nil {
+		return nil, 0, eris.Wrap(tx.Error, "unable to count total runs")
+	}
+
+	log.Debugf("Total runs: %d", total)
+
+	tx := r.db.WithContext(ctx).
+		InnerJoins(
+			"Experiment",
+			database.DB.Select(
+				"ID", "Name",
+			).Where(
+				&models.Experiment{NamespaceID: req.NamespaceID},
+			),
+		).
+		Order("row_num DESC")
+
+	if !req.ExcludeParams {
+		tx.Preload("Params")
+		tx.Preload("Tags")
+	}
+
+	if !req.ExcludeTraces {
+		tx.Preload("LatestMetrics.Context")
+	}
+
+	if req.Limit > 0 {
+		tx.Limit(req.Limit)
+	}
+	if req.Offset != "" {
+		run := &database.Run{
+			ID: req.Offset,
+		}
+		if err := database.DB.Select(
+			"row_num",
+		).First(
+			&run,
+		).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, eris.Wrapf(err, "unable to find search runs offset %q", req.Offset)
+		}
+		tx.Where("row_num < ?", run.RowNum)
+	}
+	var runs []models.Run
+	if err := pq.Filter(tx).Find(&runs).Error; err != nil {
+		return nil, 0, eris.Wrap(err, "error searching runs")
+	}
+	log.Debugf("found %d runs", len(runs))
+	return runs, total, nil
 }
 
 // getMinRowNum will find the lowest row_num for the slice of runs

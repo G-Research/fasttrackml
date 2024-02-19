@@ -68,3 +68,15 @@ func (s Service) GetRunMetrics(
 
 	return metrics, metricKeysMap, nil
 }
+
+// GetRunsActive returns the active runs.
+func (s Service) GetRunsActive(
+	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetRunsActiveRequest,
+) ([]models.Run, error) {
+	runs, err := s.runRepository.GetByNamespaceIDAndStatus(ctx, namespace.ID, aimModels.StatusRunning)
+	if err != nil {
+		return nil, api.NewInternalError("error ative runs: %s", err)
+	}
+	return runs, nil
+}
+

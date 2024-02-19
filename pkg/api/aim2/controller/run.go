@@ -80,6 +80,7 @@ func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 	return ctx.JSON(resp)
 }
 
+// GetRunMetrics handles `GET /runs/active` endpoint.
 func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -96,111 +97,12 @@ func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
 		req.ReportProgress = true
 	}
 
-	var runs []database.Run
-	if err := database.DB.
-		Where("status = ?", database.StatusRunning).
-		InnerJoins(
-			"Experiment",
-			database.DB.Select(
-				"ID", "Name",
-			).Where(
-				&models.Experiment{NamespaceID: ns.ID},
-			),
-		).
-		Preload("LatestMetrics.Context").
-		Limit(50).
-		Order("start_time DESC").
-		Find(&runs).Error; err != nil {
-		return fmt.Errorf("error retrieving active runs: %w", err)
+	runs, err := c.runService.GetRunsActive(ctx.Context(), ns, &req)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	ctx.Set("Content-Type", "application/octet-stream")
-	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		start := time.Now()
-		if err := func() error {
-			for i, r := range runs {
-				props := fiber.Map{
-					"name":        r.Name,
-					"description": nil,
-					"experiment": fiber.Map{
-						"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-						"name": r.Experiment.Name,
-					},
-					"tags":          []string{}, // TODO insert real tags
-					"creation_time": float64(r.StartTime.Int64) / 1000,
-					"end_time":      float64(r.EndTime.Int64) / 1000,
-					"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
-					"active":        r.Status == database.StatusRunning,
-				}
-
-				metrics := make([]fiber.Map, len(r.LatestMetrics))
-				for i, m := range r.LatestMetrics {
-					v := m.Value
-					if m.IsNan {
-						v = math.NaN()
-					}
-					data := fiber.Map{
-						"name": m.Key,
-						"last_value": fiber.Map{
-							"dtype":      "float",
-							"first_step": 0,
-							"last_step":  m.LastIter,
-							"last":       v,
-							"version":    2,
-							"context":    fiber.Map{},
-						},
-					}
-					// to be properly decoded by AIM UI, json should be represented as a key:value object.
-					context := fiber.Map{}
-					if err := json.Unmarshal(m.Context.Json, &context); err != nil {
-						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
-					}
-					data["context"] = context
-					metrics[i] = data
-				}
-
-				if err := encoding.EncodeTree(w, fiber.Map{
-					r.ID: fiber.Map{
-						"props": props,
-						"traces": fiber.Map{
-							"metric": metrics,
-						},
-					},
-				}); err != nil {
-					return err
-				}
-
-				if req.ReportProgress {
-					if err := encoding.EncodeTree(w, fiber.Map{
-						fmt.Sprintf("progress_%d", i): []int{i + 1, len(runs)},
-					}); err != nil {
-						return err
-					}
-				}
-
-				if err := w.Flush(); err != nil {
-					return err
-				}
-			}
-
-			// if q.ReportProgress && err == nil {
-			// 	err = encoding.EncodeTree(w, fiber.Map{
-			// 		fmt.Sprintf("progress_%d", len(runs)): []int{len(runs), len(runs)},
-			// 	})
-			// 	if err != nil {
-			// 		err = w.Flush()
-			// 	}
-			// }
-
-			return nil
-		}(); err != nil {
-			log.Errorf("Error encountered in %s %s: error streaming active runs: %s", ctx.Method(), ctx.Path(), err)
-		}
-
-		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
-	})
-
-	return nil
+	return ActiveRunsStreamResponse(ctx, runs, req.ReportProgress)
 }
 
 // TODO:get back and fix `gocyclo` problem.

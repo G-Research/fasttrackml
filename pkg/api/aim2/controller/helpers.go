@@ -14,7 +14,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/encoding"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
@@ -271,6 +272,86 @@ func RunsSearchAsStreamResponse(
 		}
 		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
 	})
+}
+
+// ActiveRunsStreamResponse streams the provided []models.Run to the fiber context.
+func ActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgress bool) error {
+	ctx.Set("Content-Type", "application/octet-stream")
+	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		start := time.Now()
+		if err := func() error {
+			for i, r := range runs {
+				props := fiber.Map{
+					"name":        r.Name,
+					"description": nil,
+					"experiment": fiber.Map{
+						"id":   fmt.Sprintf("%d", *r.Experiment.ID),
+						"name": r.Experiment.Name,
+					},
+					"tags":          []string{},
+					"creation_time": float64(r.StartTime.Int64) / 1000,
+					"end_time":      float64(r.EndTime.Int64) / 1000,
+					"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
+					"active":        r.Status == models.StatusRunning,
+				}
+
+				metrics := make([]fiber.Map, len(r.LatestMetrics))
+				for i, m := range r.LatestMetrics {
+					v := m.Value
+					if m.IsNan {
+						v = math.NaN()
+					}
+					data := fiber.Map{
+						"name": m.Key,
+						"last_value": fiber.Map{
+							"dtype":      "float",
+							"first_step": 0,
+							"last_step":  m.LastIter,
+							"last":       v,
+							"version":    2,
+							"context":    fiber.Map{},
+						},
+					}
+
+					context := fiber.Map{}
+					if err := json.Unmarshal(m.Context.Json, &context); err != nil {
+						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+					}
+					data["context"] = context
+					metrics[i] = data
+				}
+
+				if err := encoding.EncodeTree(w, fiber.Map{
+					r.ID: fiber.Map{
+						"props": props,
+						"traces": fiber.Map{
+							"metric": metrics,
+						},
+					},
+				}); err != nil {
+					return err
+				}
+
+				if reportProgress {
+					if err := encoding.EncodeTree(w, fiber.Map{
+						fmt.Sprintf("progress_%d", i): []int{i + 1, len(runs)},
+					}); err != nil {
+						return err
+					}
+				}
+
+				if err := w.Flush(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			log.Errorf("Error encountered in %s %s: error streaming active runs: %s", ctx.Method(), ctx.Path(), err)
+		}
+
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
+	})
+	return nil
 }
 
 // CompareJson compares two json objects.

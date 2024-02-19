@@ -26,14 +26,15 @@ type RunRepositoryProvider interface {
 	GetRunMetrics(ctx context.Context, runID string, metricKeysMapDTO dto.MetricKeysMapDTO) ([]models.Metric, error)
 	// GetRunByNamespaceIDAndRunID returns experiment by Namespace ID and Run ID.
 	GetRunByNamespaceIDAndRunID(ctx context.Context, namespaceID uint, runID string) (*models.Run, error)
-
 	// GetByID returns models.Run entity by its ID.
 	GetByID(ctx context.Context, id string) (*models.Run, error)
 	// GetByNamespaceIDRunIDAndLifecycleStage returns models.Run entity by Namespace ID, its ID and Lifecycle Stage.
 	GetByNamespaceIDRunIDAndLifecycleStage(
 		ctx context.Context, namespaceID uint, runID string, lifecycleStage models.LifecycleStage,
 	) (*models.Run, error)
-	// 	GetByNamespaceIDAndRunID returns models.Run entity by Namespace ID and its ID.
+	// GetByNamespaceIDAndStatus returns []models.Run by Namespace ID and status.
+	GetByNamespaceIDAndStatus(ctx context.Context, namespaceID uint, status models.Status) ([]models.Run, error)
+	// GetByNamespaceIDAndRunID returns models.Run entity by Namespace ID and its ID.
 	GetByNamespaceIDAndRunID(
 		ctx context.Context, namespaceID uint, runID string,
 	) (*models.Run, error)
@@ -202,6 +203,30 @@ func (r RunRepository) GetByNamespaceIDRunIDAndLifecycleStage(
 		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", runID)
 	}
 	return &run, nil
+}
+
+// GetByNamespaceIDAndStatus returns []models.Run by Namespace ID and Lifecycle Stage.
+func (r RunRepository) GetByNamespaceIDAndStatus(
+	ctx context.Context, namespaceID uint, status models.Status,
+) ([]models.Run, error) {
+	var runs []models.Run
+	if err := r.db.WithContext(ctx).
+		Where("status = ?", status).
+		InnerJoins(
+			"Experiment",
+			database.DB.Select(
+				"ID", "Name",
+			).Where(
+				&models.Experiment{NamespaceID: namespaceID},
+			),
+		).
+		Preload("LatestMetrics.Context").
+		Limit(50).
+		Order("start_time DESC").
+		Find(&runs).Error; err != nil {
+		return nil, eris.Wrapf(err, "error retrieving runs by lifecycle stage")
+	}
+	return runs, nil
 }
 
 // GetByNamespaceIDAndRunID returns models.Run entity by Namespace ID and its ID.

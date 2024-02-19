@@ -18,7 +18,7 @@ func (c Controller) GetDashboards(ctx *fiber.Ctx) error {
 	log.Debugf("getDashboards namespace: %s", ns.Code)
 	dashboards, err := c.dashboardService.GetDashboards(ctx.Context(), ns)
 	if err != nil {
-		return api.NewInternalError("error getting dashboards")
+		return convertError(err)
 	}
 	return ctx.JSON(dashboards)
 }
@@ -36,7 +36,7 @@ func (c Controller) CreateDashboard(ctx *fiber.Ctx) error {
 	}
 	dash, err := c.dashboardService.Create(ctx.Context(), ns, &req)
 	if err != nil {
-		return api.NewInternalError("error creating dashboard")
+		return convertError(err)
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(dash)
 }
@@ -77,7 +77,7 @@ func (c Controller) UpdateDashboard(ctx *fiber.Ctx) error {
 	}
 	dash, err := c.dashboardService.Update(ctx.Context(), ns, &req)
 	if err != nil {
-		return api.NewInternalError("error updating dashboard")
+		return convertError(err)
 	}
 	return ctx.JSON(dash)
 }

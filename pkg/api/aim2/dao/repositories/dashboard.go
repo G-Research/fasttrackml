@@ -76,14 +76,17 @@ func (d DashboardRepository) GetByNamespaceIDAndDashboardID(ctx context.Context,
 ) (*models.Dashboard, error) {
 	var dashboard models.Dashboard
 	if err := d.db.WithContext(ctx).
-		InnerJoins("App").
-		Where(
-			"NOT dashboards.is_archived",
-		).Where(
-		"dashboards.id = ?", dashboardID,
-	).Where(
-		"app.namespace_id = ?", namespaceID,
-	).First(&dashboard).Error; err != nil {
+		InnerJoins(
+			"App",
+			database.DB.Select(
+				"ID", "Type",
+			).Where(
+				&database.App{
+					NamespaceID: namespaceID,
+				},
+				"NamespaceID",
+			),
+		).Where("NOT dashboards.is_archived").Where("dashboards.id = ?", dashboardID).First(&dashboard).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

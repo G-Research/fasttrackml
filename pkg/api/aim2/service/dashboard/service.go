@@ -97,12 +97,11 @@ func (s Service) Delete(ctx context.Context, namespace *mlflowModels.Namespace,
 ) error {
 	dashboard, err := s.dashboardRepository.GetByNamespaceIDAndDashboardID(ctx, namespace.ID, req.ID.String())
 	if err != nil {
-		return api.NewInternalError("unable to find dashboard by id %s: %s", req.ID, err)
+		return api.NewInternalError("error trying to find dashboard by id %s: %s", req.ID, err)
 	}
 	if dashboard == nil {
 		return api.NewResourceDoesNotExistError("dashboard with id '%s' not found", req.ID)
 	}
-
 	if err := s.dashboardRepository.Delete(ctx, dashboard); err != nil {
 		return api.NewInternalError("unable to delete dashboard by id %s: %s", req.ID, err)
 	}

@@ -129,7 +129,9 @@ func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.JSON(response.NewDeleteExperimentResponse(req.ID, "OK"))
+	resp := response.NewDeleteExperimentResponse(req.ID, "OK")
+	log.Debugf("deleteExperiment response: %#v", resp)
+	return ctx.JSON(resp)
 }
 
 // UpdateExperiment handles `PUT /experiments/:id` endpoint.
@@ -153,5 +155,7 @@ func (c Controller) UpdateExperiment(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.JSON(response.NewUpdateExperimentResponse(req.ID, "OK"))
+	resp := response.NewUpdateExperimentResponse(req.ID, "OK")
+	log.Debugf("updateExperiment response: %#v", resp)
+	return ctx.JSON(resp)
 }

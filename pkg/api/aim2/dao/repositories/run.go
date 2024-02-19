@@ -10,13 +10,23 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // RunRepositoryProvider provides an interface to work with models.Run entity.
 type RunRepositoryProvider interface {
 	BaseRepositoryProvider
+	// GetRunInfo returns run info.
+	GetRunInfo(ctx context.Context, namespaceID uint, req *request.GetRunInfoRequest) (*models.Run, error)
+	// GetRunMetrics returns Run metrics.
+	GetRunMetrics(ctx context.Context, runID string, metricKeysMapDTO dto.MetricKeysMapDTO) ([]models.Metric, error)
+	// GetRunByNamespaceIDAndRunID returns experiment by Namespace ID and Run ID.
+	GetRunByNamespaceIDAndRunID(ctx context.Context, namespaceID uint, runID string) (*models.Run, error)
+
 	// GetByID returns models.Run entity by its ID.
 	GetByID(ctx context.Context, id string) (*models.Run, error)
 	// GetByNamespaceIDRunIDAndLifecycleStage returns models.Run entity by Namespace ID, its ID and Lifecycle Stage.
@@ -61,6 +71,93 @@ func NewRunRepository(db *gorm.DB) *RunRepository {
 			db: db,
 		},
 	}
+}
+
+// GetRunInfo returns run info.
+func (r RunRepository) GetRunInfo(
+	ctx context.Context, namespaceID uint, req *request.GetRunInfoRequest,
+) (*models.Run, error) {
+	query := r.db.WithContext(ctx)
+	for _, s := range req.Sequences {
+		switch s {
+		case "metric":
+			query = query.Preload("LatestMetrics", func(db *gorm.DB) *gorm.DB {
+				return db.Select("RunID", "Key", "ContextID")
+			}).Preload(
+				"LatestMetrics.Context",
+			)
+		}
+	}
+
+	run := models.Run{ID: req.ID}
+	if err := query.InnerJoins(
+		"Experiment",
+		database.DB.Select(
+			"ID", "Name",
+		).Where(
+			&models.Experiment{NamespaceID: namespaceID},
+		),
+	).Preload(
+		"Params",
+	).Preload(
+		"Tags",
+	).First(&run).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, eris.Wrapf(err, "error getting run info id: %d", req.ID)
+	}
+	return &run, nil
+}
+
+// GetRunMetrics returns Run metrics.
+func (r RunRepository) GetRunMetrics(
+	ctx context.Context, runID string, metricKeysMapDTO dto.MetricKeysMapDTO,
+) ([]models.Metric, error) {
+	subQuery := r.db.WithContext(ctx)
+	for metricKey := range metricKeysMapDTO {
+		subQuery = subQuery.Or("key = ? AND json = ?", metricKey.Name, types.JSONB(metricKey.Context))
+	}
+
+	// fetch run metrics based on provided criteria.
+	var metrics []models.Metric
+	if err := r.db.InnerJoins(
+		"Context",
+	).Order(
+		"iter",
+	).Where(
+		"run_uuid = ?", runID,
+	).Where(
+		subQuery,
+	).Find(&metrics).Error; err != nil {
+		return nil, eris.Wrapf(err, "error getting run metrics")
+	}
+	return metrics, nil
+}
+
+// GetRunByNamespaceIDAndRunID returns experiment by Namespace ID and Run ID.
+func (r RunRepository) GetRunByNamespaceIDAndRunID(
+	ctx context.Context, namespaceID uint, runID string,
+) (*models.Run, error) {
+	var run models.Run
+	if err := r.db.WithContext(ctx).Select(
+		"ID",
+	).InnerJoins(
+		"Experiment",
+		database.DB.Select(
+			"ID",
+		).Where(
+			&models.Experiment{NamespaceID: namespaceID},
+		),
+	).Where(
+		"run_uuid = ?", runID,
+	).First(&run).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, eris.Wrapf(err, "error getting run by id: %d", runID)
+	}
+	return &run, nil
 }
 
 // GetByID returns models.Run entity by its ID.

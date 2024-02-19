@@ -22,6 +22,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
@@ -30,6 +31,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
+// GetRunInfo handles `GET /runs/:id/info` endpoint.
 func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -41,103 +43,21 @@ func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
 	if err := ctx.QueryParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-
 	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	tx := database.DB.
-		InnerJoins(
-			"Experiment",
-			database.DB.Select(
-				"ID", "Name",
-			).Where(
-				&models.Experiment{NamespaceID: ns.ID},
-			),
-		).
-		Preload("Params").
-		Preload("Tags")
-
-	if len(req.Sequences) == 0 {
-		req.Sequences = []string{
-			"audios",
-			"distributions",
-			"figures",
-			"images",
-			"log_records",
-			"logs",
-			"metric",
-			"texts",
-		}
+	runInfo, err := c.runService.GetRunInfo(ctx.Context(), ns, &req)
+	if err != nil {
+		return err
 	}
 
-	traces := make(map[string][]fiber.Map, len(req.Sequences))
-	for _, s := range req.Sequences {
-		switch s {
-		case "audios", "distributions", "figures", "images", "log_records", "logs", "texts":
-			traces[s] = []fiber.Map{}
-		case "metric":
-			tx.Preload("LatestMetrics", func(db *gorm.DB) *gorm.DB {
-				return db.Select("RunID", "Key", "ContextID")
-			}).Preload("LatestMetrics.Context")
-		default:
-			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("%q is not a valid Sequence", s))
-		}
-	}
-
-	r := database.Run{
-		ID: req.ID,
-	}
-
-	if err := tx.First(&r).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("error retrieving run %q: %w", req.ID, err)
-	}
-
-	props := fiber.Map{
-		"name":        r.Name,
-		"description": nil,
-		"experiment": fiber.Map{
-			"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-			"name": r.Experiment.Name,
-		},
-		"tags":          []string{}, // TODO insert real tags
-		"creation_time": float64(r.StartTime.Int64) / 1000,
-		"end_time":      float64(r.EndTime.Int64) / 1000,
-		"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
-		"active":        r.Status == database.StatusRunning,
-	}
-	params := make(map[string]any, len(r.Params)+1)
-	for _, p := range r.Params {
-		params[p.Key] = p.Value
-	}
-	tags := make(map[string]string, len(r.Tags))
-	for _, t := range r.Tags {
-		tags[t.Key] = t.Value
-	}
-	params["tags"] = tags
-
-	metrics := make([]fiber.Map, len(r.LatestMetrics))
-	for i, m := range r.LatestMetrics {
-		metric := fiber.Map{
-			"name":       m.Key,
-			"context":    fiber.Map{},
-			"last_value": 0.1,
-		}
-		metric["context"] = m.Context.Json
-		metrics[i] = metric
-	}
-	traces["metric"] = metrics
-
-	return ctx.JSON(fiber.Map{
-		"params": params,
-		"traces": traces,
-		"props":  props,
-	})
+	resp := response.NewGetRunInfoResponse(runInfo)
+	log.Debugf("getRunInfo response: %#v", resp)
+	return ctx.JSON(resp)
 }
 
+// GetRunMetrics handles `GET /runs/:id/metric/get-batch` endpoint.
 func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -150,101 +70,13 @@ func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	metricKeysMap, contexts := make(fiber.Map, len(req)), make([]types.JSONB, 0, len(req))
-	for _, m := range req {
-		if m.Context != nil {
-			serializedContext, err := json.Marshal(m.Context)
-			if err != nil {
-				return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-			}
-			contexts = append(contexts, serializedContext)
-		}
-		metricKeysMap[m.Name] = nil
-	}
-	metricKeys := make([]string, len(metricKeysMap))
-
-	i := 0
-	for k := range metricKeysMap {
-		metricKeys[i] = k
-		i++
+	metrics, metricKeysMap, err := c.runService.GetRunMetrics(ctx.Context(), ns, ctx.Params("id"), &req)
+	if err != nil {
+		return err
 	}
 
-	// check that requested run actually exists.
-	runID := ctx.Params("id")
-	if err := database.DB.Select(
-		"ID",
-	).InnerJoins(
-		"Experiment",
-		database.DB.Select(
-			"ID",
-		).Where(
-			&models.Experiment{NamespaceID: ns.ID},
-		),
-	).First(&database.Run{
-		ID: runID,
-	}).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fiber.ErrNotFound
-		}
-		return fmt.Errorf("unable to find run %q: %w", runID, err)
-	}
-
-	// fetch run metrics based on provided criteria.
-	var data []database.Metric
-	if err := database.DB.Where(
-		"run_uuid = ?", runID,
-	).InnerJoins(
-		"Context",
-		func() *gorm.DB {
-			query := database.DB
-			for _, context := range contexts {
-				query = query.Or("json = ?", context)
-			}
-			return query
-		}(),
-	).Where(
-		"key IN ?", metricKeys,
-	).Order(
-		"iter",
-	).Find(
-		&data,
-	).Error; err != nil {
-		return fmt.Errorf("unable to find run metrics: %w", err)
-	}
-
-	metrics := make(map[string]struct {
-		name    string
-		iters   []int
-		values  []*float64
-		context json.RawMessage
-	}, len(metricKeys))
-
-	for _, m := range data {
-		v := m.Value
-		pv := &v
-		if m.IsNan {
-			pv = nil
-		}
-
-		key := fmt.Sprintf("%s%d", m.Key, m.ContextID)
-		k := metrics[key]
-		k.name = m.Key
-		k.iters = append(k.iters, int(m.Iter))
-		k.values = append(k.values, pv)
-		k.context = json.RawMessage(m.Context.Json)
-		metrics[key] = k
-	}
-
-	resp := make([]fiber.Map, 0, len(metrics))
-	for _, m := range metrics {
-		resp = append(resp, fiber.Map{
-			"name":    m.name,
-			"iters":   m.iters,
-			"values":  m.values,
-			"context": m.context,
-		})
-	}
-
+	resp := response.NewGetRunMetricsResponse(metrics, metricKeysMap)
+	log.Debugf("getRunMetrics response: %#v", resp)
 	return ctx.JSON(resp)
 }
 

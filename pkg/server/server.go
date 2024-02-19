@@ -235,7 +235,9 @@ func createApp(
 			aimAppService.NewService(
 				aimRepositories.NewAppRepository(db.GormDB()),
 			),
-			aimRunService.NewService(),
+			aimRunService.NewService(
+				aimRepositories.NewRunRepository(db.GormDB()),
+			),
 			aimProjectService.NewService(),
 			aimDashboardService.NewService(),
 			aimExperimentService.NewService(

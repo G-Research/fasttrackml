@@ -84,7 +84,7 @@ func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	return NewActiveRunsStreamResponse(ctx, runs, req.ReportProgress)
+	return response.NewActiveRunsStreamResponse(ctx, runs, req.ReportProgress)
 }
 
 // SearchRuns handles `GET /runs/search` endpoint.

@@ -103,7 +103,6 @@ func (s Service) SearchRuns(
 func (s Service) SearchAlignedMetrics(
 	ctx context.Context, namespace *mlflowModels.Namespace, req *request.SearchAlignedMetricsRequest,
 ) (*sql.Rows, func(*sql.Rows) (*models.AlignedMetric, error), int, error) {
-
 	// collect map of unique contexts, collect values.
 	values, capacity, contextsMap := []any{}, 0, map[string]types.JSONB{}
 	for _, r := range req.Runs {
@@ -136,7 +135,7 @@ func (s Service) SearchAlignedMetrics(
 
 	rows, next, err := s.runRepository.GetAlignedMetrics(ctx, namespace.ID, values, req.AlignBy)
 	if err != nil {
-		return nil, nil, 0, api.NewInternalError("error searching aligned run metrics: %w", err)
+		return nil, nil, 0, api.NewInternalError("error searching aligned run metrics: %s", err)
 	}
 
 	return rows, next, capacity, nil

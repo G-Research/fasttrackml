@@ -215,7 +215,6 @@ func NewSearchAlignedMetricsResponse(
 				// New series of metrics
 				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
 					addMetrics()
-
 					if metric.RunID != id {
 						if err := flushMetrics(); err != nil {
 							return eris.Wrap(err, "error flushing metrics")

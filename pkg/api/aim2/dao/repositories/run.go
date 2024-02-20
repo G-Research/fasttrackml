@@ -150,7 +150,6 @@ func (r RunRepository) GetRunMetrics(
 func (r RunRepository) GetAlignedMetrics(
 	ctx context.Context, namespaceID uint, values []any, alignBy string,
 ) (*sql.Rows, func(rows *sql.Rows) (*models.AlignedMetric, error), error) {
-
 	var valuesStmt strings.Builder
 	length := len(values) / 4
 	for i := 0; i < length; i++ {

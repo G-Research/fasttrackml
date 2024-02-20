@@ -347,12 +347,15 @@ func (r RunRepository) Update(ctx context.Context, run *models.Run) error {
 
 // Archive marks existing models.Run entity as archived.
 func (r RunRepository) Archive(ctx context.Context, run *models.Run) error {
-	run.DeletedTime = sql.NullInt64{
-		Int64: time.Now().UTC().UnixMilli(),
-		Valid: true,
-	}
-	run.LifecycleStage = models.LifecycleStageDeleted
-	if err := r.db.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&run).Omit("Experiment").Updates(
+		models.Run{
+			DeletedTime: sql.NullInt64{
+				Int64: time.Now().UTC().UnixMilli(),
+				Valid: true,
+			},
+			LifecycleStage: models.LifecycleStageDeleted,
+		},
+	).Error; err != nil {
 		return eris.Wrapf(err, "error updating existing run with id: %s", run.ID)
 	}
 

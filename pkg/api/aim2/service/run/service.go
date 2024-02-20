@@ -219,7 +219,6 @@ func (s Service) UpdateRun(
 func (s Service) ProcessBatch(
 	ctx context.Context, namespace *mlflowModels.Namespace, action string, ids []string,
 ) error {
-	// TODO this code should move to service
 	switch action {
 	case BatchActionArchive:
 		if err := s.runRepository.ArchiveBatch(ctx, namespace.ID, ids); err != nil {
@@ -233,6 +232,8 @@ func (s Service) ProcessBatch(
 		if err := s.runRepository.DeleteBatch(ctx, namespace.ID, ids); err != nil {
 			return api.NewInternalError("error deleting runs: %s", err)
 		}
+	default:
+		return eris.Errorf("unsupported batch action: %s", action)
 	}
-	return eris.Errorf("unsupported batch action: %s", action)
+	return nil
 }

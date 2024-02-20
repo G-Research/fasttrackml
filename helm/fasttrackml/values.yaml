@@ -17,7 +17,8 @@ data:
 
   # common service settings.
   FML_DEV_MODE: "true"
-  FML_DATABASE_URI: "postgresql://admin:admin@localhost:5432" # /data/mydatabase.db
+  FML_DATABASE_URI: "postgresql://admin:admin@localhost:5432" # PostgresSQL
+  # FML_DATABASE_URI: "/data/mydatabase.db # SQLite 
   FML_LOG_LEVEL: "DEBUG"
 
   # database settings.
@@ -81,10 +82,6 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
   
-# For mounting SQLite database, set to `true` and uncoment `volumes` and `volumeMounts`
-sqlite:
-  enabled: false
-
 # Additional volumes on the output Deployment definition.
 volumes: []
   # - name: sqlite-db

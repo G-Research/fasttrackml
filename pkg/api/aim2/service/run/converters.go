@@ -9,9 +9,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 )
 
-// ConvertRunMetricsRequestToMetricKeysMapDTO converts request of `GET /runs/:id/metric/get-batch`
-// endpoint to internal DTO object.
-func ConvertRunMetricsRequestToMetricKeysMapDTO(req *request.GetRunMetricsRequest) (dto.MetricKeysMapDTO, error) {
+// ConvertRunMetricsRequestToMap converts request of `GET /runs/:id/metric/get-batch` endpoint to internal DTO object.
+func ConvertRunMetricsRequestToMap(req *request.GetRunMetricsRequest) (dto.MetricKeysMapDTO, error) {
 	// collect unique metrics. uniqueness provides metricKeysMap + metric struct.
 	metricKeysMap := make(map[dto.MetricKeysItemDTO]any, len(*req))
 	for _, m := range *req {

@@ -1,9 +1,6 @@
 package controller
 
 import (
-	"bytes"
-	"encoding/binary"
-	"math"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -87,7 +84,7 @@ func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	return ActiveRunsStreamResponse(ctx, runs, req.ReportProgress)
+	return NewActiveRunsStreamResponse(ctx, runs, req.ReportProgress)
 }
 
 // SearchRuns handles `GET /runs/search` endpoint.
@@ -124,9 +121,9 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	// Choose response
 	switch req.Action {
 	case "export":
-		RunsSearchAsCSVResponse(ctx, runs, req.ExcludeTraces, req.ExcludeParams)
+		response.NewRunsSearchCSVResponse(ctx, runs, req.ExcludeTraces, req.ExcludeParams)
 	default:
-		RunsSearchAsStreamResponse(ctx, runs, total, req.ExcludeTraces, req.ExcludeParams, req.ReportProgress)
+		response.NewRunsSearchStreamResponse(ctx, runs, total, req.ExcludeTraces, req.ExcludeParams, req.ReportProgress)
 	}
 
 	return nil
@@ -185,7 +182,7 @@ func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 	//nolint:rowserrcheck
 	rows, next, capacity, err := c.runService.SearchAlignedMetrics(ctx.Context(), ns, &req)
 	if err != nil {
-		return err
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	response.NewSearchAlignedMetricsResponse(ctx, rows, next, capacity)
@@ -279,24 +276,4 @@ func (c Controller) DeleteBatch(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(response.NewArchiveBatchResponse("OK"))
-}
-
-func toNumpy(values []float64) fiber.Map {
-	buf := bytes.NewBuffer(make([]byte, 0, len(values)*8))
-	for _, v := range values {
-		switch v {
-		case math.MaxFloat64:
-			v = math.Inf(1)
-		case -math.MaxFloat64:
-			v = math.Inf(-1)
-		}
-		//nolint:gosec,errcheck
-		binary.Write(buf, binary.LittleEndian, v)
-	}
-	return fiber.Map{
-		"type":  "numpy",
-		"dtype": "float64",
-		"shape": len(values),
-		"blob":  buf.Bytes(),
-	}
 }

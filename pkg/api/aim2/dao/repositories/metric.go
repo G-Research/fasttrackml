@@ -3,6 +3,8 @@ package repositories
 import (
 	"context"
 
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -26,6 +28,10 @@ type MetricRepositoryProvider interface {
 	) ([]models.Metric, error)
 	// GetMetricHistoryByRunIDAndKey returns metrics history by RunID and Key.
 	GetMetricHistoryByRunIDAndKey(ctx context.Context, runID, key string) ([]models.Metric, error)
+	// GetContextListByContextObjects returns list of context by provided map of contexts.
+	GetContextListByContextObjects(
+		ctx context.Context, contextsMap map[string]types.JSONB,
+	) ([]models.Context, error)
 }
 
 // MetricRepository repository to work with models.Metric entity.
@@ -227,4 +233,20 @@ func (r MetricRepository) GetMetricHistoryBulk(
 		return nil, eris.Wrapf(err, "error getting metric history by run ids: %v and key: %s", runIDs, key)
 	}
 	return metrics, nil
+}
+
+// GetContextListByContextObjects returns list of context by provided map of contexts.
+func (r MetricRepository) GetContextListByContextObjects(
+	ctx context.Context, contextsMap map[string]types.JSONB,
+) ([]models.Context, error) {
+	query := r.db.WithContext(ctx)
+	for _, context := range contextsMap {
+		query = query.Or("contexts.json = ?", context)
+	}
+
+	var contexts []models.Context
+	if err := query.Find(&contexts).Error; err != nil {
+		return nil, eris.Wrap(err, "error getting contexts information")
+	}
+	return contexts, nil
 }

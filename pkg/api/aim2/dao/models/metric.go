@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	"gorm.io/datatypes"
+
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 )
 
@@ -26,6 +28,17 @@ type Metric struct {
 // UniqueKey is a compound unique key for this metric series.
 func (m Metric) UniqueKey() string {
 	return fmt.Sprintf("%v-%v-%v", m.RunID, m.Key, m.ContextID)
+}
+
+// AlignedMetric represents model to work with `metrics` table.
+type AlignedMetric struct {
+	Metric
+	Context datatypes.JSON `gorm:"column:context_json"`
+}
+
+// TableName returns current table name.
+func (m AlignedMetric) TableName() string {
+	return "metrics"
 }
 
 // LatestMetric represents model to work with `last_metrics` table.

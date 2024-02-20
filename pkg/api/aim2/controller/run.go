@@ -3,13 +3,11 @@ package controller
 import (
 	"bufio"
 	"bytes"
-	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"math"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -25,7 +23,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
@@ -79,7 +76,7 @@ func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 	return ctx.JSON(resp)
 }
 
-// GetRunMetrics handles `GET /runs/active` endpoint.
+// GetRunsActive handles `GET /runs/active` endpoint.
 func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -468,9 +465,7 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 	return nil
 }
 
-// TODO:get back and fix `gocyclo` problem.
-//
-//nolint:gocyclo
+// SearchAlignedMetrics handles `GET /runs/search/metric/align` endpoint.
 func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -483,190 +478,12 @@ func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	values, capacity, contextsMap := []any{}, 0, map[string]types.JSONB{}
-	for _, r := range req.Runs {
-		for _, t := range r.Traces {
-			l := t.Slice[2]
-			if l > capacity {
-				capacity = l
-			}
-			// collect map of unique contexts.
-			data, err := json.Marshal(t.Context)
-			if err != nil {
-				return api.NewInternalError("error serializing context: %s", err)
-			}
-			sum := sha256.Sum256(data)
-			contextHash := fmt.Sprintf("%x", sum)
-			_, ok := contextsMap[contextHash]
-			if !ok {
-				contextsMap[contextHash] = data
-			}
-			values = append(values, r.ID, t.Name, data, float32(l))
-		}
-	}
-
-	// map context values to context ids
-	query := database.DB
-	for _, context := range contextsMap {
-		query = query.Or("contexts.json = ?", context)
-	}
-	var contexts []database.Context
-	if err := query.Find(&contexts).Error; err != nil {
-		return api.NewInternalError("error getting context information: %s", err)
-	}
-
-	// add context ids to `values`
-	for _, context := range contexts {
-		for i := 2; i < len(values); i += 4 {
-			if CompareJson(values[i].([]byte), context.Json) {
-				values[i] = context.ID
-			}
-		}
-	}
-
-	var valuesStmt strings.Builder
-	length := len(values) / 4
-	for i := 0; i < length; i++ {
-		valuesStmt.WriteString("(?, ?, CAST(? AS numeric), CAST(? AS numeric))")
-		if i < length-1 {
-			valuesStmt.WriteString(",")
-		}
-	}
-
-	// TODO this should probably be batched
-
-	values = append(values, ns.ID, req.AlignBy)
-
-	rows, err := database.DB.Raw(
-		fmt.Sprintf("WITH params(run_uuid, key, context_id, steps) AS (VALUES %s)", &valuesStmt)+
-			"        SELECT m.run_uuid, "+
-			"				rm.key, "+
-			"				m.iter, "+
-			"				m.value, "+
-			"				m.is_nan, "+
-			"				rm.context_id, "+
-			"				rm.context_json"+
-			"		 FROM metrics AS m"+
-			"        RIGHT JOIN ("+
-			"          SELECT p.run_uuid, "+
-			"				  p.key, "+
-			"				  p.context_id, "+
-			"				  lm.last_iter AS max, "+
-			"				  (lm.last_iter + 1) / p.steps AS interval, "+
-			"				  contexts.json AS context_json"+
-			"          FROM params AS p"+
-			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key, context_id)"+
-			"          INNER JOIN contexts ON contexts.id = lm.context_id"+
-			"        ) rm USING(run_uuid, context_id)"+
-			"		 INNER JOIN runs AS r ON m.run_uuid = r.run_uuid"+
-			"		 INNER JOIN experiments AS e ON r.experiment_id = e.experiment_id AND e.namespace_id = ?"+
-			"        WHERE m.key = ?"+
-			"          AND m.iter <= rm.max"+
-			"          AND MOD(m.iter + 1 + rm.interval / 2, rm.interval) < 1"+
-			"        ORDER BY r.row_num DESC, rm.key, rm.context_id, m.iter",
-		values...,
-	).Rows()
+	rows, next, capacity, err := c.runService.SearchAlignedMetrics(ctx.Context(), ns, &req)
 	if err != nil {
-		return fmt.Errorf("error searching aligned run metrics: %w", err)
-	}
-	if err := rows.Err(); err != nil {
-		return api.NewInternalError("error getting query result: %s", err)
+		return err
 	}
 
-	ctx.Set("Content-Type", "application/octet-stream")
-	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		//nolint:errcheck
-		defer rows.Close()
-
-		start := time.Now()
-		if err := func() error {
-			var id string
-			var key string
-			var context fiber.Map
-			var contextID uint
-			metrics := make([]fiber.Map, 0)
-			values := make([]float64, 0, capacity)
-			iters := make([]float64, 0, capacity)
-
-			addMetrics := func() {
-				if key != "" {
-					metric := fiber.Map{
-						"name":          key,
-						"context":       context,
-						"x_axis_values": toNumpy(values),
-						"x_axis_iters":  toNumpy(iters),
-					}
-					metrics = append(metrics, metric)
-				}
-			}
-
-			flushMetrics := func() error {
-				if id == "" {
-					return nil
-				}
-				if err := encoding.EncodeTree(w, fiber.Map{
-					id: metrics,
-				}); err != nil {
-					return err
-				}
-				return w.Flush()
-			}
-
-			for rows.Next() {
-				var metric struct {
-					database.Metric
-					Context datatypes.JSON `gorm:"column:context_json"`
-				}
-				if err := database.DB.ScanRows(rows, &metric); err != nil {
-					return err
-				}
-
-				// New series of metrics
-				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
-					addMetrics()
-
-					if metric.RunID != id {
-						if err := flushMetrics(); err != nil {
-							return err
-						}
-						metrics = metrics[:0]
-						id = metric.RunID
-					}
-
-					key = metric.Key
-					values = values[:0]
-					iters = iters[:0]
-					context = fiber.Map{}
-				}
-
-				v := metric.Value
-				if metric.IsNan {
-					v = math.NaN()
-				}
-				values = append(values, v)
-				iters = append(iters, float64(metric.Iter))
-				if metric.Context != nil {
-					// to be properly decoded by AIM UI, json should be represented as a key:value object.
-					if err := json.Unmarshal(metric.Context, &context); err != nil {
-						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
-					}
-					contextID = metric.ContextID
-				}
-			}
-
-			addMetrics()
-			if err := flushMetrics(); err != nil {
-				return err
-			}
-
-			return nil
-		}(); err != nil {
-			log.Errorf("Error encountered in %s %s: error streaming metrics: %s", ctx.Method(), ctx.Path(), err)
-		}
-
-		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
-	})
-
+	response.NewSearchAlignedMetricsResponse(ctx, rows, next, capacity)
 	return nil
 }
 

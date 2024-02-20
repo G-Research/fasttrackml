@@ -1,11 +1,20 @@
 package response
 
 import (
+	"bufio"
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/encoding"
 	"github.com/G-Research/fasttrackml/pkg/common"
 )
 
@@ -146,4 +155,105 @@ func NewGetRunMetricsResponse(metrics []models.Metric, metricKeysMap dto.MetricK
 		})
 	}
 	return resp
+}
+
+// SearchAlignedMetricsResponse  is a response object to hold response data for
+// `GET /runs/search/metric/align` endpoint.
+type SearchAlignedMetricsResponse struct {
+	Name        string    `json:"name"`
+	Context     fiber.Map `json:"context"`
+	XAxisValues fiber.Map `json:"x_axis_values"`
+	XAxisIters  fiber.Map `json:"x_axis_iters"`
+}
+
+// NewSearchAlignedMetricsResponse creates new response object for `GET /runs/search/metric/align` endpoint.
+func NewSearchAlignedMetricsResponse(
+	ctx *fiber.Ctx, rows *sql.Rows, next func(*sql.Rows) (*models.AlignedMetric, error), capacity int,
+) {
+	ctx.Set("Content-Type", "application/octet-stream")
+	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		//nolint:errcheck
+		defer rows.Close()
+
+		start := time.Now()
+		if err := func() error {
+			var id string
+			var key string
+			var context fiber.Map
+			var contextID uint
+
+			metrics, values, iters := make([]SearchAlignedMetricsResponse, 0), make([]float64, 0, capacity), make([]float64, 0, capacity)
+			addMetrics := func() {
+				if key != "" {
+					metrics = append(metrics, SearchAlignedMetricsResponse{
+						Name:        key,
+						Context:     context,
+						XAxisValues: toNumpy(values),
+						XAxisIters:  toNumpy(iters),
+					})
+				}
+			}
+
+			flushMetrics := func() error {
+				if id == "" {
+					return nil
+				}
+				if err := encoding.EncodeTree(w, fiber.Map{
+					id: metrics,
+				}); err != nil {
+					return eris.Wrap(err, "error encoding metrics")
+				}
+				return w.Flush()
+			}
+
+			for rows.Next() {
+				metric, err := next(rows)
+				if err != nil {
+					return eris.Wrap(err, "error getting next result")
+				}
+
+				// New series of metrics
+				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
+					addMetrics()
+
+					if metric.RunID != id {
+						if err := flushMetrics(); err != nil {
+							return eris.Wrap(err, "error flushing metrics")
+						}
+						metrics = metrics[:0]
+						id = metric.RunID
+					}
+
+					key = metric.Key
+					values = values[:0]
+					iters = iters[:0]
+					context = fiber.Map{}
+				}
+
+				v := metric.Value
+				if metric.IsNan {
+					v = math.NaN()
+				}
+				values = append(values, v)
+				iters = append(iters, float64(metric.Iter))
+				if metric.Context != nil {
+					// to be properly decoded by AIM UI, json should be represented as a key:value object.
+					if err := json.Unmarshal(metric.Context, &context); err != nil {
+						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+					}
+					contextID = metric.ContextID
+				}
+			}
+
+			addMetrics()
+			if err := flushMetrics(); err != nil {
+				return eris.Wrap(err, "error flushing metrics")
+			}
+
+			return nil
+		}(); err != nil {
+			log.Errorf("error encountered in %s %s: error streaming metrics: %s", ctx.Method(), ctx.Path(), err)
+		}
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
+	})
 }

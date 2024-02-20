@@ -6,6 +6,9 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -13,14 +16,21 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
-	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 const (
 	MetricHistoriesDefaultLimit   = 10000000
 	MetricHistoryBulkDefaultLimit = 25000
 )
+
+// SearchResult is a helper for reporting result progress.
+type SearchResult struct {
+	RowNum int64
+	Info   fiber.Map
+}
+
+// SearchResultMap is a helper for reporting result progress.
+type SearchResultMap = map[string]SearchResult
 
 // MetricRepositoryProvider provides an interface to work with models.Metric entity.
 type MetricRepositoryProvider interface {
@@ -34,7 +44,11 @@ type MetricRepositoryProvider interface {
 	// GetMetricHistoryByRunIDAndKey returns metrics history by RunID and Key.
 	GetMetricHistoryByRunIDAndKey(ctx context.Context, runID, key string) ([]models.Metric, error)
 	// SearchMetrics returns a sql.Rows cursor for streaming the metrics matching the request.
-	SearchMetrics(ctx context.Context, req request.SearchMetricsRequest) (*sql.Rows, int64, error)
+	SearchMetrics(ctx context.Context, req request.SearchMetricsRequest) (*sql.Rows, int64, SearchResultMap, error)
+	// GetContextListByContextObjects returns list of context by provided map of contexts.
+	GetContextListByContextObjects(
+		ctx context.Context, contextsMap map[string]types.JSONB,
+	) ([]models.Context, error)
 }
 
 // MetricRepository repository to work with models.Metric entity.
@@ -240,7 +254,8 @@ func (r MetricRepository) GetMetricHistoryBulk(
 
 // SearchMetrics returns a metrics cursor according to the SearchMetricsRequest.
 func (r MetricRepository) SearchMetrics(
-	ctx context.Context, req request.SearchMetricsRequest) (*sql.Rows, int64, error) {
+	ctx context.Context, req request.SearchMetricsRequest,
+) (*sql.Rows, int64, SearchResultMap, error) {
 	qp := query.QueryParser{
 		Default: query.DefaultExpression{
 			Contains:   "run.archived",
@@ -256,16 +271,16 @@ func (r MetricRepository) SearchMetrics(
 	}
 	pq, err := qp.Parse(req.Query)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 
 	if !pq.IsMetricSelected() {
-		return nil, 0, eris.New("No metrics are selected")
+		return nil, 0, nil, eris.New("No metrics are selected")
 	}
 
 	var totalRuns int64
 	if err := r.db.WithContext(ctx).Model(&models.Run{}).Count(&totalRuns).Error; err != nil {
-		return nil, 0, eris.Wrap(err, "error counting metrics")
+		return nil, 0, nil, eris.Wrap(err, "error counting metrics")
 	}
 
 	var runs []models.Run
@@ -290,13 +305,10 @@ func (r MetricRepository) SearchMetrics(
 		)).
 		Order("runs.row_num DESC").
 		Find(&runs); tx.Error != nil {
-		return nil, 0, eris.Wrap(err, "error searching metrics")
+		return nil, 0, nil, eris.Wrap(err, "error searching metrics")
 	}
 
-	result := make(map[string]struct {
-		RowNum int64
-		Info   fiber.Map
-	}, len(runs))
+	result := make(SearchResultMap, len(runs))
 	for _, r := range runs {
 		run := fiber.Map{
 			"props": fiber.Map{
@@ -325,10 +337,7 @@ func (r MetricRepository) SearchMetrics(
 		params["tags"] = tags
 		run["params"] = params
 
-		result[r.ID] = struct {
-			RowNum int64
-			Info   fiber.Map
-		}{int64(r.RowNum), run}
+		result[r.ID] = SearchResult{int64(r.RowNum), run}
 	}
 
 	tx := r.db.WithContext(ctx).
@@ -371,13 +380,28 @@ func (r MetricRepository) SearchMetrics(
 				req.XAxis,
 			)
 	}
-
 	rows, err := tx.Rows()
 	if err != nil {
-		return nil, 0, eris.Wrap(err, "error searching metrics")
+		return nil, 0, nil, eris.Wrap(err, "error searching metrics")
 	}
 	if err := rows.Err(); err != nil {
-		return nil, 0, eris.Wrap(err, "error getting query result metrics")
+		return nil, 0, nil, eris.Wrap(err, "error getting metrics rows cursor")
 	}
-	return rows, totalRuns, nil
+
+	return rows, totalRuns, result, nil
+}
+
+// GetContextListByContextObjects returns list of context by provided map of contexts.
+func (r MetricRepository) GetContextListByContextObjects(
+	ctx context.Context, contextsMap map[string]types.JSONB,
+) ([]models.Context, error) {
+	query := r.db.WithContext(ctx)
+	for _, context := range contextsMap {
+		query = query.Or("contexts.json = ?", context)
+	}
+	var contexts []models.Context
+	if err := query.Find(&contexts).Error; err != nil {
+		return nil, eris.Wrap(err, "error getting contexts information")
+	}
+	return contexts, nil
 }

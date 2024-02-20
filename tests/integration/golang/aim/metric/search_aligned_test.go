@@ -933,9 +933,8 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 
 			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
-
+			fmt.Println("decoded_data:", decodedData)
 			xValues := make(map[int][]float64)
-
 			for _, run := range runs {
 				metricCount := 0
 				for decodedData[fmt.Sprintf("%v.%d.name", run.ID, metricCount)] != nil {

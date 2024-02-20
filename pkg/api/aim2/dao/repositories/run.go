@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rotisserie/eris"
@@ -26,6 +28,10 @@ type RunRepositoryProvider interface {
 	GetRunInfo(ctx context.Context, namespaceID uint, req *request.GetRunInfoRequest) (*models.Run, error)
 	// GetRunMetrics returns Run metrics.
 	GetRunMetrics(ctx context.Context, runID string, metricKeysMapDTO dto.MetricKeysMapDTO) ([]models.Metric, error)
+	// GetAlignedMetrics returns aligned metrics.
+	GetAlignedMetrics(
+		ctx context.Context, namespaceID uint, values []any, alignBy string,
+	) (*sql.Rows, func(*sql.Rows) (*models.AlignedMetric, error), error)
 	// GetRunByNamespaceIDAndRunID returns experiment by Namespace ID and Run ID.
 	GetRunByNamespaceIDAndRunID(ctx context.Context, namespaceID uint, runID string) (*models.Run, error)
 	// GetByID returns models.Run entity by its ID.
@@ -138,6 +144,63 @@ func (r RunRepository) GetRunMetrics(
 		return nil, eris.Wrapf(err, "error getting run metrics")
 	}
 	return metrics, nil
+}
+
+// GetAlignedMetrics returns aligned metrics.
+func (r RunRepository) GetAlignedMetrics(
+	ctx context.Context, namespaceID uint, values []any, alignBy string,
+) (*sql.Rows, func(rows *sql.Rows) (*models.AlignedMetric, error), error) {
+	var valuesStmt strings.Builder
+	length := len(values) / 4
+	for i := 0; i < length; i++ {
+		valuesStmt.WriteString("(?, ?, CAST(? AS numeric), CAST(? AS numeric))")
+		if i < length-1 {
+			valuesStmt.WriteString(",")
+		}
+	}
+	values = append(values, namespaceID, alignBy)
+	rows, err := r.db.Raw(
+		fmt.Sprintf("WITH params(run_uuid, key, context_id, steps) AS (VALUES %s)", &valuesStmt)+
+			"        SELECT m.run_uuid, "+
+			"				rm.key, "+
+			"				m.iter, "+
+			"				m.value, "+
+			"				m.is_nan, "+
+			"				rm.context_id, "+
+			"				rm.context_json"+
+			"		 FROM metrics AS m"+
+			"        RIGHT JOIN ("+
+			"          SELECT p.run_uuid, "+
+			"				  p.key, "+
+			"				  p.context_id, "+
+			"				  lm.last_iter AS max, "+
+			"				  (lm.last_iter + 1) / p.steps AS interval, "+
+			"				  contexts.json AS context_json"+
+			"          FROM params AS p"+
+			"          LEFT JOIN latest_metrics AS lm USING(run_uuid, key, context_id)"+
+			"          INNER JOIN contexts ON contexts.id = lm.context_id"+
+			"        ) rm USING(run_uuid, context_id)"+
+			"		 INNER JOIN runs AS r ON m.run_uuid = r.run_uuid"+
+			"		 INNER JOIN experiments AS e ON r.experiment_id = e.experiment_id AND e.namespace_id = ?"+
+			"        WHERE m.key = ?"+
+			"          AND m.iter <= rm.max"+
+			"          AND MOD(m.iter + 1 + rm.interval / 2, rm.interval) < 1"+
+			"        ORDER BY r.row_num DESC, rm.key, rm.context_id, m.iter",
+		values...,
+	).Rows()
+	if err != nil {
+		return nil, nil, eris.Wrap(err, "error searching aligned run metrics")
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, eris.Wrap(err, "error getting query result")
+	}
+	return rows, func(rows *sql.Rows) (*models.AlignedMetric, error) {
+		var metric models.AlignedMetric
+		if err := r.db.ScanRows(rows, &metric); err != nil {
+			return nil, eris.Wrap(err, "error getting aligned metric")
+		}
+		return &metric, nil
+	}, nil
 }
 
 // GetRunByNamespaceIDAndRunID returns experiment by Namespace ID and Run ID.

@@ -2,7 +2,7 @@ package request
 
 import "github.com/gofiber/fiber/v2"
 
-// BaseRequest defines shared fields.
+// BaseRequest defines some shared fields.
 type BaseRequest struct {
 	ReportProgress bool `query:"report_progress"`
 	TimeZoneOffset int

@@ -1,12 +1,25 @@
 package response
 
 import (
+	"bufio"
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
+	"time"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
+	log "github.com/sirupsen/logrus"
+	"gorm.io/datatypes"
+
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/encoding"
 	"github.com/G-Research/fasttrackml/pkg/common"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // GetRunInfoTracesMetricPartial is a partial response object for GetRunInfoTracesPartial.
@@ -146,4 +159,313 @@ func NewGetRunMetricsResponse(metrics []models.Metric, metricKeysMap dto.MetricK
 		})
 	}
 	return resp
+}
+
+// SearchAlignedMetricsResponse  is a response object to hold response data for
+// `GET /runs/search/metric/align` endpoint.
+type SearchAlignedMetricsResponse struct {
+	Name        string    `json:"name"`
+	Context     fiber.Map `json:"context"`
+	XAxisValues fiber.Map `json:"x_axis_values"`
+	XAxisIters  fiber.Map `json:"x_axis_iters"`
+}
+
+// NewSearchAlignedMetricsResponse creates new response object for `GET /runs/search/metric/align` endpoint.
+func NewSearchAlignedMetricsResponse(
+	ctx *fiber.Ctx, rows *sql.Rows, next func(*sql.Rows) (*models.AlignedMetric, error), capacity int,
+) {
+	ctx.Set("Content-Type", "application/octet-stream")
+	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		//nolint:errcheck
+		defer rows.Close()
+
+		flushMetrics := func(id string, metrics []SearchAlignedMetricsResponse) error {
+			if len(metrics) == 0 {
+				return nil
+			}
+			if err := encoding.EncodeTree(w, fiber.Map{
+				id: metrics,
+			}); err != nil {
+				return eris.Wrap(err, "error encoding metrics")
+			}
+			return w.Flush()
+		}
+
+		start := time.Now()
+		if err := func() error {
+			var id string
+			var key string
+			var context fiber.Map
+			var contextID uint
+
+			iters := make([]float64, 0, capacity)
+			metrics, values := make([]SearchAlignedMetricsResponse, 0), make([]float64, 0, capacity)
+			addMetrics := func() {
+				if key != "" {
+					metrics = append(metrics, SearchAlignedMetricsResponse{
+						Name:        key,
+						Context:     context,
+						XAxisValues: toNumpy(values),
+						XAxisIters:  toNumpy(iters),
+					})
+				}
+			}
+
+			for rows.Next() {
+				metric, err := next(rows)
+				if err != nil {
+					return eris.Wrap(err, "error getting next result")
+				}
+
+				// New series of metrics
+				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
+					addMetrics()
+					if metric.RunID != id {
+						if err := flushMetrics(id, metrics); err != nil {
+							return eris.Wrap(err, "error flushing metrics")
+						}
+						id, metrics = metric.RunID, metrics[:0]
+					}
+					key, values, iters, context = metric.Key, values[:0], iters[:0], fiber.Map{}
+				}
+
+				v := metric.Value
+				if metric.IsNan {
+					v = math.NaN()
+				}
+
+				iters, values = append(iters, float64(metric.Iter)), append(values, v)
+				if metric.Context != nil {
+					// to be properly decoded by AIM UI, json should be represented as a key:value object.
+					if err := json.Unmarshal(metric.Context, &context); err != nil {
+						return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+					}
+					contextID = metric.ContextID
+				}
+			}
+
+			addMetrics()
+			if err := flushMetrics(id, metrics); err != nil {
+				return eris.Wrap(err, "error flushing metrics")
+			}
+
+			return nil
+		}(); err != nil {
+			log.Errorf("error encountered in %s %s: error streaming metrics: %s", ctx.Method(), ctx.Path(), err)
+		}
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
+	})
+}
+
+// DeleteRunResponse is a response object to hold response data for `DELETE /runs/:id` endpoint.
+type DeleteRunResponse struct {
+	ID     string `json:"ID"`
+	Status string `json:"status"`
+}
+
+// NewDeleteRunResponse creates new response object for `DELETE /runs/:id` endpoint.
+func NewDeleteRunResponse(id string, status string) *DeleteRunResponse {
+	return &DeleteRunResponse{
+		ID:     id,
+		Status: status,
+	}
+}
+
+// UpdateRunResponse is a response object to hold response data for `PUT /runs/:id` endpoint.
+type UpdateRunResponse struct {
+	ID     string `json:"ID"`
+	Status string `json:"status"`
+}
+
+// NewUpdateRunResponse creates new response object for `PUT /runs/:id` endpoint.
+func NewUpdateRunResponse(id string, status string) *UpdateRunResponse {
+	return &UpdateRunResponse{
+		ID:     id,
+		Status: status,
+	}
+}
+
+// ArchiveBatchResponse is a response object to hold response data for `POST /runs/archive-batch` endpoint.
+type ArchiveBatchResponse struct {
+	Status string `json:"status"`
+}
+
+// NewArchiveBatchResponse creates new response object for `POST /runs/archive-batch` endpoint.
+func NewArchiveBatchResponse(status string) *ArchiveBatchResponse {
+	return &ArchiveBatchResponse{
+		Status: status,
+	}
+}
+
+// DeleteBatchResponse is a response object to hold response data for `DELETE /runs/delete-batch` endpoint.
+type DeleteBatchResponse struct {
+	Status string `json:"status"`
+}
+
+// NewDeleteBatchResponse creates new response object for `POST /runs/archive-batch` endpoint.
+func NewDeleteBatchResponse(status string) *DeleteBatchResponse {
+	return &DeleteBatchResponse{
+		Status: status,
+	}
+}
+
+// NewStreamMetricsResponse streams the provided sql.Rows to the fiber context.
+//
+//nolint:gocyclo
+func NewStreamMetricsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
+	result repositories.SearchResultMap, req request.SearchMetricsRequest,
+) {
+	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		//nolint:errcheck
+		defer rows.Close()
+
+		start := time.Now()
+
+		var xAxis bool
+		if req.XAxis != "" {
+			xAxis = true
+		}
+
+		if err := func() error {
+			var (
+				id          string
+				key         string
+				context     fiber.Map
+				contextID   uint
+				metrics     []fiber.Map
+				values      []float64
+				iters       []float64
+				epochs      []float64
+				timestamps  []float64
+				xAxisValues []float64
+				progress    int
+			)
+			reportProgress := func(cur int64) error {
+				if !req.ReportProgress {
+					return nil
+				}
+				err := encoding.EncodeTree(w, fiber.Map{
+					fmt.Sprintf("progress_%d", progress): []int64{cur, totalRuns},
+				})
+				if err != nil {
+					return err
+				}
+				progress++
+				return w.Flush()
+			}
+			addMetrics := func() {
+				if key != "" {
+					metric := fiber.Map{
+						"name":          key,
+						"context":       context,
+						"slice":         []int{0, 0, req.Steps},
+						"values":        toNumpy(values),
+						"iters":         toNumpy(iters),
+						"epochs":        toNumpy(epochs),
+						"timestamps":    toNumpy(timestamps),
+						"x_axis_values": nil,
+						"x_axis_iters":  nil,
+					}
+					if xAxis {
+						metric["x_axis_values"] = toNumpy(xAxisValues)
+						metric["x_axis_iters"] = metric["iters"]
+					}
+					metrics = append(metrics, metric)
+				}
+			}
+			flushMetrics := func() error {
+				if id == "" {
+					return nil
+				}
+				if err := encoding.EncodeTree(w, fiber.Map{
+					id: fiber.Map{
+						"traces": metrics,
+					},
+				}); err != nil {
+					return err
+				}
+				if err := reportProgress(totalRuns - result[id].RowNum); err != nil {
+					return err
+				}
+				return w.Flush()
+			}
+			for rows.Next() {
+				var metric struct {
+					database.Metric
+					Context    datatypes.JSON `gorm:"column:context_json"`
+					XAxisValue float64        `gorm:"column:x_axis_value"`
+					XAxisIsNaN bool           `gorm:"column:x_axis_is_nan"`
+				}
+				if err := database.DB.ScanRows(rows, &metric); err != nil {
+					return err
+				}
+
+				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
+					addMetrics()
+
+					if metric.RunID != id {
+						if err := flushMetrics(); err != nil {
+							return err
+						}
+
+						metrics = make([]fiber.Map, 0)
+
+						if err := encoding.EncodeTree(w, fiber.Map{
+							metric.RunID: result[metric.RunID].Info,
+						}); err != nil {
+							return err
+						}
+
+						id = metric.RunID
+					}
+
+					values = make([]float64, 0, req.Steps)
+					iters = make([]float64, 0, req.Steps)
+					epochs = make([]float64, 0, req.Steps)
+					context = fiber.Map{}
+					timestamps = make([]float64, 0, req.Steps)
+					if xAxis {
+						xAxisValues = make([]float64, 0, req.Steps)
+					}
+					key = metric.Key
+				}
+
+				v := metric.Value
+				if metric.IsNan {
+					v = math.NaN()
+				}
+				values = append(values, v)
+				iters = append(iters, float64(metric.Iter))
+				epochs = append(epochs, float64(metric.Step))
+				timestamps = append(timestamps, float64(metric.Timestamp)/1000)
+				if xAxis {
+					x := metric.XAxisValue
+					if metric.XAxisIsNaN {
+						x = math.NaN()
+					}
+					xAxisValues = append(xAxisValues, x)
+				}
+				// to be properly decoded by AIM UI, json should be represented as a key:value object.
+				if err := json.Unmarshal(metric.Context, &context); err != nil {
+					return eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+				}
+				contextID = metric.ContextID
+			}
+
+			addMetrics()
+			if err := flushMetrics(); err != nil {
+				return err
+			}
+
+			if err := reportProgress(totalRuns); err != nil {
+				return err
+			}
+
+			return nil
+		}(); err != nil {
+			log.Errorf("Error encountered in %s %s: error streaming metrics: %s", ctx.Method(), ctx.Path(), err)
+		}
+
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
+	})
 }

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"reflect"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -351,18 +350,6 @@ func ActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgress 
 		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
 	})
 	return nil
-}
-
-// CompareJson compares two json objects.
-func CompareJson(json1, json2 []byte) bool {
-	var j, j2 interface{}
-	if err := json.Unmarshal(json1, &j); err != nil {
-		return false
-	}
-	if err := json.Unmarshal(json2, &j2); err != nil {
-		return false
-	}
-	return reflect.DeepEqual(j2, j)
 }
 
 // convertError converts api.ErrorResponse to fiber error.

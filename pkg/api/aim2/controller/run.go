@@ -157,6 +157,7 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 	req.TimeZoneOffset = tzOffset
 	req.NamespaceID = ns.ID
 
+	//nolint:rowserrcheck
 	rows, totalRuns, result, err := c.runService.SearchMetrics(ctx.Context(), req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())

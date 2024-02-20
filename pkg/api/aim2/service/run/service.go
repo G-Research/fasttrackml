@@ -74,7 +74,7 @@ func (s Service) GetRunMetrics(
 		return nil, nil, api.NewResourceDoesNotExistError("run '%s' not found", runID)
 	}
 
-	metricKeysMap, err := ConvertRunMetricsRequestToMetricKeysMapDTO(req)
+	metricKeysMap, err := ConvertRunMetricsRequestToMap(req)
 	if err != nil {
 		return nil, nil, api.NewBadRequestError("unable to convert request: %s", err)
 	}

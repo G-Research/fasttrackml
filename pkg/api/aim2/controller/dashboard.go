@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
@@ -20,7 +21,10 @@ func (c Controller) GetDashboards(ctx *fiber.Ctx) error {
 	if err != nil {
 		return convertError(err)
 	}
-	return ctx.JSON(dashboards)
+
+	resp := response.NewGetDashboardsResponse(dashboards)
+	log.Debugf("getDashboards response %#v", resp)
+	return ctx.JSON(resp)
 }
 
 // CreateDashboard handles `POST /dashboards` endpoint.
@@ -38,7 +42,10 @@ func (c Controller) CreateDashboard(ctx *fiber.Ctx) error {
 	if err != nil {
 		return convertError(err)
 	}
-	return ctx.Status(fiber.StatusCreated).JSON(dash)
+
+	resp := response.NewCreateDashboardResponse(dash)
+	log.Debugf("createDashboard response %#v", resp)
+	return ctx.JSON(resp)
 }
 
 // GetDashboard handles `GET /dashboard/:id` endpoint.
@@ -57,7 +64,10 @@ func (c Controller) GetDashboard(ctx *fiber.Ctx) error {
 	if err != nil {
 		return convertError(err)
 	}
-	return ctx.JSON(dashboard)
+
+	resp := response.NewGetDashboardResponse(dashboard)
+	log.Debugf("getDashboard response %#v", resp)
+	return ctx.JSON(resp)
 }
 
 // UpdateDashboard handles `PUT /dashboard/:id` endpoint.
@@ -79,7 +89,10 @@ func (c Controller) UpdateDashboard(ctx *fiber.Ctx) error {
 	if err != nil {
 		return convertError(err)
 	}
-	return ctx.JSON(dash)
+
+	resp := response.NewUpdateDashboardResponse(dash)
+	log.Debugf("updateDashboard response %#v", resp)
+	return ctx.JSON(resp)
 }
 
 // DeleteDashboard handles `DELETE /dashboards/:id` endpoint.

@@ -252,3 +252,43 @@ func NewSearchAlignedMetricsResponse(
 		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
 	})
 }
+
+// DeleteRunResponse is a response object to hold response data for `DELETE /runs/:id` endpoint.
+type DeleteRunResponse struct {
+	ID     string `json:"ID"`
+	Status string `json:"status"`
+}
+
+// NewDeleteRunResponse creates new response object for `DELETE /runs/:id` endpoint.
+func NewDeleteRunResponse(id string, status string) *DeleteRunResponse {
+	return &DeleteRunResponse{
+		ID:     id,
+		Status: status,
+	}
+}
+
+// UpdateRunResponse is a response object to hold response data for `PUT /runs/:id` endpoint.
+type UpdateRunResponse struct {
+	ID     string `json:"ID"`
+	Status string `json:"status"`
+}
+
+// NewUpdateRunResponse creates new response object for `PUT /runs/:id` endpoint.
+func NewUpdateRunResponse(id string, status string) *UpdateRunResponse {
+	return &UpdateRunResponse{
+		ID:     id,
+		Status: status,
+	}
+}
+
+// ArchiveBatchResponse is a response object to hold response data for `POST /runs/archive-batch` endpoint.
+type ArchiveBatchResponse struct {
+	Status string `json:"status"`
+}
+
+// NewArchiveBatchResponse creates new response object for `POST /runs/archive-batch` endpoint.
+func NewArchiveBatchResponse(status string) *ArchiveBatchResponse {
+	return &ArchiveBatchResponse{
+		Status: status,
+	}
+}

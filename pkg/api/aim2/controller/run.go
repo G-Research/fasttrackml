@@ -14,7 +14,6 @@ import (
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/datatypes"
-	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
@@ -488,7 +487,7 @@ func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 	return nil
 }
 
-// DeleteRun will remove the Run from the repo
+// DeleteRun handles `DELETE /runs/:id` endpoint.
 func (c Controller) DeleteRun(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -501,32 +500,14 @@ func (c Controller) DeleteRun(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	// TODO this code should move to service
-	runRepository := repositories.NewRunRepository(database.DB)
-	run, err := runRepository.GetByNamespaceIDAndRunID(ctx.Context(), ns.ID, req.ID)
-	if err != nil {
-		return fiber.NewError(
-			fiber.StatusInternalServerError, fmt.Sprintf("unable to find run '%s': %s", req.ID, err),
-		)
-	}
-	if run == nil {
-		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("unable to find run '%s'", req.ID))
+	if err := c.runService.DeleteRun(ctx.Context(), ns, &req); err != nil {
+		return err
 	}
 
-	// TODO this code should move to service with injected repository
-	if err = runRepository.Delete(ctx.Context(), ns.ID, run); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError,
-			fmt.Sprintf("unable to delete run %q: %s", req.ID, err),
-		)
-	}
-
-	return ctx.JSON(fiber.Map{
-		"id":     req.ID,
-		"status": "OK",
-	})
+	return ctx.JSON(response.NewDeleteRunResponse(req.ID, "OK"))
 }
 
-// UpdateRun will update the run name, description, and lifecycle stage
+// UpdateRun handles `PUT /runs/:id` endpoint.
 func (c Controller) UpdateRun(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -543,52 +524,14 @@ func (c Controller) UpdateRun(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	// TODO this code should move to service
-	runRepository := repositories.NewRunRepository(database.DB)
-	run, err := runRepository.GetByNamespaceIDAndRunID(ctx.Context(), ns.ID, req.ID)
-	if err != nil {
-		return fiber.NewError(
-			fiber.StatusInternalServerError, fmt.Sprintf("unable to find run '%s': %s", req.ID, err),
-		)
-	}
-	if run == nil {
-		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("unable to find run '%s'", req.ID))
+	if err := c.runService.UpdateRun(ctx.Context(), ns, &req); err != nil {
+		return err
 	}
 
-	if req.Archived != nil {
-		if *req.Archived {
-			if err := runRepository.Archive(ctx.Context(), run); err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError,
-					fmt.Sprintf("unable to archive/restore run %q: %s", req.ID, err))
-			}
-		} else {
-			if err := runRepository.Restore(ctx.Context(), run); err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError,
-					fmt.Sprintf("unable to archive/restore run %q: %s", req.ID, err))
-			}
-		}
-	}
-
-	if req.Name != nil {
-		run.Name = *req.Name
-		// TODO:DSuhinin - transaction?
-		if err := database.DB.Transaction(func(tx *gorm.DB) error {
-			if err := runRepository.UpdateWithTransaction(ctx.Context(), tx, run); err != nil {
-				return err
-			}
-			return nil
-		}); err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError,
-				fmt.Sprintf("unable to update run %q: %s", req.ID, err))
-		}
-	}
-
-	return ctx.JSON(fiber.Map{
-		"id":     req.ID,
-		"status": "OK",
-	})
+	return ctx.JSON(response.NewUpdateRunResponse(req.ID, "OK"))
 }
 
+// ArchiveBatch handles `POST /runs/archive-batch` endpoint.
 func (c Controller) ArchiveBatch(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -601,23 +544,14 @@ func (c Controller) ArchiveBatch(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	// TODO this code should move to service
-	runRepo := repositories.NewRunRepository(database.DB)
-	if ctx.Query("archive") == "true" {
-		if err := runRepo.ArchiveBatch(ctx.Context(), ns.ID, req); err != nil {
-			return err
-		}
-	} else {
-		if err := runRepo.RestoreBatch(ctx.Context(), ns.ID, req); err != nil {
-			return err
-		}
+	if err := c.runService.ArchiveBatch(ctx.Context(), ns, ctx.Query("archive"), &req); err != nil {
+		return err
 	}
 
-	return ctx.JSON(fiber.Map{
-		"status": "OK",
-	})
+	return ctx.JSON(response.NewArchiveBatchResponse("OK"))
 }
 
+// DeleteBatch handles `DELETE /runs/delete-batch` endpoint.
 func (c Controller) DeleteBatch(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -635,6 +569,7 @@ func (c Controller) DeleteBatch(ctx *fiber.Ctx) error {
 	if err := runRepo.DeleteBatch(ctx.Context(), ns.ID, req); err != nil {
 		return err
 	}
+
 	return ctx.JSON(fiber.Map{
 		"status": "OK",
 	})

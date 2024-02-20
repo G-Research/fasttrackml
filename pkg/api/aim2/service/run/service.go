@@ -140,3 +140,74 @@ func (s Service) SearchAlignedMetrics(
 
 	return rows, next, capacity, nil
 }
+
+// DeleteRun deletes requested run.
+func (s Service) DeleteRun(
+	ctx context.Context, namespace *mlflowModels.Namespace, req *request.DeleteRunRequest,
+) error {
+	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespace.ID, req.ID)
+	if err != nil {
+		return api.NewInternalError("error getting run by id %s: %s", req.ID, err)
+	}
+
+	if run == nil {
+		return api.NewResourceDoesNotExistError("run '%s' not found", req.ID)
+	}
+
+	if err = s.runRepository.Delete(ctx, namespace.ID, run); err != nil {
+		return api.NewInternalError("unable to delete run %q: %s", req.ID, err)
+	}
+	return nil
+}
+
+// UpdateRun updates requested run.
+func (s Service) UpdateRun(
+	ctx context.Context, namespace *mlflowModels.Namespace, req *request.UpdateRunRequest,
+) error {
+	// TODO this code should move to service
+	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespace.ID, req.ID)
+	if err != nil {
+		return api.NewInternalError("error getting run by id %s: %s", req.ID, err)
+	}
+
+	if run == nil {
+		return api.NewResourceDoesNotExistError("run '%s' not found", req.ID)
+	}
+
+	if req.Archived != nil {
+		if *req.Archived {
+			if err := s.runRepository.Archive(ctx, run); err != nil {
+				return api.NewInternalError("error archiving run %s: %s", req.ID, err)
+			}
+		} else {
+			if err := s.runRepository.Restore(ctx, run); err != nil {
+				return api.NewInternalError("error restoring run %s: %s", req.ID, err)
+			}
+		}
+	}
+
+	if req.Name != nil {
+		run.Name = *req.Name
+		if err := s.runRepository.Update(ctx, run); err != nil {
+			return api.NewInternalError("error updating run %s: %s", req.ID, err)
+		}
+	}
+	return nil
+}
+
+// ArchiveBatch archives runs in batches.
+func (s Service) ArchiveBatch(
+	ctx context.Context, namespace *mlflowModels.Namespace, archive string, req *request.ArchiveBatchRequest,
+) error {
+	// TODO this code should move to service
+	if archive == "true" {
+		if err := s.runRepository.ArchiveBatch(ctx, namespace.ID, *req); err != nil {
+			return api.NewInternalError("error archiving runs: %s", err)
+		}
+	} else {
+		if err := s.runRepository.RestoreBatch(ctx, namespace.ID, *req); err != nil {
+			return api.NewInternalError("error restoring runs: %s", err)
+		}
+	}
+	return nil
+}

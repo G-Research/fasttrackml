@@ -175,6 +175,18 @@ func NewSearchAlignedMetricsResponse(
 		//nolint:errcheck
 		defer rows.Close()
 
+		flushMetrics := func(id string, metrics []SearchAlignedMetricsResponse) error {
+			if len(metrics) == 0 {
+				return nil
+			}
+			if err := encoding.EncodeTree(w, fiber.Map{
+				id: metrics,
+			}); err != nil {
+				return eris.Wrap(err, "error encoding metrics")
+			}
+			return w.Flush()
+		}
+
 		start := time.Now()
 		if err := func() error {
 			var id string
@@ -182,7 +194,8 @@ func NewSearchAlignedMetricsResponse(
 			var context fiber.Map
 			var contextID uint
 
-			metrics, values, iters := make([]SearchAlignedMetricsResponse, 0), make([]float64, 0, capacity), make([]float64, 0, capacity)
+			iters := make([]float64, 0, capacity)
+			metrics, values := make([]SearchAlignedMetricsResponse, 0), make([]float64, 0, capacity)
 			addMetrics := func() {
 				if key != "" {
 					metrics = append(metrics, SearchAlignedMetricsResponse{
@@ -192,18 +205,6 @@ func NewSearchAlignedMetricsResponse(
 						XAxisIters:  toNumpy(iters),
 					})
 				}
-			}
-
-			flushMetrics := func() error {
-				if id == "" {
-					return nil
-				}
-				if err := encoding.EncodeTree(w, fiber.Map{
-					id: metrics,
-				}); err != nil {
-					return eris.Wrap(err, "error encoding metrics")
-				}
-				return w.Flush()
 			}
 
 			for rows.Next() {
@@ -216,7 +217,7 @@ func NewSearchAlignedMetricsResponse(
 				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
 					addMetrics()
 					if metric.RunID != id {
-						if err := flushMetrics(); err != nil {
+						if err := flushMetrics(id, metrics); err != nil {
 							return eris.Wrap(err, "error flushing metrics")
 						}
 						metrics = metrics[:0]
@@ -233,8 +234,8 @@ func NewSearchAlignedMetricsResponse(
 				if metric.IsNan {
 					v = math.NaN()
 				}
-				values = append(values, v)
-				iters = append(iters, float64(metric.Iter))
+
+				iters, values = append(iters, float64(metric.Iter)), append(values, v)
 				if metric.Context != nil {
 					// to be properly decoded by AIM UI, json should be represented as a key:value object.
 					if err := json.Unmarshal(metric.Context, &context); err != nil {
@@ -245,7 +246,7 @@ func NewSearchAlignedMetricsResponse(
 			}
 
 			addMetrics()
-			if err := flushMetrics(); err != nil {
+			if err := flushMetrics(id, metrics); err != nil {
 				return eris.Wrap(err, "error flushing metrics")
 			}
 

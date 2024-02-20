@@ -339,7 +339,7 @@ func (r RunRepository) Create(ctx context.Context, run *models.Run) error {
 
 // Update updates existing models.Run entity.
 func (r RunRepository) Update(ctx context.Context, run *models.Run) error {
-	if err := r.db.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&run).Omit("Experiment").Updates(run).Error; err != nil {
 		return eris.Wrapf(err, "error updating run with id: %s", run.ID)
 	}
 	return nil

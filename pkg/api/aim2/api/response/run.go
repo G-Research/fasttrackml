@@ -261,7 +261,7 @@ func NewSearchAlignedMetricsResponse(
 
 // DeleteRunResponse is a response object to hold response data for `DELETE /runs/:id` endpoint.
 type DeleteRunResponse struct {
-	ID     string `json:"ID"`
+	ID     string `json:"id"`
 	Status string `json:"status"`
 }
 

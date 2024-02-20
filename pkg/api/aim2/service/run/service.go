@@ -184,7 +184,6 @@ func (s Service) DeleteRun(
 func (s Service) UpdateRun(
 	ctx context.Context, namespace *mlflowModels.Namespace, req *request.UpdateRunRequest,
 ) error {
-	// TODO this code should move to service
 	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespace.ID, req.ID)
 	if err != nil {
 		return api.NewInternalError("error getting run by id %s: %s", req.ID, err)

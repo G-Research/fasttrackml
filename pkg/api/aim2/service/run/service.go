@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 
+	"github.com/rotisserie/eris"
+
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
@@ -13,6 +15,13 @@ import (
 	mlflowModels "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+)
+
+// allowed batch actions.
+const (
+	BatchActionDelete  = "delete"
+	BatchActionArchive = "archive"
+	BatchActionRestore = "restore"
 )
 
 // Service provides service layer to work with `run` business logic.
@@ -195,19 +204,24 @@ func (s Service) UpdateRun(
 	return nil
 }
 
-// ArchiveBatch archives runs in batches.
-func (s Service) ArchiveBatch(
-	ctx context.Context, namespace *mlflowModels.Namespace, archive string, req *request.ArchiveBatchRequest,
+// ProcessBatch processes runs in batch.
+func (s Service) ProcessBatch(
+	ctx context.Context, namespace *mlflowModels.Namespace, action string, ids []string,
 ) error {
 	// TODO this code should move to service
-	if archive == "true" {
-		if err := s.runRepository.ArchiveBatch(ctx, namespace.ID, *req); err != nil {
+	switch action {
+	case BatchActionArchive:
+		if err := s.runRepository.ArchiveBatch(ctx, namespace.ID, ids); err != nil {
 			return api.NewInternalError("error archiving runs: %s", err)
 		}
-	} else {
-		if err := s.runRepository.RestoreBatch(ctx, namespace.ID, *req); err != nil {
+	case BatchActionRestore:
+		if err := s.runRepository.RestoreBatch(ctx, namespace.ID, ids); err != nil {
 			return api.NewInternalError("error restoring runs: %s", err)
 		}
+	case BatchActionDelete:
+		if err := s.runRepository.DeleteBatch(ctx, namespace.ID, ids); err != nil {
+			return api.NewInternalError("error deleting runs: %s", err)
+		}
 	}
-	return nil
+	return eris.Errorf("unsupported batch action: %s", action)
 }

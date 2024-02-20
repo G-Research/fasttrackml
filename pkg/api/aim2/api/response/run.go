@@ -292,3 +292,15 @@ func NewArchiveBatchResponse(status string) *ArchiveBatchResponse {
 		Status: status,
 	}
 }
+
+// DeleteBatchResponse is a response object to hold response data for `DELETE /runs/delete-batch` endpoint.
+type DeleteBatchResponse struct {
+	Status string `json:"status"`
+}
+
+// NewDeleteBatchResponse creates new response object for `POST /runs/archive-batch` endpoint.
+func NewDeleteBatchResponse(status string) *DeleteBatchResponse {
+	return &DeleteBatchResponse{
+		Status: status,
+	}
+}

@@ -20,7 +20,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/service/run"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
@@ -544,7 +544,12 @@ func (c Controller) ArchiveBatch(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if err := c.runService.ArchiveBatch(ctx.Context(), ns, ctx.Query("archive"), &req); err != nil {
+	action := run.BatchActionRestore
+	if ctx.Query("archive") == "true" {
+		action = run.BatchActionArchive
+	}
+
+	if err := c.runService.ProcessBatch(ctx.Context(), ns, action, req); err != nil {
 		return err
 	}
 
@@ -564,15 +569,11 @@ func (c Controller) DeleteBatch(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	// TODO this code should move to service
-	runRepo := repositories.NewRunRepository(database.DB)
-	if err := runRepo.DeleteBatch(ctx.Context(), ns.ID, req); err != nil {
+	if err := c.runService.ProcessBatch(ctx.Context(), ns, run.BatchActionDelete, req); err != nil {
 		return err
 	}
 
-	return ctx.JSON(fiber.Map{
-		"status": "OK",
-	})
+	return ctx.JSON(response.NewArchiveBatchResponse("OK"))
 }
 
 func toNumpy(values []float64) fiber.Map {

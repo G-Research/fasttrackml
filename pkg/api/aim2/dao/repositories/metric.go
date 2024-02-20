@@ -2,12 +2,19 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 const (
@@ -26,6 +33,8 @@ type MetricRepositoryProvider interface {
 	) ([]models.Metric, error)
 	// GetMetricHistoryByRunIDAndKey returns metrics history by RunID and Key.
 	GetMetricHistoryByRunIDAndKey(ctx context.Context, runID, key string) ([]models.Metric, error)
+	// SearchMetrics returns a sql.Rows cursor for streaming the metrics matching the request.
+	SearchMetrics(ctx context.Context, req request.SearchMetricsRequest) (*sql.Rows, int64, error)
 }
 
 // MetricRepository repository to work with models.Metric entity.
@@ -227,4 +236,148 @@ func (r MetricRepository) GetMetricHistoryBulk(
 		return nil, eris.Wrapf(err, "error getting metric history by run ids: %v and key: %s", runIDs, key)
 	}
 	return metrics, nil
+}
+
+// SearchMetrics returns a metrics cursor according to the SearchMetricsRequest.
+func (r MetricRepository) SearchMetrics(
+	ctx context.Context, req request.SearchMetricsRequest) (*sql.Rows, int64, error) {
+	qp := query.QueryParser{
+		Default: query.DefaultExpression{
+			Contains:   "run.archived",
+			Expression: "not run.archived",
+		},
+		Tables: map[string]string{
+			"runs":        "runs",
+			"experiments": "experiments",
+			"metrics":     "latest_metrics",
+		},
+		TzOffset:  req.TimeZoneOffset,
+		Dialector: r.db.Dialector.Name(),
+	}
+	pq, err := qp.Parse(req.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if !pq.IsMetricSelected() {
+		return nil, 0, eris.New("No metrics are selected")
+	}
+
+	var totalRuns int64
+	if err := r.db.WithContext(ctx).Model(&models.Run{}).Count(&totalRuns).Error; err != nil {
+		return nil, 0, eris.Wrap(err, "error counting metrics")
+	}
+
+	var runs []models.Run
+	if tx := r.db.WithContext(ctx).
+		InnerJoins(
+			"Experiment",
+			r.db.WithContext(ctx).Select(
+				"ID", "Name",
+			).Where(&models.Experiment{NamespaceID: req.NamespaceID}),
+		).
+		Preload("Params").
+		Preload("Tags").
+		Where("run_uuid IN (?)", pq.Filter(r.db.WithContext(ctx).
+			Select("runs.run_uuid").
+			Table("runs").
+			Joins(
+				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+				req.NamespaceID,
+			).
+			Joins("JOIN latest_metrics USING(run_uuid)").
+			Joins("JOIN contexts ON latest_metrics.context_id = contexts.id"),
+		)).
+		Order("runs.row_num DESC").
+		Find(&runs); tx.Error != nil {
+		return nil, 0, eris.Wrap(err, "error searching metrics")
+	}
+
+	result := make(map[string]struct {
+		RowNum int64
+		Info   fiber.Map
+	}, len(runs))
+	for _, r := range runs {
+		run := fiber.Map{
+			"props": fiber.Map{
+				"name":        r.Name,
+				"description": nil,
+				"experiment": fiber.Map{
+					"id":   fmt.Sprintf("%d", *r.Experiment.ID),
+					"name": r.Experiment.Name,
+				},
+				"tags":          []string{}, // TODO insert real tags
+				"creation_time": float64(r.StartTime.Int64) / 1000,
+				"end_time":      float64(r.EndTime.Int64) / 1000,
+				"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
+				"active":        r.Status == models.StatusRunning,
+			},
+		}
+
+		params := make(fiber.Map, len(r.Params)+1)
+		for _, p := range r.Params {
+			params[p.Key] = p.Value
+		}
+		tags := make(map[string]string, len(r.Tags))
+		for _, t := range r.Tags {
+			tags[t.Key] = t.Value
+		}
+		params["tags"] = tags
+		run["params"] = params
+
+		result[r.ID] = struct {
+			RowNum int64
+			Info   fiber.Map
+		}{int64(r.RowNum), run}
+	}
+
+	tx := r.db.WithContext(ctx).
+		Select(`
+			metrics.*,
+			runmetrics.context_json`,
+		).
+		Table("metrics").
+		Joins(
+			"INNER JOIN (?) runmetrics USING(run_uuid, key, context_id)",
+			pq.Filter(r.db.WithContext(ctx).
+				Select(
+					"runs.run_uuid",
+					"runs.row_num",
+					"latest_metrics.key",
+					"latest_metrics.context_id",
+					"contexts.json AS context_json",
+					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(req.Steps)),
+				).
+				Table("runs").
+				Joins(
+					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+					req.NamespaceID,
+				).
+				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
+				Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id")),
+		).
+		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
+		Order("runmetrics.row_num DESC").
+		Order("metrics.key").
+		Order("metrics.context_id").
+		Order("metrics.iter")
+
+	if req.XAxis != "" {
+		tx.
+			Select("metrics.*", "runmetrics.context_json", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
+			Joins(
+				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND "+
+					"metrics.iter = x_axis.iter AND x_axis.context_id = metrics.context_id AND x_axis.key = ?",
+				req.XAxis,
+			)
+	}
+
+	rows, err := tx.Rows()
+	if err != nil {
+		return nil, 0, eris.Wrap(err, "error searching metrics")
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, eris.Wrap(err, "error getting query result metrics")
+	}
+	return rows, totalRuns, nil
 }

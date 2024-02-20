@@ -2,6 +2,13 @@ package request
 
 import "github.com/gofiber/fiber/v2"
 
+// BaseRequest defines shared fields.
+type BaseRequest struct {
+	ReportProgress bool `query:"report_progress"`
+	TimeZoneOffset int
+	NamespaceID    uint
+}
+
 // GetRunInfoRequest is a request object for `GET /runs/:id/info` endpoint.
 type GetRunInfoRequest struct {
 	ID         string   `params:"id"`
@@ -17,7 +24,7 @@ type GetRunMetricsRequest []struct {
 
 // GetRunsActiveRequest is a request object for `GET /runs/active` endpoint.
 type GetRunsActiveRequest struct {
-	ReportProgress bool `query:"report_progress"`
+	BaseRequest
 }
 
 // UpdateRunRequest is a request struct for `PUT /runs/:id` endpoint.
@@ -34,25 +41,23 @@ type UpdateRunRequest struct {
 
 // SearchRunsRequest is a request object for `GET /runs/search/run` endpoint.
 type SearchRunsRequest struct {
-	Query          string `query:"q"`
-	Limit          int    `query:"limit"`
-	Offset         string `query:"offset"`
-	Action         string `query:"action"`
-	SkipSystem     bool   `query:"skip_system"`
-	ReportProgress bool   `query:"report_progress"`
-	ExcludeParams  bool   `query:"exclude_params"`
-	ExcludeTraces  bool   `query:"exclude_traces"`
-	TimeZoneOffset int
-	NamespaceID    uint
+	BaseRequest
+	Query         string `query:"q"`
+	Limit         int    `query:"limit"`
+	Offset        string `query:"offset"`
+	Action        string `query:"action"`
+	SkipSystem    bool   `query:"skip_system"`
+	ExcludeParams bool   `query:"exclude_params"`
+	ExcludeTraces bool   `query:"exclude_traces"`
 }
 
 // SearchMetricsRequest is a request struct for `GET /runs/search/metric` endpoint.
 type SearchMetricsRequest struct {
-	Query          string `query:"q"`
-	Steps          int    `query:"p"`
-	XAxis          string `query:"x_axis"`
-	SkipSystem     bool   `query:"skip_system"`
-	ReportProgress bool   `query:"report_progress"`
+	BaseRequest
+	Query      string `query:"q"`
+	Steps      int    `query:"p"`
+	XAxis      string `query:"x_axis"`
+	SkipSystem bool   `query:"skip_system"`
 }
 
 // SearchAlignedMetricsRequest is a request struct for `GET /runs/search/metric/align` endpoint.

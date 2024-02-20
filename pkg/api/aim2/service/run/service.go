@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
@@ -14,13 +15,16 @@ import (
 
 // Service provides service layer to work with `run` business logic.
 type Service struct {
-	runRepository repositories.RunRepositoryProvider
+	runRepository    repositories.RunRepositoryProvider
+	metricRepository repositories.MetricRepositoryProvider
 }
 
 // NewService creates new Service instance.
-func NewService(runRepository repositories.RunRepositoryProvider) *Service {
+func NewService(runRepository repositories.RunRepositoryProvider,
+	metricRepository repositories.MetricRepositoryProvider) *Service {
 	return &Service{
-		runRepository: runRepository,
+		runRepository:    runRepository,
+		metricRepository: metricRepository,
 	}
 }
 
@@ -82,11 +86,22 @@ func (s Service) GetRunsActive(
 
 // SearchRuns returns the list of runs by provided search criteria.
 func (s Service) SearchRuns(
-	ctx context.Context, namespace *mlflowModels.Namespace, req request.SearchRunsRequest,
+	ctx context.Context, req request.SearchRunsRequest,
 ) ([]models.Run, int64, error) {
 	runs, total, err := s.runRepository.SearchRuns(ctx, req)
 	if err != nil {
 		return nil, 0, api.NewInternalError("error searching runs: %s", err)
 	}
 	return runs, total, nil
+}
+
+// SearchMetrics returns the list of metrics by provided search criteria.
+func (s Service) SearchMetrics(
+	ctx context.Context, req request.SearchMetricsRequest,
+) (*sql.Rows, int64, error) {
+	rows, total, err := s.metricRepository.SearchMetrics(ctx, req)
+	if err != nil {
+		return nil, 0, api.NewInternalError("error searching runs: %s", err)
+	}
+	return rows, total, nil
 }

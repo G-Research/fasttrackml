@@ -133,23 +133,20 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
+	log.Debugf("found %d runs", len(runs))
 
 	// Choose response
 	switch req.Action {
 	case "export":
-		log.Debugf("found %d runs", len(runs))
 		RunsSearchAsCSVResponse(ctx, runs, req.ExcludeTraces, req.ExcludeParams)
 	default:
-		log.Debugf("found %d runs", len(runs))
 		RunsSearchAsStreamResponse(ctx, runs, total, req.ExcludeTraces, req.ExcludeParams, req.ReportProgress)
 	}
 
 	return nil
 }
 
-// TODO:get back and fix `gocyclo` problem.
-//
-//nolint:gocyclo
+// SearchMetrics handles `GET /runs/search/metric` endpoint.
 func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -174,147 +171,15 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
+	req.TimeZoneOffset = tzOffset
+	req.NamespaceID = ns.ID
 
-	qp := query.QueryParser{
-		Default: query.DefaultExpression{
-			Contains:   "run.archived",
-			Expression: "not run.archived",
-		},
-		Tables: map[string]string{
-			"runs":        "runs",
-			"experiments": "experiments",
-			"metrics":     "latest_metrics",
-		},
-		TzOffset:  tzOffset,
-		Dialector: database.DB.Dialector.Name(),
-	}
-	pq, err := qp.Parse(req.Query)
-	if err != nil {
-		return err
-	}
-
-	if !pq.IsMetricSelected() {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, "No metrics are selected")
-	}
-
-	var totalRuns int64
-	if tx := database.DB.Model(&database.Run{}).Count(&totalRuns); tx.Error != nil {
-		return fmt.Errorf("error searching run metrics: %w", tx.Error)
-	}
-
-	var runs []database.Run
-	if tx := database.DB.
-		InnerJoins(
-			"Experiment",
-			database.DB.Select(
-				"ID", "Name",
-			).Where(&models.Experiment{NamespaceID: ns.ID}),
-		).
-		Preload("Params").
-		Preload("Tags").
-		Where("run_uuid IN (?)", pq.Filter(database.DB.
-			Select("runs.run_uuid").
-			Table("runs").
-			Joins(
-				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
-				ns.ID,
-			).
-			Joins("JOIN latest_metrics USING(run_uuid)").
-			Joins("JOIN contexts ON latest_metrics.context_id = contexts.id"),
-		)).
-		Order("runs.row_num DESC").
-		Find(&runs); tx.Error != nil {
-		return fmt.Errorf("error searching run metrics: %w", tx.Error)
-	}
-
-	result := make(map[string]struct {
-		RowNum int64
-		Info   fiber.Map
-	}, len(runs))
-	for _, r := range runs {
-		run := fiber.Map{
-			"props": fiber.Map{
-				"name":        r.Name,
-				"description": nil,
-				"experiment": fiber.Map{
-					"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-					"name": r.Experiment.Name,
-				},
-				"tags":          []string{}, // TODO insert real tags
-				"creation_time": float64(r.StartTime.Int64) / 1000,
-				"end_time":      float64(r.EndTime.Int64) / 1000,
-				"archived":      r.LifecycleStage == database.LifecycleStageDeleted,
-				"active":        r.Status == database.StatusRunning,
-			},
-		}
-
-		params := make(fiber.Map, len(r.Params)+1)
-		for _, p := range r.Params {
-			params[p.Key] = p.Value
-		}
-		tags := make(map[string]string, len(r.Tags))
-		for _, t := range r.Tags {
-			tags[t.Key] = t.Value
-		}
-		params["tags"] = tags
-		run["params"] = params
-
-		result[r.ID] = struct {
-			RowNum int64
-			Info   fiber.Map
-		}{int64(r.RowNum), run}
-	}
-
-	tx := database.DB.
-		Select(`
-			metrics.*,
-			runmetrics.context_json`,
-		).
-		Table("metrics").
-		Joins(
-			"INNER JOIN (?) runmetrics USING(run_uuid, key, context_id)",
-			pq.Filter(database.DB.
-				Select(
-					"runs.run_uuid",
-					"runs.row_num",
-					"latest_metrics.key",
-					"latest_metrics.context_id",
-					"contexts.json AS context_json",
-					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(req.Steps)),
-				).
-				Table("runs").
-				Joins(
-					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
-					ns.ID,
-				).
-				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
-				Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id")),
-		).
-		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
-		Order("runmetrics.row_num DESC").
-		Order("metrics.key").
-		Order("metrics.context_id").
-		Order("metrics.iter")
-
-	var xAxis bool
+	var XAxis bool
 	if req.XAxis != "" {
-		tx.
-			Select("metrics.*", "runmetrics.context_json", "x_axis.value as x_axis_value", "x_axis.is_nan as x_axis_is_nan").
-			Joins(
-				"LEFT JOIN metrics x_axis ON metrics.run_uuid = x_axis.run_uuid AND "+
-					"metrics.iter = x_axis.iter AND x_axis.context_id = metrics.context_id AND x_axis.key = ?",
-				req.XAxis,
-			)
-		xAxis = true
+		XAxis = true
 	}
 
-	rows, err := tx.Rows()
-	if err != nil {
-		return fmt.Errorf("error searching run metrics: %w", err)
-	}
-	if err := rows.Err(); err != nil {
-		return api.NewInternalError("error getting query result: %s", err)
-	}
+	rows, totalRuns, err := c.runService.SearchMetrics(ctx, req)
 
 	ctx.Set("Content-Type", "application/octet-stream")
 	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {

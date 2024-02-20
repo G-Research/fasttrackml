@@ -220,14 +220,9 @@ func NewSearchAlignedMetricsResponse(
 						if err := flushMetrics(id, metrics); err != nil {
 							return eris.Wrap(err, "error flushing metrics")
 						}
-						metrics = metrics[:0]
-						id = metric.RunID
+						id, metrics = metric.RunID, metrics[:0]
 					}
-
-					key = metric.Key
-					values = values[:0]
-					iters = iters[:0]
-					context = fiber.Map{}
+					key, values, iters, context = metric.Key, values[:0], iters[:0], fiber.Map{}
 				}
 
 				v := metric.Value

@@ -478,6 +478,7 @@ func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
+	//nolint:rowserrcheck
 	rows, next, capacity, err := c.runService.SearchAlignedMetrics(ctx.Context(), ns, &req)
 	if err != nil {
 		return err

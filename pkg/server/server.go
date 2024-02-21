@@ -232,6 +232,9 @@ func createApp(
 		log.Info("Using refactored aim service")
 		aim2API.NewRouter(
 			aim2Controller.NewController(
+				aimTagService.NewService(
+					aimRepositories.NewTagRepository(db.GormDB()),
+				),
 				aimAppService.NewService(
 					aimRepositories.NewAppRepository(db.GormDB()),
 				),
@@ -241,14 +244,11 @@ func createApp(
 					aimRepositories.NewDashboardRepository(db.GormDB()),
 					aimRepositories.NewAppRepository(db.GormDB()),
 				),
-				aimExperimentService.NewService(
-					aimRepositories.NewTagRepository(db.GormDB()),
-					aimRepositories.NewExperimentRepository(db.GormDB()),
-				),
+				aimExperimentService.NewService(),
 			),
 		).Init(app)
 	}
-		
+
 	// init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(

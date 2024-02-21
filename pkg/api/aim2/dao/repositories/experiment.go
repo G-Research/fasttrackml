@@ -34,8 +34,6 @@ type ExperimentRepositoryProvider interface {
 	GetExperimentByNamespaceIDAndExperimentID(
 		ctx context.Context, namespaceID uint, experimentID int32,
 	) (*models.Experiment, error)
-	// GetCountOfActiveExperiments returns count of active experiments.
-	GetCountOfActiveExperiments(ctx context.Context, namespaceID uint) (int64, error)
 	// GetExtendedExperimentByNamespaceIDAndExperimentID returns extended experiment by Namespace ID and Experiment ID.
 	GetExtendedExperimentByNamespaceIDAndExperimentID(
 		ctx context.Context, namespaceID uint, experimentID int32,
@@ -262,21 +260,6 @@ func (r ExperimentRepository) GetExperimentByNamespaceIDAndExperimentID(
 		return nil, eris.Wrapf(err, "error getting experiment by id: %d", experimentID)
 	}
 	return &experiment, nil
-}
-
-// GetCountOfActiveExperiments returns count of active experiments.
-func (r ExperimentRepository) GetCountOfActiveExperiments(ctx context.Context, namespaceID uint) (int64, error) {
-	var count int64
-	if err := r.db.WithContext(ctx).Model(
-		&database.Experiment{},
-	).Where(
-		"lifecycle_stage = ?", database.LifecycleStageActive,
-	).Where(
-		"namespace_id = ?", namespaceID,
-	).Count(&count).Error; err != nil {
-		return 0, eris.Wrap(err, "error counting experiments")
-	}
-	return count, nil
 }
 
 // GetExtendedExperimentByNamespaceIDAndExperimentID returns experiment by Namespace ID and Experiment ID.

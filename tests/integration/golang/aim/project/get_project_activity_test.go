@@ -23,7 +23,8 @@ func (s *GetProjectActivityTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	archivedRunsIds := []string{runs[0].ID, runs[1].ID}
-	s.Require().Nil(s.RunFixtures.ArchiveRuns(context.Background(), s.DefaultNamespace.ID, archivedRunsIds))
+	err = s.RunFixtures.ArchiveRuns(context.Background(), s.DefaultNamespace.ID, archivedRunsIds)
+	s.Require().Nil(err)
 
 	var resp response.ProjectActivityResponse
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/projects/activity"))

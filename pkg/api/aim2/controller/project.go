@@ -4,32 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
+
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
-// GetProject handles `GET /projects` endpoint.
 func (c Controller) GetProject(ctx *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
-	if err != nil {
-		return api.NewInternalError("error getting namespace from context")
-	}
-	log.Debugf("getProjectActivity namespace: %s", ns.Code)
-
-	name, dialector := c.projectService.GetProjectInformation()
-
-	return ctx.JSON(response.NewGetProjectResponse(name, dialector))
+	return ctx.JSON(fiber.Map{
+		"name":              "FastTrackML",
+		"path":              database.DB.Dialector.Name(),
+		"description":       "",
+		"telemetry_enabled": 0,
+	})
 }
 
-// GetProjectActivity handles `GET /projects/activity` endpoint.
 func (c Controller) GetProjectActivity(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -42,15 +38,52 @@ func (c Controller) GetProjectActivity(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
 
-	activity, err := c.projectService.GetProjectActivity(ctx.Context(), ns.ID, tzOffset)
-	if err != nil {
-		return err
+	var numExperiments int64
+	if tx := database.DB.Model(
+		&database.Experiment{},
+	).Where(
+		"lifecycle_stage = ?", database.LifecycleStageActive,
+	).Where(
+		"namespace_id = ?", ns.ID,
+	).Count(&numExperiments); tx.Error != nil {
+		return fmt.Errorf("error counting experiments: %w", tx.Error)
 	}
 
-	resp := response.NewProjectActivityResponse(activity)
-	log.Debugf("getProjectActivity response: %#v", resp)
+	var runs []database.Run
+	if tx := database.DB.Select(
+		"runs.status",
+		"runs.start_time",
+		"runs.lifecycle_stage",
+	).Joins(
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+		ns.ID,
+	).Find(
+		&runs,
+	); tx.Error != nil {
+		return fmt.Errorf("error retrieving runs: %w", tx.Error)
+	}
 
-	return ctx.JSON(resp)
+	numArchivedRuns := 0
+	numActiveRuns := 0
+	activity := map[string]int{}
+	for _, r := range runs {
+		key := time.UnixMilli(r.StartTime.Int64).Add(time.Duration(-tzOffset) * time.Minute).Format("2006-01-02T15:00:00")
+		activity[key] += 1
+		switch {
+		case r.LifecycleStage == database.LifecycleStageDeleted:
+			numArchivedRuns += 1
+		case r.Status == database.StatusRunning:
+			numActiveRuns += 1
+		}
+	}
+
+	return ctx.JSON(fiber.Map{
+		"num_runs":          len(runs),
+		"activity_map":      activity,
+		"num_active_runs":   numActiveRuns,
+		"num_experiments":   numExperiments,
+		"num_archived_runs": numArchivedRuns,
+	})
 }
 
 // TODO

@@ -252,7 +252,7 @@ func (r RunRepository) GetByID(ctx context.Context, id string) (*models.Run, err
 // GetByNamespaceID returns list of models.Run by requested namespace ID.
 func (r RunRepository) GetByNamespaceID(ctx context.Context, namespaceID uint) ([]models.Run, error) {
 	var runs []models.Run
-	if err := r.db.Joins(
+	if err := r.db.WithContext(ctx).Joins(
 		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 		namespaceID,
 	).Find(

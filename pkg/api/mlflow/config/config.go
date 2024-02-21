@@ -14,6 +14,7 @@ import (
 // ServiceConfig represents main service configuration.
 type ServiceConfig struct {
 	DevMode               bool
+	AimRevert             bool
 	ListenAddress         string
 	AuthUsername          string
 	AuthPassword          string
@@ -31,6 +32,7 @@ type ServiceConfig struct {
 func NewServiceConfig() *ServiceConfig {
 	return &ServiceConfig{
 		DevMode:               viper.GetBool("dev-mode"),
+		AimRevert:             viper.GetBool("aim-revert"),
 		ListenAddress:         viper.GetString("listen-address"),
 		AuthUsername:          viper.GetString("auth-username"),
 		AuthPassword:          viper.GetString("auth-password"),

@@ -43,11 +43,3 @@ func GetS3EndpointUri() string {
 	}
 	return "http://localhost:9000"
 }
-
-func GetAimEndpointPath() string {
-	path, ok := os.LookupEnv("FML_AIM_ENDPOINT_PATH")
-	if ok {
-		return path
-	}
-	return "/aim/api"
-}

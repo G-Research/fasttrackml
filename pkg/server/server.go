@@ -222,32 +222,37 @@ func createApp(
 		return c.SendString(version.Version)
 	})
 
-	// init `aim` api and ui routes.
-	router := app.Group("/aim/api/")
-	aimAPI.AddRoutes(router)
-
-	// init `aim2` api routes.
-	aim2API.NewRouter(
-		aim2Controller.NewController(
-			aimTagService.NewService(
-				aimRepositories.NewTagRepository(db.GormDB()),
+	if config.AimRevert {
+		// init original `aim` api routes.
+		router := app.Group("/aim/api/")
+		aimAPI.AddRoutes(router)
+	} else {
+		// init `aim` api refactored routes.
+		aim2API.NewRouter(
+			aim2Controller.NewController(
+				aimTagService.NewService(
+					aimRepositories.NewTagRepository(db.GormDB()),
+				),
+				aimAppService.NewService(
+					aimRepositories.NewAppRepository(db.GormDB()),
+				),
+				aimRunService.NewService(
+					aimRepositories.NewRunRepository(db.GormDB()),
+					aimRepositories.NewMetricRepository(db.GormDB()),
+				),
+				aimProjectService.NewService(),
+				aimDashboardService.NewService(
+					aimRepositories.NewDashboardRepository(db.GormDB()),
+					aimRepositories.NewAppRepository(db.GormDB()),
+				),
+				aimExperimentService.NewService(
+					aimRepositories.NewTagRepository(db.GormDB()),
+					aimRepositories.NewExperimentRepository(db.GormDB()),
+				),
 			),
-			aimAppService.NewService(
-				aimRepositories.NewAppRepository(db.GormDB()),
-			),
-			aimRunService.NewService(),
-			aimProjectService.NewService(),
-			aimDashboardService.NewService(
-				aimRepositories.NewDashboardRepository(db.GormDB()),
-				aimRepositories.NewAppRepository(db.GormDB()),
-			),
-			aimExperimentService.NewService(
-				aimRepositories.NewTagRepository(db.GormDB()),
-				aimRepositories.NewExperimentRepository(db.GormDB()),
-			),
-		),
-	).Init(app)
-
+		).Init(app)
+	}
+		
 	// init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(

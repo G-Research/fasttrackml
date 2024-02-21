@@ -244,7 +244,10 @@ func createApp(
 					aimRepositories.NewDashboardRepository(db.GormDB()),
 					aimRepositories.NewAppRepository(db.GormDB()),
 				),
-				aimExperimentService.NewService(),
+				aimExperimentService.NewService(
+					aimRepositories.NewTagRepository(db.GormDB()),
+					aimRepositories.NewExperimentRepository(db.GormDB()),
+				),
 			),
 		).Init(app)
 	}

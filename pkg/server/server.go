@@ -232,16 +232,10 @@ func createApp(
 		log.Info("Using refactored aim service")
 		aim2API.NewRouter(
 			aim2Controller.NewController(
-				aimTagService.NewService(
-					aimRepositories.NewTagRepository(db.GormDB()),
-				),
 				aimAppService.NewService(
-					aimRepositories.NewAppRepository(db.GormDB()),
+					aimRepositories.NewAppRepository(db.GormDB())
 				),
-				aimRunService.NewService(
-					aimRepositories.NewRunRepository(db.GormDB()),
-					aimRepositories.NewMetricRepository(db.GormDB()),
-				),
+				aimRunService.NewService(),
 				aimProjectService.NewService(),
 				aimDashboardService.NewService(
 					aimRepositories.NewDashboardRepository(db.GormDB()),

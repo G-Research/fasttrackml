@@ -233,7 +233,7 @@ func createApp(
 		aim2API.NewRouter(
 			aim2Controller.NewController(
 				aimAppService.NewService(
-					aimRepositories.NewAppRepository(db.GormDB())
+					aimRepositories.NewAppRepository(db.GormDB()),
 				),
 				aimRunService.NewService(),
 				aimProjectService.NewService(),

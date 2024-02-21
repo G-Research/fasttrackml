@@ -224,10 +224,12 @@ func createApp(
 
 	if config.AimRevert {
 		// init original `aim` api routes.
+		log.Info("Using original aim service")
 		router := app.Group("/aim/api/")
 		aimAPI.AddRoutes(router)
 	} else {
 		// init `aim` api refactored routes.
+		log.Info("Using refactored aim service")
 		aim2API.NewRouter(
 			aim2Controller.NewController(
 				aimTagService.NewService(

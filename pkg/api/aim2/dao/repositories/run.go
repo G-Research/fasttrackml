@@ -67,7 +67,9 @@ type RunRepositoryProvider interface {
 	// UpdateWithTransaction updates existing models.Run entity in scope of transaction.
 	UpdateWithTransaction(ctx context.Context, tx *gorm.DB, run *models.Run) error
 	// SearchRuns returns the list of runs by provided search request.
-	SearchRuns(ctx context.Context, req request.SearchRunsRequest) ([]models.Run, int64, error)
+	SearchRuns(
+		ctx context.Context, namespaceID uint, tzOffset int, req request.SearchRunsRequest,
+	) ([]models.Run, int64, error)
 }
 
 // RunRepository repository to work with models.Run entity.
@@ -518,7 +520,9 @@ func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, bat
 }
 
 // SearchRuns returns the list of runs by provided search request.
-func (r RunRepository) SearchRuns(ctx context.Context, req request.SearchRunsRequest) ([]models.Run, int64, error) {
+func (r RunRepository) SearchRuns(
+	ctx context.Context, namespaceID uint, timeZoneOffset int, req request.SearchRunsRequest,
+) ([]models.Run, int64, error) {
 	qp := query.QueryParser{
 		Default: query.DefaultExpression{
 			Contains:   "run.archived",
@@ -528,7 +532,7 @@ func (r RunRepository) SearchRuns(ctx context.Context, req request.SearchRunsReq
 			"runs":        "runs",
 			"experiments": "Experiment",
 		},
-		TzOffset:  req.TimeZoneOffset,
+		TzOffset:  timeZoneOffset,
 		Dialector: r.db.Dialector.Name(),
 	}
 	pq, err := qp.Parse(req.Query)
@@ -551,7 +555,7 @@ func (r RunRepository) SearchRuns(ctx context.Context, req request.SearchRunsReq
 			database.DB.Select(
 				"ID", "Name",
 			).Where(
-				&models.Experiment{NamespaceID: req.NamespaceID},
+				&models.Experiment{NamespaceID: namespaceID},
 			),
 		).
 		Order("row_num DESC")

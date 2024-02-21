@@ -10,9 +10,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
-	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
-	mlflowModels "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 )
@@ -43,14 +41,14 @@ func NewService(
 
 // GetRunInfo returns run info.
 func (s Service) GetRunInfo(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetRunInfoRequest,
-) (*aimModels.Run, error) {
+	ctx context.Context, namespaceID uint, req *request.GetRunInfoRequest,
+) (*models.Run, error) {
 	req = NormaliseGetRunInfoRequest(req)
 	if err := ValidateGetRunInfoRequest(req); err != nil {
 		return nil, err
 	}
 
-	runInfo, err := s.runRepository.GetRunInfo(ctx, namespace.ID, req)
+	runInfo, err := s.runRepository.GetRunInfo(ctx, namespaceID, req)
 	if err != nil {
 		return nil, api.NewInternalError("unable to find run by id %s: %s", req.ID, err)
 	}
@@ -63,9 +61,9 @@ func (s Service) GetRunInfo(
 
 // GetRunMetrics returns run metrics.
 func (s Service) GetRunMetrics(
-	ctx context.Context, namespace *mlflowModels.Namespace, runID string, req *request.GetRunMetricsRequest,
+	ctx context.Context, namespaceID uint, runID string, req *request.GetRunMetricsRequest,
 ) ([]models.Metric, dto.MetricKeysMapDTO, error) {
-	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespace.ID, runID)
+	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespaceID, runID)
 	if err != nil {
 		return nil, nil, api.NewInternalError("error getting run by id %s: %s", runID, err)
 	}
@@ -88,9 +86,9 @@ func (s Service) GetRunMetrics(
 
 // GetRunsActive returns the active runs.
 func (s Service) GetRunsActive(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetRunsActiveRequest,
+	ctx context.Context, namespaceID uint, req *request.GetRunsActiveRequest,
 ) ([]models.Run, error) {
-	runs, err := s.runRepository.GetByNamespaceIDAndStatus(ctx, namespace.ID, aimModels.StatusRunning)
+	runs, err := s.runRepository.GetByNamespaceIDAndStatus(ctx, namespaceID, models.StatusRunning)
 	if err != nil {
 		return nil, api.NewInternalError("error ative runs: %s", err)
 	}
@@ -99,9 +97,9 @@ func (s Service) GetRunsActive(
 
 // SearchRuns returns the list of runs by provided search criteria.
 func (s Service) SearchRuns(
-	ctx context.Context, req request.SearchRunsRequest,
+	ctx context.Context, namespaceID uint, tzOffset int, req request.SearchRunsRequest,
 ) ([]models.Run, int64, error) {
-	runs, total, err := s.runRepository.SearchRuns(ctx, req)
+	runs, total, err := s.runRepository.SearchRuns(ctx, namespaceID, tzOffset, req)
 	if err != nil {
 		return nil, 0, api.NewInternalError("error searching runs: %s", err)
 	}
@@ -110,9 +108,9 @@ func (s Service) SearchRuns(
 
 // SearchMetrics returns the list of metrics by provided search criteria.
 func (s Service) SearchMetrics(
-	ctx context.Context, req request.SearchMetricsRequest,
+	ctx context.Context, namespaceID uint, timeZoneOffset int, req request.SearchMetricsRequest,
 ) (*sql.Rows, int64, repositories.SearchResultMap, error) {
-	rows, total, searchResult, err := s.metricRepository.SearchMetrics(ctx, req)
+	rows, total, searchResult, err := s.metricRepository.SearchMetrics(ctx, namespaceID, timeZoneOffset, req)
 	if err != nil {
 		return nil, 0, nil, api.NewInternalError("error searching runs: %s", err)
 	}
@@ -121,7 +119,7 @@ func (s Service) SearchMetrics(
 
 // SearchAlignedMetrics returns the list of aligned metrics.
 func (s Service) SearchAlignedMetrics(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.SearchAlignedMetricsRequest,
+	ctx context.Context, namespaceID uint, req *request.SearchAlignedMetricsRequest,
 ) (*sql.Rows, func(*sql.Rows) (*models.AlignedMetric, error), int, error) {
 	// collect map of unique contexts, collect values.
 	values, capacity, contextsMap := []any{}, 0, map[string]types.JSONB{}
@@ -153,7 +151,7 @@ func (s Service) SearchAlignedMetrics(
 		}
 	}
 
-	rows, next, err := s.runRepository.GetAlignedMetrics(ctx, namespace.ID, values, req.AlignBy)
+	rows, next, err := s.runRepository.GetAlignedMetrics(ctx, namespaceID, values, req.AlignBy)
 	if err != nil {
 		return nil, nil, 0, api.NewInternalError("error searching aligned run metrics: %s", err)
 	}
@@ -163,9 +161,9 @@ func (s Service) SearchAlignedMetrics(
 
 // DeleteRun deletes requested run.
 func (s Service) DeleteRun(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.DeleteRunRequest,
+	ctx context.Context, namespaceID uint, req *request.DeleteRunRequest,
 ) error {
-	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespace.ID, req.ID)
+	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespaceID, req.ID)
 	if err != nil {
 		return api.NewInternalError("error getting run by id %s: %s", req.ID, err)
 	}
@@ -174,7 +172,7 @@ func (s Service) DeleteRun(
 		return api.NewResourceDoesNotExistError("run '%s' not found", req.ID)
 	}
 
-	if err = s.runRepository.Delete(ctx, namespace.ID, run); err != nil {
+	if err = s.runRepository.Delete(ctx, namespaceID, run); err != nil {
 		return api.NewInternalError("unable to delete run %q: %s", req.ID, err)
 	}
 	return nil
@@ -182,9 +180,9 @@ func (s Service) DeleteRun(
 
 // UpdateRun updates requested run.
 func (s Service) UpdateRun(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.UpdateRunRequest,
+	ctx context.Context, namespaceID uint, req *request.UpdateRunRequest,
 ) error {
-	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespace.ID, req.ID)
+	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespaceID, req.ID)
 	if err != nil {
 		return api.NewInternalError("error getting run by id %s: %s", req.ID, err)
 	}
@@ -216,19 +214,19 @@ func (s Service) UpdateRun(
 
 // ProcessBatch processes runs in batch.
 func (s Service) ProcessBatch(
-	ctx context.Context, namespace *mlflowModels.Namespace, action string, ids []string,
+	ctx context.Context, namespaceID uint, action string, ids []string,
 ) error {
 	switch action {
 	case BatchActionArchive:
-		if err := s.runRepository.ArchiveBatch(ctx, namespace.ID, ids); err != nil {
+		if err := s.runRepository.ArchiveBatch(ctx, namespaceID, ids); err != nil {
 			return api.NewInternalError("error archiving runs: %s", err)
 		}
 	case BatchActionRestore:
-		if err := s.runRepository.RestoreBatch(ctx, namespace.ID, ids); err != nil {
+		if err := s.runRepository.RestoreBatch(ctx, namespaceID, ids); err != nil {
 			return api.NewInternalError("error restoring runs: %s", err)
 		}
 	case BatchActionDelete:
-		if err := s.runRepository.DeleteBatch(ctx, namespace.ID, ids); err != nil {
+		if err := s.runRepository.DeleteBatch(ctx, namespaceID, ids); err != nil {
 			return api.NewInternalError("error deleting runs: %s", err)
 		}
 	default:

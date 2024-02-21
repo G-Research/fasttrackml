@@ -44,7 +44,9 @@ type MetricRepositoryProvider interface {
 	// GetMetricHistoryByRunIDAndKey returns metrics history by RunID and Key.
 	GetMetricHistoryByRunIDAndKey(ctx context.Context, runID, key string) ([]models.Metric, error)
 	// SearchMetrics returns a sql.Rows cursor for streaming the metrics matching the request.
-	SearchMetrics(ctx context.Context, req request.SearchMetricsRequest) (*sql.Rows, int64, SearchResultMap, error)
+	SearchMetrics(
+		ctx context.Context, namespaceID uint, timeZoneOffset int, req request.SearchMetricsRequest,
+	) (*sql.Rows, int64, SearchResultMap, error)
 	// GetContextListByContextObjects returns list of context by provided map of contexts.
 	GetContextListByContextObjects(
 		ctx context.Context, contextsMap map[string]types.JSONB,
@@ -254,7 +256,7 @@ func (r MetricRepository) GetMetricHistoryBulk(
 
 // SearchMetrics returns a metrics cursor according to the SearchMetricsRequest.
 func (r MetricRepository) SearchMetrics(
-	ctx context.Context, req request.SearchMetricsRequest,
+	ctx context.Context, namespaceID uint, timeZoneOffset int, req request.SearchMetricsRequest,
 ) (*sql.Rows, int64, SearchResultMap, error) {
 	qp := query.QueryParser{
 		Default: query.DefaultExpression{
@@ -266,7 +268,7 @@ func (r MetricRepository) SearchMetrics(
 			"experiments": "experiments",
 			"metrics":     "latest_metrics",
 		},
-		TzOffset:  req.TimeZoneOffset,
+		TzOffset:  timeZoneOffset,
 		Dialector: r.db.Dialector.Name(),
 	}
 	pq, err := qp.Parse(req.Query)
@@ -289,7 +291,7 @@ func (r MetricRepository) SearchMetrics(
 			"Experiment",
 			r.db.WithContext(ctx).Select(
 				"ID", "Name",
-			).Where(&models.Experiment{NamespaceID: req.NamespaceID}),
+			).Where(&models.Experiment{NamespaceID: namespaceID}),
 		).
 		Preload("Params").
 		Preload("Tags").
@@ -298,7 +300,7 @@ func (r MetricRepository) SearchMetrics(
 			Table("runs").
 			Joins(
 				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
-				req.NamespaceID,
+				namespaceID,
 			).
 			Joins("JOIN latest_metrics USING(run_uuid)").
 			Joins("JOIN contexts ON latest_metrics.context_id = contexts.id"),
@@ -360,7 +362,7 @@ func (r MetricRepository) SearchMetrics(
 				Table("runs").
 				Joins(
 					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
-					req.NamespaceID,
+					namespaceID,
 				).
 				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
 				Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id")),

@@ -29,7 +29,7 @@ func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	runInfo, err := c.runService.GetRunInfo(ctx.Context(), ns, &req)
+	runInfo, err := c.runService.GetRunInfo(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	metrics, metricKeysMap, err := c.runService.GetRunMetrics(ctx.Context(), ns, ctx.Params("id"), &req)
+	metrics, metricKeysMap, err := c.runService.GetRunMetrics(ctx.Context(), ns.ID, ctx.Params("id"), &req)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
 		req.ReportProgress = true
 	}
 
-	runs, err := c.runService.GetRunsActive(ctx.Context(), ns, &req)
+	runs, err := c.runService.GetRunsActive(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -108,11 +108,9 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	if ctx.Query("report_progress") == "" {
 		req.ReportProgress = true
 	}
-	req.TimeZoneOffset = tzOffset
-	req.NamespaceID = ns.ID
 
 	// Search runs
-	runs, total, err := c.runService.SearchRuns(ctx.Context(), req)
+	runs, total, err := c.runService.SearchRuns(ctx.Context(), ns.ID, tzOffset, req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -154,11 +152,9 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
-	req.TimeZoneOffset = tzOffset
-	req.NamespaceID = ns.ID
 
 	//nolint:rowserrcheck
-	rows, totalRuns, result, err := c.runService.SearchMetrics(ctx.Context(), req)
+	rows, totalRuns, result, err := c.runService.SearchMetrics(ctx.Context(), ns.ID, tzOffset, req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -181,7 +177,7 @@ func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 	}
 
 	//nolint:rowserrcheck
-	rows, next, capacity, err := c.runService.SearchAlignedMetrics(ctx.Context(), ns, &req)
+	rows, next, capacity, err := c.runService.SearchAlignedMetrics(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -203,7 +199,7 @@ func (c Controller) DeleteRun(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if err := c.runService.DeleteRun(ctx.Context(), ns, &req); err != nil {
+	if err := c.runService.DeleteRun(ctx.Context(), ns.ID, &req); err != nil {
 		return err
 	}
 
@@ -227,7 +223,7 @@ func (c Controller) UpdateRun(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if err := c.runService.UpdateRun(ctx.Context(), ns, &req); err != nil {
+	if err := c.runService.UpdateRun(ctx.Context(), ns.ID, &req); err != nil {
 		return err
 	}
 
@@ -252,7 +248,7 @@ func (c Controller) ArchiveBatch(ctx *fiber.Ctx) error {
 		action = run.BatchActionArchive
 	}
 
-	if err := c.runService.ProcessBatch(ctx.Context(), ns, action, req); err != nil {
+	if err := c.runService.ProcessBatch(ctx.Context(), ns.ID, action, req); err != nil {
 		return err
 	}
 
@@ -272,7 +268,7 @@ func (c Controller) DeleteBatch(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if err := c.runService.ProcessBatch(ctx.Context(), ns, run.BatchActionDelete, req); err != nil {
+	if err := c.runService.ProcessBatch(ctx.Context(), ns.ID, run.BatchActionDelete, req); err != nil {
 		return err
 	}
 

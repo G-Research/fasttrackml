@@ -2,11 +2,9 @@ package request
 
 import "github.com/gofiber/fiber/v2"
 
-// BaseRequest defines some shared fields.
-type BaseRequest struct {
+// BaseSearchRequest defines some shared fields for search requestes.
+type BaseSearchRequest struct {
 	ReportProgress bool `query:"report_progress"`
-	TimeZoneOffset int
-	NamespaceID    uint
 }
 
 // GetRunInfoRequest is a request object for `GET /runs/:id/info` endpoint.
@@ -24,7 +22,7 @@ type GetRunMetricsRequest []struct {
 
 // GetRunsActiveRequest is a request object for `GET /runs/active` endpoint.
 type GetRunsActiveRequest struct {
-	BaseRequest
+	BaseSearchRequest
 }
 
 // UpdateRunRequest is a request struct for `PUT /runs/:id` endpoint.
@@ -41,7 +39,7 @@ type UpdateRunRequest struct {
 
 // SearchRunsRequest is a request object for `GET /runs/search/run` endpoint.
 type SearchRunsRequest struct {
-	BaseRequest
+	BaseSearchRequest
 	Query         string `query:"q"`
 	Limit         int    `query:"limit"`
 	Offset        string `query:"offset"`
@@ -53,7 +51,7 @@ type SearchRunsRequest struct {
 
 // SearchMetricsRequest is a request struct for `GET /runs/search/metric` endpoint.
 type SearchMetricsRequest struct {
-	BaseRequest
+	BaseSearchRequest
 	Query      string `query:"q"`
 	Steps      int    `query:"p"`
 	XAxis      string `query:"x_axis"`

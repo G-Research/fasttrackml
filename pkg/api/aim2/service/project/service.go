@@ -36,33 +36,32 @@ func (s Service) GetProjectInformation() (string, string) {
 func (s Service) GetProjectActivity(
 	ctx context.Context, namespaceID uint, tzOffset int,
 ) (*dto.ProjectActivity, error) {
-	activeExperiments, err := s.experimentRepository.GetCountOfActiveExperiments(ctx, namespaceID)
-	if err != nil {
-		return nil, api.NewInternalError("error getting number of active experiments: %s", err)
-	}
-
 	runs, err := s.runRepository.GetByNamespaceID(ctx, namespaceID)
 	if err != nil {
 		return nil, api.NewInternalError("error getting runs: %s", err)
 	}
-
 	activity, numActiveRuns, numArchivedRuns := map[string]int{}, int64(0), int64(0)
-	for _, r := range runs {
+	for _, run := range runs {
 		switch {
-		case r.Status == models.StatusRunning:
-			numActiveRuns += 1
-		case r.LifecycleStage == models.LifecycleStageDeleted:
+		case run.LifecycleStage == models.LifecycleStageDeleted:
 			numArchivedRuns += 1
+		case run.Status == models.StatusRunning:
+			numActiveRuns += 1
 		}
-		key := time.UnixMilli(r.StartTime.Int64).Add(time.Duration(-tzOffset) * time.Minute).Format("2006-01-02T15:00:00")
+		key := time.UnixMilli(run.StartTime.Int64).Add(time.Duration(-tzOffset) * time.Minute).Format("2006-01-02T15:00:00")
 		activity[key] += 1
+	}
+
+	numActiveExperiments, err := s.experimentRepository.GetCountOfActiveExperiments(ctx, namespaceID)
+	if err != nil {
+		return nil, api.NewInternalError("error getting number of active experiments: %s", err)
 	}
 
 	return &dto.ProjectActivity{
 		NumRuns:         int64(len(runs)),
 		ActivityMap:     activity,
 		NumActiveRuns:   numActiveRuns,
-		NumExperiments:  activeExperiments,
+		NumExperiments:  numActiveExperiments,
 		NumArchivedRuns: numArchivedRuns,
 	}, nil
 }

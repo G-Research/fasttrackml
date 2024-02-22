@@ -88,17 +88,17 @@ index 31d3654..060d528 100644
 -        run1.track(generate_image_set(1), name='images1', context={'a': True})
 -        run1.track(generate_image_set(1), name='images1', context={'b': True})
 +        run1 = cls.create_run("Run # 1", "0")
-+        cls.log_metric(run1, "metric1", 1, 0)
++        cls.log_metric(run1, "metric1", 1, 0, context={'a': True})
  
 -        run2 = Run(system_tracking_interval=None)
 -        run2.track(1, name='metric2', context={'a': True})
 -        run2.track(generate_image_set(1)[0], name='images2', context={'b': True})
 +        run2 = cls.create_run("Run # 2", "0")
-+        cls.log_metric(run2, "metric2", 1, 0)
++        cls.log_metric(run2, "metric2", 1, 0, context={'a': True})
  
      @parameterized.expand([
          ({'sequence': ('metric', 'images')},),  # metrics only
-@@ -70,18 +65,20 @@ class TestProjectParamsWithImagesApi(ApiTestBase):
+@@ -70,18 +65,18 @@ class TestProjectParamsWithImagesApi(ApiTestBase):
          self.assertIn('images', data)
  
          self.assertTrue({'metric1', 'metric2'}.issubset(set(data['metric'].keys())))
@@ -111,8 +111,7 @@ index 31d3654..060d528 100644
 -
 -        self.assertEqual(2, len(data['images']['images1']))
 -
-+        # TODO requires context support
-+        # self.assertDictEqual({'a': 1}, data['metric']['metric1'][0])
++        self.assertDictEqual({'a': 1}, data['metric']['metric1'][0])
 +        # TODO requires image support
 +        # self.assertEqual(2, len(data['images']['images1']))
          self.assertEqual(1, len(data['metric']['metric2']))
@@ -120,8 +119,7 @@ index 31d3654..060d528 100644
 -
 -        self.assertEqual(1, len(data['images']['images2']))
 -        self.assertDictEqual({'b': 1}, data['images']['images2'][0])
-+        # TODO requires context support
-+        # self.assertDictEqual({'a': 1}, data['metric']['metric2'][0])
++        self.assertDictEqual({'a': 1}, data['metric']['metric2'][0])
 +        # TODO requires image support
 +        # self.assertEqual(1, len(data['images']['images2']))
 +        # self.assertDictEqual({'b': 1}, data['images']['images2'][0])
@@ -182,7 +180,7 @@ new file mode 100644
 index 0000000..099cab0
 --- /dev/null
 +++ b/tests/fml.py
-@@ -0,0 +1,199 @@
+@@ -0,0 +1,200 @@
 +import datetime
 +import itertools
 +import os
@@ -312,7 +310,7 @@ index 0000000..099cab0
 +        return response.json()["run"]["info"]["run_uuid"]
 +
 +    @classmethod
-+    def log_metric(cls, run_id, key, value, step):
++    def log_metric(cls, run_id, key, value, step, context={}):
 +        cls.mlflow_client.post(
 +            "/runs/log-metric",
 +            json={
@@ -321,6 +319,7 @@ index 0000000..099cab0
 +                "timestamp": get_current_timestamp(),
 +                "run_id": run_id,
 +                "step": step,
++                "context": context,
 +            },
 +        )
 +

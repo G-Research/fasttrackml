@@ -6,9 +6,6 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
-
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -16,6 +13,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 const (
@@ -37,6 +36,10 @@ type MetricRepositoryProvider interface {
 	BaseRepositoryProvider
 	// CreateBatch creates []models.Metric entities in batch.
 	CreateBatch(ctx context.Context, run *models.Run, batchSize int, params []models.Metric) error
+	// GetLatestMetricsByExperiments returns latest metrics by provided experiments.
+	GetLatestMetricsByExperiments(
+		ctx context.Context, namespaceID uint, experiments []int,
+	) ([]models.LatestMetric, error)
 	// GetMetricHistoryBulk returns metrics history bulk.
 	GetMetricHistoryBulk(
 		ctx context.Context, namespaceID uint, runIDs []string, key string, limit int,
@@ -181,6 +184,32 @@ func (r MetricRepository) CreateBatch(
 		}
 	}
 	return nil
+}
+
+// GetLatestMetricsByExperiments returns latest metrics by provided experiments.
+func (r MetricRepository) GetLatestMetricsByExperiments(
+	ctx context.Context, namespaceID uint, experiments []int,
+) ([]models.LatestMetric, error) {
+	query := r.db.WithContext(ctx).Distinct().Model(
+		&database.LatestMetric{},
+	).Joins(
+		"JOIN runs USING(run_uuid)",
+	).Joins(
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+		namespaceID,
+	).Joins(
+		"Context",
+	).Where(
+		"runs.lifecycle_stage = ?", database.LifecycleStageActive,
+	)
+	if len(experiments) != 0 {
+		query.Where("experiments.experiment_id IN ?", experiments)
+	}
+	var metrics []models.LatestMetric
+	if err := query.Find(&metrics).Error; err != nil {
+		return nil, eris.Wrap(err, "error getting metrics by provided experiments")
+	}
+	return metrics, nil
 }
 
 // getLatestMetricsByRunIDAndKeys returns the latest metrics by requested Run ID and keys.

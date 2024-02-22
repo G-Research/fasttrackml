@@ -1,7 +1,10 @@
 package response
 
 import (
+	"encoding/json"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 )
@@ -42,8 +45,61 @@ func NewGetProjectResponse(name, dialector string) *GetProjectResponse {
 	}
 }
 
-// ProjectParamsResponse is a response object for `GET aim/projects/params` endpoint.
+// ProjectParamsResponse is a response object for `GET /projects/params` endpoint.
 type ProjectParamsResponse struct {
-	Metric map[string][]fiber.Map `json:"metric"`
-	Params map[string]interface{} `json:"params"`
+	Metric        map[string][]fiber.Map `json:"metric"`
+	Params        fiber.Map              `json:"params"`
+	Texts         fiber.Map              `json:"texts"`
+	Audios        fiber.Map              `json:"audios"`
+	Images        fiber.Map              `json:"images"`
+	Figures       fiber.Map              `json:"figures"`
+	Distributions fiber.Map              `json:"distributions"`
+}
+
+// NewProjectParamsResponse creates new response object for `GET /projects/params` endpoint.
+func NewProjectParamsResponse(projectParams *dto.ProjectParams) (*ProjectParamsResponse, error) {
+	// process params and tags
+	params := make(map[string]any, len(projectParams.ParamKeys)+1)
+	for _, paramKey := range projectParams.ParamKeys {
+		params[paramKey] = map[string]string{
+			"__example_type__": "<class 'str'>",
+		}
+	}
+
+	tags := make(map[string]map[string]string, len(projectParams.TagKeys))
+	for _, tagKey := range projectParams.TagKeys {
+		tags[tagKey] = map[string]string{
+			"__example_type__": "<class 'str'>",
+		}
+	}
+	params["tags"] = tags
+
+	// process metrics
+	metrics, mapped := make(
+		map[string][]fiber.Map, len(projectParams.Metrics),
+	), make(map[string]map[string]fiber.Map, len(projectParams.Metrics))
+	for _, metric := range projectParams.Metrics {
+		if mapped[metric.Key] == nil {
+			mapped[metric.Key] = map[string]fiber.Map{}
+		}
+		if _, ok := mapped[metric.Key][metric.Context.GetJsonHash()]; !ok {
+			// to be properly decoded by AIM UI, json should be represented as a key:value object.
+			context := fiber.Map{}
+			if err := json.Unmarshal(metric.Context.Json, &context); err != nil {
+				return nil, eris.Wrap(err, "error unmarshalling `context` json to `fiber.Map` object")
+			}
+			mapped[metric.Key][metric.Context.GetJsonHash()] = context
+			metrics[metric.Key] = append(metrics[metric.Key], context)
+		}
+	}
+
+	return &ProjectParamsResponse{
+		Metric:        metrics,
+		Params:        params,
+		Texts:         fiber.Map{},
+		Audios:        fiber.Map{},
+		Images:        fiber.Map{},
+		Figures:       fiber.Map{},
+		Distributions: fiber.Map{},
+	}, nil
 }

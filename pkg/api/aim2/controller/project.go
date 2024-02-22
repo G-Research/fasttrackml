@@ -63,7 +63,7 @@ func (c Controller) UpdateProjectPinnedSequences(ctx *fiber.Ctx) error {
 	})
 }
 
-// GetProjectParams handles `PUT /projects/params` endpoint.
+// GetProjectParams handles `GET /projects/params` endpoint.
 func (c Controller) GetProjectParams(ctx *fiber.Ctx) error {
 	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -81,7 +81,13 @@ func (c Controller) GetProjectParams(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.JSON(params)
+	resp, err := response.NewProjectParamsResponse(params)
+	if err != nil {
+		return api.NewInternalError("error creating response object: %s", err)
+	}
+	log.Debugf("getProjectParams response: %#v", resp)
+
+	return ctx.JSON(resp)
 }
 
 // GetProjectStatus handles `PUT /projects/status` endpoint.

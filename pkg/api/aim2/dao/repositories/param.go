@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // ParamRepositoryProvider provides an interface to work with models.Param entity.
@@ -42,10 +41,10 @@ func (r ParamRepository) GetParamKeysByParameters(
 		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 		namespaceID,
 	).Where(
-		"runs.lifecycle_stage = ?", database.LifecycleStageActive,
+		"runs.lifecycle_stage = ?", models.LifecycleStageActive,
 	)
 	if len(experiments) != 0 {
-		query.Where("experiments.experiment_id IN ?", experiments)
+		query = query.Where("experiments.experiment_id IN ?", experiments)
 	}
 	var keys []string
 	if err := query.Pluck("Key", &keys).Error; err != nil {

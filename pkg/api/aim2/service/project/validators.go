@@ -19,8 +19,8 @@ var SupportedSequences = []string{
 
 // ValidateGetProjectsRequest validates `GET /projects/params` request.
 func ValidateGetProjectsRequest(req *request.GetProjectParamsRequest) error {
-	for _, sequence := range SupportedSequences {
-		if !slices.Contains(req.Sequences, sequence) {
+	for _, sequence := range req.Sequences {
+		if !slices.Contains(SupportedSequences, sequence) {
 			return api.NewInvalidParameterValueError("%q is not a valid Sequence", sequence)
 		}
 	}

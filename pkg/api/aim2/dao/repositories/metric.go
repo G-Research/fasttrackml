@@ -203,7 +203,7 @@ func (r MetricRepository) GetLatestMetricsByExperiments(
 		"runs.lifecycle_stage = ?", database.LifecycleStageActive,
 	)
 	if len(experiments) != 0 {
-		query.Where("experiments.experiment_id IN ?", experiments)
+		query = query.Where("experiments.experiment_id IN ?", experiments)
 	}
 	var metrics []models.LatestMetric
 	if err := query.Find(&metrics).Error; err != nil {

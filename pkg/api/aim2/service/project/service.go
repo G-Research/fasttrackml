@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"time"
 
@@ -81,24 +82,28 @@ func (s Service) GetProjectActivity(
 func (s Service) GetProjectParams(
 	ctx context.Context, namespaceID uint, req *request.GetProjectParamsRequest,
 ) (*dto.ProjectParams, error) {
+	fmt.Println("inn:", req.Sequences)
 	req = NormaliseGetProjectParamsRequest(req)
 	if err := ValidateGetProjectsRequest(req); err != nil {
 		return nil, err
 	}
 
 	projectParams := dto.ProjectParams{}
+	fmt.Println("req.ExcludeParams:", req.ExcludeParams)
 	if !req.ExcludeParams {
 		paramKeys, err := s.paramRepository.GetParamKeysByParameters(ctx, namespaceID, req.Experiments)
 		if err != nil {
 			return nil, api.NewInternalError("error getting param keys: %s", err)
 		}
+		fmt.Println("paramKeys:", paramKeys)
 		projectParams.ParamKeys = paramKeys
 
-		tagKeys, err := s.tagRepository.GetParamKeysByParameters(ctx, namespaceID, req.Experiments)
+		tagKeys, err := s.tagRepository.GetTagKeysByParameters(ctx, namespaceID, req.Experiments)
 		if err != nil {
 			return nil, api.NewInternalError("error getting tag keys: %s", err)
 		}
 		projectParams.TagKeys = tagKeys
+		fmt.Println("tagKeys:", tagKeys)
 	}
 
 	if slices.Contains(req.Sequences, "metric") {

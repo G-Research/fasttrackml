@@ -3,8 +3,6 @@ package repositories
 import (
 	"context"
 
-	"github.com/G-Research/fasttrackml/pkg/database"
-
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -19,8 +17,8 @@ type TagRepositoryProvider interface {
 	GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.Tag, error)
 	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
-	// GetParamKeysByParameters returns list of tag keys by requested parameters.
-	GetParamKeysByParameters(ctx context.Context, namespaceID uint, experiments []int) ([]string, error)
+	// GetTagKeysByParameters returns list of tag keys by requested parameters.
+	GetTagKeysByParameters(ctx context.Context, namespaceID uint, experiments []int) ([]string, error)
 }
 
 // TagRepository repository to work with models.Tag entity.
@@ -57,23 +55,23 @@ func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint)
 	return []models.Tag{}, nil
 }
 
-// GetParamKeysByParameters returns list of tag keys by requested parameters.
-func (r TagRepository) GetParamKeysByParameters(
+// GetTagKeysByParameters returns list of tag keys by requested parameters.
+func (r TagRepository) GetTagKeysByParameters(
 	ctx context.Context, namespaceID uint, experiments []int,
 ) ([]string, error) {
 	// fetch and process tags.
 	query := r.db.WithContext(ctx).Model(
-		&database.Tag{},
+		&models.Tag{},
 	).Joins(
 		"JOIN runs USING(run_uuid)",
 	).Joins(
 		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 		namespaceID,
 	).Where(
-		"runs.lifecycle_stage = ?", database.LifecycleStageActive,
+		"runs.lifecycle_stage = ?", models.LifecycleStageActive,
 	)
 	if len(experiments) != 0 {
-		query.Where("experiments.experiment_id IN ?", experiments)
+		query = query.Where("experiments.experiment_id IN ?", experiments)
 	}
 
 	var keys []string

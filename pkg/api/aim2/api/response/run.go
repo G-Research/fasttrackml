@@ -16,7 +16,6 @@ import (
 	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/encoding"
@@ -130,8 +129,8 @@ type GetRunMetricsResponse struct {
 }
 
 // NewGetRunMetricsResponse creates new response object for `GET /runs/:id/metric/get-batch` endpoint.
-func NewGetRunMetricsResponse(metrics []models.Metric, metricKeysMap dto.MetricKeysMapDTO) []GetRunMetricsResponse {
-	data := make(map[dto.MetricKeysItemDTO]struct {
+func NewGetRunMetricsResponse(metrics []models.Metric, metricKeysMap models.MetricKeysMap) []GetRunMetricsResponse {
+	data := make(map[models.MetricKeysItem]struct {
 		iters  []int
 		values []*float64
 	}, len(metricKeysMap))
@@ -141,7 +140,7 @@ func NewGetRunMetricsResponse(metrics []models.Metric, metricKeysMap dto.MetricK
 		if item.IsNan {
 			v = nil
 		}
-		key := dto.MetricKeysItemDTO{
+		key := models.MetricKeysItem{
 			Name:    item.Key,
 			Context: string(item.Context.Json),
 		}

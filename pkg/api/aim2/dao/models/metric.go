@@ -70,3 +70,12 @@ func (c Context) GetJsonHash() string {
 	hash := sha256.Sum256(c.Json)
 	return string(hash[:])
 }
+
+// MetricKeysItem represents object to build composite unique key for map.
+type MetricKeysItem struct {
+	Name    string
+	Context string
+}
+
+// MetricKeysMap represents map with composite keys.
+type MetricKeysMap map[MetricKeysItem]any

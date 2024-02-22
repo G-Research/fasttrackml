@@ -2,7 +2,6 @@ package project
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"time"
 
@@ -82,7 +81,6 @@ func (s Service) GetProjectActivity(
 func (s Service) GetProjectParams(
 	ctx context.Context, namespaceID uint, req *request.GetProjectParamsRequest,
 ) (*dto.ProjectParams, error) {
-	fmt.Println("inn:", req.Sequences)
 	req = NormaliseGetProjectParamsRequest(req)
 	if err := ValidateGetProjectsRequest(req); err != nil {
 		return nil, err

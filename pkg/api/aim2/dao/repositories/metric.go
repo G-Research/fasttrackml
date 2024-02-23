@@ -5,16 +5,16 @@ import (
 	"database/sql"
 	"fmt"
 
+  "github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+  "github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 const (

@@ -8,7 +8,6 @@ import (
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
@@ -62,7 +61,7 @@ func (s Service) GetRunInfo(
 // GetRunMetrics returns run metrics.
 func (s Service) GetRunMetrics(
 	ctx context.Context, namespaceID uint, runID string, req *request.GetRunMetricsRequest,
-) ([]models.Metric, dto.MetricKeysMapDTO, error) {
+) ([]models.Metric, models.MetricKeysMap, error) {
 	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespaceID, runID)
 	if err != nil {
 		return nil, nil, api.NewInternalError("error getting run by id %s: %s", runID, err)

@@ -14,7 +14,6 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
@@ -27,7 +26,7 @@ type RunRepositoryProvider interface {
 	// GetRunInfo returns run info.
 	GetRunInfo(ctx context.Context, namespaceID uint, req *request.GetRunInfoRequest) (*models.Run, error)
 	// GetRunMetrics returns Run metrics.
-	GetRunMetrics(ctx context.Context, runID string, metricKeysMapDTO dto.MetricKeysMapDTO) ([]models.Metric, error)
+	GetRunMetrics(ctx context.Context, runID string, metricKeysMapDTO models.MetricKeysMap) ([]models.Metric, error)
 	// GetAlignedMetrics returns aligned metrics.
 	GetAlignedMetrics(
 		ctx context.Context, namespaceID uint, values []any, alignBy string,
@@ -127,7 +126,7 @@ func (r RunRepository) GetRunInfo(
 
 // GetRunMetrics returns Run metrics.
 func (r RunRepository) GetRunMetrics(
-	ctx context.Context, runID string, metricKeysMapDTO dto.MetricKeysMapDTO,
+	ctx context.Context, runID string, metricKeysMapDTO models.MetricKeysMap,
 ) ([]models.Metric, error) {
 	subQuery := r.db.WithContext(ctx)
 	for metricKey := range metricKeysMapDTO {

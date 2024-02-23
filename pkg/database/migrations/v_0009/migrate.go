@@ -107,8 +107,8 @@ func postgresMigrate(tx *gorm.DB) error {
 	}
 
 	tablesKeyCols := map[string][]string{
-		"metrics":        []string{"key", "value", "timestamp", "run_uuid", "step", "is_nan", "context_id"},
-		"latest_metrics": []string{"key", "run_uuid", "context_id"},
+		"metrics":        {"key", "value", "timestamp", "run_uuid", "step", "is_nan", "context_id"},
+		"latest_metrics": {"key", "run_uuid", "context_id"},
 	}
 
 	for table, pkCols := range tablesKeyCols {

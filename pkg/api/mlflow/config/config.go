@@ -32,7 +32,7 @@ type ServiceConfig struct {
 func NewServiceConfig() *ServiceConfig {
 	return &ServiceConfig{
 		DevMode:               viper.GetBool("dev-mode"),
-		AimRevert:             viper.GetBool("aim-revert"),
+		AimRevert:             viper.GetBool("run-original-aim-service"),
 		ListenAddress:         viper.GetString("listen-address"),
 		AuthUsername:          viper.GetString("auth-username"),
 		AuthPassword:          viper.GetString("auth-password"),

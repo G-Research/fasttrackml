@@ -3,10 +3,13 @@ package v_0009
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/datatypes"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/database/migrations"
@@ -18,13 +21,13 @@ func Migrate(db *gorm.DB) error {
 	return migrations.RunWithoutForeignKeyIfNeeded(db, func() error {
 		return db.Transaction(func(tx *gorm.DB) error {
 			switch tx.Dialector.Name() {
-			case "sqlite":
-				err := sqlite(tx)
+			case sqlite.Dialector{}.Name():
+				err := sqliteMigrate(tx)
 				if err != nil {
 					return err
 				}
-			case "postgres":
-				err := postgres(tx)
+			case postgres.Dialector{}.Name():
+				err := postgresMigrate(tx)
 				if err != nil {
 					return err
 				}
@@ -38,7 +41,7 @@ func Migrate(db *gorm.DB) error {
 	})
 }
 
-func sqlite(tx *gorm.DB) error {
+func sqliteMigrate(tx *gorm.DB) error {
 	tablesIndexes := map[string][]string{
 		"metrics":        {"idx_metrics_run_id", "idx_metrics_iter"},
 		"latest_metrics": {"idx_latest_metrics_run_id"},
@@ -91,6 +94,38 @@ func sqlite(tx *gorm.DB) error {
 	return nil
 }
 
+func postgresMigrate(tx *gorm.DB) error {
+	if err := tx.Migrator().AutoMigrate(&Context{}); err != nil {
+		return eris.Wrap(err, "error automigrating context")
+	}
+	_, err := createDefaultMetricContext(tx)
+	if err != nil {
+		return eris.Wrap(err, "error creating default metric context")
+	}
+	if err := tx.Debug().Migrator().AutoMigrate(&Metric{}, &LatestMetric{}); err != nil {
+		return eris.Wrap(err, "error automigrating metrics and latest_metrics")
+	}
+
+	tablesKeyCols := map[string][]string{
+		"metrics":        []string{"key", "value", "timestamp", "run_uuid", "step", "is_nan", "context_id"},
+		"latest_metrics": []string{"key", "run_uuid", "context_id"},
+	}
+
+	for table, pkCols := range tablesKeyCols {
+		pk := fmt.Sprintf("%s_pkey", table)
+		if tx.Migrator().HasConstraint(table, pk) {
+			if err := tx.Migrator().DropConstraint(table, pk); err != nil {
+				return eris.Wrap(err, "error dropping primary key")
+			}
+		}
+		sql := fmt.Sprintf("ALTER TABLE %s ADD PRIMARY KEY (%s)", table, strings.Join(pkCols, ","))
+		if err := tx.Exec(sql).Error; err != nil {
+			return eris.Wrapf(err, "error creating pk for %s", table)
+		}
+	}
+	return nil
+}
+
 func backupName(name string) string {
 	return fmt.Sprintf("%s_old", name)
 }
@@ -119,36 +154,4 @@ func createDefaultMetricContext(db *gorm.DB) (*Context, error) {
 	}
 	log.Debugf("default metric context: %v", defaultContext)
 	return &defaultContext, nil
-}
-
-func postgres(tx *gorm.DB) error {
-	if err := tx.Migrator().AutoMigrate(&Context{}); err != nil {
-		return eris.Wrap(err, "error automigrating context")
-	}
-	_, err := createDefaultMetricContext(tx)
-	if err != nil {
-		return eris.Wrap(err, "error creating default metric context")
-	}
-	tables := []string{
-		"metrics",
-		"latest_metrics",
-	}
-	for _, table := range tables {
-		pk := fmt.Sprintf("%s_pkey", table)
-		if tx.Migrator().HasConstraint(table, pk) {
-			if err := tx.Migrator().DropConstraint(table, pk); err != nil {
-				return eris.Wrap(err, "error dropping primary key")
-			}
-		}
-	}
-	if err := tx.Debug().Migrator().AutoMigrate(&Metric{}, &LatestMetric{}); err != nil {
-		return eris.Wrap(err, "error automigrating metrics and latest_metrics")
-	}
-	if err := tx.Debug().Migrator().CreateConstraint(&LatestMetric{}, "LatestMetrics"); err != nil {
-		return eris.Wrapf(err, "error creating contraints for %s", "LatestMetrics")
-	}
-	if err := tx.Debug().Migrator().CreateConstraint(&Metric{}, "Metrics"); err != nil {
-		return eris.Wrapf(err, "error creating contraints for %s", "Metrics")
-	}
-	return nil
 }

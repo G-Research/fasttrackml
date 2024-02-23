@@ -17,7 +17,7 @@ func (c Controller) GetDashboards(ctx *fiber.Ctx) error {
 		return api.NewInternalError("error getting namespace from context")
 	}
 	log.Debugf("getDashboards namespace: %s", ns.Code)
-	dashboards, err := c.dashboardService.GetDashboards(ctx.Context(), ns)
+	dashboards, err := c.dashboardService.GetDashboards(ctx.Context(), ns.ID)
 	if err != nil {
 		return convertError(err)
 	}
@@ -38,7 +38,7 @@ func (c Controller) CreateDashboard(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	dash, err := c.dashboardService.Create(ctx.Context(), ns, &req)
+	dash, err := c.dashboardService.Create(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return convertError(err)
 	}
@@ -60,7 +60,7 @@ func (c Controller) GetDashboard(ctx *fiber.Ctx) error {
 	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	dashboard, err := c.dashboardService.Get(ctx.Context(), ns, &req)
+	dashboard, err := c.dashboardService.Get(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return convertError(err)
 	}
@@ -85,7 +85,7 @@ func (c Controller) UpdateDashboard(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	dash, err := c.dashboardService.Update(ctx.Context(), ns, &req)
+	dash, err := c.dashboardService.Update(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return convertError(err)
 	}
@@ -107,7 +107,7 @@ func (c Controller) DeleteDashboard(ctx *fiber.Ctx) error {
 	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	err = c.dashboardService.Delete(ctx.Context(), ns, &req)
+	err = c.dashboardService.Delete(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return convertError(err)
 	}

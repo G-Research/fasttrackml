@@ -5,9 +5,8 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/convertors"
-	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
-	mlflowModels "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
@@ -30,9 +29,9 @@ func NewService(
 
 // Get returns dashboard object.
 func (s Service) Get(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetDashboardRequest,
-) (*aimModels.Dashboard, error) {
-	dashboard, err := s.dashboardRepository.GetByNamespaceIDAndDashboardID(ctx, namespace.ID, req.ID.String())
+	ctx context.Context, namespaceID uint, req *request.GetDashboardRequest,
+) (*models.Dashboard, error) {
+	dashboard, err := s.dashboardRepository.GetByNamespaceIDAndDashboardID(ctx, namespaceID, req.ID.String())
 	if err != nil {
 		return nil, api.NewInternalError("unable to find dashboard by id %q: %s", req.ID, err)
 	}
@@ -44,9 +43,9 @@ func (s Service) Get(
 
 // Create creates new dashboard object.
 func (s Service) Create(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.CreateDashboardRequest,
-) (*aimModels.Dashboard, error) {
-	app, err := s.appRepository.GetByNamespaceIDAndAppID(ctx, namespace.ID, req.AppID.String())
+	ctx context.Context, namespaceID uint, req *request.CreateDashboardRequest,
+) (*models.Dashboard, error) {
+	app, err := s.appRepository.GetByNamespaceIDAndAppID(ctx, namespaceID, req.AppID.String())
 	if err != nil {
 		return nil, api.NewInternalError("unable to find app %q for dashboard: %s", req.AppID, err)
 	}
@@ -63,9 +62,9 @@ func (s Service) Create(
 
 // Update updates existing dashboard object.
 func (s Service) Update(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.UpdateDashboardRequest,
-) (*aimModels.Dashboard, error) {
-	dashboard, err := s.dashboardRepository.GetByNamespaceIDAndDashboardID(ctx, namespace.ID, req.ID.String())
+	ctx context.Context, namespaceID uint, req *request.UpdateDashboardRequest,
+) (*models.Dashboard, error) {
+	dashboard, err := s.dashboardRepository.GetByNamespaceIDAndDashboardID(ctx, namespaceID, req.ID.String())
 	if err != nil {
 		return nil, api.NewInternalError("unable to find dashboard by id %s: %s", req.ID, err)
 	}
@@ -83,8 +82,8 @@ func (s Service) Update(
 }
 
 // GetDashboards returns the list of active dashboards.
-func (s Service) GetDashboards(ctx context.Context, namespace *mlflowModels.Namespace) ([]aimModels.Dashboard, error) {
-	dashboards, err := s.dashboardRepository.GetDashboardsByNamespace(ctx, namespace.ID)
+func (s Service) GetDashboards(ctx context.Context, namespaceID uint) ([]models.Dashboard, error) {
+	dashboards, err := s.dashboardRepository.GetDashboardsByNamespace(ctx, namespaceID)
 	if err != nil {
 		return nil, api.NewInternalError("unable to get active dashboards: %v", err)
 	}
@@ -92,10 +91,8 @@ func (s Service) GetDashboards(ctx context.Context, namespace *mlflowModels.Name
 }
 
 // Delete deletes existing object.
-func (s Service) Delete(ctx context.Context, namespace *mlflowModels.Namespace,
-	req *request.DeleteDashboardRequest,
-) error {
-	dashboard, err := s.dashboardRepository.GetByNamespaceIDAndDashboardID(ctx, namespace.ID, req.ID.String())
+func (s Service) Delete(ctx context.Context, namespaceID uint, req *request.DeleteDashboardRequest) error {
+	dashboard, err := s.dashboardRepository.GetByNamespaceIDAndDashboardID(ctx, namespaceID, req.ID.String())
 	if err != nil {
 		return api.NewInternalError("error trying to find dashboard by id %s: %s", req.ID, err)
 	}

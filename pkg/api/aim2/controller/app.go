@@ -20,7 +20,7 @@ func (c Controller) GetApps(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getApps namespace: %s", ns.Code)
 
-	apps, err := c.appService.GetApps(ctx.Context(), ns)
+	apps, err := c.appService.GetApps(ctx.Context(), ns.ID)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (c Controller) CreateApp(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	app, err := c.appService.Create(ctx.Context(), ns, &req)
+	app, err := c.appService.Create(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (c Controller) GetApp(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	app, err := c.appService.Get(ctx.Context(), ns, &req)
+	app, err := c.appService.Get(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return convertError(err)
 	}
@@ -96,7 +96,7 @@ func (c Controller) UpdateApp(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	app, err := c.appService.Update(ctx.Context(), ns, &req)
+	app, err := c.appService.Update(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return convertError(err)
 	}
@@ -120,7 +120,7 @@ func (c Controller) DeleteApp(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if err := c.appService.Delete(ctx.Context(), ns, &req); err != nil {
+	if err := c.appService.Delete(ctx.Context(), ns.ID, &req); err != nil {
 		return convertError(err)
 	}
 

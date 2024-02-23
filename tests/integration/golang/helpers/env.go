@@ -1,6 +1,8 @@
 package helpers
 
-import "os"
+import (
+	"os"
+)
 
 const defaultDatabaseBackend = "sqlite"
 

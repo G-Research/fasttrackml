@@ -5,9 +5,8 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/convertors"
-	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
-	mlflowModels "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
@@ -25,9 +24,9 @@ func NewService(appRepository repositories.AppRepositoryProvider) *Service {
 
 // Get returns app object.
 func (s Service) Get(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetAppRequest,
-) (*aimModels.App, error) {
-	app, err := s.appRepository.GetByNamespaceIDAndAppID(ctx, namespace.ID, req.ID.String())
+	ctx context.Context, namespaceID uint, req *request.GetAppRequest,
+) (*models.App, error) {
+	app, err := s.appRepository.GetByNamespaceIDAndAppID(ctx, namespaceID, req.ID.String())
 	if err != nil {
 		return nil, api.NewInternalError("unable to find app by id %q: %s", req.ID, err)
 	}
@@ -39,9 +38,9 @@ func (s Service) Get(
 
 // Create creates new app object.
 func (s Service) Create(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.CreateAppRequest,
-) (*aimModels.App, error) {
-	app := convertors.ConvertCreateAppRequestToDBModel(namespace, req)
+	ctx context.Context, namespaceID uint, req *request.CreateAppRequest,
+) (*models.App, error) {
+	app := convertors.ConvertCreateAppRequestToDBModel(namespaceID, req)
 	if err := s.appRepository.Create(ctx, app); err != nil {
 		return nil, api.NewInternalError("unable to create app: %v", err)
 	}
@@ -50,9 +49,9 @@ func (s Service) Create(
 
 // Update updates existing app object.
 func (s Service) Update(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.UpdateAppRequest,
-) (*aimModels.App, error) {
-	app, err := s.appRepository.GetByNamespaceIDAndAppID(ctx, namespace.ID, req.ID.String())
+	ctx context.Context, namespaceID uint, req *request.UpdateAppRequest,
+) (*models.App, error) {
+	app, err := s.appRepository.GetByNamespaceIDAndAppID(ctx, namespaceID, req.ID.String())
 	if err != nil {
 		return nil, api.NewInternalError("unable to find app by id %s: %s", req.ID, err)
 	}
@@ -61,7 +60,7 @@ func (s Service) Update(
 	}
 
 	app.Type = req.Type
-	app.State = aimModels.AppState(req.State)
+	app.State = models.AppState(req.State)
 
 	if err := s.appRepository.Update(ctx, app); err != nil {
 		return nil, api.NewInternalError("unable to update app '%s': %s", app.ID, err)
@@ -70,8 +69,8 @@ func (s Service) Update(
 }
 
 // GetApps returns the list of active apps.
-func (s Service) GetApps(ctx context.Context, namespace *mlflowModels.Namespace) ([]aimModels.App, error) {
-	apps, err := s.appRepository.GetActiveAppsByNamespace(ctx, namespace.ID)
+func (s Service) GetApps(ctx context.Context, namespaceID uint) ([]models.App, error) {
+	apps, err := s.appRepository.GetActiveAppsByNamespace(ctx, namespaceID)
 	if err != nil {
 		return nil, api.NewInternalError("unable to get active apps: %v", err)
 	}
@@ -79,8 +78,8 @@ func (s Service) GetApps(ctx context.Context, namespace *mlflowModels.Namespace)
 }
 
 // Delete deletes existing object.
-func (s Service) Delete(ctx context.Context, namespace *mlflowModels.Namespace, req *request.DeleteAppRequest) error {
-	app, err := s.appRepository.GetByNamespaceIDAndAppID(ctx, namespace.ID, req.ID.String())
+func (s Service) Delete(ctx context.Context, namespaceID uint, req *request.DeleteAppRequest) error {
+	app, err := s.appRepository.GetByNamespaceIDAndAppID(ctx, namespaceID, req.ID.String())
 	if err != nil {
 		return api.NewInternalError("unable to find app by id %s: %s", req.ID, err)
 	}

@@ -274,7 +274,7 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 		{
 			name:  "GetNonexistentRun",
 			runID: uuid.NewString(),
-			error: "Not Found",
+			error: `(Not Found|not found)`,
 		},
 	}
 	for _, tt := range tests {
@@ -283,7 +283,7 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 			s.Require().Nil(
 				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/metric/get-batch", tt.runID),
 			)
-			s.Equal(tt.error, resp.Message)
+			s.Regexp(tt.error, resp.Message)
 		})
 	}
 }

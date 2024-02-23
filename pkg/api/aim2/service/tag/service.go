@@ -3,9 +3,8 @@ package tag
 import (
 	"context"
 
-	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
-	mlflowModels "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
@@ -22,8 +21,8 @@ func NewService(tagRepository repositories.TagRepositoryProvider) *Service {
 }
 
 // GetTags returns the list of tags.
-func (s Service) GetTags(ctx context.Context, namespace *mlflowModels.Namespace) ([]aimModels.Tag, error) {
-	tags, err := s.tagRepository.GetTagsByNamespace(ctx, namespace.ID)
+func (s Service) GetTags(ctx context.Context, namespaceID uint) ([]models.Tag, error) {
+	tags, err := s.tagRepository.GetTagsByNamespace(ctx, namespaceID)
 	if err != nil {
 		return nil, api.NewInternalError("unable to get active apps: %v", err)
 	}

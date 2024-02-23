@@ -17,62 +17,18 @@ const Version = "2c2299e4e061"
 func Migrate(db *gorm.DB) error {
 	return migrations.RunWithoutForeignKeyIfNeeded(db, func() error {
 		return db.Transaction(func(tx *gorm.DB) error {
-			// Rename the existing metrics tables and drop indexes
-			tablesIndexes := map[string][]string{
-				"metrics":        {"idx_metrics_run_id", "idx_metrics_iter"},
-				"latest_metrics": {"idx_latest_metrics_run_id"},
-			}
-			for table, indexes := range tablesIndexes {
-				for _, index := range indexes {
-					if err := dropIndex(tx, table, index); err != nil {
-						return eris.Wrapf(err, "error dropping %s", index)
-					}
+			switch tx.Dialector.Name() {
+			case "sqlite":
+				err := sqlite(tx)
+				if err != nil {
+					return err
 				}
-				if err := tx.Migrator().RenameTable(table, backupName(table)); err != nil {
-					return eris.Wrapf(err, "error renaming %s", table)
+			case "postgres":
+				err := postgres(tx)
+				if err != nil {
+					return err
 				}
 			}
-
-			// Auto-migrate to create new and altered tables
-			if err := tx.Migrator().AutoMigrate(&Context{}, &Metric{}, &LatestMetric{}); err != nil {
-				return eris.Wrap(err, "error automigrating new tables")
-			}
-
-			// Create the default metric context
-			defaultContext, err := createDefaultMetricContext(tx)
-			if err != nil {
-				return eris.Wrap(err, "error creating default metric context")
-			}
-
-			// Copy the data from the old tables to the new ones with default metric context
-			for table := range tablesIndexes {
-				// copy
-				if err := tx.Exec(fmt.Sprintf("INSERT INTO %s SELECT *, %d FROM %s",
-					table,
-					defaultContext.ID,
-					backupName(table))).Error; err != nil {
-					return eris.Wrapf(err, "error copying data for %s", table)
-				}
-
-				// verify
-				var oldRowCount, newRowCount int64
-				if err := tx.Table(table).Count(&newRowCount).Error; err != nil {
-					return eris.Wrapf(err, "error counting rows for %s", table)
-				}
-				if err := tx.Table(backupName(table)).Count(&oldRowCount).Error; err != nil {
-					return eris.Wrapf(err, "error counting rows for %s", backupName(table))
-				}
-				if oldRowCount != newRowCount {
-					return eris.Errorf("rowcount incorrect for %s (old: %d, new: %d)",
-						table, oldRowCount, newRowCount)
-				}
-
-				// Drop the backup tables
-				if err := tx.Exec("DROP TABLE " + backupName(table)).Error; err != nil {
-					return eris.Wrapf(err, "error dropping %s", backupName(table))
-				}
-			}
-
 			// Update the schema version
 			return tx.Model(&SchemaVersion{}).
 				Where("1 = 1").
@@ -80,6 +36,59 @@ func Migrate(db *gorm.DB) error {
 				Error
 		})
 	})
+}
+
+func sqlite(tx *gorm.DB) error {
+	tablesIndexes := map[string][]string{
+		"metrics":        {"idx_metrics_run_id", "idx_metrics_iter"},
+		"latest_metrics": {"idx_latest_metrics_run_id"},
+	}
+	for table, indexes := range tablesIndexes {
+		for _, index := range indexes {
+			if err := dropIndex(tx, table, index); err != nil {
+				return eris.Wrapf(err, "error dropping %s", index)
+			}
+		}
+		if err := tx.Migrator().RenameTable(table, backupName(table)); err != nil {
+			return eris.Wrapf(err, "error renaming %s", table)
+		}
+	}
+
+	if err := tx.Migrator().AutoMigrate(&Context{}, &Metric{}, &LatestMetric{}); err != nil {
+		return eris.Wrap(err, "error automigrating new tables")
+	}
+
+	defaultContext, err := createDefaultMetricContext(tx)
+	if err != nil {
+		return eris.Wrap(err, "error creating default metric context")
+	}
+
+	for table := range tablesIndexes {
+
+		if err := tx.Exec(fmt.Sprintf("INSERT INTO %s SELECT *, %d FROM %s",
+			table,
+			defaultContext.ID,
+			backupName(table))).Error; err != nil {
+			return eris.Wrapf(err, "error copying data for %s", table)
+		}
+
+		var oldRowCount, newRowCount int64
+		if err := tx.Table(table).Count(&newRowCount).Error; err != nil {
+			return eris.Wrapf(err, "error counting rows for %s", table)
+		}
+		if err := tx.Table(backupName(table)).Count(&oldRowCount).Error; err != nil {
+			return eris.Wrapf(err, "error counting rows for %s", backupName(table))
+		}
+		if oldRowCount != newRowCount {
+			return eris.Errorf("rowcount incorrect for %s (old: %d, new: %d)",
+				table, oldRowCount, newRowCount)
+		}
+
+		if err := tx.Exec("DROP TABLE " + backupName(table)).Error; err != nil {
+			return eris.Wrapf(err, "error dropping %s", backupName(table))
+		}
+	}
+	return nil
 }
 
 func backupName(name string) string {
@@ -110,4 +119,36 @@ func createDefaultMetricContext(db *gorm.DB) (*Context, error) {
 	}
 	log.Debugf("default metric context: %v", defaultContext)
 	return &defaultContext, nil
+}
+
+func postgres(tx *gorm.DB) error {
+	if err := tx.Migrator().AutoMigrate(&Context{}); err != nil {
+		return eris.Wrap(err, "error automigrating context")
+	}
+	_, err := createDefaultMetricContext(tx)
+	if err != nil {
+		return eris.Wrap(err, "error creating default metric context")
+	}
+	tables := []string{
+		"metrics",
+		"latest_metrics",
+	}
+	for _, table := range tables {
+		pk := fmt.Sprintf("%s_pkey", table)
+		if tx.Migrator().HasConstraint(table, pk) {
+			if err := tx.Migrator().DropConstraint(table, pk); err != nil {
+				return eris.Wrap(err, "error dropping primary key")
+			}
+		}
+	}
+	if err := tx.Debug().Migrator().AutoMigrate(&Metric{}, &LatestMetric{}); err != nil {
+		return eris.Wrap(err, "error automigrating metrics and latest_metrics")
+	}
+	if err := tx.Debug().Migrator().CreateConstraint(&LatestMetric{}, "LatestMetrics"); err != nil {
+		return eris.Wrapf(err, "error creating contraints for %s", "LatestMetrics")
+	}
+	if err := tx.Debug().Migrator().CreateConstraint(&Metric{}, "Metrics"); err != nil {
+		return eris.Wrapf(err, "error creating contraints for %s", "Metrics")
+	}
+	return nil
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
-  "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 )
 
 // ConvertRunMetricsRequestToMap converts request of `GET /runs/:id/metric/get-batch` endpoint to internal DTO object.

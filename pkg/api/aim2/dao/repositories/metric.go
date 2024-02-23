@@ -5,16 +5,15 @@ import (
 	"database/sql"
 	"fmt"
 
-  "github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-  "github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 )
 
 const (
@@ -191,7 +190,7 @@ func (r MetricRepository) GetLatestMetricsByExperiments(
 	ctx context.Context, namespaceID uint, experiments []int,
 ) ([]models.LatestMetric, error) {
 	query := r.db.WithContext(ctx).Distinct().Model(
-		&database.LatestMetric{},
+		&models.LatestMetric{},
 	).Joins(
 		"JOIN runs USING(run_uuid)",
 	).Joins(
@@ -200,7 +199,7 @@ func (r MetricRepository) GetLatestMetricsByExperiments(
 	).Joins(
 		"Context",
 	).Where(
-		"runs.lifecycle_stage = ?", database.LifecycleStageActive,
+		"runs.lifecycle_stage = ?", models.LifecycleStageActive,
 	)
 	if len(experiments) != 0 {
 		query = query.Where("experiments.experiment_id IN ?", experiments)

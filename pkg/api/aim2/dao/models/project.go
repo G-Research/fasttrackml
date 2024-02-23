@@ -1,6 +1,4 @@
-package dto
-
-import "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+package models
 
 // ProjectActivity represents object to store and transfer project activity.
 type ProjectActivity struct {
@@ -11,8 +9,9 @@ type ProjectActivity struct {
 	NumArchivedRuns int64          `json:"num_archived_runs"`
 }
 
+// ProjectParams represents object to store and transfer project parameters.
 type ProjectParams struct {
-	Metrics   []models.LatestMetric
+	Metrics   []LatestMetric
 	TagKeys   []string
 	ParamKeys []string
 }

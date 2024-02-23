@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 )
 
 // ProjectActivityResponse represents the response json for the `GET aim/projects/activity` endpoint.
@@ -19,7 +19,7 @@ type ProjectActivityResponse struct {
 }
 
 // NewProjectActivityResponse creates new response object for `GET /projects/activity` endpoint.
-func NewProjectActivityResponse(activity *dto.ProjectActivity) *ProjectActivityResponse {
+func NewProjectActivityResponse(activity *models.ProjectActivity) *ProjectActivityResponse {
 	return &ProjectActivityResponse{
 		NumRuns:         activity.NumRuns,
 		NumActiveRuns:   activity.NumActiveRuns,
@@ -57,7 +57,7 @@ type ProjectParamsResponse struct {
 }
 
 // NewProjectParamsResponse creates new response object for `GET /projects/params` endpoint.
-func NewProjectParamsResponse(projectParams *dto.ProjectParams) (*ProjectParamsResponse, error) {
+func NewProjectParamsResponse(projectParams *models.ProjectParams) (*ProjectParamsResponse, error) {
 	// process params and tags
 	params := make(map[string]any, len(projectParams.ParamKeys)+1)
 	for _, paramKey := range projectParams.ParamKeys {

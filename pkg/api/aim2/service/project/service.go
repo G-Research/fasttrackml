@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/dto"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
@@ -46,7 +45,7 @@ func (s Service) GetProjectInformation() (string, string) {
 // GetProjectActivity returns project activity.
 func (s Service) GetProjectActivity(
 	ctx context.Context, namespaceID uint, tzOffset int,
-) (*dto.ProjectActivity, error) {
+) (*models.ProjectActivity, error) {
 	runs, err := s.runRepository.GetByNamespaceID(ctx, namespaceID)
 	if err != nil {
 		return nil, api.NewInternalError("error getting runs: %s", err)
@@ -68,7 +67,7 @@ func (s Service) GetProjectActivity(
 		return nil, api.NewInternalError("error getting number of active experiments: %s", err)
 	}
 
-	return &dto.ProjectActivity{
+	return &models.ProjectActivity{
 		NumRuns:         int64(len(runs)),
 		ActivityMap:     activity,
 		NumActiveRuns:   numActiveRuns,
@@ -80,13 +79,13 @@ func (s Service) GetProjectActivity(
 // GetProjectParams returns project params.
 func (s Service) GetProjectParams(
 	ctx context.Context, namespaceID uint, req *request.GetProjectParamsRequest,
-) (*dto.ProjectParams, error) {
+) (*models.ProjectParams, error) {
 	req = NormaliseGetProjectParamsRequest(req)
 	if err := ValidateGetProjectsRequest(req); err != nil {
 		return nil, err
 	}
 
-	projectParams := dto.ProjectParams{}
+	projectParams := models.ProjectParams{}
 	if !req.ExcludeParams {
 		paramKeys, err := s.paramRepository.GetParamKeysByParameters(ctx, namespaceID, req.Experiments)
 		if err != nil {

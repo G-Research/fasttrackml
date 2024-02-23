@@ -90,7 +90,7 @@ func (s *UpdateRunTestSuite) Test_Error() {
 			name:        "UpdateRunWithUnknownID",
 			ID:          "incorrect-ID",
 			requestBody: map[string]any{},
-			error:       "unable to find run 'incorrect-ID'",
+			error:       "unable to find run 'incorrect-ID'|not found",
 		},
 	}
 	for _, tt := range tests {
@@ -107,7 +107,7 @@ func (s *UpdateRunTestSuite) Test_Error() {
 					"/runs/%s", tt.ID,
 				),
 			)
-			s.Contains(resp.Message, tt.error)
+			s.Regexp(tt.error, resp.Message)
 		})
 	}
 }

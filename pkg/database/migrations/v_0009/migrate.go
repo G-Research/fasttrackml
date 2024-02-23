@@ -67,7 +67,6 @@ func sqliteMigrate(tx *gorm.DB) error {
 	}
 
 	for table := range tablesIndexes {
-
 		if err := tx.Exec(fmt.Sprintf("INSERT INTO %s SELECT *, %d FROM %s",
 			table,
 			defaultContext.ID,
@@ -96,14 +95,14 @@ func sqliteMigrate(tx *gorm.DB) error {
 
 func postgresMigrate(tx *gorm.DB) error {
 	if err := tx.Migrator().AutoMigrate(&Context{}); err != nil {
-		return eris.Wrap(err, "error automigrating context")
+		return eris.Wrap(err, "error auto migrating context")
 	}
 	_, err := createDefaultMetricContext(tx)
 	if err != nil {
 		return eris.Wrap(err, "error creating default metric context")
 	}
 	if err := tx.Debug().Migrator().AutoMigrate(&Metric{}, &LatestMetric{}); err != nil {
-		return eris.Wrap(err, "error automigrating metrics and latest_metrics")
+		return eris.Wrap(err, "error auto migrating metrics and latest_metrics")
 	}
 
 	tablesKeyCols := map[string][]string{

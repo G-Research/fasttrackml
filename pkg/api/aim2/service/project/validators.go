@@ -1,4 +1,4 @@
-package run
+package project
 
 import (
 	"slices"
@@ -7,20 +7,18 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
-// SupportedSequences list of supported Sequences for `GET /runs/:id/info` request.
+// SupportedSequences list of supported Sequences for `GET /projects/params` request.
 var SupportedSequences = []string{
-	"audios",
-	"distributions",
-	"figures",
-	"images",
-	"log_records",
-	"logs",
-	"texts",
 	"metric",
+	"images",
+	"texts",
+	"figures",
+	"distributions",
+	"audios",
 }
 
-// ValidateGetRunInfoRequest validates `GET /runs/:id/info` request.
-func ValidateGetRunInfoRequest(req *request.GetRunInfoRequest) error {
+// ValidateGetProjectsRequest validates `GET /projects/params` request.
+func ValidateGetProjectsRequest(req *request.GetProjectParamsRequest) error {
 	for _, sequence := range req.Sequences {
 		if !slices.Contains(SupportedSequences, sequence) {
 			return api.NewInvalidParameterValueError("%q is not a valid Sequence", sequence)

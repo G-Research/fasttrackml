@@ -349,7 +349,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run1.ID,
 		),
 	)
-	s.Equal("Not Found", resp.Message)
+	s.Regexp("(Not Found|not found)", resp.Message)
 
 	s.deleteRun(namespace2Code, run2.ID)
 	s.Require().Nil(
@@ -361,7 +361,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run1.ID,
 		),
 	)
-	s.Equal("Not Found", resp.Message)
+	s.Regexp("(Not Found|not found)", resp.Message)
 
 	// test `DELETE /runs/delete-batch` endpoint.
 	// recreate deleted runs.
@@ -395,7 +395,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run3.ID,
 		),
 	)
-	s.Equal("Not Found", resp.Message)
+	s.Regexp("(Not Found|not found)", resp.Message)
 
 	run4, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "id4",
@@ -424,7 +424,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run4.ID,
 		),
 	)
-	s.Equal("Not Found", resp.Message)
+	s.Regexp("(Not Found|not found)", resp.Message)
 }
 
 func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunRequest) {

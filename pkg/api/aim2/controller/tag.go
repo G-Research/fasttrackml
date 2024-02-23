@@ -17,7 +17,7 @@ func (c Controller) GetTags(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getTags namespace: %s", ns.Code)
 
-	tags, err := c.tagService.GetTags(ctx.Context(), ns)
+	tags, err := c.tagService.GetTags(ctx.Context(), ns.ID)
 	if err != nil {
 		return err
 	}

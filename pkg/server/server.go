@@ -28,6 +28,7 @@ import (
 	aimExperimentService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/experiment"
 	aimProjectService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/project"
 	aimRunService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/run"
+	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/tag"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
@@ -231,6 +232,9 @@ func createApp(
 		log.Info("Using refactored aim service")
 		aim2API.NewRouter(
 			aim2Controller.NewController(
+				aimTagService.NewService(
+					aimRepositories.NewTagRepository(db.GormDB()),
+				),
 				aimAppService.NewService(
 					aimRepositories.NewAppRepository(db.GormDB()),
 				),

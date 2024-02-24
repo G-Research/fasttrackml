@@ -171,7 +171,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_BACKEND: ${{ matrix.database-backend }}
-          FML_AIM_REVERT: true
+          FML_RUN_ORIGINAL_AIM_SERVICE: true
 
       - name: Run Integration Tests (Aim Refactor)
         run: make container-test

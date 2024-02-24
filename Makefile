@@ -167,7 +167,7 @@ test-python-integration-aim: ## run the Aim python integration tests.
 container-test: ## run integration tests in container.
 	@echo ">>> Running integration tests in container."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose run -e FML_AIM_REVERT integration-tests
+		docker-compose run -e FML_RUN_ORIGINAL_AIM_SERVICE integration-tests
 
 .PHONY: container-clean
 container-clean: ## clean containers.

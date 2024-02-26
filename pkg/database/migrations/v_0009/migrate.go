@@ -101,7 +101,7 @@ func postgresMigrate(tx *gorm.DB) error {
 	if err != nil {
 		return eris.Wrap(err, "error creating default metric context")
 	}
-	if err := tx.Debug().Migrator().AutoMigrate(&Metric{}, &LatestMetric{}); err != nil {
+	if err := tx.Migrator().AutoMigrate(&Metric{}, &LatestMetric{}); err != nil {
 		return eris.Wrap(err, "error auto migrating metrics and latest_metrics")
 	}
 

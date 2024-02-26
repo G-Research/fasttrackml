@@ -71,7 +71,7 @@ func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server,
 	}
 
 	// create database provider.
-	db, err := createDBProvider(config)
+	db, err := createDBProvider(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server,
 }
 
 // createDBProvider creates a new DB provider.
-func createDBProvider(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
+func createDBProvider(ctx context.Context, config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 	db, err := database.NewDBProvider(
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
@@ -108,19 +108,20 @@ func createDBProvider(config *mlflowConfig.ServiceConfig) (database.DBProvider, 
 		}
 	}
 
-	if err := database.CheckAndMigrateDB(config.DatabaseMigrate, db.GormDB()); err != nil {
+	gormDBWithContext := db.GormDB().WithContext(ctx)
+	if err := database.CheckAndMigrateDB(config.DatabaseMigrate, gormDBWithContext); err != nil {
 		return nil, eris.Wrap(err, "error running database migration")
 	}
 
-	if err := database.CreateDefaultNamespace(db.GormDB()); err != nil {
+	if err := database.CreateDefaultNamespace(gormDBWithContext); err != nil {
 		return nil, eris.Wrap(err, "error creating default namespace")
 	}
 
-	if err := database.CreateDefaultExperiment(db.GormDB(), config.DefaultArtifactRoot); err != nil {
+	if err := database.CreateDefaultExperiment(gormDBWithContext, config.DefaultArtifactRoot); err != nil {
 		return nil, eris.Wrap(err, "error creating default experiment")
 	}
 
-	if err := database.CreateDefaultMetricContext(db.GormDB()); err != nil {
+	if err := database.CreateDefaultMetricContext(gormDBWithContext); err != nil {
 		return nil, eris.Wrap(err, "error creating default context")
 	}
 

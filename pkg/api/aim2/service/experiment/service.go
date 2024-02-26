@@ -7,9 +7,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/common"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/convertors"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
-	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
-	mlflowModels "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
@@ -32,10 +30,10 @@ func NewService(
 
 // GetExperiment returns requested experiment.
 func (s Service) GetExperiment(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetExperimentRequest,
-) (*aimModels.ExperimentExtended, error) {
+	ctx context.Context, namespaceID uint, req *request.GetExperimentRequest,
+) (*models.ExperimentExtended, error) {
 	experiment, err := s.experimentRepository.GetExtendedExperimentByNamespaceIDAndExperimentID(
-		ctx, namespace.ID, req.ID,
+		ctx, namespaceID, req.ID,
 	)
 	if err != nil {
 		return nil, api.NewInternalError("unable to find experiment by id %d: %s", req.ID, err)
@@ -47,10 +45,8 @@ func (s Service) GetExperiment(
 }
 
 // GetExperiments returns the list of experiments.
-func (s Service) GetExperiments(
-	ctx context.Context, namespace *mlflowModels.Namespace,
-) ([]aimModels.ExperimentExtended, error) {
-	experiments, err := s.experimentRepository.GetExperiments(ctx, namespace.ID)
+func (s Service) GetExperiments(ctx context.Context, namespaceID uint) ([]models.ExperimentExtended, error) {
+	experiments, err := s.experimentRepository.GetExperiments(ctx, namespaceID)
 	if err != nil {
 		return nil, api.NewInternalError("unable to find experiments: %s", err)
 	}
@@ -59,9 +55,9 @@ func (s Service) GetExperiments(
 
 // GetExperimentActivity returns experiment activity.
 func (s Service) GetExperimentActivity(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetExperimentActivityRequest, tzOffset int,
-) (*aimModels.ExperimentActivity, error) {
-	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespace.ID, req.ID)
+	ctx context.Context, namespaceID uint, req *request.GetExperimentActivityRequest, tzOffset int,
+) (*models.ExperimentActivity, error) {
+	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespaceID, req.ID)
 	if err != nil {
 		return nil, api.NewInternalError("unable to find experiment by id %d: %s", req.ID, err)
 	}
@@ -69,7 +65,7 @@ func (s Service) GetExperimentActivity(
 		return nil, api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)
 	}
 
-	activity, err := s.experimentRepository.GetExperimentActivity(ctx, namespace.ID, *experiment.ID, tzOffset)
+	activity, err := s.experimentRepository.GetExperimentActivity(ctx, namespaceID, *experiment.ID, tzOffset)
 	if err != nil {
 		return nil, api.NewInternalError("unable to get experiment activity: %s", err)
 	}
@@ -78,9 +74,9 @@ func (s Service) GetExperimentActivity(
 
 // GetExperimentRuns returns list of runs related to requested experiment.
 func (s Service) GetExperimentRuns(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.GetExperimentRunsRequest,
-) ([]aimModels.Run, error) {
-	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespace.ID, req.ID)
+	ctx context.Context, namespaceID uint, req *request.GetExperimentRunsRequest,
+) ([]models.Run, error) {
+	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespaceID, req.ID)
 	if err != nil {
 		return nil, api.NewInternalError("unable to find experiment by id %d: %s", req.ID, err)
 	}
@@ -96,9 +92,9 @@ func (s Service) GetExperimentRuns(
 
 // UpdateExperiment updates existing experiment.
 func (s Service) UpdateExperiment(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.UpdateExperimentRequest,
+	ctx context.Context, namespaceID uint, req *request.UpdateExperimentRequest,
 ) error {
-	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespace.ID, req.ID)
+	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespaceID, req.ID)
 	if err != nil {
 		return api.NewInternalError("unable to find experiment by id %d: %s", req.ID, err)
 	}
@@ -126,9 +122,9 @@ func (s Service) UpdateExperiment(
 
 // DeleteExperiment deletes existing experiment.
 func (s Service) DeleteExperiment(
-	ctx context.Context, namespace *mlflowModels.Namespace, req *request.DeleteExperimentRequest,
+	ctx context.Context, namespaceID uint, namespaceDefaultExperimentID *int32, req *request.DeleteExperimentRequest,
 ) error {
-	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespace.ID, req.ID)
+	experiment, err := s.experimentRepository.GetExperimentByNamespaceIDAndExperimentID(ctx, namespaceID, req.ID)
 	if err != nil {
 		return api.NewInternalError("unable to find experiment by id %d: %s", req.ID, err)
 	}
@@ -136,7 +132,7 @@ func (s Service) DeleteExperiment(
 		return api.NewResourceDoesNotExistError("experiment '%d' not found", req.ID)
 	}
 
-	if experiment.IsDefault(namespace) {
+	if experiment.IsDefault(namespaceDefaultExperimentID) {
 		return api.NewBadRequestError("unable to delete default experiment")
 	}
 

@@ -64,17 +64,19 @@ func (s *GetRunInfoTestSuite) Test_Error() {
 	tests := []struct {
 		name  string
 		runID string
+		error string
 	}{
 		{
 			name:  "GetNonexistentRun",
 			runID: uuid.NewString(),
+			error: `(Not Found|not found)`,
 		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.Error
 			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID))
-			s.Equal("Not Found", resp.Message)
+			s.Regexp(tt.error, resp.Message)
 		})
 	}
 }

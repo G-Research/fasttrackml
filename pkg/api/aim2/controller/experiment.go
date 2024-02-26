@@ -20,7 +20,7 @@ func (c Controller) GetExperiments(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getExperiments namespace: %s", ns.Code)
 
-	experiments, err := c.experimentService.GetExperiments(ctx.Context(), ns)
+	experiments, err := c.experimentService.GetExperiments(ctx.Context(), ns.ID)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (c Controller) GetExperiment(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	experiment, err := c.experimentService.GetExperiment(ctx.Context(), ns, &req)
+	experiment, err := c.experimentService.GetExperiment(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (c Controller) GetExperimentRuns(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	runs, err := c.experimentService.GetExperimentRuns(ctx.Context(), ns, &req)
+	runs, err := c.experimentService.GetExperimentRuns(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (c Controller) GetExperimentActivity(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	activity, err := c.experimentService.GetExperimentActivity(ctx.Context(), ns, &req, tzOffset)
+	activity, err := c.experimentService.GetExperimentActivity(ctx.Context(), ns.ID, &req, tzOffset)
 	if err != nil {
 		return err
 	}
@@ -125,11 +125,13 @@ func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if err := c.experimentService.DeleteExperiment(ctx.Context(), ns, &req); err != nil {
+	if err := c.experimentService.DeleteExperiment(ctx.Context(), ns.ID, ns.DefaultExperimentID, &req); err != nil {
 		return err
 	}
 
-	return ctx.JSON(response.NewDeleteExperimentResponse(req.ID, "OK"))
+	resp := response.NewDeleteExperimentResponse(req.ID, "OK")
+	log.Debugf("deleteExperiment response: %#v", resp)
+	return ctx.JSON(resp)
 }
 
 // UpdateExperiment handles `PUT /experiments/:id` endpoint.
@@ -149,9 +151,11 @@ func (c Controller) UpdateExperiment(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	if err := c.experimentService.UpdateExperiment(ctx.Context(), ns, &req); err != nil {
+	if err := c.experimentService.UpdateExperiment(ctx.Context(), ns.ID, &req); err != nil {
 		return err
 	}
 
-	return ctx.JSON(response.NewUpdateExperimentResponse(req.ID, "OK"))
+	resp := response.NewUpdateExperimentResponse(req.ID, "OK")
+	log.Debugf("updateExperiment response: %#v", resp)
+	return ctx.JSON(resp)
 }

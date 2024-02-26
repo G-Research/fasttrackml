@@ -17,12 +17,8 @@ type TagRepositoryProvider interface {
 	GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.Tag, error)
 	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
-	// CreateRunTagWithTransaction creates new models.Tag entity connected to models.Run.
-	CreateRunTagWithTransaction(ctx context.Context, tx *gorm.DB, runID, key, value string) error
-	// GetByRunIDAndKey returns models.Tag by provided RunID and Tag Key.
-	GetByRunIDAndKey(ctx context.Context, runID, key string) (*models.Tag, error)
-	// Delete deletes existing models.Tag entity.
-	Delete(ctx context.Context, tag *models.Tag) error
+	// GetTagKeysByParameters returns list of tag keys by requested parameters.
+	GetTagKeysByParameters(ctx context.Context, namespaceID uint, experiments []int) ([]string, error)
 }
 
 // TagRepository repository to work with models.Tag entity.
@@ -49,42 +45,6 @@ func (r TagRepository) CreateExperimentTag(ctx context.Context, experimentTag *m
 	return nil
 }
 
-// CreateRunTagWithTransaction creates new models.Tag entity connected to models.Run.
-func (r TagRepository) CreateRunTagWithTransaction(
-	ctx context.Context, tx *gorm.DB, runID, key, value string,
-) error {
-	if err := tx.WithContext(ctx).Clauses(clause.OnConflict{
-		UpdateAll: true,
-	}).Create([]models.Tag{{
-		Key:   key,
-		Value: value,
-		RunID: runID,
-	}}).Error; err != nil {
-		return eris.Wrapf(err, "error creating tag for run with id: %s", runID)
-	}
-	return nil
-}
-
-// GetByRunIDAndKey returns models.Tag by provided RunID and Tag Key.
-func (r TagRepository) GetByRunIDAndKey(ctx context.Context, runID, key string) (*models.Tag, error) {
-	tag := models.Tag{RunID: runID, Key: key}
-	if err := r.db.WithContext(ctx).First(&tag).Error; err != nil {
-		if eris.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, eris.Wrapf(err, "error getting tag by run id: %s and tag key: %s", runID, key)
-	}
-	return &tag, nil
-}
-
-// Delete deletes existing models.Tag entity.
-func (r TagRepository) Delete(ctx context.Context, tag *models.Tag) error {
-	if err := r.db.Delete(tag).Error; err != nil {
-		return eris.Wrapf(err, "error deleting tag by run id: %s and key: %s", tag.RunID, tag.Key)
-	}
-	return nil
-}
-
 // GetTagsByNamespace returns the list of tags.
 // TODO fix stub implementation
 func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.Tag, error) {
@@ -93,4 +53,30 @@ func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint)
 		return nil, err
 	}
 	return []models.Tag{}, nil
+}
+
+// GetTagKeysByParameters returns list of tag keys by requested parameters.
+func (r TagRepository) GetTagKeysByParameters(
+	ctx context.Context, namespaceID uint, experiments []int,
+) ([]string, error) {
+	// fetch and process tags.
+	query := r.db.WithContext(ctx).Model(
+		&models.Tag{},
+	).Joins(
+		"JOIN runs USING(run_uuid)",
+	).Joins(
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+		namespaceID,
+	).Where(
+		"runs.lifecycle_stage = ?", models.LifecycleStageActive,
+	)
+	if len(experiments) != 0 {
+		query = query.Where("experiments.experiment_id IN ?", experiments)
+	}
+
+	var keys []string
+	if err := query.Pluck("Key", &keys).Error; err != nil {
+		return nil, eris.Wrap(err, "error getting tag keys by parameters")
+	}
+	return keys, nil
 }

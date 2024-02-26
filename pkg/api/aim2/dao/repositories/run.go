@@ -35,6 +35,8 @@ type RunRepositoryProvider interface {
 	GetRunByNamespaceIDAndRunID(ctx context.Context, namespaceID uint, runID string) (*models.Run, error)
 	// GetByID returns models.Run entity by its ID.
 	GetByID(ctx context.Context, id string) (*models.Run, error)
+	// GetByNamespaceID returns list of models.Run by requested namespace ID.
+	GetByNamespaceID(ctx context.Context, namespaceID uint) ([]models.Run, error)
 	// GetByNamespaceIDRunIDAndLifecycleStage returns models.Run entity by Namespace ID, its ID and Lifecycle Stage.
 	GetByNamespaceIDRunIDAndLifecycleStage(
 		ctx context.Context, namespaceID uint, runID string, lifecycleStage models.LifecycleStage,
@@ -244,6 +246,20 @@ func (r RunRepository) GetByID(ctx context.Context, id string) (*models.Run, err
 		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", id)
 	}
 	return &run, nil
+}
+
+// GetByNamespaceID returns list of models.Run by requested namespace ID.
+func (r RunRepository) GetByNamespaceID(ctx context.Context, namespaceID uint) ([]models.Run, error) {
+	var runs []models.Run
+	if err := r.db.WithContext(ctx).Joins(
+		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+		namespaceID,
+	).Find(
+		&runs,
+	).Error; err != nil {
+		return nil, eris.Wrap(err, "error getting runs")
+	}
+	return runs, nil
 }
 
 // GetByNamespaceIDRunIDAndLifecycleStage returns models.Run entity by Namespace ID, its ID and Lifecycle Stage..

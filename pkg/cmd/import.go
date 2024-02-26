@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -39,7 +40,9 @@ func importCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error connecting to output DB: %w", err)
 	}
 
-	ctx := cmd.Context()
+	ctx, cancel := context.WithCancel(cmd.Context())
+	defer cancel()
+
 	if err := database.CheckAndMigrateDB(true, output.GormDB().WithContext(ctx)); err != nil {
 		return fmt.Errorf("error running database migration: %w", err)
 	}

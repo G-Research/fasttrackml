@@ -13,7 +13,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/G-Research/fasttrackml-ui-aim v0.31705.9
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.4
-	github.com/PuerkitoBio/goquery v1.8.1
+	github.com/PuerkitoBio/goquery v1.9.0
 	github.com/apache/arrow/go/v14 v14.0.2
 	github.com/aws/aws-sdk-go-v2 v1.25.2
 	github.com/aws/aws-sdk-go-v2/config v1.27.4
@@ -48,7 +48,7 @@ require (
 	github.com/Khan/genqlient v0.6.0 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
-	github.com/andybalholm/cascadia v1.3.1 // indirect
+	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.1 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.4 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.15.2 // indirect

@@ -23,24 +23,24 @@ import (
 	aim2API "github.com/G-Research/fasttrackml/pkg/api/aim2"
 	aim2Controller "github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
 	aimRepositories "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
-	aimAppService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/app"
-	aimDashboardService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/dashboard"
-	aimExperimentService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/experiment"
-	aimProjectService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/project"
-	aimRunService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/run"
-	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/tag"
+	aimAppService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/app"
+	aimDashboardService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/dashboard"
+	aimExperimentService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/experiment"
+	aimProjectService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/project"
+	aimRunService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/run"
+	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/tag"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
-	mlflowArtifactService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
-	mlflowExperimentService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
-	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
-	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
-	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
+	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services"
+	mlflowArtifactService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact/storage"
+	mlflowExperimentService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/experiment"
+	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/metric"
+	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/model"
+	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/run"
 	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
@@ -71,7 +71,7 @@ func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server,
 	}
 
 	// create database provider.
-	db, err := createDBProvider(config)
+	db, err := createDBProvider(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server,
 }
 
 // createDBProvider creates a new DB provider.
-func createDBProvider(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
+func createDBProvider(ctx context.Context, config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
 	db, err := database.NewDBProvider(
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
@@ -108,19 +108,20 @@ func createDBProvider(config *mlflowConfig.ServiceConfig) (database.DBProvider, 
 		}
 	}
 
-	if err := database.CheckAndMigrateDB(config.DatabaseMigrate, db.GormDB()); err != nil {
+	gormDBWithContext := db.GormDB().WithContext(ctx)
+	if err := database.CheckAndMigrateDB(config.DatabaseMigrate, gormDBWithContext); err != nil {
 		return nil, eris.Wrap(err, "error running database migration")
 	}
 
-	if err := database.CreateDefaultNamespace(db.GormDB()); err != nil {
+	if err := database.CreateDefaultNamespace(gormDBWithContext); err != nil {
 		return nil, eris.Wrap(err, "error creating default namespace")
 	}
 
-	if err := database.CreateDefaultExperiment(db.GormDB(), config.DefaultArtifactRoot); err != nil {
+	if err := database.CreateDefaultExperiment(gormDBWithContext, config.DefaultArtifactRoot); err != nil {
 		return nil, eris.Wrap(err, "error creating default experiment")
 	}
 
-	if err := database.CreateDefaultMetricContext(db.GormDB()); err != nil {
+	if err := database.CreateDefaultMetricContext(gormDBWithContext); err != nil {
 		return nil, eris.Wrap(err, "error creating default context")
 	}
 

@@ -30,7 +30,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
 
 	server, err := server.NewServer(ctx, mlflowConfig)

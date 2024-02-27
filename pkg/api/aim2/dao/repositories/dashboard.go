@@ -20,10 +20,12 @@ type DashboardRepositoryProvider interface {
 	Create(ctx context.Context, dashboard *models.Dashboard) error
 	// Delete deletes existing models.Dashboard object.
 	Delete(ctx context.Context, dashboard *models.Dashboard) error
-	// GetByNamespaceIDAndDashboardID returns models.Dashboard by Dashboard ID.
-	GetByNamespaceIDAndDashboardID(ctx context.Context, namespaceID uint, dashboardID string) (*models.Dashboard, error)
 	// GetDashboardsByNamespace returns the list of active models.Dashboard by provided Namespace ID.
 	GetDashboardsByNamespace(ctx context.Context, namespaceID uint) ([]models.Dashboard, error)
+	// GetByNamespaceIDAndDashboardID returns models.Dashboard by Dashboard ID.
+	GetByNamespaceIDAndDashboardID(
+		ctx context.Context, namespaceID uint, dashboardID string,
+	) (*models.Dashboard, error)
 }
 
 // DashboardRepository repository to work with `dashboard` entity.

@@ -4,12 +4,6 @@ import (
 	"database/sql"
 )
 
-// Default Experiment properties.
-const (
-	DefaultExperimentID   = int32(0)
-	DefaultExperimentName = "Default"
-)
-
 // Experiment represents model to work with `experiments` table.
 type Experiment struct {
 	ID               *int32         `gorm:"column:experiment_id;not null;primaryKey"`

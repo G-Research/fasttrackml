@@ -171,7 +171,7 @@ func (s Service) DeleteRun(
 		return api.NewResourceDoesNotExistError("run '%s' not found", req.ID)
 	}
 
-	if err = s.runRepository.Delete(ctx, namespaceID, run); err != nil {
+	if err = s.runRepository.DeleteBatch(ctx, namespaceID, []string{run.ID}); err != nil {
 		return api.NewInternalError("unable to delete run %q: %s", req.ID, err)
 	}
 	return nil
@@ -192,11 +192,11 @@ func (s Service) UpdateRun(
 
 	if req.Archived != nil {
 		if *req.Archived {
-			if err := s.runRepository.Archive(ctx, run); err != nil {
+			if err := s.runRepository.ArchiveBatch(ctx, namespaceID, []string{run.ID}); err != nil {
 				return api.NewInternalError("error archiving run %s: %s", req.ID, err)
 			}
 		} else {
-			if err := s.runRepository.Restore(ctx, run); err != nil {
+			if err := s.runRepository.RestoreBatch(ctx, namespaceID, []string{run.ID}); err != nil {
 				return api.NewInternalError("error restoring run %s: %s", req.ID, err)
 			}
 		}

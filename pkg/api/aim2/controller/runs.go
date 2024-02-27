@@ -8,7 +8,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/service/run"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/services/run"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )

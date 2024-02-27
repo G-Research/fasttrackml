@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact/storage"
 )
 
 func TestNewListArtifactsResponse_Ok(t *testing.T) {

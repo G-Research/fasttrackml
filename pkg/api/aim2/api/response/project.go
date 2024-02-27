@@ -47,17 +47,19 @@ func NewGetProjectResponse(name, dialector string) *GetProjectResponse {
 
 // ProjectParamsResponse is a response object for `GET /projects/params` endpoint.
 type ProjectParamsResponse struct {
-	Metric        map[string][]fiber.Map `json:"metric"`
-	Params        fiber.Map              `json:"params"`
-	Texts         fiber.Map              `json:"texts"`
-	Audios        fiber.Map              `json:"audios"`
-	Images        fiber.Map              `json:"images"`
-	Figures       fiber.Map              `json:"figures"`
-	Distributions fiber.Map              `json:"distributions"`
+	Metric        *map[string][]fiber.Map `json:"metric,omitempty"`
+	Params        *map[string]any         `json:"params,omitempty"`
+	Texts         *fiber.Map              `json:"texts,omitempty"`
+	Audios        *fiber.Map              `json:"audios,omitempty"`
+	Images        *fiber.Map              `json:"images,omitempty"`
+	Figures       *fiber.Map              `json:"figures,omitempty"`
+	Distributions *fiber.Map              `json:"distributions,omitempty"`
 }
 
 // NewProjectParamsResponse creates new response object for `GET /projects/params` endpoint.
-func NewProjectParamsResponse(projectParams *models.ProjectParams) (*ProjectParamsResponse, error) {
+func NewProjectParamsResponse(projectParams *models.ProjectParams,
+	excludeParams bool, sequences []string,
+) (*ProjectParamsResponse, error) {
 	// process params and tags
 	params := make(map[string]any, len(projectParams.ParamKeys)+1)
 	for _, paramKey := range projectParams.ParamKeys {
@@ -93,13 +95,35 @@ func NewProjectParamsResponse(projectParams *models.ProjectParams) (*ProjectPara
 		}
 	}
 
-	return &ProjectParamsResponse{
-		Metric:        metrics,
-		Params:        params,
-		Texts:         fiber.Map{},
-		Audios:        fiber.Map{},
-		Images:        fiber.Map{},
-		Figures:       fiber.Map{},
-		Distributions: fiber.Map{},
-	}, nil
+	rsp := ProjectParamsResponse{}
+	if !excludeParams {
+		rsp.Params = &params
+	}
+	if len(sequences) == 0 {
+		sequences = []string{
+			"metric",
+			"images",
+			"texts",
+			"figures",
+			"distributions",
+			"audios",
+		}
+	}
+	for _, s := range sequences {
+		switch s {
+		case "images":
+			rsp.Images = &fiber.Map{}
+		case "texts":
+			rsp.Texts = &fiber.Map{}
+		case "figures":
+			rsp.Figures = &fiber.Map{}
+		case "distributions":
+			rsp.Distributions = &fiber.Map{}
+		case "audios":
+			rsp.Audios = &fiber.Map{}
+		case "metric":
+			rsp.Metric = &metrics
+		}
+	}
+	return &rsp, nil
 }

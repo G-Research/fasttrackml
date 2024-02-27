@@ -19,7 +19,7 @@ func NewRouter(controller *controller.Controller) *Router {
 }
 
 func (r Router) Init(server fiber.Router) {
-	mainGroup := server.Group("/aim2/api")
+	mainGroup := server.Group("/aim/api")
 	apps := mainGroup.Group("apps")
 	apps.Get("/", r.controller.GetApps)
 	apps.Post("/", r.controller.CreateApp)

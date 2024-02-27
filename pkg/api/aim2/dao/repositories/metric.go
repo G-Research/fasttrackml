@@ -81,21 +81,6 @@ func (r MetricRepository) GetLatestMetricsByExperiments(
 	return metrics, nil
 }
 
-// getLatestMetricsByRunIDAndKeys returns the latest metrics by requested Run ID and keys.
-func (r MetricRepository) getLatestMetricsByRunIDAndKeys(
-	ctx context.Context, runID string, keys []string,
-) ([]models.LatestMetric, error) {
-	var metrics []models.LatestMetric
-	if err := r.db.WithContext(ctx).Where(
-		"run_uuid = ?", runID,
-	).Where(
-		"key IN ?", keys,
-	).Find(&metrics).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting latest metrics by run id: %s and keys: %v", runID, keys)
-	}
-	return metrics, nil
-}
-
 // SearchMetrics returns a metrics cursor according to the SearchMetricsRequest.
 func (r MetricRepository) SearchMetrics(
 	ctx context.Context, namespaceID uint, timeZoneOffset int, req request.SearchMetricsRequest,

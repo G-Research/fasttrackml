@@ -97,12 +97,9 @@ func postgresMigrate(tx *gorm.DB) error {
 	if err := tx.Migrator().AutoMigrate(&Context{}); err != nil {
 		return eris.Wrap(err, "error auto migrating context")
 	}
-	_, err := createDefaultMetricContext(tx)
+	defaultMetricContext, err := createDefaultMetricContext(tx)
 	if err != nil {
 		return eris.Wrap(err, "error creating default metric context")
-	}
-	if err := tx.Migrator().AutoMigrate(&Metric{}, &LatestMetric{}); err != nil {
-		return eris.Wrap(err, "error auto migrating metrics and latest_metrics")
 	}
 
 	tablesKeyCols := map[string][]string{
@@ -117,9 +114,23 @@ func postgresMigrate(tx *gorm.DB) error {
 				return eris.Wrap(err, "error dropping primary key")
 			}
 		}
-		sql := fmt.Sprintf("ALTER TABLE %s ADD PRIMARY KEY (%s)", table, strings.Join(pkCols, ","))
+
+		sql := fmt.Sprintf(`ALTER TABLE %s
+                        ADD COLUMN context_id BIGINT NOT NULL DEFAULT %d,
+                        ADD CONSTRAINT fk_%s_contexts FOREIGN KEY (context_id) REFERENCES contexts(id)`,
+			table, defaultMetricContext.ID, table)
+		if err := tx.Exec(sql).Error; err != nil {
+			return eris.Wrapf(err, "error adding context_id column for %s", table)
+		}
+
+		sql = fmt.Sprintf("ALTER TABLE %s ADD PRIMARY KEY (%s)", table, strings.Join(pkCols, ","))
 		if err := tx.Exec(sql).Error; err != nil {
 			return eris.Wrapf(err, "error creating pk for %s", table)
+		}
+
+		sql = fmt.Sprintf("ALTER TABLE %s ALTER COLUMN context_id DROP DEFAULT", table)
+		if err := tx.Exec(sql).Error; err != nil {
+			return eris.Wrapf(err, "error dropping default value for %s", table)
 		}
 	}
 	return nil

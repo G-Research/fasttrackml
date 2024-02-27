@@ -9,9 +9,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 )
 
-// DefaultContext is the default metric context
-var DefaultContext = Context{Json: types.JSONB("{}")}
-
 // Metric represents model to work with `metrics` table.
 type Metric struct {
 	Key       string  `gorm:"type:varchar(250);not null;primaryKey"`

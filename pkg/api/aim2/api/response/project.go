@@ -6,7 +6,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 )
 
@@ -58,8 +57,8 @@ type ProjectParamsResponse struct {
 }
 
 // NewProjectParamsResponse creates new response object for `GET /projects/params` endpoint.
-func NewProjectParamsResponse(req request.GetProjectParamsRequest,
-	projectParams *models.ProjectParams,
+func NewProjectParamsResponse(projectParams *models.ProjectParams,
+	excludeParams bool, sequences []string,
 ) (*ProjectParamsResponse, error) {
 	// process params and tags
 	params := make(map[string]any, len(projectParams.ParamKeys)+1)
@@ -97,11 +96,11 @@ func NewProjectParamsResponse(req request.GetProjectParamsRequest,
 	}
 
 	rsp := ProjectParamsResponse{}
-	if !req.ExcludeParams {
+	if !excludeParams {
 		rsp.Params = &params
 	}
-	if len(req.Sequences) == 0 {
-		req.Sequences = []string{
+	if len(sequences) == 0 {
+		sequences = []string{
 			"metric",
 			"images",
 			"texts",
@@ -110,7 +109,7 @@ func NewProjectParamsResponse(req request.GetProjectParamsRequest,
 			"audios",
 		}
 	}
-	for _, s := range req.Sequences {
+	for _, s := range sequences {
 		switch s {
 		case "images":
 			rsp.Images = &fiber.Map{}

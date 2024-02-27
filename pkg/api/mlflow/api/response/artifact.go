@@ -1,6 +1,6 @@
 package response
 
-import "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
+import "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact/storage"
 
 // FilePartialResponse is a partial response object for different responses.
 type FilePartialResponse struct {

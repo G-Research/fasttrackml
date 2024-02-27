@@ -1,12 +1,12 @@
 package controller
 
 import (
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/service/app"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/service/dashboard"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/service/experiment"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/service/project"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/service/run"
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/service/tag"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/services/app"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/services/dashboard"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/services/experiment"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/services/project"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/services/run"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/services/tag"
 )
 
 // Controller handles all the input HTTP requests.

@@ -30,7 +30,7 @@ func serverCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
 
 	server, err := server.NewServer(ctx, mlflowConfig)
@@ -80,6 +80,8 @@ func init() {
 	ServerCmd.Flags().MarkHidden("database-reset")
 	ServerCmd.Flags().Bool("dev-mode", false, "Development mode - enable CORS")
 	ServerCmd.Flags().MarkHidden("dev-mode")
+	ServerCmd.Flags().Bool("run-original-aim-service", false, "Run original aim service at /aim/api")
+	ServerCmd.Flags().MarkHidden("run-original-aim-service")
 	viper.BindEnv("auth-username", "MLFLOW_TRACKING_USERNAME")
 	viper.BindEnv("auth-password", "MLFLOW_TRACKING_PASSWORD")
 }

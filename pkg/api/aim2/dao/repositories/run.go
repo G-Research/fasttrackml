@@ -26,45 +26,25 @@ type RunRepositoryProvider interface {
 	// GetRunInfo returns run info.
 	GetRunInfo(ctx context.Context, namespaceID uint, req *request.GetRunInfoRequest) (*models.Run, error)
 	// GetRunMetrics returns Run metrics.
-	GetRunMetrics(ctx context.Context, runID string, metricKeysMapDTO models.MetricKeysMap) ([]models.Metric, error)
+	GetRunMetrics(ctx context.Context, runID string, metricKeysMap models.MetricKeysMap) ([]models.Metric, error)
 	// GetAlignedMetrics returns aligned metrics.
 	GetAlignedMetrics(
 		ctx context.Context, namespaceID uint, values []any, alignBy string,
 	) (*sql.Rows, func(*sql.Rows) (*models.AlignedMetric, error), error)
 	// GetRunByNamespaceIDAndRunID returns experiment by Namespace ID and Run ID.
 	GetRunByNamespaceIDAndRunID(ctx context.Context, namespaceID uint, runID string) (*models.Run, error)
-	// GetByID returns models.Run entity by its ID.
-	GetByID(ctx context.Context, id string) (*models.Run, error)
-	// GetByNamespaceIDRunIDAndLifecycleStage returns models.Run entity by Namespace ID, its ID and Lifecycle Stage.
-	GetByNamespaceIDRunIDAndLifecycleStage(
-		ctx context.Context, namespaceID uint, runID string, lifecycleStage models.LifecycleStage,
-	) (*models.Run, error)
+	// GetByNamespaceID returns list of models.Run by requested namespace ID.
+	GetByNamespaceID(ctx context.Context, namespaceID uint) ([]models.Run, error)
 	// GetByNamespaceIDAndStatus returns []models.Run by Namespace ID and status.
 	GetByNamespaceIDAndStatus(ctx context.Context, namespaceID uint, status models.Status) ([]models.Run, error)
-	// GetByNamespaceIDAndRunID returns models.Run entity by Namespace ID and its ID.
-	GetByNamespaceIDAndRunID(
-		ctx context.Context, namespaceID uint, runID string,
-	) (*models.Run, error)
-	// Create creates new models.Run entity.
-	Create(ctx context.Context, run *models.Run) error
 	// Update updates existing models.Experiment entity.
 	Update(ctx context.Context, run *models.Run) error
-	// Archive marks existing models.Run entity as archived.
-	Archive(ctx context.Context, run *models.Run) error
-	// Delete removes the existing models.Run
-	Delete(ctx context.Context, namespaceID uint, run *models.Run) error
-	// Restore marks existing models.Run entity as active.
-	Restore(ctx context.Context, run *models.Run) error
 	// ArchiveBatch marks existing models.Run entities as archived.
 	ArchiveBatch(ctx context.Context, namespaceID uint, ids []string) error
 	// DeleteBatch removes the existing models.Run from the db.
 	DeleteBatch(ctx context.Context, namespaceID uint, ids []string) error
 	// RestoreBatch marks existing models.Run entities as active.
 	RestoreBatch(ctx context.Context, namespaceID uint, ids []string) error
-	// SetRunTagsBatch sets Run tags in batch.
-	SetRunTagsBatch(ctx context.Context, run *models.Run, batchSize int, tags []models.Tag) error
-	// UpdateWithTransaction updates existing models.Run entity in scope of transaction.
-	UpdateWithTransaction(ctx context.Context, tx *gorm.DB, run *models.Run) error
 	// SearchRuns returns the list of runs by provided search request.
 	SearchRuns(
 		ctx context.Context, namespaceID uint, tzOffset int, req request.SearchRunsRequest,
@@ -124,10 +104,10 @@ func (r RunRepository) GetRunInfo(
 
 // GetRunMetrics returns Run metrics.
 func (r RunRepository) GetRunMetrics(
-	ctx context.Context, runID string, metricKeysMapDTO models.MetricKeysMap,
+	ctx context.Context, runID string, metricKeysMap models.MetricKeysMap,
 ) ([]models.Metric, error) {
 	subQuery := r.db.WithContext(ctx)
-	for metricKey := range metricKeysMapDTO {
+	for metricKey := range metricKeysMap {
 		subQuery = subQuery.Or("key = ? AND json = ?", metricKey.Name, types.JSONB(metricKey.Context))
 	}
 
@@ -229,48 +209,18 @@ func (r RunRepository) GetRunByNamespaceIDAndRunID(
 	return &run, nil
 }
 
-// GetByID returns models.Run entity by its ID.
-func (r RunRepository) GetByID(ctx context.Context, id string) (*models.Run, error) {
-	run := models.Run{ID: id}
-	if err := r.db.WithContext(
-		ctx,
-	).Preload(
-		"LatestMetrics",
-	).Preload(
-		"Params",
-	).Preload(
-		"Tags",
-	).First(&run).Error; err != nil {
-		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", id)
-	}
-	return &run, nil
-}
-
-// GetByNamespaceIDRunIDAndLifecycleStage returns models.Run entity by Namespace ID, its ID and Lifecycle Stage..
-func (r RunRepository) GetByNamespaceIDRunIDAndLifecycleStage(
-	ctx context.Context, namespaceID uint, runID string, lifecycleStage models.LifecycleStage,
-) (*models.Run, error) {
-	run := models.Run{ID: runID}
-	if err := r.db.WithContext(
-		ctx,
-	).Preload(
-		"LatestMetrics",
-	).Preload(
-		"Params",
-	).Preload(
-		"Tags",
-	).Joins(
+// GetByNamespaceID returns list of models.Run by requested namespace ID.
+func (r RunRepository) GetByNamespaceID(ctx context.Context, namespaceID uint) ([]models.Run, error) {
+	var runs []models.Run
+	if err := r.db.WithContext(ctx).Joins(
 		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 		namespaceID,
-	).Where(
-		`runs.lifecycle_stage = ?`, lifecycleStage,
-	).First(&run).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", runID)
+	).Find(
+		&runs,
+	).Error; err != nil {
+		return nil, eris.Wrap(err, "error getting runs")
 	}
-	return &run, nil
+	return runs, nil
 }
 
 // GetByNamespaceIDAndStatus returns []models.Run by Namespace ID and Lifecycle Stage.
@@ -297,69 +247,11 @@ func (r RunRepository) GetByNamespaceIDAndStatus(
 	return runs, nil
 }
 
-// GetByNamespaceIDAndRunID returns models.Run entity by Namespace ID and its ID.
-func (r RunRepository) GetByNamespaceIDAndRunID(
-	ctx context.Context, namespaceID uint, runID string,
-) (*models.Run, error) {
-	run := models.Run{ID: runID}
-	if err := r.db.WithContext(
-		ctx,
-	).Preload(
-		"LatestMetrics",
-	).Preload(
-		"Params",
-	).Preload(
-		"Tags",
-	).Joins(
-		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
-		namespaceID,
-	).First(&run).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, eris.Wrapf(err, "error getting 'run' entity by id: %s", runID)
-	}
-	return &run, nil
-}
-
-// Create creates new models.Run entity.
-func (r RunRepository) Create(ctx context.Context, run *models.Run) error {
-	// Lock need to calculate row_num
-	if err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if tx.Dialector.Name() == "postgres" {
-			if err := tx.Exec("LOCK TABLE runs").Error; err != nil {
-				return err
-			}
-		}
-		return tx.Create(&run).Error
-	}); err != nil {
-		return eris.Wrap(err, "error creating new 'run' entity")
-	}
-	return nil
-}
-
 // Update updates existing models.Run entity.
 func (r RunRepository) Update(ctx context.Context, run *models.Run) error {
 	if err := r.db.WithContext(ctx).Model(&run).Omit("Experiment").Updates(run).Error; err != nil {
 		return eris.Wrapf(err, "error updating run with id: %s", run.ID)
 	}
-	return nil
-}
-
-// Archive marks existing models.Run entity as archived.
-func (r RunRepository) Archive(ctx context.Context, run *models.Run) error {
-	if err := r.db.WithContext(ctx).Model(&run).Omit("Experiment").Updates(
-		models.Run{
-			DeletedTime: sql.NullInt64{
-				Int64: time.Now().UTC().UnixMilli(),
-				Valid: true,
-			},
-			LifecycleStage: models.LifecycleStageDeleted,
-		},
-	).Error; err != nil {
-		return eris.Wrapf(err, "error updating existing run with id: %s", run.ID)
-	}
-
 	return nil
 }
 
@@ -441,19 +333,6 @@ func (r RunRepository) DeleteBatch(ctx context.Context, namespaceID uint, ids []
 	return nil
 }
 
-// Restore marks existing models.Run entity as active.
-func (r RunRepository) Restore(ctx context.Context, run *models.Run) error {
-	// Use UpdateColumns so we can reset DeletedTime to null
-	if err := r.db.WithContext(ctx).Model(&run).UpdateColumns(map[string]any{
-		"DeletedTime":    sql.NullInt64{},
-		"LifecycleStage": database.LifecycleStageActive,
-	}).Error; err != nil {
-		return eris.Wrapf(err, "error updating existing run with id: %s", run.ID)
-	}
-
-	return nil
-}
-
 // RestoreBatch marks existing models.Run entities as active.
 func (r RunRepository) RestoreBatch(ctx context.Context, namespaceID uint, ids []string) error {
 	if err := r.db.WithContext(
@@ -484,36 +363,6 @@ func (r RunRepository) RestoreBatch(ctx context.Context, namespaceID uint, ids [
 func (r RunRepository) UpdateWithTransaction(ctx context.Context, tx *gorm.DB, run *models.Run) error {
 	if err := tx.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
 		return eris.Wrapf(err, "error updating existing run with id: %s", run.ID)
-	}
-	return nil
-}
-
-// SetRunTagsBatch sets Run tags in batch.
-func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, batchSize int, tags []models.Tag) error {
-	if err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		for _, tag := range tags {
-			switch tag.Key {
-			case "mlflow.user":
-				run.UserID = tag.Value
-				if err := r.UpdateWithTransaction(ctx, tx, run); err != nil {
-					return eris.Wrap(err, "error updating run 'user_id' field")
-				}
-			case "mlflow.runName":
-				run.Name = tag.Value
-				if err := r.UpdateWithTransaction(ctx, tx, run); err != nil {
-					return eris.Wrap(err, "error updating run 'name' field")
-				}
-			}
-		}
-
-		if err := tx.Clauses(clause.OnConflict{
-			UpdateAll: true,
-		}).CreateInBatches(&tags, batchSize).Error; err != nil {
-			return err
-		}
-		return nil
-	}); err != nil {
-		return err
 	}
 	return nil
 }

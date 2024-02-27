@@ -45,7 +45,7 @@ func (c Controller) CreateDashboard(ctx *fiber.Ctx) error {
 
 	resp := response.NewCreateDashboardResponse(dash)
 	log.Debugf("createDashboard response %#v", resp)
-	return ctx.JSON(resp)
+	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }
 
 // GetDashboard handles `GET /dashboard/:id` endpoint.

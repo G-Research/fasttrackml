@@ -62,7 +62,7 @@ func NewMlflowApiClient(server server.Server) *HttpClient {
 
 // NewAimApiClient creates new HTTP client for the aim api
 func NewAimApiClient(server server.Server) *HttpClient {
-	return NewClient(server, GetAimEndpointPath())
+	return NewClient(server, "/aim/api")
 }
 
 // NewAdminApiClient creates new HTTP client for the admin api

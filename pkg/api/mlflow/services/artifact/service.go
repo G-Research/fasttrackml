@@ -13,7 +13,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact/storage"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 

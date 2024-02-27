@@ -59,7 +59,8 @@ type ProjectParamsResponse struct {
 
 // NewProjectParamsResponse creates new response object for `GET /projects/params` endpoint.
 func NewProjectParamsResponse(req request.GetProjectParamsRequest,
-	projectParams *models.ProjectParams) (*ProjectParamsResponse, error) {
+	projectParams *models.ProjectParams,
+) (*ProjectParamsResponse, error) {
 	// process params and tags
 	params := make(map[string]any, len(projectParams.ParamKeys)+1)
 	for _, paramKey := range projectParams.ParamKeys {

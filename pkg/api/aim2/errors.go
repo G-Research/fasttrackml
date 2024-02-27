@@ -3,9 +3,10 @@ package aim2
 import (
 	"errors"
 
-	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
 func ErrorHandler(c *fiber.Ctx, err error) error {

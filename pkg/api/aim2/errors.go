@@ -20,7 +20,6 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 		}
 	case errors.As(err, &e):
 	default:
-		log.Errorf(" **** ERROR we're in the default: %T", err)
 		e = &api.ErrorResponse{
 			StatusCode: fiber.StatusInternalServerError,
 			Message:    err.Error(),

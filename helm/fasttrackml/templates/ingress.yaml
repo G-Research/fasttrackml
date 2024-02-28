@@ -1,0 +1,19 @@
+{{ if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "fasttrackml.fullname" . }}
+  namespace: {{ .Values.namespace }}
+spec:
+  ingressClassName: {{ quote .Values.ingress.className }}
+  rules:
+  - http:
+      paths:
+      - path: {{ quote .Values.ingress.path }}
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ include "fasttrackml.fullname" . }}
+            port:
+              number: {{ .Values.service.port }}
+{{- end -}}

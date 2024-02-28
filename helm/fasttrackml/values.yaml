@@ -54,6 +54,13 @@ service:
   type: ClusterIP
   port: 5000
 
+# By default ingress is enabled, and set to have `nginx` as `className`.
+# Change depending of your environment and needs
+ingress:
+  enabled: true
+  className: nginx
+  path: "/"
+
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little

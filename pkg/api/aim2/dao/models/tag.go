@@ -12,16 +12,17 @@ type Tag struct {
 	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 
-// TagExtraInfo stores additional tag data for Aim UI.
-type TagExtraInfo struct {
+// TagExtra stores additional tag data for Aim UI.
+type TagExtra struct {
 	Key         string    `gorm:"type:varchar(250);not null;primaryKey"`
 	ID          uuid.UUID `gorm:"column:id;not null"`
 	Color       string    `gorm:"type:varchar(7);null"`
 	Description string    `gorm:"type:varchar(500);null`
+	Runs        []Run     `gorm:"many2many:run_tag_extras"`
 }
 
 // BeforeCreate supplies a UUID for TagExtraInfo.
-func (tag *TagExtraInfo) BeforeCreate(tx *gorm.DB) error {
+func (tag *TagExtra) BeforeCreate(tx *gorm.DB) error {
 	tag.ID = uuid.New()
 	return nil
 }

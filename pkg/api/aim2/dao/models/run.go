@@ -42,7 +42,7 @@ type Run struct {
 	RowNum         RowNum         `gorm:"<-:create;index"`
 	Params         []Param        `gorm:"constraint:OnDelete:CASCADE"`
 	Tags           []Tag          `gorm:"constraint:OnDelete:CASCADE"`
-	TagExtras      []TagExtras    `gorm:"many2many:run_tag_extras"`
+	TagDatas       []TagData      `gorm:"many2many:run_tag_datas"`
 	Metrics        []Metric       `gorm:"constraint:OnDelete:CASCADE"`
 	LatestMetrics  []LatestMetric `gorm:"constraint:OnDelete:CASCADE"`
 }

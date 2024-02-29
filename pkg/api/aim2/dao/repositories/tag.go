@@ -14,7 +14,7 @@ import (
 type TagRepositoryProvider interface {
 	BaseRepositoryProvider
 	// GetTagsByNamespace returns the list of tags.
-	GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.Tag, error)
+	GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.TagData, error)
 	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
 	// GetTagKeysByParameters returns list of tag keys by requested parameters.
@@ -46,13 +46,12 @@ func (r TagRepository) CreateExperimentTag(ctx context.Context, experimentTag *m
 }
 
 // GetTagsByNamespace returns the list of tags.
-// TODO fix stub implementation
-func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.Tag, error) {
-	var tags []models.Tag
-	if err := r.db.WithContext(ctx).Find(&tags).Error; err != nil {
+func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.TagData, error) {
+	var tagAttrs []models.TagData
+	if err := r.db.WithContext(ctx).Find(&tagAttrs).Error; err != nil {
 		return nil, err
 	}
-	return []models.Tag{}, nil
+	return []models.TagData{}, nil
 }
 
 // GetTagKeysByParameters returns list of tag keys by requested parameters.

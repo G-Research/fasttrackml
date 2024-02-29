@@ -2,6 +2,8 @@ package response
 
 import (
 	"github.com/google/uuid"
+
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 )
 
 // TagResponse represents a run tag.
@@ -17,18 +19,18 @@ type TagResponse struct {
 // GetTagsResponse represents a list of run tags.
 type GetTagsResponse []TagResponse
 
-// NewGetTagsResponse will convert the []model.Tag to GetTagsResponse
-func NewGetTagsResponse(tagsRunCount map[string]int) GetTagsResponse {
-	tagResponses := make(GetTagsResponse, len(tagsRunCount))
+// NewGetTagsResponse will convert the []model.TagData to GetTagsResponse
+func NewGetTagsResponse(tagDatas []models.TagData) GetTagsResponse {
+	tagResponses := make(GetTagsResponse, len(tagDatas))
 	idx := 0
-	for tag, runCount := range tagsRunCount {
+	for _, tagData := range tagDatas {
 		tagResponses[idx] = TagResponse{
-			ID:          uuid.New(),
-			Name:        tag,
-			Color:       "#18AB6D",
-			Description: "",
-			Archived:    false,
-			RunCount:    runCount,
+			ID:          tagData.ID,
+			Name:        tagData.Key,
+			Color:       tagData.Color,
+			Description: tagData.Description,
+			Archived:    tagData.IsArchived,
+			RunCount:    len(tagData.Runs),
 		}
 		idx++
 	}

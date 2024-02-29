@@ -81,7 +81,7 @@ func (c Controller) GetProjectParams(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := response.NewProjectParamsResponse(params)
+	resp, err := response.NewProjectParamsResponse(params, req.ExcludeParams, req.Sequences)
 	if err != nil {
 		return api.NewInternalError("error creating response object: %s", err)
 	}

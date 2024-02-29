@@ -38,6 +38,8 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 		tx.First(&schemaVersion)
 	}
 
+	fmt.Println("schemaVersion:", schemaVersion)
+	fmt.Println("alembicVersion:", alembicVersion)
 	if !slices.Contains(supportedAlembicVersions, alembicVersion.Version) || schemaVersion.Version != currentVersion() {
 		if !migrate && alembicVersion.Version != "" {
 			return fmt.Errorf(

@@ -11,7 +11,7 @@ require (
 	cloud.google.com/go/storage v1.38.0
 	dagger.io/dagger v0.10.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/G-Research/fasttrackml-ui-aim v0.31705.9
+	github.com/G-Research/fasttrackml-ui-aim v0.31705.10
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.4
 	github.com/PuerkitoBio/goquery v1.9.0
 	github.com/apache/arrow/go/v14 v14.0.2

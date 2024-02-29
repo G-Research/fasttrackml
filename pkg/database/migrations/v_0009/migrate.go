@@ -102,19 +102,25 @@ func postgresMigrate(tx *gorm.DB) error {
 		return eris.Wrap(err, "error creating default metric context")
 	}
 
+	tablesPKNames := map[string][]string{
+		"metrics":        {"metric_pk", "metrics_pkey"},
+		"latest_metrics": {"latest_metric_pk", "latest_metrics_pkey"},
+	}
+	for table, pks := range tablesPKNames {
+		for _, pk := range pks {
+			if tx.Migrator().HasConstraint(table, pk) {
+				if err := tx.Migrator().DropConstraint(table, pk); err != nil {
+					return eris.Wrap(err, "error dropping primary key")
+				}
+			}
+		}
+	}
+
 	tablesKeyCols := map[string][]string{
 		"metrics":        {"key", "value", "timestamp", "run_uuid", "step", "is_nan", "context_id"},
 		"latest_metrics": {"key", "run_uuid", "context_id"},
 	}
-
 	for table, pkCols := range tablesKeyCols {
-		pk := fmt.Sprintf("%s_pkey", table)
-		if tx.Migrator().HasConstraint(table, pk) {
-			if err := tx.Migrator().DropConstraint(table, pk); err != nil {
-				return eris.Wrap(err, "error dropping primary key")
-			}
-		}
-
 		sql := fmt.Sprintf(`ALTER TABLE %s
                         ADD COLUMN context_id BIGINT NOT NULL DEFAULT %d,
                         ADD CONSTRAINT fk_%s_contexts FOREIGN KEY (context_id) REFERENCES contexts(id)`,

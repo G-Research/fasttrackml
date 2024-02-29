@@ -45,13 +45,33 @@ func (r TagRepository) CreateExperimentTag(ctx context.Context, experimentTag *m
 	return nil
 }
 
-// GetTagsByNamespace returns the list of tags.
+// GetTagsByNamespace returns the list of TagData, with virtual rows populated from the Tag table.
 func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.TagData, error) {
-	var tagAttrs []models.TagData
-	if err := r.db.WithContext(ctx).Find(&tagAttrs).Error; err != nil {
-		return nil, err
+	var tagDatas []models.TagData
+	if err := r.db.WithContext(ctx).
+		Raw(`
+                   SELECT *
+                   FROM tag_data
+                   WHERE is_archived = false
+                   AND namespace_id = ?
+                   UNION
+                   SELECT "00000000-0000-0000-0000-000000000000" as id,
+                          'false' as is_archived,
+                          tags.key as key,
+                          '#cccccc' as color,
+                          '' as description,
+                          ? as namespace_id
+                   FROM tags JOIN runs USING(run_uuid)
+                   INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id
+                   AND experiments.namespace_id = ?
+                   AND key NOT IN (select key from tag_data where is_archived = false and namespace_id = ?)
+                   ORDER by key
+                 `, namespaceID, namespaceID, namespaceID, namespaceID).
+		Preload("Runs").
+		Find(&tagDatas).Error; err != nil {
+		return nil, eris.Wrap(err, "unable to fetch tag_data")
 	}
-	return []models.TagData{}, nil
+	return tagDatas, nil
 }
 
 // GetTagKeysByParameters returns list of tag keys by requested parameters.

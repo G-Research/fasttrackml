@@ -22,7 +22,7 @@ func (c Controller) GetTags(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	resp := response.NewGetTagsResponse(tagsDatas)
+	resp := response.NewGetTagsResponse(tagDatas)
 	log.Debugf("getTags response: %#v", resp)
 
 	return ctx.JSON(resp)

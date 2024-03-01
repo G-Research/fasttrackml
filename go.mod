@@ -13,7 +13,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/G-Research/fasttrackml-ui-aim v0.31705.10
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.4
-	github.com/PuerkitoBio/goquery v1.9.0
+	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/apache/arrow/go/v14 v14.0.2
 	github.com/aws/aws-sdk-go-v2 v1.25.2
 	github.com/aws/aws-sdk-go-v2/config v1.27.4

@@ -27,12 +27,14 @@ func TestMigrationsTestSuite(t *testing.T) {
 }
 
 func (s *MigrationsTestSuite) TestMigrations() {
+
 	type Experiment struct {
 		Name           string `gorm:"type:varchar(256);not null;unique"`
 		ExperimentID   int32  `gorm:"column:experiment_id;not null;primaryKey"`
 		LifecycleStage string `gorm:"type:varchar(32);check:lifecycle_stage IN ('active', 'deleted')"`
 	}
 
+	//nolint:lll
 	type Run struct {
 		ID             string `gorm:"<-:create;column:run_uuid;type:varchar(32);not null;primaryKey"`
 		Name           string `gorm:"type:varchar(250)"`
@@ -76,6 +78,7 @@ func (s *MigrationsTestSuite) TestMigrations() {
 					1*time.Second,
 					20,
 				)
+				s.Require().Nil(err)
 
 				//nolint:gosec
 				mlflowSql, err := os.ReadFile("sqlite-schema.sql")
@@ -137,6 +140,7 @@ func (s *MigrationsTestSuite) TestMigrations() {
 					1*time.Second,
 					20,
 				)
+				s.Require().Nil(err)
 
 				//nolint:gosec
 				mlflowSql, err := os.ReadFile("postgres-schema.sql")

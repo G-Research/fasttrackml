@@ -4,11 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
-
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/common"

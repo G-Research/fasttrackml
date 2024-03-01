@@ -80,7 +80,7 @@ func (s *MigrationsTestSuite) TestMigrations() {
 				s.Require().Nil(err)
 
 				//nolint:gosec
-				mlflowSql, err := os.ReadFile("sqlite-schema.sql")
+				mlflowSql, err := os.ReadFile("mlflow-sqlite-7f2a7d5fae7d-v2.8.0.sql")
 				s.Require().Nil(err)
 
 				s.Require().Nil(db.GormDB().Exec(string(mlflowSql)).Error)
@@ -142,7 +142,7 @@ func (s *MigrationsTestSuite) TestMigrations() {
 				s.Require().Nil(err)
 
 				//nolint:gosec
-				mlflowSql, err := os.ReadFile("postgres-schema.sql")
+				mlflowSql, err := os.ReadFile("mlflow-postgres-7f2a7d5fae7d-v2.8.0.sql")
 				s.Require().Nil(err)
 
 				s.Require().Nil(db.GormDB().Exec(string(mlflowSql)).Error)

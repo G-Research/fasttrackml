@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -22,25 +25,22 @@ func Migrate(db *gorm.DB) error {
 			if err := tx.AutoMigrate(&Namespace{}); err != nil {
 				return err
 			}
-			defaultNamespace, err := createDefaultNamespace(tx)
-			if err != nil {
-				return err
-			}
 			if err := tx.Migrator().AddColumn(&App{}, "NamespaceID"); err != nil {
 				return err
 			}
 			if err := tx.Migrator().CreateConstraint(&Namespace{}, "Apps"); err != nil {
 				return err
 			}
-			if err := tx.Exec(fmt.Sprintf(`
-				ALTER TABLE experiments ADD COLUMN namespace_id BIGINT NOT NULL DEFAULT %d,
-				ADD CONSTRAINT fk_namespaces_experiments FOREIGN KEY (namespace_id) REFERENCES namespaces(id)`,
-				defaultNamespace.ID,
-			)).Error; err != nil {
-				return eris.Wrap(err, "error adding namespace_id column for experiments")
-			}
-			if err := tx.Migrator().AlterColumn(&Experiment{}, "NamespaceID"); err != nil {
-				return err
+
+			switch tx.Dialector.Name() {
+			case sqlite.Dialector{}.Name():
+				if err := sqliteMigrate(tx); err != nil {
+					return err
+				}
+			case postgres.Dialector{}.Name():
+				if err := postgresMigrate(tx); err != nil {
+					return err
+				}
 			}
 			if err := tx.Migrator().AlterColumn(&Experiment{}, "Name"); err != nil {
 				return err
@@ -54,6 +54,38 @@ func Migrate(db *gorm.DB) error {
 				Error
 		})
 	})
+}
+
+func sqliteMigrate(tx *gorm.DB) error {
+	if err := tx.Migrator().AddColumn(&Experiment{}, "NamespaceID"); err != nil {
+		return err
+	}
+	if err := tx.Migrator().CreateConstraint(&Namespace{}, "Experiments"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func postgresMigrate(tx *gorm.DB) error {
+	defaultNamespace, err := createDefaultNamespace(tx)
+	if err != nil {
+		return err
+	}
+	if err := tx.Exec(
+		fmt.Sprintf(`
+			ALTER TABLE experiments ADD COLUMN namespace_id BIGINT NOT NULL DEFAULT %d, 
+			ADD CONSTRAINT fk_namespaces_experiments FOREIGN KEY (namespace_id) REFERENCES namespaces(id)`,
+			defaultNamespace.ID,
+		),
+	).Error; err != nil {
+		return eris.Wrap(err, "error adding namespace_id column for experiments")
+	}
+
+	if err := tx.Exec(`ALTER TABLE experiments ALTER COLUMN namespace_id DROP DEFAULT`).Error; err != nil {
+		return eris.Wrapf(err, "error dropping default value for `namespace_id` field in `experiments` table")
+	}
+
+	return nil
 }
 
 // createDefaultMetricContext creates the default metric context if it doesn't exist.

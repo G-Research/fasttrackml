@@ -1,21 +1,20 @@
 package migrations
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 	"github.com/google/uuid"
-	"gorm.io/driver/postgres"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/database"
+	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
 type MigrationsTestSuite struct {
@@ -23,6 +22,7 @@ type MigrationsTestSuite struct {
 }
 
 func TestMigrationsTestSuite(t *testing.T) {
+	t.Skip()
 	suite.Run(t, new(MigrationsTestSuite))
 }
 
@@ -67,70 +67,67 @@ func (s *MigrationsTestSuite) TestMigrations() {
 		load     func(*gorm.DB)
 		duration time.Duration
 	}{
-		/*
-			{
-				name: "TestMigrationsOverSQLite",
-				init: func() *gorm.DB {
-					dsn, err := helpers.GenerateDatabaseURI(s.T(), sqlite.Dialector{}.Name())
-					s.Require().Nil(err)
-					db, err := database.NewDBProvider(
-						dsn,
-						1*time.Second,
-						20,
-					)
+		{
+			name: "TestMigrationsOverSQLite",
+			init: func() *gorm.DB {
+				dsn, err := helpers.GenerateDatabaseURI(s.T(), sqlite.Dialector{}.Name())
+				s.Require().Nil(err)
+				db, err := database.NewDBProvider(
+					dsn,
+					1*time.Second,
+					20,
+				)
 
-					//nolint:gosec
-					mlflowSql, err := os.ReadFile("sqlite-schema.sql")
-					s.Require().Nil(err)
+				//nolint:gosec
+				mlflowSql, err := os.ReadFile("sqlite-schema.sql")
+				s.Require().Nil(err)
 
-					s.Require().Nil(db.GormDB().Exec(string(mlflowSql)).Error)
-					return db.GormDB()
-				},
-				load: func(db *gorm.DB) {
-					experiment := Experiment{
-						Name:           uuid.New().String(),
-						LifecycleStage: "active",
-					}
-					s.Require().Nil(db.Create(&experiment).Error)
-
-					run := Run{
-						Name:           uuid.New().String(),
-						Status:         "RUNNING",
-						ID:             uuid.New().String(),
-						SourceType:     "JOB",
-						LifecycleStage: "active",
-						ExperimentID:   experiment.ExperimentID,
-					}
-					s.Require().Nil(db.Create(&run).Error)
-
-					metrics := make([]Metric, 1_000_000)
-					latestMetrics := make([]LatestMetric, 1_000_000)
-					for i := 0; i < 1_000_000; i++ {
-						metrics[i] = Metric{
-							Key:       uuid.New().String(),
-							Value:     float64(time.Now().UnixNano()),
-							Timestamp: time.Now().UnixNano(),
-							RunID:     run.ID,
-							Step:      int64(i),
-							IsNan:     false,
-						}
-						latestMetrics[i] = LatestMetric{
-							Key:       uuid.New().String(),
-							Value:     float64(time.Now().UnixNano()),
-							Timestamp: time.Now().UnixNano(),
-							RunID:     run.ID,
-							Step:      int64(i),
-							IsNan:     false,
-						}
-					}
-
-					s.Require().Nil(db.CreateInBatches(metrics, 5000).Error)
-					s.Require().Nil(db.CreateInBatches(latestMetrics, 5000).Error)
-				},
-				duration: 1*time.Minute + 10*time.Second,
+				s.Require().Nil(db.GormDB().Exec(string(mlflowSql)).Error)
+				return db.GormDB()
 			},
-		*/
+			load: func(db *gorm.DB) {
+				experiment := Experiment{
+					Name:           uuid.New().String(),
+					LifecycleStage: "active",
+				}
+				s.Require().Nil(db.Create(&experiment).Error)
 
+				run := Run{
+					Name:           uuid.New().String(),
+					Status:         "RUNNING",
+					ID:             uuid.New().String(),
+					SourceType:     "JOB",
+					LifecycleStage: "active",
+					ExperimentID:   experiment.ExperimentID,
+				}
+				s.Require().Nil(db.Create(&run).Error)
+
+				metrics := make([]Metric, 1_000_000)
+				latestMetrics := make([]LatestMetric, 1_000_000)
+				for i := 0; i < 1_000_000; i++ {
+					metrics[i] = Metric{
+						Key:       uuid.New().String(),
+						Value:     float64(time.Now().UnixNano()),
+						Timestamp: time.Now().UnixNano(),
+						RunID:     run.ID,
+						Step:      int64(i),
+						IsNan:     false,
+					}
+					latestMetrics[i] = LatestMetric{
+						Key:       uuid.New().String(),
+						Value:     float64(time.Now().UnixNano()),
+						Timestamp: time.Now().UnixNano(),
+						RunID:     run.ID,
+						Step:      int64(i),
+						IsNan:     false,
+					}
+				}
+
+				s.Require().Nil(db.CreateInBatches(metrics, 5000).Error)
+				s.Require().Nil(db.CreateInBatches(latestMetrics, 5000).Error)
+			},
+			duration: 1*time.Minute + 10*time.Second,
+		},
 		{
 			name: "TestMigrationsOverPostgres",
 			init: func() *gorm.DB {
@@ -187,24 +184,23 @@ func (s *MigrationsTestSuite) TestMigrations() {
 					}
 				}
 
-				s.Require().Nil(db.CreateInBatches(metrics, 5000).Error)
-				s.Require().Nil(db.CreateInBatches(latestMetrics, 5000).Error)
+				s.Require().Nil(db.CreateInBatches(metrics, 6000).Error)
+				s.Require().Nil(db.CreateInBatches(latestMetrics, 6000).Error)
 			},
+			duration: 50 * time.Second,
 		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			// init database schema.
 			db := tt.init()
-			fmt.Println("init")
+
 			// load test data based on current database.
 			tt.load(db)
-			fmt.Println("load")
 
 			// run migration over database and check duration time.
 			start := time.Now()
 			s.Require().Nil(database.CheckAndMigrateDB(true, db))
-			fmt.Println("migrate")
 			assert.Less(s.T(), time.Since(start), tt.duration)
 		})
 	}

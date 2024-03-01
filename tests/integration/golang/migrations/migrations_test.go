@@ -27,7 +27,6 @@ func TestMigrationsTestSuite(t *testing.T) {
 }
 
 func (s *MigrationsTestSuite) TestMigrations() {
-
 	type Experiment struct {
 		Name           string `gorm:"type:varchar(256);not null;unique"`
 		ExperimentID   int32  `gorm:"column:experiment_id;not null;primaryKey"`

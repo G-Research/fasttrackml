@@ -87,7 +87,7 @@ func postgresMigrate(tx *gorm.DB) error {
 	return nil
 }
 
-// createDefaultMetricContext creates the default metric context if it doesn't exist.
+// createDefaultNamespace creates the default namespace if it doesn't exist.
 func createDefaultNamespace(db *gorm.DB) (*Namespace, error) {
 	defaultNamespace := Namespace{
 		Code:                "default",

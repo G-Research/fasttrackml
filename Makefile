@@ -145,6 +145,12 @@ test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
 	@go test -tags="$(GO_BUILDTAGS)" ./tests/integration/golang/...
 
+.PHONY: test-scheduled-go-integration
+test-scheduled-go-integration: ## run scheduled go integration tests.
+	@echo ">>> Running scheduled integration tests."
+	@go test -tags="$(GO_BUILDTAGS),scheduled" ./tests/integration/golang/scheduled/...
+
+
 .PHONY: test-python-integration
 test-python-integration: ## run all the python integration tests.
 	@echo ">>> Running all python integration tests."
@@ -168,6 +174,12 @@ container-test: ## run integration tests in container.
 	@echo ">>> Running integration tests in container."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
 		docker-compose run -e FML_RUN_ORIGINAL_AIM_SERVICE integration-tests
+
+.PHONY: container-test-scheduled
+container-test-scheduled: ## run scheduled integration tests in container.
+	@echo ">>> Running scheduled integration tests in container."
+	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
+		docker-compose run -e FML_RUN_ORIGINAL_AIM_SERVICE integration-tests-scheduled
 
 .PHONY: container-clean
 container-clean: ## clean containers.

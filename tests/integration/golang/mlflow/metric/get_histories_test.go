@@ -1,3 +1,5 @@
+//go:build pipeline
+
 package metric
 
 import (

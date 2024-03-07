@@ -30,9 +30,9 @@ services:
       interval: 5s
       timeout: 5s
 
-  integration-tests:
+  integration-tests-pipeline:
     image: golang:1.21
-    command: make test-go-integration
+    command: make test-pipeline-go-integration
     volumes:
       - ../../:/src
       - go-cache:/cache

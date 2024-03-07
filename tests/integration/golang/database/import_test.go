@@ -1,3 +1,5 @@
+//go:build pipeline
+
 package database
 
 import (

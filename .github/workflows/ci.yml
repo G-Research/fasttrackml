@@ -167,14 +167,14 @@ jobs:
         run: docker run --rm -v fml-integration-tests_go-cache:/cache -v /tmp/go-cache:/src alpine tar xf /src/go-build.tar -C /cache
 
       - name: Run Integration Tests (Aim Original)
-        run: make container-test
+        run: make container-test-pipeline
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_BACKEND: ${{ matrix.database-backend }}
           FML_RUN_ORIGINAL_AIM_SERVICE: true
 
       - name: Run Integration Tests (Aim Refactor)
-        run: make container-test
+        run: make container-test-pipeline
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_BACKEND: ${{ matrix.database-backend }}

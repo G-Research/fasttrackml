@@ -1,5 +1,3 @@
-//go:build pipeline
-
 package flows
 
 import (

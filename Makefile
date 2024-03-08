@@ -133,23 +133,17 @@ python-lint: python-env ## check python code formatting.
 # Tests targets.
 #
 .PHONY: test
-test: test-go-unit container-test-pipeline test-python-integration ## run all the tests.
+test: test-go-unit container-test test-python-integration ## run all the tests.
 
 .PHONY: test-go-unit
 test-go-unit: ## run go unit tests.
 	@echo ">>> Running unit tests."
 	@go test -tags="$(GO_BUILDTAGS)" ./pkg/...
 
-.PHONY: test-pipeline-go-integration
-test-pipeline-go-integration: ## run pipeline go integration tests.
+.PHONY: test-go-integration
+test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
-	@go test -tags="$(GO_BUILDTAGS),pipeline" ./tests/integration/golang/...
-
-.PHONY: test-scheduled-go-integration
-test-scheduled-go-integration: ## run scheduled go integration tests.
-	@echo ">>> Running scheduled integration tests."
-	@go test -tags="$(GO_BUILDTAGS),scheduled" ./tests/integration/golang/...
-
+	@go test -tags="$(GO_BUILDTAGS)" ./tests/integration/golang/...
 
 .PHONY: test-python-integration
 test-python-integration: ## run all the python integration tests.
@@ -169,17 +163,11 @@ test-python-integration-aim: ## run the Aim python integration tests.
 #
 # Container test targets.
 #
-.PHONY: container-test-pipeline
-container-test-pipeline: ## run pipeline integration tests in container.
+.PHONY: container-test
+container-test: ## run integration tests in container.
 	@echo ">>> Running integration tests in container."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose run -e FML_RUN_ORIGINAL_AIM_SERVICE integration-tests-pipeline
-
-.PHONY: container-test-scheduled
-container-test-scheduled: ## run scheduled integration tests in container.
-	@echo ">>> Running scheduled integration tests in container."
-	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose run -e FML_RUN_ORIGINAL_AIM_SERVICE integration-tests-scheduled
+		docker-compose run -e FML_RUN_ORIGINAL_AIM_SERVICE -e FML_SLOW_TESTS_ENABLED integration-tests
 
 .PHONY: container-clean
 container-clean: ## clean containers.

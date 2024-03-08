@@ -1,5 +1,3 @@
-//go:build scheduled
-
 package migrations
 
 import (
@@ -25,7 +23,11 @@ type MigrationsTestSuite struct {
 }
 
 func TestMigrationsTestSuite(t *testing.T) {
-	suite.Run(t, new(MigrationsTestSuite))
+	// current test is a bit slow test, so if `FML_SLOW_TESTS_ENABLED`
+	// has been provided, only then run current test during the main pipeline.
+	if helpers.GetSlowTestsEnabledFlag() {
+		suite.Run(t, new(MigrationsTestSuite))
+	}
 }
 
 func (s *MigrationsTestSuite) TestMigrations() {

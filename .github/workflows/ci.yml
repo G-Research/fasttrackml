@@ -178,6 +178,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_BACKEND: ${{ matrix.database-backend }}
+          FML_SLOW_TESTS_ENABLED: ${{ github.event_name == 'schedule' }}
 
       - name: Save cache
         if: steps.cache.outputs.cache-hit != 'true'

@@ -22,13 +22,11 @@ func Migrate(db *gorm.DB) error {
 		return db.Transaction(func(tx *gorm.DB) error {
 			switch tx.Dialector.Name() {
 			case sqlite.Dialector{}.Name():
-				err := sqliteMigrate(tx)
-				if err != nil {
+				if err := sqliteMigrate(tx); err != nil {
 					return err
 				}
 			case postgres.Dialector{}.Name():
-				err := postgresMigrate(tx)
-				if err != nil {
+				if err := postgresMigrate(tx); err != nil {
 					return err
 				}
 			}

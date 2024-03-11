@@ -24,7 +24,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hetiansu5/urlquery v1.2.7
-	github.com/jackc/pgx/v5 v5.5.4
+	github.com/jackc/pgx/v5 v5.5.5
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/pkg/errors v0.9.1
 	github.com/rotisserie/eris v0.5.4
@@ -32,8 +32,8 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
-	google.golang.org/api v0.168.0
-	gorm.io/driver/postgres v1.5.6
+	google.golang.org/api v0.169.0
+	gorm.io/driver/postgres v1.5.7
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.25.7-0.20240204074919-46816ad31dde
 	gorm.io/plugin/dbresolver v1.5.1

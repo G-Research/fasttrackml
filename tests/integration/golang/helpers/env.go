@@ -45,3 +45,11 @@ func GetS3EndpointUri() string {
 	}
 	return "http://localhost:9000"
 }
+
+func GetSlowTestsEnabledFlag() bool {
+	flag, ok := os.LookupEnv("FML_SLOW_TESTS_ENABLED")
+	if ok && flag == "true" {
+		return true
+	}
+	return false
+}

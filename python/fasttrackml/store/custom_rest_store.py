@@ -1,4 +1,5 @@
 import json
+import threading
 from typing import Dict, Optional, Sequence
 
 import pyarrow as pa
@@ -13,6 +14,9 @@ from mlflow.tracking.fluent import (
     get_experiment_by_name,
     search_experiments,
 )
+from mlflow.utils.async_logging.async_logging_queue import AsyncLoggingQueue
+from mlflow.utils.async_logging.run_batch import RunBatch
+from mlflow.utils.async_logging.run_operations import RunOperations
 from mlflow.utils.rest_utils import http_request
 from mlflow.utils.string_utils import is_string_type
 
@@ -23,6 +27,7 @@ class CustomRestStore(RestStore):
 
     def __init__(self, host_creds) -> None:
         super().__init__(host_creds)
+        self._async_logging_queue = AsyncLoggingQueue(logging_func=self.log_batch)
 
     def log_metric(self, run_id, metric):
         try:
@@ -84,6 +89,20 @@ class CustomRestStore(RestStore):
                 error_code=result["error_code"],
             )
         return result
+
+    def log_batch_async(self, run_id, metrics) -> RunOperations:
+        if not self._async_logging_queue.is_active():
+            self._async_logging_queue.activate()
+
+        batch = RunBatch(
+            run_id=run_id,
+            metrics=metrics,
+            completion_event=threading.Event(),
+        )
+
+        self._async_logging_queue._queue.put(batch)
+        operation_future = self._async_logging_queue._batch_status_check_threadpool.submit(self._wait_for_batch, batch)
+        return RunOperations(operation_futures=[operation_future])
 
     def get_metric_history(self, run_id, metric_key, max_results=None, page_token=None):
         result = http_request(

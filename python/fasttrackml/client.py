@@ -4,6 +4,10 @@ import pandas as pd
 from mlflow import MlflowClient
 from mlflow.entities import Param, RunTag, ViewType
 from mlflow.tracking._tracking_service import utils
+from mlflow.utils.async_logging.run_operations import (
+    RunOperations,
+    get_combined_run_operations,
+)
 
 from ._tracking_service.client import FasttrackmlTrackingServiceClient
 from .entities.metric import Metric
@@ -92,7 +96,8 @@ class FasttrackmlClient(MlflowClient):
         metrics: Sequence[Metric] = (),
         params: Sequence[Param] = (),
         tags: Sequence[RunTag] = (),
-    ) -> None:
+        synchronous: bool = True,
+    ) -> Optional[RunOperations]:
         """
         Log multiple metrics, params, and/or tags.
 
@@ -100,10 +105,10 @@ class FasttrackmlClient(MlflowClient):
         :param metrics: If provided, List of Metric(key, value, timestamp) instances.
         :param params: If provided, List of Param(key, value) instances.
         :param tags: If provided, List of RunTag(key, value) instances.
-
+        :param synchronous: If False provided, will run async.
 
         Raises an MlflowException if any errors occur.
-        :return: None
+        :return: None when synchronous == True (default), otherwise RunOperations.
 
         .. code-block:: python
             :caption: Example
@@ -146,8 +151,13 @@ class FasttrackmlClient(MlflowClient):
             tags: {'t': 't'}
             status: FINISHED
         """
-        self._tracking_client_mlflow.log_batch(run_id, params=params, tags=tags)
-        self._tracking_client.log_batch(run_id, metrics, params, tags)
+        params_result = self._tracking_client_mlflow.log_batch(run_id, params=params, tags=tags, synchronous=synchronous)
+        if synchronous:
+            self._tracking_client.log_batch(run_id, metrics)
+            return None
+        else:
+            metrics_result = self._tracking_client.log_batch_async(run_id, metrics)
+            return get_combined_run_operations([params_result, metrics_result])
 
     def get_metric_history(self, run_id: str, key: str) -> List[Metric]:
         """

@@ -51,7 +51,7 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
 
     def log_batch_async(
         self, run_id: str, metrics: Sequence[Metric] = (), params: Sequence[Param] = (), tags: Sequence[RunTag] = ()
-     ) -> RunOperations:
+    ) -> RunOperations:
         result = RunOperations([])
         for metrics_batch in chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH):
             batch_result = self.custom_store.log_batch_async(run_id=run_id, metrics=metrics_batch)

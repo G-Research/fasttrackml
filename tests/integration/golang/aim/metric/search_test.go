@@ -313,7 +313,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		metrics []*models.LatestMetric
 	}{
 		{
-			name: "SearchMetricNameOperationEqual",
+			name: "SearchMetric",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1242,7 +1242,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationRegexpMatchFunction",
+			name: "SearchMetricAndRunNameOperationRegexpMatchFunction",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1257,7 +1257,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationRegexpSearchFunction",
+			name: "SearchMetricAndRunNameOperationRegexpSearchFunction",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1272,7 +1272,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationEquals",
+			name: "SearchMetricAndRunNameOperationEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1287,7 +1287,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationNotEquals",
+			name: "SearchMetricAndRunNameOperationNotEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1303,7 +1303,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationStartsWith",
+			name: "SearchMetricAndRunNameOperationStartsWith",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1320,7 +1320,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationEndsWith",
+			name: "SearchMetricAndRunNameOperationEndsWith",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1335,7 +1335,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationNotEqualsAndRegexpMatchFunction",
+			name: "SearchMetricsAndRunNameOperationRegexpMatchFunction",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1355,7 +1355,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationNotEqualsAndRegexpSearchFunction",
+			name: "SearchMetricsAndRunNameOperationRegexpSearchFunction",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1375,7 +1375,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationNotEqualsAndEquals",
+			name: "SearchMetricsAndRunNameOperationdEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1395,7 +1395,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationNotEqualsAndNotEquals",
+			name: "SearchMetricsAndRunNameOperationNotEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1416,7 +1416,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationNotEqualsAndStartsWith",
+			name: "SearchMetricsAndRunNameOperationStartsWith",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1439,7 +1439,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunNameOperationNotEqualsAndEndsWith",
+			name: "SearchMetricsxsAndRunNameOperationEndsWith",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1459,7 +1459,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunDurationOperationEqual",
+			name: "SearchMetricAndRunDurationOperationEqual",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1474,7 +1474,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunDurationOperationNotEqual",
+			name: "SearchMetricAndRunDurationOperationNotEqual",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1490,7 +1490,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunDurationOperationGreater",
+			name: "SearchMetricAndRunDurationOperationGreater",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1506,7 +1506,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunDurationOperationGreaterOrEquals",
+			name: "SearchMetricAndRunDurationOperationGreaterOrEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1523,7 +1523,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunDurationOperationLess",
+			name: "SearchMetricAndRunDurationOperationLess",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1539,7 +1539,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunDurationOperationLessOrEquals",
+			name: "SearchMetricAndRunDurationOperationLessOrEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1556,7 +1556,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunHashOperationEquals",
+			name: "SearchMetricAndRunHashOperationEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1571,7 +1571,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunHashOperationNotEquals",
+			name: "SearchMetricsAndRunHashOperationNotEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1587,7 +1587,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunFinalizedAtOperationGreater",
+			name: "SearchMetricAndRunFinalizedAtOperationGreater",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1603,7 +1603,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunFinalizedAtOperationGreaterOrEqual",
+			name: "SearchMetricAndRunFinalizedAtOperationGreaterOrEqual",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1620,7 +1620,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunFinalizedAtOperationLess",
+			name: "SearchMetricAndRunFinalizedAtOperationLess",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1635,7 +1635,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunFinalizedAtOperationLessOrEqual",
+			name: "SearchMetricAndRunFinalizedAtOperationLessOrEqual",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1652,7 +1652,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunFinalizedOperationAtEquals",
+			name: "SearchMetricAndRunFinalizedOperationAtEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1667,7 +1667,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunFinalizedAtOperationNotEquals",
+			name: "SearchMetricAndRunFinalizedAtOperationNotEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1683,7 +1683,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunFinalizedAtOperationNotEqualsAndGreater",
+			name: "SearchMetricAndRunFinalizedAtOperationNotEqualsAndGreater",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1704,7 +1704,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameAndRunFinalizedAtOperationNotEqualsAndGreaterOrEqual",
+			name: "SearchMetricsAndRunFinalizedAtOperationNotEqualsAndGreaterOrEqual",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1727,7 +1727,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameEqualsAndRunCreatedAtOperationGreater",
+			name: "SearchMetricEqualsAndRunCreatedAtOperationGreater",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1742,7 +1742,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameEqualsAndRunCreatedAtOperationGreaterOrEqual",
+			name: "SearchMetricEqualsAndRunCreatedAtOperationGreaterOrEqual",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1758,7 +1758,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameEqualsAndRunCreatedAtOperationLess",
+			name: "SearchMetricEqualsAndRunCreatedAtOperationLess",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1774,7 +1774,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameEqualsAndRunCreatedAtOperationLessOrEqual",
+			name: "SearchMetricEqualsAndRunCreatedAtOperationLessOrEqual",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1791,7 +1791,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameEqualsAndRunCreatedAtOperationEquals",
+			name: "SearchMetricEqualsAndRunCreatedAtOperationEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{
@@ -1806,7 +1806,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricNameEqualsAndRunCreatedAtOperationNotEquals",
+			name: "SearchMetricEqualsAndRunCreatedAtOperationNotEquals",
 			request: request.SearchMetricsRequest{
 				Metrics: []request.MetricTuple{
 					{

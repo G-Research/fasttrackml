@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
@@ -103,7 +104,7 @@ func (r MetricRepository) SearchMetrics(
 		return nil, 0, nil, err
 	}
 
-	if !pq.IsMetricSelected() {
+	if req.Metrics == nil || len(req.Metrics) == 0 {
 		return nil, 0, nil, eris.New("No metrics are selected")
 	}
 
@@ -169,6 +170,17 @@ func (r MetricRepository) SearchMetrics(
 		result[r.ID] = SearchResult{int64(r.RowNum), run}
 	}
 
+	var metricsSlice []string
+	var metricsContextsSlice []string
+	for _, metricTuple := range req.Metrics {
+		if metricTuple.PartialContext == nil {
+			metricsSlice = append(metricsSlice, metricTuple.Key)
+		} else {
+			cleanContext := strings.ReplaceAll(*metricTuple.PartialContext, `"`, `"`)
+			metricsContextsSlice = append(metricsContextsSlice, fmt.Sprintf("%s-{%s}", metricTuple.Key, cleanContext))
+		}
+	}
+
 	tx := r.db.WithContext(ctx).
 		Select(`
 			metrics.*,
@@ -192,7 +204,8 @@ func (r MetricRepository) SearchMetrics(
 					namespaceID,
 				).
 				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
-				Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id")),
+				Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id").
+				Where("CONCAT(latest_metrics.key, '-', contexts.json) IN ? OR latest_metrics.key IN ?", metricsContextsSlice, metricsSlice)),
 		).
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").

@@ -187,10 +187,6 @@ func (pq *parsedQuery) Filter(tx *gorm.DB) *gorm.DB {
 	return tx
 }
 
-func (pq *parsedQuery) IsMetricSelected() bool {
-	return pq.metricSelected
-}
-
 func (pq *parsedQuery) parseNode(node ast.Expr) (any, error) {
 	ret, err := pq._parseNode(node)
 	if err != nil && !errors.Is(err, SyntaxError{}) {
@@ -641,51 +637,6 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 							Table: j.alias,
 							Name:  "value",
 						}, nil
-					}
-				},
-			), nil
-		case "metric":
-			table, ok := pq.qp.Tables["metrics"]
-			if !ok {
-				return nil, errors.New("unsupported name identifier 'metric'")
-			}
-			return attributeGetter(
-				func(attr string) (any, error) {
-					switch attr {
-					case "name":
-						pq.metricSelected = true
-						return clause.Column{
-							Table: table,
-							Name:  "key",
-						}, nil
-					case "last":
-						return clause.Column{
-							Table: table,
-							Name:  "value",
-						}, nil
-					case "last_step":
-						return clause.Column{
-							Table: table,
-							Name:  "last_iter",
-						}, nil
-					case "first_step":
-						return 0, nil
-					case "context":
-						return attributeGetter(
-							func(contextKey string) (any, error) {
-								// Add a WHERE clause for the context key
-								return Json{
-									Column: clause.Column{
-										Table: TableContexts,
-										Name:  "json",
-									},
-									JsonPath:  contextKey,
-									Dialector: pq.qp.Dialector,
-								}, nil
-							},
-						), nil
-					default:
-						return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
 					}
 				},
 			), nil

@@ -151,7 +151,9 @@ class FasttrackmlClient(MlflowClient):
             tags: {'t': 't'}
             status: FINISHED
         """
-        params_result = self._tracking_client_mlflow.log_batch(run_id, params=params, tags=tags, synchronous=synchronous)
+        params_result = self._tracking_client_mlflow.log_batch(
+            run_id, params=params, tags=tags, synchronous=synchronous
+        )
         if synchronous:
             self._tracking_client.log_batch(run_id, metrics)
             return None

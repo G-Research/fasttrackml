@@ -103,7 +103,9 @@ class CustomRestStore(RestStore):
         )
 
         self._async_logging_queue._queue.put(batch)
-        operation_future = self._async_logging_queue._batch_status_check_threadpool.submit(self._async_logging_queue._wait_for_batch, batch)
+        operation_future = self._async_logging_queue._batch_status_check_threadpool.submit(
+            self._async_logging_queue._wait_for_batch, batch
+        )
         return RunOperations(operation_futures=[operation_future])
 
     def get_metric_history(self, run_id, metric_key, max_results=None, page_token=None):

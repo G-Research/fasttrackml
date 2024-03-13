@@ -5,7 +5,6 @@ from mlflow.entities import Param, RunTag
 from mlflow.store.tracking import GET_METRIC_HISTORY_MAX_RESULTS
 from mlflow.tracking._tracking_service import utils
 from mlflow.tracking._tracking_service.client import TrackingServiceClient
-
 from mlflow.tracking.metric_value_conversion_utils import (
     convert_metric_value_to_float_if_possible,
 )

@@ -13,11 +13,10 @@ import (
 
 // ServiceConfig represents main service configuration.
 type ServiceConfig struct {
+	Auth                  AuthConfig
 	DevMode               bool
 	AimRevert             bool
 	ListenAddress         string
-	AuthUsername          string
-	AuthPassword          string
 	DefaultArtifactRoot   string
 	S3EndpointURI         string
 	GSEndpointURI         string
@@ -31,11 +30,15 @@ type ServiceConfig struct {
 // NewServiceConfig creates new instance of ServiceConfig.
 func NewServiceConfig() *ServiceConfig {
 	return &ServiceConfig{
+		Auth: AuthConfig{
+			AuthType:     viper.GetString("auth-type"),
+			AuthUsername: viper.GetString("auth-username"),
+			AuthPassword: viper.GetString("auth-password"),
+			AuthUserList: viper.GetStringSlice("auth-user-list"),
+		},
 		DevMode:               viper.GetBool("dev-mode"),
 		AimRevert:             viper.GetBool("run-original-aim-service"),
 		ListenAddress:         viper.GetString("listen-address"),
-		AuthUsername:          viper.GetString("auth-username"),
-		AuthPassword:          viper.GetString("auth-password"),
 		DefaultArtifactRoot:   viper.GetString("default-artifact-root"),
 		S3EndpointURI:         viper.GetString("s3-endpoint-uri"),
 		GSEndpointURI:         viper.GetString("gs-endpoint-uri"),
@@ -74,6 +77,10 @@ func (c *ServiceConfig) validateConfiguration() error {
 		return eris.New("unsupported schema of 'default-artifact-root' flag")
 	}
 
+	if err := c.Auth.validateConfiguration(); err != nil {
+		return eris.Wrap(err, "error validating auth configuration")
+	}
+
 	return nil
 }
 
@@ -93,5 +100,10 @@ func (c *ServiceConfig) normalizeConfiguration() error {
 		}
 		c.DefaultArtifactRoot = "file://" + absoluteArtifactRoot
 	}
+
+	if err := c.Auth.normalizeConfiguration(); err != nil {
+		return eris.Wrap(err, "error normalizing auth configuration")
+	}
+
 	return nil
 }

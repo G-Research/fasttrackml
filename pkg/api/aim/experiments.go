@@ -15,12 +15,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetExperiments(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -66,7 +66,7 @@ func GetExperiments(c *fiber.Ctx) error {
 }
 
 func GetExperiment(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -132,7 +132,7 @@ func GetExperiment(c *fiber.Ctx) error {
 }
 
 func GetExperimentRuns(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -219,7 +219,7 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 }
 
 func GetExperimentActivity(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -287,7 +287,7 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 }
 
 func DeleteExperiment(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -342,7 +342,7 @@ func DeleteExperiment(c *fiber.Ctx) error {
 }
 
 func UpdateExperiment(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

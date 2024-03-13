@@ -1,9 +1,8 @@
 package controller
 
 import (
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/gofiber/fiber/v2"
-
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
 // GetNamespaces renders the index view
@@ -12,7 +11,7 @@ func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return err
 	}

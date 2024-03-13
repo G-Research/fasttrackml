@@ -59,7 +59,7 @@ class CustomRestStore(RestStore):
             )
         return result
 
-    def log_batch(self, run_id, metrics):
+    def log_batch(self, run_id, metrics=[], params=[], tags=[]):
         metrics_list = []
         for metric in metrics:
             metrics_list.append(
@@ -90,7 +90,7 @@ class CustomRestStore(RestStore):
             )
         return result
 
-    def log_batch_async(self, run_id, metrics) -> RunOperations:
+    def log_batch_async(self, run_id, metrics=[], params=[], tags=[]) -> RunOperations:
         if not self._async_logging_queue.is_active():
             self._async_logging_queue.activate()
 

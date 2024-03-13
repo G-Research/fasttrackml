@@ -96,9 +96,9 @@ class CustomRestStore(RestStore):
 
         batch = RunBatch(
             run_id=run_id,
-            params=[],
-            tags=[],
             metrics=metrics,
+            params=params,
+            tags=tags,
             completion_event=threading.Event(),
         )
 

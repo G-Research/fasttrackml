@@ -1,4 +1,4 @@
-package namespace
+package middleware
 
 import (
 	"context"
@@ -22,8 +22,8 @@ const (
 
 var namespaceRegexp = regexp.MustCompile(`^/ns/([^/]+)/`)
 
-// New creates new Middleware instance
-func New(namespaceRepository repositories.NamespaceRepositoryProvider) fiber.Handler {
+// NewNamespaceMiddleware creates new Middleware instance.
+func NewNamespaceMiddleware(namespaceRepository repositories.NamespaceRepositoryProvider) fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		log.Debugf("checking namespace for path: %s", c.Path())
 		// if namespace exists in the request then try to process it, otherwise fallback to default namespace.

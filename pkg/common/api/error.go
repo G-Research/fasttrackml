@@ -27,6 +27,7 @@ type ErrorCode string
 
 const (
 	ErrorCodeInternalError          = "INTERNAL_ERROR"
+	ErrorAccessForbiddenError       = "FORBIDDEN_ERROR"
 	ErrorCodeTemporarilyUnavailable = "TEMPORARILY_UNAVAILABLE"
 	ErrorCodeBadRequest             = "BAD_REQUEST"
 	ErrorCodeInvalidParameterValue  = "INVALID_PARAMETER_VALUE"
@@ -86,5 +87,14 @@ func NewEndpointNotFound(msg string, args ...any) *ErrorResponse {
 		Message:    fmt.Sprintf(msg, args...),
 		ErrorCode:  ErrorCodeEndpointNotFound,
 		StatusCode: http.StatusNotFound,
+	}
+}
+
+// NewResourceAccessForbiddenError creates new Response object with ErrorAccessForbiddenError.
+func NewResourceAccessForbiddenError(msg string, args ...any) *ErrorResponse {
+	return &ErrorResponse{
+		Message:    fmt.Sprintf(msg, args...),
+		ErrorCode:  ErrorAccessForbiddenError,
+		StatusCode: http.StatusForbidden,
 	}
 }

@@ -1,7 +1,9 @@
+from functools import partial
 from typing import Dict, Optional, Sequence
 
 from mlflow.entities import Param, RunTag
 from mlflow.store.tracking import GET_METRIC_HISTORY_MAX_RESULTS
+from mlflow.tracking._tracking_service import utils
 from mlflow.tracking._tracking_service.client import TrackingServiceClient
 
 from mlflow.tracking.metric_value_conversion_utils import (
@@ -21,7 +23,7 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
 
     def __init__(self, tracking_uri):
         super().__init__(tracking_uri)
-        self.custom_store = CustomRestStore(lambda: MlflowHostCreds(self.tracking_uri))
+        self.custom_store = CustomRestStore(partial(utils._get_default_host_creds, self.tracking_uri))
 
     def log_metric(
         self,

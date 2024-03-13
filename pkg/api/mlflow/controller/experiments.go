@@ -9,7 +9,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
 // CreateExperiment handles `POST /experiments/create` endpoint.
@@ -26,7 +26,7 @@ func (c Controller) CreateExperiment(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 	log.Debugf("createExperiment request: %#v", req)
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -49,7 +49,7 @@ func (c Controller) UpdateExperiment(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 	log.Debugf("updateExperiment request: %#v", req)
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -68,7 +68,7 @@ func (c Controller) GetExperiment(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError(err.Error())
 	}
 	log.Debugf("getExperiment request: %#v", req)
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -90,7 +90,7 @@ func (c Controller) GetExperimentByName(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError(err.Error())
 	}
 	log.Debugf("getExperimentByName request: %#v", req)
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -112,7 +112,7 @@ func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 	log.Debugf("deleteExperiment request: %#v", req)
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -131,7 +131,7 @@ func (c Controller) RestoreExperiment(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 	log.Debugf("restoreExperiment request: %#v", req)
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -149,7 +149,7 @@ func (c Controller) SetExperimentTag(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError("Unable to decode request body: %s", err)
 	}
 	log.Debugf("setExperimentTag request: %#v", req)
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -174,7 +174,7 @@ func (c Controller) SearchExperiments(ctx *fiber.Ctx) error {
 		}
 	}
 	log.Debugf("searchExperiments request: %#v", req)
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

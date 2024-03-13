@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 
 	"github.com/G-Research/fasttrackml/pkg/api/admin/api/response"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
 // ListNamespaces handles `GET /namespaces/list` endpoint.
@@ -22,7 +22,7 @@ func (c Controller) ListNamespaces(ctx *fiber.Ctx) error {
 
 // GetCurrentNamespace handles `GET /namespaces/current` endpoint.
 func (c Controller) GetCurrentNamespace(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return err
 	}

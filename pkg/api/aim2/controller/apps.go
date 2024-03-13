@@ -9,12 +9,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
 // GetApps handles `GET /apps` endpoint.
 func (c Controller) GetApps(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -33,7 +33,7 @@ func (c Controller) GetApps(ctx *fiber.Ctx) error {
 
 // CreateApp handles `POST /apps` endpoint.
 func (c Controller) CreateApp(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -57,7 +57,7 @@ func (c Controller) CreateApp(ctx *fiber.Ctx) error {
 
 // GetApp handles `GET /apps/:id` endpoint.
 func (c Controller) GetApp(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -81,7 +81,7 @@ func (c Controller) GetApp(ctx *fiber.Ctx) error {
 
 // UpdateApp handles `PUT /apps/:id` endpoint.
 func (c Controller) UpdateApp(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -109,7 +109,7 @@ func (c Controller) UpdateApp(ctx *fiber.Ctx) error {
 
 // DeleteApp handles `DELETE /apps/:id` endpoint.
 func (c Controller) DeleteApp(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

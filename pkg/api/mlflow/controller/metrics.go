@@ -16,7 +16,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -27,7 +27,7 @@ func (c Controller) GetMetricHistory(ctx *fiber.Ctx) error {
 		return api.NewBadRequestError(err.Error())
 	}
 	log.Debugf("getMetricHistory request: %#v", req)
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -54,7 +54,7 @@ func (c Controller) GetMetricHistoryBulk(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getMetricHistoryBulk request: %#v", req)
 
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -79,7 +79,7 @@ func (c Controller) GetMetricHistories(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("GetMetricHistories request: %#v", req)
 
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

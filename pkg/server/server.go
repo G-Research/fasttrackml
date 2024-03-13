@@ -41,7 +41,7 @@ import (
 	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/metric"
 	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/model"
 	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/run"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
@@ -192,21 +192,12 @@ func createApp(
 		app.Use(cors.New())
 	}
 
-	app.Use(middleware.NewNamespaceMiddleware(namespaceRepository))
-
-	// attach auth middleware based on provided configuration of auth type.
-	if config.Auth.IsAuthTypeBasic() {
+	if config.AuthUsername != "" && config.AuthPassword != "" {
 		app.Use(basicauth.New(basicauth.Config{
 			Users: map[string]string{
-				config.Auth.AuthUsername: config.Auth.AuthPassword,
+				config.AuthUsername: config.AuthPassword,
 			},
 		}))
-	}
-	if config.Auth.IsAuthTypeRole() {
-		app.Use(middleware.NewRoleAuthorizationMiddleware(map[string]struct{}{}))
-	}
-	if config.Auth.IsAuthTypeOIDC() {
-		app.Use(middleware.NewOIDCAuthorizationMiddleware())
 	}
 
 	app.Use(compress.New(compress.Config{
@@ -222,6 +213,8 @@ func createApp(
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
+
+	app.Use(namespaceMiddleware.New(namespaceRepository))
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")

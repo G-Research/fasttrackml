@@ -7,12 +7,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
 // GetDashboards handles `GET /dashboards` endpoint.
 func (c Controller) GetDashboards(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -29,7 +29,7 @@ func (c Controller) GetDashboards(ctx *fiber.Ctx) error {
 
 // CreateDashboard handles `POST /dashboards` endpoint.
 func (c Controller) CreateDashboard(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -50,7 +50,7 @@ func (c Controller) CreateDashboard(ctx *fiber.Ctx) error {
 
 // GetDashboard handles `GET /dashboard/:id` endpoint.
 func (c Controller) GetDashboard(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -72,7 +72,7 @@ func (c Controller) GetDashboard(ctx *fiber.Ctx) error {
 
 // UpdateDashboard handles `PUT /dashboard/:id` endpoint.
 func (c Controller) UpdateDashboard(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -97,7 +97,7 @@ func (c Controller) UpdateDashboard(ctx *fiber.Ctx) error {
 
 // DeleteDashboard handles `DELETE /dashboards/:id` endpoint.
 func (c Controller) DeleteDashboard(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

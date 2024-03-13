@@ -9,12 +9,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
 // GetProject handles `GET /projects` endpoint.
 func (c Controller) GetProject(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -27,7 +27,7 @@ func (c Controller) GetProject(ctx *fiber.Ctx) error {
 
 // GetProjectActivity handles `GET /projects/activity` endpoint.
 func (c Controller) GetProjectActivity(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -65,7 +65,7 @@ func (c Controller) UpdateProjectPinnedSequences(ctx *fiber.Ctx) error {
 
 // GetProjectParams handles `GET /projects/params` endpoint.
 func (c Controller) GetProjectParams(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

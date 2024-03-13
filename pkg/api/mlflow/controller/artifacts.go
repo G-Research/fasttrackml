@@ -15,7 +15,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
 // ListArtifacts handles `GET /artifacts/list` endpoint.
@@ -26,7 +26,7 @@ func (c Controller) ListArtifacts(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("listArtifacts request: %#v", req)
 
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -50,7 +50,7 @@ func (c Controller) GetArtifact(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("GetArtifact request: %#v", req)
 
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

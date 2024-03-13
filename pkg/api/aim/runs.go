@@ -26,12 +26,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetRunInfo(c *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(c.Context())
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -148,7 +148,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 }
 
 func GetRunMetrics(c *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(c.Context())
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -264,7 +264,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 }
 
 func GetRunsActive(c *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(c.Context())
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -393,7 +393,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 //
 //nolint:gocyclo
 func SearchRuns(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -510,7 +510,7 @@ func SearchRuns(ctx *fiber.Ctx) error {
 //
 //nolint:gocyclo
 func SearchMetrics(c *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(c.Context())
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -839,7 +839,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 //
 //nolint:gocyclo
 func SearchAlignedMetrics(c *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(c.Context())
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -999,7 +999,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 					return err
 				}
 
-				// NewNamespaceMiddleware series of metrics
+				// New series of metrics
 				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
 					addMetrics()
 
@@ -1050,7 +1050,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 
 // DeleteRun will remove the Run from the repo
 func DeleteRun(c *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(c.Context())
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -1091,7 +1091,7 @@ func DeleteRun(c *fiber.Ctx) error {
 
 // UpdateRun will update the run name, description, and lifecycle stage
 func UpdateRun(c *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(c.Context())
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -1156,7 +1156,7 @@ func UpdateRun(c *fiber.Ctx) error {
 }
 
 func ArchiveBatch(c *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(c.Context())
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -1185,7 +1185,7 @@ func ArchiveBatch(c *fiber.Ctx) error {
 }
 
 func DeleteBatch(c *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(c.Context())
+	ns, err := namespace.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

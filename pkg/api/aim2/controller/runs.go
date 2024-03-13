@@ -10,12 +10,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/services/run"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
 // GetRunInfo handles `GET /runs/:id/info` endpoint.
 func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -41,7 +41,7 @@ func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
 
 // GetRunMetrics handles `GET /runs/:id/metric/get-batch` endpoint.
 func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -64,7 +64,7 @@ func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 
 // GetRunsActive handles `GET /runs/active` endpoint.
 func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -89,7 +89,7 @@ func (c Controller) GetRunsActive(ctx *fiber.Ctx) error {
 
 // SearchRuns handles `GET /runs/search` endpoint.
 func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -129,7 +129,7 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 
 // SearchMetrics handles `GET /runs/search/metric` endpoint.
 func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -165,7 +165,7 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 
 // SearchAlignedMetrics handles `GET /runs/search/metric/align` endpoint.
 func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -188,7 +188,7 @@ func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 
 // DeleteRun handles `DELETE /runs/:id` endpoint.
 func (c Controller) DeleteRun(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -208,7 +208,7 @@ func (c Controller) DeleteRun(ctx *fiber.Ctx) error {
 
 // UpdateRun handles `PUT /runs/:id` endpoint.
 func (c Controller) UpdateRun(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -232,7 +232,7 @@ func (c Controller) UpdateRun(ctx *fiber.Ctx) error {
 
 // ArchiveBatch handles `POST /runs/archive-batch` endpoint.
 func (c Controller) ArchiveBatch(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -257,7 +257,7 @@ func (c Controller) ArchiveBatch(ctx *fiber.Ctx) error {
 
 // DeleteBatch handles `DELETE /runs/delete-batch` endpoint.
 func (c Controller) DeleteBatch(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

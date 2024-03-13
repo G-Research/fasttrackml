@@ -9,12 +9,12 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/response"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
 )
 
 // GetExperiments handles `GET /experiments` endpoint.
 func (c Controller) GetExperiments(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -33,7 +33,7 @@ func (c Controller) GetExperiments(ctx *fiber.Ctx) error {
 
 // GetExperiment handles `GET /experiments/:id` endpoint.
 func (c Controller) GetExperiment(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -57,7 +57,7 @@ func (c Controller) GetExperiment(ctx *fiber.Ctx) error {
 
 // GetExperimentRuns handles `GET /experiments/:id/runs` endpoint.
 func (c Controller) GetExperimentRuns(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -85,7 +85,7 @@ func (c Controller) GetExperimentRuns(ctx *fiber.Ctx) error {
 
 // GetExperimentActivity handles `GET /experiments/:id/activity` endpoint.
 func (c Controller) GetExperimentActivity(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -114,7 +114,7 @@ func (c Controller) GetExperimentActivity(ctx *fiber.Ctx) error {
 
 // DeleteExperiment handles `DELETE /experiments/:id` endpoint.
 func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -136,7 +136,7 @@ func (c Controller) DeleteExperiment(ctx *fiber.Ctx) error {
 
 // UpdateExperiment handles `PUT /experiments/:id` endpoint.
 func (c Controller) UpdateExperiment(ctx *fiber.Ctx) error {
-	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

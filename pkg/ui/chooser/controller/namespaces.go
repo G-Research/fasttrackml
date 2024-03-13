@@ -1,8 +1,9 @@
 package controller
 
 import (
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
 // GetNamespaces renders the index view

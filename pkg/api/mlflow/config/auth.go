@@ -33,11 +33,13 @@ func (c *AuthConfig) IsAuthTypeBasic() bool {
 
 // validateConfiguration validates service configuration for correctness.
 func (c *AuthConfig) validateConfiguration() error {
-	if c.AuthType != AuthTypeOIDC && c.AuthType != AuthTypeRole && c.AuthType != AuthTypeBasic {
-		return eris.Errorf(
-			"provided auth type is incorrect. supported types are: %s, %s, %s",
-			AuthTypeOIDC, AuthTypeRole, AuthTypeBasic,
-		)
+	if c.AuthType != "" {
+		if c.AuthType != AuthTypeOIDC && c.AuthType != AuthTypeRole && c.AuthType != AuthTypeBasic {
+			return eris.Errorf(
+				"provided auth type is incorrect. supported types are: %s, %s, %s",
+				AuthTypeOIDC, AuthTypeRole, AuthTypeBasic,
+			)
+		}
 	}
 	return nil
 }

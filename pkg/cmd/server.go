@@ -70,7 +70,7 @@ func init() {
 	ServerCmd.Flags().String("s3-endpoint-uri", "", "S3 compatible storage base endpoint url")
 	ServerCmd.Flags().String("gs-endpoint-uri", "", "Google Storage base endpoint url")
 	ServerCmd.Flags().MarkHidden("gs-endpoint-uri")
-	ServerCmd.Flags().String("auth-type", "", "Authentication type. Supported types: oidc, role, basic")
+	ServerCmd.Flags().String("auth-rbac-config", "", "Configuration file for RBAC authentication type")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")
 	ServerCmd.Flags().StringP("database-uri", "d", "sqlite://fasttrackml.db", "Database URI")

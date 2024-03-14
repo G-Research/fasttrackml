@@ -31,6 +31,7 @@ import (
 	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/tag"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -86,7 +87,10 @@ func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server,
 
 	// create fiber app.
 	//nolint:contextcheck
-	app := createApp(config, db, artifactStorageFactory, namespaceRepository)
+	app, err := createApp(config, db, artifactStorageFactory, namespaceRepository)
+	if err != nil {
+		return nil, eris.Wrapf(err, "error creating application")
+	}
 
 	return server{app}, nil
 }
@@ -157,7 +161,7 @@ func createApp(
 	db database.DBProvider,
 	artifactStorageFactory storage.ArtifactStorageFactoryProvider,
 	namespaceRepository mlflowRepositories.NamespaceRepositoryProvider,
-) *fiber.App {
+) (*fiber.App, error) {
 	app := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
 		ReadBufferSize:        16384,
@@ -202,8 +206,14 @@ func createApp(
 			},
 		}))
 	}
-	if config.Auth.IsAuthTypeRole() {
-		app.Use(middleware.NewRoleAuthorizationMiddleware(map[string]struct{}{}))
+	if config.Auth.IsAuthTypeRBAC() {
+		cfg, err := auth.Load(config.Auth.AuthRBACConfigFile)
+		if err != nil {
+			return nil, eris.Wrapf(
+				err, "error loading rbac configuration from file: %s", config.Auth.AuthRBACConfigFile,
+			)
+		}
+		app.Use(middleware.NewRBACAuthorizationMiddleware(cfg))
 	}
 	if config.Auth.IsAuthTypeOIDC() {
 		app.Use(middleware.NewOIDCAuthorizationMiddleware())
@@ -332,5 +342,5 @@ func createApp(
 		),
 	).AddRoutes(app)
 
-	return app
+	return app, nil
 }

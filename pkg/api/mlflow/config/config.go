@@ -9,11 +9,13 @@ import (
 
 	"github.com/rotisserie/eris"
 	"github.com/spf13/viper"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
 )
 
 // ServiceConfig represents main service configuration.
 type ServiceConfig struct {
-	Auth                  AuthConfig
+	Auth                  auth.Config
 	DevMode               bool
 	AimRevert             bool
 	ListenAddress         string
@@ -30,11 +32,10 @@ type ServiceConfig struct {
 // NewServiceConfig creates new instance of ServiceConfig.
 func NewServiceConfig() *ServiceConfig {
 	return &ServiceConfig{
-		Auth: AuthConfig{
-			AuthType:     viper.GetString("auth-type"),
-			AuthUsername: viper.GetString("auth-username"),
-			AuthPassword: viper.GetString("auth-password"),
-			AuthUserList: viper.GetStringSlice("auth-user-list"),
+		Auth: auth.Config{
+			AuthUsername:       viper.GetString("auth-username"),
+			AuthPassword:       viper.GetString("auth-password"),
+			AuthRBACConfigFile: viper.GetString("auth-rbac-config"),
 		},
 		DevMode:               viper.GetBool("dev-mode"),
 		AimRevert:             viper.GetBool("run-original-aim-service"),
@@ -77,7 +78,7 @@ func (c *ServiceConfig) validateConfiguration() error {
 		return eris.New("unsupported schema of 'default-artifact-root' flag")
 	}
 
-	if err := c.Auth.validateConfiguration(); err != nil {
+	if err := c.Auth.ValidateConfiguration(); err != nil {
 		return eris.Wrap(err, "error validating auth configuration")
 	}
 
@@ -91,8 +92,6 @@ func (c *ServiceConfig) normalizeConfiguration() error {
 		return eris.Wrap(err, "error parsing 'default-artifact-root' flag")
 	}
 	switch parsed.Scheme {
-	case "s3", "gs":
-		return nil
 	case "", "file":
 		absoluteArtifactRoot, err := filepath.Abs(path.Join(parsed.Host, parsed.Path))
 		if err != nil {
@@ -101,7 +100,7 @@ func (c *ServiceConfig) normalizeConfiguration() error {
 		c.DefaultArtifactRoot = "file://" + absoluteArtifactRoot
 	}
 
-	if err := c.Auth.normalizeConfiguration(); err != nil {
+	if err := c.Auth.NormalizeConfiguration(); err != nil {
 		return eris.Wrap(err, "error normalizing auth configuration")
 	}
 

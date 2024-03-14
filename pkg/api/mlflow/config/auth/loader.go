@@ -14,6 +14,7 @@ import (
 
 // Load loads RBAC configuration from given configuration file.
 func Load(configFilePath string) (map[string]map[string]struct{}, error) {
+	//nolint:gosec
 	data, err := os.ReadFile(configFilePath)
 	if err != nil {
 		return nil, eris.Wrap(err, "error reading rbac configuration file")
@@ -34,10 +35,10 @@ func Load(configFilePath string) (map[string]map[string]struct{}, error) {
 func parseYamlConfiguration(content []byte) (map[string]map[string]struct{}, error) {
 	type config struct {
 		Users []struct {
-			Name     string
-			Password string
-			Roles    []string
-		}
+			Name     string   `yaml:"name"`
+			Password string   `yaml:"password"`
+			Roles    []string `yaml:"roles"`
+		} `yaml:"users"`
 	}
 
 	cfg := config{}

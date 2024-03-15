@@ -306,7 +306,6 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	runs := []*models.Run{run1, run2, run3}
-	contextValue := "\"testkey\":\"testvalue\""
 	tests := []struct {
 		name    string
 		request request.SearchMetricsRequest
@@ -315,11 +314,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetric",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key: "TestMetric1",
-					},
-				},
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -330,39 +325,18 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunArchived",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.archived == True`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.archived == True`,
 			},
 		},
 		{
 			name: "SearchRunNotArchived",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.archived == False`,
 			},
@@ -380,21 +354,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunActive",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.active == True`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.active == True`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -405,19 +366,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNotActive",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.active == False`,
 			},
@@ -432,19 +385,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchDurationOperationGreater",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.duration > 0`,
 			},
@@ -459,19 +404,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunDurationOperationGreaterOrEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.duration >= 0`,
 			},
@@ -489,20 +426,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunDurationOperationLess",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
 				Query: fmt.Sprintf(
 					`run.duration < %d`,
 					(run3.EndTime.Int64-run3.StartTime.Int64)/1000,
@@ -517,20 +441,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunDurationOperationLessOrEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
 				Query: fmt.Sprintf(
 					`run.duration <= %d`,
 					(run3.EndTime.Int64-run3.StartTime.Int64)/1000,
@@ -547,21 +458,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunDurationOperationEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.duration == 0`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.duration == 0`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -572,19 +470,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunDurationOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.duration != 0`,
 			},
@@ -599,21 +489,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationGreater",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.created_at > 123456789`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.created_at > 123456789`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run3,
@@ -623,21 +500,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationGreaterOrEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.created_at >= 123456789`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.created_at >= 123456789`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -650,19 +514,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.created_at != 123456789`,
 			},
@@ -677,21 +533,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.created_at == 123456789`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.created_at == 123456789`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -702,19 +545,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationLess",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.created_at < 222222222`,
 			},
@@ -730,19 +565,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationLessOrEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.created_at <= 222222222`,
 			},
@@ -760,19 +587,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationGreater",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.finalized_at > 123456789`,
 			},
@@ -787,19 +606,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationGreaterOrEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.finalized_at >= 123456789`,
 			},
@@ -817,19 +628,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.finalized_at != 123456789`,
 			},
@@ -844,21 +647,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.finalized_at == 123456789`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.finalized_at == 123456789`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -869,21 +659,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationLess",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.finalized_at < 444444444`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.finalized_at < 444444444`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -894,19 +671,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationLessOrEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.finalized_at <= 444444444`,
 			},
@@ -924,21 +693,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunHashOperationEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: fmt.Sprintf(`run.hash == "%s"`, run1.ID),
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              fmt.Sprintf(`run.hash == "%s"`, run1.ID),
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -949,19 +705,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunHashOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: fmt.Sprintf(`run.hash != "%s"`, run1.ID),
 			},
@@ -976,19 +724,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.name != "TestRun1"`,
 			},
@@ -1003,21 +743,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.name == "TestRun1"`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.name == "TestRun1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1028,21 +755,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationIn",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `"Run3" in run.name`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `"Run3" in run.name`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run3,
@@ -1052,19 +766,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationNotIn",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `"Run3" not in run.name`,
 			},
@@ -1080,19 +786,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationStartsWith",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.name.startswith("Test")`,
 			},
@@ -1110,21 +808,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationStartsWith",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.name.endswith('3')`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.name.endswith('3')`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run3,
@@ -1134,19 +819,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunExperimentOperationEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: fmt.Sprintf(
 					`run.experiment == "%s"`,
@@ -1165,20 +842,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunExperimentOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
 				Query: fmt.Sprintf(
 					`run.experiment != "%s"`,
 					experiment.Name,
@@ -1192,21 +856,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunTagOperationEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.tags['mlflow.runName'] == "TestRunTag1"`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.tags['mlflow.runName'] == "TestRunTag1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1217,19 +868,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunTagOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
+				MetricsWithContext: []string{
+					"TestMetric1-{}",
+					"TestMetric2-{}",
+					"TestMetric3-{}",
+					`TestMetric1-{"testkey":"testvalue"}`,
 				},
 				Query: `run.tags['mlflow.runName'] != "TestRunTag1"`,
 			},
@@ -1244,13 +887,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunNameOperationRegexpMatchFunction",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `re.match("TestRun1", run.name)`,
+				MetricsWithContext: []string{"TestMetric1-{}"},
+				Query:              `re.match("TestRun1", run.name)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1259,13 +897,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunNameOperationRegexpSearchFunction",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `re.search("TestRun1", run.name)`,
+				MetricsWithContext: []string{"TestMetric1-{}"},
+				Query:              `re.search("TestRun1", run.name)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1274,13 +907,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunNameOperationEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.name == "TestRun1"`,
+				MetricsWithContext: []string{"TestMetric1-{}"},
+				Query:              `run.name == "TestRun1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1289,13 +917,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunNameOperationNotEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.name != "TestRun1"`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `run.name != "TestRun1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1305,13 +928,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunNameOperationStartsWith",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.name.startswith("Test")`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `run.name.startswith("Test")`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1322,13 +940,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunNameOperationEndsWith",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.name.endswith("Run2")`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `run.name.endswith("Run2")`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1337,17 +950,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricsAndRunNameOperationRegexpMatchFunction",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `re.match("TestRun1", run.name)`,
+				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `re.match("TestRun1", run.name)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run1,
@@ -1357,17 +961,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricsAndRunNameOperationRegexpSearchFunction",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `re.search("TestRun1", run.name)`,
+				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `re.search("TestRun1", run.name)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run1,
@@ -1377,17 +972,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricsAndRunNameOperationdEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.name == "TestRun1"`,
+				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.name == "TestRun1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run1,
@@ -1397,17 +983,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricsAndRunNameOperationNotEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.name != "TestRun1"`,
+				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.name != "TestRun1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run2,
@@ -1418,17 +995,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricsAndRunNameOperationStartsWith",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.name.startswith("Test")`,
+				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.name.startswith("Test")`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run1,
@@ -1441,17 +1009,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricsxsAndRunNameOperationEndsWith",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.name.endswith("Run2")`,
+				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `run.name.endswith("Run2")`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run2,
@@ -1461,13 +1020,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunDurationOperationEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.duration == 222222`,
+				MetricsWithContext: []string{"TestMetric1-{}"},
+				Query:              `run.duration == 222222`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run3,
@@ -1476,13 +1030,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunDurationOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.duration != 222222`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `run.duration != 222222`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1492,13 +1041,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunDurationOperationGreater",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.duration > 0`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `run.duration > 0`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1508,13 +1052,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunDurationOperationGreaterOrEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.duration >= 0`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `run.duration >= 0`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1525,13 +1064,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunDurationOperationLess",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.duration < 333333)`,
+				MetricsWithContext: []string{"TestMetric1-{}"},
+				Query:              `(run.duration < 333333)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1541,13 +1075,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunDurationOperationLessOrEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `run.duration <= 333333`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `run.duration <= 333333`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1558,13 +1087,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunHashOperationEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: fmt.Sprintf(`(run.hash == "%s")`, run1.ID),
+				MetricsWithContext: []string{"TestMetric1-{}"},
+				Query:              fmt.Sprintf(`(run.hash == "%s")`, run1.ID),
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1573,13 +1097,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricsAndRunHashOperationNotEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: fmt.Sprintf(`(run.hash != "%s")`, run1.ID),
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              fmt.Sprintf(`(run.hash != "%s")`, run1.ID),
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1589,13 +1108,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunFinalizedAtOperationGreater",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.finalized_at > 123456789)`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `(run.finalized_at > 123456789)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1605,13 +1119,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunFinalizedAtOperationGreaterOrEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.finalized_at >= 123456789)`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `(run.finalized_at >= 123456789)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1622,13 +1131,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunFinalizedAtOperationLess",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.finalized_at < 444444444)`,
+				MetricsWithContext: []string{"TestMetric1-{}"},
+				Query:              `(run.finalized_at < 444444444)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1637,13 +1141,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunFinalizedAtOperationLessOrEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.finalized_at <= 444444444)`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `(run.finalized_at <= 444444444)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1654,13 +1153,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunFinalizedOperationAtEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.finalized_at == 123456789)`,
+				MetricsWithContext: []string{"TestMetric1-{}"},
+				Query:              `(run.finalized_at == 123456789)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1669,13 +1163,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunFinalizedAtOperationNotEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.finalized_at != 123456789)`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `(run.finalized_at != 123456789)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1685,17 +1174,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricAndRunFinalizedAtOperationNotEqualsAndGreater",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.finalized_at > 123456789)`,
+				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `(run.finalized_at > 123456789)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run2,
@@ -1706,17 +1186,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricsAndRunFinalizedAtOperationNotEqualsAndGreaterOrEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric3",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.finalized_at >= 123456789)`,
+				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
+				Query:              `(run.finalized_at >= 123456789)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run1,
@@ -1729,13 +1200,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricEqualsAndRunCreatedAtOperationGreater",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.created_at > 123456789)`,
+				MetricsWithContext: []string{"TestMetric1-{}"},
+				Query:              `(run.created_at > 123456789)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run3,
@@ -1744,13 +1210,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricEqualsAndRunCreatedAtOperationGreaterOrEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.created_at >= 123456789)`,
+				MetricsWithContext: []string{"TestMetric1-{}"},
+				Query:              `(run.created_at >= 123456789)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1760,13 +1221,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricEqualsAndRunCreatedAtOperationLess",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.created_at < 222222222)`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `(run.created_at < 222222222)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1776,13 +1232,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricEqualsAndRunCreatedAtOperationLessOrEqual",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.created_at <= 222222222)`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `(run.created_at <= 222222222)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1793,13 +1244,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricEqualsAndRunCreatedAtOperationEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.created_at == 123456789)`,
+				MetricsWithContext: []string{"TestMetric1-{}"},
+				Query:              `(run.created_at == 123456789)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1808,13 +1254,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricEqualsAndRunCreatedAtOperationNotEquals",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.created_at != 123456789)`,
+				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `(run.created_at != 123456789)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1824,17 +1265,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricComplexQuery",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: nil,
-					},
-					{
-						Key:            "TestMetric2",
-						PartialContext: nil,
-					},
-				},
-				Query: `(run.name.endswith("2") or re.match("TestRun1", run.name) and run.duration > 0)`,
+				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Query:              `(run.name.endswith("2") or re.match("TestRun1", run.name) and run.duration > 0)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1844,12 +1276,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricContext",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: &contextValue,
-					},
-				},
+				MetricsWithContext: []string{`TestMetric1-{"testkey":"testvalue"}`},
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1858,13 +1285,8 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricContextWithXAxis",
 			request: request.SearchMetricsRequest{
-				Metrics: []request.MetricTuple{
-					{
-						Key:            "TestMetric1",
-						PartialContext: &contextValue,
-					},
-				},
-				XAxis: `TestMetric2`,
+				MetricsWithContext: []string{`TestMetric1-{"testkey":"testvalue"}`},
+				XAxis:              `TestMetric2`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,

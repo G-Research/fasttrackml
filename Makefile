@@ -129,8 +129,8 @@ python-format: python-env ## format python code.
 .PHONY: python-lint
 python-lint: python-env ## check python code formatting.
 	@echo '>>> Checking python code formatting.'
-	@pipenv run black --line-length 120 .
-	@pipenv run isort --profile black .
+	@pipenv run black --check --line-length 120 .
+	@pipenv run isort --check-only --profile black .
 
 #
 # Tests targets.

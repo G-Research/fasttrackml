@@ -1,18 +1,18 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
 // NewRBACMiddleware creates new RBAC based Middleware instance.
-func NewRBACMiddleware(config map[string]map[string]struct{}) fiber.Handler {
+func NewRBACMiddleware(permissions *auth.Permissions) fiber.Handler {
 	return func(ctx *fiber.Ctx) (err error) {
 		namespace, err := GetNamespaceFromContext(ctx.Context())
 		if err != nil {
@@ -20,32 +20,9 @@ func NewRBACMiddleware(config map[string]map[string]struct{}) fiber.Handler {
 		}
 		log.Debugf("checking access permission to %s namespace", namespace.Code)
 
-		authorization := strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Basic ", "", 1)
-		if authorization == "" {
-			return ctx.Status(
-				http.StatusBadRequest,
-			).JSON(
-				api.NewBadRequestError("authorization header is empty or incorrect"),
-			)
-		}
-
-		// check that requested Authorization token actually exists in user list and get the user roles.
-		roles, ok := config[authorization]
-		if !ok {
-			return ctx.Status(
-				http.StatusForbidden,
-			).JSON(
-				api.NewResourceAccessForbiddenError("access to %s namespace is forbidden", namespace.Code),
-			)
-		}
-
-		// if role list contains `admin` then move forward immediately. `admin` has access to all namespaces.
-		if _, ok := roles["admin"]; ok {
-			return ctx.Next()
-		}
-
-		// if user is not admin, then check that this user has permission to access to the requested namespace.
-		if _, ok := roles[fmt.Sprintf("ns:%s", namespace.Code)]; !ok {
+		// check that user has permissions to access to the requested namespace.
+		authToken := strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Basic ", "", 1)
+		if !permissions.HasPermissions(namespace.Code, authToken) {
 			return ctx.Status(
 				http.StatusForbidden,
 			).JSON(
@@ -66,8 +43,8 @@ func NewOIDCMiddleware() fiber.Handler {
 		}
 		log.Debugf("checking access permission to %s namespace", namespace.Code)
 
-		authorization := strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Bearer ", "", 1)
-		if authorization == "" {
+		authToken := strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Bearer ", "", 1)
+		if authToken == "" {
 			return ctx.Status(
 				http.StatusBadRequest,
 			).JSON(

@@ -207,13 +207,13 @@ func createApp(
 			},
 		}))
 	case config.Auth.IsAuthTypeRBAC():
-		cfg, err := auth.Load(config.Auth.AuthRBACConfigFile)
+		permissions, err := auth.Load(config.Auth.AuthRBACConfigFile)
 		if err != nil {
 			return nil, eris.Wrapf(
 				err, "error loading rbac configuration from file: %s", config.Auth.AuthRBACConfigFile,
 			)
 		}
-		app.Use(middleware.NewRBACMiddleware(cfg))
+		app.Use(middleware.NewRBACMiddleware(permissions))
 	case config.Auth.IsAuthTypeOIDC():
 		app.Use(middleware.NewOIDCMiddleware())
 	}

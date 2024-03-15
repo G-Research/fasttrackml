@@ -11,14 +11,14 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
-// NewRBACAuthorizationMiddleware creates new RBAC based Middleware instance.
-func NewRBACAuthorizationMiddleware(config map[string]map[string]struct{}) fiber.Handler {
+// NewRBACMiddleware creates new RBAC based Middleware instance.
+func NewRBACMiddleware(config map[string]map[string]struct{}) fiber.Handler {
 	return func(ctx *fiber.Ctx) (err error) {
 		namespace, err := GetNamespaceFromContext(ctx.Context())
 		if err != nil {
 			return api.NewInternalError("error getting namespace from context")
 		}
-		log.Debugf("checking acess permission to %s namespace", namespace.Code)
+		log.Debugf("checking access permission to %s namespace", namespace.Code)
 
 		authorization := strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Basic ", "", 1)
 		if authorization == "" {
@@ -57,14 +57,14 @@ func NewRBACAuthorizationMiddleware(config map[string]map[string]struct{}) fiber
 	}
 }
 
-// NewOIDCAuthorizationMiddleware creates new OIDC based Middleware instance.
-func NewOIDCAuthorizationMiddleware() fiber.Handler {
+// NewOIDCMiddleware creates new OIDC based Middleware instance.
+func NewOIDCMiddleware() fiber.Handler {
 	return func(ctx *fiber.Ctx) (err error) {
 		namespace, err := GetNamespaceFromContext(ctx.Context())
 		if err != nil {
 			return api.NewInternalError("error getting namespace from context")
 		}
-		log.Debugf("checking acess permission to %s namespace", namespace.Code)
+		log.Debugf("checking access permission to %s namespace", namespace.Code)
 
 		authorization := strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Bearer ", "", 1)
 		if authorization == "" {

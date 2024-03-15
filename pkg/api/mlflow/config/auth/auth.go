@@ -1,7 +1,5 @@
 package auth
 
-import "github.com/rotisserie/eris"
-
 // supported list of authentication types.
 const (
 	TypeOIDC  string = "oidc"
@@ -33,14 +31,6 @@ func (c *Config) IsAuthTypeBasic() bool {
 
 // ValidateConfiguration validates service configuration for correctness.
 func (c *Config) ValidateConfiguration() error {
-	if c.AuthType != "" {
-		if c.AuthType != TypeOIDC && c.AuthType != TypeRBAC && c.AuthType != TypeBasic {
-			return eris.Errorf(
-				"provided auth type is incorrect. supported types are: %s, %s, %s",
-				TypeOIDC, TypeRBAC, TypeBasic,
-			)
-		}
-	}
 	return nil
 }
 

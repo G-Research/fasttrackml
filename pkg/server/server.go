@@ -199,24 +199,23 @@ func createApp(
 	app.Use(middleware.NewNamespaceMiddleware(namespaceRepository))
 
 	// attach auth middleware based on provided configuration of auth type.
-	if config.Auth.IsAuthTypeBasic() {
+	switch {
+	case config.Auth.IsAuthTypeBasic():
 		app.Use(basicauth.New(basicauth.Config{
 			Users: map[string]string{
 				config.Auth.AuthUsername: config.Auth.AuthPassword,
 			},
 		}))
-	}
-	if config.Auth.IsAuthTypeRBAC() {
+	case config.Auth.IsAuthTypeRBAC():
 		cfg, err := auth.Load(config.Auth.AuthRBACConfigFile)
 		if err != nil {
 			return nil, eris.Wrapf(
 				err, "error loading rbac configuration from file: %s", config.Auth.AuthRBACConfigFile,
 			)
 		}
-		app.Use(middleware.NewRBACAuthorizationMiddleware(cfg))
-	}
-	if config.Auth.IsAuthTypeOIDC() {
-		app.Use(middleware.NewOIDCAuthorizationMiddleware())
+		app.Use(middleware.NewRBACMiddleware(cfg))
+	case config.Auth.IsAuthTypeOIDC():
+		app.Use(middleware.NewOIDCMiddleware())
 	}
 
 	app.Use(compress.New(compress.Config{

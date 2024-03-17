@@ -52,13 +52,13 @@ the packages in `database/migrations`.
 
 ## Working with the UIs
 
-FastTrackML incorporates the existing Aim and MLFlow web UIs, albeit with a few
-modifications. This is accomplished at build time by importing the
-`fasttrackml-ui-aim` and `fasttrackml-ui-mlflow` modules. These repos contain
-the patched and compiled UI assets of the upstream repos at specific tagged
-revisions. To make a UI change, a PR is merged to the appropriate release branch
-and new tag is pushed. At that point, the `fasttrackml` reference can be updated
-(in `go.mod`) to pull in the new tag.
+FastTrackML incorporates the existing Aim and MLFlow web UIs, albeit
+with a few modifications. This is accomplisshed by importing the
+`fasttrackml-ui-aim` and `fasttrackml-ui-mlflow` go modules. The
+corresponding repos contain the patched and compiled UI assets of the
+upstream repos. To make a UI change, a PR is merged to the appropriate
+release branch and new tag is pushed. At that point, the `fasttrackml`
+reference can be updated (in `go.mod`) to pull in the new tag.
 
 For UI development, you'll need a tighter change/view loop, so we recommend the
 following approach.
@@ -70,55 +70,32 @@ Prerequisites:
 
 Steps:
 
-1. Clone the UI repos as siblings to your `fasttrackml` working copy.
+1. Fetch the UI repo submodules in your working copy of FastTrackML:
 
     ```bash
-    cd ..
-    # This is the repo for the Aim UI
-    git clone https://github.com/G-Research/fasttrackml-ui-aim.git
-    # This is the repo for the MLFlow UI
-    git clone https://github.com/G-Research/fasttrackml-ui-mlflow.git
+    git submodule update --init --recursive
     ```
 
-2. Change the UI working copies to their latest release branch.
+2. Update the UI submodule to the most recent release branch, and make
+   changes as needed:
 
     ```bash
-    for repo in fasttrackml-ui-*; do
-      pushd $repo
-      git checkout release/$(cat upstream.txt)
-      popd
-    done
+    cd ui/fasttrackml-ui-aim
+    git fetch -a
+    git switch release/v3.17.5
+    <make edits>
     ```
 
-3. In the `fasttrackml` folder, use `go work` to map the UI working copy you
-   will work on as a go module replacement (we use the Aim UI in this example):
+3. Run the UI development server to see your changes (use vscode
+   terminal to automatically map ports and make sure the FML tracking
+   server is already launched):
 
     ```bash
-    cd fastrackml
-    go work init
-    go work use .
-    go work use ../fasttrackml-ui-aim
+    cd <fasttrackml project root>
+    make ui-aim-start
+	<ctrl-c to stop>
     ```
 
-4. Compile the UI project:
-
-    ```bash
-    pushd ../fasttrackml-ui-aim
-    go run main.go
-    popd
-    ```
-
-5. On success, the UI project will have an `embed` directory that contains the
-   compiled assets and that can be used directly by the main project. Just build
-   and launch it as usual:
-
-    ```bash
-    make run
-    ```
-
-6. You should now be able to see your local working copy of the UI in your
-   browser. As you make changes in the UI's `/src` folder, just re-run the
-   compile steps and refresh your browser.
-
-7. When ready, make a PR of your changes to the UI repo, with the merge target
-   set as the release branch, _not_ the `main` branch.
+4. When ready, make a new branch in the submodule, commit changes, and
+   push to your fork. Make a PR with the merge target set as the
+   release branch, _not_ the `main` branch.

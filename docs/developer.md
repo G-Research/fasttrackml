@@ -53,20 +53,16 @@ the packages in `database/migrations`.
 ## Working with the UIs
 
 FastTrackML incorporates the existing Aim and MLFlow web UIs, albeit
-with a few modifications. This is accomplisshed by importing the
+with a few modifications. This is accomplished by importing the
 `fasttrackml-ui-aim` and `fasttrackml-ui-mlflow` go modules. The
 corresponding repos contain the patched and compiled UI assets of the
 upstream repos. To make a UI change, a PR is merged to the appropriate
-release branch and new tag is pushed. At that point, the `fasttrackml`
-reference can be updated (in `go.mod`) to pull in the new tag.
+release branch and a new tag is pushed. At that point, the
+`fasttrackml` reference can be updated (in `go.mod`) to pull in the
+new tag with your changes.
 
 For UI development, you'll need a tighter change/view loop, so we recommend the
 following approach.
-
-Prerequisites:
-
-- Go 1.20 or higher
-- [Docker](https://docs.docker.com/get-docker/)
 
 Steps:
 

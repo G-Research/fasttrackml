@@ -86,9 +86,9 @@ Steps:
     <make edits>
     ```
 
-3. Run the UI development server to see your changes (use vscode
-   terminal to automatically map ports and make sure the FML tracking
-   server is already launched):
+3. Run the UI development server to see your changes. Make sure the
+   FML tracking server is already launched, then run the ui make
+   target in the vscode terminal:
 
     ```bash
     cd <fasttrackml project root>

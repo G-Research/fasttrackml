@@ -24,7 +24,7 @@ type SearchMetricsTestSuite struct {
 
 func TestSearchMetricsTestSuite(t *testing.T) {
 	flag, ok := os.LookupEnv("FML_RUN_ORIGINAL_AIM_SERVICE")
-	if ok && flag == "true" {
+	if !ok || flag == "false" {
 		suite.Run(t, new(SearchMetricsTestSuite))
 	}
 }

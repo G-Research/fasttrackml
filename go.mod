@@ -10,6 +10,7 @@ replace (
 require (
 	cloud.google.com/go/storage v1.39.1
 	dagger.io/dagger v0.10.2
+	dario.cat/mergo v1.0.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/G-Research/fasttrackml-ui-aim v0.31705.12
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.4
@@ -32,17 +33,12 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
+	github.com/zeebo/assert v1.3.0
 	google.golang.org/api v0.170.0
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.25.7-0.20240204074919-46816ad31dde
 	gorm.io/plugin/dbresolver v1.5.1
-)
-
-require (
-	dario.cat/mergo v1.0.0 // indirect
-	github.com/fatih/structs v1.1.0 // indirect
-	github.com/geraldo-labs/merge-struct v1.0.0 // indirect
 )
 
 require (

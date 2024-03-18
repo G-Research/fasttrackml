@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -238,12 +238,12 @@ func (s *MetricFlowTestSuite) testRunFlow(
 ) {
 	// test `GET /runs/search/metric` endpoint.
 	s.searchMetricsAndCompare(namespace1Code, request.SearchMetricsRequest{
-		Query: `(metric.name == "TestMetric1")`,
+		MetricsWithContext: []string{`TestMetric1-{"key":"value"}`},
 	}, []*models.Run{run1}, []*models.LatestMetric{
 		metric1Run1,
 	})
 	s.searchMetricsAndCompare(namespace2Code, request.SearchMetricsRequest{
-		Query: `(metric.name == "TestMetric2")`,
+		MetricsWithContext: []string{`TestMetric2-{"key":"value"}`},
 	}, []*models.Run{run2}, []*models.LatestMetric{
 		metric1Run2,
 	})

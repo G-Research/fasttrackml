@@ -12,13 +12,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Permissions represents permission object into which the RBAC configuration is parsed.
-type Permissions struct {
+// UserPermissions represents permission object into which the user configuration is parsed.
+type UserPermissions struct {
 	data map[string]map[string]struct{}
 }
 
-// HasPermissions makes check that user has permission to access to the requested namespace.
-func (p Permissions) HasPermissions(namespace string, authToken string) bool {
+// HasAccess makes check that user has permission to access to the requested namespace.
+func (p UserPermissions) HasAccess(namespace string, authToken string) bool {
 	if authToken == "" {
 		return false
 	}
@@ -38,44 +38,48 @@ func (p Permissions) HasPermissions(namespace string, authToken string) bool {
 	return true
 }
 
-// Load loads RBAC configuration from given configuration file.
-func Load(configFilePath string) (*Permissions, error) {
+// Load loads user configuration from given configuration file.
+func Load(configFilePath string) (*UserPermissions, error) {
 	//nolint:gosec
 	data, err := os.ReadFile(configFilePath)
 	if err != nil {
-		return nil, eris.Wrap(err, "error reading rbac configuration file")
+		return nil, eris.Wrap(err, "error reading user configuration file")
 	}
 
 	switch filepath.Ext(configFilePath) {
 	case ".yaml", ".yml":
-		permissions, err := parsePermissionFromYaml(data)
+		permissions, err := parseUserConfigFromYaml(data)
 		if err != nil {
-			return nil, eris.Wrap(err, "error parsing rbac configuration from yaml")
+			return nil, eris.Wrap(err, "error parsing user configuration from yaml")
 		}
 		return permissions, nil
 	}
-	return nil, eris.Errorf("unsupported rbac configuration file type")
+	return nil, eris.Errorf("unsupported user configuration file type")
 }
 
-// parsePermissionFromYaml parse configuration from ".yaml", ".yml" files and transform it into internal representation.
-func parsePermissionFromYaml(content []byte) (*Permissions, error) {
-	type config struct {
-		Users []struct {
-			Name     string   `yaml:"name"`
-			Password string   `yaml:"password"`
-			Roles    []string `yaml:"roles"`
-		} `yaml:"users"`
-	}
+// YamlConfig represents users configuration in YAML format.
+type YamlConfig struct {
+	Users []YamlUserConfig `yaml:"users"`
+}
 
-	cfg := config{}
-	if err := yaml.Unmarshal(content, &cfg); err != nil {
+// YamlUserConfig partial object of YamlConfig.
+type YamlUserConfig struct {
+	Name     string   `yaml:"name"`
+	Password string   `yaml:"password"`
+	Roles    []string `yaml:"roles"`
+}
+
+// parseUserConfigFromYaml parse configuration from ".yaml", ".yml" files and transform it into internal representation.
+func parseUserConfigFromYaml(content []byte) (*UserPermissions, error) {
+	config := YamlConfig{}
+	if err := yaml.Unmarshal(content, &config); err != nil {
 		return nil, eris.Wrap(err, "error unmarshaling data from yaml file")
 	}
 
-	permissions := Permissions{data: make(map[string]map[string]struct{})}
+	permissions := UserPermissions{data: make(map[string]map[string]struct{})}
 	passwordRegex := regexp.MustCompile(`^\$\{(.*)\}$`)
 	passwordReplacer := strings.NewReplacer("$", "", "{", "", "}", "")
-	for _, user := range cfg.Users {
+	for _, user := range config.Users {
 		// if password format is ${PASSWORD_PARAMETER_FROM_ENV} then try to load it from ENV.
 		if passwordRegex.MatchString(user.Password) {
 			password, ok := os.LookupEnv(passwordReplacer.Replace(user.Password))

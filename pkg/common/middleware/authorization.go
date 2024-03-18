@@ -11,8 +11,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
-// NewRBACMiddleware creates new RBAC based Middleware instance.
-func NewRBACMiddleware(permissions *auth.Permissions) fiber.Handler {
+// NewUserMiddleware creates new User based Middleware instance.
+func NewUserMiddleware(userPermissions *auth.UserPermissions) fiber.Handler {
 	return func(ctx *fiber.Ctx) (err error) {
 		namespace, err := GetNamespaceFromContext(ctx.Context())
 		if err != nil {
@@ -22,11 +22,11 @@ func NewRBACMiddleware(permissions *auth.Permissions) fiber.Handler {
 
 		// check that user has permissions to access to the requested namespace.
 		authToken := strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Basic ", "", 1)
-		if !permissions.HasPermissions(namespace.Code, authToken) {
+		if !userPermissions.HasAccess(namespace.Code, authToken) {
 			return ctx.Status(
-				http.StatusForbidden,
+				http.StatusNotFound,
 			).JSON(
-				api.NewResourceAccessForbiddenError("access to %s namespace is forbidden", namespace.Code),
+				api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
 			)
 		}
 

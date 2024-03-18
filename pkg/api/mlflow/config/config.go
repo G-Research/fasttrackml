@@ -33,9 +33,9 @@ type ServiceConfig struct {
 func NewServiceConfig() *ServiceConfig {
 	return &ServiceConfig{
 		Auth: auth.Config{
-			AuthUsername:       viper.GetString("auth-username"),
-			AuthPassword:       viper.GetString("auth-password"),
-			AuthRBACConfigFile: viper.GetString("auth-rbac-config"),
+			AuthUsername:    viper.GetString("auth-username"),
+			AuthPassword:    viper.GetString("auth-password"),
+			AuthUsersConfig: viper.GetString("auth-users-config"),
 		},
 		DevMode:               viper.GetBool("dev-mode"),
 		AimRevert:             viper.GetBool("run-original-aim-service"),

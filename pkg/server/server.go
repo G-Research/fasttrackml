@@ -206,14 +206,14 @@ func createApp(
 				config.Auth.AuthUsername: config.Auth.AuthPassword,
 			},
 		}))
-	case config.Auth.IsAuthTypeRBAC():
-		permissions, err := auth.Load(config.Auth.AuthRBACConfigFile)
+	case config.Auth.IsAuthTypeUser():
+		userPermissions, err := auth.Load(config.Auth.AuthUsersConfig)
 		if err != nil {
 			return nil, eris.Wrapf(
-				err, "error loading rbac configuration from file: %s", config.Auth.AuthRBACConfigFile,
+				err, "error loading user configuration from file: %s", config.Auth.AuthUsersConfig,
 			)
 		}
-		app.Use(middleware.NewRBACMiddleware(permissions))
+		app.Use(middleware.NewUserMiddleware(userPermissions))
 	case config.Auth.IsAuthTypeOIDC():
 		app.Use(middleware.NewOIDCMiddleware())
 	}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -22,7 +23,10 @@ type SearchMetricsTestSuite struct {
 }
 
 func TestSearchMetricsTestSuite(t *testing.T) {
-	suite.Run(t, new(SearchMetricsTestSuite))
+	flag, ok := os.LookupEnv("FML_RUN_ORIGINAL_AIM_SERVICE")
+	if ok && flag == "true" {
+		suite.Run(t, new(SearchMetricsTestSuite))
+	}
 }
 
 func (s *SearchMetricsTestSuite) Test_Ok() {

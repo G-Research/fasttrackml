@@ -9,6 +9,11 @@ from mlflow.tracking.metric_value_conversion_utils import (
     convert_metric_value_to_float_if_possible,
 )
 from mlflow.utils import chunk_list
+from mlflow.utils.async_logging.run_operations import (
+    RunOperations,
+    get_combined_run_operations,
+)
+from mlflow.utils.rest_utils import MlflowHostCreds
 from mlflow.utils.time import get_current_time_millis
 from mlflow.utils.validation import MAX_METRICS_PER_BATCH
 
@@ -43,6 +48,15 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
     ):
         for metrics_batch in chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH):
             self.custom_store.log_batch(run_id=run_id, metrics=metrics_batch)
+
+    def log_batch_async(
+        self, run_id: str, metrics: Sequence[Metric] = (), params: Sequence[Param] = (), tags: Sequence[RunTag] = ()
+    ) -> RunOperations:
+        result = RunOperations([])
+        for metrics_batch in chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH):
+            batch_result = self.custom_store.log_batch_async(run_id=run_id, metrics=metrics_batch)
+            result = get_combined_run_operations([result, batch_result])
+        return result
 
     def get_metric_history(self, run_id, key):
         # NB: Paginated query support is currently only available for the RestStore backend.

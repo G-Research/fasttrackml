@@ -12,13 +12,13 @@ require (
 	dagger.io/dagger v0.10.2
 	dario.cat/mergo v1.0.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/G-Research/fasttrackml-ui-aim v0.31705.12
+	github.com/G-Research/fasttrackml-ui-aim v0.31705.13
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.4
 	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/apache/arrow/go/v14 v14.0.2
 	github.com/aws/aws-sdk-go-v2 v1.25.3
 	github.com/aws/aws-sdk-go-v2/config v1.27.7
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.52.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.52.1
 	github.com/go-python/gpython v0.2.0
 	github.com/gofiber/fiber/v2 v2.52.2
 	github.com/gofiber/template/html/v2 v2.1.1

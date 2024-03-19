@@ -193,7 +193,7 @@ func (r MetricRepository) SearchMetrics(
 				).
 				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
 				Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id").
-				Where("CONCAT(latest_metrics.key, '-', contexts.json) IN ?", req.MetricsWithContext)),
+				Where("(latest_metrics.key || '-' || contexts.json) IN ?", req.MetricsWithContext)),
 		).
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").

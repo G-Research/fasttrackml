@@ -31,17 +31,19 @@ func NewProjectActivityResponse(activity *models.ProjectActivity) *ProjectActivi
 
 // GetProjectResponse represents the response json for the `GET aim/projects` endpoint.
 type GetProjectResponse struct {
-	Name             string `json:"name"`
-	Path             string `json:"path"`
-	Description      string `json:"description"`
-	TelemetryEnabled int    `json:"telemetry_enabled"`
+	Name               string `json:"name"`
+	Path               string `json:"path"`
+	Description        string `json:"description"`
+	TelemetryEnabled   int    `json:"telemetry_enabled"`
+	LiveUpdatesEnabled int    `json:"live_updates_enabled"`
 }
 
 // NewGetProjectResponse creates new response object for `GET /projects` endpoint.
-func NewGetProjectResponse(name, dialector string) *GetProjectResponse {
+func NewGetProjectResponse(name, dialector string, live_updates_enabled int) *GetProjectResponse {
 	return &GetProjectResponse{
-		Name: name,
-		Path: dialector,
+		Name:               name,
+		Path:               dialector,
+		LiveUpdatesEnabled: live_updates_enabled,
 	}
 }
 

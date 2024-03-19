@@ -18,6 +18,7 @@ type Service struct {
 	paramRepository      repositories.ParamRepositoryProvider
 	metricRepository     repositories.MetricRepositoryProvider
 	experimentRepository repositories.ExperimentRepositoryProvider
+	liveUpdatesEnabled   bool
 }
 
 // NewService creates new Service instance.
@@ -27,6 +28,7 @@ func NewService(
 	paramRepository repositories.ParamRepositoryProvider,
 	metricRepository repositories.MetricRepositoryProvider,
 	experimentRepository repositories.ExperimentRepositoryProvider,
+	liveUpdatesEnabled bool,
 ) *Service {
 	return &Service{
 		tagRepository:        tagRepository,
@@ -34,12 +36,13 @@ func NewService(
 		paramRepository:      paramRepository,
 		metricRepository:     metricRepository,
 		experimentRepository: experimentRepository,
+		liveUpdatesEnabled:   liveUpdatesEnabled,
 	}
 }
 
 // GetProjectInformation returns project information.
-func (s Service) GetProjectInformation() (string, string) {
-	return "FastTrackML", s.runRepository.GetDB().Dialector.Name()
+func (s Service) GetProjectInformation() (string, string, bool) {
+	return "FastTrackML", s.runRepository.GetDB().Dialector.Name(), s.liveUpdatesEnabled
 }
 
 // GetProjectActivity returns project activity.

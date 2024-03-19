@@ -39,11 +39,15 @@ type GetProjectResponse struct {
 }
 
 // NewGetProjectResponse creates new response object for `GET /projects` endpoint.
-func NewGetProjectResponse(name, dialector string, live_updates_enabled int) *GetProjectResponse {
+func NewGetProjectResponse(name, dialector string, liveUpdatesEnabled bool) *GetProjectResponse {
+	liveUpdates := 0
+	if liveUpdatesEnabled {
+		liveUpdates = 1
+	}
 	return &GetProjectResponse{
 		Name:               name,
 		Path:               dialector,
-		LiveUpdatesEnabled: live_updates_enabled,
+		LiveUpdatesEnabled: liveUpdates,
 	}
 }
 

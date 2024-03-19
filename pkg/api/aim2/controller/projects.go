@@ -21,11 +21,7 @@ func (c Controller) GetProject(ctx *fiber.Ctx) error {
 	log.Debugf("getProjectActivity namespace: %s", ns.Code)
 
 	name, dialector, liveUpdatesEnabled := c.projectService.GetProjectInformation()
-	liveUpdates := 0
-	if liveUpdatesEnabled {
-		liveUpdates = 1
-	}
-	return ctx.JSON(response.NewGetProjectResponse(name, dialector, liveUpdates))
+	return ctx.JSON(response.NewGetProjectResponse(name, dialector, liveUpdatesEnabled))
 }
 
 // GetProjectActivity handles `GET /projects/activity` endpoint.

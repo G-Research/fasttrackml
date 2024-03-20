@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"dario.cat/mergo"
-
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 

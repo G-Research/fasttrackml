@@ -152,7 +152,6 @@ func (s *MlflowAuthTestSuite) Test_Ok() {
 		{
 			name: "TestUser2Access",
 			check: func() {
-
 				// check that user2 has access to namespace2 and namespace3 namespaces.
 				basicAuthToken := base64.StdEncoding.EncodeToString(
 					[]byte(fmt.Sprintf("%s:%s", "user2", "user2password")),

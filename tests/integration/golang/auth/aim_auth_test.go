@@ -58,6 +58,7 @@ func TestAimAuthTestSuite(t *testing.T) {
 	configPath := fmt.Sprintf("%s/users-config.yaml", t.TempDir())
 	// #nosec G304
 	f, err := os.Create(configPath)
+	assert.Nil(t, err)
 	_, err = f.Write(data)
 	assert.Nil(t, err)
 	assert.Nil(t, f.Close())

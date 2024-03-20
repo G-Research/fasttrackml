@@ -242,12 +242,22 @@ func (s *MetricFlowTestSuite) testRunFlow(
 ) {
 	// test `GET /runs/search/metric` endpoint.
 	s.searchMetricsAndCompare(namespace1Code, request.SearchMetricsRequest{
-		MetricsWithContext: []string{`TestMetric1-{"key":"value"}`},
+		Metrics: []request.MetricTuple{
+			{
+				Key:     "TestMetric1",
+				Context: `{"key":"value"}`,
+			},
+		},
 	}, []*models.Run{run1}, []*models.LatestMetric{
 		metric1Run1,
 	})
 	s.searchMetricsAndCompare(namespace2Code, request.SearchMetricsRequest{
-		MetricsWithContext: []string{`TestMetric2-{"key":"value"}`},
+		Metrics: []request.MetricTuple{
+			{
+				Key:     "TestMetric2",
+				Context: `{"key":"value"}`,
+			},
+		},
 	}, []*models.Run{run2}, []*models.LatestMetric{
 		metric1Run2,
 	})

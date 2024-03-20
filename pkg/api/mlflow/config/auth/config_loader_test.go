@@ -66,6 +66,7 @@ func TestLoad_Ok(t *testing.T) {
 				assert.Nil(t, err)
 
 				configPath := fmt.Sprintf("%s/configuration.yaml", t.TempDir())
+				// #nosec G304
 				f, err := os.Create(configPath)
 				_, err = f.Write(data)
 				assert.Nil(t, err)
@@ -98,6 +99,7 @@ func TestLoad_Ok(t *testing.T) {
 				assert.Nil(t, err)
 
 				configPath := fmt.Sprintf("%s/configuration.yaml", t.TempDir())
+				// #nosec G304
 				f, err := os.Create(configPath)
 				_, err = f.Write(data)
 				assert.Nil(t, err)

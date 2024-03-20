@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -23,10 +22,7 @@ type SearchMetricsTestSuite struct {
 }
 
 func TestSearchMetricsTestSuite(t *testing.T) {
-	flag, ok := os.LookupEnv("FML_RUN_ORIGINAL_AIM_SERVICE")
-	if !ok || flag == "false" {
-		suite.Run(t, new(SearchMetricsTestSuite))
-	}
+	suite.Run(t, new(SearchMetricsTestSuite))
 }
 
 func (s *SearchMetricsTestSuite) Test_Ok() {
@@ -310,6 +306,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	runs := []*models.Run{run1, run2, run3}
+	contextValue := "{\"testkey\":\"testvalue\"}"
 	tests := []struct {
 		name    string
 		request request.SearchMetricsRequest
@@ -318,7 +315,16 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetric",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -329,18 +335,43 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunArchived",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.archived == True`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.archived == True`,
 			},
 		},
 		{
 			name: "SearchRunNotArchived",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.archived == False`,
 			},
@@ -358,8 +389,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunActive",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.active == True`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.active == True`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -370,11 +414,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNotActive",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.active == False`,
 			},
@@ -389,11 +445,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchDurationOperationGreater",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.duration > 0`,
 			},
@@ -408,11 +476,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunDurationOperationGreaterOrEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.duration >= 0`,
 			},
@@ -430,7 +510,20 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunDurationOperationLess",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
 				Query: fmt.Sprintf(
 					`run.duration < %d`,
 					(run3.EndTime.Int64-run3.StartTime.Int64)/1000,
@@ -445,7 +538,20 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunDurationOperationLessOrEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
 				Query: fmt.Sprintf(
 					`run.duration <= %d`,
 					(run3.EndTime.Int64-run3.StartTime.Int64)/1000,
@@ -462,8 +568,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunDurationOperationEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.duration == 0`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.duration == 0`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -474,11 +593,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunDurationOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.duration != 0`,
 			},
@@ -493,8 +624,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationGreater",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.created_at > 123456789`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.created_at > 123456789`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run3,
@@ -504,8 +648,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationGreaterOrEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.created_at >= 123456789`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.created_at >= 123456789`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -518,11 +675,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.created_at != 123456789`,
 			},
@@ -537,8 +706,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.created_at == 123456789`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.created_at == 123456789`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -549,11 +731,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationLess",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.created_at < 222222222`,
 			},
@@ -569,11 +763,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunStartTimeOperationLessOrEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.created_at <= 222222222`,
 			},
@@ -591,11 +797,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationGreater",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.finalized_at > 123456789`,
 			},
@@ -610,11 +828,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationGreaterOrEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.finalized_at >= 123456789`,
 			},
@@ -632,11 +862,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.finalized_at != 123456789`,
 			},
@@ -651,8 +893,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.finalized_at == 123456789`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.finalized_at == 123456789`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -663,8 +918,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationLess",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.finalized_at < 444444444`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.finalized_at < 444444444`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -675,11 +943,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunFinalizedAtOperationLessOrEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.finalized_at <= 444444444`,
 			},
@@ -697,8 +977,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunHashOperationEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              fmt.Sprintf(`run.hash == "%s"`, run1.ID),
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: fmt.Sprintf(`run.hash == "%s"`, run1.ID),
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -709,11 +1002,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunHashOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: fmt.Sprintf(`run.hash != "%s"`, run1.ID),
 			},
@@ -728,11 +1033,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.name != "TestRun1"`,
 			},
@@ -747,8 +1064,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.name == "TestRun1"`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.name == "TestRun1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -759,8 +1089,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationIn",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `"Run3" in run.name`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `"Run3" in run.name`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run3,
@@ -770,11 +1113,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationNotIn",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `"Run3" not in run.name`,
 			},
@@ -790,11 +1145,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationStartsWith",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.name.startswith("Test")`,
 			},
@@ -812,8 +1179,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunNameOperationStartsWith",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.name.endswith('3')`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.name.endswith('3')`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run3,
@@ -823,11 +1203,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunExperimentOperationEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: fmt.Sprintf(
 					`run.experiment == "%s"`,
@@ -846,7 +1238,20 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunExperimentOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
 				Query: fmt.Sprintf(
 					`run.experiment != "%s"`,
 					experiment.Name,
@@ -860,8 +1265,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunTagOperationEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.tags['mlflow.runName'] == "TestRunTag1"`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.tags['mlflow.runName'] == "TestRunTag1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -872,11 +1290,23 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchRunTagOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{
-					"TestMetric1-{}",
-					"TestMetric2-{}",
-					"TestMetric3-{}",
-					`TestMetric1-{"testkey":"testvalue"}`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
 				},
 				Query: `run.tags['mlflow.runName'] != "TestRunTag1"`,
 			},
@@ -889,40 +1319,64 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricAndRunNameOperationRegexpMatchFunction",
+			name: "SearchMetricNameAndRunNameOperationRegexpMatchFunction",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}"},
-				Query:              `re.match("TestRun1", run.name)`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+				},
+				Query: `re.match("TestRun1", run.name)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
 		},
 		{
-			name: "SearchMetricAndRunNameOperationRegexpSearchFunction",
+			name: "SearchMetricNameAndRunNameOperationRegexpSearchFunction",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}"},
-				Query:              `re.search("TestRun1", run.name)`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+				},
+				Query: `re.search("TestRun1", run.name)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
 		},
 		{
-			name: "SearchMetricAndRunNameOperationEquals",
+			name: "SearchMetricNameAndRunNameOperationEquals",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}"},
-				Query:              `run.name == "TestRun1"`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+				},
+				Query: `run.name == "TestRun1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
 		},
 		{
-			name: "SearchMetricAndRunNameOperationNotEquals",
+			name: "SearchMetricNameAndRunNameOperationNotEquals",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `run.name != "TestRun1"`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `run.name != "TestRun1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -930,10 +1384,19 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricAndRunNameOperationStartsWith",
+			name: "SearchMetricNameAndRunNameOperationStartsWith",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `run.name.startswith("Test")`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `run.name.startswith("Test")`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -942,20 +1405,38 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricAndRunNameOperationEndsWith",
+			name: "SearchMetricNameAndRunNameOperationEndsWith",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `run.name.endswith("Run2")`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `run.name.endswith("Run2")`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
 			},
 		},
 		{
-			name: "SearchMetricsAndRunNameOperationRegexpMatchFunction",
+			name: "SearchMetricNameAndRunNameOperationNotEqualsAndRegexpMatchFunction",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `re.match("TestRun1", run.name)`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `re.match("TestRun1", run.name)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run1,
@@ -963,10 +1444,19 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricsAndRunNameOperationRegexpSearchFunction",
+			name: "SearchMetricNameAndRunNameOperationNotEqualsAndRegexpSearchFunction",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `re.search("TestRun1", run.name)`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `re.search("TestRun1", run.name)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run1,
@@ -974,10 +1464,19 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricsAndRunNameOperationdEquals",
+			name: "SearchMetricNameAndRunNameOperationNotEqualsAndEquals",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.name == "TestRun1"`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.name == "TestRun1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run1,
@@ -985,10 +1484,19 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricsAndRunNameOperationNotEquals",
+			name: "SearchMetricNameAndRunNameOperationNotEqualsAndNotEquals",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.name != "TestRun1"`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.name != "TestRun1"`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run2,
@@ -997,201 +1505,19 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricsAndRunNameOperationStartsWith",
+			name: "SearchMetricNameAndRunNameOperationNotEqualsAndStartsWith",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.name.startswith("Test")`,
-			},
-			metrics: []*models.LatestMetric{
-				metric2Run1,
-				metric3Run1,
-				metric2Run2,
-				metric3Run2,
-				metric2Run3,
-			},
-		},
-		{
-			name: "SearchMetricsxsAndRunNameOperationEndsWith",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `run.name.endswith("Run2")`,
-			},
-			metrics: []*models.LatestMetric{
-				metric2Run2,
-				metric3Run2,
-			},
-		},
-		{
-			name: "SearchMetricAndRunDurationOperationEqual",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}"},
-				Query:              `run.duration == 222222`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run3,
-			},
-		},
-		{
-			name: "SearchMetricAndRunDurationOperationNotEqual",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `run.duration != 222222`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run1,
-				metric1Run2,
-			},
-		},
-		{
-			name: "SearchMetricAndRunDurationOperationGreater",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `run.duration > 0`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run2,
-				metric1Run3,
-			},
-		},
-		{
-			name: "SearchMetricAndRunDurationOperationGreaterOrEquals",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `run.duration >= 0`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run1,
-				metric1Run2,
-				metric1Run3,
-			},
-		},
-		{
-			name: "SearchMetricAndRunDurationOperationLess",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}"},
-				Query:              `(run.duration < 333333)`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run1,
-				metric1Run3,
-			},
-		},
-		{
-			name: "SearchMetricAndRunDurationOperationLessOrEquals",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `run.duration <= 333333`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run1,
-				metric1Run2,
-				metric1Run3,
-			},
-		},
-		{
-			name: "SearchMetricAndRunHashOperationEquals",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}"},
-				Query:              fmt.Sprintf(`(run.hash == "%s")`, run1.ID),
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run1,
-			},
-		},
-		{
-			name: "SearchMetricsAndRunHashOperationNotEquals",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              fmt.Sprintf(`(run.hash != "%s")`, run1.ID),
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run2,
-				metric1Run3,
-			},
-		},
-		{
-			name: "SearchMetricAndRunFinalizedAtOperationGreater",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `(run.finalized_at > 123456789)`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run2,
-				metric1Run3,
-			},
-		},
-		{
-			name: "SearchMetricAndRunFinalizedAtOperationGreaterOrEqual",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `(run.finalized_at >= 123456789)`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run1,
-				metric1Run2,
-				metric1Run3,
-			},
-		},
-		{
-			name: "SearchMetricAndRunFinalizedAtOperationLess",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}"},
-				Query:              `(run.finalized_at < 444444444)`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run1,
-			},
-		},
-		{
-			name: "SearchMetricAndRunFinalizedAtOperationLessOrEqual",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `(run.finalized_at <= 444444444)`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run1,
-				metric1Run2,
-				metric1Run3,
-			},
-		},
-		{
-			name: "SearchMetricAndRunFinalizedOperationAtEquals",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}"},
-				Query:              `(run.finalized_at == 123456789)`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run1,
-			},
-		},
-		{
-			name: "SearchMetricAndRunFinalizedAtOperationNotEquals",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `(run.finalized_at != 123456789)`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run2,
-				metric1Run3,
-			},
-		},
-		{
-			name: "SearchMetricAndRunFinalizedAtOperationNotEqualsAndGreater",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `(run.finalized_at > 123456789)`,
-			},
-			metrics: []*models.LatestMetric{
-				metric2Run2,
-				metric3Run2,
-				metric2Run3,
-			},
-		},
-		{
-			name: "SearchMetricsAndRunFinalizedAtOperationNotEqualsAndGreaterOrEqual",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric2-{}", "TestMetric3-{}"},
-				Query:              `(run.finalized_at >= 123456789)`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.name.startswith("Test")`,
 			},
 			metrics: []*models.LatestMetric{
 				metric2Run1,
@@ -1202,31 +1528,54 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricEqualsAndRunCreatedAtOperationGreater",
+			name: "SearchMetricNameAndRunNameOperationNotEqualsAndEndsWith",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}"},
-				Query:              `(run.created_at > 123456789)`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `run.name.endswith("Run2")`,
+			},
+			metrics: []*models.LatestMetric{
+				metric2Run2,
+				metric3Run2,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunDurationOperationEqual",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+				},
+				Query: `run.duration == 222222`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run3,
 			},
 		},
 		{
-			name: "SearchMetricEqualsAndRunCreatedAtOperationGreaterOrEqual",
+			name: "SearchMetricNameAndRunDurationOperationNotEqual",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}"},
-				Query:              `(run.created_at >= 123456789)`,
-			},
-			metrics: []*models.LatestMetric{
-				metric1Run1,
-				metric1Run3,
-			},
-		},
-		{
-			name: "SearchMetricEqualsAndRunCreatedAtOperationLess",
-			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `(run.created_at < 222222222)`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `run.duration != 222222`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1234,10 +1583,39 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricEqualsAndRunCreatedAtOperationLessOrEqual",
+			name: "SearchMetricNameAndRunDurationOperationGreater",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `(run.created_at <= 222222222)`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `run.duration > 0`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run2,
+				metric1Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunDurationOperationGreaterOrEquals",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `run.duration >= 0`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
@@ -1246,20 +1624,334 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 			},
 		},
 		{
-			name: "SearchMetricEqualsAndRunCreatedAtOperationEquals",
+			name: "SearchMetricNameAndRunDurationOperationLess",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}"},
-				Query:              `(run.created_at == 123456789)`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+				},
+				Query: `(run.duration < 333333)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run1,
+				metric1Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunDurationOperationLessOrEquals",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `run.duration <= 333333`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run1,
+				metric1Run2,
+				metric1Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunHashOperationEquals",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+				},
+				Query: fmt.Sprintf(`(run.hash == "%s")`, run1.ID),
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run1,
 			},
 		},
 		{
-			name: "SearchMetricEqualsAndRunCreatedAtOperationNotEquals",
+			name: "SearchMetricNameAndRunHashOperationNotEquals",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `(run.created_at != 123456789)`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: fmt.Sprintf(`(run.hash != "%s")`, run1.ID),
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run2,
+				metric1Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunFinalizedAtOperationGreater",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `(run.finalized_at > 123456789)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run2,
+				metric1Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunFinalizedAtOperationGreaterOrEqual",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `(run.finalized_at >= 123456789)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run1,
+				metric1Run2,
+				metric1Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunFinalizedAtOperationLess",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+				},
+				Query: `(run.finalized_at < 444444444)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run1,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunFinalizedAtOperationLessOrEqual",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `(run.finalized_at <= 444444444)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run1,
+				metric1Run2,
+				metric1Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunFinalizedOperationAtEquals",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+				},
+				Query: `(run.finalized_at == 123456789)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run1,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunFinalizedAtOperationNotEquals",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `(run.finalized_at != 123456789)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run2,
+				metric1Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunFinalizedAtOperationNotEqualsAndGreater",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `(run.finalized_at > 123456789)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric2Run2,
+				metric3Run2,
+				metric2Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameAndRunFinalizedAtOperationNotEqualsAndGreaterOrEqual",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric3",
+						Context: "{}",
+					},
+				},
+				Query: `(run.finalized_at >= 123456789)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric2Run1,
+				metric3Run1,
+				metric2Run2,
+				metric3Run2,
+				metric2Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameEqualsAndRunCreatedAtOperationGreater",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+				},
+				Query: `(run.created_at > 123456789)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameEqualsAndRunCreatedAtOperationGreaterOrEqual",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+				},
+				Query: `(run.created_at >= 123456789)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run1,
+				metric1Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameEqualsAndRunCreatedAtOperationLess",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `(run.created_at < 222222222)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run1,
+				metric1Run2,
+			},
+		},
+		{
+			name: "SearchMetricNameEqualsAndRunCreatedAtOperationLessOrEqual",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `(run.created_at <= 222222222)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run1,
+				metric1Run2,
+				metric1Run3,
+			},
+		},
+		{
+			name: "SearchMetricNameEqualsAndRunCreatedAtOperationEquals",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+				},
+				Query: `(run.created_at == 123456789)`,
+			},
+			metrics: []*models.LatestMetric{
+				metric1Run1,
+			},
+		},
+		{
+			name: "SearchMetricNameEqualsAndRunCreatedAtOperationNotEquals",
+			request: request.SearchMetricsRequest{
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `(run.created_at != 123456789)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1269,8 +1961,21 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricComplexQuery",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{"TestMetric1-{}", "TestMetric2-{}", `TestMetric1-{"testkey":"testvalue"}`},
-				Query:              `(run.name.endswith("2") or re.match("TestRun1", run.name) and run.duration > 0)`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric2",
+						Context: "{}",
+					},
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				Query: `(run.name.endswith("2") or re.match("TestRun1", run.name) and run.duration > 0)`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1280,7 +1985,12 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricContext",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{`TestMetric1-{"testkey":"testvalue"}`},
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,
@@ -1289,8 +1999,13 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		{
 			name: "SearchMetricContextWithXAxis",
 			request: request.SearchMetricsRequest{
-				MetricsWithContext: []string{`TestMetric1-{"testkey":"testvalue"}`},
-				XAxis:              `TestMetric2`,
+				Metrics: []request.MetricTuple{
+					{
+						Key:     "TestMetric1",
+						Context: contextValue,
+					},
+				},
+				XAxis: `TestMetric2`,
 			},
 			metrics: []*models.LatestMetric{
 				metric1Run2,

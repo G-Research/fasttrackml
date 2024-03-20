@@ -1,7 +1,9 @@
 package repositories
 
 import (
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"gorm.io/driver/postgres"
@@ -67,4 +69,16 @@ func BuildJsonCondition(
 	conditionTemplate = fmt.Sprintf(conditionTemplate, jsonColumnName)
 	sql = strings.Repeat(conditionTemplate+" AND ", len(jsonPathValueMap)-1) + conditionTemplate
 	return sql, args
+}
+
+// CompareJson compares two json objects.
+func CompareJson(json1, json2 []byte) bool {
+	var j, j2 interface{}
+	if err := json.Unmarshal(json1, &j); err != nil {
+		return false
+	}
+	if err := json.Unmarshal(json2, &j2); err != nil {
+		return false
+	}
+	return reflect.DeepEqual(j2, j)
 }

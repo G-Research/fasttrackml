@@ -57,6 +57,7 @@ func TestMlflowAuthTestSuite(t *testing.T) {
 	assert.Nil(t, err)
 
 	configPath := fmt.Sprintf("%s/users-config.yaml", t.TempDir())
+	// #nosec G304
 	f, err := os.Create(configPath)
 	_, err = f.Write(data)
 	assert.Nil(t, err)

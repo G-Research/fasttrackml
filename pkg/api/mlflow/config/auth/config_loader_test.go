@@ -34,7 +34,9 @@ func TestLoad_Ok(t *testing.T) {
 				assert.Nil(t, err)
 
 				configPath := fmt.Sprintf("%s/configuration.yml", t.TempDir())
+				// #nosec G304
 				f, err := os.Create(configPath)
+				assert.Nil(t, err)
 				_, err = f.Write(data)
 				assert.Nil(t, err)
 				assert.Nil(t, f.Close())
@@ -68,6 +70,7 @@ func TestLoad_Ok(t *testing.T) {
 				configPath := fmt.Sprintf("%s/configuration.yaml", t.TempDir())
 				// #nosec G304
 				f, err := os.Create(configPath)
+				assert.Nil(t, err)
 				_, err = f.Write(data)
 				assert.Nil(t, err)
 				assert.Nil(t, f.Close())
@@ -101,6 +104,7 @@ func TestLoad_Ok(t *testing.T) {
 				configPath := fmt.Sprintf("%s/configuration.yaml", t.TempDir())
 				// #nosec G304
 				f, err := os.Create(configPath)
+				assert.Nil(t, err)
 				_, err = f.Write(data)
 				assert.Nil(t, err)
 				assert.Nil(t, f.Close())
@@ -129,6 +133,7 @@ func TestLoad_Ok(t *testing.T) {
 
 func TestLoad_Error(t *testing.T) {
 	configPath := fmt.Sprintf("%s/configuration.unsupported-extension", t.TempDir())
+	// #nosec G304
 	_, err := os.Create(configPath)
 	assert.Nil(t, err)
 

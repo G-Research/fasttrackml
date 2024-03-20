@@ -169,6 +169,13 @@ func (r MetricRepository) SearchMetrics(
 		result[r.ID] = SearchResult{int64(r.RowNum), run}
 	}
 
+	var contextJson string
+	if r.db.Dialector.Name() == "postgres" {
+		contextJson = "REPLACE(contexts.json::text, ': ', ':')"
+	} else {
+		contextJson = "contexts.json"
+	}
+
 	tx := r.db.WithContext(ctx).
 		Select(`
 			metrics.*,
@@ -183,7 +190,7 @@ func (r MetricRepository) SearchMetrics(
 					"runs.row_num",
 					"latest_metrics.key",
 					"latest_metrics.context_id",
-					"contexts.json AS context_json",
+					fmt.Sprintf("%s AS context_json", contextJson),
 					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(req.Steps)),
 				).
 				Table("runs").
@@ -193,7 +200,7 @@ func (r MetricRepository) SearchMetrics(
 				).
 				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
 				Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id").
-				Where("CONCAT(latest_metrics.key, '-', contexts.json) IN ?", req.MetricsWithContext)),
+				Where(fmt.Sprintf("CONCAT(latest_metrics.key, '-', %s) IN ?", contextJson), req.MetricsWithContext)),
 		).
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").

@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/common"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
@@ -171,9 +172,9 @@ func (r MetricRepository) SearchMetrics(
 		result[r.ID] = SearchResult{int64(r.RowNum), run}
 	}
 
-	values, contextsMap := []any{}, map[string]types.JSONB{}
+	values, contextsMap := []types.JSONB{}, map[string]types.JSONB{}
 	for _, r := range req.Metrics {
-		data := []byte(r.Context)
+		data := types.JSONB(r.Context)
 		values, contextsMap[string(data)] = append(values, data), data
 	}
 
@@ -185,19 +186,19 @@ func (r MetricRepository) SearchMetrics(
 	// add context ids to `values` array.
 	ids := make([]uint, len(values))
 	for _, context := range contexts {
-		for i := 0; i < len(values); i += 1 {
-			if CompareJson(values[i].([]byte), context.Json) {
+		for i := 0; i < len(values); i++ {
+			if common.CompareJson(values[i], context.Json) {
 				ids[i] = context.ID
 			}
 		}
 	}
 
-	var conditions []string
+	var metricKeyContextConditionSlice []string
 	for i, tuple := range req.Metrics {
 		condition := fmt.Sprintf("(latest_metrics.key = '%s' AND contexts.id = %d)", tuple.Key, ids[i])
-		conditions = append(conditions, condition)
+		metricKeyContextConditionSlice = append(metricKeyContextConditionSlice, condition)
 	}
-	tuplesConditions := strings.Join(conditions, " OR ")
+	metricKeyContextCondition := strings.Join(metricKeyContextConditionSlice, " OR ")
 
 	subQuery := r.db.WithContext(ctx).
 		Select(
@@ -215,7 +216,7 @@ func (r MetricRepository) SearchMetrics(
 		).
 		Joins("LEFT JOIN latest_metrics USING(run_uuid)").
 		Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id").
-		Where(tuplesConditions)
+		Where(metricKeyContextCondition)
 
 	tx := r.db.WithContext(ctx).
 		Select(`

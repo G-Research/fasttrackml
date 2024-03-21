@@ -27,6 +27,7 @@ type ServiceConfig struct {
 	DatabasePoolMax       int
 	DatabaseMigrate       bool
 	DatabaseSlowThreshold time.Duration
+	LiveUpdatesEnabled    bool
 }
 
 // NewServiceConfig creates new instance of ServiceConfig.
@@ -48,6 +49,7 @@ func NewServiceConfig() *ServiceConfig {
 		DatabasePoolMax:       viper.GetInt("database-pool-max"),
 		DatabaseMigrate:       viper.GetBool("database-migrate"),
 		DatabaseSlowThreshold: viper.GetDuration("database-slow-threshold"),
+		LiveUpdatesEnabled:    viper.GetBool("live-updates-enabled"),
 	}
 }
 

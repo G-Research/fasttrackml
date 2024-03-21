@@ -999,7 +999,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 					return err
 				}
 
-				// NewNamespaceMiddleware series of metrics
+				// New series of metrics
 				if metric.Key != key || metric.RunID != id || metric.ContextID != contextID {
 					addMetrics()
 

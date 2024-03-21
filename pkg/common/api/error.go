@@ -89,12 +89,3 @@ func NewEndpointNotFound(msg string, args ...any) *ErrorResponse {
 		StatusCode: http.StatusNotFound,
 	}
 }
-
-// NewResourceAccessForbiddenError creates new Response object with ErrorAccessForbiddenError.
-func NewResourceAccessForbiddenError(msg string, args ...any) *ErrorResponse {
-	return &ErrorResponse{
-		Message:    fmt.Sprintf(msg, args...),
-		ErrorCode:  ErrorAccessForbiddenError,
-		StatusCode: http.StatusForbidden,
-	}
-}

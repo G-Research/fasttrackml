@@ -172,7 +172,7 @@ func TestUserPermissions_HasAccess_Ok(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.True(t, tt.permissions.HasAccess(tt.namespace, tt.token))
+			assert.True(t, tt.permissions.HasUserAccess(tt.namespace, tt.token))
 		})
 	}
 }
@@ -210,7 +210,7 @@ func TestUserPermissions_HasAccess_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.False(t, tt.permissions.HasAccess(tt.namespace, tt.token))
+			assert.False(t, tt.permissions.HasUserAccess(tt.namespace, tt.token))
 		})
 	}
 }

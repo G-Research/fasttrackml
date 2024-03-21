@@ -17,8 +17,8 @@ type UserPermissions struct {
 	data map[string]map[string]struct{}
 }
 
-// HasAccess makes check that user has permission to access to the requested namespace.
-func (p UserPermissions) HasAccess(namespace string, authToken string) bool {
+// HasUserAccess makes check that user has permission to access to the requested namespace.
+func (p UserPermissions) HasUserAccess(namespace string, authToken string) bool {
 	if authToken == "" {
 		return false
 	}
@@ -36,6 +36,23 @@ func (p UserPermissions) HasAccess(namespace string, authToken string) bool {
 		return ok
 	}
 	return true
+}
+
+// HasAdminAccess makes check that user has admin permissions to access to the requested resource.
+func (p UserPermissions) HasAdminAccess(authToken string) bool {
+	if authToken == "" {
+		return false
+	}
+
+	roles, ok := p.data[authToken]
+	if !ok {
+		return ok
+	}
+
+	if _, ok := roles["admin"]; ok {
+		return true
+	}
+	return false
 }
 
 // Load loads user configuration from given configuration file.

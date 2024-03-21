@@ -28,8 +28,8 @@ func NewRouter(controller *controller.Controller) *Router {
 	}
 }
 
-// AddRoutes adds all the `chooser` routes
-func (r Router) AddRoutes(fr fiber.Router) {
+// Init adds all the `chooser` routes
+func (r Router) Init(fr fiber.Router) {
 	//nolint:errcheck
 	sub, _ := fs.Sub(content, "embed")
 

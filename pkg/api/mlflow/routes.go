@@ -1,7 +1,11 @@
 package mlflow
 
 import (
+	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
@@ -58,13 +62,15 @@ const (
 
 // Router represents `mlflow` router.
 type Router struct {
+	config     *mlflowConfig.ServiceConfig
 	prefixList []string
 	controller *controller.Controller
 }
 
 // NewRouter creates new instance of `mlflow` router.
-func NewRouter(controller *controller.Controller) *Router {
+func NewRouter(config *mlflowConfig.ServiceConfig, controller *controller.Controller) *Router {
 	return &Router{
+		config: config,
 		prefixList: []string{
 			"/api/2.0/mlflow/",
 			"/ajax-api/2.0/mlflow/",
@@ -74,10 +80,20 @@ func NewRouter(controller *controller.Controller) *Router {
 }
 
 // Init makes initialization of all `mlflow` routes.
-func (r Router) Init(server fiber.Router) {
+func (r Router) Init(router fiber.Router) error {
 	for _, prefix := range r.prefixList {
-		mainGroup := server.Group(prefix)
+		mainGroup := router.Group(prefix)
+		// apply global auth middlewares.
+		switch {
+		case r.config.Auth.IsAuthTypeUser():
+			userPermissions, err := auth.Load(r.config.Auth.AuthUsersConfig)
+			if err != nil {
+				return eris.Wrapf(err, "error loading user configuration from file: %s", r.config.Auth.AuthUsersConfig)
+			}
+			mainGroup.Use(middleware.NewUserMiddleware(userPermissions))
+		}
 
+		// setup related routes.
 		artifacts := mainGroup.Group(ArtifactsRoutePrefix)
 		artifacts.Get(ArtifactsGetRoute, r.controller.GetArtifact)
 		artifacts.Get(ArtifactsListRoute, r.controller.ListArtifacts)
@@ -119,4 +135,5 @@ func (r Router) Init(server fiber.Router) {
 			return api.NewEndpointNotFound("Not found")
 		})
 	}
+	return nil
 }

@@ -19,8 +19,8 @@ func NewRouter(controller *controller.Controller) *Router {
 }
 
 // Init makes initialization of all `admin` routes.
-func (r Router) Init(fr fiber.Router) {
-	mainGroup := fr.Group("admin")
+func (r Router) Init(router fiber.Router) {
+	mainGroup := router.Group("admin")
 	namespaces := mainGroup.Group("namespaces")
 	namespaces.Get("/list", r.controller.ListNamespaces)
 	namespaces.Get("/current", r.controller.GetCurrentNamespace)

@@ -8,6 +8,7 @@ import (
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/common"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
@@ -144,7 +145,7 @@ func (s Service) SearchAlignedMetrics(
 	// add context ids to `values` array.
 	for _, context := range contexts {
 		for i := 2; i < len(values); i += 4 {
-			if CompareJson(values[i].([]byte), context.Json) {
+			if common.CompareJson(values[i].([]byte), context.Json) {
 				values[i] = context.ID
 			}
 		}

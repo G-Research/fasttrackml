@@ -11,8 +11,9 @@ import (
 	"github.com/zeebo/assert"
 	"gopkg.in/yaml.v3"
 
+	aimResponse "github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
+	mlflowResponse "github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
@@ -21,11 +22,11 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type MlflowAuthTestSuite struct {
+type UserPermissionsFromConfigTestSuite struct {
 	helpers.BaseTestSuite
 }
 
-func TestMlflowAuthTestSuite(t *testing.T) {
+func TestUserPermissionsFromConfigTestSuite(t *testing.T) {
 	// create users configuration firstly.
 	data, err := yaml.Marshal(auth.YamlConfig{
 		Users: []auth.YamlUserConfig{
@@ -65,7 +66,7 @@ func TestMlflowAuthTestSuite(t *testing.T) {
 	assert.Nil(t, f.Close())
 
 	// run test suite with newly created configuration.
-	testSuite := new(MlflowAuthTestSuite)
+	testSuite := new(UserPermissionsFromConfigTestSuite)
 	testSuite.Config = config.ServiceConfig{
 		Auth: auth.Config{
 			AuthType:        auth.TypeUser,
@@ -75,7 +76,7 @@ func TestMlflowAuthTestSuite(t *testing.T) {
 	suite.Run(t, testSuite)
 }
 
-func (s *MlflowAuthTestSuite) Test_Ok() {
+func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
 	// create test namespaces.
 	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
@@ -110,7 +111,177 @@ func (s *MlflowAuthTestSuite) Test_Ok() {
 				basicAuthToken := base64.StdEncoding.EncodeToString(
 					[]byte(fmt.Sprintf("%s:%s", "user1", "user1password")),
 				)
-				successResponse := response.SearchExperimentsResponse{}
+				successResponse := aimResponse.GetProjectResponse{}
+				s.Require().Nil(
+					s.AIMClient().WithResponse(
+						&successResponse,
+					).WithNamespace(
+						"namespace1",
+					).WithHeaders(map[string]string{
+						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
+					}).DoRequest("/projects"),
+				)
+				s.Equal("FastTrackML", successResponse.Name)
+
+				s.Require().Nil(
+					s.AIMClient().WithResponse(
+						&successResponse,
+					).WithNamespace(
+						"namespace2",
+					).WithHeaders(map[string]string{
+						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
+					}).DoRequest("/projects"),
+				)
+				s.Equal("FastTrackML", successResponse.Name)
+
+				// check that user1 has no access to namespace3 namespace.
+				errorResponse := api.ErrorResponse{}
+				s.Require().Nil(
+					s.AIMClient().WithResponse(
+						&errorResponse,
+					).WithNamespace(
+						"namespace3",
+					).WithHeaders(map[string]string{
+						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
+					}).DoRequest("/projects"),
+				)
+				s.Equal(
+					"RESOURCE_DOES_NOT_EXIST: unable to find namespace with code: namespace3", errorResponse.Error(),
+				)
+			},
+		},
+		{
+			name: "TestUser2Access",
+			check: func() {
+				// check that user2 has access to namespace2 and namespace3 namespaces.
+				basicAuthToken := base64.StdEncoding.EncodeToString(
+					[]byte(fmt.Sprintf("%s:%s", "user2", "user2password")),
+				)
+				successResponse := aimResponse.GetProjectResponse{}
+				s.Require().Nil(
+					s.AIMClient().WithResponse(
+						&successResponse,
+					).WithNamespace(
+						"namespace2",
+					).WithHeaders(map[string]string{
+						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
+					}).DoRequest("/projects"),
+				)
+				s.Equal("FastTrackML", successResponse.Name)
+
+				s.Require().Nil(
+					s.AIMClient().WithResponse(
+						&successResponse,
+					).WithNamespace(
+						"namespace3",
+					).WithHeaders(map[string]string{
+						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
+					}).DoRequest("/projects"),
+				)
+				s.Equal("FastTrackML", successResponse.Name)
+
+				// check that user2 has no access to namespace1 namespace.
+				errorResponse := api.ErrorResponse{}
+				s.Require().Nil(
+					s.AIMClient().WithResponse(
+						&errorResponse,
+					).WithNamespace(
+						"namespace1",
+					).WithHeaders(map[string]string{
+						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
+					}).DoRequest("/projects"),
+				)
+				s.Equal(
+					"RESOURCE_DOES_NOT_EXIST: unable to find namespace with code: namespace1", errorResponse.Error(),
+				)
+			},
+		},
+		{
+			name: "TestUser3Access",
+			check: func() {
+				// check that user3 has access to namespace1, namespace2, namespace3 namespaces because of admin role.
+				basicAuthToken := base64.StdEncoding.EncodeToString(
+					[]byte(fmt.Sprintf("%s:%s", "user3", "user3password")),
+				)
+				successResponse := aimResponse.GetProjectResponse{}
+				s.Require().Nil(
+					s.AIMClient().WithResponse(
+						&successResponse,
+					).WithNamespace(
+						"namespace1",
+					).WithHeaders(map[string]string{
+						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
+					}).DoRequest("/projects"),
+				)
+				s.Equal("FastTrackML", successResponse.Name)
+
+				s.Require().Nil(
+					s.AIMClient().WithResponse(
+						&successResponse,
+					).WithNamespace(
+						"namespace2",
+					).WithHeaders(map[string]string{
+						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
+					}).DoRequest("/projects"),
+				)
+				s.Equal("FastTrackML", successResponse.Name)
+				s.Require().Nil(
+					s.AIMClient().WithResponse(
+						&successResponse,
+					).WithNamespace(
+						"namespace3",
+					).WithHeaders(map[string]string{
+						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
+					}).DoRequest("/projects"),
+				)
+				s.Equal("FastTrackML", successResponse.Name)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			tt.check()
+		})
+	}
+}
+
+func (s *UserPermissionsFromConfigTestSuite) TestMlflowAuth_Ok() {
+	// create test namespaces.
+	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  2,
+		Code:                "namespace1",
+		Description:         "Test namespace 1",
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
+	})
+	s.Require().Nil(err)
+	_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  3,
+		Code:                "namespace2",
+		Description:         "Test namespace 2",
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
+	})
+	s.Require().Nil(err)
+	_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		ID:                  4,
+		Code:                "namespace3",
+		Description:         "Test namespace 3",
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
+	})
+	s.Require().Nil(err)
+
+	tests := []struct {
+		name  string
+		check func()
+	}{
+		{
+			name: "TestUser1Access",
+			check: func() {
+				// check that user1 has access to namespace1 and namespace2 namespaces.
+				basicAuthToken := base64.StdEncoding.EncodeToString(
+					[]byte(fmt.Sprintf("%s:%s", "user1", "user1password")),
+				)
+				successResponse := mlflowResponse.SearchExperimentsResponse{}
 				s.Require().Nil(
 					s.MlflowClient().WithResponse(
 						&successResponse,
@@ -158,7 +329,7 @@ func (s *MlflowAuthTestSuite) Test_Ok() {
 				basicAuthToken := base64.StdEncoding.EncodeToString(
 					[]byte(fmt.Sprintf("%s:%s", "user2", "user2password")),
 				)
-				successResponse := response.SearchExperimentsResponse{}
+				successResponse := mlflowResponse.SearchExperimentsResponse{}
 				s.Require().Nil(
 					s.MlflowClient().WithResponse(
 						&successResponse,
@@ -210,7 +381,7 @@ func (s *MlflowAuthTestSuite) Test_Ok() {
 				basicAuthToken := base64.StdEncoding.EncodeToString(
 					[]byte(fmt.Sprintf("%s:%s", "user3", "user3password")),
 				)
-				successResponse := response.SearchExperimentsResponse{}
+				successResponse := mlflowResponse.SearchExperimentsResponse{}
 				s.Require().Nil(
 					s.MlflowClient().WithResponse(
 						&successResponse,

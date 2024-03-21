@@ -128,7 +128,7 @@ func TestLoad_Ok(t *testing.T) {
 			configPath := tt.init()
 			userPermissions, err := Load(configPath)
 			assert.Nil(t, err)
-			assert.Equal(t, tt.permissions, userPermissions.GetData())
+			assert.Equal(t, tt.permissions.GetData(), userPermissions.GetData())
 		})
 	}
 }

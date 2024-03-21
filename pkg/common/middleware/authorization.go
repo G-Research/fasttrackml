@@ -7,12 +7,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/common/db/models"
 )
 
 // NewUserMiddleware creates new User based Middleware instance.
-func NewUserMiddleware(userPermissions *auth.UserPermissions) fiber.Handler {
+func NewUserMiddleware(userPermissions *models.UserPermissions) fiber.Handler {
 	return func(ctx *fiber.Ctx) (err error) {
 		namespace, err := GetNamespaceFromContext(ctx.Context())
 		if err != nil {

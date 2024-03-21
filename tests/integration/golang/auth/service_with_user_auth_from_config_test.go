@@ -22,11 +22,11 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type ServiceWithUserAuthFromConfigTestSuite struct {
+type UserAuthFromConfigTestSuite struct {
 	helpers.BaseTestSuite
 }
 
-func TestServiceWithUserAuthFromConfigTestSuite(t *testing.T) {
+func TestUserAuthFromConfigTestSuite(t *testing.T) {
 	// create users configuration firstly.
 	data, err := yaml.Marshal(auth.YamlConfig{
 		Users: []auth.YamlUserConfig{
@@ -66,7 +66,7 @@ func TestServiceWithUserAuthFromConfigTestSuite(t *testing.T) {
 	assert.Nil(t, f.Close())
 
 	// run test suite with newly created configuration.
-	testSuite := new(ServiceWithUserAuthFromConfigTestSuite)
+	testSuite := new(UserAuthFromConfigTestSuite)
 	testSuite.Config = config.ServiceConfig{
 		Auth: auth.Config{
 			AuthType:        auth.TypeUser,
@@ -76,7 +76,7 @@ func TestServiceWithUserAuthFromConfigTestSuite(t *testing.T) {
 	suite.Run(t, testSuite)
 }
 
-func (s *ServiceWithUserAuthFromConfigTestSuite) TestAIMAuth_Ok() {
+func (s *UserAuthFromConfigTestSuite) TestAIMAuth_Ok() {
 	// create test namespaces.
 	namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
@@ -246,7 +246,7 @@ func (s *ServiceWithUserAuthFromConfigTestSuite) TestAIMAuth_Ok() {
 	}
 }
 
-func (s *ServiceWithUserAuthFromConfigTestSuite) TestMlflowAuth_Ok() {
+func (s *UserAuthFromConfigTestSuite) TestMlflowAuth_Ok() {
 	// create test namespaces.
 	namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,

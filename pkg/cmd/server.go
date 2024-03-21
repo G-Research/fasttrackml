@@ -78,6 +78,7 @@ func init() {
 	ServerCmd.Flags().Duration("database-slow-threshold", 1*time.Second, "Slow SQL warning threshold")
 	ServerCmd.Flags().Bool("database-migrate", true, "Run database migrations")
 	ServerCmd.Flags().Bool("database-reset", false, "Reinitialize database - WARNING all data will be lost!")
+	ServerCmd.Flags().Bool("live-updates-enabled", false, "Enable 'live updates' in the Aim UI")
 	ServerCmd.Flags().MarkHidden("database-reset")
 	ServerCmd.Flags().Bool("dev-mode", false, "Development mode - enable CORS")
 	ServerCmd.Flags().MarkHidden("dev-mode")

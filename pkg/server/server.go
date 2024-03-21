@@ -265,6 +265,7 @@ func createApp(
 					aimRepositories.NewParamRepository(db.GormDB()),
 					aimRepositories.NewMetricRepository(db.GormDB()),
 					aimRepositories.NewExperimentRepository(db.GormDB()),
+					config.LiveUpdatesEnabled,
 				),
 				aimDashboardService.NewService(
 					aimRepositories.NewDashboardRepository(db.GormDB()),

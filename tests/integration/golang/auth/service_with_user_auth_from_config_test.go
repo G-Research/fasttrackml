@@ -22,11 +22,11 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type UserPermissionsFromConfigTestSuite struct {
+type ServiceWithUserAuthFromConfigTestSuite struct {
 	helpers.BaseTestSuite
 }
 
-func TestUserPermissionsFromConfigTestSuite(t *testing.T) {
+func TestServiceWithUserAuthFromConfigTestSuite(t *testing.T) {
 	// create users configuration firstly.
 	data, err := yaml.Marshal(auth.YamlConfig{
 		Users: []auth.YamlUserConfig{
@@ -66,7 +66,7 @@ func TestUserPermissionsFromConfigTestSuite(t *testing.T) {
 	assert.Nil(t, f.Close())
 
 	// run test suite with newly created configuration.
-	testSuite := new(UserPermissionsFromConfigTestSuite)
+	testSuite := new(ServiceWithUserAuthFromConfigTestSuite)
 	testSuite.Config = config.ServiceConfig{
 		Auth: auth.Config{
 			AuthType:        auth.TypeUser,
@@ -76,23 +76,23 @@ func TestUserPermissionsFromConfigTestSuite(t *testing.T) {
 	suite.Run(t, testSuite)
 }
 
-func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
+func (s *ServiceWithUserAuthFromConfigTestSuite) TestAIMAuth_Ok() {
 	// create test namespaces.
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+	namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
 		Code:                "namespace1",
 		Description:         "Test namespace 1",
 		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
-	_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+	namespace2, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  3,
 		Code:                "namespace2",
 		Description:         "Test namespace 2",
 		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
-	_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+	namespace3, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  4,
 		Code:                "namespace3",
 		Description:         "Test namespace 3",
@@ -116,7 +116,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
 					s.AIMClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace1",
+						namespace1.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest("/projects"),
@@ -127,7 +127,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
 					s.AIMClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace2",
+						namespace2.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest("/projects"),
@@ -140,7 +140,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
 					s.AIMClient().WithResponse(
 						&errorResponse,
 					).WithNamespace(
-						"namespace3",
+						namespace3.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest("/projects"),
@@ -162,7 +162,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
 					s.AIMClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace2",
+						namespace2.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest("/projects"),
@@ -173,7 +173,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
 					s.AIMClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace3",
+						namespace3.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest("/projects"),
@@ -186,7 +186,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
 					s.AIMClient().WithResponse(
 						&errorResponse,
 					).WithNamespace(
-						"namespace1",
+						namespace1.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest("/projects"),
@@ -208,7 +208,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
 					s.AIMClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace1",
+						namespace1.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest("/projects"),
@@ -219,7 +219,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
 					s.AIMClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace2",
+						namespace2.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest("/projects"),
@@ -229,7 +229,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
 					s.AIMClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace3",
+						namespace3.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest("/projects"),
@@ -246,23 +246,23 @@ func (s *UserPermissionsFromConfigTestSuite) TestAIMAuth_Ok() {
 	}
 }
 
-func (s *UserPermissionsFromConfigTestSuite) TestMlflowAuth_Ok() {
+func (s *ServiceWithUserAuthFromConfigTestSuite) TestMlflowAuth_Ok() {
 	// create test namespaces.
-	_, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+	namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
 		Code:                "namespace1",
 		Description:         "Test namespace 1",
 		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
-	_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+	namespace2, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  3,
 		Code:                "namespace2",
 		Description:         "Test namespace 2",
 		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
 	s.Require().Nil(err)
-	_, err = s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+	namespace3, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  4,
 		Code:                "namespace3",
 		Description:         "Test namespace 3",
@@ -286,7 +286,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestMlflowAuth_Ok() {
 					s.MlflowClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace1",
+						namespace1.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest(
@@ -299,7 +299,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestMlflowAuth_Ok() {
 					s.MlflowClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace2",
+						namespace2.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest("/projects"),
@@ -312,7 +312,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestMlflowAuth_Ok() {
 					s.MlflowClient().WithResponse(
 						&errorResponse,
 					).WithNamespace(
-						"namespace3",
+						namespace3.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest("/projects"),
@@ -334,7 +334,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestMlflowAuth_Ok() {
 					s.MlflowClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace2",
+						namespace2.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest(
@@ -347,7 +347,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestMlflowAuth_Ok() {
 					s.MlflowClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace3",
+						namespace3.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest(
@@ -362,7 +362,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestMlflowAuth_Ok() {
 					s.MlflowClient().WithResponse(
 						&errorResponse,
 					).WithNamespace(
-						"namespace1",
+						namespace1.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest(
@@ -386,7 +386,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestMlflowAuth_Ok() {
 					s.MlflowClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace1",
+						namespace1.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest(
@@ -399,7 +399,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestMlflowAuth_Ok() {
 					s.MlflowClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace2",
+						namespace2.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest(
@@ -412,7 +412,7 @@ func (s *UserPermissionsFromConfigTestSuite) TestMlflowAuth_Ok() {
 					s.MlflowClient().WithResponse(
 						&successResponse,
 					).WithNamespace(
-						"namespace3",
+						namespace3.Code,
 					).WithHeaders(map[string]string{
 						"Authorization": fmt.Sprintf("Basic %s", basicAuthToken),
 					}).DoRequest(

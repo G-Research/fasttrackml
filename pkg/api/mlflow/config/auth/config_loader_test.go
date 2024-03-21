@@ -7,13 +7,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
+
+	"github.com/G-Research/fasttrackml/pkg/common/db/models"
 )
 
 func TestLoad_Ok(t *testing.T) {
 	tests := []struct {
 		name        string
 		init        func() string
-		permissions map[string]map[string]struct{}
+		permissions *models.UserPermissions
 	}{
 		{
 			name: "TestLoadConfigurationWithYmlExtension",
@@ -42,12 +44,12 @@ func TestLoad_Ok(t *testing.T) {
 				assert.Nil(t, f.Close())
 				return configPath
 			},
-			permissions: map[string]map[string]struct{}{
+			permissions: models.NewUserPermissions(map[string]map[string]struct{}{
 				"dXNlcjE6dXNlcjFwYXNzd29yZA==": {
 					"ns:namespace1": struct{}{},
 					"ns:namespace2": struct{}{},
 				},
-			},
+			}),
 		},
 		{
 			name: "TestLoadConfigurationWithYamlExtension",
@@ -76,12 +78,12 @@ func TestLoad_Ok(t *testing.T) {
 				assert.Nil(t, f.Close())
 				return configPath
 			},
-			permissions: map[string]map[string]struct{}{
+			permissions: models.NewUserPermissions(map[string]map[string]struct{}{
 				"dXNlcjI6dXNlcjJwYXNzd29yZA==": {
 					"ns:namespace3": struct{}{},
 					"ns:namespace4": struct{}{},
 				},
-			},
+			}),
 		},
 		{
 			name: "TestLoadConfigurationUserPasswordExistsInENV",
@@ -112,12 +114,12 @@ func TestLoad_Ok(t *testing.T) {
 				assert.Nil(t, os.Setenv("LOAD_FROM_ENV", "user2password"))
 				return configPath
 			},
-			permissions: map[string]map[string]struct{}{
+			permissions: models.NewUserPermissions(map[string]map[string]struct{}{
 				"dXNlcjM6dXNlcjJwYXNzd29yZA==": {
 					"ns:namespace3": struct{}{},
 					"ns:namespace4": struct{}{},
 				},
-			},
+			}),
 		},
 	}
 
@@ -126,7 +128,7 @@ func TestLoad_Ok(t *testing.T) {
 			configPath := tt.init()
 			userPermissions, err := Load(configPath)
 			assert.Nil(t, err)
-			assert.Equal(t, tt.permissions, userPermissions.data)
+			assert.Equal(t, tt.permissions, userPermissions.GetData())
 		})
 	}
 }
@@ -146,27 +148,27 @@ func TestUserPermissions_HasAccess_Ok(t *testing.T) {
 		name        string
 		token       string
 		namespace   string
-		permissions *UserPermissions
+		permissions *models.UserPermissions
 	}{
 		{
 			name:      "TestUserPermissionsUserHasPermissions",
 			token:     "token",
 			namespace: "namespace1",
-			permissions: &UserPermissions{data: map[string]map[string]struct{}{
+			permissions: models.NewUserPermissions(map[string]map[string]struct{}{
 				"token": {
 					"ns:namespace1": struct{}{},
 				},
-			}},
+			}),
 		},
 		{
 			name:      "TestUserPermissionsUserHasAdminRole",
 			token:     "token",
 			namespace: "namespace1",
-			permissions: &UserPermissions{data: map[string]map[string]struct{}{
+			permissions: models.NewUserPermissions(map[string]map[string]struct{}{
 				"token": {
 					"admin": struct{}{},
 				},
-			}},
+			}),
 		},
 	}
 
@@ -182,29 +184,29 @@ func TestUserPermissions_HasAccess_Error(t *testing.T) {
 		name        string
 		token       string
 		namespace   string
-		permissions *UserPermissions
+		permissions *models.UserPermissions
 	}{
 		{
 			name:        "TestUserPermissionsAuthTokenIsEmpty",
 			token:       "",
-			permissions: &UserPermissions{data: map[string]map[string]struct{}{}},
+			permissions: models.NewUserPermissions(map[string]map[string]struct{}{}),
 		},
 		{
 			name:  "TestUserPermissionsAuthTokenNotFound",
 			token: "not-existing-token",
-			permissions: &UserPermissions{data: map[string]map[string]struct{}{
+			permissions: models.NewUserPermissions(map[string]map[string]struct{}{
 				"token": {},
-			}},
+			}),
 		},
 		{
 			name:      "TestUserPermissionsUserHasNoAccessToNamespace",
 			token:     "token",
 			namespace: "namespace1",
-			permissions: &UserPermissions{data: map[string]map[string]struct{}{
+			permissions: models.NewUserPermissions(map[string]map[string]struct{}{
 				"token": {
 					"ns:namespace2": struct{}{},
 				},
-			}},
+			}),
 		},
 	}
 

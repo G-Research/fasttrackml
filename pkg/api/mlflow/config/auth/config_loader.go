@@ -10,36 +10,12 @@ import (
 
 	"github.com/rotisserie/eris"
 	"gopkg.in/yaml.v3"
+
+	"github.com/G-Research/fasttrackml/pkg/common/db/models"
 )
 
-// UserPermissions represents permission object into which the user configuration is parsed.
-type UserPermissions struct {
-	data map[string]map[string]struct{}
-}
-
-// HasAccess makes check that user has permission to access to the requested namespace.
-func (p UserPermissions) HasAccess(namespace string, authToken string) bool {
-	if authToken == "" {
-		return false
-	}
-
-	roles, ok := p.data[authToken]
-	if !ok {
-		return ok
-	}
-
-	if _, ok := roles["admin"]; ok {
-		return true
-	}
-
-	if _, ok := roles[fmt.Sprintf("ns:%s", namespace)]; !ok {
-		return ok
-	}
-	return true
-}
-
 // Load loads user configuration from given configuration file.
-func Load(configFilePath string) (*UserPermissions, error) {
+func Load(configFilePath string) (*models.UserPermissions, error) {
 	//nolint:gosec
 	data, err := os.ReadFile(configFilePath)
 	if err != nil {
@@ -70,13 +46,13 @@ type YamlUserConfig struct {
 }
 
 // parseUserConfigFromYaml parse configuration from ".yaml", ".yml" files and transform it into internal representation.
-func parseUserConfigFromYaml(content []byte) (*UserPermissions, error) {
+func parseUserConfigFromYaml(content []byte) (*models.UserPermissions, error) {
 	config := YamlConfig{}
 	if err := yaml.Unmarshal(content, &config); err != nil {
 		return nil, eris.Wrap(err, "error unmarshaling data from yaml file")
 	}
 
-	permissions := UserPermissions{data: make(map[string]map[string]struct{})}
+	data := make(map[string]map[string]struct{})
 	passwordRegex := regexp.MustCompile(`^\$\{(.*)\}$`)
 	passwordReplacer := strings.NewReplacer("$", "", "{", "", "}", "")
 	for _, user := range config.Users {
@@ -98,8 +74,8 @@ func parseUserConfigFromYaml(content []byte) (*UserPermissions, error) {
 		loginEncoded := base64.StdEncoding.EncodeToString(
 			[]byte(fmt.Sprintf("%s:%s", user.Name, user.Password)),
 		)
-		permissions.data[loginEncoded] = roles
+		data[loginEncoded] = roles
 	}
 
-	return &permissions, nil
+	return models.NewUserPermissions(data), nil
 }

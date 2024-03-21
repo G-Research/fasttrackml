@@ -14,7 +14,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/common"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
-	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 )
 
@@ -172,25 +171,9 @@ func (r MetricRepository) SearchMetrics(
 		result[r.ID] = SearchResult{int64(r.RowNum), run}
 	}
 
-	values, contextsMap := []types.JSONB{}, map[string]types.JSONB{}
-	for _, r := range req.Metrics {
-		data := types.JSONB(r.Context)
-		values, contextsMap[string(data)] = append(values, data), data
-	}
-
-	contexts, err := r.GetContextListByContextObjects(ctx, contextsMap)
+	ids, err := r.findContextIDs(ctx, &req)
 	if err != nil {
-		return nil, 0, nil, api.NewInternalError("error getting context list: %s", err)
-	}
-
-	// add context ids to `values` array.
-	ids := make([]uint, len(values))
-	for _, context := range contexts {
-		for i := 0; i < len(values); i++ {
-			if common.CompareJson(values[i], context.Json) {
-				ids[i] = context.ID
-			}
-		}
+		return nil, 0, nil, eris.Wrap(err, "error finding context ids")
 	}
 
 	var metricKeyContextConditionSlice []string
@@ -267,4 +250,30 @@ func (r MetricRepository) GetContextListByContextObjects(
 		return nil, eris.Wrap(err, "error getting contexts information")
 	}
 	return contexts, nil
+}
+
+func (r MetricRepository) findContextIDs(ctx context.Context, req *request.SearchMetricsRequest) ([]uint, error) {
+	contextList := []types.JSONB{}
+	contextsMap := map[string]types.JSONB{}
+	for _, r := range req.Metrics {
+		data := types.JSONB(r.Context)
+		contextList = append(contextList, data)
+		contextsMap[string(data)] = data
+	}
+
+	contexts, err := r.GetContextListByContextObjects(ctx, contextsMap)
+	if err != nil {
+		return nil, fmt.Errorf("error getting context list: %w", err)
+	}
+
+	ids := make([]uint, len(contextList))
+	for _, context := range contexts {
+		for i := 0; i < len(contextList); i++ {
+			if common.CompareJson(contextList[i], context.Json) {
+				ids[i] = context.ID
+			}
+		}
+	}
+
+	return ids, nil
 }

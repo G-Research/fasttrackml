@@ -275,11 +275,10 @@ type RegisteredModel struct {
 }
 
 type RegisteredModelTag struct {
-	Key                 string `gorm:"not null;type:varchar(250);primaryKey"`
-	Value               string `gorm:"type:varachar(5000);"`
-	Name                string `gorm:"not null;type:varchar(256);primaryKey"`
-	RegisteredModelName string `gorm:"not null;varchar(256);"`
-	RegistredModel      RegisteredModel `gorm:"constraint:OnUpdate:CASCADE"`
+	Key             string          `gorm:"not null;type:varchar(250);primaryKey"`
+	Value           string          `gorm:"type:varachar(5000);"`
+	Name            string          `gorm:"not null;type:varchar(256);primaryKey"`
+	RegisteredModel RegisteredModel `gorm:"foreignKey:Name;constraint:OnUpdate:CASCADE"`
 }
 
 type ModelVersion struct {

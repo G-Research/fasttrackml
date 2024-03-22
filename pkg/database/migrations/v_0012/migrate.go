@@ -1,24 +1,29 @@
 package v_0012
 
 import (
-	"gorm.io/gorm"
+	"fmt"
 
-	"github.com/G-Research/fasttrackml/pkg/database/migrations"
+	"gorm.io/gorm"
 )
 
 const Version = "20240322124259"
 
 func Migrate(db *gorm.DB) error {
-	return migrations.RunWithoutForeignKeyIfNeeded(db, func() error {
-		return db.Transaction(func(tx *gorm.DB) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.AutoMigrate(
+			&RegisteredModel{},
+			&RegisteredModelTag{},
+			&RegisteredModelAlias{},
+			&ModelVersion{},
+			&ModelVersionTag{},
+		); err != nil {
+			return fmt.Errorf("error initializing database: %w", err)
+		}
 
-			// TODO add migration code as needed
-
-			// Update the schema version
-			return tx.Model(&SchemaVersion{}).
-				Where("1 = 1").
-				Update("Version", Version).
-				Error
-		})
+		// Update the schema version
+		return tx.Model(&SchemaVersion{}).
+			Where("1 = 1").
+			Update("Version", Version).
+			Error
 	})
 }

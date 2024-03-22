@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/common"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
@@ -103,7 +105,7 @@ func (r MetricRepository) SearchMetrics(
 		return nil, 0, nil, err
 	}
 
-	if !pq.IsMetricSelected() {
+	if req.Metrics == nil || len(req.Metrics) == 0 {
 		return nil, 0, nil, eris.New("No metrics are selected")
 	}
 
@@ -169,30 +171,45 @@ func (r MetricRepository) SearchMetrics(
 		result[r.ID] = SearchResult{int64(r.RowNum), run}
 	}
 
+	ids, err := r.findContextIDs(ctx, &req)
+	if err != nil {
+		return nil, 0, nil, eris.Wrap(err, "error finding context ids")
+	}
+
+	var metricKeyContextConditionSlice []string
+	for i, tuple := range req.Metrics {
+		condition := fmt.Sprintf("(latest_metrics.key = '%s' AND contexts.id = %d)", tuple.Key, ids[i])
+		metricKeyContextConditionSlice = append(metricKeyContextConditionSlice, condition)
+	}
+	metricKeyContextCondition := strings.Join(metricKeyContextConditionSlice, " OR ")
+
+	subQuery := r.db.WithContext(ctx).
+		Select(
+			"runs.run_uuid",
+			"runs.row_num",
+			"latest_metrics.key",
+			"latest_metrics.context_id",
+			"contexts.json AS context_json",
+			fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(req.Steps)),
+		).
+		Table("runs").
+		Joins(
+			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+			namespaceID,
+		).
+		Joins("LEFT JOIN latest_metrics USING(run_uuid)").
+		Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id").
+		Where(metricKeyContextCondition)
+
 	tx := r.db.WithContext(ctx).
 		Select(`
-			metrics.*,
-			runmetrics.context_json`,
+        metrics.*,
+        runmetrics.context_json`,
 		).
 		Table("metrics").
 		Joins(
 			"INNER JOIN (?) runmetrics USING(run_uuid, key, context_id)",
-			pq.Filter(r.db.WithContext(ctx).
-				Select(
-					"runs.run_uuid",
-					"runs.row_num",
-					"latest_metrics.key",
-					"latest_metrics.context_id",
-					"contexts.json AS context_json",
-					fmt.Sprintf("(latest_metrics.last_iter + 1)/ %f AS interval", float32(req.Steps)),
-				).
-				Table("runs").
-				Joins(
-					"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
-					namespaceID,
-				).
-				Joins("LEFT JOIN latest_metrics USING(run_uuid)").
-				Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id")),
+			pq.Filter(subQuery),
 		).
 		Where("MOD(metrics.iter + 1 + runmetrics.interval / 2, runmetrics.interval) < 1").
 		Order("runmetrics.row_num DESC").
@@ -233,4 +250,30 @@ func (r MetricRepository) GetContextListByContextObjects(
 		return nil, eris.Wrap(err, "error getting contexts information")
 	}
 	return contexts, nil
+}
+
+func (r MetricRepository) findContextIDs(ctx context.Context, req *request.SearchMetricsRequest) ([]uint, error) {
+	contextList := []types.JSONB{}
+	contextsMap := map[string]types.JSONB{}
+	for _, r := range req.Metrics {
+		data := types.JSONB(r.Context)
+		contextList = append(contextList, data)
+		contextsMap[string(data)] = data
+	}
+
+	contexts, err := r.GetContextListByContextObjects(ctx, contextsMap)
+	if err != nil {
+		return nil, fmt.Errorf("error getting context list: %w", err)
+	}
+
+	ids := make([]uint, len(contextList))
+	for _, context := range contexts {
+		for i := 0; i < len(contextList); i++ {
+			if common.CompareJson(contextList[i], context.Json) {
+				ids[i] = context.ID
+			}
+		}
+	}
+
+	return ids, nil
 }

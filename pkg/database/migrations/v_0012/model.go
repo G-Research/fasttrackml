@@ -276,7 +276,7 @@ type RegisteredModel struct {
 
 type RegisteredModelTag struct {
 	Key             string          `gorm:"not null;type:varchar(250);primaryKey"`
-	Value           string          `gorm:"type:varachar(5000);"`
+	Value           string          `gorm:"type:varchar(5000);"`
 	Name            string          `gorm:"not null;type:varchar(256);primaryKey"`
 	RegisteredModel RegisteredModel `gorm:"foreignKey:Name;constraint:OnUpdate:CASCADE"`
 }
@@ -299,7 +299,7 @@ type ModelVersion struct {
 
 type ModelVersionTag struct {
 	Key          string       `gorm:"not null;type:varchar(250);primaryKey"`
-	Value        string       `gorm:"type:varachar(5000);"`
+	Value        string       `gorm:"type:varchar(5000);"`
 	Name         string       `gorm:"not null;type:varchar(256);primaryKey"`
 	Version      int          `gorm:"not null;primaryKey"`
 	ModelVersion ModelVersion `gorm:"foreignKey:Name,Version;constraint:OnUpdate:CASCADE"`

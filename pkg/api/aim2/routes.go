@@ -1,13 +1,10 @@
 package aim2
 
 import (
+	"github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rotisserie/eris"
-
-	"github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
 )
 
 // Router represents `mlflow` router.
@@ -30,11 +27,7 @@ func (r Router) Init(router fiber.Router) error {
 	// apply global auth middlewares.
 	switch {
 	case r.config.Auth.IsAuthTypeUser():
-		userPermissions, err := auth.Load(r.config.Auth.AuthUsersConfig)
-		if err != nil {
-			return eris.Wrapf(err, "error loading user configuration from file: %s", r.config.Auth.AuthUsersConfig)
-		}
-		mainGroup.Use(middleware.NewUserMiddleware(userPermissions))
+		mainGroup.Use(middleware.NewUserMiddleware(r.config.Auth.AuthParsedUserPermissions))
 	}
 
 	// setup related routes.

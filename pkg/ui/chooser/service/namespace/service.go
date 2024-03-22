@@ -3,6 +3,8 @@ package namespace
 import (
 	"context"
 
+	"github.com/G-Research/fasttrackml/pkg/ui/chooser/middleware"
+
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
@@ -28,16 +30,28 @@ func NewService(
 }
 
 // ListNamespaces returns all namespaces.
-func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, error) {
+func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, bool, error) {
 	namespaces, err := s.namespaceRepository.List(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "error listing namespaces")
+		return nil, false, eris.Wrap(err, "error listing namespaces")
 	}
 
 	// filter namespaces based on current user permissions.
 	switch {
 	case s.config.Auth.IsAuthTypeUser():
+		authToken, err := middleware.GetAuthTokenFromContext(ctx)
+		if err != nil {
+			return nil, false, err
+		}
+
+		roles, ok := s.config.Auth.AuthParsedUserPermissions.GetRolesByAuthToken(authToken)
+		if !ok {
+			return nil, false, eris.New("error validating user auth token")
+		}
+		return FilterNamespacesByUserRoles(roles, namespaces),
+			s.config.Auth.AuthParsedUserPermissions.HasAdminAccess(authToken),
+			nil
 	}
 
-	return namespaces, nil
+	return namespaces, true, nil
 }

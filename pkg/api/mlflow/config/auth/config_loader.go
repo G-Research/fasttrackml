@@ -55,6 +55,19 @@ func (p UserPermissions) HasAdminAccess(authToken string) bool {
 	return false
 }
 
+// GetRolesByAuthToken returns User roles by provided Auth Token.
+func (p UserPermissions) GetRolesByAuthToken(authToken string) (map[string]struct{}, bool) {
+	if authToken == "" {
+		return nil, false
+	}
+
+	roles, ok := p.data[authToken]
+	if !ok {
+		return nil, ok
+	}
+	return roles, true
+}
+
 // Load loads user configuration from given configuration file.
 func Load(configFilePath string) (*UserPermissions, error) {
 	//nolint:gosec

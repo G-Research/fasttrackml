@@ -332,6 +332,7 @@ func createApp(
 
 	// init `chooser` ui routes.
 	chooser.NewRouter(
+		config,
 		chooserController.NewController(
 			chooserNamespaceService.NewService(
 				config,

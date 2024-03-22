@@ -1,6 +1,8 @@
 package controller
 
-import "github.com/G-Research/fasttrackml/pkg/ui/chooser/service/namespace"
+import (
+	"github.com/G-Research/fasttrackml/pkg/ui/chooser/service/namespace"
+)
 
 // Controller handles all the input HTTP requests.
 type Controller struct {

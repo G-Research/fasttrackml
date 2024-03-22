@@ -266,3 +266,49 @@ func NewUUID() string {
 	hex.Encode(r[:], u[:])
 	return string(r[:])
 }
+
+type RegisteredModel struct {
+	Name            string `gorm:"not null;type:varchar(256);primaryKey"`
+	CreationTime    int64  `gorm:"not null;type:bigint"`
+	LastUpdatedTime int64  `gorm:"not null;type:bigint"`
+	Description     string `gorm:"type:varchar(5000)"`
+}
+
+type RegisteredModelTag struct {
+	Key                 string `gorm:"not null;type:varchar(250);primaryKey"`
+	Value               string `gorm:"type:varachar(5000);"`
+	Name                string `gorm:"not null;type:varchar(256);primaryKey"`
+	RegisteredModelName string `gorm:"not null;varchar(256);"`
+	RegistredModel      RegisteredModel `gorm:"constraint:OnUpdate:CASCADE"`
+}
+
+type ModelVersion struct {
+	Name            string          `gorm:"not null;type:varchar(256);primaryKey"`
+	Version         int             `gorm:"not null;primaryKey"`
+	CreationTime    int64           `gorm:"not null;type:bigint"`
+	LastUpdatedTime int64           `gorm:"not null;type:bigint"`
+	Description     string          `gorm:"type:varchar(5000)"`
+	UserID          string          `gorm:"type:varchar(256)"`
+	CurrentStage    string          `gorm:"type:varchar(20)"`
+	Source          string          `gorm:"type:varchar(500)"`
+	RunID           string          `gorm:"type:varchar(32)"`
+	Status          string          `gorm:"type:varchar(20)"`
+	StatusMessage   string          `gorm:"type:varchar(500)"`
+	RunLink         string          `gorm:"type:varchar(500)"`
+	RegisteredModel RegisteredModel `gorm:"foreignKey:Name;constraint:OnUpdate:CASCADE"`
+}
+
+type ModelVersionTag struct {
+	Key          string       `gorm:"not null;type:varchar(250);primaryKey"`
+	Value        string       `gorm:"type:varachar(5000);"`
+	Name         string       `gorm:"not null;type:varchar(256);primaryKey"`
+	Version      int          `gorm:"not null;primaryKey"`
+	ModelVersion ModelVersion `gorm:"foreignKey:Name,Version;constraint:OnUpdate:CASCADE"`
+}
+
+type RegisteredModelAlias struct {
+	Alias           string          `gorm:"not null;type:varchar(256);primaryKey"`
+	Version         int             `gorm:"not null"`
+	Name            string          `gorm:"not null;type:varchar(256);primaryKey"`
+	RegisteredModel RegisteredModel `gorm:"foreignKey:Name;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+}

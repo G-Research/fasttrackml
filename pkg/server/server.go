@@ -31,6 +31,7 @@ import (
 	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/tag"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -41,7 +42,7 @@ import (
 	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/metric"
 	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/model"
 	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/run"
-	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
@@ -86,7 +87,10 @@ func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server,
 
 	// create fiber app.
 	//nolint:contextcheck
-	app := createApp(config, db, artifactStorageFactory, namespaceRepository)
+	app, err := createApp(config, db, artifactStorageFactory, namespaceRepository)
+	if err != nil {
+		return nil, eris.Wrapf(err, "error creating application")
+	}
 
 	return server{app}, nil
 }
@@ -157,7 +161,7 @@ func createApp(
 	db database.DBProvider,
 	artifactStorageFactory storage.ArtifactStorageFactoryProvider,
 	namespaceRepository mlflowRepositories.NamespaceRepositoryProvider,
-) *fiber.App {
+) (*fiber.App, error) {
 	app := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
 		ReadBufferSize:        16384,
@@ -192,12 +196,30 @@ func createApp(
 		app.Use(cors.New())
 	}
 
-	if config.AuthUsername != "" && config.AuthPassword != "" {
+	app.Use(middleware.NewNamespaceMiddleware(namespaceRepository))
+	if config.Auth.AuthUsername != "" && config.Auth.AuthPassword != "" {
+		log.Info("Auth - enabling Basic Auth")
 		app.Use(basicauth.New(basicauth.Config{
 			Users: map[string]string{
-				config.AuthUsername: config.AuthPassword,
+				config.Auth.AuthUsername: config.Auth.AuthPassword,
 			},
 		}))
+	}
+
+	// attach auth middleware based on provided configuration of auth type.
+	switch {
+	case config.Auth.IsAuthTypeUser():
+		log.Info("Auth - enabling user auth configuration from file")
+		userPermissions, err := auth.Load(config.Auth.AuthUsersConfig)
+		if err != nil {
+			return nil, eris.Wrapf(
+				err, "error loading user configuration from file: %s", config.Auth.AuthUsersConfig,
+			)
+		}
+		app.Use(middleware.NewUserMiddleware(userPermissions))
+	case config.Auth.IsAuthTypeOIDC():
+		log.Info("Auth - enabling OIDC user auth")
+		app.Use(middleware.NewOIDCMiddleware())
 	}
 
 	app.Use(compress.New(compress.Config{
@@ -213,8 +235,6 @@ func createApp(
 		Format: "${status} - ${latency} ${method} ${path}\n",
 		Output: log.StandardLogger().Writer(),
 	}))
-
-	app.Use(namespaceMiddleware.New(namespaceRepository))
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")
@@ -326,5 +346,5 @@ func createApp(
 		),
 	).AddRoutes(app)
 
-	return app
+	return app, nil
 }

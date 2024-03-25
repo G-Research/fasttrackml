@@ -5,6 +5,7 @@ import HeroSection from '@site/src/components/Index/HeroSection';
 import FeaturesSection from '@site/src/components/Index/FeaturesSection';
 import QuickStartSection from '@site/src/components/Index/QuickStartSection';
 import ContactUsSection from '@site/src/components/Index/ContactUsSection';
+import CommunitySection from '@site/src/components/Index/CommunitySection';
 
 
 export default function Home(): React.JSX.Element {
@@ -18,6 +19,7 @@ export default function Home(): React.JSX.Element {
                 <FeaturesSection/>
                 <QuickStartSection/>
                 <ContactUsSection/>
+                <CommunitySection/>
             </main>
         </Layout>
     );

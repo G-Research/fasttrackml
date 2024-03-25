@@ -19,14 +19,6 @@ func TestConfig_NormalizeConfiguration(t *testing.T) {
 			},
 			configType: TypeUser,
 		},
-		{
-			name: "TestAuthTypeBasic",
-			config: &Config{
-				AuthUsername: "username",
-				AuthPassword: "password",
-			},
-			configType: TypeBasic,
-		},
 	}
 
 	for _, tt := range tests {

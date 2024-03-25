@@ -7,6 +7,7 @@ import (
 	"gorm.io/driver/postgres"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 )
 
 // makeSqlPlaceholders collects a string of "(?,?,?), (?,?,?)" and so on,
@@ -67,4 +68,10 @@ func BuildJsonCondition(
 	conditionTemplate = fmt.Sprintf(conditionTemplate, jsonColumnName)
 	sql = strings.Repeat(conditionTemplate+" AND ", len(jsonPathValueMap)-1) + conditionTemplate
 	return sql, args
+}
+
+// mergeMap converts string with multiple json objects into a single json object.
+func mergeMap(jsonString string) types.JSONB {
+	result := strings.ReplaceAll(jsonString, "}, {", ", ")
+	return types.JSONB(result)
 }

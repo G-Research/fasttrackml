@@ -256,7 +256,7 @@ func (r MetricRepository) findContextIDs(ctx context.Context, req *request.Searc
 	contextList := []types.JSONB{}
 	contextsMap := map[string]types.JSONB{}
 	for _, r := range req.Metrics {
-		data := types.JSONB(r.Context)
+		data := mergeMap(r.Context)
 		contextList = append(contextList, data)
 		contextsMap[string(data)] = data
 	}

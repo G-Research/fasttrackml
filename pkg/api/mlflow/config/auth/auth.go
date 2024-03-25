@@ -4,9 +4,8 @@ import "github.com/rotisserie/eris"
 
 // supported list of authentication types.
 const (
-	TypeOIDC  string = "oidc"
-	TypeUser  string = "user"
-	TypeBasic string = "basic"
+	TypeOIDC string = "oidc"
+	TypeUser string = "user"
 )
 
 type Config struct {
@@ -27,11 +26,6 @@ func (c *Config) IsAuthTypeUser() bool {
 	return c.AuthType == TypeUser
 }
 
-// IsAuthTypeBasic makes check that current auth is TypeBasic.
-func (c *Config) IsAuthTypeBasic() bool {
-	return c.AuthType == TypeBasic
-}
-
 // ValidateConfiguration validates service configuration for correctness.
 func (c *Config) ValidateConfiguration() error {
 	return nil
@@ -40,8 +34,6 @@ func (c *Config) ValidateConfiguration() error {
 // NormalizeConfiguration normalizes auth configuration parameters.
 func (c *Config) NormalizeConfiguration() error {
 	switch {
-	case c.AuthUsername != "" && c.AuthPassword != "":
-		c.AuthType = TypeBasic
 	case c.AuthUsersConfig != "":
 		c.AuthType = TypeUser
 		parsedUserPermissions, err := Load(c.AuthUsersConfig)

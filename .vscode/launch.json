@@ -40,7 +40,13 @@
             "args": [
                 "server",
                 "--database-uri",
-                "sqlite://fasttrackml.db"
+                "sqlite://fasttrackml.db",
+                "--auth-users-config",
+                "./user-permissions-config.yaml",
+                "--auth-username",
+                "user2",
+                "--auth-password",
+                "password2"
             ],
         },
         {

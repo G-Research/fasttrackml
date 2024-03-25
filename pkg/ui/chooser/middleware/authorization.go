@@ -37,7 +37,7 @@ func NewUserMiddleware(userPermissions *auth.UserPermissions) fiber.Handler {
 			)
 		}
 
-		ctx.Locals(authTokenContextKey, namespace)
+		ctx.Locals(authTokenContextKey, authToken)
 		return ctx.Next()
 	}
 }

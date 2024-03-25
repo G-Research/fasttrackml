@@ -42,6 +42,7 @@ func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, error)
 	if err != nil {
 		return nil, eris.Wrap(err, "error listing namespaces")
 	}
+
 	return namespaces, nil
 }
 

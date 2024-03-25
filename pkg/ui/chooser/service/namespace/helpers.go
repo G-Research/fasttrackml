@@ -1,6 +1,8 @@
 package namespace
 
 import (
+	"fmt"
+
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
@@ -11,7 +13,7 @@ func FilterNamespacesByUserRoles(
 ) []models.Namespace {
 	var filteredPermissions []models.Namespace
 	for _, namespace := range namespaces {
-		if _, ok := roles[namespace.Code]; ok {
+		if _, ok := roles[fmt.Sprintf("ns:%s", namespace.Code)]; ok {
 			filteredPermissions = append(filteredPermissions, namespace)
 		}
 	}

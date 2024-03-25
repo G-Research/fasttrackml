@@ -197,10 +197,7 @@ func createApp(
 	}
 
 	app.Use(middleware.NewNamespaceMiddleware(namespaceRepository))
-
-	// attach auth middleware based on provided configuration of auth type.
-	switch {
-	case config.Auth.IsAuthTypeBasic():
+	if config.Auth.AuthUsername != "" && config.Auth.AuthPassword != "" {
 		app.Use(basicauth.New(basicauth.Config{
 			Users: map[string]string{
 				config.Auth.AuthUsername: config.Auth.AuthPassword,

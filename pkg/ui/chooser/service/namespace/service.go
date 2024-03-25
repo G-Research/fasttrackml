@@ -3,13 +3,12 @@ package namespace
 import (
 	"context"
 
-	"github.com/G-Research/fasttrackml/pkg/ui/chooser/middleware"
-
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/ui/chooser/middleware"
 )
 
 // Service provides service layer to work with `namespace` business logic.
@@ -44,13 +43,17 @@ func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, bool, 
 			return nil, false, err
 		}
 
-		roles, ok := s.config.Auth.AuthParsedUserPermissions.GetRolesByAuthToken(authToken)
-		if !ok {
-			return nil, false, eris.New("error validating user auth token")
+		// if user is not an admin user, then filter namespaces for current user,
+		// otherwise just show the namespaces for current user.
+		if !s.config.Auth.AuthParsedUserPermissions.HasAdminAccess(authToken) {
+			roles, ok := s.config.Auth.AuthParsedUserPermissions.GetRolesByAuthToken(authToken)
+			if !ok {
+				return nil, false, eris.New("error validating user auth token")
+			}
+			return FilterNamespacesByUserRoles(roles, namespaces),
+				s.config.Auth.AuthParsedUserPermissions.HasAdminAccess(authToken),
+				nil
 		}
-		return FilterNamespacesByUserRoles(roles, namespaces),
-			s.config.Auth.AuthParsedUserPermissions.HasAdminAccess(authToken),
-			nil
 	}
 
 	return namespaces, true, nil

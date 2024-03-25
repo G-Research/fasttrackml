@@ -104,3 +104,28 @@ func TestBuildJsonCondition(t *testing.T) {
 		})
 	}
 }
+
+func Test_mergeMaps(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedResult string
+	}{
+		{
+			input:          "{}",
+			expectedResult: "{}",
+		},
+		{
+			input:          `{"key1": "value1", "key2": "value2"}`,
+			expectedResult: `{"key1": "value1", "key2": "value2"}`,
+		},
+		{
+			input:          `{"key1": "value1"}, {"key2": "value2"}`,
+			expectedResult: `{"key1": "value1", "key2": "value2"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		result := mergeMaps(tt.input)
+		assert.Equal(t, tt.expectedResult, result)
+	}
+}

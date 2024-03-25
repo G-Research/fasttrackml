@@ -11,12 +11,12 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetDashboards(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -52,7 +52,7 @@ func GetDashboards(c *fiber.Ctx) error {
 }
 
 func CreateDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -103,7 +103,7 @@ func CreateDashboard(c *fiber.Ctx) error {
 }
 
 func GetDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -147,7 +147,7 @@ func GetDashboard(c *fiber.Ctx) error {
 }
 
 func UpdateDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -211,7 +211,7 @@ func UpdateDashboard(c *fiber.Ctx) error {
 }
 
 func DeleteDashboard(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

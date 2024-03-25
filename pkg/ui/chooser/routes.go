@@ -10,7 +10,9 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/template/html/v2"
 
+	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
+	"github.com/G-Research/fasttrackml/pkg/ui/chooser/middleware"
 )
 
 //go:embed embed
@@ -18,22 +20,24 @@ var content embed.FS
 
 // Router represents `chooser` router.
 type Router struct {
+	config     *mlflowConfig.ServiceConfig
 	controller *controller.Controller
 }
 
 // NewRouter creates new instance of `chooser` router.
-func NewRouter(controller *controller.Controller) *Router {
+func NewRouter(config *mlflowConfig.ServiceConfig, controller *controller.Controller) *Router {
 	return &Router{
+		config:     config,
 		controller: controller,
 	}
 }
 
-// AddRoutes adds all the `chooser` routes
-func (r Router) AddRoutes(fr fiber.Router) {
+// Init adds all the `chooser` routes
+func (r Router) Init(router fiber.Router) {
 	//nolint:errcheck
 	sub, _ := fs.Sub(content, "embed")
 
-	fr.Use("/static/chooser/", etag.New(), filesystem.New(filesystem.Config{
+	router.Use("/static/chooser/", etag.New(), filesystem.New(filesystem.Config{
 		Root: http.FS(sub),
 	}))
 
@@ -41,8 +45,14 @@ func (r Router) AddRoutes(fr fiber.Router) {
 	app := fiber.New(fiber.Config{
 		Views: html.NewFileSystem(http.FS(sub), ".html"),
 	})
-	fr.Mount("/", app)
+	router.Mount("/", app)
 
-	// specific routes
+	// apply global auth middlewares.
+	switch {
+	case r.config.Auth.IsAuthTypeUser():
+		app.Use(middleware.NewUserMiddleware(r.config.Auth.AuthParsedUserPermissions))
+	}
+
+	// setup related routes.
 	app.Get("/", r.controller.GetNamespaces)
 }

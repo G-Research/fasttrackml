@@ -72,6 +72,7 @@ func init() {
 	ServerCmd.Flags().MarkHidden("gs-endpoint-uri")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")
+	ServerCmd.Flags().String("auth-users-config", "", "Users configuration file")
 	ServerCmd.Flags().StringP("database-uri", "d", "sqlite://fasttrackml.db", "Database URI")
 	ServerCmd.Flags().Int("database-pool-max", 20, "Maximum number of database connections in the pool")
 	ServerCmd.Flags().Duration("database-slow-threshold", 1*time.Second, "Slow SQL warning threshold")

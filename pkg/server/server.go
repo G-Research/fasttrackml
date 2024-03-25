@@ -18,7 +18,7 @@ import (
 
 	adminAPI "github.com/G-Research/fasttrackml/pkg/api/admin"
 	adminAPIController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
-	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
+	adminNamespaceService "github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	aim2API "github.com/G-Research/fasttrackml/pkg/api/aim2"
 	aim2Controller "github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
@@ -41,13 +41,14 @@ import (
 	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/metric"
 	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/model"
 	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/run"
-	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
 	chooserController "github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
+	chooserNamespaceService "github.com/G-Research/fasttrackml/pkg/ui/chooser/service/namespace"
 	mlflowUI "github.com/G-Research/fasttrackml/pkg/ui/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/version"
 )
@@ -86,7 +87,10 @@ func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server,
 
 	// create fiber app.
 	//nolint:contextcheck
-	app := createApp(config, db, artifactStorageFactory, namespaceRepository)
+	app, err := createApp(config, db, artifactStorageFactory, namespaceRepository)
+	if err != nil {
+		return nil, eris.Wrapf(err, "error creating application")
+	}
 
 	return server{app}, nil
 }
@@ -157,7 +161,7 @@ func createApp(
 	db database.DBProvider,
 	artifactStorageFactory storage.ArtifactStorageFactoryProvider,
 	namespaceRepository mlflowRepositories.NamespaceRepositoryProvider,
-) *fiber.App {
+) (*fiber.App, error) {
 	app := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
 		ReadBufferSize:        16384,
@@ -192,10 +196,11 @@ func createApp(
 		app.Use(cors.New())
 	}
 
-	if config.AuthUsername != "" && config.AuthPassword != "" {
+	app.Use(middleware.NewNamespaceMiddleware(namespaceRepository))
+	if config.Auth.AuthUsername != "" && config.Auth.AuthPassword != "" {
 		app.Use(basicauth.New(basicauth.Config{
 			Users: map[string]string{
-				config.AuthUsername: config.AuthPassword,
+				config.Auth.AuthUsername: config.Auth.AuthPassword,
 			},
 		}))
 	}
@@ -214,8 +219,6 @@ func createApp(
 		Output: log.StandardLogger().Writer(),
 	}))
 
-	app.Use(namespaceMiddleware.New(namespaceRepository))
-
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")
 	})
@@ -231,7 +234,8 @@ func createApp(
 	} else {
 		// init `aim` api refactored routes.
 		log.Info("Using refactored aim service")
-		aim2API.NewRouter(
+		if err := aim2API.NewRouter(
+			config,
 			aim2Controller.NewController(
 				aimTagService.NewService(
 					aimRepositories.NewTagRepository(db.GormDB()),
@@ -260,12 +264,15 @@ func createApp(
 					aimRepositories.NewExperimentRepository(db.GormDB()),
 				),
 			),
-		).Init(app)
+		).Init(app); err != nil {
+			return nil, eris.Wrap(err, "error initializing aim routes")
+		}
 	}
 
 	// init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
-	mlflowAPI.NewRouter(
+	if err := mlflowAPI.NewRouter(
+		config,
 		mlflowController.NewController(
 			mlflowRunService.NewService(
 				mlflowRepositories.NewTagRepository(db.GormDB()),
@@ -289,14 +296,16 @@ func createApp(
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
-	).Init(app)
+	).Init(app); err != nil {
+		return nil, eris.Wrap(err, "error initializing mlflow routes")
+	}
 	mlflowUI.AddRoutes(app)
 	aimUI.AddRoutes(app)
 
 	// init `admin` api routes.
 	adminAPI.NewRouter(
 		adminAPIController.NewController(
-			namespace.NewService(
+			adminNamespaceService.NewService(
 				config,
 				namespaceRepository,
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
@@ -305,26 +314,29 @@ func createApp(
 	).Init(app)
 
 	// init `admin` UI routes.
-	adminUI.NewRouter(
+	if err := adminUI.NewRouter(
+		config,
 		adminUIController.NewController(
-			namespace.NewService(
+			adminNamespaceService.NewService(
 				config,
 				namespaceRepository,
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
+			),
+		),
+	).Init(app); err != nil {
+		return nil, eris.Wrap(err, "error initializing admin routes")
+	}
+
+	// init `chooser` ui routes.
+	chooser.NewRouter(
+		config,
+		chooserController.NewController(
+			chooserNamespaceService.NewService(
+				config,
+				namespaceRepository,
 			),
 		),
 	).Init(app)
 
-	// init `chooser` ui routes.
-	chooser.NewRouter(
-		chooserController.NewController(
-			namespace.NewService(
-				config,
-				namespaceRepository,
-				mlflowRepositories.NewExperimentRepository(db.GormDB()),
-			),
-		),
-	).AddRoutes(app)
-
-	return app
+	return app, nil
 }

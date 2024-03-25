@@ -10,6 +10,7 @@ replace (
 require (
 	cloud.google.com/go/storage v1.39.1
 	dagger.io/dagger v0.10.2
+	dario.cat/mergo v1.0.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/G-Research/fasttrackml-ui-aim v0.31705.17
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.4
@@ -32,7 +33,8 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
-	google.golang.org/api v0.171.0
+	github.com/zeebo/assert v1.3.0
+	google.golang.org/api v0.170.0
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.25.8
@@ -137,7 +139,7 @@ require (
 	google.golang.org/grpc v1.62.1 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/datatypes v1.2.0
 	gorm.io/driver/mysql v1.4.7 // indirect
 )

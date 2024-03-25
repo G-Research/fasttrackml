@@ -61,7 +61,7 @@ func (c Controller) CreateNamespace(ctx *fiber.Ctx) error {
 	return c.renderIndex(ctx, "Successfully added new namespace")
 }
 
-// UpdateNamespace udpates an existing namespace record.
+// UpdateNamespace updates an existing namespace record.
 func (c Controller) UpdateNamespace(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id")
 	if err != nil {

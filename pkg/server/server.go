@@ -198,6 +198,7 @@ func createApp(
 
 	app.Use(middleware.NewNamespaceMiddleware(namespaceRepository))
 	if config.Auth.AuthUsername != "" && config.Auth.AuthPassword != "" {
+		log.Info("Auth - enabling Basic Auth")
 		app.Use(basicauth.New(basicauth.Config{
 			Users: map[string]string{
 				config.Auth.AuthUsername: config.Auth.AuthPassword,
@@ -208,6 +209,7 @@ func createApp(
 	// attach auth middleware based on provided configuration of auth type.
 	switch {
 	case config.Auth.IsAuthTypeUser():
+		log.Info("Auth - enabling user auth configuration from file")
 		userPermissions, err := auth.Load(config.Auth.AuthUsersConfig)
 		if err != nil {
 			return nil, eris.Wrapf(
@@ -216,6 +218,7 @@ func createApp(
 		}
 		app.Use(middleware.NewUserMiddleware(userPermissions))
 	case config.Auth.IsAuthTypeOIDC():
+		log.Info("Auth - enabling OIDC user auth")
 		app.Use(middleware.NewOIDCMiddleware())
 	}
 

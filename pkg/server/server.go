@@ -31,7 +31,6 @@ import (
 	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/tag"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -206,22 +205,6 @@ func createApp(
 		}))
 	}
 
-	// attach auth middleware based on provided configuration of auth type.
-	switch {
-	case config.Auth.IsAuthTypeUser():
-		log.Info("Auth - enabling user auth configuration from file")
-		userPermissions, err := auth.Load(config.Auth.AuthUsersConfig)
-		if err != nil {
-			return nil, eris.Wrapf(
-				err, "error loading user configuration from file: %s", config.Auth.AuthUsersConfig,
-			)
-		}
-		app.Use(middleware.NewUserMiddleware(userPermissions))
-	case config.Auth.IsAuthTypeOIDC():
-		log.Info("Auth - enabling OIDC user auth")
-		app.Use(middleware.NewOIDCMiddleware())
-	}
-
 	app.Use(compress.New(compress.Config{
 		Next: func(c *fiber.Ctx) bool {
 			// This is a little brittle, maybe there is a better way?
@@ -326,6 +309,7 @@ func createApp(
 
 	// init `admin` UI routes.
 	adminUI.NewRouter(
+		config,
 		adminUIController.NewController(
 			namespace.NewService(
 				config,
@@ -344,7 +328,7 @@ func createApp(
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
-	).AddRoutes(app)
+	).Init(app)
 
 	return app, nil
 }

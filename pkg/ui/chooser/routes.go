@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/template/html/v2"
+	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
 )
@@ -28,12 +29,15 @@ func NewRouter(controller *controller.Controller) *Router {
 	}
 }
 
-// AddRoutes adds all the `chooser` routes
-func (r Router) AddRoutes(fr fiber.Router) {
+// Init adds all the `chooser` routes
+func (r Router) Init(router fiber.Router) error {
 	//nolint:errcheck
-	sub, _ := fs.Sub(content, "embed")
+	sub, err := fs.Sub(content, "embed")
+	if err != nil {
+		return eris.Wrap(err, "error mounting `embed` directory")
+	}
 
-	fr.Use("/static/chooser/", etag.New(), filesystem.New(filesystem.Config{
+	router.Use("/static/chooser/", etag.New(), filesystem.New(filesystem.Config{
 		Root: http.FS(sub),
 	}))
 
@@ -41,8 +45,10 @@ func (r Router) AddRoutes(fr fiber.Router) {
 	app := fiber.New(fiber.Config{
 		Views: html.NewFileSystem(http.FS(sub), ".html"),
 	})
-	fr.Mount("/", app)
+	router.Mount("/", app)
 
 	// specific routes
 	app.Get("/", r.controller.GetNamespaces)
+
+	return nil
 }

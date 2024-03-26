@@ -14,7 +14,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
-// nolint:G101
+// nolint:gosec
 const (
 	authTokenContextKey = "basic_auth_token"
 )

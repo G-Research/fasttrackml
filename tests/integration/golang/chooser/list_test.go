@@ -1,4 +1,4 @@
-package namespace
+package chooser
 
 import (
 	"context"
@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/admin/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/ui/chooser/api/response"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 

@@ -1,9 +1,10 @@
 package aim2
 
 import (
+	"github.com/gofiber/fiber/v2"
+
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
-	"github.com/gofiber/fiber/v2"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
 )

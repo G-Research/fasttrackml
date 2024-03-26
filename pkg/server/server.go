@@ -16,9 +16,6 @@ import (
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
-	adminAPI "github.com/G-Research/fasttrackml/pkg/api/admin"
-	adminAPIController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
-	adminNamespaceService "github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	aim2API "github.com/G-Research/fasttrackml/pkg/api/aim2"
 	aim2Controller "github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
@@ -45,6 +42,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
+	adminUINamespaceService "github.com/G-Research/fasttrackml/pkg/ui/admin/service/namespace"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
 	chooserController "github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
@@ -299,22 +297,11 @@ func createApp(
 	mlflowUI.AddRoutes(app)
 	aimUI.AddRoutes(app)
 
-	// init `admin` api routes.
-	adminAPI.NewRouter(
-		adminAPIController.NewController(
-			adminNamespaceService.NewService(
-				config,
-				namespaceRepository,
-				mlflowRepositories.NewExperimentRepository(db.GormDB()),
-			),
-		),
-	).Init(app)
-
 	// init `admin` UI routes.
 	if err := adminUI.NewRouter(
 		config,
 		adminUIController.NewController(
-			adminNamespaceService.NewService(
+			adminUINamespaceService.NewService(
 				config,
 				namespaceRepository,
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),

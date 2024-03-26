@@ -59,6 +59,8 @@ func (r Router) Init(router fiber.Router) error {
 
 	// setup related routes.
 	app.Get("/", r.controller.GetNamespaces)
+	app.Get("/namespaces", r.controller.ListNamespaces)
+	app.Get("/namespaces/current", r.controller.GetCurrentNamespace)
 
 	return nil
 }

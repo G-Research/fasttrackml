@@ -46,17 +46,17 @@ func (p UserPermissions) GetData() map[string]map[string]struct{} {
 }
 
 // ValidateAuthToken makes basic validation of auth token.
-func (p UserPermissions) ValidateAuthToken(authToken string) (*BasicAuthToken, bool) {
+func (p UserPermissions) ValidateAuthToken(authToken string) *BasicAuthToken {
 	if authToken == "" {
-		return nil, false
+		return nil
 	}
 
 	roles, ok := p.data[authToken]
 	if !ok {
-		return nil, ok
+		return nil
 	}
 
 	return &BasicAuthToken{
 		roles: roles,
-	}, true
+	}
 }

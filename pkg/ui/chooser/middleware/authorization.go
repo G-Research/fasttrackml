@@ -27,14 +27,17 @@ func NewUserMiddleware(userPermissions *models.UserPermissions) fiber.Handler {
 		}
 		log.Debugf("checking access permission to %s namespace", namespace.Code)
 
-		authToken, isValid := userPermissions.ValidateAuthToken(
+		authToken := userPermissions.ValidateAuthToken(
 			strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Basic ", "", 1),
 		)
-		if !isValid || !authToken.HasUserAccess(namespace.Code) {
+		if authToken != nil && authToken.HasAdminAccess() {
+			return ctx.Next()
+		}
+		if authToken == nil || !authToken.HasUserAccess(namespace.Code) {
 			return ctx.Status(
 				http.StatusNotFound,
 			).JSON(
-				api.NewResourceDoesNotExistError("unable to find requested resource"),
+				api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
 			)
 		}
 

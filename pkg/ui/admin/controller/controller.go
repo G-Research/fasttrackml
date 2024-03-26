@@ -1,6 +1,6 @@
 package controller
 
-import "github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
+import "github.com/G-Research/fasttrackml/pkg/ui/admin/service/namespace"
 
 // Controller contains all the request handler functions for the admin ui.
 type Controller struct {

@@ -11,9 +11,9 @@ import (
 	"github.com/gofiber/template/html/v2"
 	"github.com/rotisserie/eris"
 
-	"github.com/G-Research/fasttrackml/pkg/api/admin/middleware"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
+	"github.com/G-Research/fasttrackml/pkg/ui/admin/middleware"
 )
 
 //go:embed embed/*

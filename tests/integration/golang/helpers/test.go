@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"dario.cat/mergo"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 
@@ -17,8 +18,9 @@ import (
 
 type BaseTestSuite struct {
 	suite.Suite
-	server                      server.Server
 	db                          database.DBProvider
+	Config                      config.ServiceConfig
+	server                      server.Server
 	setupHooks                  []func()
 	tearDownHooks               []func()
 	AIMClient                   func() *HttpClient
@@ -121,8 +123,7 @@ func (s *BaseTestSuite) closeDB() {
 }
 
 func (s *BaseTestSuite) startServer() {
-	var err error
-	s.server, err = server.NewServer(context.Background(), &config.ServiceConfig{
+	cfg := config.ServiceConfig{
 		DatabaseURI:           s.db.Dsn(),
 		DatabasePoolMax:       10,
 		DatabaseSlowThreshold: 1 * time.Second,
@@ -130,8 +131,12 @@ func (s *BaseTestSuite) startServer() {
 		DefaultArtifactRoot:   s.T().TempDir(),
 		S3EndpointURI:         GetS3EndpointUri(),
 		GSEndpointURI:         GetGSEndpointUri(),
-	})
+	}
+	s.Require().Nil(mergo.Merge(&cfg, s.Config))
+
+	srv, err := server.NewServer(context.Background(), &cfg)
 	s.Require().Nil(err)
+	s.server = srv
 
 	s.AIMClient = func() *HttpClient {
 		return NewAimApiClient(s.server)

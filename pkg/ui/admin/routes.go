@@ -29,7 +29,7 @@ func NewRouter(controller *controller.Controller) *Router {
 }
 
 // Init makes initialization of all `admin` routes.
-func (r Router) Init(fr fiber.Router) {
+func (r Router) Init(router fiber.Router) {
 	//nolint:errcheck
 	sub, _ := fs.Sub(content, "embed")
 
@@ -39,7 +39,7 @@ func (r Router) Init(fr fiber.Router) {
 		Views:       engine,
 		ViewsLayout: "layouts/main",
 	})
-	fr.Mount("/admin", app)
+	router.Mount("/admin", app)
 
 	// specific routes
 	namespaces := app.Group("namespaces")

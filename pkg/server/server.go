@@ -18,7 +18,7 @@ import (
 
 	adminAPI "github.com/G-Research/fasttrackml/pkg/api/admin"
 	adminAPIController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
-	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
+	adminNamespaceService "github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	aim2API "github.com/G-Research/fasttrackml/pkg/api/aim2"
 	aim2Controller "github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
@@ -48,6 +48,7 @@ import (
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
 	chooserController "github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
+	chooserNamespaceService "github.com/G-Research/fasttrackml/pkg/ui/chooser/service/namespace"
 	mlflowUI "github.com/G-Research/fasttrackml/pkg/ui/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/version"
 )
@@ -235,6 +236,7 @@ func createApp(
 		// init `aim` api refactored routes.
 		log.Info("Using refactored aim service")
 		aim2API.NewRouter(
+			config,
 			aim2Controller.NewController(
 				aimTagService.NewService(
 					aimRepositories.NewTagRepository(db.GormDB()),
@@ -269,6 +271,7 @@ func createApp(
 	// init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
+		config,
 		mlflowController.NewController(
 			mlflowRunService.NewService(
 				mlflowRepositories.NewTagRepository(db.GormDB()),
@@ -299,7 +302,7 @@ func createApp(
 	// init `admin` api routes.
 	adminAPI.NewRouter(
 		adminAPIController.NewController(
-			namespace.NewService(
+			adminNamespaceService.NewService(
 				config,
 				namespaceRepository,
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
@@ -308,27 +311,31 @@ func createApp(
 	).Init(app)
 
 	// init `admin` UI routes.
-	adminUI.NewRouter(
+	if err := adminUI.NewRouter(
 		config,
 		adminUIController.NewController(
-			namespace.NewService(
+			adminNamespaceService.NewService(
 				config,
 				namespaceRepository,
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
-	).Init(app)
+	).Init(app); err != nil {
+		return nil, eris.Wrap(err, "error initializing admin routes")
+	}
 
 	// init `chooser` ui routes.
-	chooser.NewRouter(
+	if err := chooser.NewRouter(
+		config,
 		chooserController.NewController(
-			namespace.NewService(
+			chooserNamespaceService.NewService(
 				config,
 				namespaceRepository,
-				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
-	).Init(app)
+	).Init(app); err != nil {
+		return nil, eris.Wrap(err, "error initializing chooser routes")
+	}
 
 	return app, nil
 }

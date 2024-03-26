@@ -24,8 +24,8 @@ func (p BasicAuthToken) HasUserAccess(namespace string) bool {
 }
 
 // GetRoles returns User roles assigned to current Auth token.
-func (p BasicAuthToken) GetRoles() (map[string]struct{}, bool) {
-	return p.roles, true
+func (p BasicAuthToken) GetRoles() map[string]struct{} {
+	return p.roles
 }
 
 // UserPermissions represents model to store user permissions data.
@@ -45,6 +45,7 @@ func (p UserPermissions) GetData() map[string]map[string]struct{} {
 	return p.data
 }
 
+// ValidateAuthToken makes basic validation of auth token.
 func (p UserPermissions) ValidateAuthToken(authToken string) (*BasicAuthToken, bool) {
 	if authToken == "" {
 		return nil, false

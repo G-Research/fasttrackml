@@ -13,10 +13,10 @@ import (
 // NewAdminUserMiddleware creates new User based Middleware instance.
 func NewAdminUserMiddleware(userPermissions *models.UserPermissions) fiber.Handler {
 	return func(ctx *fiber.Ctx) (err error) {
-		// check that user has permissions to access to the requested namespace.
-		authToken := strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Basic ", "", 1)
-		authTokenInfo, isValid := userPermissions.ValidateAuthToken(authToken)
-		if !isValid || !authTokenInfo.HasAdminAccess() {
+		authToken, isValid := userPermissions.ValidateAuthToken(
+			strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Basic ", "", 1),
+		)
+		if !isValid || !authToken.HasAdminAccess() {
 			return ctx.Status(
 				http.StatusNotFound,
 			).JSON(

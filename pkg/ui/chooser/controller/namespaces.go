@@ -8,7 +8,7 @@ import (
 
 // GetNamespaces renders the index view
 func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
-	namespaces, err := c.namespaceService.ListNamespaces(ctx.Context())
+	namespaces, isAdmin, err := c.namespaceService.ListNamespaces(ctx.Context())
 	if err != nil {
 		return err
 	}
@@ -17,6 +17,7 @@ func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
 		return err
 	}
 	return ctx.Render("index", fiber.Map{
+		"IsAdmin":          isAdmin,
 		"Namespaces":       namespaces,
 		"CurrentNamespace": ns,
 	})

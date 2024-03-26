@@ -27,7 +27,6 @@ type ErrorCode string
 
 const (
 	ErrorCodeInternalError          = "INTERNAL_ERROR"
-	ErrorAccessForbiddenError       = "FORBIDDEN_ERROR"
 	ErrorCodeTemporarilyUnavailable = "TEMPORARILY_UNAVAILABLE"
 	ErrorCodeBadRequest             = "BAD_REQUEST"
 	ErrorCodeInvalidParameterValue  = "INVALID_PARAMETER_VALUE"

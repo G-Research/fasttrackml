@@ -174,8 +174,8 @@ func TestUserPermissions_HasAccess_Ok(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			authToken, isValid := tt.permissions.ValidateAuthToken(tt.token)
-			assert.True(t, isValid)
+			authToken := tt.permissions.ValidateAuthToken(tt.token)
+			assert.NotNil(t, authToken)
 			assert.True(t, authToken.HasUserAccess(tt.namespace))
 		})
 	}
@@ -214,9 +214,12 @@ func TestUserPermissions_HasAccess_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			authToken, isValid := tt.permissions.ValidateAuthToken(tt.token)
-			assert.False(t, isValid)
-			assert.False(t, authToken.HasUserAccess(tt.namespace))
+			authToken := tt.permissions.ValidateAuthToken(tt.token)
+			if authToken != nil {
+				assert.False(t, authToken.HasUserAccess(tt.namespace))
+			} else {
+				assert.Nil(t, authToken)
+			}
 		})
 	}
 }

@@ -73,6 +73,7 @@ func TestUserAuthFromConfigTestSuite(t *testing.T) {
 			AuthUsersConfig: configPath,
 		},
 	}
+	assert.Nil(t, testSuite.Config.Validate())
 	suite.Run(t, testSuite)
 }
 

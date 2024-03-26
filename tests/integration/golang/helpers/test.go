@@ -26,6 +26,7 @@ type BaseTestSuite struct {
 	AIMClient                   func() *HttpClient
 	MlflowClient                func() *HttpClient
 	AdminClient                 func() *HttpClient
+	ChooserClient               func() *HttpClient
 	AppFixtures                 *fixtures.AppFixtures
 	RunFixtures                 *fixtures.RunFixtures
 	TagFixtures                 *fixtures.TagFixtures
@@ -146,6 +147,9 @@ func (s *BaseTestSuite) startServer() {
 	}
 	s.AdminClient = func() *HttpClient {
 		return NewAdminApiClient(s.server)
+	}
+	s.ChooserClient = func() *HttpClient {
+		return NewChooserApiClient(s.server)
 	}
 }
 

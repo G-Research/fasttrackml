@@ -31,7 +31,13 @@ func (s *GetCurrentNamespacesTestSuite) Test_Ok() {
 
 	var resp response.Namespace
 	s.Require().Nil(
-		s.AdminClient().WithNamespace(namespace.Code).WithResponse(&resp).DoRequest("/namespaces/current"),
+		s.ChooserClient().WithNamespace(
+			namespace.Code,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"/namespaces/current",
+		),
 	)
 
 	s.Equal(namespace.ID, resp.ID)

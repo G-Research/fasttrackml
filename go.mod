@@ -9,7 +9,7 @@ replace (
 
 require (
 	cloud.google.com/go/storage v1.39.1
-	dagger.io/dagger v0.10.2
+	dagger.io/dagger v0.10.3
 	dario.cat/mergo v1.0.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/G-Research/fasttrackml-ui-aim v0.31705.17

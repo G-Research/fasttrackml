@@ -6,7 +6,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/db/models"
 )
 
@@ -19,8 +18,8 @@ func NewAdminUserMiddleware(userPermissions *models.UserPermissions) fiber.Handl
 		if authToken == nil || !authToken.HasAdminAccess() {
 			return ctx.Status(
 				http.StatusNotFound,
-			).JSON(
-				api.NewResourceDoesNotExistError("unable to find requested resource"),
+			).SendString(
+				"unable to find requested resource",
 			)
 		}
 

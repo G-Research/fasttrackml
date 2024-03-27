@@ -38,8 +38,8 @@ func NewUserMiddleware(userPermissions *models.UserPermissions) fiber.Handler {
 		if authToken == nil || !authToken.HasUserAccess(namespace.Code) {
 			return ctx.Status(
 				http.StatusNotFound,
-			).JSON(
-				api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
+			).SendString(
+				"unable to find requested resource",
 			)
 		}
 

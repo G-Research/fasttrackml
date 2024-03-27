@@ -45,6 +45,9 @@ COMPOSE_FILE=tests/integration/docker-compose.yml
 # Docker compose project name.
 COMPOSE_PROJECT_NAME=$(APP)-integration-tests
 
+AIM_BUILD_LOCATION=$(HOME)/fasttrackml-ui-aim
+MLFLOW_BUILD_LOCATION=$(HOME)/fasttrackml-ui-mlflow
+
 #
 # Default target (help).
 #
@@ -255,3 +258,17 @@ migrations-create: ## generate a new database migration.
 migrations-rebuild: ## rebuild the migrations script to detect new migrations.
 	@echo ">>> Running FastTrackML migrations rebuild."
 	@go run main.go migrations rebuild
+
+.PHONY: ui-aim-start
+ui-aim-start: ## start the Aim UI for development.
+	@echo ">>> Syncing the Aim UI."
+	@rsync -rvu --exclude node_modules --exclude .git ui/fasttrackml-ui-aim/ $(AIM_BUILD_LOCATION)
+	@echo ">>> Starting the Aim UI."
+	@cd $(AIM_BUILD_LOCATION)/src && npm ci --legacy-peer-deps && npm start
+
+.PHONY: ui-mlflow-start
+ui-mlflow-start: ## start the MLflow UI for development.
+	@echo ">>> Syncing the MLflow UI."
+	@rsync -rvu --exclude node_modules --exclude .git ui/fasttrackml-ui-mlflow/ $(MLFLOW_BUILD_LOCATION)
+	@echo ">>> Starting the MLflow UI."
+	@cd $(MLFLOW_BUILD_LOCATION)/src && yarn install --immutable && yarn start

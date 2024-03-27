@@ -68,3 +68,8 @@ func BuildJsonCondition(
 	sql = strings.Repeat(conditionTemplate+" AND ", len(jsonPathValueMap)-1) + conditionTemplate
 	return sql, args
 }
+
+// mergeMaps converts string with multiple json objects into a single json object.
+func mergeMaps(jsonString string) string {
+	return strings.ReplaceAll(jsonString, "}, {", ", ")
+}

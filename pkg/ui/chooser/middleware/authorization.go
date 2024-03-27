@@ -32,6 +32,7 @@ func NewUserMiddleware(userPermissions *models.UserPermissions) fiber.Handler {
 			strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Basic ", "", 1),
 		)
 		if authToken != nil && authToken.HasAdminAccess() {
+			ctx.Locals(authTokenContextKey, authToken)
 			return ctx.Next()
 		}
 		if authToken == nil || !authToken.HasUserAccess(namespace.Code) {
@@ -49,9 +50,9 @@ func NewUserMiddleware(userPermissions *models.UserPermissions) fiber.Handler {
 
 // GetAuthTokenFromContext returns Basic Auth Token from the context.
 func GetAuthTokenFromContext(ctx context.Context) (*models.BasicAuthToken, error) {
-	authToken, ok := ctx.Value(authTokenContextKey).(models.BasicAuthToken)
+	authToken, ok := ctx.Value(authTokenContextKey).(*models.BasicAuthToken)
 	if !ok {
 		return nil, eris.New("error getting auth token from context")
 	}
-	return &authToken, nil
+	return authToken, nil
 }

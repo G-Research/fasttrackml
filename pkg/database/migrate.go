@@ -142,6 +142,11 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				&Dashboard{},
 				&App{},
 				&SchemaVersion{},
+				&RegisteredModel{},
+				&RegisteredModelTag{},
+				&RegisteredModelAlias{},
+				&ModelVersion{},
+				&ModelVersionTag{},
 			); err != nil {
 				return fmt.Errorf("error initializing database: %w", err)
 			}

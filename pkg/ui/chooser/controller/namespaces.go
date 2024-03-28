@@ -18,7 +18,7 @@ func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return ctx.Render("index", fiber.Map{
+	return ctx.Render("namespaces/index", fiber.Map{
 		"IsAdmin":          isAdmin,
 		"Namespaces":       namespaces,
 		"CurrentNamespace": ns,

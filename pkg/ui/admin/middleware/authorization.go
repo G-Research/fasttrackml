@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,7 +16,7 @@ func NewAdminUserMiddleware(userPermissions *models.UserPermissions) fiber.Handl
 			strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Basic ", "", 1),
 		)
 		if authToken == nil || !authToken.HasAdminAccess() {
-			return ctx.Redirect("/admin/errors/not-found")
+			return ctx.Redirect("/admin/errors/not-found", http.StatusMovedPermanently)
 		}
 
 		return ctx.Next()

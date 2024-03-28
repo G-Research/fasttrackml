@@ -15,11 +15,7 @@ import (
 
 // ConvertLogParamRequestToDBModel converts request.LogParamRequest into actual models.Param model.
 func ConvertLogParamRequestToDBModel(runID string, req *request.LogParamRequest) *models.Param {
-	return &models.Param{
-		Key:   req.Key,
-		Value: req.Value,
-		RunID: runID,
-	}
+	return convertParam(runID, req.Key, req.Value)
 }
 
 // ConvertLogBatchRequestToDBModel converts request.LogBatchRequest into actual []models.Param, []models.Tag models.
@@ -28,11 +24,7 @@ func ConvertLogBatchRequestToDBModel(
 ) ([]models.Metric, []models.Param, []models.Tag, error) {
 	params := make([]models.Param, len(req.Params))
 	for i, param := range req.Params {
-		params[i] = models.Param{
-			Key:   param.Key,
-			Value: param.Value,
-			RunID: runID,
-		}
+		params[i] = *convertParam(runID, param.Key, param.Value)
 	}
 
 	tags := make([]models.Tag, len(req.Tags))
@@ -83,4 +75,20 @@ func ConvertLogBatchRequestToDBModel(
 		metrics[n] = m
 	}
 	return metrics, params, tags, nil
+}
+
+func convertParam(runID, key string, value any) *models.Param {
+	param := &models.Param{
+		Key:   key,
+		RunID: runID,
+	}
+	switch v := value.(type) {
+	case string:
+		param.Value = v
+	case int64:
+		param.ValueInt = &v
+	case float64:
+		param.ValueFloat = &v
+	}
+	return param
 }

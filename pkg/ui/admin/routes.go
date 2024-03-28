@@ -64,9 +64,6 @@ func (r Router) Init(router fiber.Router) error {
 	namespaces.Put("/:id<int>/", r.controller.UpdateNamespace)
 	namespaces.Delete("/:id<int>/", r.controller.DeleteNamespace)
 
-	errors := app.Group("errors")
-	errors.Get("/not-found", r.controller.NotFoundError)
-
 	// default route
 	app.Use("/", etag.New(), filesystem.New(filesystem.Config{
 		Root: http.FS(sub),

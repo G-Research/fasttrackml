@@ -25,7 +25,7 @@ func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
 	})
 }
 
-// ListNamespaces handles `GET /namespaces/list` endpoint.
+// ListNamespaces handles `GET /namespaces` endpoint.
 func (c Controller) ListNamespaces(ctx *fiber.Ctx) error {
 	namespaces, _, err := c.namespaceService.ListNamespaces(ctx.Context())
 	if err != nil {

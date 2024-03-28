@@ -41,7 +41,7 @@ func (r Router) Init(router fiber.Router) error {
 		return eris.Wrap(err, "error mounting `embed` directory")
 	}
 
-	router.Use("/chooser/", etag.New(), filesystem.New(filesystem.Config{
+	router.Use("/static/chooser/", etag.New(), filesystem.New(filesystem.Config{
 		Root: http.FS(sub),
 	}))
 

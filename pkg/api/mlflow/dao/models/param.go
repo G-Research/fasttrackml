@@ -6,8 +6,8 @@ import "fmt"
 type Param struct {
 	Key        string   `gorm:"type:varchar(250);not null;primaryKey"`
 	Value      string   `gorm:"type:varchar(500);not null"`
-	ValueInt   *int64   `gorm:"type:bigint;not null"`
-	ValueFloat *float64 `gorm:"type:float;not null"`
+	ValueInt   *int64   `gorm:"type:bigint"`
+	ValueFloat *float64 `gorm:"type:float"`
 	RunID      string   `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 

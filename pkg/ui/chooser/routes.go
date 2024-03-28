@@ -47,7 +47,8 @@ func (r Router) Init(router fiber.Router) error {
 
 	// app for template rendering
 	app := fiber.New(fiber.Config{
-		Views: html.NewFileSystem(http.FS(sub), ".html"),
+		Views:       html.NewFileSystem(http.FS(sub), ".html"),
+		ViewsLayout: "layouts/main",
 	})
 	router.Mount("/", app)
 
@@ -61,6 +62,9 @@ func (r Router) Init(router fiber.Router) error {
 	app.Get("/", r.controller.GetNamespaces)
 	app.Get("/chooser/namespaces", r.controller.ListNamespaces)
 	app.Get("/chooser/namespaces/current", r.controller.GetCurrentNamespace)
+
+	errors := app.Group("errors")
+	errors.Get("/not-found", r.controller.NotFoundError)
 
 	return nil
 }

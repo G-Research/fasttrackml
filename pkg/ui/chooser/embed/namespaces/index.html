@@ -1,0 +1,43 @@
+<p>Which UI do you want to use?</p>
+<div class="ui">
+    <article>
+        <a href="#" onclick="window.location = window.location.origin + window.location.pathname + 'mlflow/'">
+            <button>Classic</button>
+        </a>
+        <p>This is the classic MLFlow UI, albeit fast and responsive.</p>
+    </article>
+    <article>
+        <a href="#" onclick="window.location = window.location.origin + window.location.pathname + 'aim/'">
+            <button>Modern</button>
+        </a>
+        <p>This is the modern Aim UI, much faster than MLFlow.</p>
+    </article>
+</div>
+<p>Selected namespace:
+    <b>
+        <u>{{.CurrentNamespace.DisplayName}}</u>
+    </b>
+</p>
+
+<div id="namespaces-list-container">
+    <ul id="namespaces-list">
+        {{ range .Namespaces }}
+        {{ if ne .DisplayName $.CurrentNamespace.DisplayName }}
+        <li>
+            <a href="#" onclick="window.location = window.location.origin + {{if eq .Code "default"}}'/'{{else}}'/ns/{{.Code}}/'{{end}}">{{.DisplayName}}</a>
+        </li>
+        {{ else }}
+        <li class="selected-namespace">
+            <i id="current-icon" class="Icon__container icon-long-arrow-right"></i>
+            <b id="current-namespace">{{$.CurrentNamespace.DisplayName}}</b>
+        </li>
+        {{ end }}
+        {{ end }}
+    </ul>
+</div>
+
+{{ if .IsAdmin }}
+<p>
+    <a href="#" onclick="window.location = window.location.origin + '/admin/namespaces/'">Manage namespaces</a>
+</p>
+{{ end }}

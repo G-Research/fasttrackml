@@ -16,11 +16,7 @@ func NewAdminUserMiddleware(userPermissions *models.UserPermissions) fiber.Handl
 			strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Basic ", "", 1),
 		)
 		if authToken == nil || !authToken.HasAdminAccess() {
-			return ctx.Status(
-				http.StatusNotFound,
-			).SendString(
-				"unable to find requested resource",
-			)
+			return ctx.Redirect("/errors/not-found", http.StatusMovedPermanently)
 		}
 
 		return ctx.Next()

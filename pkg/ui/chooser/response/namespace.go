@@ -17,11 +17,9 @@ func NewListNamespacesResponse(
 	namespaces []models.Namespace,
 ) *ListNamespaces {
 	response := ListNamespaces(make([]Namespace, len(namespaces)))
-
 	for i := range namespaces {
 		response[i] = *NewGetCurrentNamespaceResponse(&namespaces[i])
 	}
-
 	return &response
 }
 

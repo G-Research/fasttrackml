@@ -16,9 +16,6 @@ import (
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
-	adminAPI "github.com/G-Research/fasttrackml/pkg/api/admin"
-	adminAPIController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
-	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
 	aim2API "github.com/G-Research/fasttrackml/pkg/api/aim2"
 	aim2Controller "github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
@@ -31,7 +28,6 @@ import (
 	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/tag"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -46,9 +42,11 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
+	adminUINamespaceService "github.com/G-Research/fasttrackml/pkg/ui/admin/service/namespace"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
 	chooserController "github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
+	chooserNamespaceService "github.com/G-Research/fasttrackml/pkg/ui/chooser/service/namespace"
 	mlflowUI "github.com/G-Research/fasttrackml/pkg/ui/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/version"
 )
@@ -206,22 +204,6 @@ func createApp(
 		}))
 	}
 
-	// attach auth middleware based on provided configuration of auth type.
-	switch {
-	case config.Auth.IsAuthTypeUser():
-		log.Info("Auth - enabling user auth configuration from file")
-		userPermissions, err := auth.Load(config.Auth.AuthUsersConfig)
-		if err != nil {
-			return nil, eris.Wrapf(
-				err, "error loading user configuration from file: %s", config.Auth.AuthUsersConfig,
-			)
-		}
-		app.Use(middleware.NewUserMiddleware(userPermissions))
-	case config.Auth.IsAuthTypeOIDC():
-		log.Info("Auth - enabling OIDC user auth")
-		app.Use(middleware.NewOIDCMiddleware())
-	}
-
 	app.Use(compress.New(compress.Config{
 		Next: func(c *fiber.Ctx) bool {
 			// This is a little brittle, maybe there is a better way?
@@ -252,6 +234,7 @@ func createApp(
 		// init `aim` api refactored routes.
 		log.Info("Using refactored aim service")
 		aim2API.NewRouter(
+			config,
 			aim2Controller.NewController(
 				aimTagService.NewService(
 					aimRepositories.NewTagRepository(db.GormDB()),
@@ -286,6 +269,7 @@ func createApp(
 	// init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
+		config,
 		mlflowController.NewController(
 			mlflowRunService.NewService(
 				mlflowRepositories.NewTagRepository(db.GormDB()),
@@ -313,38 +297,32 @@ func createApp(
 	mlflowUI.AddRoutes(app)
 	aimUI.AddRoutes(app)
 
-	// init `admin` api routes.
-	adminAPI.NewRouter(
-		adminAPIController.NewController(
-			namespace.NewService(
-				config,
-				namespaceRepository,
-				mlflowRepositories.NewExperimentRepository(db.GormDB()),
-			),
-		),
-	).Init(app)
-
 	// init `admin` UI routes.
-	adminUI.NewRouter(
+	if err := adminUI.NewRouter(
+		config,
 		adminUIController.NewController(
-			namespace.NewService(
+			adminUINamespaceService.NewService(
 				config,
 				namespaceRepository,
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
-	).Init(app)
+	).Init(app); err != nil {
+		return nil, eris.Wrap(err, "error initializing admin routes")
+	}
 
 	// init `chooser` ui routes.
-	chooser.NewRouter(
+	if err := chooser.NewRouter(
+		config,
 		chooserController.NewController(
-			namespace.NewService(
+			chooserNamespaceService.NewService(
 				config,
 				namespaceRepository,
-				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
-	).AddRoutes(app)
+	).Init(app); err != nil {
+		return nil, eris.Wrap(err, "error initializing chooser routes")
+	}
 
 	return app, nil
 }

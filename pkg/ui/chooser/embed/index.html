@@ -109,7 +109,11 @@
             </ul>
         </div>
 
-	<p><a href="#" onclick="window.location = window.location.origin + '/admin/namespaces/'">Manage namespaces</a></p>
+        {{ if .IsAdmin }}
+        <p>
+            <a href="#" onclick="window.location = window.location.origin + '/admin/namespaces/'">Manage namespaces</a>
+        </p>
+        {{ end }}
 
     </main>
 

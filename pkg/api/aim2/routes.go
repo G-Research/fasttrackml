@@ -3,23 +3,35 @@ package aim2
 import (
 	"github.com/gofiber/fiber/v2"
 
+	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
 )
 
 // Router represents `mlflow` router.
 type Router struct {
+	config     *mlflowConfig.ServiceConfig
 	controller *controller.Controller
 }
 
 // NewRouter creates new instance of `mlflow` router.
-func NewRouter(controller *controller.Controller) *Router {
+func NewRouter(config *mlflowConfig.ServiceConfig, controller *controller.Controller) *Router {
 	return &Router{
+		config:     config,
 		controller: controller,
 	}
 }
 
 func (r Router) Init(server fiber.Router) {
 	mainGroup := server.Group("/aim/api")
+	// apply global auth middlewares.
+	switch {
+	case r.config.Auth.IsAuthTypeUser():
+		mainGroup.Use(middleware.NewUserMiddleware(r.config.Auth.AuthParsedUserPermissions))
+	}
+
+	// setup related routes.
 	apps := mainGroup.Group("apps")
 	apps.Get("/", r.controller.GetApps)
 	apps.Post("/", r.controller.CreateApp)

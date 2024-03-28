@@ -1,4 +1,4 @@
-package namespace
+package chooser
 
 import (
 	"context"
@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/admin/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/ui/chooser/api/response"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -40,7 +40,7 @@ func (s *ListNamespacesTestSuite) Test_Ok() {
 	}
 
 	var resp response.ListNamespaces
-	s.Require().Nil(s.AdminClient().WithResponse(&resp).DoRequest("/namespaces/list"))
+	s.Require().Nil(s.ChooserClient().WithResponse(&resp).DoRequest("/namespaces"))
 
 	s.Require().Equal(len(namespaces), len(resp))
 	for _, actualNamespace := range resp {

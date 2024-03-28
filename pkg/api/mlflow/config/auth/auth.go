@@ -1,5 +1,11 @@
 package auth
 
+import (
+	"github.com/rotisserie/eris"
+
+	"github.com/G-Research/fasttrackml/pkg/common/db/models"
+)
+
 // supported list of authentication types.
 const (
 	TypeOIDC string = "oidc"
@@ -7,10 +13,11 @@ const (
 )
 
 type Config struct {
-	AuthType        string
-	AuthUsername    string
-	AuthPassword    string
-	AuthUsersConfig string
+	AuthType                  string
+	AuthUsername              string
+	AuthPassword              string
+	AuthUsersConfig           string
+	AuthParsedUserPermissions *models.UserPermissions
 }
 
 // IsAuthTypeOIDC makes check that current auth is TypeOIDC.
@@ -33,6 +40,11 @@ func (c *Config) NormalizeConfiguration() error {
 	switch {
 	case c.AuthUsersConfig != "":
 		c.AuthType = TypeUser
+		parsedUserPermissions, err := Load(c.AuthUsersConfig)
+		if err != nil {
+			return eris.Wrapf(err, "error loading auth user configuration from file: %s", c.AuthUsersConfig)
+		}
+		c.AuthParsedUserPermissions = parsedUserPermissions
 	}
 	return nil
 }

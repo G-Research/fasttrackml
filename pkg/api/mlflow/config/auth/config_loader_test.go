@@ -160,6 +160,24 @@ func TestUserPermissions_HasAccess_Ok(t *testing.T) {
 				},
 			}),
 		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			authToken := tt.permissions.ValidateAuthToken(tt.token)
+			assert.NotNil(t, authToken)
+			assert.True(t, authToken.HasUserAccess(tt.namespace))
+		})
+	}
+}
+
+func TestUserPermissions_HasAdminAccess_Ok(t *testing.T) {
+	tests := []struct {
+		name        string
+		token       string
+		namespace   string
+		permissions *models.UserPermissions
+	}{
 		{
 			name:      "TestUserPermissionsUserHasAdminRole",
 			token:     "token",
@@ -174,7 +192,9 @@ func TestUserPermissions_HasAccess_Ok(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.True(t, tt.permissions.HasAccess(tt.namespace, tt.token))
+			authToken := tt.permissions.ValidateAuthToken(tt.token)
+			assert.NotNil(t, authToken)
+			assert.True(t, authToken.HasAdminAccess())
 		})
 	}
 }
@@ -212,7 +232,12 @@ func TestUserPermissions_HasAccess_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.False(t, tt.permissions.HasAccess(tt.namespace, tt.token))
+			authToken := tt.permissions.ValidateAuthToken(tt.token)
+			if authToken != nil {
+				assert.False(t, authToken.HasUserAccess(tt.namespace))
+			} else {
+				assert.Nil(t, authToken)
+			}
 		})
 	}
 }

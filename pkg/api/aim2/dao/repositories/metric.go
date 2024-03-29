@@ -159,7 +159,7 @@ func (r MetricRepository) SearchMetrics(
 
 		params := make(fiber.Map, len(r.Params)+1)
 		for _, p := range r.Params {
-			params[p.Key] = p.ValueAny()
+			params[p.Key] = p.Value
 		}
 		tags := make(map[string]string, len(r.Tags))
 		for _, t := range r.Tags {

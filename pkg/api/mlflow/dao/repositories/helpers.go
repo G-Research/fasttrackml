@@ -26,7 +26,7 @@ func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []in
 	index := 0
 	for _, param := range params {
 		valuesArray[index] = param.Key
-		valuesArray[index+1] = param.ValueString()
+		valuesArray[index+1] = param.Value
 		valuesArray[index+2] = param.RunID
 		index = index + 3
 	}

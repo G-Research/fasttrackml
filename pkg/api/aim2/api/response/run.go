@@ -84,7 +84,7 @@ func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
 
 	params := make(GetRunInfoParamsPartial, len(run.Params)+1)
 	for _, p := range run.Params {
-		params[p.Key] = p.Value
+		params[p.Key] = p.ValueTyped()
 	}
 	tags := make(GetRunInfoParamsPartial, len(run.Tags))
 	for _, t := range run.Tags {

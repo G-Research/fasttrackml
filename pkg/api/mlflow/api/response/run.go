@@ -184,7 +184,7 @@ func NewRunPartialResponse(run *models.Run) *RunPartialResponse {
 	for n, p := range run.Params {
 		params[n] = RunParamPartialResponse{
 			Key:   p.Key,
-			Value: p.ValueString(),
+			Value: p.ValueTyped(),
 		}
 	}
 

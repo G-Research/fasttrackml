@@ -107,6 +107,30 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 			},
 		},
 		{
+			name: "LogFloat",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "keyfloat",
+						Value: 123.45,
+					},
+				},
+			},
+		},
+		{
+			name: "LogInt",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Params: []request.ParamPartialRequest{
+					{
+						Key:   "keyInt",
+						Value: 123,
+					},
+				},
+			},
+		},
+		{
 			name: "LogDuplicateSeparateBatch",
 			request: &request.LogBatchRequest{
 				RunID: run.ID,

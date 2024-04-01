@@ -72,6 +72,44 @@ func (s *LogParamTestSuite) Test_Ok() {
 		),
 	)
 	s.Empty(resp)
+
+	// Log float
+	req = request.LogParamRequest{
+		RunID: run.ID,
+		Key:   "key2",
+		Value: float64(123.45),
+	}
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
+		),
+	)
+	s.Empty(resp)
+
+	// Log int
+	req = request.LogParamRequest{
+		RunID: run.ID,
+		Key:   "key3",
+		Value: int64(123),
+	}
+	s.Require().Nil(
+		s.MlflowClient().WithMethod(
+			http.MethodPost,
+		).WithRequest(
+			req,
+		).WithResponse(
+			&resp,
+		).DoRequest(
+			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
+		),
+	)
+	s.Empty(resp)
 }
 
 func (s *LogParamTestSuite) Test_Error() {

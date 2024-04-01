@@ -27,6 +27,11 @@ func TestValueTyped(t *testing.T) {
 			param: Param{Value: "abc"},
 			want:  "abc",
 		},
+		{
+			name:  "StringValue2",
+			param: Param{Value: "123.45n"},
+			want:  "123.45n",
+		},
 	}
 
 	for _, tt := range tests {

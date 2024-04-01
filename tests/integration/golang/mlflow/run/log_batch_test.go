@@ -155,8 +155,10 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 			params, err := s.ParamFixtures.GetParamsByRunID(context.Background(), run.ID)
 			s.Require().Nil(err)
 			for _, param := range tt.request.Params {
-				s.Contains(params, models.Param{Key: param.Key,
-					Value: fmt.Sprintf("%v", param.Value), RunID: run.ID})
+				s.Contains(params, models.Param{
+					Key:   param.Key,
+					Value: fmt.Sprintf("%v", param.Value), RunID: run.ID,
+				})
 			}
 		})
 	}

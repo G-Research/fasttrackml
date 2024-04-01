@@ -20,8 +20,8 @@ github.com/DATA-DOG/go-sqlmock v1.5.2 h1:OcvFkGmslmlZibjAjaHm3L//6LiuBgolP7Oputl
 github.com/DATA-DOG/go-sqlmock v1.5.2/go.mod h1:88MAG/4G7SMwSE3CeA0ZKzrT5CiOU3OJ+JlNzwDqpNU=
 github.com/G-Research/fasttrackml-ui-aim v0.31705.19 h1:ZwB0USydnJjaB1bsADdB58UUhnrGoJQj6OreSVhGXmI=
 github.com/G-Research/fasttrackml-ui-aim v0.31705.19/go.mod h1:1ydj5zgJgklq4gf3jkKMh+OrBXRz/5hZtx+1aROuWaM=
-github.com/G-Research/fasttrackml-ui-mlflow v0.20902.4 h1:YhFxViemtfzoNk89IMvuY1Peawp60RZltPPr6tAlzuU=
-github.com/G-Research/fasttrackml-ui-mlflow v0.20902.4/go.mod h1:Bg/xSCP6KzFDVDBSfJfrGmXuU6H8lFtboy+bTiHK6c4=
+github.com/G-Research/fasttrackml-ui-mlflow v0.20902.5 h1:GxdmEN7llxC/HYKLIccSUE7BeCzOjgtPPsP/Y7YRRa8=
+github.com/G-Research/fasttrackml-ui-mlflow v0.20902.5/go.mod h1:Bg/xSCP6KzFDVDBSfJfrGmXuU6H8lFtboy+bTiHK6c4=
 github.com/Khan/genqlient v0.6.0 h1:Bwb1170ekuNIVIwTJEqvO8y7RxBxXu639VJOkKSrwAk=
 github.com/Khan/genqlient v0.6.0/go.mod h1:rvChwWVTqXhiapdhLDV4bp9tz/Xvtewwkon4DpWWCRM=
 github.com/PuerkitoBio/goquery v1.9.1 h1:mTL6XjbJTZdpfL+Gwl5U2h1l9yEkJjhmlTeV9VPW7UI=

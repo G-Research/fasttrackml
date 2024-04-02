@@ -4,7 +4,6 @@ package convertors
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 
 	"github.com/rotisserie/eris"
@@ -79,9 +78,17 @@ func ConvertLogBatchRequestToDBModel(
 }
 
 func convertParam(runID, key string, value any) *models.Param {
-	return &models.Param{
+	param := &models.Param{
 		Key:   key,
 		RunID: runID,
-		Value: fmt.Sprintf("%v", value),
 	}
+	switch v := value.(type) {
+	case string:
+		param.Value = v
+	case int64:
+		param.ValueInt = &v
+	case float64:
+		param.ValueFloat = &v
+	}
+	return param
 }

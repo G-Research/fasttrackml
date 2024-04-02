@@ -2,10 +2,11 @@ package chooser
 
 import (
 	"embed"
-	"github.com/gofiber/fiber/v2/middleware/etag"
-	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"io/fs"
 	"net/http"
+
+	"github.com/gofiber/fiber/v2/middleware/etag"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"

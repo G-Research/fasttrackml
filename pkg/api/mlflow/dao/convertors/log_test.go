@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
@@ -19,7 +20,7 @@ func TestConvertLogParamRequestToDBModel_Ok(t *testing.T) {
 	}
 	result := ConvertLogParamRequestToDBModel("run_id", &req)
 	assert.Equal(t, "key", result.Key)
-	assert.Equal(t, "value", result.Value)
+	assert.Equal(t, "value", *result.ValueStr)
 	assert.Equal(t, "run_id", result.RunID)
 }
 
@@ -62,9 +63,9 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 			},
 			expectedParams: []models.Param{
 				{
-					RunID: "run_id",
-					Key:   "key",
-					Value: "value",
+					RunID:    "run_id",
+					Key:      "key",
+					ValueStr: common.GetPointer[string]("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{
@@ -109,9 +110,9 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 			},
 			expectedParams: []models.Param{
 				{
-					RunID: "run_id",
-					Key:   "key",
-					Value: "value",
+					RunID:    "run_id",
+					Key:      "key",
+					ValueStr: common.GetPointer[string]("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{
@@ -157,9 +158,9 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 			},
 			expectedParams: []models.Param{
 				{
-					RunID: "run_id",
-					Key:   "key",
-					Value: "value",
+					RunID:    "run_id",
+					Key:      "key",
+					ValueStr: common.GetPointer[string]("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{
@@ -204,9 +205,9 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 			},
 			expectedParams: []models.Param{
 				{
-					RunID: "run_id",
-					Key:   "key",
-					Value: "value",
+					RunID:    "run_id",
+					Key:      "key",
+					ValueStr: common.GetPointer[string]("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{

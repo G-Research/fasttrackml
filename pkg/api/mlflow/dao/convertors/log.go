@@ -84,7 +84,7 @@ func convertParam(runID, key string, value any) *models.Param {
 	}
 	switch v := value.(type) {
 	case string:
-		param.Value = v
+		param.ValueStr = &v
 	case int64:
 		param.ValueInt = &v
 	case float64:

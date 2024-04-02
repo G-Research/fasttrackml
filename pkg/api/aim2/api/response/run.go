@@ -84,7 +84,7 @@ func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
 
 	params := make(GetRunInfoParamsPartial, len(run.Params)+1)
 	for _, p := range run.Params {
-		params[p.Key] = p.ValueTyped()
+		params[p.Key] = p.ValueAny()
 	}
 	tags := make(GetRunInfoParamsPartial, len(run.Tags))
 	for _, t := range run.Tags {
@@ -508,10 +508,10 @@ func NewRunsSearchCSVResponse(ctx *fiber.Ctx, runs []models.Run, excludeTraces, 
 				if !excludeParams {
 					for _, param := range run.Params {
 						if _, ok := paramData[param.Key]; ok {
-							paramData[param.Key][run.ID] = param.Value
+							paramData[param.Key][run.ID] = param.ValueString()
 						} else {
 							paramKeys = append(paramKeys, param.Key)
-							paramData[param.Key] = map[string]string{run.ID: param.Value}
+							paramData[param.Key] = map[string]string{run.ID: param.ValueString()}
 						}
 					}
 					for _, tag := range run.Tags {
@@ -679,7 +679,7 @@ func NewRunsSearchStreamResponse(
 				if !excludeParams {
 					params := make(fiber.Map, len(r.Params)+1)
 					for _, p := range r.Params {
-						params[p.Key] = p.Value
+						params[p.Key] = p.ValueAny()
 					}
 					tags := make(map[string]string, len(r.Tags))
 					for _, t := range r.Tags {

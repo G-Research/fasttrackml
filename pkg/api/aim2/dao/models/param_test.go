@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestValueTyped(t *testing.T) {
+func TestValueAny(t *testing.T) {
 	tests := []struct {
 		name  string
 		param Param
@@ -36,7 +36,7 @@ func TestValueTyped(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valueTyped := tt.param.ValueTyped()
+			valueTyped := tt.param.ValueAny()
 			assert.Equal(t, tt.want, valueTyped)
 			assert.IsType(t, tt.want, valueTyped)
 		})

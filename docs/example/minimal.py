@@ -3,8 +3,8 @@ from random import randint, random
 import mlflow
 from mlflow import log_metric, log_param
 
-mlflow.set_tracking_uri("http://localhost:5000")
-mlflow.set_experiment("my-experiment")
+mlflow.set_tracking_uri("http://localhost:5000/ns/ns1")
+mlflow.set_experiment("my-experiment1")
 
 
 if __name__ == "__main__":

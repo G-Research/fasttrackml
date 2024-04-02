@@ -1,0 +1,12 @@
+users:
+  - name: user1
+    password: password1
+    roles:
+      - admin
+  - name: user2
+    password: password2
+    roles:
+      - ns:default
+      - ns:ns1
+      - ns:namespace2
+      - ns:namespace3

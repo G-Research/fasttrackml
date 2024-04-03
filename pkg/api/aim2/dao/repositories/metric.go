@@ -178,7 +178,7 @@ func (r MetricRepository) SearchMetrics(
 
 	var metricKeyContextConditionSlice []string
 	for i, tuple := range req.Metrics {
-		condition := fmt.Sprintf("(latest_metrics.key = '%s' AND contexts.id = %d)", tuple.Key, ids[i])
+		condition := fmt.Sprintf("(latest_metrics.key = '%s' AND contexts.id = %d)", tuple[0], ids[i])
 		metricKeyContextConditionSlice = append(metricKeyContextConditionSlice, condition)
 	}
 	metricKeyContextCondition := strings.Join(metricKeyContextConditionSlice, " OR ")
@@ -256,7 +256,7 @@ func (r MetricRepository) findContextIDs(ctx context.Context, req *request.Searc
 	contextList := []types.JSONB{}
 	contextsMap := map[string]types.JSONB{}
 	for _, r := range req.Metrics {
-		data := types.JSONB(r.Context)
+		data := types.JSONB(r[1])
 		contextList = append(contextList, data)
 		contextsMap[string(data)] = data
 	}

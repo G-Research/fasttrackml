@@ -49,20 +49,14 @@ type SearchRunsRequest struct {
 	ExcludeTraces bool   `query:"exclude_traces"`
 }
 
-// MetricTuple represents a metric with key and context.
-type MetricTuple struct {
-	Key     string `query:"metric"`
-	Context string `query:"context"`
-}
-
 // SearchMetricsRequest is a request struct for `GET /runs/search/metric` endpoint.
 type SearchMetricsRequest struct {
 	BaseSearchRequest
-	Metrics    []MetricTuple `json:"m"`
-	Query      string        `json:"q"`
-	Steps      int           `json:"p"`
-	XAxis      string        `json:"x_axis"`
-	SkipSystem bool          `json:"skip_system"`
+	Metrics    [][]string `json:"metrics"`
+	Query      string     `json:"query"`
+	Steps      int        `json:"steps"`
+	XAxis      string     `json:"x_axis"`
+	SkipSystem bool       `json:"skip_system"`
 }
 
 // SearchAlignedMetricsRequest is a request struct for `GET /runs/search/metric/align` endpoint.

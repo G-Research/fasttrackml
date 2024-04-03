@@ -167,6 +167,8 @@ func (r ExperimentRepository) GetExperiments(
 			" experiment_tags.key = ?", common.DescriptionTagKey,
 	).Group(
 		"experiments.experiment_id",
+	).Order(
+		"experiments.experiment_id",
 	).Find(
 		&experiments,
 	).Error; err != nil {

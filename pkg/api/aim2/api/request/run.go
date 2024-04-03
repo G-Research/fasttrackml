@@ -58,11 +58,11 @@ type MetricTuple struct {
 // SearchMetricsRequest is a request struct for `GET /runs/search/metric` endpoint.
 type SearchMetricsRequest struct {
 	BaseSearchRequest
-	Metrics    []MetricTuple `query:"m"`
-	Query      string        `query:"q"`
-	Steps      int           `query:"p"`
-	XAxis      string        `query:"x_axis"`
-	SkipSystem bool          `query:"skip_system"`
+	Metrics    []MetricTuple `json:"m"`
+	Query      string        `json:"q"`
+	Steps      int           `json:"p"`
+	XAxis      string        `json:"x_axis"`
+	SkipSystem bool          `json:"skip_system"`
 }
 
 // SearchAlignedMetricsRequest is a request struct for `GET /runs/search/metric/align` endpoint.

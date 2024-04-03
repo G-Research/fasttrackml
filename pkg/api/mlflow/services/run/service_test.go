@@ -801,7 +801,7 @@ func TestService_GetRun_Ok(t *testing.T) {
 		RowNum:         1,
 		Params: []models.Param{
 			{
-				Key:   "key",
+				Key:      "key",
 				ValueStr: common.GetPointer[string]("value"),
 			},
 		},
@@ -851,7 +851,7 @@ func TestService_GetRun_Ok(t *testing.T) {
 	assert.Equal(t, models.RowNum(1), run.RowNum)
 	assert.Equal(t, []models.Param{
 		{
-			Key:   "key",
+			Key:      "key",
 			ValueStr: common.GetPointer[string]("value"),
 		},
 	}, run.Params)
@@ -1175,9 +1175,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 					100,
 					[]models.Param{
 						{
-							Key:   "key",
+							Key:      "key",
 							ValueStr: common.GetPointer[string]("value"),
-							RunID: "1",
+							RunID:    "1",
 						},
 					},
 				).Return(errors.New("database error"))
@@ -1220,9 +1220,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 					100,
 					[]models.Param{
 						{
-							Key:   "key",
+							Key:      "key",
 							ValueStr: common.GetPointer[string]("value"),
-							RunID: "1",
+							RunID:    "1",
 						},
 					},
 				).Return(repositories.ParamConflictError{Message: "param conflict!"})
@@ -1274,9 +1274,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 					100,
 					[]models.Param{
 						{
-							Key:   "key",
+							Key:      "key",
 							ValueStr: common.GetPointer[string]("value"),
-							RunID: "1",
+							RunID:    "1",
 						},
 					},
 				).Return(nil)
@@ -1371,9 +1371,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 					100,
 					[]models.Param{
 						{
-							Key:   "key",
+							Key:      "key",
 							ValueStr: common.GetPointer[string]("value"),
-							RunID: "1",
+							RunID:    "1",
 						},
 					},
 				).Return(nil)

@@ -3,8 +3,9 @@ package models
 import (
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/G-Research/fasttrackml/pkg/common"
 )
 
 func TestValueAny(t *testing.T) {

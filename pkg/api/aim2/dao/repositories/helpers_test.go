@@ -35,7 +35,7 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 		expectedValues       []interface{}
 	}{
 		{
-			params:               []models.Param{
+			params: []models.Param{
 				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
 			},
 			expectedPlaceholders: "(?,?,?)",

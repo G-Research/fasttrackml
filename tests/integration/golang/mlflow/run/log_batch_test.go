@@ -180,7 +180,8 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 			params, err := s.ParamFixtures.GetParamsByRunID(context.Background(), run.ID)
 			s.Require().Nil(err)
 			for _, param := range tt.request.Params {
-				valueStr := param.Value.(string)
+				valueStr, ok := param.Value.(string)
+				s.Assert().True(ok)
 				s.Contains(params, models.Param{Key: param.Key, ValueStr: &valueStr, RunID: run.ID})
 			}
 		})

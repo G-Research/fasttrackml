@@ -3,6 +3,7 @@ package models
 import (
 	"testing"
 
+	"github.com/G-Research/fasttrackml/pkg/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,23 +15,18 @@ func TestValueAny(t *testing.T) {
 	}{
 		{
 			name:  "IntegerValue",
-			param: Param{Value: "123"},
+			param: Param{ValueInt: common.GetPointer[int64](int64(123))},
 			want:  int64(123),
 		},
 		{
 			name:  "FloatValue",
-			param: Param{Value: "123.45"},
+			param: Param{ValueFloat: common.GetPointer[float64](float64(123.45))},
 			want:  float64(123.45),
 		},
 		{
 			name:  "StringValue",
-			param: Param{Value: "abc"},
+			param: Param{ValueStr: common.GetPointer[string]("abc")},
 			want:  "abc",
-		},
-		{
-			name:  "StringValue2",
-			param: Param{Value: "123.45n"},
-			want:  "123.45n",
 		},
 	}
 

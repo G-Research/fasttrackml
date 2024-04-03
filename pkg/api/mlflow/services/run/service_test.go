@@ -802,7 +802,7 @@ func TestService_GetRun_Ok(t *testing.T) {
 		Params: []models.Param{
 			{
 				Key:   "key",
-				Value: "value",
+				ValueStr: common.GetPointer[string]("value"),
 			},
 		},
 		Tags: []models.Tag{
@@ -852,7 +852,7 @@ func TestService_GetRun_Ok(t *testing.T) {
 	assert.Equal(t, []models.Param{
 		{
 			Key:   "key",
-			Value: "value",
+			ValueStr: common.GetPointer[string]("value"),
 		},
 	}, run.Params)
 	assert.Equal(t, []models.Tag{
@@ -961,7 +961,7 @@ func TestService_LogBatch_Ok(t *testing.T) {
 		mock.MatchedBy(func(params []models.Param) bool {
 			assert.Equal(t, "1", params[0].RunID)
 			assert.Equal(t, "key2", params[0].Key)
-			assert.Equal(t, "value2", params[0].Value)
+			assert.Equal(t, "value2", params[0].ValueString())
 			return true
 		}),
 	).Return(nil)
@@ -1176,7 +1176,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 					[]models.Param{
 						{
 							Key:   "key",
-							Value: "value",
+							ValueStr: common.GetPointer[string]("value"),
 							RunID: "1",
 						},
 					},
@@ -1221,7 +1221,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 					[]models.Param{
 						{
 							Key:   "key",
-							Value: "value",
+							ValueStr: common.GetPointer[string]("value"),
 							RunID: "1",
 						},
 					},
@@ -1275,7 +1275,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 					[]models.Param{
 						{
 							Key:   "key",
-							Value: "value",
+							ValueStr: common.GetPointer[string]("value"),
 							RunID: "1",
 						},
 					},
@@ -1372,7 +1372,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 					[]models.Param{
 						{
 							Key:   "key",
-							Value: "value",
+							ValueStr: common.GetPointer[string]("value"),
 							RunID: "1",
 						},
 					},
@@ -1656,7 +1656,7 @@ func TestService_LogParam_Ok(t *testing.T) {
 		mock.MatchedBy(func(params []models.Param) bool {
 			assert.Equal(t, "1", params[0].RunID)
 			assert.Equal(t, "key", params[0].Key)
-			assert.Equal(t, "value", params[0].Value)
+			assert.Equal(t, "value", params[0].ValueString())
 			return true
 		}),
 	).Return(nil)
@@ -1798,7 +1798,7 @@ func TestService_LogParam_Error(t *testing.T) {
 					mock.MatchedBy(func(params []models.Param) bool {
 						assert.Equal(t, 1, len(params))
 						assert.Equal(t, "key", params[0].Key)
-						assert.Equal(t, "value", params[0].Value)
+						assert.Equal(t, "value", params[0].ValueString())
 						assert.Equal(t, "1", params[0].RunID)
 						return true
 					}),
@@ -1840,7 +1840,7 @@ func TestService_LogParam_Error(t *testing.T) {
 					mock.MatchedBy(func(params []models.Param) bool {
 						assert.Equal(t, 1, len(params))
 						assert.Equal(t, "key", params[0].Key)
-						assert.Equal(t, "value", params[0].Value)
+						assert.Equal(t, "value", params[0].ValueString())
 						assert.Equal(t, "1", params[0].RunID)
 						return true
 					}),

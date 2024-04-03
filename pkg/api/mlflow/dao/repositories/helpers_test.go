@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
@@ -34,14 +35,16 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 		expectedValues       []interface{}
 	}{
 		{
-			params:               []models.Param{{Key: "key1", Value: "value1", RunID: "run1"}},
+			params:               []models.Param{
+				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
+			},
 			expectedPlaceholders: "(?,?,?)",
 			expectedValues:       []interface{}{"key1", "value1", "run1"},
 		},
 		{
 			params: []models.Param{
-				{Key: "key1", Value: "value1", RunID: "run1"},
-				{Key: "key2", Value: "value2", RunID: "run2"},
+				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
+				{Key: "key2", ValueStr: common.GetPointer[string]("value2"), RunID: "run2"},
 			},
 			expectedPlaceholders: "(?,?,?),(?,?,?)",
 			expectedValues:       []interface{}{"key1", "value1", "run1", "key2", "value2", "run2"},

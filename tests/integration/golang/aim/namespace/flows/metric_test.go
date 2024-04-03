@@ -242,20 +242,20 @@ func (s *MetricFlowTestSuite) testRunFlow(
 ) {
 	// test `GET /runs/search/metric` endpoint.
 	s.searchMetricsAndCompare(namespace1Code, request.SearchMetricsRequest{
-		Metrics: [][]string{
+		Metrics: []request.MetricTuple{
 			{
-				"TestMetric1",
-				`{"key":"value"}`,
+				Key:     "TestMetric1",
+				Context: `{"key":"value"}`,
 			},
 		},
 	}, []*models.Run{run1}, []*models.LatestMetric{
 		metric1Run1,
 	})
 	s.searchMetricsAndCompare(namespace2Code, request.SearchMetricsRequest{
-		Metrics: [][]string{
+		Metrics: []request.MetricTuple{
 			{
-				"TestMetric2",
-				`{"key":"value"}`,
+				Key:     "TestMetric2",
+				Context: `{"key":"value"}`,
 			},
 		},
 	}, []*models.Run{run2}, []*models.LatestMetric{
@@ -307,11 +307,9 @@ func (s *MetricFlowTestSuite) searchMetricsAndCompare(
 ) {
 	resp := new(bytes.Buffer)
 	s.Require().Nil(
-		s.AIMClient().WithMethod(
-			http.MethodPost,
-		).WithNamespace(
+		s.AIMClient().WithNamespace(
 			namespace,
-		).WithRequest(
+		).WithQuery(
 			request,
 		).WithResponseType(
 			helpers.ResponseTypeBuffer,

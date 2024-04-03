@@ -9,6 +9,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -57,9 +58,9 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	param, err := s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-		Key:   "param1",
-		Value: "value1",
-		RunID: run.ID,
+		Key:      "param1",
+		ValueStr: common.GetPointer[string]("value1"),
+		RunID:    run.ID,
 	})
 	s.Require().Nil(err)
 

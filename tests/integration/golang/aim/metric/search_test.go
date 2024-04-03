@@ -13,6 +13,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common"
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -122,9 +123,9 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-		Key:   "param1",
-		Value: "value1",
-		RunID: run1.ID,
+		Key:      "param1",
+		ValueStr: common.GetPointer[string]("value1"),
+		RunID:    run1.ID,
 	})
 	s.Require().Nil(err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
@@ -220,9 +221,9 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-		Key:   "param2",
-		Value: "value2",
-		RunID: run2.ID,
+		Key:      "param2",
+		ValueStr: common.GetPointer[string]("value2"),
+		RunID:    run2.ID,
 	})
 	s.Require().Nil(err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
@@ -293,9 +294,9 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-		Key:   "param3",
-		Value: "value3",
-		RunID: run3.ID,
+		Key:      "param3",
+		ValueStr: common.GetPointer[string]("value3"),
+		RunID:    run3.ID,
 	})
 	s.Require().Nil(err)
 	_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{

@@ -202,6 +202,10 @@ func (b *Base) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
+type BaseWithArchived struct {
+	IsArchived bool `json:"-"`
+}
+
 type Dashboard struct {
 	Base
 	Name        string     `json:"name"`

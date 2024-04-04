@@ -101,8 +101,8 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key1",
-						Value: "value1",
+						Key:      "key1",
+						ValueStr: common.GetPointer("value1"),
 					},
 				},
 			},
@@ -113,8 +113,8 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "keyfloat",
-						Value: float64(123.45),
+						Key:        "keyfloat",
+						ValueFloat: common.GetPointer(float64(123.45)),
 					},
 				},
 			},
@@ -125,8 +125,8 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "keyInt",
-						Value: int64(123),
+						Key:      "keyInt",
+						ValueInt: common.GetPointer(int64(123)),
 					},
 				},
 			},
@@ -137,8 +137,8 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key1",
-						Value: "value1",
+						Key:      "key1",
+						ValueStr: common.GetPointer("value1"),
 					},
 				},
 			},
@@ -149,12 +149,12 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key2",
-						Value: "value2",
+						Key:      "key2",
+						ValueStr: common.GetPointer("value2"),
 					},
 					{
-						Key:   "key2",
-						Value: "value2",
+						Key:      "key2",
+						ValueStr: common.GetPointer("value2"),
 					},
 				},
 			},
@@ -181,13 +181,12 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 			s.Require().Nil(err)
 			for _, param := range tt.request.Params {
 				modelParam := models.Param{Key: param.Key, RunID: run.ID}
-				switch v := param.Value.(type) {
-				case int64:
-					modelParam.ValueInt = &v
-				case float64:
-					modelParam.ValueFloat = &v
-				case string:
-					modelParam.ValueStr = &v
+				if param.ValueInt != nil {
+					modelParam.ValueInt = param.ValueInt
+				} else if param.ValueFloat != nil {
+					modelParam.ValueFloat = param.ValueFloat
+				} else if param.ValueStr != nil {
+					modelParam.ValueStr = param.ValueStr
 				}
 				s.Contains(params, modelParam)
 			}
@@ -508,16 +507,16 @@ func (s *LogBatchTestSuite) Test_Error() {
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key1",
-						Value: "value1",
+						Key:      "key1",
+						ValueStr: common.GetPointer("value1"),
 					},
 					{
-						Key:   "key1",
-						Value: "value2",
+						Key:      "key1",
+						ValueStr: common.GetPointer("value2"),
 					},
 					{
-						Key:   "key2",
-						Value: "value2",
+						Key:      "key2",
+						ValueStr: common.GetPointer("value2"),
 					},
 				},
 			},

@@ -12,6 +12,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -36,9 +37,9 @@ func (s *LogParamTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	req := request.LogParamRequest{
-		RunID: run.ID,
-		Key:   "key1",
-		Value: "value1",
+		RunID:    run.ID,
+		Key:      "key1",
+		ValueStr: common.GetPointer("value1"),
 	}
 	resp := map[string]any{}
 	s.Require().Nil(
@@ -56,9 +57,9 @@ func (s *LogParamTestSuite) Test_Ok() {
 
 	// log duplicate, which is OK
 	req = request.LogParamRequest{
-		RunID: run.ID,
-		Key:   "key1",
-		Value: "value1",
+		RunID:    run.ID,
+		Key:      "key1",
+		ValueStr: common.GetPointer("value1"),
 	}
 	s.Require().Nil(
 		s.MlflowClient().WithMethod(
@@ -75,9 +76,9 @@ func (s *LogParamTestSuite) Test_Ok() {
 
 	// Log float
 	req = request.LogParamRequest{
-		RunID: run.ID,
-		Key:   "key2",
-		Value: float64(123.45),
+		RunID:      run.ID,
+		Key:        "key2",
+		ValueFloat: common.GetPointer(float64(123.45)),
 	}
 	s.Require().Nil(
 		s.MlflowClient().WithMethod(
@@ -94,9 +95,9 @@ func (s *LogParamTestSuite) Test_Ok() {
 
 	// Log int
 	req = request.LogParamRequest{
-		RunID: run.ID,
-		Key:   "key3",
-		Value: int64(123),
+		RunID:    run.ID,
+		Key:      "key3",
+		ValueInt: common.GetPointer(int64(123)),
 	}
 	s.Require().Nil(
 		s.MlflowClient().WithMethod(
@@ -124,9 +125,9 @@ func (s *LogParamTestSuite) Test_Error() {
 
 	// setup param OK
 	req := request.LogParamRequest{
-		RunID: run.ID,
-		Key:   "key1",
-		Value: "value1",
+		RunID:    run.ID,
+		Key:      "key1",
+		ValueStr: common.GetPointer("value1"),
 	}
 	resp := api.ErrorResponse{}
 	s.Require().Nil(
@@ -146,8 +147,8 @@ func (s *LogParamTestSuite) Test_Error() {
 
 	// missing run_id
 	req = request.LogParamRequest{
-		Key:   "key1",
-		Value: "value1",
+		Key:      "key1",
+		ValueStr: common.GetPointer("value1"),
 	}
 	s.Require().Nil(
 		s.MlflowClient().WithMethod(
@@ -167,9 +168,9 @@ func (s *LogParamTestSuite) Test_Error() {
 
 	// conflicting param
 	req = request.LogParamRequest{
-		RunID: run.ID,
-		Key:   "key1",
-		Value: "value2",
+		RunID:    run.ID,
+		Key:      "key1",
+		ValueStr: common.GetPointer("value2"),
 	}
 	s.Require().Nil(
 		s.MlflowClient().WithMethod(
@@ -190,7 +191,7 @@ func (s *LogParamTestSuite) Test_Error() {
 				req.RunID,
 				req.Key,
 				"value1",
-				req.Value,
+				*req.ValueStr,
 			),
 		).Error(),
 		resp.Error(),

@@ -15,7 +15,7 @@ import (
 
 // ConvertLogParamRequestToDBModel converts request.LogParamRequest into actual models.Param model.
 func ConvertLogParamRequestToDBModel(runID string, req *request.LogParamRequest) *models.Param {
-	return convertParam(runID, req.Key, req.Value)
+	return convertParam(runID, req.Key, req.ValueInt, req.ValueFloat, req.ValueStr)
 }
 
 // ConvertLogBatchRequestToDBModel converts request.LogBatchRequest into actual []models.Param, []models.Tag models.
@@ -24,7 +24,7 @@ func ConvertLogBatchRequestToDBModel(
 ) ([]models.Metric, []models.Param, []models.Tag, error) {
 	params := make([]models.Param, len(req.Params))
 	for i, param := range req.Params {
-		params[i] = *convertParam(runID, param.Key, param.Value)
+		params[i] = *convertParam(runID, param.Key, param.ValueInt, param.ValueFloat, param.ValueStr)
 	}
 
 	tags := make([]models.Tag, len(req.Tags))
@@ -77,18 +77,13 @@ func ConvertLogBatchRequestToDBModel(
 	return metrics, params, tags, nil
 }
 
-func convertParam(runID, key string, value any) *models.Param {
+func convertParam(runID, key string, valueInt *int64, valueFloat *float64, valueStr *string) *models.Param {
 	param := &models.Param{
-		Key:   key,
-		RunID: runID,
-	}
-	switch v := value.(type) {
-	case string:
-		param.ValueStr = &v
-	case int64:
-		param.ValueInt = &v
-	case float64:
-		param.ValueFloat = &v
+		Key:        key,
+		RunID:      runID,
+		ValueInt:   valueInt,
+		ValueFloat: valueFloat,
+		ValueStr:   valueStr,
 	}
 	return param
 }

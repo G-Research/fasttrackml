@@ -16,7 +16,7 @@ import (
 func TestConvertLogParamRequestToDBModel_Ok(t *testing.T) {
 	req := request.LogParamRequest{
 		Key:   "key",
-		Value: "value",
+		ValueStr: common.GetPointer[string]("value"),
 	}
 	result := ConvertLogParamRequestToDBModel("run_id", &req)
 	assert.Equal(t, "key", result.Key)
@@ -42,7 +42,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "key",
-						Value: "value",
+						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -89,7 +89,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "key",
-						Value: "value",
+						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -137,7 +137,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "key",
-						Value: "value",
+						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -184,7 +184,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "key",
-						Value: "value",
+						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -250,7 +250,7 @@ func TestConvertLogBatchRequestToDBModel_Error(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "key",
-						Value: "value",
+						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -274,7 +274,7 @@ func TestConvertLogBatchRequestToDBModel_Error(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "key",
-						Value: "value",
+						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{

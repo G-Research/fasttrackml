@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
@@ -333,10 +334,10 @@ func TestValidateLogBatchRequest_Error(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "key1",
-						Value: "value1",
+						ValueStr: common.GetPointer[string]("value1"),
 					},
 					{
-						Value: "value2",
+						ValueStr: common.GetPointer[string]("value2"),
 					},
 				},
 			},

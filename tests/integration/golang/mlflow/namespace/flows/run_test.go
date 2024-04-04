@@ -494,12 +494,12 @@ func (s *RunFlowTestSuite) testRunFlow(
 	s.logRunParam(namespace1Code, &request.LogParamRequest{
 		RunID: run1ID,
 		Key:   "key1",
-		Value: "param1",
+		ValueStr: common.GetPointer[string]("param1"),
 	})
 	s.logRunParam(namespace2Code, &request.LogParamRequest{
 		RunID: run2ID,
 		Key:   "key2",
-		Value: "param2",
+		ValueStr: common.GetPointer[string]("param2"),
 	})
 
 	// try to get runs information and compare it.
@@ -710,7 +710,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		Params: []request.ParamPartialRequest{
 			{
 				Key:   "key1",
-				Value: "param1",
+				ValueStr: common.GetPointer[string]("param1"),
 			},
 		},
 		Metrics: []request.MetricPartialRequest{
@@ -733,7 +733,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		Params: []request.ParamPartialRequest{
 			{
 				Key:   "key2",
-				Value: "param2",
+				ValueStr: common.GetPointer[string]("param2"),
 			},
 		},
 		Metrics: []request.MetricPartialRequest{

@@ -130,6 +130,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 			tx := db.Begin()
 			if err := tx.AutoMigrate(
 				&Role{},
+				&Namespace{},
 				&RoleNamespace{},
 				&Experiment{},
 				&ExperimentTag{},

@@ -226,6 +226,7 @@ func (s Service) SearchRuns(
 			key := strings.Trim(components[2], "\"`")
 			comparison := components[3]
 			var value any = components[4]
+			valueCol := "value"
 
 			var kind any
 			switch entity {
@@ -308,10 +309,33 @@ func (s Service) SearchRuns(
 			case "parameter", "parameters", "param", "params":
 				switch strings.ToUpper(comparison) {
 				case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
-					if strings.HasPrefix(value.(string), "(") {
-						return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
+					switch v := value.(type) {
+					case string:
+						if strings.HasPrefix(v, "(") {
+							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
+						}
+						value = strings.Trim(v, `"'`)
+						valueCol = "value_str"
+					case int64, int32, int:
+						valueCol = "value_int"
+					case float64, float32:
+						valueCol = "value_float"
+					default:
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid value '%v' for comparison operator '%s'", v, comparison,
+						)
 					}
-					value = strings.Trim(value.(string), `"'`)
+				case GraterExpression, GraterOrEqualExpression, LessExpression, LessOrEqualExpression:
+					switch v := value.(type) {
+					case int64, int32, int:
+						valueCol = "value_int"
+					case float64, float32:
+						valueCol = "value_float"
+					default:
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid value '%v' for comparison operator '%s'", v, comparison,
+						)
+					}
 				default:
 					return nil, 0, 0, api.NewInvalidParameterValueError(
 						"invalid param comparison operator '%s'", comparison,
@@ -348,14 +372,14 @@ func (s Service) SearchRuns(
 				}
 			} else {
 				table := fmt.Sprintf("filter_%d", n)
-				where := fmt.Sprintf("value %s ?", comparison)
+				where := fmt.Sprintf("%s %s ?", valueCol, comparison)
 				if database.DB.Dialector.Name() == "sqlite" && strings.ToUpper(comparison) == ILikeExpression {
-					where = "LOWER(value) LIKE ?"
-					value = strings.ToLower(value.(string))
+					where = fmt.Sprintf("LOWER(%s) LIKE ?", valueCol)
+					value = strings.ToLower(fmt.Sprintf("%v", value))
 				}
 				tx.Joins(
 					fmt.Sprintf("JOIN (?) AS %s ON runs.run_uuid = %s.run_uuid", table, table),
-					database.DB.Select("run_uuid", "value").Where("key = ?", key).Where(where, value).Model(kind),
+					database.DB.Select("run_uuid", valueCol).Where("key = ?", key).Where(where, value).Model(kind),
 				)
 			}
 		}

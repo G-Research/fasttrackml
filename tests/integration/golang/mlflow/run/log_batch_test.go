@@ -114,7 +114,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "keyfloat",
-						Value: 123.45,
+						Value: float64(123.45),
 					},
 				},
 			},
@@ -126,7 +126,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:   "keyInt",
-						Value: 123,
+						Value: int64(123),
 					},
 				},
 			},

@@ -180,9 +180,16 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 			params, err := s.ParamFixtures.GetParamsByRunID(context.Background(), run.ID)
 			s.Require().Nil(err)
 			for _, param := range tt.request.Params {
-				valueStr, ok := param.Value.(string)
-				s.Assert().True(ok)
-				s.Contains(params, models.Param{Key: param.Key, ValueStr: &valueStr, RunID: run.ID})
+				modelParam := models.Param{Key: param.Key, RunID: run.ID}
+				switch v := param.Value.(type) {
+				case int64:
+					modelParam.ValueInt = &v
+				case float64:
+					modelParam.ValueFloat = &v
+				case string:
+					modelParam.ValueStr = &v
+				}
+				s.Contains(params, modelParam)
 			}
 		})
 	}

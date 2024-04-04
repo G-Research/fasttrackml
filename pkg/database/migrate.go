@@ -129,7 +129,8 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 			log.Info("Initializing database")
 			tx := db.Begin()
 			if err := tx.AutoMigrate(
-				&Namespace{},
+				&Role{},
+				&RoleNamespace{},
 				&Experiment{},
 				&ExperimentTag{},
 				&Run{},

@@ -65,7 +65,7 @@ func (r Router) Init(server fiber.Router) {
 	runs := mainGroup.Group("/runs")
 	runs.Get("/active/", r.controller.GetRunsActive)
 	runs.Get("/search/run/", r.controller.SearchRuns)
-	runs.Get("/search/metric/", r.controller.SearchMetrics)
+	runs.Post("/search/metric/", r.controller.SearchMetrics)
 	runs.Post("/search/metric/align/", r.controller.SearchAlignedMetrics)
 	runs.Get("/:id/info/", r.controller.GetRunInfo)
 	runs.Post("/:id/metric/get-batch/", r.controller.GetRunMetrics)

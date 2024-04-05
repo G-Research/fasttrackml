@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
@@ -2017,7 +2018,9 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 		s.Run(tt.name, func() {
 			resp := new(bytes.Buffer)
 			s.Require().Nil(
-				s.AIMClient().WithQuery(
+				s.AIMClient().WithMethod(
+					http.MethodPost,
+				).WithRequest(
 					tt.request,
 				).WithResponseType(
 					helpers.ResponseTypeBuffer,

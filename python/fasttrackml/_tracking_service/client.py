@@ -12,7 +12,12 @@ from mlflow.utils.async_logging.run_operations import (
     RunOperations,
     get_combined_run_operations,
 )
-from mlflow.utils.credentials import get_default_host_creds
+
+try:
+    from mlflow.utils.credentials import get_default_host_creds
+except ImportError:
+    from mlflow.tracking._tracking_service.utils import _get_default_host_creds as get_default_host_creds
+
 from mlflow.utils.time import get_current_time_millis
 from mlflow.utils.validation import MAX_METRICS_PER_BATCH
 

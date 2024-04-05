@@ -38,7 +38,7 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 			params: []models.Param{
 				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
 			},
-			expectedPlaceholders: "(?,?,?,?,?)",
+			expectedPlaceholders: "SELECT ?::text, ?::text, ?::int, ?::float, ?::text",
 			expectedValues:       []interface{}{"key1", "run1", nil, nil, "value1"},
 		},
 		{
@@ -46,7 +46,9 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
 				{Key: "key2", ValueStr: common.GetPointer[string]("value2"), RunID: "run2"},
 			},
-			expectedPlaceholders: "(?,?,?,?,?),(?,?,?,?,?)",
+			expectedPlaceholders: "SELECT ?::text, ?::text, ?::int, ?::float, ?::text\n" +
+				"UNION ALL\n" +
+				"SELECT ?::text, ?::text, ?::int, ?::float, ?::text",
 			expectedValues:       []interface{}{"key1", "run1", nil, nil, "value1", "key2", "run2", nil, nil, "value2"},
 		},
 	}

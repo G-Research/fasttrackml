@@ -36,11 +36,7 @@ func NewUserMiddleware(userPermissions *models.UserPermissions) fiber.Handler {
 			return ctx.Next()
 		}
 		if authToken == nil || !authToken.HasUserAccess(namespace.Code) {
-			return ctx.Status(
-				http.StatusNotFound,
-			).SendString(
-				"unable to find requested resource",
-			)
+			return ctx.Redirect("/errors/not-found", http.StatusMovedPermanently)
 		}
 
 		ctx.Locals(authTokenContextKey, authToken)

@@ -307,9 +307,11 @@ func (s *MetricFlowTestSuite) searchMetricsAndCompare(
 ) {
 	resp := new(bytes.Buffer)
 	s.Require().Nil(
-		s.AIMClient().WithNamespace(
+		s.AIMClient().WithMethod(
+			http.MethodPost,
+		).WithNamespace(
 			namespace,
-		).WithQuery(
+		).WithRequest(
 			request,
 		).WithResponseType(
 			helpers.ResponseTypeBuffer,

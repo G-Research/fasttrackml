@@ -49,7 +49,7 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 			expectedPlaceholders: "SELECT ?::text, ?::text, ?::int, ?::float, ?::text\n" +
 				"UNION ALL\n" +
 				"SELECT ?::text, ?::text, ?::int, ?::float, ?::text",
-			expectedValues:       []interface{}{"key1", "run1", nil, nil, "value1", "key2", "run2", nil, nil, "value2"},
+			expectedValues: []interface{}{"key1", "run1", nil, nil, "value1", "key2", "run2", nil, nil, "value2"},
 		},
 	}
 

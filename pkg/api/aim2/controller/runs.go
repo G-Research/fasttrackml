@@ -127,7 +127,7 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	return nil
 }
 
-// SearchMetrics handles `GET /runs/search/metric` endpoint.
+// SearchMetrics handles `POST /runs/search/metric` endpoint.
 func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -136,10 +136,9 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 	log.Debugf("searchMetrics namespace: %s", ns.Code)
 
 	req := request.SearchMetricsRequest{}
-	if err = ctx.QueryParser(&req); err != nil {
+	if err = ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-
 	if ctx.Query("report_progress") == "" {
 		req.ReportProgress = true
 	}
@@ -163,7 +162,7 @@ func (c Controller) SearchMetrics(ctx *fiber.Ctx) error {
 	return nil
 }
 
-// SearchAlignedMetrics handles `GET /runs/search/metric/align` endpoint.
+// SearchAlignedMetrics handles `POST /runs/search/metric/align` endpoint.
 func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
 	if err != nil {

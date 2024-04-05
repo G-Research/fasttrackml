@@ -492,13 +492,13 @@ func (s *RunFlowTestSuite) testRunFlow(
 
 	// test `POST /runs/log-parameter` endpoint.
 	s.logRunParam(namespace1Code, &request.LogParamRequest{
-		RunID: run1ID,
-		Key:   "key1",
+		RunID:    run1ID,
+		Key:      "key1",
 		ValueStr: common.GetPointer[string]("param1"),
 	})
 	s.logRunParam(namespace2Code, &request.LogParamRequest{
-		RunID: run2ID,
-		Key:   "key2",
+		RunID:    run2ID,
+		Key:      "key2",
 		ValueStr: common.GetPointer[string]("param2"),
 	})
 
@@ -709,7 +709,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 		Params: []request.ParamPartialRequest{
 			{
-				Key:   "key1",
+				Key:      "key1",
 				ValueStr: common.GetPointer[string]("param1"),
 			},
 		},
@@ -732,7 +732,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 		},
 		Params: []request.ParamPartialRequest{
 			{
-				Key:   "key2",
+				Key:      "key2",
 				ValueStr: common.GetPointer[string]("param2"),
 			},
 		},

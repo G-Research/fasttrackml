@@ -15,7 +15,7 @@ import (
 
 func TestConvertLogParamRequestToDBModel_Ok(t *testing.T) {
 	req := request.LogParamRequest{
-		Key:   "key",
+		Key:      "key",
 		ValueStr: common.GetPointer[string]("value"),
 	}
 	result := ConvertLogParamRequestToDBModel("run_id", &req)
@@ -41,7 +41,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
+						Key:      "key",
 						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
@@ -88,7 +88,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
+						Key:      "key",
 						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
@@ -136,7 +136,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
+						Key:      "key",
 						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
@@ -183,7 +183,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
+						Key:      "key",
 						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
@@ -249,7 +249,7 @@ func TestConvertLogBatchRequestToDBModel_Error(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
+						Key:      "key",
 						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
@@ -273,7 +273,7 @@ func TestConvertLogBatchRequestToDBModel_Error(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
+						Key:      "key",
 						ValueStr: common.GetPointer[string]("value"),
 					},
 				},

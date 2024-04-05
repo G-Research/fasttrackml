@@ -333,7 +333,7 @@ func TestValidateLogBatchRequest_Error(t *testing.T) {
 				RunID: "id",
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key1",
+						Key:      "key1",
 						ValueStr: common.GetPointer[string]("value1"),
 					},
 					{

@@ -88,12 +88,14 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 func findConflictingParams(tx *gorm.DB, params []models.Param) ([]paramConflict, error) {
 	var conflicts []paramConflict
 	placeholders, values := makeParamConflictPlaceholdersAndValues(params)
-	sql := fmt.Sprintf(`WITH new(key, value, run_uuid) AS (VALUES %s)
-		     SELECT current.run_uuid, current.key, COALESCE(current.value_int, current.value_float, current.value_str) 
-			   as old_value, new.value as new_value
+	sql := fmt.Sprintf(`WITH new(key, run_uuid, value_int, value_float, value_str) AS (VALUES %s)
+		     SELECT current.run_uuid, current.key, current.value_int, 
+			   current.value_float, current.value_str 
 		     FROM params AS current
 		     INNER JOIN new USING (run_uuid, key)
-		     WHERE new.value != COALESCE(current.value_int, current.value_float, current.value_str)`, placeholders)
+		     WHERE new.value_int != current.value_int 
+			 AND new.value_float != current.value_float
+			 AND new.value_str != current.value_str`, placeholders)
 	if err := tx.Raw(sql, values...).
 		Find(&conflicts).Error; err != nil {
 		return nil, eris.Wrap(err, "error fetching params from db")

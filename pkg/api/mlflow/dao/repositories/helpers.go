@@ -19,15 +19,17 @@ func makeSqlPlaceholders(numberInEachSet, numberOfSets int) string {
 // makeParamConflictPlaceholdersAndValues provides sql placeholders and concatenates
 // Key, Value, RunID from each input Param for use in sql values replacement
 func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []interface{}) {
-	// make place holders of 3 fields for each param
-	placeholders := makeSqlPlaceholders(3, len(params))
-	// values array is params * 3 in length since using 3 fields from each
-	valuesArray := make([]interface{}, len(params)*3)
+	// make place holders of 5 fields for each param
+	placeholders := makeSqlPlaceholders(5, len(params))
+	// values array is params * 5 in length since using 5 fields from each
+	valuesArray := make([]interface{}, len(params)*5)
 	index := 0
 	for _, param := range params {
 		valuesArray[index] = param.Key
-		valuesArray[index+1] = param.ValueAny()
-		valuesArray[index+2] = param.RunID
+		valuesArray[index+1] = param.RunID
+		valuesArray[index+2] = param.ValueInt
+		valuesArray[index+3] = param.ValueFloat
+		valuesArray[index+4] = param.ValueStr
 		index = index + 3
 	}
 	return placeholders, valuesArray

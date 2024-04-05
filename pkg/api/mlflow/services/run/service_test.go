@@ -1001,7 +1001,7 @@ func TestService_LogBatch_Ok(t *testing.T) {
 		},
 		Params: []request.ParamPartialRequest{
 			{
-				Key:   "key2",
+				Key:      "key2",
 				ValueStr: common.GetPointer[string]("value2"),
 			},
 		},
@@ -1152,7 +1152,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				RunID: "1",
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
+						Key:      "key",
 						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
@@ -1197,7 +1197,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				RunID: "1",
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
+						Key:      "key",
 						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
@@ -1242,7 +1242,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				RunID: "1",
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
+						Key:      "key",
 						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
@@ -1317,7 +1317,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				RunID: "1",
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
+						Key:      "key",
 						ValueStr: common.GetPointer[string]("value"),
 					},
 				},
@@ -1672,8 +1672,8 @@ func TestService_LogParam_Ok(t *testing.T) {
 	err := service.LogParam(context.TODO(), &models.Namespace{
 		ID: 1,
 	}, &request.LogParamRequest{
-		RunID: "1",
-		Key:   "key",
+		RunID:    "1",
+		Key:      "key",
 		ValueStr: common.GetPointer[string]("value"),
 	})
 
@@ -1722,8 +1722,8 @@ func TestService_LogParam_Error(t *testing.T) {
 			name:  "RunNotFoundDatabaseError",
 			error: api.NewInternalError(`Unable to find run '1': database error`),
 			request: &request.LogParamRequest{
-				RunID: "1",
-				Key:   "key",
+				RunID:    "1",
+				Key:      "key",
 				ValueStr: common.GetPointer[string]("value"),
 			},
 			service: func() *Service {
@@ -1748,8 +1748,8 @@ func TestService_LogParam_Error(t *testing.T) {
 			name:  "NoActiveRunFound",
 			error: api.NewResourceDoesNotExistError("Run '1' not found"),
 			request: &request.LogParamRequest{
-				RunID: "1",
-				Key:   "key",
+				RunID:    "1",
+				Key:      "key",
 				ValueStr: common.GetPointer[string]("value"),
 			},
 			service: func() *Service {
@@ -1774,8 +1774,8 @@ func TestService_LogParam_Error(t *testing.T) {
 			name:  "LogParamDatabaseError",
 			error: api.NewInternalError(`unable to insert params for run '1': database error`),
 			request: &request.LogParamRequest{
-				RunID: "1",
-				Key:   "key",
+				RunID:    "1",
+				Key:      "key",
 				ValueStr: common.GetPointer[string]("value"),
 			},
 			service: func() *Service {
@@ -1816,8 +1816,8 @@ func TestService_LogParam_Error(t *testing.T) {
 			name:  "LogParamConflictError",
 			error: api.NewInvalidParameterValueError(`unable to insert params for run '1': conflict!`),
 			request: &request.LogParamRequest{
-				RunID: "1",
-				Key:   "key",
+				RunID:    "1",
+				Key:      "key",
 				ValueStr: common.GetPointer[string]("value"),
 			},
 			service: func() *Service {

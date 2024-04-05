@@ -114,7 +114,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:        "keyfloat",
-						ValueFloat: common.GetPointer(float64(123.45)),
+						ValueFloat: common.GetPointer[float64](float64(123.45)),
 					},
 				},
 			},
@@ -126,7 +126,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "keyInt",
-						ValueInt: common.GetPointer(int64(123)),
+						ValueInt: common.GetPointer[int64](int64(123)),
 					},
 				},
 			},
@@ -138,7 +138,7 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "key1",
-						ValueStr: common.GetPointer("value1"),
+						ValueStr: common.GetPointer[string]("value1"),
 					},
 				},
 			},

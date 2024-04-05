@@ -152,7 +152,7 @@ jobs:
       - name: Compute cache info
         id: cache-info
         run: |
-          image=$(yq .services.service.image < tests/integration/docker-compose.yml)
+          image=$(yq .services.integration-tests.image < tests/integration/docker-compose.yml)
           echo go-version=$(skopeo inspect docker://${image} | jq -r .Digest | cut -d: -f2) >> $GITHUB_OUTPUT
 
       - name: Setup cache

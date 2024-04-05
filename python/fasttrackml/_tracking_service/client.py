@@ -3,12 +3,17 @@ from typing import Dict, Optional, Sequence
 
 from mlflow.entities import Param, RunTag
 from mlflow.store.tracking import GET_METRIC_HISTORY_MAX_RESULTS
-from mlflow.tracking._tracking_service import utils
 from mlflow.tracking._tracking_service.client import TrackingServiceClient
 from mlflow.tracking.metric_value_conversion_utils import (
     convert_metric_value_to_float_if_possible,
 )
 from mlflow.utils import chunk_list
+
+try:
+    from mlflow.utils.credentials import get_default_host_creds
+except ImportError:
+    from mlflow.tracking._tracking_service.utils import _get_default_host_creds as get_default_host_creds
+
 from mlflow.utils.time import get_current_time_millis
 from mlflow.utils.validation import MAX_METRICS_PER_BATCH
 
@@ -20,7 +25,7 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
 
     def __init__(self, tracking_uri):
         super().__init__(tracking_uri)
-        self.custom_store = CustomRestStore(partial(utils._get_default_host_creds, self.tracking_uri))
+        self.custom_store = CustomRestStore(partial(get_default_host_creds, self.tracking_uri))
 
     def log_metric(
         self,

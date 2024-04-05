@@ -20,7 +20,8 @@ func makeSqlPlaceholders(numberInEachSet, numberOfSets int) string {
 // Key, Value, RunID from each input Param for use in sql values replacement
 func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []interface{}) {
 	// make place holders of 5 fields for each param
-	placeholders := makeSqlPlaceholders(5, len(params))
+	set := "SELECT $1::text, $2::text, $3::int, $4::float, $5::text"
+	placeholders := strings.Repeat(set+"\nUNION ALL\n", len(params)-1) + set
 	// values array is params * 5 in length since using 5 fields from each
 	valuesArray := make([]interface{}, len(params)*5)
 	index := 0

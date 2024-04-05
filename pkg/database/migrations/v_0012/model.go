@@ -191,10 +191,9 @@ func (SchemaVersion) TableName() string {
 }
 
 type Base struct {
-	ID         uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	IsArchived bool      `json:"-"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) error {
@@ -208,6 +207,7 @@ type Dashboard struct {
 	Description string     `json:"description"`
 	AppID       *uuid.UUID `gorm:"type:uuid" json:"app_id"`
 	App         App        `json:"-"`
+	IsArchived  bool       `json:"-"`
 }
 
 func (d Dashboard) MarshalJSON() ([]byte, error) {
@@ -233,6 +233,7 @@ type App struct {
 	State       AppState  `json:"state"`
 	Namespace   Namespace `json:"-"`
 	NamespaceID uint      `gorm:"not null" json:"-"`
+	IsArchived  bool      `json:"-"`
 }
 
 type AppState map[string]any
@@ -268,18 +269,14 @@ func NewUUID() string {
 }
 
 type Role struct {
-	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
-	Role      string    `gorm:"unique;index;not null"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Base
+	Role string `gorm:"unique;index;not null"`
 }
 
 type RoleNamespace struct {
-	ID          uuid.UUID `gorm:"type:uuid;primaryKey"`
+	Base
 	Role        Role      `gorm:"constraint:OnDelete:CASCADE"`
 	RoleID      uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
 	Namespace   Namespace `gorm:"constraint:OnDelete:CASCADE"`
 	NamespaceID uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
 }

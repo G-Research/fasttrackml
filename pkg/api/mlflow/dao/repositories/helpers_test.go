@@ -31,6 +31,7 @@ func Test_makeSqlPlaceholders(t *testing.T) {
 func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 	tests := []struct {
 		params               []models.Param
+		dialector            string
 		expectedPlaceholders string
 		expectedValues       []interface{}
 	}{
@@ -38,6 +39,7 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 			params: []models.Param{
 				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
 			},
+			dialector:            "postgres",
 			expectedPlaceholders: "SELECT ?::text, ?::text, ?::int, ?::float, ?::text",
 			expectedValues:       []interface{}{"key1", "run1", nil, nil, "value1"},
 		},
@@ -46,15 +48,33 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
 				{Key: "key2", ValueStr: common.GetPointer[string]("value2"), RunID: "run2"},
 			},
+			dialector: "postgres",
 			expectedPlaceholders: "SELECT ?::text, ?::text, ?::int, ?::float, ?::text\n" +
 				"UNION ALL\n" +
 				"SELECT ?::text, ?::text, ?::int, ?::float, ?::text",
 			expectedValues: []interface{}{"key1", "run1", nil, nil, "value1", "key2", "run2", nil, nil, "value2"},
 		},
+		{
+			params: []models.Param{
+				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
+			},
+			dialector:            "sqlite",
+			expectedPlaceholders: "VALUES (?,?,?,?,?)",
+			expectedValues:       []interface{}{"key1", "run1", nil, nil, "value1"},
+		},
+		{
+			params: []models.Param{
+				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
+				{Key: "key2", ValueStr: common.GetPointer[string]("value2"), RunID: "run2"},
+			},
+			dialector:            "sqlite",
+			expectedPlaceholders: "VALUES (?,?,?,?,?),(?,?,?,?,?)",
+			expectedValues:       []interface{}{"key1", "run1", nil, nil, "value1", "key2", "run2", nil, nil, "value2"},
+		},
 	}
 
 	for _, tt := range tests {
-		placeholders, values := makeParamConflictPlaceholdersAndValues(tt.params)
+		placeholders, values := makeParamConflictPlaceholdersAndValues(tt.params, tt.dialector)
 		assert.Equal(t, tt.expectedPlaceholders, placeholders)
 		assert.Equal(t, tt.expectedValues, values)
 	}

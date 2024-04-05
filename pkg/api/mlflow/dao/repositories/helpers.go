@@ -25,12 +25,20 @@ func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []in
 	valuesArray := make([]interface{}, len(params)*5)
 	index := 0
 	for _, param := range params {
+		var valueInt, valueFloat, valueStr any
+		if param.ValueInt != nil {
+			valueInt = *param.ValueInt
+		} else if param.ValueFloat != nil {
+			valueFloat = *param.ValueFloat
+		} else if param.ValueStr != nil {
+			valueStr = *param.ValueStr
+		}
 		valuesArray[index] = param.Key
 		valuesArray[index+1] = param.RunID
-		valuesArray[index+2] = param.ValueInt
-		valuesArray[index+3] = param.ValueFloat
-		valuesArray[index+4] = param.ValueStr
-		index = index + 3
+		valuesArray[index+2] = valueInt
+		valuesArray[index+3] = valueFloat
+		valuesArray[index+4] = valueStr
+		index = index + 5
 	}
 	return placeholders, valuesArray
 }

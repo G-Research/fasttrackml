@@ -8,10 +8,6 @@ from mlflow.tracking.metric_value_conversion_utils import (
     convert_metric_value_to_float_if_possible,
 )
 from mlflow.utils import chunk_list
-from mlflow.utils.async_logging.run_operations import (
-    RunOperations,
-    get_combined_run_operations,
-)
 
 try:
     from mlflow.utils.credentials import get_default_host_creds

@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 )
 
 func TestService_CreateNamespace_Ok(t *testing.T) {
@@ -65,7 +65,7 @@ func TestService_CreateNamespace_Ok(t *testing.T) {
 	).Return(nil)
 
 	// call service under testing.
-	service := NewService(&config.ServiceConfig{
+	service := NewService(&config.Config{
 		DefaultArtifactRoot: "default_artifact_root",
 	}, &namespaceRepository, &experimentRepository)
 	_, err := service.CreateNamespace(context.TODO(), "code", "description")
@@ -94,7 +94,7 @@ func TestService_CreateNamespace_Error(t *testing.T) {
 	).Return(nil)
 
 	// call service under testing.
-	service := NewService(&config.ServiceConfig{}, &namespaceRepository, &experimentRepository)
+	service := NewService(&config.Config{}, &namespaceRepository, &experimentRepository)
 	_, err = service.CreateNamespace(context.TODO(), "code", "description")
 
 	// compare results.
@@ -118,7 +118,7 @@ func TestService_GetNamespace_Ok(t *testing.T) {
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 
 	// call service under testing.
-	service := NewService(&config.ServiceConfig{}, &namespaceRepository, &experimentRepository)
+	service := NewService(&config.Config{}, &namespaceRepository, &experimentRepository)
 	namespace, err := service.GetNamespace(context.TODO(), uint(0))
 
 	// compare results.
@@ -136,7 +136,7 @@ func TestService_GetNamespace_Error(t *testing.T) {
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 
 	// call service under testing.
-	service := NewService(&config.ServiceConfig{}, &namespaceRepository, &experimentRepository)
+	service := NewService(&config.Config{}, &namespaceRepository, &experimentRepository)
 	namespace, err := service.GetNamespace(context.TODO(), uint(0))
 
 	// compare results.
@@ -162,7 +162,7 @@ func TestService_ListNamespace_Ok(t *testing.T) {
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 
 	// call service under testing.
-	service := NewService(&config.ServiceConfig{}, &namespaceRepository, &experimentRepository)
+	service := NewService(&config.Config{}, &namespaceRepository, &experimentRepository)
 	namespaces, err := service.ListNamespaces(context.TODO())
 
 	// compare results.
@@ -180,7 +180,7 @@ func TestService_ListNamespaces_Error(t *testing.T) {
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 
 	// call service under testing.
-	service := NewService(&config.ServiceConfig{}, &namespaceRepository, &experimentRepository)
+	service := NewService(&config.Config{}, &namespaceRepository, &experimentRepository)
 	namespaces, err := service.ListNamespaces(context.TODO())
 
 	// compare results.
@@ -205,7 +205,7 @@ func TestService_DeleteNamespace_Ok(t *testing.T) {
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 
 	// call service under testing.
-	service := NewService(&config.ServiceConfig{}, &namespaceRepository, &experimentRepository)
+	service := NewService(&config.Config{}, &namespaceRepository, &experimentRepository)
 	err := service.DeleteNamespace(context.TODO(), uint(0))
 
 	// compare results.
@@ -222,7 +222,7 @@ func TestService_DeleteNamespace_Error(t *testing.T) {
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 
 	// call service under testing.
-	service := NewService(&config.ServiceConfig{}, &namespaceRepository, &experimentRepository)
+	service := NewService(&config.Config{}, &namespaceRepository, &experimentRepository)
 	err := service.DeleteNamespace(context.TODO(), uint(0))
 
 	// compare results.
@@ -243,7 +243,7 @@ func TestService_DeleteDefaultNamespace_Error(t *testing.T) {
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 
 	// call service under testing.
-	service := NewService(&config.ServiceConfig{}, &namespaceRepository, &experimentRepository)
+	service := NewService(&config.Config{}, &namespaceRepository, &experimentRepository)
 	err := service.DeleteNamespace(context.TODO(), uint(0))
 
 	// compare results.
@@ -273,7 +273,7 @@ func TestService_UpdateNamespace_Ok(t *testing.T) {
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 
 	// call service under testing.
-	service := NewService(&config.ServiceConfig{}, &namespaceRepository, &experimentRepository)
+	service := NewService(&config.Config{}, &namespaceRepository, &experimentRepository)
 	_, err := service.UpdateNamespace(context.TODO(), uint(1), "code", "description")
 
 	// compare results.
@@ -290,7 +290,7 @@ func TestService_UpdateNamespace_Error(t *testing.T) {
 	experimentRepository := repositories.MockExperimentRepositoryProvider{}
 
 	// call service under testing.
-	service := NewService(&config.ServiceConfig{}, &namespaceRepository, &experimentRepository)
+	service := NewService(&config.Config{}, &namespaceRepository, &experimentRepository)
 	_, err := service.UpdateNamespace(context.TODO(), uint(1), "code", "description")
 
 	// compare results.

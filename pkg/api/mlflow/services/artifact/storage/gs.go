@@ -12,7 +12,7 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 )
 
 // GSStorageName is a Google Storage name.
@@ -26,7 +26,7 @@ type GS struct {
 }
 
 // NewGS creates new Google Storage instance.
-func NewGS(ctx context.Context, config *config.ServiceConfig) (*GS, error) {
+func NewGS(ctx context.Context, config *config.Config) (*GS, error) {
 	var options []option.ClientOption
 	if config.GSEndpointURI != "" {
 		// we use option.WithoutAuthentication() in order to make the GCS SDK work with our fake server.

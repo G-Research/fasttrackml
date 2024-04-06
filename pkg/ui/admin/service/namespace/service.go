@@ -10,22 +10,22 @@ import (
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 )
 
 // Service provides service layer to work with `namespace` business logic.
 type Service struct {
-	config               *config.ServiceConfig
+	config               *config.Config
 	namespaceRepository  repositories.NamespaceRepositoryProvider
 	experimentRepository repositories.ExperimentRepositoryProvider
 }
 
 // NewService creates new Service instance.
 func NewService(
-	config *config.ServiceConfig,
+	config *config.Config,
 	namespaceRepository repositories.NamespaceRepositoryProvider,
 	experimentRepository repositories.ExperimentRepositoryProvider,
 ) *Service {

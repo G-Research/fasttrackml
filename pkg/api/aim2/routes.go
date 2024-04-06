@@ -3,20 +3,19 @@ package aim2
 import (
 	"github.com/gofiber/fiber/v2"
 
-	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
-
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
 // Router represents `mlflow` router.
 type Router struct {
-	config     *mlflowConfig.ServiceConfig
+	config     *config.Config
 	controller *controller.Controller
 }
 
 // NewRouter creates new instance of `mlflow` router.
-func NewRouter(config *mlflowConfig.ServiceConfig, controller *controller.Controller) *Router {
+func NewRouter(config *config.Config, controller *controller.Controller) *Router {
 	return &Router{
 		config:     config,
 		controller: controller,

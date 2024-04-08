@@ -31,7 +31,7 @@ type MetricRepositoryProvider interface {
 	BaseRepositoryProvider
 	// GetMetricKeysAndContextsByExperiments returns metric keys and contexts by provided experiments.
 	GetMetricKeysAndContextsByExperiments(
-		ctx context.Context, namespaceID uint, experiments []int,
+		ctx context.Context, namespaceID uint, experiments []int, experimentNames []string,
 	) ([]models.LatestMetric, error)
 	// SearchMetrics returns a sql.Rows cursor for streaming the metrics matching the request.
 	SearchMetrics(
@@ -59,7 +59,7 @@ func NewMetricRepository(db *gorm.DB) *MetricRepository {
 
 // GetMetricKeysAndContextsByExperiments returns metric keys and contexts by provided experiments.
 func (r MetricRepository) GetMetricKeysAndContextsByExperiments(
-	ctx context.Context, namespaceID uint, experiments []int,
+	ctx context.Context, namespaceID uint, experiments []int, experimentNames []string,
 ) ([]models.LatestMetric, error) {
 	query := r.db.WithContext(ctx).Distinct().Select(
 		"key", "context_id",
@@ -77,6 +77,9 @@ func (r MetricRepository) GetMetricKeysAndContextsByExperiments(
 	)
 	if len(experiments) != 0 {
 		query = query.Where("experiments.experiment_id IN ?", experiments)
+	}
+	if len(experimentNames) != 0 {
+		query = query.Where("experiments.name IN ?", experimentNames)
 	}
 	var metrics []models.LatestMetric
 	if err := query.Find(&metrics).Error; err != nil {

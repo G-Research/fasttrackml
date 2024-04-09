@@ -28,6 +28,8 @@ func (r Router) Init(server fiber.Router) {
 	switch {
 	case r.config.Auth.IsAuthTypeUser():
 		mainGroup.Use(middleware.NewUserMiddleware(r.config.Auth.AuthParsedUserPermissions))
+	case r.config.Auth.IsAuthTypeOIDC():
+		mainGroup.Use(middleware.NewOIDCMiddleware())
 	}
 
 	// setup related routes.

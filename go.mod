@@ -42,6 +42,11 @@ require (
 )
 
 require (
+	github.com/coreos/go-oidc/v3 v3.10.0 // indirect
+	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
+)
+
+require (
 	cloud.google.com/go v0.112.1 // indirect
 	cloud.google.com/go/compute v1.24.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect

@@ -38,3 +38,16 @@ func NewUserMiddleware(userPermissions *models.UserPermissions) fiber.Handler {
 		return ctx.Next()
 	}
 }
+
+func NewOIDCMiddleware() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		namespace, err := GetNamespaceFromContext(ctx.Context())
+		if err != nil {
+			return api.NewInternalError("error getting namespace from context")
+		}
+		log.Debugf("checking access permission to %s namespace", namespace.Code)
+		authToken := strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Bearer ", "", 1)
+
+		return ctx.Next()
+	}
+}

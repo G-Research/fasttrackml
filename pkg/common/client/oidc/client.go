@@ -8,6 +8,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
 )
 
+// User represents object to store current user information.
 type User struct {
 	Groups []string
 }

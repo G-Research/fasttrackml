@@ -39,6 +39,7 @@ func NewUserMiddleware(userPermissions *models.UserPermissions) fiber.Handler {
 	}
 }
 
+// NewOIDCMiddleware creates new OIDC based Middleware instance.
 func NewOIDCMiddleware() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		namespace, err := GetNamespaceFromContext(ctx.Context())

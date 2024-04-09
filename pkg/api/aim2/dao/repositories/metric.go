@@ -75,6 +75,7 @@ func (r MetricRepository) GetMetricKeysAndContextsByExperiments(
 	).Where(
 		"runs.lifecycle_stage = ?", models.LifecycleStageActive,
 	)
+
 	if len(experiments) != 0 {
 		query = query.Where("experiments.experiment_id IN ?", experiments)
 	}

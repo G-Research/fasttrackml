@@ -104,13 +104,16 @@ func (s Service) GetProjectParams(
 	}
 
 	if slices.Contains(req.Sequences, "metric") {
-		metrics, err := s.metricRepository.GetMetricKeysAndContextsByExperiments(
-			ctx, namespaceID, req.Experiments, req.ExperimentNames,
-		)
-		if err != nil {
-			return nil, api.NewInternalError("error getting metrics: %s", err)
+		// fetch metrics only when Experiments or ExperimentNames were provided.
+		if len(req.Experiments) != 0 || len(req.ExperimentNames) != 0 {
+			metrics, err := s.metricRepository.GetMetricKeysAndContextsByExperiments(
+				ctx, namespaceID, req.Experiments, req.ExperimentNames,
+			)
+			if err != nil {
+				return nil, api.NewInternalError("error getting metrics: %s", err)
+			}
+			projectParams.Metrics = metrics
 		}
-		projectParams.Metrics = metrics
 	}
 	return &projectParams, nil
 }

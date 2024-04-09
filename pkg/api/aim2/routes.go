@@ -14,7 +14,7 @@ type Router struct {
 	controller *controller.Controller
 }
 
-// NewRouter creates new instance of `mlflow` router.
+// NewRouter creates new instance of `aim` router.
 func NewRouter(config *config.Config, controller *controller.Controller) *Router {
 	return &Router{
 		config:     config,

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -48,6 +49,7 @@ func NewOIDCMiddleware() fiber.Handler {
 		}
 		log.Debugf("checking access permission to %s namespace", namespace.Code)
 		authToken := strings.Replace(ctx.Get(fiber.HeaderAuthorization), "Bearer ", "", 1)
+		fmt.Println(authToken)
 
 		return ctx.Next()
 	}

@@ -25,7 +25,7 @@ type Config struct {
 
 // IsAuthTypeOIDC makes check that current auth is TypeOIDC.
 func (c *Config) IsAuthTypeOIDC() bool {
-	return c.AuthType == TypeUser
+	return c.AuthType == TypeOIDC
 }
 
 // IsAuthTypeUser makes check that current auth is TypeUser.

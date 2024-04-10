@@ -27,7 +27,6 @@ import (
 	aimRunService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/run"
 	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/tag"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
-	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -38,6 +37,7 @@ import (
 	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/metric"
 	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/model"
 	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/run"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
@@ -62,7 +62,7 @@ type server struct {
 }
 
 // NewServer creates a new server instance.
-func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server, error) {
+func NewServer(ctx context.Context, config *config.Config) (Server, error) {
 	// create artifact storage factory.
 	artifactStorageFactory, err := storage.NewArtifactStorageFactory(config)
 	if err != nil {
@@ -94,7 +94,7 @@ func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server,
 }
 
 // createDBProvider creates a new DB provider.
-func createDBProvider(ctx context.Context, config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
+func createDBProvider(ctx context.Context, config *config.Config) (database.DBProvider, error) {
 	db, err := database.NewDBProvider(
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
@@ -155,7 +155,7 @@ func createNamespaceRepository(
 
 // createApp creates a new fiber app with base configuration.
 func createApp(
-	config *mlflowConfig.ServiceConfig,
+	config *config.Config,
 	db database.DBProvider,
 	artifactStorageFactory storage.ArtifactStorageFactoryProvider,
 	namespaceRepository mlflowRepositories.NamespaceRepositoryProvider,

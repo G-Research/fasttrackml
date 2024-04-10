@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 	"github.com/G-Research/fasttrackml/pkg/server"
 )
 
@@ -25,7 +25,7 @@ var ServerCmd = &cobra.Command{
 
 func serverCmd(cmd *cobra.Command, args []string) error {
 	// process config parameters.
-	mlflowConfig := mlflowConfig.NewServiceConfig()
+	mlflowConfig := config.NewConfig()
 	if err := mlflowConfig.Validate(); err != nil {
 		return err
 	}
@@ -73,6 +73,9 @@ func init() {
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")
 	ServerCmd.Flags().String("auth-users-config", "", "Users configuration file")
+	ServerCmd.Flags().String("auth-oidc-client-id", "", "OIDC auth client id")
+	ServerCmd.Flags().String("auth-oidc-client-secret", "", "OIDC auth client secret")
+	ServerCmd.Flags().String("auth-oidc-provider-endpoint", "", "OIDC auth provider endpoint")
 	ServerCmd.Flags().StringP("database-uri", "d", "sqlite://fasttrackml.db", "Database URI")
 	ServerCmd.Flags().Int("database-pool-max", 20, "Maximum number of database connections in the pool")
 	ServerCmd.Flags().Duration("database-slow-threshold", 1*time.Second, "Slow SQL warning threshold")

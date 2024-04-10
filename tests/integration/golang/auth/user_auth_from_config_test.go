@@ -14,11 +14,11 @@ import (
 	aimResponse "github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowResponse "github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
+	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -67,7 +67,7 @@ func TestUserAuthFromConfigTestSuite(t *testing.T) {
 
 	// run test suite with newly created configuration.
 	testSuite := new(UserAuthFromConfigTestSuite)
-	testSuite.Config = config.ServiceConfig{
+	testSuite.Config = config.Config{
 		Auth: auth.Config{
 			AuthType:        auth.TypeUser,
 			AuthUsersConfig: configPath,

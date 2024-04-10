@@ -17,6 +17,9 @@ type Config struct {
 	AuthUsername              string
 	AuthPassword              string
 	AuthUsersConfig           string
+	AuthOIDCClientID          string
+	AuthOIDCClientSecret      string
+	AuthOIDCProviderEndpoint  string
 	AuthParsedUserPermissions *models.UserPermissions
 }
 
@@ -45,6 +48,8 @@ func (c *Config) NormalizeConfiguration() error {
 			return eris.Wrapf(err, "error loading auth user configuration from file: %s", c.AuthUsersConfig)
 		}
 		c.AuthParsedUserPermissions = parsedUserPermissions
+	case c.AuthOIDCClientID != "" && c.AuthOIDCClientSecret != "" && c.AuthOIDCProviderEndpoint != "":
+		c.AuthType = TypeOIDC
 	}
 	return nil
 }

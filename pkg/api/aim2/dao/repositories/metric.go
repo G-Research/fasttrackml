@@ -29,9 +29,9 @@ type SearchResultMap = map[string]SearchResult
 // MetricRepositoryProvider provides an interface to work with models.Metric entity.
 type MetricRepositoryProvider interface {
 	BaseRepositoryProvider
-	// GetLatestMetricsByExperiments returns latest metrics by provided experiments.
-	GetLatestMetricsByExperiments(
-		ctx context.Context, namespaceID uint, experiments []int,
+	// GetMetricKeysAndContextsByExperiments returns metric keys and contexts by provided experiments.
+	GetMetricKeysAndContextsByExperiments(
+		ctx context.Context, namespaceID uint, experiments []int, experimentNames []string,
 	) ([]models.LatestMetric, error)
 	// SearchMetrics returns a sql.Rows cursor for streaming the metrics matching the request.
 	SearchMetrics(
@@ -57,24 +57,30 @@ func NewMetricRepository(db *gorm.DB) *MetricRepository {
 	}
 }
 
-// GetLatestMetricsByExperiments returns latest metrics by provided experiments.
-func (r MetricRepository) GetLatestMetricsByExperiments(
-	ctx context.Context, namespaceID uint, experiments []int,
+// GetMetricKeysAndContextsByExperiments returns metric keys and contexts by provided experiments.
+func (r MetricRepository) GetMetricKeysAndContextsByExperiments(
+	ctx context.Context, namespaceID uint, experiments []int, experimentNames []string,
 ) ([]models.LatestMetric, error) {
-	query := r.db.WithContext(ctx).Distinct().Model(
+	query := r.db.WithContext(ctx).Distinct().Select(
+		"key", "context_id",
+	).Model(
 		&models.LatestMetric{},
 	).Joins(
 		"JOIN runs USING(run_uuid)",
 	).Joins(
 		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 		namespaceID,
-	).Joins(
+	).Preload(
 		"Context",
 	).Where(
 		"runs.lifecycle_stage = ?", models.LifecycleStageActive,
 	)
+
 	if len(experiments) != 0 {
 		query = query.Where("experiments.experiment_id IN ?", experiments)
+	}
+	if len(experimentNames) != 0 {
+		query = query.Where("experiments.name IN ?", experimentNames)
 	}
 	var metrics []models.LatestMetric
 	if err := query.Find(&metrics).Error; err != nil {

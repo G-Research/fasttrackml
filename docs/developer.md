@@ -53,11 +53,11 @@ the packages in `database/migrations`.
 ## Filling the database
 
 It's often necessary to test out your changes on a loaded database, and we definitely want to do this
-before making a release. A good target for database shape is:
+before making a release. A production-level target for database shape is:
 * 40k runs across 300 experiments
 * 2k unique metrics per run, each with 200 values
 
-To get something like this into your local database instance, you can use the included K6
+To get some percentage of this into your local database instance, you can use the included K6
 load test script, which can be run in the dev container.
 
 1. Start the FML tracking server

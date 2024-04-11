@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/db/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 

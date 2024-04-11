@@ -3,6 +3,9 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/G-Research/fasttrackml/pkg/common/client/oidc"
+	"github.com/G-Research/fasttrackml/pkg/common/dao"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 	"net/http"
 	"strings"
 	"time"
@@ -28,7 +31,6 @@ import (
 	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/tag"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services"
 	mlflowArtifactService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact"
@@ -75,17 +77,9 @@ func NewServer(ctx context.Context, config *config.Config) (Server, error) {
 		return nil, err
 	}
 
-	// create namespace repository.
-	namespaceRepository, err := createNamespaceRepository(ctx, db)
-	if err != nil {
-		//nolint:errcheck,gosec
-		db.Close()
-		return nil, err
-	}
-
 	// create fiber app.
 	//nolint:contextcheck
-	app, err := createApp(config, db, artifactStorageFactory, namespaceRepository)
+	app, err := createApp(ctx, config, db, artifactStorageFactory)
 	if err != nil {
 		return nil, eris.Wrapf(err, "error creating application")
 	}
@@ -132,33 +126,12 @@ func createDBProvider(ctx context.Context, config *config.Config) (database.DBPr
 	return db, nil
 }
 
-// createNamespaceRepository creates a new namespace repository.
-func createNamespaceRepository(
-	ctx context.Context, db database.DBProvider,
-) (mlflowRepositories.NamespaceRepositoryProvider, error) {
-	// create namespace notification listener.
-	listener, err := dao.NewNamespaceListener(ctx, db.GormDB())
-	if err != nil {
-		return nil, eris.Wrap(err, "error creating namespace notification listener")
-	}
-
-	// create cached namespace repository.
-	repo, err := mlflowRepositories.NewNamespaceCachedRepository(
-		db.GormDB(), listener, mlflowRepositories.NewNamespaceRepository(db.GormDB()),
-	)
-	if err != nil {
-		return nil, eris.Wrap(err, "error creating namespace repository")
-	}
-
-	return repo, nil
-}
-
 // createApp creates a new fiber app with base configuration.
 func createApp(
+	ctx context.Context,
 	config *config.Config,
 	db database.DBProvider,
 	artifactStorageFactory storage.ArtifactStorageFactoryProvider,
-	namespaceRepository mlflowRepositories.NamespaceRepositoryProvider,
 ) (*fiber.App, error) {
 	app := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
@@ -194,7 +167,28 @@ func createApp(
 		app.Use(cors.New())
 	}
 
-	app.Use(middleware.NewNamespaceMiddleware(namespaceRepository))
+	// create namespace notification listener.
+	namespaceEventListener, err := dao.NewNamespaceListener(ctx, db.GormDB())
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating namespace notification listener")
+	}
+
+	namespaceCachedRepository, err := mlflowRepositories.NewNamespaceCachedRepository(
+		ctx, mlflowRepositories.NewNamespaceRepository(db.GormDB()), namespaceEventListener,
+	)
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating namespace repository")
+	}
+	rolesCachedRepository, err := repositories.NewRoleCachedRepository(
+		ctx, db.GormDB(), namespaceEventListener,
+	)
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating roles repository")
+	}
+
+	namespaceEventListener.Listen()
+
+	app.Use(middleware.NewNamespaceMiddleware(namespaceCachedRepository))
 	if config.Auth.AuthUsername != "" && config.Auth.AuthPassword != "" {
 		log.Info("Auth - enabling Basic Auth")
 		app.Use(basicauth.New(basicauth.Config{
@@ -227,14 +221,13 @@ func createApp(
 
 	if config.AimRevert {
 		// init original `aim` api routes.
-		log.Info("Using original aim service")
+		log.Info("using original aim service")
 		router := app.Group("/aim/api/")
 		aimAPI.AddRoutes(router)
 	} else {
 		// init `aim` api refactored routes.
-		log.Info("Using refactored aim service")
-		aim2API.NewRouter(
-			config,
+		log.Info("using refactored aim service")
+		aimRouter := aim2API.NewRouter(
 			aim2Controller.NewController(
 				aimTagService.NewService(
 					aimRepositories.NewTagRepository(db.GormDB()),
@@ -263,13 +256,25 @@ func createApp(
 					aimRepositories.NewExperimentRepository(db.GormDB()),
 				),
 			),
-		).Init(app)
+		)
+
+		// configure AIM global Auth middlewares.
+		switch {
+		case config.Auth.IsAuthTypeOIDC():
+			oidcClient, err := oidc.NewClient(ctx, &config.Auth)
+			if err != nil {
+				return nil, eris.Wrap(err, "error creating OIDC client")
+			}
+			aimRouter.AddGlobalMiddleware(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
+		case config.Auth.IsAuthTypeUser():
+			aimRouter.AddGlobalMiddleware(middleware.NewUserMiddleware(config.Auth.AuthParsedUserPermissions))
+		}
+		aimRouter.Init(app)
 	}
 
 	// init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
-	mlflowAPI.NewRouter(
-		config,
+	mlflowRouter := mlflowAPI.NewRouter(
 		mlflowController.NewController(
 			mlflowRunService.NewService(
 				mlflowRepositories.NewTagRepository(db.GormDB()),
@@ -293,7 +298,21 @@ func createApp(
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
-	).Init(app)
+	)
+
+	// configure Mlflow global Auth middlewares.
+	switch {
+	case config.Auth.IsAuthTypeOIDC():
+		oidcClient, err := oidc.NewClient(ctx, &config.Auth)
+		if err != nil {
+			return nil, eris.Wrap(err, "error creating OIDC client")
+		}
+		mlflowRouter.AddGlobalMiddleware(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
+	case config.Auth.IsAuthTypeUser():
+		mlflowRouter.AddGlobalMiddleware(middleware.NewUserMiddleware(config.Auth.AuthParsedUserPermissions))
+	}
+	mlflowRouter.Init(app)
+
 	mlflowUI.AddRoutes(app)
 	aimUI.AddRoutes(app)
 
@@ -303,7 +322,7 @@ func createApp(
 		adminUIController.NewController(
 			adminUINamespaceService.NewService(
 				config,
-				namespaceRepository,
+				namespaceCachedRepository,
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
@@ -317,7 +336,7 @@ func createApp(
 		chooserController.NewController(
 			chooserNamespaceService.NewService(
 				config,
-				namespaceRepository,
+				namespaceCachedRepository,
 			),
 		),
 	).Init(app); err != nil {

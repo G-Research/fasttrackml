@@ -12,7 +12,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 )
 
 // allowed batch actions.

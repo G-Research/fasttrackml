@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/G-Research/fasttrackml/pkg/common/db/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // NewAdminUserMiddleware creates new User based Middleware instance.

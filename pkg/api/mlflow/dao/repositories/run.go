@@ -11,12 +11,13 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // RunRepositoryProvider provides an interface to work with models.Run entity.
 type RunRepositoryProvider interface {
-	BaseRepositoryProvider
+	repositories.BaseRepositoryProvider
 	// GetByID returns models.Run entity by its ID.
 	GetByID(ctx context.Context, id string) (*models.Run, error)
 	// GetByNamespaceIDRunIDAndLifecycleStage returns models.Run entity by Namespace ID, its ID and Lifecycle Stage.
@@ -51,22 +52,20 @@ type RunRepositoryProvider interface {
 
 // RunRepository repository to work with models.Run entity.
 type RunRepository struct {
-	BaseRepository
+	repositories.BaseRepositoryProvider
 }
 
 // NewRunRepository creates repository to work with models.Run entity.
 func NewRunRepository(db *gorm.DB) *RunRepository {
 	return &RunRepository{
-		BaseRepository{
-			db: db,
-		},
+		repositories.NewBaseRepository(db),
 	}
 }
 
 // GetByID returns models.Run entity by its ID.
 func (r RunRepository) GetByID(ctx context.Context, id string) (*models.Run, error) {
 	run := models.Run{ID: id}
-	if err := r.db.WithContext(
+	if err := r.GetDB().WithContext(
 		ctx,
 	).Preload(
 		"LatestMetrics",
@@ -85,7 +84,7 @@ func (r RunRepository) GetByNamespaceIDRunIDAndLifecycleStage(
 	ctx context.Context, namespaceID uint, runID string, lifecycleStage models.LifecycleStage,
 ) (*models.Run, error) {
 	run := models.Run{ID: runID}
-	if err := r.db.WithContext(
+	if err := r.GetDB().WithContext(
 		ctx,
 	).Preload(
 		"LatestMetrics",
@@ -112,7 +111,7 @@ func (r RunRepository) GetByNamespaceIDAndRunID(
 	ctx context.Context, namespaceID uint, runID string,
 ) (*models.Run, error) {
 	run := models.Run{ID: runID}
-	if err := r.db.WithContext(
+	if err := r.GetDB().WithContext(
 		ctx,
 	).Preload(
 		"LatestMetrics",
@@ -135,7 +134,7 @@ func (r RunRepository) GetByNamespaceIDAndRunID(
 // Create creates new models.Run entity.
 func (r RunRepository) Create(ctx context.Context, run *models.Run) error {
 	// Lock need to calculate row_num
-	if err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	if err := r.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if tx.Dialector.Name() == "postgres" {
 			if err := tx.Exec("LOCK TABLE runs").Error; err != nil {
 				return err
@@ -150,7 +149,7 @@ func (r RunRepository) Create(ctx context.Context, run *models.Run) error {
 
 // Update updates existing models.Run entity.
 func (r RunRepository) Update(ctx context.Context, run *models.Run) error {
-	if err := r.db.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
+	if err := r.GetDB().WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
 		return eris.Wrapf(err, "error updating run with id: %s", run.ID)
 	}
 	return nil
@@ -163,7 +162,7 @@ func (r RunRepository) Archive(ctx context.Context, run *models.Run) error {
 		Valid: true,
 	}
 	run.LifecycleStage = models.LifecycleStageDeleted
-	if err := r.db.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
+	if err := r.GetDB().WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
 		return eris.Wrapf(err, "error updating existing run with id: %s", run.ID)
 	}
 
@@ -172,13 +171,13 @@ func (r RunRepository) Archive(ctx context.Context, run *models.Run) error {
 
 // ArchiveBatch marks existing models.Run entities as archived.
 func (r RunRepository) ArchiveBatch(ctx context.Context, namespaceID uint, ids []string) error {
-	if err := r.db.WithContext(
+	if err := r.GetDB().WithContext(
 		ctx,
 	).Model(
 		models.Run{},
 	).Where(
 		"run_uuid IN (?)",
-		r.db.Model(
+		r.GetDB().Model(
 			models.Run{},
 		).Select(
 			"run_uuid",
@@ -208,13 +207,13 @@ func (r RunRepository) Delete(ctx context.Context, namespaceID uint, run *models
 
 // DeleteBatch removes existing models.Run from the db.
 func (r RunRepository) DeleteBatch(ctx context.Context, namespaceID uint, ids []string) error {
-	if err := r.db.Transaction(func(tx *gorm.DB) error {
+	if err := r.GetDB().Transaction(func(tx *gorm.DB) error {
 		runs := make([]models.Run, 0, len(ids))
 		if err := tx.Clauses(
 			clause.Returning{Columns: []clause.Column{{Name: "row_num"}}},
 		).Where(
 			"run_uuid IN (?)",
-			r.db.Model(
+			r.GetDB().Model(
 				models.Run{},
 			).Select(
 				"run_uuid",
@@ -251,7 +250,7 @@ func (r RunRepository) DeleteBatch(ctx context.Context, namespaceID uint, ids []
 // Restore marks existing models.Run entity as active.
 func (r RunRepository) Restore(ctx context.Context, run *models.Run) error {
 	// Use UpdateColumns so we can reset DeletedTime to null
-	if err := r.db.WithContext(ctx).Model(&run).UpdateColumns(map[string]any{
+	if err := r.GetDB().WithContext(ctx).Model(&run).UpdateColumns(map[string]any{
 		"DeletedTime":    sql.NullInt64{},
 		"LifecycleStage": database.LifecycleStageActive,
 	}).Error; err != nil {
@@ -263,11 +262,11 @@ func (r RunRepository) Restore(ctx context.Context, run *models.Run) error {
 
 // RestoreBatch marks existing models.Run entities as active.
 func (r RunRepository) RestoreBatch(ctx context.Context, namespaceID uint, ids []string) error {
-	if err := r.db.WithContext(
+	if err := r.GetDB().WithContext(
 		ctx,
 	).Where(
 		"run_uuid IN (?)",
-		r.db.Model(
+		r.GetDB().Model(
 			models.Run{},
 		).Select(
 			"run_uuid",
@@ -297,7 +296,7 @@ func (r RunRepository) UpdateWithTransaction(ctx context.Context, tx *gorm.DB, r
 
 // SetRunTagsBatch sets Run tags in batch.
 func (r RunRepository) SetRunTagsBatch(ctx context.Context, run *models.Run, batchSize int, tags []models.Tag) error {
-	if err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	if err := r.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, tag := range tags {
 			switch tag.Key {
 			case "mlflow.user":

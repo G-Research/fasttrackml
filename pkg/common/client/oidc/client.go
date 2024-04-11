@@ -2,15 +2,17 @@ package oidc
 
 import (
 	"context"
+
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
 )
 
-// User represents object to store current user information.
-type User struct {
-	Groups []string
+// ClientProvider provides an interface to work with OIDC provider.
+type ClientProvider interface {
+	// Verify makes Access Token verification.
+	Verify(ctx context.Context, accessToken string) (*User, error)
 }
 
 // Client represents OIDC client.
@@ -41,7 +43,7 @@ func (c Client) Verify(ctx context.Context, accessToken string) (*User, error) {
 		Groups []string `json:"groups"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
-		return nil, eris.Wrap(err, "error parsing claims")
+		return nil, eris.Wrap(err, "error extracting token claims")
 	}
 	return &User{Groups: claims.Groups}, nil
 }

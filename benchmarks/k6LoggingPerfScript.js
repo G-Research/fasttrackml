@@ -4,7 +4,7 @@ import { sleep } from 'k6';
 sleep(3);
 
 export default function () {
-  // Set base url from environment variable, the variable ' -e HOSTNAME = xxxx ' must be added to command line arguement
+  // Set base url from environment variable, the variable ' -e HOSTNAME = xxxx ' must be added to command line argument
   const base_url = 'http://' + __ENV.HOSTNAME + '/api/2.0/mlflow/';
 
   // test creating runs
@@ -29,7 +29,7 @@ export default function () {
       },
     }
   );
-  
+
   // retrieve run id
   const runId = run_response.json().run.info.run_id;
 
@@ -106,7 +106,7 @@ export default function () {
       key: "metric0",
       value: Math.random(),
       timestamp: Date.now(),
-      step: 0 
+      step: 0
     }),
       {
         headers: {

@@ -16,6 +16,16 @@ BENCHMARKS = [
     "LogMetricBatch10",
     "LogMetricBatch100",
 ]
+BENCHMARKS = [
+    "SearchRuns",
+    "SearchExperiments",
+    "MetricHistory",
+    "CreateRun",
+    "LogMetricSingle",
+    "LogMetricBatch5",
+    "LogMetricBatch10",
+    "LogMetricBatch100",
+]
 
 # Configure logging
 logging.basicConfig(
@@ -71,6 +81,9 @@ def getDataframeFromFile(filename, application_name):
     df = pd.read_csv(filename)
 
     # Display the DataFrame
+    df = df[df["metric_name"] == "http_req_duration"]
+    df = df[df["name"].isin(BENCHMARKS)]
+
     df = df[df["metric_name"] == "http_req_duration"]
     df = df[df["name"].isin(BENCHMARKS)]
 

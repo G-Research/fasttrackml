@@ -226,7 +226,7 @@ endif
 
 #
 # Build targets.
-# 
+#
 .PHONY: clean
 clean: ## clean build artifacts.
 	@echo ">>> Cleaning build artifacts."

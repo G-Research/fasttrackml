@@ -1,10 +1,12 @@
 import http from 'k6/http';
 
+const MAX_METRICS_PER_BATCH = 200
+
 export default function () {
   const namespace = 'default'
-  const numberOfExperiments = 2
-  const runsPerExperiment = 10
-  const paramsPerRun = 100
+  const numberOfExperiments = 1
+  const runsPerExperiment = 2
+  const paramsPerRun = 1
   const metricsPerRun = 2000
   const stepsPerMetric = 4
 
@@ -16,9 +18,9 @@ export default function () {
   }
 }
 
-function createExperiment(namespace) {  
+function createExperiment(namespace) {
   const base_url = `http://localhost:5000/ns/${namespace}/api/2.0/mlflow/`;
-  
+
   const exp_response = http.post(
     base_url + 'experiments/create',
     JSON.stringify({
@@ -34,9 +36,9 @@ function createExperiment(namespace) {
 }
 
 
-function createRun(namespace, experimentId, numParams, numMetrics, numSteps) {  
+function createRun(namespace, experimentId, numParams, numMetrics, numSteps) {
   const base_url = `http://localhost:5000/ns/${namespace}/api/2.0/mlflow/`;
-  
+
   const run_response = http.post(
     base_url + 'runs/create',
     JSON.stringify({
@@ -96,33 +98,51 @@ function createRun(namespace, experimentId, numParams, numMetrics, numSteps) {
         step: step,
         context: ctx,
       })
+
+      if (metrics.length >= MAX_METRICS_PER_BATCH) {
+        http.post(
+          base_url + 'runs/log-batch',
+          JSON.stringify({
+            run_id: run_id,
+            metrics: metrics
+          }),
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            },
+          }
+        );
+        metrics.length = 0;
+      }
     }
+
+    if (metrics.length > 0) {
+      http.post(
+        base_url + 'runs/log-batch',
+        JSON.stringify({
+          run_id: run_id,
+          metrics: metrics
+        }),
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+        }
+      );
+    }
+
+    http.post(
+      base_url + 'runs/update',
+      JSON.stringify({
+        run_id: run_id,
+        end_time: Date.now(),
+        status: 'FINISHED'
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      }
+    );
   }
-
-  http.post(
-    base_url + 'runs/log-batch',
-    JSON.stringify({
-      run_id: run_id,
-      metrics: metrics
-    }),
-    {
-      headers: {
-        'Content-Type': 'application/json'
-      },
-    }
-  );
-
-  http.post(
-    base_url + 'runs/update',
-    JSON.stringify({
-      run_id: run_id,
-      end_time: Date.now(),
-      status: 'FINISHED'
-    }),
-    {
-      headers: {
-        'Content-Type': 'application/json'
-      },
-    }
-  );
 }

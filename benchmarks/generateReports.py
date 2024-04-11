@@ -33,7 +33,7 @@ logging.basicConfig(
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
 
@@ -190,7 +190,7 @@ def cleanGeneratedFiles():
     return False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # ensure all reports have been generated
 
     logging.info("Beginning report generation")
@@ -217,6 +217,7 @@ if __name__ == '__main__':
     DELAY_BETWEEN_CHECKS = args.delaybetween
 
     num_checks = 0
+
     # while checkAllFilesReady() == False and num_checks < NUM_OF_TIMES_TO_CHECK:
     #     logging.info("Waiting for all csv files to be generated...")
     #     time.sleep(DELAY_BETWEEN_CHECKS)
@@ -232,4 +233,7 @@ if __name__ == '__main__':
 
 
     if SHOULD_CLEAN:
+        # cleanGeneratedFiles()
+        pass
+
         cleanGeneratedFiles()

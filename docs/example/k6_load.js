@@ -5,8 +5,8 @@ export default function () {
   const numberOfExperiments = 2
   const runsPerExperiment = 10
   const paramsPerRun = 100
-  const metricsPerRun = 1000
-  const stepsPerMetric = 10
+  const metricsPerRun = 2000
+  const stepsPerMetric = 4
 
   for (let i = 0; i < numberOfExperiments; i++) {
     const experimentId = createExperiment(namespace)
@@ -80,12 +80,16 @@ function createRun(namespace, experimentId, numParams, numMetrics, numSteps) {
   let metrics = [];
   for (let step = 1; step <= numSteps; step++) {
     for (let id = 1; id <= numMetrics; id++) {
-      metrics.push({
+      let metric = {
         key: `metric${id}`,
         value: id * step * Math.random(),
         timestamp: Date.now(),
         step: step,
-      })
+      }
+      if (Math.random() < 0.5) {
+	      metric['context'] = { contextKey1: `val${id}`, contextKey2: `val${id}` }
+      }
+      metrics.push(metric)
     }
   }
 

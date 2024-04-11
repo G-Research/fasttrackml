@@ -127,6 +127,8 @@ func createDBProvider(ctx context.Context, config *config.Config) (database.DBPr
 }
 
 // createApp creates a new fiber app with base configuration.
+//
+//nolint:contextcheck
 func createApp(
 	ctx context.Context,
 	config *config.Config,

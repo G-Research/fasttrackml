@@ -2,6 +2,7 @@ package oidc
 
 import (
 	"context"
+	"slices"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/rotisserie/eris"
@@ -13,10 +14,13 @@ import (
 type ClientProvider interface {
 	// Verify makes Access Token verification.
 	Verify(ctx context.Context, accessToken string) (*User, error)
+	// IsAdmin makes check that current user is Admin user.
+	IsAdmin(user *User) bool
 }
 
 // Client represents OIDC client.
 type Client struct {
+	config   *auth.Config
 	verifier *oidc.IDTokenVerifier
 }
 
@@ -28,6 +32,7 @@ func NewClient(ctx context.Context, config *auth.Config) (*Client, error) {
 	}
 
 	return &Client{
+		config:   config,
 		verifier: provider.Verifier(&oidc.Config{ClientID: config.AuthOIDCClientID}),
 	}, nil
 }
@@ -46,4 +51,9 @@ func (c Client) Verify(ctx context.Context, accessToken string) (*User, error) {
 		return nil, eris.Wrap(err, "error extracting token claims")
 	}
 	return &User{Groups: claims.Groups}, nil
+}
+
+// IsAdmin makes check that current user is Admin user.
+func (c Client) IsAdmin(user *User) bool {
+	return slices.Contains(user.Groups, c.config.AuthOIDCAdminRole)
 }

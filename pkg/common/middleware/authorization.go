@@ -57,7 +57,7 @@ func NewOIDCMiddleware(
 			)
 		}
 		log.Debugf("user has roles: %v accociated", user.Groups)
-		if user.IsAdmin() {
+		if client.IsAdmin(user) {
 			return ctx.Next()
 		}
 

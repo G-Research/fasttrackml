@@ -8,7 +8,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/config"
-	"github.com/G-Research/fasttrackml/pkg/ui/chooser/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
 // Service provides service layer to work with `namespace` business logic.

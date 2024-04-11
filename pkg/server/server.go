@@ -44,12 +44,10 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
-	adminMiddleware "github.com/G-Research/fasttrackml/pkg/ui/admin/middleware"
 	adminUINamespaceService "github.com/G-Research/fasttrackml/pkg/ui/admin/service/namespace"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
 	chooserController "github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
-	chooserMiddleware "github.com/G-Research/fasttrackml/pkg/ui/chooser/middleware"
 	chooserNamespaceService "github.com/G-Research/fasttrackml/pkg/ui/chooser/service/namespace"
 	mlflowUI "github.com/G-Research/fasttrackml/pkg/ui/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/version"
@@ -203,6 +201,17 @@ func createApp(
 	}
 	app.Use(middleware.NewNamespaceMiddleware(namespaceCachedRepository))
 
+	switch {
+	case config.Auth.IsAuthTypeOIDC():
+		oidcClient, err := oidc.NewClient(ctx, &config.Auth)
+		if err != nil {
+			return nil, eris.Wrap(err, "error creating OIDC client")
+		}
+		app.Use(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
+	case config.Auth.IsAuthTypeUser():
+		app.Use(middleware.NewUserMiddleware(config.Auth.AuthParsedUserPermissions))
+	}
+
 	app.Use(compress.New(compress.Config{
 		Next: func(c *fiber.Ctx) bool {
 			// This is a little brittle, maybe there is a better way?
@@ -232,7 +241,7 @@ func createApp(
 	} else {
 		// init `aim` api refactored routes.
 		log.Info("using refactored aim service")
-		aimRouter := aim2API.NewRouter(
+		aim2API.NewRouter(
 			aim2Controller.NewController(
 				aimTagService.NewService(
 					aimRepositories.NewTagRepository(db.GormDB()),
@@ -261,25 +270,12 @@ func createApp(
 					aimRepositories.NewExperimentRepository(db.GormDB()),
 				),
 			),
-		)
-
-		// configure AIM global Auth middlewares.
-		switch {
-		case config.Auth.IsAuthTypeOIDC():
-			oidcClient, err := oidc.NewClient(ctx, &config.Auth)
-			if err != nil {
-				return nil, eris.Wrap(err, "error creating OIDC client")
-			}
-			aimRouter.AddGlobalMiddleware(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
-		case config.Auth.IsAuthTypeUser():
-			aimRouter.AddGlobalMiddleware(middleware.NewUserMiddleware(config.Auth.AuthParsedUserPermissions))
-		}
-		aimRouter.Init(app)
+		).Init(app)
 	}
 
 	// init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
-	mlflowRouter := mlflowAPI.NewRouter(
+	mlflowAPI.NewRouter(
 		mlflowController.NewController(
 			mlflowRunService.NewService(
 				mlflowRepositories.NewTagRepository(db.GormDB()),
@@ -303,26 +299,13 @@ func createApp(
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
-	)
-
-	// configure Mlflow global Auth middlewares.
-	switch {
-	case config.Auth.IsAuthTypeOIDC():
-		oidcClient, err := oidc.NewClient(ctx, &config.Auth)
-		if err != nil {
-			return nil, eris.Wrap(err, "error creating OIDC client")
-		}
-		mlflowRouter.AddGlobalMiddleware(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
-	case config.Auth.IsAuthTypeUser():
-		mlflowRouter.AddGlobalMiddleware(middleware.NewUserMiddleware(config.Auth.AuthParsedUserPermissions))
-	}
-	mlflowRouter.Init(app)
+	).Init(app)
 
 	mlflowUI.AddRoutes(app)
 	aimUI.AddRoutes(app)
 
 	// init `admin` UI routes.
-	adminRouter := adminUI.NewRouter(
+	if err := adminUI.NewRouter(
 		adminUIController.NewController(
 			adminUINamespaceService.NewService(
 				config,
@@ -330,52 +313,19 @@ func createApp(
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
-	)
-	// configure Admin global Auth middlewares.
-	switch {
-	case config.Auth.IsAuthTypeOIDC():
-		oidcClient, err := oidc.NewClient(ctx, &config.Auth)
-		if err != nil {
-			return nil, eris.Wrap(err, "error creating OIDC client")
-		}
-		adminRouter.AddGlobalMiddleware(
-			adminMiddleware.NewOIDCMiddleware(oidcClient),
-		)
-	case config.Auth.IsAuthTypeUser():
-		adminRouter.AddGlobalMiddleware(
-			adminMiddleware.NewAdminUserMiddleware(config.Auth.AuthParsedUserPermissions),
-		)
-	}
-
-	if err := adminRouter.Init(app); err != nil {
+	).Init(app); err != nil {
 		return nil, eris.Wrap(err, "error initializing admin routes")
 	}
 
 	// init `chooser` ui routes.
-	chooserRouter := chooser.NewRouter(
+	if err := chooser.NewRouter(
 		chooserController.NewController(
 			chooserNamespaceService.NewService(
 				config,
 				namespaceCachedRepository,
 			),
 		),
-	)
-	// configure Chooser global Auth middlewares.
-	switch {
-	case config.Auth.IsAuthTypeOIDC():
-		oidcClient, err := oidc.NewClient(ctx, &config.Auth)
-		if err != nil {
-			return nil, eris.Wrap(err, "error creating OIDC client")
-		}
-		chooserRouter.AddGlobalMiddleware(
-			chooserMiddleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository),
-		)
-	case config.Auth.IsAuthTypeUser():
-		chooserRouter.AddGlobalMiddleware(
-			chooserMiddleware.NewUserMiddleware(config.Auth.AuthParsedUserPermissions),
-		)
-	}
-	if err := chooserRouter.Init(app); err != nil {
+	).Init(app); err != nil {
 		return nil, eris.Wrap(err, "error initializing chooser routes")
 	}
 

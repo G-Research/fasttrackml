@@ -5,7 +5,9 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/G-Research/fasttrackml/pkg/common/client/oidc"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
@@ -19,6 +21,27 @@ func NewAdminUserMiddleware(userPermissions *models.UserPermissions) fiber.Handl
 			return ctx.Redirect("/errors/not-found", http.StatusMovedPermanently)
 		}
 
+		return ctx.Next()
+	}
+}
+
+// NewOIDCMiddleware creates new OIDC based Middleware instance.
+func NewOIDCMiddleware(client oidc.ClientProvider) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		authToken := ctx.Query("authToken", "")
+		if authToken == "" {
+			return ctx.Redirect("/login", http.StatusMovedPermanently)
+		}
+
+		user, err := client.Verify(ctx.Context(), authToken)
+		if err != nil {
+			return ctx.Redirect("/login", http.StatusMovedPermanently)
+		}
+
+		log.Debugf("user has roles: %v accociated", user.Roles())
+		if !user.IsAdmin() {
+			return ctx.Redirect("/login", http.StatusMovedPermanently)
+		}
 		return ctx.Next()
 	}
 }

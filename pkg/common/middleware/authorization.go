@@ -56,12 +56,12 @@ func NewOIDCMiddleware(
 				api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
 			)
 		}
-		log.Debugf("user has roles: %v accociated", user.Groups)
-		if client.IsAdmin(user) {
+		log.Debugf("user has roles: %v accociated", user.Roles())
+		if user.IsAdmin() {
 			return ctx.Next()
 		}
 
-		isValid, err := rolesRepository.ValidateRolesAccessToNamespace(ctx.Context(), user.Groups, namespace.Code)
+		isValid, err := rolesRepository.ValidateRolesAccessToNamespace(ctx.Context(), user.Roles(), namespace.Code)
 		if err != nil {
 			log.Errorf("error validating access to requested namespace with code: %s, %+v", namespace.Code, err)
 			return api.NewInternalError(

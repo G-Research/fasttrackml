@@ -37,7 +37,7 @@ func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, bool, 
 
 	switch {
 	case s.config.Auth.IsAuthTypeUser():
-		authToken, err := middleware.GetAuthTokenFromContext(ctx)
+		authToken, err := middleware.GetBasicAuthTokenFromContext(ctx)
 		if err != nil {
 			return nil, false, err
 		}

@@ -14,8 +14,6 @@ import (
 type ClientProvider interface {
 	// Verify makes Access Token verification.
 	Verify(ctx context.Context, accessToken string) (*User, error)
-	// IsAdmin makes check that current user is Admin user.
-	IsAdmin(user *User) bool
 }
 
 // Client represents OIDC client.
@@ -45,15 +43,13 @@ func (c Client) Verify(ctx context.Context, accessToken string) (*User, error) {
 	}
 	// Extract custom claims.
 	var claims struct {
-		Groups []string `json:"groups"`
+		Groups []string `json:"roles"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
 		return nil, eris.Wrap(err, "error extracting token claims")
 	}
-	return &User{Groups: claims.Groups}, nil
-}
-
-// IsAdmin makes check that current user is Admin user.
-func (c Client) IsAdmin(user *User) bool {
-	return slices.Contains(user.Groups, c.config.AuthOIDCAdminRole)
+	return &User{
+		roles:   claims.Groups,
+		isAdmin: slices.Contains(claims.Groups, c.config.AuthOIDCAdminRole),
+	}, nil
 }

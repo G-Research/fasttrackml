@@ -1,13 +1,17 @@
 package oidc
 
-import "slices"
-
 // User represents object to store current user information.
 type User struct {
-	Groups []string
+	roles   []string
+	isAdmin bool
+}
+
+// Roles returns current user roles.
+func (u User) Roles() []string {
+	return u.roles
 }
 
 // IsAdmin makes check that current user is Admin user.
 func (u User) IsAdmin() bool {
-	return slices.Contains(u.Groups, "admin")
+	return u.isAdmin
 }

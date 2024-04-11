@@ -4,8 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
-	"github.com/G-Research/fasttrackml/pkg/common/config"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
 // Router represents `mlflow` router.
@@ -15,7 +13,7 @@ type Router struct {
 }
 
 // NewRouter creates new instance of `mlflow` router.
-func NewRouter(config *config.Config, controller *controller.Controller) *Router {
+func NewRouter(controller *controller.Controller) *Router {
 	return &Router{
 		controller:        controller,
 		globalMiddlewares: make([]fiber.Handler, 0),

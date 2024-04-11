@@ -10,11 +10,11 @@ import (
 	"github.com/rotisserie/eris"
 	"github.com/spf13/viper"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config/auth"
+	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
 )
 
-// ServiceConfig represents main service configuration.
-type ServiceConfig struct {
+// Config represents main service configuration.
+type Config struct {
 	Auth                  auth.Config
 	DevMode               bool
 	AimRevert             bool
@@ -30,13 +30,16 @@ type ServiceConfig struct {
 	LiveUpdatesEnabled    bool
 }
 
-// NewServiceConfig creates new instance of ServiceConfig.
-func NewServiceConfig() *ServiceConfig {
-	return &ServiceConfig{
+// NewConfig creates new instance of Config.
+func NewConfig() *Config {
+	return &Config{
 		Auth: auth.Config{
-			AuthUsername:    viper.GetString("auth-username"),
-			AuthPassword:    viper.GetString("auth-password"),
-			AuthUsersConfig: viper.GetString("auth-users-config"),
+			AuthUsername:             viper.GetString("auth-username"),
+			AuthPassword:             viper.GetString("auth-password"),
+			AuthUsersConfig:          viper.GetString("auth-users-config"),
+			AuthOIDCClientID:         viper.GetString("auth-oidc-client-id"),
+			AuthOIDCClientSecret:     viper.GetString("auth-oidc-client-secret"),
+			AuthOIDCProviderEndpoint: viper.GetString("auth-oidc-provider-endpoint"),
 		},
 		DevMode:               viper.GetBool("dev-mode"),
 		AimRevert:             viper.GetBool("run-original-aim-service"),
@@ -54,7 +57,7 @@ func NewServiceConfig() *ServiceConfig {
 }
 
 // Validate validates service configuration.
-func (c *ServiceConfig) Validate() error {
+func (c *Config) Validate() error {
 	if err := c.validateConfiguration(); err != nil {
 		return eris.Wrap(err, "error validating service configuration")
 	}
@@ -65,7 +68,7 @@ func (c *ServiceConfig) Validate() error {
 }
 
 // validateConfiguration validates service configuration for correctness.
-func (c *ServiceConfig) validateConfiguration() error {
+func (c *Config) validateConfiguration() error {
 	// 1. validate DefaultArtifactRoot configuration parameter for correctness and valid values.
 	parsed, err := url.Parse(c.DefaultArtifactRoot)
 	if err != nil {
@@ -88,7 +91,7 @@ func (c *ServiceConfig) validateConfiguration() error {
 }
 
 // normalizeConfiguration normalizes service configuration parameters.
-func (c *ServiceConfig) normalizeConfiguration() error {
+func (c *Config) normalizeConfiguration() error {
 	parsed, err := url.Parse(c.DefaultArtifactRoot)
 	if err != nil {
 		return eris.Wrap(err, "error parsing 'default-artifact-root' flag")

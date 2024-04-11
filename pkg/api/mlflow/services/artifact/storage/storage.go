@@ -8,7 +8,7 @@ import (
 
 	"github.com/rotisserie/eris"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 )
 
 // ArtifactObject represents Artifact object agnostic to selected storage.
@@ -49,12 +49,12 @@ type ArtifactStorageFactoryProvider interface {
 
 // ArtifactStorageFactory represents Artifact Storage .
 type ArtifactStorageFactory struct {
-	config      *config.ServiceConfig
+	config      *config.Config
 	storageList sync.Map
 }
 
 // NewArtifactStorageFactory creates new Artifact Storage Factory instance.
-func NewArtifactStorageFactory(config *config.ServiceConfig) (*ArtifactStorageFactory, error) {
+func NewArtifactStorageFactory(config *config.Config) (*ArtifactStorageFactory, error) {
 	return &ArtifactStorageFactory{
 		config:      config,
 		storageList: sync.Map{},

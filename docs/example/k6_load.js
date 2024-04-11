@@ -80,16 +80,22 @@ function createRun(namespace, experimentId, numParams, numMetrics, numSteps) {
   let metrics = [];
   for (let step = 1; step <= numSteps; step++) {
     for (let id = 1; id <= numMetrics; id++) {
-      let metric = {
+      let ctx = {}
+      let rnd = Math.random()
+      if (rnd < 0.3) {
+        ctx = { type: 'training' }
+      }
+      else if (rnd > 0.6) {
+        ctx = { type: 'testing' }
+      }
+
+      metrics.push({
         key: `metric${id}`,
         value: id * step * Math.random(),
         timestamp: Date.now(),
         step: step,
-      }
-      if (Math.random() < 0.5) {
-	      metric['context'] = { contextKey1: `val${id}`, contextKey2: `val${id}` }
-      }
-      metrics.push(metric)
+        context: ctx,
+      })
     }
   }
 

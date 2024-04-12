@@ -89,9 +89,9 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 func findConflictingParams(tx *gorm.DB, params []models.Param) ([]paramConflict, error) {
 	var conflicts []paramConflict
 	placeholders, values := makeParamConflictPlaceholdersAndValues(params, tx.Dialector.Name())
-	nullSafeEquality := "<=>"
+	nullSafeEquality := "IS NOT"
 	if (tx.Dialector.Name() == postgres.Dialector{}.Name()) {
-		nullSafeEquality = "IS NOT DISTINCT FROM"
+		nullSafeEquality = "IS DISTINCT FROM"
 	}
 	sql := fmt.Sprintf(`WITH new(key, run_uuid, value_int, value_float, value_str) AS (%s)
 		     SELECT current.run_uuid, current.key, CONCAT(current.value_int, 
@@ -99,9 +99,9 @@ func findConflictingParams(tx *gorm.DB, params []models.Param) ([]paramConflict,
 			   new.value_float, new.value_str) as new_value
 		     FROM params AS current
 		     INNER JOIN new USING (run_uuid, key)
-		     WHERE NOT (new.value_int %s current.value_int)
-			 OR NOT (new.value_float %s current.value_float)
-			 OR NOT (new.value_str %s current.value_str)`,
+		     WHERE (new.value_int %s current.value_int)
+			 OR (new.value_float %s current.value_float)
+			 OR (new.value_str %s current.value_str)`,
 		placeholders, nullSafeEquality, nullSafeEquality, nullSafeEquality)
 	if err := tx.Raw(sql, values...).
 		Find(&conflicts).Error; err != nil {

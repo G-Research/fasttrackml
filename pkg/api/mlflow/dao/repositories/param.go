@@ -100,8 +100,8 @@ func findConflictingParams(tx *gorm.DB, params []models.Param) ([]paramConflict,
 		     FROM params AS current
 		     INNER JOIN new USING (run_uuid, key)
 		     WHERE NOT (new.value_int %s current.value_int)
-			 AND NOT (new.value_float %s current.value_float)
-			 AND NOT (new.value_str %s current.value_str)`,
+			 OR NOT (new.value_float %s current.value_float)
+			 OR NOT (new.value_str %s current.value_str)`,
 		placeholders, nullSafeEquality, nullSafeEquality, nullSafeEquality)
 	if err := tx.Raw(sql, values...).
 		Find(&conflicts).Error; err != nil {

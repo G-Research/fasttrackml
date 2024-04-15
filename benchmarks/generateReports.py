@@ -16,16 +16,6 @@ BENCHMARKS = [
     "LogMetricBatch10",
     "LogMetricBatch100",
 ]
-BENCHMARKS = [
-    "SearchRuns",
-    "SearchExperiments",
-    "MetricHistory",
-    "CreateRun",
-    "LogMetricSingle",
-    "LogMetricBatch5",
-    "LogMetricBatch10",
-    "LogMetricBatch100",
-]
 
 # Configure logging
 logging.basicConfig(

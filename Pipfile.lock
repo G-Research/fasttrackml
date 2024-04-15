@@ -834,20 +834,20 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:139dd2d94eaa0e3213ff37ba7cf4cb2e3823269178fe8f3e33c965f680a9ddde",
-                "sha256:265b0b4865e8c07e27abb32a31d2bd9129bb009b1d89ca0783776ec084886123"
+                "sha256:7a02f44af32095946587d748ebeb39c3fa15b9d7275307ff612a6760ead47e04",
+                "sha256:91e6343474173e9b82f603076856e1d5b7b68f44247bdd556250857a3f16b37b"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==1.34.79"
+            "version": "==1.34.84"
         },
         "botocore": {
             "hashes": [
-                "sha256:6b59b0f7de219d383a2a633f6718c2600642ebcb707749dc6c67a6a436474b7a",
-                "sha256:a42a014d3dbaa9ef123810592af69f9e55b456c5be3ac9efc037325685519e83"
+                "sha256:a2b309bf5594f0eb6f63f355ade79ba575ce8bf672e52e91da1a7933caa245e6",
+                "sha256:da1ae0a912e69e10daee2a34dafd6c6c106450d20b8623665feceb2d96c173eb"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==1.34.79"
+            "version": "==1.34.84"
         },
         "cachetools": {
             "hashes": [

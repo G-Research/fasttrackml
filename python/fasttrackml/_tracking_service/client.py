@@ -1,4 +1,5 @@
 from functools import partial
+from itertools import zip_longest
 from typing import Dict, Optional, Sequence
 
 from mlflow.entities import Param, RunTag
@@ -59,10 +60,11 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
     def log_batch(
         self, run_id: str, metrics: Sequence[Metric] = (), params: Sequence[Param] = (), tags: Sequence[RunTag] = ()
     ):
-        for metrics_batch, params_batch, tags_batch in zip(
+        for metrics_batch, params_batch, tags_batch in zip_longest(
             chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH),
             chunk_list(params, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
             chunk_list(tags, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
+            fillvalue=[]
         ):
             self.custom_store.log_batch(run_id=run_id, metrics=metrics_batch, params=params_batch, tags=tags_batch)
 
@@ -70,10 +72,11 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
         self, run_id: str, metrics: Sequence[Metric] = (), params: Sequence[Param] = (), tags: Sequence[RunTag] = ()
     ) -> RunOperations:
         result = RunOperations([])
-        for metrics_batch, params_batch, tags_batch in zip(
+        for metrics_batch, params_batch, tags_batch in zip_longest(
             chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH),
             chunk_list(params, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
             chunk_list(tags, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
+            fillvalue=[]
         ):
             batch_result = self.custom_store.log_batch_async(
                 run_id=run_id, metrics=metrics_batch, params=params_batch, tags=tags_batch

@@ -257,7 +257,7 @@ func (f RunFixtures) CreateParams(
 	for i := 1; i <= count; i++ {
 		err := f.baseFixtures.db.WithContext(ctx).Create(&models.Param{
 			Key:      fmt.Sprintf("key%d", i),
-			ValueStr: common.GetPointer[string](fmt.Sprintf("val%d", i)),
+			ValueStr: common.GetPointer(fmt.Sprintf("val%d", i)),
 			RunID:    run.ID,
 		}).Error
 		if err != nil {

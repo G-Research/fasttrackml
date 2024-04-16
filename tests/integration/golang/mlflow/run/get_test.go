@@ -68,7 +68,7 @@ func (s *GetRunTestSuite) Test_Ok() {
 
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 		Key:      "param1",
-		ValueStr: common.GetPointer[string]("value1"),
+		ValueStr: common.GetPointer("value1"),
 		RunID:    run.ID,
 	})
 	s.Require().Nil(err)

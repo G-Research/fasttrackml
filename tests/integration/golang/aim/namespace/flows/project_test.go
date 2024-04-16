@@ -144,7 +144,7 @@ func (s *ProjectFlowTestSuite) Test_Ok() {
 
 			param1, err := s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 				Key:      "param1",
-				ValueStr: common.GetPointer[string]("value1"),
+				ValueStr: common.GetPointer("value1"),
 				RunID:    run1.ID,
 			})
 			s.Require().Nil(err)
@@ -188,7 +188,7 @@ func (s *ProjectFlowTestSuite) Test_Ok() {
 
 			param2, err := s.ParamFixtures.CreateParam(context.Background(), &models.Param{
 				Key:      "param2",
-				ValueStr: common.GetPointer[string]("value2"),
+				ValueStr: common.GetPointer("value2"),
 				RunID:    run2.ID,
 			})
 			s.Require().Nil(err)

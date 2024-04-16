@@ -308,7 +308,7 @@ func (s Service) SearchRuns(
 				kind = &database.LatestMetric{}
 			case "parameter", "parameters", "param", "params":
 				switch strings.ToUpper(comparison) {
-				case NotEqualExpression, EqualExpression, LikeExpression, ILikeExpression:
+				case NotEqualExpression, EqualExpression:
 					switch v := value.(type) {
 					case string:
 						if strings.HasPrefix(v, "(") {
@@ -320,6 +320,19 @@ func (s Service) SearchRuns(
 						valueCol = "value_int"
 					case float64, float32:
 						valueCol = "value_float"
+					default:
+						return nil, 0, 0, api.NewInvalidParameterValueError(
+							"invalid value '%v' for comparison operator '%s'", v, comparison,
+						)
+					}
+				case LikeExpression, ILikeExpression:
+					switch v := value.(type) {
+					case string:
+						if strings.HasPrefix(v, "(") {
+							return nil, 0, 0, api.NewInvalidParameterValueError("invalid string value '%s'", value)
+						}
+						value = strings.Trim(v, `"'`)
+						valueCol = "value_str"
 					default:
 						return nil, 0, 0, api.NewInvalidParameterValueError(
 							"invalid value '%v' for comparison operator '%s'", v, comparison,

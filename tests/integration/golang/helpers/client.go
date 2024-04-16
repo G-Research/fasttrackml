@@ -70,6 +70,11 @@ func NewAdminApiClient(server server.Server) *HttpClient {
 	return NewClient(server, "/admin")
 }
 
+// NewChooserApiClient creates new HTTP client for the chooser api
+func NewChooserApiClient(server server.Server) *HttpClient {
+	return NewClient(server, "/chooser")
+}
+
 // WithMethod sets the HTTP method.
 func (c *HttpClient) WithMethod(method string) *HttpClient {
 	c.method = method

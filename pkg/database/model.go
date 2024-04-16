@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
 )
 
@@ -65,8 +66,8 @@ type Experiment struct {
 }
 
 // IsDefault makes check that Experiment is default.
-func (e Experiment) IsDefault() bool {
-	return e.ID != nil && *e.ID == DefaultExperimentID && e.Name == DefaultExperimentName
+func (e Experiment) IsDefault(namespace *models.Namespace) bool {
+	return e.ID != nil && namespace.DefaultExperimentID != nil && *e.ID == *namespace.DefaultExperimentID
 }
 
 type ExperimentTag struct {
@@ -190,10 +191,9 @@ func (SchemaVersion) TableName() string {
 }
 
 type Base struct {
-	ID         uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	IsArchived bool      `json:"-"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) error {
@@ -207,6 +207,7 @@ type Dashboard struct {
 	Description string     `json:"description"`
 	AppID       *uuid.UUID `gorm:"type:uuid" json:"app_id"`
 	App         App        `json:"-"`
+	IsArchived  bool       `json:"-"`
 }
 
 func (d Dashboard) MarshalJSON() ([]byte, error) {
@@ -232,6 +233,7 @@ type App struct {
 	State       AppState  `json:"state"`
 	Namespace   Namespace `json:"-"`
 	NamespaceID uint      `gorm:"not null" json:"-"`
+	IsArchived  bool      `json:"-"`
 }
 
 type AppState map[string]any
@@ -264,4 +266,17 @@ func NewUUID() string {
 	u := uuid.New()
 	hex.Encode(r[:], u[:])
 	return string(r[:])
+}
+
+type Role struct {
+	Base
+	Role string `gorm:"unique;index;not null"`
+}
+
+type RoleNamespace struct {
+	Base
+	Role        Role      `gorm:"constraint:OnDelete:CASCADE"`
+	RoleID      uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
+	Namespace   Namespace `gorm:"constraint:OnDelete:CASCADE"`
+	NamespaceID uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
 }

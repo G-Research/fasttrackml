@@ -11,16 +11,16 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetExperiments(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -66,7 +66,7 @@ func GetExperiments(c *fiber.Ctx) error {
 }
 
 func GetExperiment(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -132,7 +132,7 @@ func GetExperiment(c *fiber.Ctx) error {
 }
 
 func GetExperimentRuns(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -219,7 +219,7 @@ func GetExperimentRuns(c *fiber.Ctx) error {
 }
 
 func GetExperimentActivity(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -287,7 +287,7 @@ func GetExperimentActivity(c *fiber.Ctx) error {
 }
 
 func DeleteExperiment(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -322,7 +322,7 @@ func DeleteExperiment(c *fiber.Ctx) error {
 		return fmt.Errorf("unable to find experiment %q: %w", params.ID, err)
 	}
 
-	if experiment.IsDefault() {
+	if experiment.IsDefault(ns) {
 		return fiber.NewError(fiber.StatusBadRequest, "unable to delete default experiment")
 	}
 
@@ -342,7 +342,7 @@ func DeleteExperiment(c *fiber.Ctx) error {
 }
 
 func UpdateExperiment(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

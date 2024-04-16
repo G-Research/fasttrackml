@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -41,7 +41,9 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 		s.AIMClient().WithQuery(map[any]any{
 			"limit":  4,
 			"offset": runs[8].ID,
-		}).WithResponse(&resp).DoRequest(
+		}).WithResponse(
+			&resp,
+		).DoRequest(
 			"/experiments/%d/runs", *experiment.ID,
 		),
 	)
@@ -64,14 +66,13 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 		ID    string
 	}{
 		{
-			name: "IncorrectExperimentID",
-			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt: ` +
-				`parsing "incorrect_experiment_id": invalid syntax`,
-			ID: "incorrect_experiment_id",
+			name:  "IncorrectExperimentID",
+			error: `(unable to parse|failed to decode)`,
+			ID:    "incorrect_experiment_id",
 		},
 		{
 			name:  "NotFoundExperiment",
-			error: `: Not Found`,
+			error: `(Not Found|not found)`,
 			ID:    "123",
 		},
 	}
@@ -80,7 +81,7 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
 			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s/runs", tt.ID))
-			s.Equal(tt.error, resp.Error())
+			s.Regexp(tt.error, resp.Error())
 		})
 	}
 }

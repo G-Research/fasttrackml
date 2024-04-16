@@ -16,7 +16,7 @@ import (
 func TestConvertLogParamRequestToDBModel_Ok(t *testing.T) {
 	req := request.LogParamRequest{
 		Key:      "key",
-		ValueStr: common.GetPointer[string]("value"),
+		ValueStr: common.GetPointer("value"),
 	}
 	result := ConvertLogParamRequestToDBModel("run_id", &req)
 	assert.Equal(t, "key", result.Key)
@@ -42,7 +42,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "key",
-						ValueStr: common.GetPointer[string]("value"),
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -65,7 +65,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				{
 					RunID:    "run_id",
 					Key:      "key",
-					ValueStr: common.GetPointer[string]("value"),
+					ValueStr: common.GetPointer("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{
@@ -89,7 +89,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "key",
-						ValueStr: common.GetPointer[string]("value"),
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -112,7 +112,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				{
 					RunID:    "run_id",
 					Key:      "key",
-					ValueStr: common.GetPointer[string]("value"),
+					ValueStr: common.GetPointer("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{
@@ -137,7 +137,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "key",
-						ValueStr: common.GetPointer[string]("value"),
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -160,7 +160,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				{
 					RunID:    "run_id",
 					Key:      "key",
-					ValueStr: common.GetPointer[string]("value"),
+					ValueStr: common.GetPointer("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{
@@ -184,7 +184,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "key",
-						ValueStr: common.GetPointer[string]("value"),
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -207,7 +207,7 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				{
 					RunID:    "run_id",
 					Key:      "key",
-					ValueStr: common.GetPointer[string]("value"),
+					ValueStr: common.GetPointer("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{
@@ -250,7 +250,7 @@ func TestConvertLogBatchRequestToDBModel_Error(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "key",
-						ValueStr: common.GetPointer[string]("value"),
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -274,7 +274,7 @@ func TestConvertLogBatchRequestToDBModel_Error(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "key",
-						ValueStr: common.GetPointer[string]("value"),
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{

@@ -42,7 +42,7 @@ func TestNewRunPartialResponse(t *testing.T) {
 				Params: []models.Param{
 					{
 						Key:      "Key",
-						ValueStr: common.GetPointer[string]("Value"),
+						ValueStr: common.GetPointer("Value"),
 						RunID:    "RunID",
 					},
 				},
@@ -124,7 +124,7 @@ func TestNewRunPartialResponse(t *testing.T) {
 				Params: []models.Param{
 					{
 						Key:      "Key",
-						ValueStr: common.GetPointer[string]("Value"),
+						ValueStr: common.GetPointer("Value"),
 						RunID:    "RunID",
 					},
 				},

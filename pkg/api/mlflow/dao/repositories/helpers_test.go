@@ -37,7 +37,7 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 	}{
 		{
 			params: []models.Param{
-				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
+				{Key: "key1", ValueStr: common.GetPointer("value1"), RunID: "run1"},
 			},
 			dialector:            "postgres",
 			expectedPlaceholders: "SELECT ?::text, ?::text, ?::int, ?::float, ?::text",
@@ -45,8 +45,8 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 		},
 		{
 			params: []models.Param{
-				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
-				{Key: "key2", ValueStr: common.GetPointer[string]("value2"), RunID: "run2"},
+				{Key: "key1", ValueStr: common.GetPointer("value1"), RunID: "run1"},
+				{Key: "key2", ValueStr: common.GetPointer("value2"), RunID: "run2"},
 			},
 			dialector: "postgres",
 			expectedPlaceholders: "SELECT ?::text, ?::text, ?::int, ?::float, ?::text\n" +
@@ -56,7 +56,7 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 		},
 		{
 			params: []models.Param{
-				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
+				{Key: "key1", ValueStr: common.GetPointer("value1"), RunID: "run1"},
 			},
 			dialector:            "sqlite",
 			expectedPlaceholders: "VALUES (?,?,?,?,?)",
@@ -64,8 +64,8 @@ func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 		},
 		{
 			params: []models.Param{
-				{Key: "key1", ValueStr: common.GetPointer[string]("value1"), RunID: "run1"},
-				{Key: "key2", ValueStr: common.GetPointer[string]("value2"), RunID: "run2"},
+				{Key: "key1", ValueStr: common.GetPointer("value1"), RunID: "run1"},
+				{Key: "key2", ValueStr: common.GetPointer("value2"), RunID: "run2"},
 			},
 			dialector:            "sqlite",
 			expectedPlaceholders: "VALUES (?,?,?,?,?),(?,?,?,?,?)",

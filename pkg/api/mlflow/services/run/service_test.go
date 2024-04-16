@@ -802,7 +802,7 @@ func TestService_GetRun_Ok(t *testing.T) {
 		Params: []models.Param{
 			{
 				Key:      "key",
-				ValueStr: common.GetPointer[string]("value"),
+				ValueStr: common.GetPointer("value"),
 			},
 		},
 		Tags: []models.Tag{
@@ -852,7 +852,7 @@ func TestService_GetRun_Ok(t *testing.T) {
 	assert.Equal(t, []models.Param{
 		{
 			Key:      "key",
-			ValueStr: common.GetPointer[string]("value"),
+			ValueStr: common.GetPointer("value"),
 		},
 	}, run.Params)
 	assert.Equal(t, []models.Tag{
@@ -1002,7 +1002,7 @@ func TestService_LogBatch_Ok(t *testing.T) {
 		Params: []request.ParamPartialRequest{
 			{
 				Key:      "key2",
-				ValueStr: common.GetPointer[string]("value2"),
+				ValueStr: common.GetPointer("value2"),
 			},
 		},
 		Metrics: []request.MetricPartialRequest{
@@ -1153,7 +1153,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "key",
-						ValueStr: common.GetPointer[string]("value"),
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 			},
@@ -1176,7 +1176,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 					[]models.Param{
 						{
 							Key:      "key",
-							ValueStr: common.GetPointer[string]("value"),
+							ValueStr: common.GetPointer("value"),
 							RunID:    "1",
 						},
 					},
@@ -1198,7 +1198,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "key",
-						ValueStr: common.GetPointer[string]("value"),
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 			},
@@ -1221,7 +1221,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 					[]models.Param{
 						{
 							Key:      "key",
-							ValueStr: common.GetPointer[string]("value"),
+							ValueStr: common.GetPointer("value"),
 							RunID:    "1",
 						},
 					},
@@ -1243,7 +1243,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "key",
-						ValueStr: common.GetPointer[string]("value"),
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -1275,7 +1275,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 					[]models.Param{
 						{
 							Key:      "key",
-							ValueStr: common.GetPointer[string]("value"),
+							ValueStr: common.GetPointer("value"),
 							RunID:    "1",
 						},
 					},
@@ -1318,7 +1318,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 				Params: []request.ParamPartialRequest{
 					{
 						Key:      "key",
-						ValueStr: common.GetPointer[string]("value"),
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Tags: []request.TagPartialRequest{
@@ -1372,7 +1372,7 @@ func TestService_LogBatch_Error(t *testing.T) {
 					[]models.Param{
 						{
 							Key:      "key",
-							ValueStr: common.GetPointer[string]("value"),
+							ValueStr: common.GetPointer("value"),
 							RunID:    "1",
 						},
 					},
@@ -1674,7 +1674,7 @@ func TestService_LogParam_Ok(t *testing.T) {
 	}, &request.LogParamRequest{
 		RunID:    "1",
 		Key:      "key",
-		ValueStr: common.GetPointer[string]("value"),
+		ValueStr: common.GetPointer("value"),
 	})
 
 	// compare results.
@@ -1724,7 +1724,7 @@ func TestService_LogParam_Error(t *testing.T) {
 			request: &request.LogParamRequest{
 				RunID:    "1",
 				Key:      "key",
-				ValueStr: common.GetPointer[string]("value"),
+				ValueStr: common.GetPointer("value"),
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
@@ -1750,7 +1750,7 @@ func TestService_LogParam_Error(t *testing.T) {
 			request: &request.LogParamRequest{
 				RunID:    "1",
 				Key:      "key",
-				ValueStr: common.GetPointer[string]("value"),
+				ValueStr: common.GetPointer("value"),
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
@@ -1776,7 +1776,7 @@ func TestService_LogParam_Error(t *testing.T) {
 			request: &request.LogParamRequest{
 				RunID:    "1",
 				Key:      "key",
-				ValueStr: common.GetPointer[string]("value"),
+				ValueStr: common.GetPointer("value"),
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
@@ -1818,7 +1818,7 @@ func TestService_LogParam_Error(t *testing.T) {
 			request: &request.LogParamRequest{
 				RunID:    "1",
 				Key:      "key",
-				ValueStr: common.GetPointer[string]("value"),
+				ValueStr: common.GetPointer("value"),
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}

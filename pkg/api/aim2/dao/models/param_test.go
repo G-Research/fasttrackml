@@ -16,17 +16,17 @@ func TestValueAny(t *testing.T) {
 	}{
 		{
 			name:  "IntegerValue",
-			param: Param{ValueInt: common.GetPointer[int64](int64(123))},
+			param: Param{ValueInt: common.GetPointer(int64(123))},
 			want:  int64(123),
 		},
 		{
 			name:  "FloatValue",
-			param: Param{ValueFloat: common.GetPointer[float64](float64(123.45))},
+			param: Param{ValueFloat: common.GetPointer(float64(123.45))},
 			want:  float64(123.45),
 		},
 		{
 			name:  "StringValue",
-			param: Param{ValueStr: common.GetPointer[string]("abc")},
+			param: Param{ValueStr: common.GetPointer("abc")},
 			want:  "abc",
 		},
 	}

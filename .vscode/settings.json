@@ -22,5 +22,8 @@
     "isort.args": [
         "--profile",
         "black"
+    ],
+    "cSpell.words": [
+        "mlflow"
     ]
 }

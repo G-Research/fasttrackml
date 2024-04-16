@@ -206,15 +206,11 @@ class FasttrackmlClient(MlflowClient):
             tags: {'t': 't'}
             status: FINISHED
         """
-        params_result = self._tracking_client_mlflow.log_batch(
-            run_id, params=params, tags=tags, synchronous=synchronous
-        )
         if synchronous:
-            self._tracking_client.log_batch(run_id, metrics)
+            self._tracking_client.log_batch(run_id, metrics=metrics, params=params, tags=tags)
             return None
         else:
-            metrics_result = self._tracking_client.log_batch_async(run_id, metrics)
-            return get_combined_run_operations([params_result, metrics_result])
+            return self._tracking_client.log_batch_async(run_id, metrics=metrics, params=params, tags=tags)
 
     def get_metric_history(self, run_id: str, key: str) -> List[Metric]:
         """

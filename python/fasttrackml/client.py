@@ -90,6 +90,61 @@ class FasttrackmlClient(MlflowClient):
         """
         self._tracking_client.log_metric(run_id, key, value, timestamp, step, context)
 
+    def log_param(
+        self,
+        run_id: str,
+        key: str,
+        value: any,
+    ) -> None:
+        """
+        Log a parameter (e.g. model hyperparameter) under the current run. If no run is active,
+        this method will create a new active run.
+
+        Args:
+            run_id: String ID of the run
+            key: Parameter name. This string may only contain alphanumerics, underscores (_), dashes
+                (-), periods (.), spaces ( ), and slashes (/). All backend stores support keys up to
+                length 250, but some may support larger keys.
+            value: Parameter value, of type int, float, or string (default).
+
+        .. code-block:: python
+            :caption: Example
+
+            from fasttrackml import FasttrackmlClient
+
+
+            def print_run_info(r):
+                print(f"run_id: {r.info.run_id}")
+                print(f"metrics: {r.data.metrics}")
+                print(f"status: {r.info.status}")
+
+
+            # Create a run under the default experiment (whose id is '0').
+            # Since these are low-level CRUD operations, this method will create a run.
+            # To end the run, you'll have to explicitly end it.
+            client = FasttrackmlClient()
+            experiment_id = "0"
+            run = client.create_run(experiment_id)
+            print_run_info(run)
+            print("--")
+
+            # Log the metric. Unlike mlflow.log_metric this method
+            # does not start a run if one does not exist. It will log
+            # the metric for the run id in the backend store.
+            client.log_param(run.info.run_id, "p", 1.5)
+            client.set_terminated(run.info.run_id)
+            run = client.get_run(run.info.run_id)
+            print_run_info(run)
+
+        .. code-block:: text
+            :caption: Output
+
+            run_id: 95e79843cb2c463187043d9065185e24
+            params: {'p': 1.5}
+            status: FINISHED
+        """
+        self._tracking_client.log_param(run_id, key, value)
+
     def log_batch(
         self,
         run_id: str,

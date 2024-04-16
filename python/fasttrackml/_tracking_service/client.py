@@ -19,7 +19,7 @@ except ImportError:
     from mlflow.tracking._tracking_service.utils import _get_default_host_creds as get_default_host_creds
 
 from mlflow.utils.time import get_current_time_millis
-from mlflow.utils.validation import MAX_METRICS_PER_BATCH
+from mlflow.utils.validation import MAX_METRICS_PER_BATCH, MAX_PARAMS_TAGS_PER_BATCH
 
 from ..entities.metric import Metric
 from ..store.custom_rest_store import CustomRestStore
@@ -47,18 +47,37 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
         metric = Metric(key, metric_value, timestamp, step, context)
         self.custom_store.log_metric(run_id, metric)
 
+    def log_param(
+        self,
+        run_id: str,
+        key: str,
+        value: any,
+    ):
+        param = Param(key, value)
+        self.custom_store.log_param(run_id, param)
+
     def log_batch(
         self, run_id: str, metrics: Sequence[Metric] = (), params: Sequence[Param] = (), tags: Sequence[RunTag] = ()
     ):
-        for metrics_batch in chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH):
-            self.custom_store.log_batch(run_id=run_id, metrics=metrics_batch)
+        for metrics_batch, params_batch, tags_batch in zip(
+            chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH),
+            chunk_list(params, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
+            chunk_list(tags, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
+        ):
+            self.custom_store.log_batch(run_id=run_id, metrics=metrics_batch, params=params_batch, tags=tags_batch)
 
     def log_batch_async(
         self, run_id: str, metrics: Sequence[Metric] = (), params: Sequence[Param] = (), tags: Sequence[RunTag] = ()
     ) -> RunOperations:
         result = RunOperations([])
-        for metrics_batch in chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH):
-            batch_result = self.custom_store.log_batch_async(run_id=run_id, metrics=metrics_batch)
+        for metrics_batch, params_batch, tags_batch in zip(
+            chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH),
+            chunk_list(params, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
+            chunk_list(tags, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
+        ):
+            batch_result = self.custom_store.log_batch_async(
+                run_id=run_id, metrics=metrics_batch, params=params_batch, tags=tags_batch
+            )
             result = get_combined_run_operations([result, batch_result])
         return result
 
@@ -110,3 +129,8 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
             experiment_names,
             context,
         )
+
+    def chunk_list(input_list, chunk_size):
+        """Yield successive chunks from input_list."""
+        for i in range(0, len(input_list), chunk_size):
+            yield input_list[i : i + chunk_size]

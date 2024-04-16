@@ -2,14 +2,15 @@ package experiment
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -58,16 +59,15 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 		{
 			ID:    "123",
 			name:  "DeleteWithUnknownIDFails",
-			error: "Not Found",
+			error: "(Not Found|not found)",
 		},
 		{
-			ID:   "incorrect_experiment_id",
-			name: "DeleteIncorrectExperimentID",
-			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt:` +
-				` parsing "incorrect_experiment_id": invalid syntax`,
+			ID:    "incorrect_experiment_id",
+			name:  "DeleteIncorrectExperimentID",
+			error: `(unable to parse|failed to decode)`,
 		},
 		{
-			ID:    "0",
+			ID:    fmt.Sprintf("%d", *s.DefaultExperiment.ID),
 			name:  "DeleteDefaultExperiment",
 			error: `unable to delete default experiment`,
 		},
@@ -84,7 +84,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 					"/experiments/%s", tt.ID,
 				),
 			)
-			s.Contains(resp.Error(), tt.error)
+			s.Regexp(tt.error, resp.Error())
 		})
 	}
 }

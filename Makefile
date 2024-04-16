@@ -45,6 +45,9 @@ COMPOSE_FILE=tests/integration/docker-compose.yml
 # Docker compose project name.
 COMPOSE_PROJECT_NAME=$(APP)-integration-tests
 
+AIM_BUILD_LOCATION=$(HOME)/fasttrackml-ui-aim
+MLFLOW_BUILD_LOCATION=$(HOME)/fasttrackml-ui-mlflow
+
 #
 # Default target (help).
 #
@@ -115,7 +118,7 @@ python-env: ## create python virtual environment.
 .PHONY: python-dist
 python-dist: go-build python-env ## build python wheels.
 	@echo '>>> Building Python Wheels.'
-	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python/fasttrackml --wheel-dir=wheelhouse --no-deps
+	@VERSION=$(VERSION) pipenv run python3 -m pip wheel ./python --wheel-dir=wheelhouse --no-deps
 
 .PHONY: python-format
 python-format: python-env ## format python code.
@@ -167,13 +170,13 @@ test-python-integration-aim: ## run the Aim python integration tests.
 container-test: ## run integration tests in container.
 	@echo ">>> Running integration tests in container."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose run integration-tests
+		docker compose run -e FML_RUN_ORIGINAL_AIM_SERVICE -e FML_SLOW_TESTS_ENABLED integration-tests
 
 .PHONY: container-clean
 container-clean: ## clean containers.
 	@echo ">>> Cleaning containers."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose down -v --remove-orphans
+		docker compose down -v --remove-orphans
 
 #
 # Mockery targets.
@@ -255,3 +258,17 @@ migrations-create: ## generate a new database migration.
 migrations-rebuild: ## rebuild the migrations script to detect new migrations.
 	@echo ">>> Running FastTrackML migrations rebuild."
 	@go run main.go migrations rebuild
+
+.PHONY: ui-aim-start
+ui-aim-start: ## start the Aim UI for development.
+	@echo ">>> Syncing the Aim UI."
+	@rsync -rvu --exclude node_modules --exclude .git ui/fasttrackml-ui-aim/ $(AIM_BUILD_LOCATION)
+	@echo ">>> Starting the Aim UI."
+	@cd $(AIM_BUILD_LOCATION)/src && npm ci --legacy-peer-deps && npm start
+
+.PHONY: ui-mlflow-start
+ui-mlflow-start: ## start the MLflow UI for development.
+	@echo ">>> Syncing the MLflow UI."
+	@rsync -rvu --exclude node_modules --exclude .git ui/fasttrackml-ui-mlflow/ $(MLFLOW_BUILD_LOCATION)
+	@echo ">>> Starting the MLflow UI."
+	@cd $(MLFLOW_BUILD_LOCATION)/src && yarn install --immutable && yarn start

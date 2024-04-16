@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -85,7 +86,7 @@ func (s *DeleteAppTestSuite) Test_Error() {
 					"/apps/%s", tt.idParam,
 				),
 			)
-			s.Contains(resp.Message, "Not Found")
+			s.Contains(strings.ToLower(resp.Message), "not found")
 
 			apps, err := s.AppFixtures.GetApps(context.Background())
 			s.Require().Nil(err)

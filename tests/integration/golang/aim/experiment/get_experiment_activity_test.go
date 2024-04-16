@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -59,13 +59,12 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 		{
 			name:  "GetInvalidExperimentID",
 			ID:    "123",
-			error: "Not Found",
+			error: "(Not Found|not found)",
 		},
 		{
-			name: "DeleteIncorrectExperimentID",
-			error: `: unable to parse experiment id "incorrect_experiment_id": strconv.ParseInt:` +
-				` parsing "incorrect_experiment_id": invalid syntax`,
-			ID: "incorrect_experiment_id",
+			name:  "DeleteIncorrectExperimentID",
+			error: `(unable to parse|failed to decode)`,
+			ID:    "incorrect_experiment_id",
 		},
 	}
 	for _, tt := range tests {
@@ -76,7 +75,7 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 			}).WithResponse(&resp).DoRequest(
 				"/experiments/%s/activity", tt.ID,
 			))
-			s.Contains(resp.Error(), tt.error)
+			s.Regexp(tt.error, resp.Error())
 		})
 	}
 }

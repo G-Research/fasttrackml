@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FastTrackML</title>
+        <link rel="stylesheet" href="/chooser/static/css/simple.min.css">
+        <link rel="stylesheet" href="/static/aim/assets/icomoon/icomoonIcons.css">
+        <link rel="icon" type="image/x-icon" href="/chooser/static/favicon.ico">
+        <style>
+            :root {
+                --accent: #00a4e0;
+            }
+
+            main {
+                text-align: center;
+            }
+
+            .ui {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                column-gap: 2rem;
+            }
+
+            .logo {
+                height: 150px;
+                margin-top: -25px;
+                margin-bottom: -50px;
+            }
+
+            #namespaces-list-container {
+                display: flex;
+                align-items: center;
+                overflow:auto;
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                padding: 1rem;
+            }
+
+            #namespaces-list {
+                flex-direction: column;
+                align-items: first baseline;
+                text-align: left;
+                list-style-type: none;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            #current-namespace {
+                margin-left: -1.3em;
+                position: relative;
+            }
+
+            #current-icon {
+                position: relative;
+                left: -1.5em;
+            }
+
+        </style>
+    </head>
+
+    <body>
+        <header>
+            <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="/chooser/static/media/logo-dark.svg">
+                <img class="logo" src="/chooser/static/media/logo-light.svg" alt="FastTrackML logo">
+            </picture>
+            <p>A <i>very fast</i> experiment tracker</p>
+        </header>
+
+        <!-- We load the UI with JS to avoid issues when an URL with embedded credentials is used -->
+        <main>
+            {{ embed }}
+        </main>
+
+        <footer>
+            <p>Brought to you by <a href="https://opensource.gresearch.co.uk" target="_blank">G-Research Open-Source</a>.
+            </p>
+        </footer>
+    </body>
+
+</html>

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -21,47 +22,43 @@ var ImportCmd = &cobra.Command{
 }
 
 func importCmd(cmd *cobra.Command, args []string) error {
-	inputDB, outputDB, err := initDBs()
-	if err != nil {
-		return err
-	}
-	//nolint:errcheck
-	defer inputDB.Close()
-	//nolint:errcheck
-	defer outputDB.Close()
-
-	importer := database.NewImporter(inputDB.GormDB(), outputDB.GormDB())
-	if err := importer.Import(); err != nil {
-		return err
-	}
-	return nil
-}
-
-// initDBs inits the input and output DB connections.
-func initDBs() (input, output database.DBProvider, err error) {
-	input, err = database.NewDBProvider(
+	input, err := database.NewDBProvider(
 		viper.GetString("input-database-uri"),
 		time.Second*1,
 		20,
 	)
 	if err != nil {
-		return input, output, fmt.Errorf("error connecting to input DB: %w", err)
+		return fmt.Errorf("error connecting to input DB: %w", err)
 	}
 
-	output, err = database.NewDBProvider(
+	output, err := database.NewDBProvider(
 		viper.GetString("output-database-uri"),
 		time.Second*1,
 		20,
 	)
 	if err != nil {
-		return input, output, fmt.Errorf("error connecting to output DB: %w", err)
+		return fmt.Errorf("error connecting to output DB: %w", err)
 	}
 
-	if err := database.CheckAndMigrateDB(true, output.GormDB()); err != nil {
-		return nil, nil, fmt.Errorf("error running database migration: %w", err)
+	ctx, cancel := context.WithCancel(cmd.Context())
+	defer cancel()
+
+	if err := database.CheckAndMigrateDB(true, output.GormDB().WithContext(ctx)); err != nil {
+		return fmt.Errorf("error running database migration: %w", err)
 	}
 
-	return
+	//nolint:errcheck
+	defer input.Close()
+	//nolint:errcheck
+	defer output.Close()
+
+	if err := database.NewImporter(
+		input.GormDB().WithContext(ctx),
+		output.GormDB().WithContext(ctx),
+	).Import(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // nolint:errcheck,gosec

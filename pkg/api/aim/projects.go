@@ -10,8 +10,8 @@ import (
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -25,7 +25,7 @@ func GetProject(c *fiber.Ctx) error {
 }
 
 func GetProjectActivity(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -99,7 +99,7 @@ func UpdateProjectPinnedSequences(c *fiber.Ctx) error {
 }
 
 func GetProjectParams(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

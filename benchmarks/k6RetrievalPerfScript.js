@@ -22,12 +22,12 @@ export default function () {
   // create experiments and runs
   let runIds = []
   let experimentIds = []
-  // We need to load data into the database to run the retreival tests
-  for(let i=0; i<3; i++) {
+  // We need to load data into the database to run the retrieval tests
+  for (let i = 0; i < 3; i++) {
     let experiment_response = http.post(
       base_url + 'experiments/create',
       JSON.stringify({
-          name: `experiment_${generateRandomString(5)}`,
+        name: `experiment_${generateRandomString(5)}`,
       }),
       {
         headers: {
@@ -39,7 +39,7 @@ export default function () {
     let experimentId = experiment_response.json().experiment_id
     experimentIds.push(experimentId);
 
-    for (let j=0; j<3; j++) {
+    for (let j = 0; j < 3; j++) {
       const run_response = http.post(
         base_url + 'runs/create',
         JSON.stringify({
@@ -77,18 +77,18 @@ export default function () {
       value: `${id * Math.random()}`,
     })
     // add metrics
-    for (let step=1; step < 5; step++){
+    for (let step = 1; step < 5; step++) {
       metrics.push({
         key: `metric${id}`,
         value: id * step * Math.random(),
         timestamp: Date.now(),
         step: step
       })
-  }
+    }
   }
 
   // log metrics and params on runs
-  for(let id = 0; id < runIds.length; id++){
+  for (let id = 0; id < runIds.length; id++) {
     http.post(
       base_url + 'runs/log-batch',
       JSON.stringify({
@@ -110,7 +110,7 @@ export default function () {
     JSON.stringify({
       experiment_ids: experimentIds[0],
       max_results: 10,
-      filter:" metrics.metric0 > 1 and params.param0 > 1",
+      filter: " metrics.metric0 > 1 and params.param0 > 1",
     }),
     {
       headers: {
@@ -127,7 +127,7 @@ export default function () {
     base_url + 'experiments/search',
     JSON.stringify({
       max_results: 10,
-      filter:"name LIKE 'run_%'  AND tags.key = 'mlflow.user' ",
+      filter: "name LIKE 'run_%'  AND tags.key = 'mlflow.user' ",
     }),
     {
       headers: {
@@ -149,5 +149,4 @@ export default function () {
     }
   );
 
-  //TODO: test getting metric histories
 }

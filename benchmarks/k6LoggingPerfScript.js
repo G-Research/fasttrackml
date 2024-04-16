@@ -1,13 +1,62 @@
 import http from 'k6/http';
 import { sleep } from 'k6';
+import {SharedArray} from "k6/data"
 
 sleep(3);
+
+/**
+ * A function called before the test is ran.
+ */
+
+
+function initSetup(runId) {
+  const base_url = 'http://' + __ENV.HOSTNAME + '/api/2.0/mlflow/';
+
+
+
+  let params = []
+  let metrics = []
+  for (let i = 1; i <= 1000; i++) {
+    params.push({
+      key: `param${i}`,
+      value: `${i * Math.random()}`,
+    })
+
+    // add metrics
+    for (let step = 1; step < 5; step++) {
+      metrics.push({
+        key: `metric${i}`,
+        value: i * step * Math.random(),
+        timestamp: Date.now(),
+        step: step
+      })
+    }
+
+  }
+
+  //populating the db before the data runs
+
+  http.post(
+    base_url + 'runs/log-batch',
+    JSON.stringify({
+      run_id: runId,
+      metrics: metrics,
+      params: params
+    }),
+    {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    }
+  );
+
+}
+
 
 export default function () {
   // Set base url from environment variable, the variable ' -e HOSTNAME = xxxx ' must be added to command line argument
   const base_url = 'http://' + __ENV.HOSTNAME + '/api/2.0/mlflow/';
 
-  // test creating runs
   const run_response = http.post(
     base_url + 'runs/create',
     JSON.stringify({
@@ -33,6 +82,9 @@ export default function () {
   // retrieve run id
   const runId = run_response.json().run.info.run_id;
 
+  initSetup(runId)
+
+
   // create sets of params
   let params5 = []
   let params10 = []
@@ -46,7 +98,7 @@ export default function () {
 
 
   for (let id = 1; id <= 100; id++) {
-    if(id <= 5){
+    if (id <= 5) {
       // add params
       params5.push({
         key: `param${id}`,
@@ -54,16 +106,16 @@ export default function () {
       })
 
       // add metrics
-      for (let step=1; step < 5; step++){
+      for (let step = 1; step < 5; step++) {
         metrics5.push({
           key: `metric${id}`,
           value: id * step * Math.random(),
           timestamp: Date.now(),
           step: step
         })
+      }
     }
-  }
-    if(id <= 10){
+    if (id <= 10) {
       // add params
       params10.push({
         key: `param${id}`,
@@ -71,7 +123,7 @@ export default function () {
       })
 
       // add metrics
-      for (let step=1; step < 5; step++){
+      for (let step = 1; step < 5; step++) {
         metrics10.push({
           key: `metric${id}`,
           value: id * step * Math.random(),
@@ -87,7 +139,7 @@ export default function () {
     })
 
     // add metrics
-    for (let step=1; step < 5; step++){
+    for (let step = 1; step < 5; step++) {
       metrics100.push({
         key: `metric${id}`,
         value: id * step * Math.random(),
@@ -108,14 +160,14 @@ export default function () {
       timestamp: Date.now(),
       step: 0
     }),
-      {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        tags: {
-            name: 'LogMetricSingle',
-          },
-      }
+    {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      tags: {
+        name: 'LogMetricSingle',
+      },
+    }
 
   );
 

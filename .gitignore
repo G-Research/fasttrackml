@@ -28,7 +28,7 @@ python/build/
 python/*.egg-info/
 wheelhouse/
 
-benchmark_outputs/
+benchmark_outputs**
 
 
 # Python package

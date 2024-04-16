@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -96,7 +96,7 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 			name:  "DeleteDefaultExperiment",
 			error: api.NewBadRequestError("unable to delete default experiment"),
 			request: &request.DeleteExperimentRequest{
-				ID: "0",
+				ID: fmt.Sprintf("%d", *s.DefaultExperiment.ID),
 			},
 		},
 	}

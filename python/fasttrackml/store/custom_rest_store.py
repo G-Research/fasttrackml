@@ -1,8 +1,8 @@
 import json
+import threading
 from typing import Dict, Optional, Sequence
 
 import pyarrow as pa
-from fasttrackml.entities.metric import Metric
 from mlflow import MlflowException
 from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
@@ -14,63 +14,72 @@ from mlflow.tracking.fluent import (
     get_experiment_by_name,
     search_experiments,
 )
+from mlflow.utils.async_logging.async_logging_queue import AsyncLoggingQueue
+from mlflow.utils.async_logging.run_batch import RunBatch
+from mlflow.utils.async_logging.run_operations import RunOperations
 from mlflow.utils.rest_utils import http_request
 from mlflow.utils.string_utils import is_string_type
+
+from ..entities.metric import Metric
 
 
 class CustomRestStore(RestStore):
 
     def __init__(self, host_creds) -> None:
         super().__init__(host_creds)
+        self._async_logging_queue = AsyncLoggingQueue(logging_func=self.log_batch)
 
     def log_metric(self, run_id, metric):
         try:
             json.dumps(metric.context)
         except Exception as e:
             raise MlflowException(f"Failed to serialize object in context: {metric.context}: {str(e)}")
-        result = http_request(**{
-            "host_creds": self.get_host_creds(),
-            "endpoint": "/api/2.0/mlflow/runs/log-metric",
-            "method": "POST",
-            "json": {
-                "run_id": run_id,
-                "run_uuid": run_id,
-                "key": metric.key,
-                "value": metric.value,
-                "timestamp": metric.timestamp,
-                "step": metric.step,
-                "context": metric.context,
-            }
-        })
-        if result.status_code != 200:
-            result = result.json()
-        if "error_code" in result:
-            raise MlflowException(
-                message=result["message"],
-                error_code=result["error_code"],
-            )
-        return result
-
-    def log_batch(self, run_id, metrics):
-        metrics_list = []
-        for metric in metrics:
-            metrics_list.append({
+        result = http_request(
+            **{
+                "host_creds": self.get_host_creds(),
+                "endpoint": "/api/2.0/mlflow/runs/log-metric",
+                "method": "POST",
+                "json": {
+                    "run_id": run_id,
+                    "run_uuid": run_id,
                     "key": metric.key,
                     "value": metric.value,
                     "timestamp": metric.timestamp,
                     "step": metric.step,
                     "context": metric.context,
-                })
-        
-        result = http_request(**{
-            "host_creds": self.get_host_creds(),
-            "endpoint": "/api/2.0/mlflow/runs/log-batch",
-            "method": "POST",
-            "json": {
-                "run_id": run_id,
-                "metrics": metrics_list
+                },
             }
-        })
+        )
+        if result.status_code != 200:
+            result = result.json()
+        if "error_code" in result:
+            raise MlflowException(
+                message=result["message"],
+                error_code=result["error_code"],
+            )
+        return result
+
+    def log_batch(self, run_id, metrics=[], params=[], tags=[]):
+        metrics_list = []
+        for metric in metrics:
+            metrics_list.append(
+                {
+                    "key": metric.key,
+                    "value": metric.value,
+                    "timestamp": metric.timestamp,
+                    "step": metric.step,
+                    "context": metric.context,
+                }
+            )
+
+        result = http_request(
+            **{
+                "host_creds": self.get_host_creds(),
+                "endpoint": "/api/2.0/mlflow/runs/log-batch",
+                "method": "POST",
+                "json": {"run_id": run_id, "metrics": metrics_list},
+            }
+        )
 
         if result.status_code != 200:
             result = result.json()
@@ -81,19 +90,39 @@ class CustomRestStore(RestStore):
             )
         return result
 
+    def log_batch_async(self, run_id, metrics=[], params=[], tags=[]) -> RunOperations:
+        if not self._async_logging_queue.is_active():
+            self._async_logging_queue.activate()
+
+        batch = RunBatch(
+            run_id=run_id,
+            metrics=metrics,
+            params=params,
+            tags=tags,
+            completion_event=threading.Event(),
+        )
+
+        self._async_logging_queue._queue.put(batch)
+        operation_future = self._async_logging_queue._batch_status_check_threadpool.submit(
+            self._async_logging_queue._wait_for_batch, batch
+        )
+        return RunOperations(operation_futures=[operation_future])
+
     def get_metric_history(self, run_id, metric_key, max_results=None, page_token=None):
-        result = http_request(**{
-            "host_creds": self.get_host_creds(),
-            "endpoint": "/api/2.0/mlflow/metrics/get-history",
-            "method": "GET",
-            "params": {
-                "run_uuid": run_id,
-                "metric_key": metric_key,
-                "max_results": max_results,
-                "page_token": page_token,
+        result = http_request(
+            **{
+                "host_creds": self.get_host_creds(),
+                "endpoint": "/api/2.0/mlflow/metrics/get-history",
+                "method": "GET",
+                "params": {
+                    "run_uuid": run_id,
+                    "metric_key": metric_key,
+                    "max_results": max_results,
+                    "page_token": page_token,
+                },
             }
-        })
-        
+        )
+
         if result.status_code != 200:
             result = result.json()
         if "error_code" in result:
@@ -102,12 +131,15 @@ class CustomRestStore(RestStore):
                 error_code=result["error_code"],
             )
         js_dict = json.loads(result.text)
-        metric_history = [Metric(metric["key"], metric["value"], metric["timestamp"], metric["step"], metric["context"]) for metric in js_dict.get("metrics")]
+        metric_history = [
+            Metric(metric["key"], metric["value"], metric["timestamp"], metric["step"], metric["context"])
+            for metric in js_dict.get("metrics")
+        ]
         next_page_token = js_dict.get("next_page_token")
         return PagedList(metric_history, next_page_token or None)
-    
+
     def get_metric_histories(
-            self,
+        self,
         experiment_ids: Optional[Sequence[str]] = None,
         run_ids: Optional[Sequence[str]] = None,
         metric_keys: Optional[Sequence[str]] = None,
@@ -115,7 +147,7 @@ class CustomRestStore(RestStore):
         run_view_type: int = None,
         max_results: int = 10000000,
         search_all_experiments: bool = False,
-        experiment_names: Optional[Sequence[str]] = None,    
+        experiment_names: Optional[Sequence[str]] = None,
         context: Optional[Dict[str, object]] = None,
     ):
         if index not in ("step", "timestamp"):
@@ -169,4 +201,4 @@ class CustomRestStore(RestStore):
                 )
 
         with pa.ipc.open_stream(result.raw) as reader:
-            return reader.read_pandas().set_index(["run_id", "key", index]) 
+            return reader.read_pandas().set_index(["run_id", "key", index])

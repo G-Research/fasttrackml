@@ -22,16 +22,16 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/db/types"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 func GetRunInfo(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -148,7 +148,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 }
 
 func GetRunMetrics(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -171,23 +171,25 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	metricKeysMap, contexts := make(fiber.Map, len(b)), make([]types.JSONB, 0, len(b))
+	// this is a temporary map which provides uniqueness inside the metricKeysMap map.
+	type metric struct {
+		name    string
+		context string
+	}
+
+	// collect unique metrics. uniqueness provides metricKeysMap + metric struct.
+	metricKeysMap := make(map[metric]any, len(b))
 	for _, m := range b {
 		if m.Context != nil {
 			serializedContext, err := json.Marshal(m.Context)
 			if err != nil {
 				return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 			}
-			contexts = append(contexts, serializedContext)
+			metricKeysMap[metric{
+				name:    m.Name,
+				context: string(serializedContext),
+			}] = nil
 		}
-		metricKeysMap[m.Name] = nil
-	}
-	metricKeys := make([]string, len(metricKeysMap))
-
-	i := 0
-	for k := range metricKeysMap {
-		metricKeys[i] = k
-		i++
 	}
 
 	// check that requested run actually exists.
@@ -209,59 +211,52 @@ func GetRunMetrics(c *fiber.Ctx) error {
 		return fmt.Errorf("unable to find run %q: %w", p.ID, err)
 	}
 
+	subQuery := database.DB
+	for metricKey := range metricKeysMap {
+		subQuery = subQuery.Or("key = ? AND json = ?", metricKey.name, types.JSONB(metricKey.context))
+	}
+
 	// fetch run metrics based on provided criteria.
 	var data []database.Metric
-	if err := database.DB.Where(
-		"run_uuid = ?", p.ID,
-	).InnerJoins(
+	if err := database.DB.InnerJoins(
 		"Context",
-		func() *gorm.DB {
-			query := database.DB
-			for _, context := range contexts {
-				query = query.Or("json = ?", context)
-			}
-			return query
-		}(),
-	).Where(
-		"key IN ?", metricKeys,
 	).Order(
 		"iter",
-	).Find(
-		&data,
-	).Error; err != nil {
+	).Where(
+		"run_uuid = ?", p.ID,
+	).Where(
+		subQuery,
+	).Find(&data).Error; err != nil {
 		return fmt.Errorf("unable to find run metrics: %w", err)
 	}
 
-	metrics := make(map[string]struct {
-		name    string
-		iters   []int
-		values  []*float64
-		context json.RawMessage
-	}, len(metricKeys))
-
-	for _, m := range data {
-		v := m.Value
+	metrics := make(map[metric]struct {
+		iters  []int
+		values []*float64
+	}, len(metricKeysMap))
+	for _, item := range data {
+		v := item.Value
 		pv := &v
-		if m.IsNan {
+		if item.IsNan {
 			pv = nil
 		}
-
-		key := fmt.Sprintf("%s%d", m.Key, m.ContextID)
-		k := metrics[key]
-		k.name = m.Key
-		k.iters = append(k.iters, int(m.Iter))
-		k.values = append(k.values, pv)
-		k.context = json.RawMessage(m.Context.Json)
-		metrics[key] = k
+		key := metric{
+			name:    item.Key,
+			context: string(item.Context.Json),
+		}
+		m := metrics[key]
+		m.iters = append(m.iters, int(item.Iter))
+		m.values = append(m.values, pv)
+		metrics[key] = m
 	}
 
 	resp := make([]fiber.Map, 0, len(metrics))
-	for _, m := range metrics {
+	for key, m := range metrics {
 		resp = append(resp, fiber.Map{
-			"name":    m.name,
+			"name":    key.name,
 			"iters":   m.iters,
 			"values":  m.values,
-			"context": m.context,
+			"context": json.RawMessage(key.context),
 		})
 	}
 
@@ -269,7 +264,7 @@ func GetRunMetrics(c *fiber.Ctx) error {
 }
 
 func GetRunsActive(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -398,7 +393,7 @@ func GetRunsActive(c *fiber.Ctx) error {
 //
 //nolint:gocyclo
 func SearchRuns(ctx *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(ctx.Context())
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -515,7 +510,7 @@ func SearchRuns(ctx *fiber.Ctx) error {
 //
 //nolint:gocyclo
 func SearchMetrics(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -844,7 +839,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 //
 //nolint:gocyclo
 func SearchAlignedMetrics(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -1055,7 +1050,7 @@ func SearchAlignedMetrics(c *fiber.Ctx) error {
 
 // DeleteRun will remove the Run from the repo
 func DeleteRun(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -1096,7 +1091,7 @@ func DeleteRun(c *fiber.Ctx) error {
 
 // UpdateRun will update the run name, description, and lifecycle stage
 func UpdateRun(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -1161,7 +1156,7 @@ func UpdateRun(c *fiber.Ctx) error {
 }
 
 func ArchiveBatch(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -1190,7 +1185,7 @@ func ArchiveBatch(c *fiber.Ctx) error {
 }
 
 func DeleteBatch(c *fiber.Ctx) error {
-	ns, err := namespace.GetNamespaceFromContext(c.Context())
+	ns, err := middleware.GetNamespaceFromContext(c.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

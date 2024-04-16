@@ -8,9 +8,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -113,7 +113,7 @@ func (s *DeleteRunTestSuite) Test_Error() {
 					"/runs/%s", tt.request.RunID,
 				),
 			)
-			s.Contains(resp.Error(), "unable to find run 'some-other-id'")
+			s.Regexp("unable to find|not found", resp.Error())
 
 			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,

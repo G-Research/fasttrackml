@@ -289,7 +289,7 @@ func (r RunRepository) RestoreBatch(ctx context.Context, namespaceID uint, ids [
 
 // UpdateWithTransaction updates existing models.Run entity in scope of transaction.
 func (r RunRepository) UpdateWithTransaction(ctx context.Context, tx *gorm.DB, run *models.Run) error {
-	if err := tx.WithContext(ctx).Model(&run).Updates(run).Error; err != nil {
+	if err := tx.WithContext(ctx).Model(&run).Omit("LatestMetrics", "Metrics", "Params").Updates(run).Error; err != nil {
 		return eris.Wrapf(err, "error updating existing run with id: %s", run.ID)
 	}
 	return nil

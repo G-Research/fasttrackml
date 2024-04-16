@@ -12,7 +12,7 @@ packages:
       ParamRepositoryProvider:
       RunRepositoryProvider:
       TagRepositoryProvider:
-  github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage:
+  github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact/storage:
     interfaces:
       ArtifactStorageFactoryProvider:
       ArtifactStorageProvider:

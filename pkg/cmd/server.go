@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 	"github.com/G-Research/fasttrackml/pkg/server"
 )
 
@@ -25,12 +25,12 @@ var ServerCmd = &cobra.Command{
 
 func serverCmd(cmd *cobra.Command, args []string) error {
 	// process config parameters.
-	mlflowConfig := mlflowConfig.NewServiceConfig()
+	mlflowConfig := config.NewConfig()
 	if err := mlflowConfig.Validate(); err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
 
 	server, err := server.NewServer(ctx, mlflowConfig)
@@ -72,14 +72,21 @@ func init() {
 	ServerCmd.Flags().MarkHidden("gs-endpoint-uri")
 	ServerCmd.Flags().String("auth-username", "", "BasicAuth username")
 	ServerCmd.Flags().String("auth-password", "", "BasicAuth password")
+	ServerCmd.Flags().String("auth-users-config", "", "Users configuration file")
+	ServerCmd.Flags().String("auth-oidc-client-id", "", "OIDC auth client id")
+	ServerCmd.Flags().String("auth-oidc-client-secret", "", "OIDC auth client secret")
+	ServerCmd.Flags().String("auth-oidc-provider-endpoint", "", "OIDC auth provider endpoint")
 	ServerCmd.Flags().StringP("database-uri", "d", "sqlite://fasttrackml.db", "Database URI")
 	ServerCmd.Flags().Int("database-pool-max", 20, "Maximum number of database connections in the pool")
 	ServerCmd.Flags().Duration("database-slow-threshold", 1*time.Second, "Slow SQL warning threshold")
 	ServerCmd.Flags().Bool("database-migrate", true, "Run database migrations")
 	ServerCmd.Flags().Bool("database-reset", false, "Reinitialize database - WARNING all data will be lost!")
+	ServerCmd.Flags().Bool("live-updates-enabled", false, "Enable 'live updates' in the Aim UI")
 	ServerCmd.Flags().MarkHidden("database-reset")
 	ServerCmd.Flags().Bool("dev-mode", false, "Development mode - enable CORS")
 	ServerCmd.Flags().MarkHidden("dev-mode")
+	ServerCmd.Flags().Bool("run-original-aim-service", false, "Run original aim service at /aim/api")
+	ServerCmd.Flags().MarkHidden("run-original-aim-service")
 	viper.BindEnv("auth-username", "MLFLOW_TRACKING_USERNAME")
 	viper.BindEnv("auth-password", "MLFLOW_TRACKING_PASSWORD")
 }

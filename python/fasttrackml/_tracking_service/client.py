@@ -64,7 +64,7 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
             chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH),
             chunk_list(params, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
             chunk_list(tags, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
-            fillvalue=[]
+            fillvalue=[],
         ):
             self.custom_store.log_batch(run_id=run_id, metrics=metrics_batch, params=params_batch, tags=tags_batch)
 
@@ -76,7 +76,7 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
             chunk_list(metrics, chunk_size=MAX_METRICS_PER_BATCH),
             chunk_list(params, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
             chunk_list(tags, chunk_size=MAX_PARAMS_TAGS_PER_BATCH),
-            fillvalue=[]
+            fillvalue=[],
         ):
             batch_result = self.custom_store.log_batch_async(
                 run_id=run_id, metrics=metrics_batch, params=params_batch, tags=tags_batch

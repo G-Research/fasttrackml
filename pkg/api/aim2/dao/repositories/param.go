@@ -12,7 +12,7 @@ import (
 // ParamRepositoryProvider provides an interface to work with models.Param entity.
 type ParamRepositoryProvider interface {
 	// GetParamKeysByParameters returns list of param keys by requested parameters.
-	GetParamKeysByParameters(ctx context.Context, namespaceID uint, experiments []int) ([]string, error)
+	GetParamKeysByParameters(ctx context.Context, namespaceID uint, experimentNames []string) ([]string, error)
 }
 
 // ParamRepository repository to work with models.Param entity.
@@ -31,7 +31,7 @@ func NewParamRepository(db *gorm.DB) *ParamRepository {
 
 // GetParamKeysByParameters returns list of param keys by requested parameters.
 func (r ParamRepository) GetParamKeysByParameters(
-	ctx context.Context, namespaceID uint, experiments []int,
+	ctx context.Context, namespaceID uint, experimentNames []string,
 ) ([]string, error) {
 	query := r.db.WithContext(ctx).Distinct().Model(
 		&models.Param{},
@@ -43,8 +43,8 @@ func (r ParamRepository) GetParamKeysByParameters(
 	).Where(
 		"runs.lifecycle_stage = ?", models.LifecycleStageActive,
 	)
-	if len(experiments) != 0 {
-		query = query.Where("experiments.experiment_id IN ?", experiments)
+	if len(experimentNames) != 0 {
+		query = query.Where("experiments.name IN ?", experimentNames)
 	}
 	var keys []string
 	if err := query.Pluck("Key", &keys).Error; err != nil {

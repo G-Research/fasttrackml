@@ -54,7 +54,7 @@ func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, bool, 
 		// if auth token is not admin auth token, then filter namespaces and show
 		// only those which belong to current user, otherwise just show everything.
 		if !user.IsAdmin() {
-			namespaces, err := s.namespaceRepository.GetByRoles(ctx, user.GetRoles())
+			namespaces, err = s.namespaceRepository.GetByRoles(ctx, user.GetRoles())
 			if err != nil {
 				return nil, false, eris.Wrap(err, "error getting namespaces")
 			}

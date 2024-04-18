@@ -90,13 +90,13 @@ func (s Service) GetProjectParams(
 
 	projectParams := models.ProjectParams{}
 	if !req.ExcludeParams {
-		paramKeys, err := s.paramRepository.GetParamKeysByParameters(ctx, namespaceID, req.Experiments)
+		paramKeys, err := s.paramRepository.GetParamKeysByParameters(ctx, namespaceID, req.ExperimentNames)
 		if err != nil {
 			return nil, api.NewInternalError("error getting param keys: %s", err)
 		}
 		projectParams.ParamKeys = paramKeys
 
-		tagKeys, err := s.tagRepository.GetTagKeysByParameters(ctx, namespaceID, req.Experiments)
+		tagKeys, err := s.tagRepository.GetTagKeysByParameters(ctx, namespaceID, req.ExperimentNames)
 		if err != nil {
 			return nil, api.NewInternalError("error getting tag keys: %s", err)
 		}
@@ -106,7 +106,7 @@ func (s Service) GetProjectParams(
 	if slices.Contains(req.Sequences, "metric") {
 		// fetch metrics only when Experiments or ExperimentNames were provided.
 		metrics, err := s.metricRepository.GetMetricKeysAndContextsByExperiments(
-			ctx, namespaceID, req.Experiments, req.ExperimentNames,
+			ctx, namespaceID, req.ExperimentNames,
 		)
 		if err != nil {
 			return nil, api.NewInternalError("error getting metrics: %s", err)

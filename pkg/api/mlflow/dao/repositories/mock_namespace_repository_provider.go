@@ -97,6 +97,32 @@ func (_m *MockNamespaceRepositoryProvider) GetByID(ctx context.Context, id uint)
 	return r0, r1
 }
 
+// GetByRoles provides a mock function with given fields: ctx, roles
+func (_m *MockNamespaceRepositoryProvider) GetByRoles(ctx context.Context, roles []string) ([]models.Namespace, error) {
+	ret := _m.Called(ctx, roles)
+
+	var r0 []models.Namespace
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []string) ([]models.Namespace, error)); ok {
+		return rf(ctx, roles)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []string) []models.Namespace); ok {
+		r0 = rf(ctx, roles)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Namespace)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []string) error); ok {
+		r1 = rf(ctx, roles)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetDB provides a mock function with given fields:
 func (_m *MockNamespaceRepositoryProvider) GetDB() *gorm.DB {
 	ret := _m.Called()

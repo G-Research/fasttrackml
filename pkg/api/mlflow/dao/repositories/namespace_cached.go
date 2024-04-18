@@ -114,6 +114,11 @@ func (r NamespaceCachedRepository) GetByCode(
 	return namespace, nil
 }
 
+// GetByRoles returns namespaces OIDC roles.
+func (r NamespaceCachedRepository) GetByRoles(ctx context.Context, roles []string) ([]models.Namespace, error) {
+	return r.namespaceRepository.GetByRoles(ctx, roles)
+}
+
 // GetByID returns namespace by its ID.
 func (r NamespaceCachedRepository) GetByID(ctx context.Context, id uint) (*models.Namespace, error) {
 	return r.namespaceRepository.GetByID(ctx, id)

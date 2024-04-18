@@ -24,6 +24,8 @@ type NamespaceRepositoryProvider interface {
 	GetByCode(ctx context.Context, code string) (*models.Namespace, error)
 	// GetByID returns namespace by its ID.
 	GetByID(ctx context.Context, id uint) (*models.Namespace, error)
+	// GetByRoles returns namespaces OIDC roles.
+	GetByRoles(ctx context.Context, roles []string) ([]models.Namespace, error)
 	// List returns all namespaces.
 	List(ctx context.Context) ([]models.Namespace, error)
 }
@@ -88,6 +90,24 @@ func (r NamespaceRepository) GetByID(ctx context.Context, id uint) (*models.Name
 		return nil, eris.Wrapf(err, "error getting namespace by id: %d", id)
 	}
 	return &namespace, nil
+}
+
+// GetByRoles returns namespaces OIDC roles.
+func (r NamespaceRepository) GetByRoles(ctx context.Context, roles []string) ([]models.Namespace, error) {
+	var namespaces []models.Namespace
+	if err := r.GetDB().WithContext(
+		ctx,
+	).Order(
+		"code",
+	).Joins(
+		"INNER JOIN role_namespaces ON role_namespaces.namespace_id = namespaces.id",
+	).Joins(
+		"INNER JOIN roles ON roles.id = role_namespaces.role_id AND roles.role IN (?)",
+		roles,
+	).Find(&namespaces).Error; err != nil {
+		return nil, eris.Wrap(err, "error listing namespaces")
+	}
+	return namespaces, nil
 }
 
 // List returns all namespaces.

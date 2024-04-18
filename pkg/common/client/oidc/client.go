@@ -31,7 +31,7 @@ func NewClient(ctx context.Context, config *auth.Config) (*Client, error) {
 
 	return &Client{
 		config:   config,
-		verifier: provider.Verifier(&oidc.Config{ClientID: config.AuthOIDCClientID}),
+		verifier: provider.Verifier(&oidc.Config{ClientID: config.AuthOIDCClientID, SkipIssuerCheck: true}),
 	}, nil
 }
 
@@ -42,14 +42,22 @@ func (c Client) Verify(ctx context.Context, accessToken string) (*User, error) {
 		return nil, eris.Wrap(err, "error verifying access token")
 	}
 	// Extract custom claims.
-	var claims struct {
-		Groups []string `json:"roles"`
-	}
+	var claims map[string]interface{}
 	if err := idToken.Claims(&claims); err != nil {
 		return nil, eris.Wrap(err, "error extracting token claims")
 	}
+
+	data, ok := claims[c.config.AuthOIDCClaimRoles]
+	if !ok {
+		return nil, eris.Errorf("claim property: %s not found", c.config.AuthOIDCClaimRoles)
+	}
+
+	roles, err := ConvertAndNormaliseRoles(data)
+	if err != nil {
+		return nil, eris.Wrapf(err, "error converting claim %s property", c.config.AuthOIDCClaimRoles)
+	}
 	return &User{
-		roles:   claims.Groups,
-		isAdmin: slices.Contains(claims.Groups, c.config.AuthOIDCAdminRole),
+		roles:   roles,
+		isAdmin: slices.Contains(roles, c.config.AuthOIDCAdminRole),
 	}, nil
 }

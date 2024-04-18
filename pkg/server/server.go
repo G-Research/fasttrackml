@@ -41,6 +41,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/dao"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware/auth"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
@@ -199,17 +200,25 @@ func createApp(
 			},
 		}))
 	}
+	app.Get("/set-cookie/:access_token", func(ctx *fiber.Ctx) error {
+		ctx.Cookie(&fiber.Cookie{
+			Name:  "access_token",
+			Value: ctx.Params("access_token"),
+		})
+		return ctx.Redirect("/", http.StatusMovedPermanently)
+	})
 	app.Use(middleware.NewNamespaceMiddleware(namespaceCachedRepository))
 
+	// based on Auth configuration attach global OIDC or Basic Auth middleware.
 	switch {
 	case config.Auth.IsAuthTypeOIDC():
 		oidcClient, err := oidc.NewClient(ctx, &config.Auth)
 		if err != nil {
 			return nil, eris.Wrap(err, "error creating OIDC client")
 		}
-		app.Use(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
+		app.Use(auth.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
 	case config.Auth.IsAuthTypeUser():
-		app.Use(middleware.NewUserMiddleware(config.Auth.AuthParsedUserPermissions))
+		app.Use(auth.NewBasicAuthMiddleware(config.Auth.AuthParsedUserPermissions))
 	}
 
 	app.Use(compress.New(compress.Config{

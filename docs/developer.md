@@ -50,6 +50,24 @@ make migrations-rebuild
 This target will rebuild the `database/migrate_generated.go` file to include execution of all
 the packages in `database/migrations`.
 
+## Filling the database
+
+It's often necessary to test out your changes on a loaded database, and we definitely want to do this
+before making a release. A production-level target for database shape is:
+* 40k runs across 300 experiments
+* 2k unique metrics per run, each with 200 values
+
+To get some percentage of this into your local database instance, you can use the included K6
+load test script, which can be run in the dev container.
+
+1. Start the FML tracking server
+2. Start a terminal in the dev container. 
+3. `cd docs/example`
+4. `k6 run k6_load.js`
+
+Tweak the numbers in `k6_load.js` for number of runs, metrics, etc -- the default amounts are 
+pretty small.
+
 ## Working with the UIs
 
 FastTrackML incorporates the existing Aim and MLFlow web UIs, albeit

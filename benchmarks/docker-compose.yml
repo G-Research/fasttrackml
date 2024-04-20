@@ -9,6 +9,8 @@ services:
         - POSTGRES_DB=mlflow_db
       networks:
         - mlflow_network
+      ports:
+        - 5555:5432
       healthcheck:
         test: ["CMD", "pg_isready", "-U", "postgres"]
         interval: 5s
@@ -23,6 +25,8 @@ services:
         - POSTGRES_DB=fasttrack_db
       networks:
         - fasttrack_network
+      ports:
+        - 5556:5432
       healthcheck:
         test: ["CMD", "pg_isready", "-U", "postgres"]
         interval: 5s
@@ -30,7 +34,7 @@ services:
 
     mlflowpostgres:
       image: python:3.8
-      command: bash -c "pip install mlflow psycopg2 && mlflow server --host 0.0.0.0  --backend-store-uri postgresql://postgres:postgres@mlflowdb:5432/mlflow_db"
+      command: bash -c "pip install mlflow psycopg2 && mlflow server --host 0.0.0.0  --backend-store-uri postgresql://postgres:postgres@mlflowdb:5432/mlflow_db --gunicorn-opts '--access-logfile -' "
       ports:
         - 6005:5000
       depends_on:
@@ -47,7 +51,7 @@ services:
 
     mlflow:
       image: python:3.8
-      command: bash -c "pip install mlflow && mlflow server --host 0.0.0.0 "
+      command: bash -c "pip install mlflow && mlflow server --host 0.0.0.0  --gunicorn-opts '--access-logfile -'"
       ports:
         - 6001:5000
       networks:

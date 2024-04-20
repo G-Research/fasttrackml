@@ -15,6 +15,12 @@ BENCHMARKS = [
     "LogMetricBatch5",
     "LogMetricBatch10",
     "LogMetricBatch100",
+    # "LogMetricBatch1000",
+    # "LogMetricBatch10000",
+    "LogParamOnlyBatch100",
+    "LogParamOnlyBatch10",
+#     "LogMetricOnlyBatch10"
+#     "LogMetricOnlyBatch100"
 ]
 
 # Configure logging
@@ -50,7 +56,7 @@ def generateReport(dfs, filename):
         )
 
     # Customize the layout, labels, and title
-    plt.subplots_adjust(wspace=0.4)  # Adjust the space between subplots
+    plt.subplots_adjust(wspace=0.5, hspace=0.5)  # Adjust the space between subplots
 
     for i in range(num_dfs):
         axes[int(i / num_cols)][i % num_cols].set_xlabel("Application")
@@ -88,13 +94,13 @@ def getDataframeFromFile(filename, application_name):
 
 def extractApplicationName(name: str):
     """
-    This function is used to extrac the application name from a generated
+    This function is used to extract the application name from a generated
     file. e.g 'benchmark_outputs/mlflow_sqlite_logging.csv' would be 'mlfow sqlite'
     """
     name = name.split("/")[-1]
     name = name.split(".")[0]
-    applicaiton_name = " ".join(name.split("_")[:-1])
-    return applicaiton_name
+    application_name = " ".join(name.split("_")[:-1])
+    return application_name
 
 
 def generateDataframes():
@@ -125,7 +131,7 @@ def checkAllFilesReady():
     """
     This is used to check whether all the required output files have been generated
     Since the K6 tests would be run inside containers before shutting down, we need to check if their
-    execution is complete before starting the report generataiton.
+    execution is complete before starting the report generation.
 
     We check for all files that match a defined pattern and count
     them to ensure that all the files have been generated
@@ -173,7 +179,7 @@ if __name__ == "__main__":
         help="the number of times the report generator should check that the csv files have been generated",
         default=10,
     )
-    parser.add_argument("--delaybetween", help="the amout of time delay in seconds between checks", default=60)
+    parser.add_argument("--delaybetween", help="the amount of time delay in seconds between checks", default=60)
 
     args = parser.parse_args()
 

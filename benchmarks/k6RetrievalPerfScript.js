@@ -104,13 +104,13 @@ export default function () {
     );
   }
 
-  // test searching for experiments
+  // test searching for runs
   http.post(
     base_url + 'runs/search',
     JSON.stringify({
-      experiment_ids: experimentIds[0],
+      experiment_ids: [experimentIds[0]],
       max_results: 10,
-      filter: " metrics.metric0 > 1 and params.param0 > 1",
+      filter: "metrics.key = 0 AND tags.value LIKE 'k6'",
     }),
     {
       headers: {
@@ -127,7 +127,7 @@ export default function () {
     base_url + 'experiments/search',
     JSON.stringify({
       max_results: 10,
-      filter: "name LIKE 'run_%'  AND tags.key = 'mlflow.user' ",
+      filter: "name like 'experiment_%'",
     }),
     {
       headers: {
@@ -141,7 +141,7 @@ export default function () {
 
   // test getting metric history
   http.get(
-    base_url + `runs/metrics/get-history?run_id=${runIds[0]}&metric_key=metric1`,
+    base_url + `metrics/get-history?run_id=${runIds[0]}&metric_key=metric1`,
     {
       tags: {
         name: 'MetricHistory',

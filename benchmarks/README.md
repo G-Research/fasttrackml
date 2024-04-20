@@ -14,7 +14,7 @@ FastTrackML Benchmark Suite is a project designed to provide a comprehensive and
   - [4. Usage ](#4-usage-)
     - [Benchmarking Performance ](#benchmarking-performance-)
     - [Results ](#results-)
-  
+
 
 ## 2. Getting Started <a name="getting-started"></a>
 
@@ -29,9 +29,9 @@ For the implementation of the performance benchmarking we used [K6](https://k6.i
 
 For FastTrackML we used the standard container image provided by G-research from docker hub, while for MLflow we used a python3.8 image running on linux and started the mflow server by installing the mlflow python package on the image.
 
-We used the features provided natively by k6 to run the tests concurrently and iteratively. For each test on the applicaitons we ran them using 20 virtual users concurrently running 100 iterations on each tested endpoint. This sums up to 2000 tests on each tested endpoint. 
+We used the features provided natively by k6 to run the tests concurrently and iteratively. For each test on the applications we ran them using 20 virtual users concurrently running 100 iterations on each tested endpoint. This sums up to 2000 tests on each tested endpoint.
 
-We run 2 different types suites of tests. The first is logging where we test the application's ability to log concurrent requests iteratively and we measure the latency of the application in handling these requests. The second is retreival where we tests the application's latency in returning data when queried concurrently by virtual users iteratively.
+We run 2 different types suites of tests. The first is logging where we test the application's ability to log concurrent requests iteratively and we measure the latency of the application in handling these requests. The second is retrieval where we tests the application's latency in returning data when queried concurrently by virtual users iteratively.
 
 ## 4. Usage <a name="usage"></a>
 
@@ -58,12 +58,12 @@ docker-compose up logging_test_fasttrack_postgres
 1. To test performance of MLflow sqlite:
 
 ```bash
-docker-compose up retreival_test_mlflow_sqlite
+docker-compose up retrieval_test_mlflow_sqlite
 ```
 
 *Note* These tests in isolation will generate csv report files, but will not generate report images. To generate a report image you will have to run all the tests on all 4 instances then use the `generateReports.py` script to generate the `performanceReport.png` image
 
-*Note* For the performance tests to work you must have a `\benchmark_outputs` folder in this directory. If you are running the pefromance benchmarks without the `run.sh` script you will have to create this folder manually.
+*Note* For the performance tests to work you must have a `\benchmark_outputs` folder in this directory. If you are running the performance benchmarks without the `run.sh` script you will have to create this folder manually.
 
 ### Results <a name="comparing-with-mlflow"></a>
 

@@ -19,8 +19,8 @@ BENCHMARKS = [
     # "LogMetricBatch10000",
     "LogParamOnlyBatch100",
     "LogParamOnlyBatch10",
-#     "LogMetricOnlyBatch10"
-#     "LogMetricOnlyBatch100"
+    #     "LogMetricOnlyBatch10"
+    #     "LogMetricOnlyBatch100"
 ]
 
 # Configure logging

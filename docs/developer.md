@@ -107,9 +107,18 @@ Steps:
     ```bash
     cd <fasttrackml project root>
     make ui-aim-start
-	<ctrl-c to stop>
+    <ctrl-c to stop>
     ```
 
-4. When ready, make a new branch in the submodule, commit changes, and
+4. As you make changes, just `sync` them to the development server
+   location for fast live update:
+
+    ```bash
+    cd <fasttrackml project root>
+    make ui-aim-sync
+    <ctrl-c to stop>
+    ```
+
+5. When ready, make a new branch in the submodule, commit changes, and
    push to your fork. Make a PR with the merge target set as the
    release branch, _not_ the `main` branch.

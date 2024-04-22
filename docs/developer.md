@@ -116,7 +116,6 @@ Steps:
     ```bash
     cd <fasttrackml project root>
     make ui-aim-sync
-    <ctrl-c to stop>
     ```
 
 5. When ready, make a new branch in the submodule, commit changes, and

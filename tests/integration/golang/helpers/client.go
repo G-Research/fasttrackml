@@ -182,17 +182,21 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 	}
 
 	// 7. send request data and handle possible redirects.
+	//nolint:bodyclose
 	resp, err := c.server.Test(req, 60000)
 	if err != nil {
 		return eris.Wrap(err, "error doing request")
 	}
 	if resp.StatusCode == http.StatusMovedPermanently {
 		req.RequestURI = resp.Header.Get("location")
+		//nolint:bodyclose
 		resp, err = c.server.Test(req, 60000)
 		if err != nil {
 			return eris.Wrap(err, "error doing request")
 		}
 	}
+	//nolint:errcheck
+	defer resp.Body.Close()
 
 	c.statusCode = resp.StatusCode
 

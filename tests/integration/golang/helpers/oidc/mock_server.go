@@ -70,6 +70,7 @@ func (m MockServer) Login(ctx context.Context, user *mockoidc.MockUser, scopes [
 			return http.ErrUseLastResponse
 		},
 	}
+	//nolint:bodyclose
 	authorizeResponse, err := httpClient.Do(authorizeRequest)
 	if err != nil {
 		return "", eris.Wrap(err, "error making authorization request")
@@ -119,6 +120,7 @@ func (m MockServer) Login(ctx context.Context, user *mockoidc.MockUser, scopes [
 		)
 	}
 
+	//nolint
 	defer tokenResponse.Body.Close()
 	body, err := io.ReadAll(tokenResponse.Body)
 	if err != nil {

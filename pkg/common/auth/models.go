@@ -1,4 +1,4 @@
-package oidc
+package auth
 
 // User represents object to store current user information.
 type User struct {

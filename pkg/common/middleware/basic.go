@@ -1,4 +1,4 @@
-package auth
+package middleware
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
 // nolint:gosec
@@ -56,7 +55,7 @@ func (m BasicAuthMiddleware) handleAdminResourceRequest(ctx *fiber.Ctx, authToke
 
 // handleChooserResourceRequest applies Basic Auth check for Chooser resources.
 func (m BasicAuthMiddleware) handleChooserResourceRequest(ctx *fiber.Ctx, authToken *models.BasicAuthToken) error {
-	namespace, err := middleware.GetNamespaceFromContext(ctx.Context())
+	namespace, err := GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return ctx.Redirect("/errors/not-found", http.StatusMovedPermanently)
 	}
@@ -77,7 +76,7 @@ func (m BasicAuthMiddleware) handleChooserResourceRequest(ctx *fiber.Ctx, authTo
 
 // handleAimMlflowResourceRequest applies Basic Auth check for Aim or Mlflow resources.
 func (m BasicAuthMiddleware) handleAimMlflowResourceRequest(ctx *fiber.Ctx, authToken *models.BasicAuthToken) error {
-	namespace, err := middleware.GetNamespaceFromContext(ctx.Context())
+	namespace, err := GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}

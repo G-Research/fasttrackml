@@ -1,4 +1,4 @@
-package oidc
+package auth
 
 import (
 	"context"
@@ -10,33 +10,33 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
 )
 
-// ClientProvider provides an interface to work with OIDC provider.
-type ClientProvider interface {
+// OIDCClientProvider provides an interface to work with OIDC provider.
+type OIDCClientProvider interface {
 	// Verify makes Access Token verification.
 	Verify(ctx context.Context, accessToken string) (*User, error)
 }
 
-// Client represents OIDC client.
-type Client struct {
+// OIDCClient represents OIDC client.
+type OIDCClient struct {
 	config   *auth.Config
 	verifier *oidc.IDTokenVerifier
 }
 
-// NewClient creates new OIDC client
-func NewClient(ctx context.Context, config *auth.Config) (*Client, error) {
+// NewOIDCClient creates new OIDC client
+func NewOIDCClient(ctx context.Context, config *auth.Config) (*OIDCClient, error) {
 	provider, err := oidc.NewProvider(ctx, config.AuthOIDCProviderEndpoint)
 	if err != nil {
 		return nil, eris.Wrap(err, "error creating OIDC provider")
 	}
 
-	return &Client{
+	return &OIDCClient{
 		config:   config,
 		verifier: provider.Verifier(&oidc.Config{ClientID: config.AuthOIDCClientID, SkipIssuerCheck: true}),
 	}, nil
 }
 
 // Verify makes Access Token verification.
-func (c Client) Verify(ctx context.Context, accessToken string) (*User, error) {
+func (c OIDCClient) Verify(ctx context.Context, accessToken string) (*User, error) {
 	idToken, err := c.verifier.Verify(ctx, accessToken)
 	if err != nil {
 		return nil, eris.Wrap(err, "error verifying access token")

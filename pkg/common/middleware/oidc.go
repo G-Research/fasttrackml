@@ -1,4 +1,4 @@
-package auth
+package middleware
 
 import (
 	"context"
@@ -10,9 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/client/oidc"
+	"github.com/G-Research/fasttrackml/pkg/common/auth"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
 // nolint:gosec
@@ -22,13 +21,13 @@ const (
 
 // OIDCMiddleware represents OIDC middleware.
 type OIDCMiddleware struct {
-	client          oidc.ClientProvider
+	client          auth.OIDCClientProvider
 	rolesRepository repositories.RoleRepositoryProvider
 }
 
 // NewOIDCMiddleware creates new OIDC middleware logic.
 func NewOIDCMiddleware(
-	client oidc.ClientProvider,
+	client auth.OIDCClientProvider,
 	rolesRepository repositories.RoleRepositoryProvider,
 ) fiber.Handler {
 	return OIDCMiddleware{
@@ -69,7 +68,7 @@ func (m OIDCMiddleware) handleAdminResourceRequest(ctx *fiber.Ctx) error {
 
 // handleChooserResourceRequest applies OIDC check for Chooser resources.
 func (m OIDCMiddleware) handleChooserResourceRequest(ctx *fiber.Ctx) error {
-	namespace, err := middleware.GetNamespaceFromContext(ctx.Context())
+	namespace, err := GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return ctx.Redirect("/errors/not-found", http.StatusMovedPermanently)
 	}
@@ -90,7 +89,7 @@ func (m OIDCMiddleware) handleChooserResourceRequest(ctx *fiber.Ctx) error {
 
 // handleAimMlflowResourceRequest applies OIDC check for Aim or Mlflow resources.
 func (m OIDCMiddleware) handleAimMlflowResourceRequest(ctx *fiber.Ctx) error {
-	namespace, err := middleware.GetNamespaceFromContext(ctx.Context())
+	namespace, err := GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return api.NewInternalError("error getting namespace from context")
 	}
@@ -128,8 +127,8 @@ func (m OIDCMiddleware) handleAimMlflowResourceRequest(ctx *fiber.Ctx) error {
 }
 
 // GetOIDCUserFromContext returns OIDC User object from the context.
-func GetOIDCUserFromContext(ctx context.Context) (*oidc.User, error) {
-	user, ok := ctx.Value(oidcUserContextKey).(*oidc.User)
+func GetOIDCUserFromContext(ctx context.Context) (*auth.User, error) {
+	user, ok := ctx.Value(oidcUserContextKey).(*auth.User)
 	if !ok {
 		return nil, eris.New("error getting oidc user object from context")
 	}

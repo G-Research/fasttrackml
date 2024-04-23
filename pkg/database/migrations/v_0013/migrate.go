@@ -11,6 +11,9 @@ const Version = "20240423055442"
 func Migrate(db *gorm.DB) error {
 	return migrations.RunWithoutForeignKeyIfNeeded(db, func() error {
 		return db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Migrator().DropColumn(&Role{}, "Role"); err != nil {
+				return err
+			}
 			if err := tx.AutoMigrate(&Role{}); err != nil {
 				return err
 			}

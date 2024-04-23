@@ -237,7 +237,6 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 			}
 
 			*response = *doc
-
 		}
 	}
 

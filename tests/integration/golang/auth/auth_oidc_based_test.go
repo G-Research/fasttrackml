@@ -16,6 +16,7 @@ import (
 	mlflowResponse "github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/config"
 	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -131,7 +132,7 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 		check func()
 	}{
 		{
-			name: "TestUser1HasAccess",
+			name: "TestUser1Access",
 			check: func() {
 				// check that user1 has access to namespace1 namespaces.
 				successResponse := aimResponse.GetProjectResponse{}
@@ -145,10 +146,40 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 					}).DoRequest("/projects"),
 				)
 				s.Equal("FastTrackML", successResponse.Name)
+
+				// check that user1 has no access to namespace2, namespace3.
+				errorResponse := api.ErrorResponse{}
+				client := s.AIMClient().WithResponse(
+					&errorResponse,
+				).WithNamespace(
+					s.namespace2.Code,
+				).WithHeaders(map[string]string{
+					"Authorization": fmt.Sprintf("Bearer %s", s.user1Token),
+				})
+				s.Require().Nil(client.DoRequest("/projects"))
+
+				s.Equal(client.GetStatusCode(), http.StatusNotFound)
+				s.Equal(
+					"RESOURCE_DOES_NOT_EXIST: unable to find namespace with code: namespace2", errorResponse.Error(),
+				)
+
+				client = s.AIMClient().WithResponse(
+					&errorResponse,
+				).WithNamespace(
+					s.namespace3.Code,
+				).WithHeaders(map[string]string{
+					"Authorization": fmt.Sprintf("Bearer %s", s.user1Token),
+				})
+				s.Require().Nil(client.DoRequest("/projects"))
+
+				s.Equal(client.GetStatusCode(), http.StatusNotFound)
+				s.Equal(
+					"RESOURCE_DOES_NOT_EXIST: unable to find namespace with code: namespace3", errorResponse.Error(),
+				)
 			},
 		},
 		{
-			name: "TestUser2HasAccess",
+			name: "TestUser2Access",
 			check: func() {
 				// check that user2 has access to namespace2 and namespace3 namespaces.
 				successResponse := aimResponse.GetProjectResponse{}
@@ -173,10 +204,26 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 					}).DoRequest("/projects"),
 				)
 				s.Equal("FastTrackML", successResponse.Name)
+
+				// check that user2 has no access to namespace1
+				errorResponse := api.ErrorResponse{}
+				client := s.AIMClient().WithResponse(
+					&errorResponse,
+				).WithNamespace(
+					s.namespace1.Code,
+				).WithHeaders(map[string]string{
+					"Authorization": fmt.Sprintf("Bearer %s", s.user2Token),
+				})
+				s.Require().Nil(client.DoRequest("/projects"))
+
+				s.Equal(client.GetStatusCode(), http.StatusNotFound)
+				s.Equal(
+					"RESOURCE_DOES_NOT_EXIST: unable to find namespace with code: namespace1", errorResponse.Error(),
+				)
 			},
 		},
 		{
-			name: "TestUser3HasAccess",
+			name: "TestUser3Access",
 			check: func() {
 				// check that user3 has access to namespace1, namespace2 and namespace3 namespaces.
 				successResponse := aimResponse.GetProjectResponse{}
@@ -215,7 +262,7 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 			},
 		},
 		{
-			name: "TestAdminUserHasAccess",
+			name: "TestAdminUserAccess",
 			check: func() {
 				// check that admin user has access to namespace1, namespace2 and namespace3 namespaces.
 				successResponse := aimResponse.GetProjectResponse{}
@@ -261,6 +308,7 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 		})
 	}
 }
+
 func (s *OIDCAuthTestSuite) TestMlflowAuth_Ok() {
 	s.SetupTestSuite()
 
@@ -417,6 +465,7 @@ func (s *OIDCAuthTestSuite) TestMlflowAuth_Ok() {
 		})
 	}
 }
+
 func (s *OIDCAuthTestSuite) TestAdminAuth_Ok() {
 	s.SetupTestSuite()
 
@@ -471,6 +520,7 @@ func (s *OIDCAuthTestSuite) TestAdminAuth_Ok() {
 		})
 	}
 }
+
 func (s *OIDCAuthTestSuite) TestChooserAuth_Ok() {
 	s.SetupTestSuite()
 

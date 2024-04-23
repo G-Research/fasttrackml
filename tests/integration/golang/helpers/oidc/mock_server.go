@@ -64,7 +64,7 @@ func (m MockServer) Login(user *mockoidc.MockUser, scopes []string) (string, err
 	m.oidcMockServer.QueueCode(helpers.GenerateRandomString(10))
 
 	// A custom client that doesn't automatically follow redirects
-	var httpClient = &http.Client{
+	httpClient := &http.Client{
 		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 			return http.ErrUseLastResponse
 		},

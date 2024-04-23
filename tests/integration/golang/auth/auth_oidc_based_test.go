@@ -95,31 +95,43 @@ func (s *OIDCAuthTestSuite) SetupTestSuite() {
 	s.Nil(s.RolesFixtures.AttachNamespaceToRole(context.Background(), &group2Role, namespace3))
 
 	// create test users and obtain theirs tokens.
-	user1Token, err := s.oidcMockServer.Login(&mockoidc.MockUser{
-		Email:  "test.user@example.com",
-		Groups: []string{"group1"},
-	}, []string{"openid", "groups"})
+	user1Token, err := s.oidcMockServer.Login(
+		context.Background(),
+		&mockoidc.MockUser{
+			Email:  "test.user@example.com",
+			Groups: []string{"group1"},
+		}, []string{"openid", "groups"},
+	)
 	s.Nil(err)
 	s.user1Token = user1Token
 
-	user2Token, err := s.oidcMockServer.Login(&mockoidc.MockUser{
-		Email:  "test.user@example.com",
-		Groups: []string{"group2"},
-	}, []string{"openid", "groups"})
+	user2Token, err := s.oidcMockServer.Login(
+		context.Background(),
+		&mockoidc.MockUser{
+			Email:  "test.user@example.com",
+			Groups: []string{"group2"},
+		}, []string{"openid", "groups"},
+	)
 	s.Nil(err)
 	s.user2Token = user2Token
 
-	user3Token, err := s.oidcMockServer.Login(&mockoidc.MockUser{
-		Email:  "test.user@example.com",
-		Groups: []string{"group1", "group2"},
-	}, []string{"openid", "groups"})
+	user3Token, err := s.oidcMockServer.Login(
+		context.Background(),
+		&mockoidc.MockUser{
+			Email:  "test.user@example.com",
+			Groups: []string{"group1", "group2"},
+		}, []string{"openid", "groups"},
+	)
 	s.Nil(err)
 	s.user3Token = user3Token
 
-	user4Token, err := s.oidcMockServer.Login(&mockoidc.MockUser{
-		Email:  "test.user@example.com",
-		Groups: []string{"admin"},
-	}, []string{"openid", "groups"})
+	user4Token, err := s.oidcMockServer.Login(
+		context.Background(),
+		&mockoidc.MockUser{
+			Email:  "test.user@example.com",
+			Groups: []string{"admin"},
+		}, []string{"openid", "groups"},
+	)
 	s.Nil(err)
 	s.user4Token = user4Token
 }

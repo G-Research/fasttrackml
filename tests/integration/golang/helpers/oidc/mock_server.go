@@ -2,6 +2,7 @@ package oidc
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -31,7 +32,7 @@ func NewMockServer() (*MockServer, error) {
 }
 
 // Login mimics User login action.
-func (m MockServer) Login(user *mockoidc.MockUser, scopes []string) (string, error) {
+func (m MockServer) Login(ctx context.Context, user *mockoidc.MockUser, scopes []string) (string, error) {
 	// Emulate client to IDP request.
 	authorizeQuery := url.Values{}
 	authorizeQuery.Set("client_id", m.oidcMockServer.ClientID)
@@ -55,7 +56,7 @@ func (m MockServer) Login(user *mockoidc.MockUser, scopes []string) (string, err
 	}
 	authorizeURL.RawQuery = authorizeQuery.Encode()
 
-	authorizeRequest, err := http.NewRequest(http.MethodGet, authorizeURL.String(), nil)
+	authorizeRequest, err := http.NewRequestWithContext(ctx, http.MethodGet, authorizeURL.String(), nil)
 	if err != nil {
 		return "", eris.Wrap(err, "error creating authorize request")
 	}
@@ -96,8 +97,8 @@ func (m MockServer) Login(user *mockoidc.MockUser, scopes []string) (string, err
 	tokenForm.Set("code", redirectURL.Query().Get("code"))
 	tokenForm.Set("code_verifier", codeVerifier)
 
-	tokenRequest, err := http.NewRequest(
-		http.MethodPost, m.oidcMockServer.TokenEndpoint(), bytes.NewBufferString(tokenForm.Encode()),
+	tokenRequest, err := http.NewRequestWithContext(
+		ctx, http.MethodPost, m.oidcMockServer.TokenEndpoint(), bytes.NewBufferString(tokenForm.Encode()),
 	)
 	if err != nil {
 		return "", eris.Wrap(err, "error making token request")

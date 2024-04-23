@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/database/migrations"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0012"
 )
 
 const Version = "20240423055442"
@@ -11,7 +12,7 @@ const Version = "20240423055442"
 func Migrate(db *gorm.DB) error {
 	return migrations.RunWithoutForeignKeyIfNeeded(db, func() error {
 		return db.Transaction(func(tx *gorm.DB) error {
-			if err := tx.Migrator().DropColumn(&Role{}, "Role"); err != nil {
+			if err := tx.Migrator().DropColumn(&v_0012.Role{}, "Role"); err != nil {
 				return err
 			}
 			if err := tx.AutoMigrate(&Role{}); err != nil {

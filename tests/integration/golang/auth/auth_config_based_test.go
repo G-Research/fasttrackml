@@ -22,7 +22,7 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type UserAuthFromConfigTestSuite struct {
+type ConfigAuthTestSuite struct {
 	helpers.BaseTestSuite
 }
 
@@ -66,7 +66,7 @@ func TestUserAuthFromConfigTestSuite(t *testing.T) {
 	assert.Nil(t, f.Close())
 
 	// run test suite with newly created configuration.
-	testSuite := new(UserAuthFromConfigTestSuite)
+	testSuite := new(ConfigAuthTestSuite)
 	testSuite.Config = config.Config{
 		Auth: auth.Config{
 			AuthType:        auth.TypeUser,
@@ -77,7 +77,7 @@ func TestUserAuthFromConfigTestSuite(t *testing.T) {
 	suite.Run(t, testSuite)
 }
 
-func (s *UserAuthFromConfigTestSuite) TestAIMAuth_Ok() {
+func (s *ConfigAuthTestSuite) TestAIMAuth_Ok() {
 	// create test namespaces.
 	namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
@@ -247,7 +247,7 @@ func (s *UserAuthFromConfigTestSuite) TestAIMAuth_Ok() {
 	}
 }
 
-func (s *UserAuthFromConfigTestSuite) TestMlflowAuth_Ok() {
+func (s *ConfigAuthTestSuite) TestMlflowAuth_Ok() {
 	// create test namespaces.
 	namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,

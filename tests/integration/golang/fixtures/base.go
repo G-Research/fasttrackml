@@ -27,6 +27,7 @@ func (f baseFixtures) TruncateTables() error {
 		models.ExperimentTag{},
 		models.Experiment{},
 		models.Namespace{},
+		models.Role{},
 	} {
 		if err := f.db.Session(
 			&gorm.Session{AllowGlobalUpdate: true},

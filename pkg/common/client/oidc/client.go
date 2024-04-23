@@ -31,7 +31,7 @@ func NewClient(ctx context.Context, config *auth.Config) (*Client, error) {
 
 	return &Client{
 		config:   config,
-		verifier: provider.Verifier(&oidc.Config{ClientID: config.AuthOIDCClientID, SkipIssuerCheck: true}),
+		verifier: provider.Verifier(&oidc.Config{ClientID: config.AuthOIDCClientID}),
 	}, nil
 }
 

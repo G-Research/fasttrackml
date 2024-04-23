@@ -54,7 +54,12 @@ func (m OIDCMiddleware) Handle() fiber.Handler {
 
 // handleAdminResourceRequest applies OIDC check for Admin resources.
 func (m OIDCMiddleware) handleAdminResourceRequest(ctx *fiber.Ctx) error {
-	user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
+	authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
+	if authToken == "" {
+		log.Error("auth token has incorrect format")
+		return ctx.Redirect("/login", http.StatusMovedPermanently)
+	}
+	user, err := m.client.Verify(ctx.Context(), authToken)
 	if err != nil {
 		log.Errorf("error verifying access token: %+v", err)
 		return ctx.Redirect("/login", http.StatusMovedPermanently)
@@ -76,7 +81,12 @@ func (m OIDCMiddleware) handleChooserResourceRequest(ctx *fiber.Ctx) error {
 	log.Debugf("checking access permission to %s namespace", namespace.Code)
 
 	if path := ctx.Path(); path != "/login" && !strings.Contains(path, "/chooser/static") {
-		user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
+		authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
+		if authToken == "" {
+			log.Error("auth token has incorrect format")
+			return ctx.Redirect("/login", http.StatusMovedPermanently)
+		}
+		user, err := m.client.Verify(ctx.Context(), authToken)
 		if err != nil {
 			log.Errorf("error verifying access token: %+v", err)
 			return ctx.Redirect("/login", http.StatusMovedPermanently)
@@ -96,7 +106,17 @@ func (m OIDCMiddleware) handleAimMlflowResourceRequest(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("checking access permission to %s namespace", namespace.Code)
 
-	user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
+	authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
+	if authToken == "" {
+		log.Error("auth token has incorrect format")
+		return ctx.Status(
+			http.StatusNotFound,
+		).JSON(
+			api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
+		)
+	}
+
+	user, err := m.client.Verify(ctx.Context(), ctx.Get("Authorization")[7:])
 	if err != nil {
 		return ctx.Status(
 			http.StatusNotFound,

@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 )
 
 // ParamConflictError is returned when there is a conflict in the params (same key, different value).
@@ -42,21 +43,19 @@ type ParamRepositoryProvider interface {
 
 // ParamRepository repository to work with models.Param entity.
 type ParamRepository struct {
-	BaseRepository
+	repositories.BaseRepositoryProvider
 }
 
 // NewParamRepository creates repository to work with models.Param entity.
 func NewParamRepository(db *gorm.DB) *ParamRepository {
 	return &ParamRepository{
-		BaseRepository{
-			db: db,
-		},
+		repositories.NewBaseRepository(db),
 	}
 }
 
 // CreateBatch creates []models.Param entities in batch.
 func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params []models.Param) error {
-	if err := r.db.Transaction(func(tx *gorm.DB) error {
+	if err := r.GetDB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.WithContext(ctx).Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "run_uuid"}, {Name: "key"}},
 			DoNothing: true,

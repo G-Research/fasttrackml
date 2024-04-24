@@ -29,6 +29,17 @@ func TestConfig_NormalizeConfiguration(t *testing.T) {
 			},
 			configType: TypeUser,
 		},
+		{
+			name: "TestAuthTypeOIDC",
+			init: func() *Config {
+				return &Config{
+					AuthOIDCClientID:         "client_id",
+					AuthOIDCClientSecret:     "client_secret",
+					AuthOIDCProviderEndpoint: "provider_endpoint",
+				}
+			},
+			configType: TypeOIDC,
+		},
 	}
 
 	for _, tt := range tests {

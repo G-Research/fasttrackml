@@ -16,13 +16,14 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // RunRepositoryProvider provides an interface to work with models.Run entity.
 type RunRepositoryProvider interface {
-	BaseRepositoryProvider
+	repositories.BaseRepositoryProvider
 	// GetRunInfo returns run info.
 	GetRunInfo(ctx context.Context, namespaceID uint, req *request.GetRunInfoRequest) (*models.Run, error)
 	// GetRunMetrics returns Run metrics.
@@ -53,15 +54,13 @@ type RunRepositoryProvider interface {
 
 // RunRepository repository to work with models.Run entity.
 type RunRepository struct {
-	BaseRepository
+	repositories.BaseRepositoryProvider
 }
 
 // NewRunRepository creates repository to work with models.Run entity.
 func NewRunRepository(db *gorm.DB) *RunRepository {
 	return &RunRepository{
-		BaseRepository{
-			db: db,
-		},
+		repositories.NewBaseRepository(db),
 	}
 }
 
@@ -69,7 +68,7 @@ func NewRunRepository(db *gorm.DB) *RunRepository {
 func (r RunRepository) GetRunInfo(
 	ctx context.Context, namespaceID uint, req *request.GetRunInfoRequest,
 ) (*models.Run, error) {
-	query := r.db.WithContext(ctx)
+	query := r.GetDB().WithContext(ctx)
 	for _, s := range req.Sequences {
 		switch s {
 		case "metric":
@@ -106,14 +105,14 @@ func (r RunRepository) GetRunInfo(
 func (r RunRepository) GetRunMetrics(
 	ctx context.Context, runID string, metricKeysMap models.MetricKeysMap,
 ) ([]models.Metric, error) {
-	subQuery := r.db.WithContext(ctx)
+	subQuery := r.GetDB().WithContext(ctx)
 	for metricKey := range metricKeysMap {
 		subQuery = subQuery.Or("key = ? AND json = ?", metricKey.Name, types.JSONB(metricKey.Context))
 	}
 
 	// fetch run metrics based on provided criteria.
 	var metrics []models.Metric
-	if err := r.db.InnerJoins(
+	if err := r.GetDB().InnerJoins(
 		"Context",
 	).Order(
 		"iter",
@@ -140,7 +139,7 @@ func (r RunRepository) GetAlignedMetrics(
 		}
 	}
 	values = append(values, namespaceID, alignBy)
-	rows, err := r.db.Raw(
+	rows, err := r.GetDB().Raw(
 		fmt.Sprintf("WITH params(run_uuid, key, context_id, steps) AS (VALUES %s)", &valuesStmt)+
 			"        SELECT m.run_uuid, "+
 			"				rm.key, "+
@@ -177,7 +176,7 @@ func (r RunRepository) GetAlignedMetrics(
 	}
 	return rows, func(rows *sql.Rows) (*models.AlignedMetric, error) {
 		var metric models.AlignedMetric
-		if err := r.db.ScanRows(rows, &metric); err != nil {
+		if err := r.GetDB().ScanRows(rows, &metric); err != nil {
 			return nil, eris.Wrap(err, "error getting aligned metric")
 		}
 		return &metric, nil
@@ -189,7 +188,7 @@ func (r RunRepository) GetRunByNamespaceIDAndRunID(
 	ctx context.Context, namespaceID uint, runID string,
 ) (*models.Run, error) {
 	var run models.Run
-	if err := r.db.WithContext(ctx).Select(
+	if err := r.GetDB().WithContext(ctx).Select(
 		"ID",
 	).InnerJoins(
 		"Experiment",
@@ -212,7 +211,7 @@ func (r RunRepository) GetRunByNamespaceIDAndRunID(
 // GetByNamespaceID returns list of models.Run by requested namespace ID.
 func (r RunRepository) GetByNamespaceID(ctx context.Context, namespaceID uint) ([]models.Run, error) {
 	var runs []models.Run
-	if err := r.db.WithContext(ctx).Joins(
+	if err := r.GetDB().WithContext(ctx).Joins(
 		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 		namespaceID,
 	).Find(
@@ -228,7 +227,7 @@ func (r RunRepository) GetByNamespaceIDAndStatus(
 	ctx context.Context, namespaceID uint, status models.Status,
 ) ([]models.Run, error) {
 	var runs []models.Run
-	if err := r.db.WithContext(ctx).
+	if err := r.GetDB().WithContext(ctx).
 		Where("status = ?", status).
 		InnerJoins(
 			"Experiment",
@@ -249,7 +248,7 @@ func (r RunRepository) GetByNamespaceIDAndStatus(
 
 // Update updates existing models.Run entity.
 func (r RunRepository) Update(ctx context.Context, run *models.Run) error {
-	if err := r.db.WithContext(ctx).Model(&run).Omit("Experiment").Updates(run).Error; err != nil {
+	if err := r.GetDB().WithContext(ctx).Model(&run).Omit("Experiment").Updates(run).Error; err != nil {
 		return eris.Wrapf(err, "error updating run with id: %s", run.ID)
 	}
 	return nil
@@ -257,13 +256,13 @@ func (r RunRepository) Update(ctx context.Context, run *models.Run) error {
 
 // ArchiveBatch marks existing models.Run entities as archived.
 func (r RunRepository) ArchiveBatch(ctx context.Context, namespaceID uint, ids []string) error {
-	if err := r.db.WithContext(
+	if err := r.GetDB().WithContext(
 		ctx,
 	).Model(
 		models.Run{},
 	).Where(
 		"run_uuid IN (?)",
-		r.db.Model(
+		r.GetDB().Model(
 			models.Run{},
 		).Select(
 			"run_uuid",
@@ -293,13 +292,13 @@ func (r RunRepository) Delete(ctx context.Context, namespaceID uint, run *models
 
 // DeleteBatch removes existing models.Run from the db.
 func (r RunRepository) DeleteBatch(ctx context.Context, namespaceID uint, ids []string) error {
-	if err := r.db.Transaction(func(tx *gorm.DB) error {
+	if err := r.GetDB().Transaction(func(tx *gorm.DB) error {
 		runs := make([]models.Run, 0, len(ids))
 		if err := tx.Clauses(
 			clause.Returning{Columns: []clause.Column{{Name: "row_num"}}},
 		).Where(
 			"run_uuid IN (?)",
-			r.db.Model(
+			r.GetDB().Model(
 				models.Run{},
 			).Select(
 				"run_uuid",
@@ -335,11 +334,11 @@ func (r RunRepository) DeleteBatch(ctx context.Context, namespaceID uint, ids []
 
 // RestoreBatch marks existing models.Run entities as active.
 func (r RunRepository) RestoreBatch(ctx context.Context, namespaceID uint, ids []string) error {
-	if err := r.db.WithContext(
+	if err := r.GetDB().WithContext(
 		ctx,
 	).Where(
 		"run_uuid IN (?)",
-		r.db.Model(
+		r.GetDB().Model(
 			models.Run{},
 		).Select(
 			"run_uuid",
@@ -381,7 +380,7 @@ func (r RunRepository) SearchRuns(
 			"experiments": "Experiment",
 		},
 		TzOffset:  timeZoneOffset,
-		Dialector: r.db.Dialector.Name(),
+		Dialector: r.GetDB().Dialector.Name(),
 	}
 	pq, err := qp.Parse(req.Query)
 	if err != nil {
@@ -389,7 +388,7 @@ func (r RunRepository) SearchRuns(
 	}
 
 	var total int64
-	if tx := r.db.WithContext(ctx).
+	if tx := r.GetDB().WithContext(ctx).
 		Model(&database.Run{}).
 		Count(&total); tx.Error != nil {
 		return nil, 0, eris.Wrap(tx.Error, "unable to count total runs")
@@ -397,7 +396,7 @@ func (r RunRepository) SearchRuns(
 
 	log.Debugf("Total runs: %d", total)
 
-	tx := r.db.WithContext(ctx).
+	tx := r.GetDB().WithContext(ctx).
 		InnerJoins(
 			"Experiment",
 			database.DB.Select(

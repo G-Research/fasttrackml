@@ -100,8 +100,13 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
 	}
 
-	// Complete the request
 	req := request.SearchRunsRequest{}
+
+	if err := run.ValidateGetSearchRunsRequest(req); err != nil {
+		return err
+	}
+
+	// Complete the request
 	if err = ctx.QueryParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}

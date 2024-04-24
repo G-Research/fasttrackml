@@ -28,3 +28,10 @@ func ValidateGetRunInfoRequest(req *request.GetRunInfoRequest) error {
 	}
 	return nil
 }
+
+func ValidateGetSearchRunsRequest(req request.SearchRunsRequest) error {
+	if len(req.ExperimentNames) == 0 {
+		return api.NewBadRequestError("required `experiment_names` is missing")
+	}
+	return nil
+}

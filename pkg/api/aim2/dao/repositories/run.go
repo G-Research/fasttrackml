@@ -408,6 +408,10 @@ func (r RunRepository) SearchRuns(
 		).
 		Order("row_num DESC")
 
+	// if len(req.ExperimentNames) != 0 {
+	// 	tx = tx.Where("experiments.name IN ?", req.ExperimentNames)
+	// }
+
 	if !req.ExcludeParams {
 		tx.Preload("Params")
 		tx.Preload("Tags")

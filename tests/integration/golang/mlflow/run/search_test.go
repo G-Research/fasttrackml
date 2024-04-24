@@ -219,8 +219,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithViewTypeAllParameter3RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
-				ViewType:      request.ViewTypeAll,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ViewType:        request.ViewTypeAll,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -336,8 +337,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithViewTypeActiveOnlyParameter2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
-				ViewType:      request.ViewTypeActiveOnly,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ViewType:        request.ViewTypeActiveOnly,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -418,8 +420,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithViewTypeDeletedOnlyParameter1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				ViewType:      request.ViewTypeDeletedOnly,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ViewType:        request.ViewTypeDeletedOnly,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -465,8 +468,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeStartTimeOperationGrater1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.start_time > 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.start_time > 123456789`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -512,8 +516,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeStartTimeOperationGraterOrEqual2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.start_time >= 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.start_time >= 123456789`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -594,8 +599,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeStartTimeOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.start_time != 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.start_time != 123456789`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -641,8 +647,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeStartTimeOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.start_time = 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.start_time = 123456789`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -688,8 +695,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeStartTimeOperationLess1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.start_time < 333444444`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.start_time < 333444444`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -735,8 +743,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeStartTimeOperationLessOrEqual2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.start_time <= 333444444`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.start_time <= 333444444`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -817,8 +826,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeEndTimeOperationGrater1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.end_time > 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.end_time > 123456789`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -864,8 +874,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeEndTimeOperationGraterOrEqual2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.end_time >= 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.end_time >= 123456789`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -946,8 +957,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeEndTimeOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.end_time != 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.end_time != 123456789`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -993,8 +1005,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeEndTimeOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.end_time = 123456789`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.end_time = 123456789`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1040,8 +1053,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeEndTimeOperationLess1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.end_time < 444555555`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.end_time < 444555555`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1087,8 +1101,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeEndTimeOperationLessOrEqual2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.end_time <= 444555555`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.end_time <= 444555555`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1169,8 +1184,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeRunNameOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.run_name != "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.run_name != "TestRunTag1"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1216,8 +1232,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeRunNameOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.run_name = "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.run_name = "TestRunTag1"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1263,8 +1280,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeRunNameOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.run_name LIKE "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.run_name LIKE "TestRunTag1"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1310,8 +1328,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeRunNameOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.run_name ILIKE "testruntag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.run_name ILIKE "testruntag1"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1357,16 +1376,18 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeStatusOperationNotEqualNoRunsShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.status != "RUNNING"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.status != "RUNNING"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{},
 		},
 		{
 			name: "SearchWithAttributeStatusOperationEqual2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.status = "RUNNING"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.status = "RUNNING"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1447,8 +1468,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeStatusOperationLike2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.status LIKE "RUNNING"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.status LIKE "RUNNING"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1529,8 +1551,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeStatusOperationILike2RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.status ILIKE "running"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.status ILIKE "running"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1611,8 +1634,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeUserIDOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.user_id != 1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.user_id != 1`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1658,8 +1682,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeUserIDOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.user_id = 3`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.user_id = 3`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1705,8 +1730,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeUserIDOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.user_id LIKE "3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.user_id LIKE "3"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1752,8 +1778,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeUserIDOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.user_id ILIKE "3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.user_id ILIKE "3"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1799,8 +1826,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeArtifactURIOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.artifact_uri != "artifact_uri1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.artifact_uri != "artifact_uri1"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1846,8 +1874,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeArtifactURIOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.artifact_uri = "artifact_uri3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.artifact_uri = "artifact_uri3"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1893,8 +1922,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeArtifactURIOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.artifact_uri LIKE "artifact_uri3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.artifact_uri LIKE "artifact_uri3"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1940,8 +1970,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeArtifactURIOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `attributes.artifact_uri ILIKE "ArTiFaCt_UrI3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `attributes.artifact_uri ILIKE "ArTiFaCt_UrI3"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -1987,8 +2018,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeRunIDOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        fmt.Sprintf(`attributes.run_id != "%s"`, run1.ID),
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          fmt.Sprintf(`attributes.run_id != "%s"`, run1.ID),
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2034,8 +2066,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeRunIDOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        fmt.Sprintf(`attributes.run_id = "%s"`, run3.ID),
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          fmt.Sprintf(`attributes.run_id = "%s"`, run3.ID),
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2081,8 +2114,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeRunIDOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        fmt.Sprintf(`attributes.run_id LIKE "%s"`, run3.ID),
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          fmt.Sprintf(`attributes.run_id LIKE "%s"`, run3.ID),
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2128,8 +2162,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeRunIDOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        fmt.Sprintf(`attributes.run_id ILIKE "%s"`, strings.ToUpper(run3.ID)),
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          fmt.Sprintf(`attributes.run_id ILIKE "%s"`, strings.ToUpper(run3.ID)),
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2175,8 +2210,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeRunIDOperationIN1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        fmt.Sprintf(`attributes.run_id IN ('%s')`, run3.ID),
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          fmt.Sprintf(`attributes.run_id IN ('%s')`, run3.ID),
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2222,8 +2258,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeRunIDOperationIN1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        fmt.Sprintf(`attributes.run_id NOT IN ('%s')`, run1.ID),
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          fmt.Sprintf(`attributes.run_id NOT IN ('%s')`, run1.ID),
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2269,8 +2306,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeMetricsOperationGrater1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `metrics.run3 > 1.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `metrics.run3 > 1.1`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2316,8 +2354,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeMetricsOperationGraterOrEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `metrics.run3 >= 1.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `metrics.run3 >= 1.1`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2363,8 +2402,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeMetricsOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `metrics.run3 != 1.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `metrics.run3 != 1.1`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2410,8 +2450,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeMetricsOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `metrics.run3 = 3.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `metrics.run3 = 3.1`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2457,8 +2498,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeMetricsOperationLess0RunsShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `metrics.run3 < 3.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `metrics.run3 < 3.1`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				NextPageToken: "",
@@ -2467,8 +2509,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeMetricsOperationLessOrEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `metrics.run3 <= 3.1`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `metrics.run3 <= 3.1`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2514,8 +2557,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeParamsOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `params.param3 != "value1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `params.param3 != "value1"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2561,8 +2605,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeParamsOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `params.param3 = "value3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `params.param3 = "value3"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2608,8 +2653,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeParamsOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `params.param3 LIKE "value3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `params.param3 LIKE "value3"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2655,8 +2701,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeParamsOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `params.param3 ILIKE "VaLuE3"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `params.param3 ILIKE "VaLuE3"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2702,8 +2749,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeTagsOperationNotEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `tags.mlflow.runName != "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `tags.mlflow.runName != "TestRunTag1"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2749,8 +2797,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeTagsOperationEqual1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `tags.mlflow.runName = "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `tags.mlflow.runName = "TestRunTag1"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2796,8 +2845,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeTagsOperationLike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `tags.mlflow.runName LIKE "TestRunTag1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `tags.mlflow.runName LIKE "TestRunTag1"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{
@@ -2843,8 +2893,9 @@ func (s *SearchTestSuite) testCases(
 		{
 			name: "SearchWithAttributeTagsOperationILike1RunShouldBeReturned",
 			request: request.SearchRunsRequest{
-				Filter:        `tags.mlflow.runName ILIKE "TeStRuNTaG1"`,
-				ExperimentIDs: []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				Filter:          `tags.mlflow.runName ILIKE "TeStRuNTaG1"`,
+				ExperimentIDs:   []string{fmt.Sprintf("%d", experimentIDInRequest)},
+				ExperimentNames: []string{experiment.Name},
 			},
 			response: &response.SearchRunsResponse{
 				Runs: []*response.RunPartialResponse{

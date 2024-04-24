@@ -260,7 +260,7 @@ migrations-rebuild: ## rebuild the migrations script to detect new migrations.
 	@go run main.go migrations rebuild
 
 .PHONY: ui-aim-sync
-ui-aim-sync: ## copy Aim UI files to a faster filesystem.
+ui-aim-sync: ## copy Aim UI files to docker volume.
 	@echo ">>> Syncing the Aim UI."
 	@rsync -rvu --exclude node_modules --exclude .git ui/fasttrackml-ui-aim/ $(AIM_BUILD_LOCATION)
 
@@ -270,7 +270,7 @@ ui-aim-start: ui-aim-sync ## start the Aim UI for development.
 	@cd $(AIM_BUILD_LOCATION)/src && npm ci --legacy-peer-deps && npm start
 
 .PHONY: ui-mlflow-sync
-ui-mlflow-sync: ## copy the MLflow UI files to a faster filesystem.
+ui-mlflow-sync: ## copy MLflow UI files to docker volume.
 	@echo ">>> Syncing the MLflow UI."
 	@rsync -rvu --exclude node_modules --exclude .git ui/fasttrackml-ui-mlflow/ $(MLFLOW_BUILD_LOCATION)
 

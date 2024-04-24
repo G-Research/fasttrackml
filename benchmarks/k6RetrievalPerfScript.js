@@ -127,7 +127,7 @@ export default function () {
     base_url + 'experiments/search',
     JSON.stringify({
       max_results: 10,
-      filter: "name like 'experiment_%'",
+      filter: `attribute.name != 'experiment_${generateRandomString(5)}'`,
     }),
     {
       headers: {

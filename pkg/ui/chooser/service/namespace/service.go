@@ -8,7 +8,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/config"
-	"github.com/G-Research/fasttrackml/pkg/ui/chooser/middleware"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
 // Service provides service layer to work with `namespace` business logic.
@@ -32,19 +32,33 @@ func NewService(
 func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, bool, error) {
 	namespaces, err := s.namespaceRepository.List(ctx)
 	if err != nil {
-		return nil, false, eris.Wrap(err, "error listing namespaces")
+		return nil, false, eris.Wrap(err, "error getting namespaces")
 	}
 
 	switch {
 	case s.config.Auth.IsAuthTypeUser():
-		authToken, err := middleware.GetAuthTokenFromContext(ctx)
+		authToken, err := middleware.GetBasicAuthTokenFromContext(ctx)
 		if err != nil {
 			return nil, false, err
 		}
-		// if auth token is not admin auth token, then we have to filter namespaces
-		// and show only those which belong to current user, otherwise just show everything.
+		// if auth token is not admin auth token, then filter namespaces and show
+		// only those which belong to current user, otherwise just show everything.
 		if !authToken.HasAdminAccess() {
-			return FilterNamespacesByUserRoles(authToken.GetRoles(), namespaces), false, nil
+			return FilterNamespacesByAuthTokenUserRoles(authToken.GetRoles(), namespaces), false, nil
+		}
+	case s.config.Auth.IsAuthTypeOIDC():
+		user, err := middleware.GetOIDCUserFromContext(ctx)
+		if err != nil {
+			return nil, false, err
+		}
+		// if auth token is not admin auth token, then filter namespaces and show
+		// only those which belong to current user, otherwise just show everything.
+		if !user.IsAdmin() {
+			namespaces, err = s.namespaceRepository.GetByRoles(ctx, user.GetRoles())
+			if err != nil {
+				return nil, false, eris.Wrap(err, "error getting namespaces")
+			}
+			return namespaces, false, nil
 		}
 	}
 

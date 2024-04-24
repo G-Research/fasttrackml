@@ -19,6 +19,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.26.1
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.1
+	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/go-python/gpython v0.2.0
 	github.com/gofiber/fiber/v2 v2.52.4
 	github.com/gofiber/template/html/v2 v2.1.1
@@ -40,6 +41,8 @@ require (
 	gorm.io/gorm v1.25.9
 	gorm.io/plugin/dbresolver v1.5.1
 )
+
+require github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 
 require (
 	cloud.google.com/go/auth v0.2.2 // indirect

@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 )
 
 // ParamRepositoryProvider provides an interface to work with models.Param entity.
@@ -17,15 +18,13 @@ type ParamRepositoryProvider interface {
 
 // ParamRepository repository to work with models.Param entity.
 type ParamRepository struct {
-	BaseRepository
+	repositories.BaseRepositoryProvider
 }
 
 // NewParamRepository creates repository to work with models.Param entity.
 func NewParamRepository(db *gorm.DB) *ParamRepository {
 	return &ParamRepository{
-		BaseRepository{
-			db: db,
-		},
+		repositories.NewBaseRepository(db),
 	}
 }
 
@@ -33,7 +32,7 @@ func NewParamRepository(db *gorm.DB) *ParamRepository {
 func (r ParamRepository) GetParamKeysByParameters(
 	ctx context.Context, namespaceID uint, experimentNames []string,
 ) ([]string, error) {
-	query := r.db.WithContext(ctx).Distinct().Model(
+	query := r.GetDB().WithContext(ctx).Distinct().Model(
 		&models.Param{},
 	).Joins(
 		"JOIN runs USING(run_uuid)",

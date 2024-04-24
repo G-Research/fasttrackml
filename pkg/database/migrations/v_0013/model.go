@@ -1,9 +1,11 @@
-package v_0010
+package v_0013
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"database/sql/driver"
+	"encoding/hex"
 	"encoding/json"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 )
 
@@ -29,6 +32,12 @@ type LifecycleStage string
 const (
 	LifecycleStageActive  LifecycleStage = "active"
 	LifecycleStageDeleted LifecycleStage = "deleted"
+)
+
+// Default Experiment properties.
+const (
+	DefaultExperimentID   = int32(0)
+	DefaultExperimentName = "Default"
 )
 
 type Namespace struct {
@@ -54,6 +63,11 @@ type Experiment struct {
 	Namespace        Namespace
 	Tags             []ExperimentTag `gorm:"constraint:OnDelete:CASCADE"`
 	Runs             []Run           `gorm:"constraint:OnDelete:CASCADE"`
+}
+
+// IsDefault makes check that Experiment is default.
+func (e Experiment) IsDefault(namespace *models.Namespace) bool {
+	return e.ID != nil && namespace.DefaultExperimentID != nil && *e.ID == *namespace.DefaultExperimentID
 }
 
 type ExperimentTag struct {
@@ -154,6 +168,12 @@ type Context struct {
 	Json types.JSONB `gorm:"not null;unique;index"`
 }
 
+// GetJsonHash returns hash of the Context.Json
+func (c Context) GetJsonHash() string {
+	hash := sha256.Sum256(c.Json)
+	return string(hash[:])
+}
+
 type AlembicVersion struct {
 	Version string `gorm:"column:version_num;type:varchar(32);not null;primaryKey"`
 }
@@ -171,10 +191,9 @@ func (SchemaVersion) TableName() string {
 }
 
 type Base struct {
-	ID         uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	IsArchived bool      `json:"-"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) error {
@@ -188,6 +207,7 @@ type Dashboard struct {
 	Description string     `json:"description"`
 	AppID       *uuid.UUID `gorm:"type:uuid" json:"app_id"`
 	App         App        `json:"-"`
+	IsArchived  bool       `json:"-"`
 }
 
 func (d Dashboard) MarshalJSON() ([]byte, error) {
@@ -213,6 +233,7 @@ type App struct {
 	State       AppState  `json:"state"`
 	Namespace   Namespace `json:"-"`
 	NamespaceID uint      `gorm:"not null" json:"-"`
+	IsArchived  bool      `json:"-"`
 }
 
 type AppState map[string]any
@@ -238,4 +259,24 @@ func (s *AppState) Scan(v interface{}) error {
 
 func (s AppState) GormDataType() string {
 	return "text"
+}
+
+func NewUUID() string {
+	var r [32]byte
+	u := uuid.New()
+	hex.Encode(r[:], u[:])
+	return string(r[:])
+}
+
+type Role struct {
+	Base
+	Name string `gorm:"unique;index;not null"`
+}
+
+type RoleNamespace struct {
+	Base
+	Role        Role      `gorm:"constraint:OnDelete:CASCADE"`
+	RoleID      uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
+	Namespace   Namespace `gorm:"constraint:OnDelete:CASCADE"`
+	NamespaceID uint      `gorm:"not null;index:,unique,composite:relation"`
 }

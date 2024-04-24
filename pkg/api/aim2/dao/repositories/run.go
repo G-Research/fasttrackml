@@ -403,13 +403,11 @@ func (r RunRepository) SearchRuns(
 				"ID", "Name",
 			).Where(
 				&models.Experiment{NamespaceID: namespaceID},
+			).Where(
+				"Experiment.name IN ?", req.ExperimentNames,
 			),
 		).
 		Order("row_num DESC")
-
-	// if len(req.ExperimentNames) != 0 {
-	// 	tx = tx.Where("experiments.name IN ?", req.ExperimentNames)
-	// }
 
 	if !req.ExcludeParams {
 		tx.Preload("Params")

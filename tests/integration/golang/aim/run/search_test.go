@@ -369,7 +369,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query:           `run.archived == True or run.archived == False`,
 				Offset:          s.run3.ID,
-				ExperimentNames: []string{s.run2.Experiment.Name, s.run1.Experiment.Name},
+				ExperimentNames: []string{s.run1.Experiment.Name, s.run2.Experiment.Name, s.run3.Experiment.Name},
 			},
 			runs: []*models.Run{
 				s.run2,
@@ -410,7 +410,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchActive",
 			request: request.SearchRunsRequest{
 				Query:           `run.active == True`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: []string{s.run1.Experiment.Name, s.run3.Experiment.Name},
 			},
 			runs: []*models.Run{
 				s.run1,

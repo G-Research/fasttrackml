@@ -8,7 +8,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/config"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/auth"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
 // Service provides service layer to work with `namespace` business logic.
@@ -37,7 +37,7 @@ func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, bool, 
 
 	switch {
 	case s.config.Auth.IsAuthTypeUser():
-		authToken, err := auth.GetBasicAuthTokenFromContext(ctx)
+		authToken, err := middleware.GetBasicAuthTokenFromContext(ctx)
 		if err != nil {
 			return nil, false, err
 		}
@@ -47,7 +47,7 @@ func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, bool, 
 			return FilterNamespacesByAuthTokenUserRoles(authToken.GetRoles(), namespaces), false, nil
 		}
 	case s.config.Auth.IsAuthTypeOIDC():
-		user, err := auth.GetOIDCUserFromContext(ctx)
+		user, err := middleware.GetOIDCUserFromContext(ctx)
 		if err != nil {
 			return nil, false, err
 		}

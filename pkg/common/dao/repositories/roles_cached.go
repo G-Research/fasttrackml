@@ -84,7 +84,7 @@ func (r RoleCachedRepository) ValidateRolesAccessToNamespace(
 	if err := r.db.WithContext(ctx).Model(
 		&models.RoleNamespace{},
 	).Joins(
-		"Role",
+		"Name",
 		r.db.Select("role"),
 	).InnerJoins(
 		"Namespace",
@@ -99,7 +99,7 @@ func (r RoleCachedRepository) ValidateRolesAccessToNamespace(
 
 	namespaceRoles = make([]string, len(data))
 	for i, namespaceRole := range data {
-		namespaceRoles[i] = namespaceRole.Role.Role
+		namespaceRoles[i] = namespaceRole.Role.Name
 	}
 
 	// save into cache.

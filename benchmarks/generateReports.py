@@ -11,16 +11,12 @@ BENCHMARKS = [
     "SearchExperiments",
     "MetricHistory",
     "CreateRun",
-    "LogMetricSingle",
-    "LogMetricBatch5",
+    # "LogMetricSingle",
     "LogMetricBatch10",
     "LogMetricBatch100",
-    # "LogMetricBatch1000",
-    # "LogMetricBatch10000",
-    "LogParamOnlyBatch100",
-    "LogParamOnlyBatch10",
-    #     "LogMetricOnlyBatch10"
-    #     "LogMetricOnlyBatch100"
+    # "LogMetricBatch500"
+    "LogParamBatch10",
+    "LogParamBatch100",
 ]
 
 # Configure logging

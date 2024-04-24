@@ -85,11 +85,11 @@ func (s *OIDCAuthTestSuite) SetupTestSuite() {
 	s.Require().Nil(err)
 	s.namespace3 = namespace3
 
-	group1Role := models.Role{Role: "group1"}
+	group1Role := models.Role{Name: "group1"}
 	s.Nil(s.RolesFixtures.CreateRole(context.Background(), &group1Role))
 	s.Nil(s.RolesFixtures.AttachNamespaceToRole(context.Background(), &group1Role, namespace1))
 
-	group2Role := models.Role{Role: "group2"}
+	group2Role := models.Role{Name: "group2"}
 	s.Nil(s.RolesFixtures.CreateRole(context.Background(), &group2Role))
 	s.Nil(s.RolesFixtures.AttachNamespaceToRole(context.Background(), &group2Role, namespace2))
 	s.Nil(s.RolesFixtures.AttachNamespaceToRole(context.Background(), &group2Role, namespace3))

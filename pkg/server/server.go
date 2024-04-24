@@ -41,7 +41,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/dao"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware/auth"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"

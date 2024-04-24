@@ -84,8 +84,8 @@ func (r RoleCachedRepository) ValidateRolesAccessToNamespace(
 	if err := r.db.WithContext(ctx).Model(
 		&models.RoleNamespace{},
 	).Joins(
-		"Name",
-		r.db.Select("role"),
+		"Role",
+		r.db.Select("name"),
 	).InnerJoins(
 		"Namespace",
 		r.db.Select(

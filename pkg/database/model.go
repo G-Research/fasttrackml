@@ -270,7 +270,7 @@ func NewUUID() string {
 
 type Role struct {
 	Base
-	Role string `gorm:"unique;index;not null"`
+	Name string `gorm:"unique;index;not null"`
 }
 
 type RoleNamespace struct {
@@ -278,5 +278,5 @@ type RoleNamespace struct {
 	Role        Role      `gorm:"constraint:OnDelete:CASCADE"`
 	RoleID      uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
 	Namespace   Namespace `gorm:"constraint:OnDelete:CASCADE"`
-	NamespaceID uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
+	NamespaceID uint      `gorm:"not null;index:,unique,composite:relation"`
 }

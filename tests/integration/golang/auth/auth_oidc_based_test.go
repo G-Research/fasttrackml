@@ -502,7 +502,7 @@ func (s *OIDCAuthTestSuite) TestAdminAuth_Ok() {
 					}).DoRequest("/namespaces"),
 				)
 
-				s.Equal(resp.Find("#namespaces").Length(), 0)
+				s.Equal(0, resp.Find("#namespaces").Length())
 			},
 		},
 		{
@@ -521,7 +521,7 @@ func (s *OIDCAuthTestSuite) TestAdminAuth_Ok() {
 						"Authorization": fmt.Sprintf("Bearer %s", s.user4Token),
 					}).DoRequest("/namespaces"),
 				)
-				s.Equal(resp.Find("#namespaces").Length(), 1, "namespaces not found in HTML response")
+				s.Equal(1, resp.Find("#namespaces").Length(), "namespaces not found in HTML response")
 			},
 		},
 	}
@@ -558,7 +558,7 @@ func (s *OIDCAuthTestSuite) TestChooserAuth_Ok() {
 				)
 
 				// check that HTML response has no button with id - #oidc-connect.
-				s.Equal(resp.Find("#oidc-connect").Length(), 0)
+				s.Equal(0, resp.Find("#oidc-connect").Length())
 			},
 		},
 		{
@@ -579,7 +579,7 @@ func (s *OIDCAuthTestSuite) TestChooserAuth_Ok() {
 				)
 
 				// check that HTML response has button with id - #oidc-connect.
-				s.Equal(resp.Find("#oidc-connect").Length(), 1)
+				s.Equal(1, resp.Find("#oidc-connect").Length())
 			},
 		},
 		{
@@ -599,7 +599,7 @@ func (s *OIDCAuthTestSuite) TestChooserAuth_Ok() {
 					}).DoRequest("/"),
 				)
 				// check that HTML response has no button with id - #oidc-connect.
-				s.Equal(resp.Find("#oidc-connect").Length(), 0)
+				s.Equal(0, resp.Find("#oidc-connect").Length())
 			},
 		},
 	}

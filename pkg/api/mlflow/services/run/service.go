@@ -180,7 +180,7 @@ func (s Service) SearchRuns(
 			database.LifecycleStageDeleted,
 		}
 	}
-	query := database.DB.Joins(
+	tx := database.DB.Joins(
 		"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
 	).Where(
 		"experiments.namespace_id = ?", namespace.ID,
@@ -189,9 +189,6 @@ func (s Service) SearchRuns(
 	).Where(
 		"runs.lifecycle_stage IN ?", lifecyleStages,
 	)
-	if len(req.ExperimentNames) > 0 {
-		query.Where("experiments.name IN ?", req.ExperimentNames)
-	}
 
 	// MaxResults
 	// TODO if compatible with mlflow client, consider using same logic as in ExperimentSearch
@@ -199,7 +196,7 @@ func (s Service) SearchRuns(
 	if limit == 0 {
 		limit = 1000
 	}
-	query.Limit(limit)
+	tx.Limit(limit)
 
 	// PageToken
 	var offset int
@@ -215,7 +212,7 @@ func (s Service) SearchRuns(
 		}
 		offset = int(token.Offset)
 	}
-	query.Offset(offset)
+	tx.Offset(offset)
 
 	// Filter
 	if req.Filter != "" {
@@ -345,9 +342,9 @@ func (s Service) SearchRuns(
 					key = fmt.Sprintf("LOWER(runs.%s)", key)
 					comparison = LikeExpression
 					value = strings.ToLower(value.(string))
-					query.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
+					tx.Where(fmt.Sprintf("%s %s ?", key, comparison), value)
 				} else {
-					query.Where(fmt.Sprintf("runs.%s %s ?", key, comparison), value)
+					tx.Where(fmt.Sprintf("runs.%s %s ?", key, comparison), value)
 				}
 			} else {
 				table := fmt.Sprintf("filter_%d", n)
@@ -356,7 +353,7 @@ func (s Service) SearchRuns(
 					where = "LOWER(value) LIKE ?"
 					value = strings.ToLower(value.(string))
 				}
-				query.Joins(
+				tx.Joins(
 					fmt.Sprintf("JOIN (?) AS %s ON runs.run_uuid = %s.run_uuid", table, table),
 					database.DB.Select("run_uuid", "value").Where("key = ?", key).Where(where, value).Model(kind),
 				)
@@ -397,13 +394,13 @@ func (s Service) SearchRuns(
 		}
 		if kind != nil {
 			table := fmt.Sprintf("order_%d", n)
-			query.Joins(
+			tx.Joins(
 				fmt.Sprintf("LEFT OUTER JOIN (?) AS %s ON runs.run_uuid = %s.run_uuid", table, table),
 				database.DB.Select("run_uuid", "value").Where("key = ?", column).Model(kind),
 			)
 			column = fmt.Sprintf("%s.value", table)
 		}
-		query.Order(clause.OrderByColumn{
+		tx.Order(clause.OrderByColumn{
 			Column: clause.Column{
 				Name: column,
 			},
@@ -411,18 +408,18 @@ func (s Service) SearchRuns(
 		})
 	}
 	if !startTimeOrder {
-		query.Order("runs.start_time DESC")
+		tx.Order("runs.start_time DESC")
 	}
-	query.Order("runs.run_uuid")
+	tx.Order("runs.run_uuid")
 
 	// Actual query
 	var runs []models.Run
-	query.Preload("LatestMetrics").
+	tx.Preload("LatestMetrics").
 		Preload("Params").
 		Preload("Tags").
 		Find(&runs)
-	if query.Error != nil {
-		return nil, 0, 0, api.NewInternalError("unable to search runs: %s", query.Error)
+	if tx.Error != nil {
+		return nil, 0, 0, api.NewInternalError("unable to search runs: %s", tx.Error)
 	}
 
 	return runs, limit, offset, nil

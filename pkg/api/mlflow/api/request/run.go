@@ -48,13 +48,12 @@ func (r UpdateRunRequest) GetRunID() string {
 
 // SearchRunsRequest is a request object for `POST /mlflow/runs/search` endpoint.
 type SearchRunsRequest struct {
-	ExperimentIDs   []string `json:"experiment_ids"`
-	ExperimentNames []string `json:"experiment_names"`
-	Filter          string   `json:"filter"`
-	ViewType        ViewType `json:"run_view_type"`
-	MaxResults      int32    `json:"max_results"`
-	OrderBy         []string `json:"order_by"`
-	PageToken       string   `json:"page_token"`
+	ExperimentIDs []string `json:"experiment_ids"`
+	Filter        string   `json:"filter"`
+	ViewType      ViewType `json:"run_view_type"`
+	MaxResults    int32    `json:"max_results"`
+	OrderBy       []string `json:"order_by"`
+	PageToken     string   `json:"page_token"`
 }
 
 // RestoreRunRequest is a request object for `POST /mlflow/runs/restore` endpoint.

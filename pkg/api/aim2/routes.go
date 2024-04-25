@@ -4,30 +4,28 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
-	"github.com/G-Research/fasttrackml/pkg/common/config"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
 // Router represents `mlflow` router.
 type Router struct {
-	config     *config.Config
-	controller *controller.Controller
+	controller        *controller.Controller
+	globalMiddlewares []fiber.Handler
 }
 
 // NewRouter creates new instance of `mlflow` router.
-func NewRouter(config *config.Config, controller *controller.Controller) *Router {
+func NewRouter(controller *controller.Controller) *Router {
 	return &Router{
-		config:     config,
-		controller: controller,
+		controller:        controller,
+		globalMiddlewares: make([]fiber.Handler, 0),
 	}
 }
 
-func (r Router) Init(server fiber.Router) {
+// Init initialise routes.
+func (r *Router) Init(server fiber.Router) {
 	mainGroup := server.Group("/aim/api")
-	// apply global auth middlewares.
-	switch {
-	case r.config.Auth.IsAuthTypeUser():
-		mainGroup.Use(middleware.NewUserMiddleware(r.config.Auth.AuthParsedUserPermissions))
+	// apply global middlewares.
+	for _, globalMiddleware := range r.globalMiddlewares {
+		mainGroup.Use(globalMiddleware)
 	}
 
 	// setup related routes.
@@ -79,4 +77,10 @@ func (r Router) Init(server fiber.Router) {
 	mainGroup.Use(func(c *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	})
+}
+
+// AddGlobalMiddleware adds a global middleware which will be applied for each route.
+func (r *Router) AddGlobalMiddleware(middleware fiber.Handler) *Router {
+	r.globalMiddlewares = append(r.globalMiddlewares, middleware)
+	return r
 }

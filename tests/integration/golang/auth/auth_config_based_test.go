@@ -106,7 +106,7 @@ func (s *ConfigAuthTestSuite) TestAIMAuth_Ok() {
 		check func()
 	}{
 		{
-			name: "TestUser1Access",
+			name: "TestUser1NamespaceAccessLimits",
 			check: func() {
 				// check that user1 has access to namespace1 and namespace2 namespaces.
 				basicAuthToken := base64.StdEncoding.EncodeToString(
@@ -152,7 +152,7 @@ func (s *ConfigAuthTestSuite) TestAIMAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser2Access",
+			name: "TestUser2NamespaceAccessLimits",
 			check: func() {
 				// check that user2 has access to namespace2 and namespace3 namespaces.
 				basicAuthToken := base64.StdEncoding.EncodeToString(
@@ -198,7 +198,7 @@ func (s *ConfigAuthTestSuite) TestAIMAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser3Access",
+			name: "TestUser3NamespaceAccessLimits",
 			check: func() {
 				// check that user3 has access to namespace1, namespace2, namespace3 namespaces because of admin role.
 				basicAuthToken := base64.StdEncoding.EncodeToString(
@@ -276,7 +276,7 @@ func (s *ConfigAuthTestSuite) TestMlflowAuth_Ok() {
 		check func()
 	}{
 		{
-			name: "TestUser1Access",
+			name: "TestUser1NamespaceAccessLimits",
 			check: func() {
 				// check that user1 has access to namespace1 and namespace2 namespaces.
 				basicAuthToken := base64.StdEncoding.EncodeToString(
@@ -324,7 +324,7 @@ func (s *ConfigAuthTestSuite) TestMlflowAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser2Access",
+			name: "TestUser2NamespaceAccessLimits",
 			check: func() {
 				// check that user2 has access to namespace2 and namespace3 namespaces.
 				basicAuthToken := base64.StdEncoding.EncodeToString(
@@ -376,7 +376,7 @@ func (s *ConfigAuthTestSuite) TestMlflowAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser3Access",
+			name: "TestUser3NamespaceAccessLimits",
 			check: func() {
 				// check that user3 has access to namespace1, namespace2, namespace3 namespaces because of admin role.
 				basicAuthToken := base64.StdEncoding.EncodeToString(

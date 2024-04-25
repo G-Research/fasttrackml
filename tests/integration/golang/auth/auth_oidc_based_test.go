@@ -144,7 +144,7 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 		check func()
 	}{
 		{
-			name: "TestUser1Access",
+			name: "TestUser1NamespaceAccessLimits",
 			check: func() {
 				// check that user1 has access to namespace1 namespaces.
 				successResponse := aimResponse.GetProjectResponse{}
@@ -191,7 +191,7 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser2Access",
+			name: "TestUser2NamespaceAccessLimits",
 			check: func() {
 				// check that user2 has access to namespace2 and namespace3 namespaces.
 				successResponse := aimResponse.GetProjectResponse{}
@@ -235,7 +235,7 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser3Access",
+			name: "TestUser3NamespaceAccessLimits",
 			check: func() {
 				// check that user3 has access to namespace1, namespace2 and namespace3 namespaces.
 				successResponse := aimResponse.GetProjectResponse{}
@@ -274,7 +274,7 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 			},
 		},
 		{
-			name: "TestAdminUserAccess",
+			name: "TestAdminUserNamespaceAccessLimits",
 			check: func() {
 				// check that admin user has access to namespace1, namespace2 and namespace3 namespaces.
 				successResponse := aimResponse.GetProjectResponse{}
@@ -329,7 +329,7 @@ func (s *OIDCAuthTestSuite) TestMlflowAuth_Ok() {
 		check func()
 	}{
 		{
-			name: "TestUser1Access",
+			name: "TestUser1NamespaceAccessLimits",
 			check: func() {
 				// check that user1 has access to namespace1 namespaces.
 				successResponse := mlflowResponse.SearchExperimentsResponse{}
@@ -348,7 +348,7 @@ func (s *OIDCAuthTestSuite) TestMlflowAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser2Access",
+			name: "TestUser2NamespaceAccessLimits",
 			check: func() {
 				// check that user2 has access to namespace2 and namespace3 namespaces.
 				successResponse := mlflowResponse.SearchExperimentsResponse{}
@@ -380,7 +380,7 @@ func (s *OIDCAuthTestSuite) TestMlflowAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser3Access",
+			name: "TestUser3NamespaceAccessLimits",
 			check: func() {
 				// check that user3 has access to namespace1, namespace2 and namespace3 namespaces.
 				successResponse := mlflowResponse.SearchExperimentsResponse{}
@@ -425,7 +425,7 @@ func (s *OIDCAuthTestSuite) TestMlflowAuth_Ok() {
 			},
 		},
 		{
-			name: "TestAdminUserAccess",
+			name: "TestAdminUserNamespaceAccessLimits",
 			check: func() {
 				// check that admin user has access to namespace1, namespace2 and namespace3 namespaces.
 				successResponse := mlflowResponse.SearchExperimentsResponse{}
@@ -486,7 +486,7 @@ func (s *OIDCAuthTestSuite) TestAdminAuth_Ok() {
 		check func()
 	}{
 		{
-			name: "TestUser1Access",
+			name: "TestNonAdminUserHasNoAccess",
 			check: func() {
 				// check that user1 has no access to admin part.
 				var resp goquery.Document
@@ -506,9 +506,9 @@ func (s *OIDCAuthTestSuite) TestAdminAuth_Ok() {
 			},
 		},
 		{
-			name: "TestAdminUserAccess",
+			name: "TestAdminUserHasAccess",
 			check: func() {
-				// check that user4(admin) has no access to admin part.
+				// check that user4(admin) has access to admin part.
 				var resp goquery.Document
 				s.Require().Nil(
 					s.AdminClient().WithMethod(
@@ -541,9 +541,9 @@ func (s *OIDCAuthTestSuite) TestChooserAuth_Ok() {
 		check func()
 	}{
 		{
-			name: "TestUser1Access",
+			name: "TestUserHasAccess",
 			check: func() {
-				// check that user1 has no access to admin part.
+				// check that user1 has access to chooser part.
 				var resp goquery.Document
 				s.Require().Nil(
 					s.ChooserClient().WithMethod(
@@ -562,7 +562,7 @@ func (s *OIDCAuthTestSuite) TestChooserAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUserWithoutAccess",
+			name: "TestUserHasNoAccess",
 			check: func() {
 				// check that if there is no token, then `login` screen will be provided.
 				var resp goquery.Document
@@ -583,9 +583,9 @@ func (s *OIDCAuthTestSuite) TestChooserAuth_Ok() {
 			},
 		},
 		{
-			name: "TestAdminUserAccess",
+			name: "TestAdminUserHasAccess",
 			check: func() {
-				// check that user4(admin) has no access to admin part.
+				// check that user4(admin) has access to chooser part.
 				var resp goquery.Document
 				s.Require().Nil(
 					s.ChooserClient().WithMethod(

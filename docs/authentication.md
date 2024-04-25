@@ -11,7 +11,12 @@ FastTrackML supports 2 types of authentication: OIDC based authentication and Ba
 
 To enable OIDC authentication, FastTrackML should be run with next command line parameters:
 ```
---auth-oidc-client-id client_id --auth-oidc-client-secret client_secret --auth-oidc-provider-endpoint http://127.0.0.1 --auth-oidc-admin-role admin --auth-oidc-claim-roles groups --auth-oidc-scopes email openid 
+--auth-oidc-client-id client_id
+--auth-oidc-client-secret client_secret 
+--auth-oidc-provider-endpoint http://127.0.0.1 
+--auth-oidc-admin-role admin 
+--auth-oidc-claim-roles groups 
+--auth-oidc-scopes email openid 
 ```
 where:
 - `auth-oidc-client-id` - is IDP client id.
@@ -30,7 +35,8 @@ where:
      "groups":  ["role1", "role2"]
   }
   ```
-  so in that case `auth-oidc-claim-roles` could be `roles` or `groups`.
+  so in that case `auth-oidc-claim-roles` could be `roles` or `groups`. 
+Relation between roles and namespaces has to be configured inside the database.
 - `auth-oidc-scopes` - list of `scopes` which will be requested from IDP and be present in `claims`.
 
 ### Basic authentication
@@ -44,7 +50,7 @@ in that case FastTrackML will be restricted with `username` and `password` and u
 --auth-username username --auth-password password --auth-users-config /path/to/config.file
 ```
 where:
-- `auth-users-config` is a `users` configuration file which should have next format:
+- `auth-users-config` is a `users` configuration file which should have the following format:
 ```
 users:
   - name: user1

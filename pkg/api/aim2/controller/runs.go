@@ -105,9 +105,6 @@ func (c Controller) SearchRuns(ctx *fiber.Ctx) error {
 	if err = ctx.QueryParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	if err := run.ValidateGetSearchRunsRequest(&req); err != nil {
-		return err
-	}
 	if ctx.Query("report_progress") == "" {
 		req.ReportProgress = true
 	}

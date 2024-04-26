@@ -404,7 +404,7 @@ func (r RunRepository) SearchRuns(
 			).Where(
 				&models.Experiment{NamespaceID: namespaceID},
 			).Where(
-				"Experiment.name IN ?", req.ExperimentNames,
+				`"Experiment"."name" IN ?`, req.ExperimentNames,
 			),
 		).
 		Order("row_num DESC")

@@ -263,19 +263,6 @@ func (s *SearchTestSuite) SetupTest() {
 	s.Require().Nil(err)
 }
 
-func (s *SearchTestSuite) TestNoRequiredExperimentNames() {
-	var resp api.ErrorResponse
-
-	s.Require().Nil(
-		s.AIMClient().WithResponseType(
-			helpers.ResponseTypeJSON,
-		).WithResponse(
-			&resp,
-		).DoRequest("/runs/search/run"),
-	)
-	s.Regexp("experiment_names", resp.Error())
-}
-
 func (s *SearchTestSuite) TestCSVReport_Ok() {
 	resp := new(bytes.Buffer)
 	s.Require().Nil(

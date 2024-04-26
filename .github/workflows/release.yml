@@ -121,7 +121,7 @@ jobs:
 
   chart-release:
     name: Publish Helm chart
-    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/v') 
     uses: G-Research/charts/.github/workflows/invoke-push.yaml@master
     secrets:
       APP_ID: ${{ secrets.APP_ID }}

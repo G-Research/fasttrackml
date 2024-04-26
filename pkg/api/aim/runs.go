@@ -405,10 +405,11 @@ func SearchRuns(ctx *fiber.Ctx) error {
 		Offset string `query:"offset"`
 		Action string `query:"action"`
 		// TODO skip_system is unused - should we keep it?
-		SkipSystem     bool `query:"skip_system"`
-		ReportProgress bool `query:"report_progress"`
-		ExcludeParams  bool `query:"exclude_params"`
-		ExcludeTraces  bool `query:"exclude_traces"`
+		SkipSystem      bool     `query:"skip_system"`
+		ReportProgress  bool     `query:"report_progress"`
+		ExcludeParams   bool     `query:"exclude_params"`
+		ExcludeTraces   bool     `query:"exclude_traces"`
+		ExperimentNames []string `query:"experiment_names"`
 	}{}
 
 	if err = ctx.QueryParser(&q); err != nil {
@@ -457,6 +458,8 @@ func SearchRuns(ctx *fiber.Ctx) error {
 				"ID", "Name",
 			).Where(
 				&models.Experiment{NamespaceID: ns.ID},
+			).Where(
+				`"Experiment"."name" IN ?`, q.ExperimentNames,
 			),
 		).
 		Order("row_num DESC")

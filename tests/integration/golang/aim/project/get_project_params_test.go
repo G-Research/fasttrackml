@@ -94,7 +94,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		{
 			name: "RequestProjectParamsFilteredByExistingExperiment",
 			request: map[any]any{
-				"experiment_names": s.DefaultExperiment.Name,
+				"experiments": *s.DefaultExperiment.ID,
 			},
 			response: response.ProjectParamsResponse{
 				Metric: map[string][]fiber.Map{
@@ -119,7 +119,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		{
 			name: "RequestProjectParamsFilteredByNotExistingExperiment",
 			request: map[any]any{
-				"experiment_names": "not-existing-experiment",
+				"experiments": 999,
 			},
 			response: response.ProjectParamsResponse{
 				Metric: map[string][]fiber.Map{},

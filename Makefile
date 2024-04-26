@@ -259,16 +259,22 @@ migrations-rebuild: ## rebuild the migrations script to detect new migrations.
 	@echo ">>> Running FastTrackML migrations rebuild."
 	@go run main.go migrations rebuild
 
-.PHONY: ui-aim-start
-ui-aim-start: ## start the Aim UI for development.
+.PHONY: ui-aim-sync
+ui-aim-sync: ## copy Aim UI files to docker volume.
 	@echo ">>> Syncing the Aim UI."
 	@rsync -rvu --exclude node_modules --exclude .git ui/fasttrackml-ui-aim/ $(AIM_BUILD_LOCATION)
+
+.PHONY: ui-aim-start
+ui-aim-start: ui-aim-sync ## start the Aim UI for development.	
 	@echo ">>> Starting the Aim UI."
 	@cd $(AIM_BUILD_LOCATION)/src && npm ci --legacy-peer-deps && npm start
 
-.PHONY: ui-mlflow-start
-ui-mlflow-start: ## start the MLflow UI for development.
+.PHONY: ui-mlflow-sync
+ui-mlflow-sync: ## copy MLflow UI files to docker volume.
 	@echo ">>> Syncing the MLflow UI."
 	@rsync -rvu --exclude node_modules --exclude .git ui/fasttrackml-ui-mlflow/ $(MLFLOW_BUILD_LOCATION)
+
+.PHONY: ui-mlflow-start
+ui-mlflow-start: ui-mlflow-sync ## start the MLflow UI for development.
 	@echo ">>> Starting the MLflow UI."
 	@cd $(MLFLOW_BUILD_LOCATION)/src && yarn install --immutable && yarn start

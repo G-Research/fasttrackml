@@ -22,7 +22,7 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type UserAuthFromConfigTestSuite struct {
+type ConfigAuthTestSuite struct {
 	helpers.BaseTestSuite
 }
 
@@ -66,7 +66,7 @@ func TestUserAuthFromConfigTestSuite(t *testing.T) {
 	assert.Nil(t, f.Close())
 
 	// run test suite with newly created configuration.
-	testSuite := new(UserAuthFromConfigTestSuite)
+	testSuite := new(ConfigAuthTestSuite)
 	testSuite.Config = config.Config{
 		Auth: auth.Config{
 			AuthType:        auth.TypeUser,
@@ -77,7 +77,7 @@ func TestUserAuthFromConfigTestSuite(t *testing.T) {
 	suite.Run(t, testSuite)
 }
 
-func (s *UserAuthFromConfigTestSuite) TestAIMAuth_Ok() {
+func (s *ConfigAuthTestSuite) TestAIMAuth_Ok() {
 	// create test namespaces.
 	namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
@@ -106,7 +106,7 @@ func (s *UserAuthFromConfigTestSuite) TestAIMAuth_Ok() {
 		check func()
 	}{
 		{
-			name: "TestUser1Access",
+			name: "TestUser1NamespaceAccessLimits",
 			check: func() {
 				// check that user1 has access to namespace1 and namespace2 namespaces.
 				basicAuthToken := base64.StdEncoding.EncodeToString(
@@ -152,7 +152,7 @@ func (s *UserAuthFromConfigTestSuite) TestAIMAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser2Access",
+			name: "TestUser2NamespaceAccessLimits",
 			check: func() {
 				// check that user2 has access to namespace2 and namespace3 namespaces.
 				basicAuthToken := base64.StdEncoding.EncodeToString(
@@ -198,7 +198,7 @@ func (s *UserAuthFromConfigTestSuite) TestAIMAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser3Access",
+			name: "TestUser3NamespaceAccessLimits",
 			check: func() {
 				// check that user3 has access to namespace1, namespace2, namespace3 namespaces because of admin role.
 				basicAuthToken := base64.StdEncoding.EncodeToString(
@@ -247,7 +247,7 @@ func (s *UserAuthFromConfigTestSuite) TestAIMAuth_Ok() {
 	}
 }
 
-func (s *UserAuthFromConfigTestSuite) TestMlflowAuth_Ok() {
+func (s *ConfigAuthTestSuite) TestMlflowAuth_Ok() {
 	// create test namespaces.
 	namespace1, err := s.NamespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
 		ID:                  2,
@@ -276,7 +276,7 @@ func (s *UserAuthFromConfigTestSuite) TestMlflowAuth_Ok() {
 		check func()
 	}{
 		{
-			name: "TestUser1Access",
+			name: "TestUser1NamespaceAccessLimits",
 			check: func() {
 				// check that user1 has access to namespace1 and namespace2 namespaces.
 				basicAuthToken := base64.StdEncoding.EncodeToString(
@@ -324,7 +324,7 @@ func (s *UserAuthFromConfigTestSuite) TestMlflowAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser2Access",
+			name: "TestUser2NamespaceAccessLimits",
 			check: func() {
 				// check that user2 has access to namespace2 and namespace3 namespaces.
 				basicAuthToken := base64.StdEncoding.EncodeToString(
@@ -376,7 +376,7 @@ func (s *UserAuthFromConfigTestSuite) TestMlflowAuth_Ok() {
 			},
 		},
 		{
-			name: "TestUser3Access",
+			name: "TestUser3NamespaceAccessLimits",
 			check: func() {
 				// check that user3 has access to namespace1, namespace2, namespace3 namespaces because of admin role.
 				basicAuthToken := base64.StdEncoding.EncodeToString(

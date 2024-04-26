@@ -6,8 +6,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
-// FilterNamespacesByUserRoles filter namespaces by provided user roles.
-func FilterNamespacesByUserRoles(
+// FilterNamespacesByAuthTokenUserRoles filter namespaces by provided roles from Auth token.
+func FilterNamespacesByAuthTokenUserRoles(
 	roles map[string]struct{},
 	namespaces []models.Namespace,
 ) []models.Namespace {

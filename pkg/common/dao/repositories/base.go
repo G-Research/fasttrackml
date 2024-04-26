@@ -13,6 +13,11 @@ type BaseRepository struct {
 	db *gorm.DB
 }
 
+// NewBaseRepository creates new Base repository.
+func NewBaseRepository(db *gorm.DB) *BaseRepository {
+	return &BaseRepository{db: db}
+}
+
 // GetDB returns current DB instance.
 func (r BaseRepository) GetDB() *gorm.DB {
 	return r.db

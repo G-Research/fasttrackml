@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/datatypes"
 
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 )
 
 // Metric represents model to work with `metrics` table.

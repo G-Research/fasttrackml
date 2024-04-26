@@ -269,8 +269,13 @@ func (s *SearchTestSuite) TestCSVReport_Ok() {
 			helpers.ResponseTypeBuffer,
 		).WithQuery(
 			request.SearchRunsRequest{
-				Action:          "export",
-				ExperimentNames: []string{s.experiment.Name},
+				Action: "export",
+				ExperimentNames: []string{
+					s.run1.Experiment.Name,
+					s.run2.Experiment.Name,
+					s.run3.Experiment.Name,
+					s.run4.Experiment.Name,
+				},
 			},
 		).WithResponse(
 			resp,
@@ -333,6 +338,12 @@ func (s *SearchTestSuite) TestCSVReport_Ok() {
 
 func (s *SearchTestSuite) TestStreamData_Ok() {
 	runs := []*models.Run{s.run1, s.run2, s.run3, s.run4}
+	experimentNames := []string{
+		s.run1.Experiment.Name,
+		s.run2.Experiment.Name,
+		s.run3.Experiment.Name,
+		s.run4.Experiment.Name,
+	}
 	tests := []struct {
 		name    string
 		request request.SearchRunsRequest
@@ -343,7 +354,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query:           `run.archived == True or run.archived == False`,
 				Limit:           2,
-				ExperimentNames: []string{s.run4.Experiment.Name, s.run3.Experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run4,
@@ -355,7 +366,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query:           `run.archived == True or run.archived == False`,
 				Offset:          s.run3.ID,
-				ExperimentNames: []string{s.run1.Experiment.Name, s.run2.Experiment.Name, s.run3.Experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run2,
@@ -367,14 +378,14 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query:           `run.archived == True or run.archived == False`,
 				Offset:          s.run1.ID,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 		},
 		{
 			name: "SearchArchived",
 			request: request.SearchRunsRequest{
 				Query:           `run.archived == True`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run2,
@@ -385,7 +396,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchNotArchived",
 			request: request.SearchRunsRequest{
 				Query:           `run.archived == False`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -396,7 +407,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchActive",
 			request: request.SearchRunsRequest{
 				Query:           `run.active == True`,
-				ExperimentNames: []string{s.run1.Experiment.Name, s.run3.Experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -407,7 +418,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchNotActive",
 			request: request.SearchRunsRequest{
 				Query:           `run.active == False`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{},
 		},
@@ -415,7 +426,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchDurationOperationGrater",
 			request: request.SearchRunsRequest{
 				Query:           `run.duration > 0`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -425,7 +436,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchDurationOperationGraterOrEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.duration >= 0`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -433,10 +444,42 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			},
 		},
 		{
+			name: "SearchAll",
+			request: request.SearchRunsRequest{
+				Query:           `run.archived == True or run.archived == False`,
+				ExperimentNames: experimentNames,
+			},
+			runs: []*models.Run{
+				s.run1,
+				s.run2,
+				s.run4,
+				s.run3,
+			},
+		},
+		{
+			name: "FilterByExperimentName",
+			request: request.SearchRunsRequest{
+				Query:           `run.archived == True or run.archived == False`,
+				ExperimentNames: experimentNames[0:1],
+			},
+			runs: []*models.Run{
+				s.run1,
+				s.run2,
+			},
+		},
+		{
+			name: "NoExperimentNamesNoResults",
+			request: request.SearchRunsRequest{
+				Query:           `run.archived == True or run.archived == False`,
+				ExperimentNames: []string{},
+			},
+			runs: []*models.Run{},
+		},
+		{
 			name: "SearchDurationOperationLess",
 			request: request.SearchRunsRequest{
 				Query:           fmt.Sprintf("run.duration < %d", (s.run3.EndTime.Int64-s.run3.StartTime.Int64)/1000),
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -446,7 +489,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchDurationOperationLessOrEqual",
 			request: request.SearchRunsRequest{
 				Query:           fmt.Sprintf("run.duration <= %d", (s.run3.EndTime.Int64-s.run3.StartTime.Int64)/1000),
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -457,7 +500,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchDurationOperationEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.duration == 0`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -467,7 +510,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchDurationOperationNotEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.duration != 0`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -477,7 +520,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchStartTimeOperationGrater",
 			request: request.SearchRunsRequest{
 				Query:           `run.created_at > 123456789`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -487,7 +530,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchStartTimeOperationGraterOrEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.created_at >= 123456789`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -498,7 +541,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchStartTimeOperationNotEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.created_at != 123456789`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -508,7 +551,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchStartTimeOperationEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.created_at == 123456789`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -518,7 +561,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchStartTimeOperationLess",
 			request: request.SearchRunsRequest{
 				Query:           `run.created_at < 333444444`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -528,7 +571,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchStartTimeOperationLessOrEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.created_at <= 333444444`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -539,7 +582,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchFinalizedAtOperationGrater",
 			request: request.SearchRunsRequest{
 				Query:           `run.finalized_at > 123456789`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -549,7 +592,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchFinalizedAtOperationGraterOrEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.finalized_at >= 123456789`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -560,7 +603,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchFinalizedAtOperationNotEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.finalized_at != 123456789`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -570,7 +613,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchFinalizedAtOperationEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.finalized_at == 123456789`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -580,7 +623,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchFinalizedAtOperationLess",
 			request: request.SearchRunsRequest{
 				Query:           `run.finalized_at < 333444444`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -590,7 +633,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchFinalizedAtOperationLessOrEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.finalized_at <= 444555555`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -601,7 +644,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunHashOperationEqual",
 			request: request.SearchRunsRequest{
 				Query:           fmt.Sprintf(`run.hash == "%s"`, s.run1.ID),
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -611,7 +654,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunHashOperationNotEqual",
 			request: request.SearchRunsRequest{
 				Query:           fmt.Sprintf(`run.hash != "%s"`, s.run1.ID),
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -621,7 +664,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunNameOperationNotEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.name != "TestRun1"`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -631,7 +674,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunNameOperationEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.name == "TestRun1"`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -641,7 +684,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunNameOperationIn",
 			request: request.SearchRunsRequest{
 				Query:           `"Run3" in run.name`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -651,7 +694,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunNameOperationNotIn",
 			request: request.SearchRunsRequest{
 				Query:           `"Run3" not in run.name`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -661,7 +704,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunNameOperationStartsWith",
 			request: request.SearchRunsRequest{
 				Query:           `run.name.startswith("Test")`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -672,7 +715,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunNameOperationStartsWith",
 			request: request.SearchRunsRequest{
 				Query:           `run.name.endswith('3')`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -682,7 +725,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunExperimentOperationEqual",
 			request: request.SearchRunsRequest{
 				Query:           fmt.Sprintf(`run.experiment == "%s"`, s.experiment.Name),
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -692,7 +735,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunExperimentOperationNotEqual",
 			request: request.SearchRunsRequest{
 				Query:           fmt.Sprintf(`run.experiment != "%s"`, s.experiment.Name),
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -702,7 +745,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastOperationEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last == 3.1`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -712,7 +755,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastOperationNotEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last != 3.1`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -722,7 +765,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastOperationGrater",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last > 1.1`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -732,7 +775,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastOperationGraterOrEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last >= 1.1`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -743,7 +786,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastOperationLess",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last < 3.1`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -753,7 +796,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastOperationLessOrEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last <= 3.1`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -764,7 +807,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastStepOperationEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last_step == 1`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -774,7 +817,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastStepOperationNotEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last_step != 1`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -784,7 +827,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastStepOperationGrater",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last_step > 1`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -794,7 +837,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastStepOperationGraterOrEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last_step >= 1`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -805,7 +848,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastStepOperationLess",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last_step < 3`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -815,7 +858,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchMetricLastStepOperationLessOrEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.metrics['TestMetric'].last_step <= 3`,
-				ExperimentNames: []string{s.run1.Experiment.Name, s.run3.Experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -826,7 +869,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchTagOperationEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.tags['mlflow.runName'] == "TestRunTag1"`,
-				ExperimentNames: []string{s.run1.Experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -836,7 +879,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchTagOperationNotEqual",
 			request: request.SearchRunsRequest{
 				Query:           `run.tags['mlflow.runName'] != "TestRunTag1"`,
-				ExperimentNames: []string{s.run3.Experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -847,7 +890,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunNameOperationRegexpMatchFunction",
 			request: request.SearchRunsRequest{
 				Query:           `re.match('TestRun1', run.name)`,
-				ExperimentNames: []string{s.run1.Experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run1,
@@ -857,7 +900,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			name: "SearchRunNameOperationRegexpSearchFunction",
 			request: request.SearchRunsRequest{
 				Query:           `re.search('TestRun3', run.name)`,
-				ExperimentNames: []string{s.run3.Experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,
@@ -868,7 +911,7 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			request: request.SearchRunsRequest{
 				Query: `(run.archived == True or run.archived == False) and run.duration > 0` +
 					`and run.metrics['TestMetric'].last > 2.5 and not run.name.endswith('4')`,
-				ExperimentNames: []string{s.experiment.Name},
+				ExperimentNames: experimentNames,
 			},
 			runs: []*models.Run{
 				s.run3,

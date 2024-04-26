@@ -21,13 +21,12 @@ type GetRunMetric struct {
 }
 
 type SearchRunsRequest struct {
-	Query           string   `query:"q"`
-	Limit           int      `query:"limit"`
-	Offset          string   `query:"offset"`
-	Action          string   `query:"action"`
-	SkipSystem      bool     `query:"skip_system"`
-	ReportProgress  bool     `query:"report_progress"`
-	ExcludeParams   bool     `query:"exclude_params"`
-	ExcludeTraces   bool     `query:"exclude_traces"`
-	ExperimentNames []string `query:"experiment_names"`
+	Query          string `query:"q"`
+	Limit          int    `query:"limit"`
+	Offset         string `query:"offset"`
+	Action         string `query:"action"`
+	SkipSystem     bool   `query:"skip_system"`
+	ReportProgress bool   `query:"report_progress"`
+	ExcludeParams  bool   `query:"exclude_params"`
+	ExcludeTraces  bool   `query:"exclude_traces"`
 }

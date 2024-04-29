@@ -104,9 +104,9 @@ func (s Service) GetProjectParams(
 	}
 
 	if slices.Contains(req.Sequences, "metric") {
-		// fetch metrics only when Experiments or ExperimentNames were provided.
+		// fetch metrics only when Experiments or ExperimentIDs were provided.
 		metrics, err := s.metricRepository.GetMetricKeysAndContextsByExperiments(
-			ctx, namespaceID, req.Experiments, req.ExperimentNames,
+			ctx, namespaceID, req.Experiments,
 		)
 		if err != nil {
 			return nil, api.NewInternalError("error getting metrics: %s", err)

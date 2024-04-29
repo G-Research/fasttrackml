@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 )
 
 // ExperimentRepositoryProvider provides an interface to work with `experiment` entity.
@@ -34,23 +35,23 @@ type ExperimentRepositoryProvider interface {
 
 // ExperimentRepository repository to work with `experiment` entity.
 type ExperimentRepository struct {
-	db *gorm.DB
+	repositories.BaseRepositoryProvider
 }
 
 // NewExperimentRepository creates repository to work with `experiment` entity.
 func NewExperimentRepository(db *gorm.DB) *ExperimentRepository {
 	return &ExperimentRepository{
-		db: db,
+		repositories.NewBaseRepository(db),
 	}
 }
 
 // Create creates new models.Experiment entity.
 func (r ExperimentRepository) Create(ctx context.Context, experiment *models.Experiment) error {
-	if err := r.db.WithContext(ctx).Create(&experiment).Error; err != nil {
+	if err := r.GetDB().WithContext(ctx).Create(&experiment).Error; err != nil {
 		return eris.Wrap(err, "error creating experiment entity")
 	}
 	if experiment.ArtifactLocation == "" {
-		if err := r.db.Model(
+		if err := r.GetDB().Model(
 			&experiment,
 		).Update(
 			"ArtifactLocation", experiment.ArtifactLocation,
@@ -66,7 +67,7 @@ func (r ExperimentRepository) GetByNamespaceIDAndExperimentID(
 	ctx context.Context, namespaceID uint, experimentID int32,
 ) (*models.Experiment, error) {
 	var experiment models.Experiment
-	if err := r.db.WithContext(ctx).Preload(
+	if err := r.GetDB().WithContext(ctx).Preload(
 		"Tags",
 	).Where(
 		models.Experiment{ID: &experimentID},
@@ -83,7 +84,7 @@ func (r ExperimentRepository) GetByNamespaceIDAndName(
 	ctx context.Context, namespaceID uint, name string,
 ) (*models.Experiment, error) {
 	var experiment models.Experiment
-	if err := r.db.WithContext(ctx).Preload(
+	if err := r.GetDB().WithContext(ctx).Preload(
 		"Tags",
 	).Where(
 		models.Experiment{Name: name},
@@ -100,7 +101,7 @@ func (r ExperimentRepository) GetByNamespaceIDAndName(
 
 // Update updates existing models.Experiment entity.
 func (r ExperimentRepository) Update(ctx context.Context, experiment *models.Experiment) error {
-	if err := r.db.Transaction(func(tx *gorm.DB) error {
+	if err := r.GetDB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.WithContext(ctx).Model(&experiment).Updates(experiment).Error; err != nil {
 			return eris.Wrapf(err, "error updating experiment with id: %d", *experiment.ID)
 		}
@@ -137,7 +138,7 @@ func (r ExperimentRepository) Delete(ctx context.Context, experiment *models.Exp
 
 // DeleteBatch removes existing []models.Experiment in batch from the db.
 func (r ExperimentRepository) DeleteBatch(ctx context.Context, ids []*int32) error {
-	if err := r.db.Transaction(func(tx *gorm.DB) error {
+	if err := r.GetDB().Transaction(func(tx *gorm.DB) error {
 		// finding all the runs
 		var minRowNum sql.NullInt64
 		if err := tx.Model(

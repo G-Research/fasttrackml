@@ -8,7 +8,6 @@ const Version = "20240429012448"
 
 func Migrate(db *gorm.DB) error {
 	return db.Transaction(func(tx *gorm.DB) error {
-
 		// rename the existing Value column to ValueString
 		if err := tx.Migrator().RenameColumn(&Param{}, "value", "value_str"); err != nil {
 			return err

@@ -19,7 +19,7 @@ type TagRepositoryProvider interface {
 	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
 	// GetTagKeysByParameters returns list of tag keys by requested parameters.
-	GetTagKeysByParameters(ctx context.Context, namespaceID uint, experimentNames []string) ([]string, error)
+	GetTagKeysByParameters(ctx context.Context, namespaceID uint, experiments []int) ([]string, error)
 }
 
 // TagRepository repository to work with models.Tag entity.
@@ -56,7 +56,7 @@ func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint)
 
 // GetTagKeysByParameters returns list of tag keys by requested parameters.
 func (r TagRepository) GetTagKeysByParameters(
-	ctx context.Context, namespaceID uint, experimentNames []string,
+	ctx context.Context, namespaceID uint, experiments []int,
 ) ([]string, error) {
 	// fetch and process tags.
 	query := r.GetDB().WithContext(ctx).Model(
@@ -69,8 +69,8 @@ func (r TagRepository) GetTagKeysByParameters(
 	).Where(
 		"runs.lifecycle_stage = ?", models.LifecycleStageActive,
 	)
-	if len(experimentNames) != 0 {
-		query = query.Where("experiments.name IN ?", experimentNames)
+	if len(experiments) != 0 {
+		query = query.Where("experiments.experiment_id IN ?", experiments)
 	}
 
 	var keys []string

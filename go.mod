@@ -9,10 +9,10 @@ replace (
 
 require (
 	cloud.google.com/go/storage v1.40.0
-	dagger.io/dagger v0.11.1
+	dagger.io/dagger v0.11.2
 	dario.cat/mergo v1.0.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/G-Research/fasttrackml-ui-aim v0.31705.34
+	github.com/G-Research/fasttrackml-ui-aim v0.31705.35
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.7
 	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/apache/arrow/go/v14 v14.0.2
@@ -28,6 +28,7 @@ require (
 	github.com/hetiansu5/urlquery v1.2.7
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/mattn/go-sqlite3 v1.14.16
+	github.com/oauth2-proxy/mockoidc v0.0.0-20240214162133-caebfff84d25
 	github.com/pkg/errors v0.9.1
 	github.com/rotisserie/eris v0.5.4
 	github.com/sirupsen/logrus v1.9.3
@@ -38,7 +39,7 @@ require (
 	google.golang.org/api v0.176.1
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/driver/sqlite v1.4.3
-	gorm.io/gorm v1.25.9
+	gorm.io/gorm v1.25.10
 	gorm.io/plugin/dbresolver v1.5.1
 )
 
@@ -47,6 +48,8 @@ require github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 require (
 	cloud.google.com/go/auth v0.3.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.2 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.0 // indirect
 	github.com/sosodev/duration v1.2.0 // indirect
 )
 

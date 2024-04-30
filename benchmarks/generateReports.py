@@ -26,13 +26,6 @@ logging.basicConfig(
 )
 
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
-
-
 def generateReport(dfs, filename):
     """
     Generate an image report for a given dataframe and storing it with the
@@ -67,9 +60,7 @@ def generateReport(dfs, filename):
         axes[int(i / num_cols)][i % num_cols].set_title(dfs[i]["name"][0])
 
     # Save the figure to a single image file (e.g., PNG)
-    plt.savefig('performanceReport.png')
-
-
+    plt.savefig(filename)
 
 
 def getDataframeFromFile(filename, application_name):
@@ -136,54 +127,35 @@ def checkAllFilesReady():
     """
     This is used to check whether all the required output files have been generated
     Since the K6 tests would be run inside containers before shutting down, we need to check if their
-    execution is complete before starting the report generataiton.
-    The files we are checking to ensure they exist are:
-    - mlflowsqlitelogging.csv
-    - mlflowpostgreslogging.csv
-    - fasttracksqlitelogging.csv
-    - fasttrackpostgreslogging.csv
-    - mlflowsqliteretrieval.csv
-    - mlflowpostgresretrieval.csv
-    - fasttrackpostgresretrieval.csv
-    - fasttracksqliteretrieval.csv
-    """
-    if os.path.exists("benchmark_outputs/mlflowsqlitelogging.csv") and \
-       os.path.exists("benchmark_outputs/mlflowpostgreslogging.csv") and \
-       os.path.exists("benchmark_outputs/fasttracksqlitelogging.csv") and \
-       os.path.exists("benchmark_outputs/fasttrackpostgreslogging.csv") and \
-       os.path.exists("benchmark_outputs/mlflowsqliteretrieval.csv") and \
-       os.path.exists("benchmark_outputs/mlflowpostgresretrieval.csv") and \
-       os.path.exists("benchmark_outputs/fasttrackpostgresretrieval.csv") and \
-       os.path.exists("benchmark_outputs/fasttracksqliteretrieval.csv"):
-           return True
+    execution is complete before starting the report generation.
 
+    We check for all files that match a defined pattern and count
+    them to ensure that all the files have been generated
+    """
+    file_pattern = "benchmark_outputs/*.csv"
+    # Use glob to find all files matching the pattern
+    matching_files = glob.glob(file_pattern)
+    # Count the number of matching files
+    file_count = len(matching_files)
+    if file_count >= 8:
+        return True
     return False
 
 
 def cleanGeneratedFiles():
     """
     Delete generated output files
-    The function checks if a particular csv report output file exists
-    and deletes it
+    The function checks for all generated files based on a specific pattern
+    and deletes them
     """
-    if os.path.exists("benchmark_outputs/mlflowsqlitelogging.csv"):
-        os.remove("benchmark_outputs/mlflowsqlitelogging.csv")
-    if os.path.exists("benchmark_outputs/mlflowpostgreslogging.csv"):
-        os.remove("benchmark_outputs/mlflowpostgreslogging.csv")
-    if os.path.exists("benchmark_outputs/fasttracksqlitelogging.csv"):
-        os.remove("benchmark_outputs/fasttracksqlitelogging.csv")
-    if os.path.exists("benchmark_outputs/fasttrackpostgreslogging.csv"):
-        os.remove("benchmark_outputs/fasttrackpostgreslogging.csv")
-    if os.path.exists("benchmark_outputs/mlflowsqliteretrieval.csv"):
-        os.remove("benchmark_outputs/mlflowsqliteretrieval.csv")
-    if os.path.exists("benchmark_outputs/mlflowpostgresretrieval.csv"):
-        os.remove("benchmark_outputs/mlflowpostgresretrieval.csv")
-    if os.path.exists("benchmark_outputs/fasttrackpostgresretrieval.csv"):
-        os.remove("benchmark_outputs/fasttrackpostgresretrieval.csv")
-    if os.path.exists("benchmark_outputs/fasttracksqliteretrieval.csv"):
-        os.remove("benchmark_outputs/fasttracksqliteretrieval.csv")
 
-    return False
+    files_to_delete = glob.glob("benchmark_outputs/*.csv")
+    for file_path in files_to_delete:
+        try:
+            os.remove(file_path)
+            print(f"Deleted: {file_path}")
+        except Exception as e:
+            print(f"Error deleting {file_path}: {e}")
 
 
 if __name__ == "__main__":
@@ -214,10 +186,6 @@ if __name__ == "__main__":
 
     num_checks = 0
 
-    # while checkAllFilesReady() == False and num_checks < NUM_OF_TIMES_TO_CHECK:
-    #     logging.info("Waiting for all csv files to be generated...")
-    #     time.sleep(DELAY_BETWEEN_CHECKS)
-
     if checkAllFilesReady() == True:
         # clean the reports and get the relevant dataframes for the tests
         # generate report using dataframes
@@ -227,9 +195,6 @@ if __name__ == "__main__":
     else:
         logging.info("Generated CSV files not complete and could not generate reports")
 
-
     if SHOULD_CLEAN:
         # cleanGeneratedFiles()
         pass
-
-        cleanGeneratedFiles()

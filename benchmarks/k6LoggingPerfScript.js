@@ -1,5 +1,5 @@
-import { sleep } from 'k6';
 import http from 'k6/http';
+import { sleep } from 'k6';
 
 sleep(3);
 
@@ -81,7 +81,7 @@ export default function () {
 
       }
     }
-    
+
     params500.push({
       key: `param500-${id}`,
       value: `${id * Math.random()}`,
@@ -96,7 +96,7 @@ export default function () {
         step: step
       })
     }
-    
+
   }
 
   // test logging single metric value

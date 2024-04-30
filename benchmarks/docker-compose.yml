@@ -93,18 +93,19 @@ services:
 
     logging_test_mlflow_sqlite:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/mlflowsqlitelogging.csv -e HOSTNAME=mlflow:5000
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/mlflow_sqlite_logging.csv -e HOSTNAME=mlflow:5000
       working_dir: /src
       volumes:
         - .:/src
       networks:
         - mlflow_network
       depends_on:
-        - mlflow
+        mlflow:
+          condition: service_healthy
 
     logging_test_mlflow_postgres:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/mlflowpostgreslogging.csv -e HOSTNAME=mlflowpostgres:5000
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/mlflow_postgres_logging.csv -e HOSTNAME=mlflowpostgres:5000
       working_dir: /src
       volumes:
         - .:/src
@@ -116,7 +117,7 @@ services:
 
     logging_test_fasttrack_sqlite:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/fasttracksqlitelogging.csv -e HOSTNAME=fasttrack:5000
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/fasttrack_sqlite_logging.csv -e HOSTNAME=fasttrack:5000
       working_dir: /src
       volumes:
         - .:/src
@@ -125,9 +126,9 @@ services:
       depends_on:
         - fasttrack
 
-    throughput_test_fasttrack_postgres:
+    logging_test_fasttrack_postgres:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/fasttrackpostgreslogging.csv -e HOSTNAME=fasttrackpostgres:5000
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/fasttrack_postgres_logging.csv -e HOSTNAME=fasttrackpostgres:5000
       working_dir: /src
       volumes:
         - .:/src
@@ -138,7 +139,7 @@ services:
 
     retrieval_test_mlflow_sqlite:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/mlflowsqliteretrieval.csv -e HOSTNAME=mlflow:5000
+      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/mlflow_sqlite_retrieval.csv -e HOSTNAME=mlflow:5000
       working_dir: /src
       volumes:
         - .:/src
@@ -150,18 +151,19 @@ services:
 
     retrieval_test_mlflow_postgres:
       image: grafana/k6:latest
-      command: run -u 20 -i 100 k6RetrievalPerfScript.js --out csv=benchmark_outputs/mlflowpostgresretrieval.csv -e HOSTNAME=mlflowpostgres:5000
+      command: run -u 20 -i 100 k6RetrievalPerfScript.js --out csv=benchmark_outputs/mlflow_postgres_retrieval.csv -e HOSTNAME=mlflowpostgres:5000
       working_dir: /src
       volumes:
         - .:/src
       networks:
         - mlflow_network
       depends_on:
-        - mlflowpostgres
+        mlflowpostgres:
+          condition: service_healthy
 
     retrieval_test_fasttrack_postgres:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/fasttrackpostgresretrieval.csv -e HOSTNAME=fasttrackpostgres:5000
+      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/fasttrack_postgres_retrieval.csv -e HOSTNAME=fasttrackpostgres:5000
       working_dir: /src
       volumes:
         - .:/src
@@ -172,7 +174,7 @@ services:
 
     retrieval_test_fasttrack_sqlite:
       image: grafana/k6:latest
-      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/fasttracksqliteretrieval.csv -e HOSTNAME=fasttrack:5000
+      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/fasttrack_sqlite_retrieval.csv -e HOSTNAME=fasttrack:5000
       working_dir: /src
       volumes:
         - .:/src
@@ -181,9 +183,10 @@ services:
       depends_on:
         - fasttrack
 
-    performance_benchmark_test:
-      image: opencadc/matplotlib
-      command: python generateReports.py
+
+    generate_report:
+      build:
+        dockerfile: ./Dockerfile
       working_dir: /src
       volumes:
         - .:/src

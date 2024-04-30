@@ -143,7 +143,6 @@ vscode ➜ /workspaces/fasttrackml (main) $ make run
 ```
 </details>
 
-
 ### License
 
 Copyright 2022-2023 G-Research

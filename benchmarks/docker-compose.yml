@@ -1,4 +1,3 @@
-version: '3'
 services:
     mlflowdb:
       image: postgres:latest
@@ -184,8 +183,10 @@ services:
       depends_on:
         - fasttrack
 
-    performance_benchmark_test:
-      build: .
+
+    generate_report:
+      build:
+        dockerfile: ./Dockerfile
       working_dir: /src
       volumes:
         - .:/src

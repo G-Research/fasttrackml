@@ -20,8 +20,8 @@ github.com/99designs/gqlgen v0.17.44/go.mod h1:UTCu3xpK2mLI5qcMNw+HKDiEL77it/1Xt
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DATA-DOG/go-sqlmock v1.5.2 h1:OcvFkGmslmlZibjAjaHm3L//6LiuBgolP7OputlJIzU=
 github.com/DATA-DOG/go-sqlmock v1.5.2/go.mod h1:88MAG/4G7SMwSE3CeA0ZKzrT5CiOU3OJ+JlNzwDqpNU=
-github.com/G-Research/fasttrackml-ui-aim v0.31705.35 h1:vKBK97AZAXWHRUS7zDW28OAPhbkNgtl5s48o2V3Xlzk=
-github.com/G-Research/fasttrackml-ui-aim v0.31705.35/go.mod h1:1ydj5zgJgklq4gf3jkKMh+OrBXRz/5hZtx+1aROuWaM=
+github.com/G-Research/fasttrackml-ui-aim v0.31705.36 h1:C+uYFL3eSXozIk25+Gik3dIKQzhfprQK3WIVdEguoeQ=
+github.com/G-Research/fasttrackml-ui-aim v0.31705.36/go.mod h1:1ydj5zgJgklq4gf3jkKMh+OrBXRz/5hZtx+1aROuWaM=
 github.com/G-Research/fasttrackml-ui-mlflow v0.20902.7 h1:GPNCKPkUBBx54JYCRX8r06WvBa7sep5ppm1VQiPYZKY=
 github.com/G-Research/fasttrackml-ui-mlflow v0.20902.7/go.mod h1:Bg/xSCP6KzFDVDBSfJfrGmXuU6H8lFtboy+bTiHK6c4=
 github.com/Khan/genqlient v0.7.0 h1:GZ1meyRnzcDTK48EjqB8t3bcfYvHArCUUvgOwpz1D4w=

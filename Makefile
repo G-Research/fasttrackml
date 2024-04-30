@@ -226,7 +226,7 @@ endif
 
 #
 # Build targets.
-# 
+#
 .PHONY: clean
 clean: ## clean build artifacts.
 	@echo ">>> Cleaning build artifacts."
@@ -265,7 +265,7 @@ ui-aim-sync: ## copy Aim UI files to docker volume.
 	@rsync -rvu --exclude node_modules --exclude .git ui/fasttrackml-ui-aim/ $(AIM_BUILD_LOCATION)
 
 .PHONY: ui-aim-start
-ui-aim-start: ui-aim-sync ## start the Aim UI for development.
+ui-aim-start: ui-aim-sync ## start the Aim UI for development. 
 	@echo ">>> Starting the Aim UI."
 	@cd $(AIM_BUILD_LOCATION)/src && npm ci --legacy-peer-deps && npm start
 

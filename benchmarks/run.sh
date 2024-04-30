@@ -6,13 +6,10 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Check if Docker Compose is installed
-if ! command -v docker compose &> /dev/null; then
-    echo "Docker Compose is not installed. Please install Docker Compose first."
-    exit 1
-fi
 
-# Create the benchmark outputs if they do not exist
+
+# Recreate the benchmark outputs
+rm -rf benchmark_outputs
 mkdir -p benchmark_outputs
 # Ensure the created folder is world writable
 chmod 777 benchmark_outputs
@@ -22,6 +19,7 @@ for app in "mlflow" "fasttrack"; do
     for db in "sqlite" "postgres"; do
 	for test in "logging" "retrieval"; do
 	    docker compose down
+        docker volume prune -af
 	    command="docker compose up ${test}_test_${app}_${db}"
 	    echo "Executing command: $command"
 	    eval $command
@@ -30,4 +28,6 @@ for app in "mlflow" "fasttrack"; do
 done
 
 # generate the report
-docker build -t fml-benchmark:generator . && docker run -d -v .:/work -w /work fml-benchmark:generator
+docker compose up generate_report
+docker compose down
+docker volume  prune -af

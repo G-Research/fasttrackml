@@ -17,7 +17,7 @@ import (
 func ConvertLogParamRequestToDBModel(runID string, req *request.LogParamRequest) *models.Param {
 	return &models.Param{
 		Key:        req.Key,
-		RunID:      req.RunID,
+		RunID:      runID,
 		ValueInt:   req.ValueInt,
 		ValueFloat: req.ValueFloat,
 		ValueStr:   req.ValueStr,

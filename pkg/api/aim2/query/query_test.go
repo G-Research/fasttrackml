@@ -142,6 +142,20 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5)`,
 			expectedVars: []interface{}{"my_metric", "{key1}", "value1", -1, models.LifecycleStageDeleted},
 		},
+		{
+			name:  "TestTagsSubscript",
+			query: `(run.tags["foo"] == "bar")`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" LEFT JOIN tags tags_0 ON runs.run_uuid = tags_0.run_uuid ` +
+				`AND tags_0.key = $1 WHERE "tags_0"."value" = $2 AND "runs"."lifecycle_stage" <> $3`,
+			expectedVars: []interface{}{"foo", "bar", models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestTagsAttribute",
+			query: `(run.tags.foo == "bar")`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" LEFT JOIN tags tags_0 ON runs.run_uuid = tags_0.run_uuid ` +
+				`AND tags_0.key = $1 WHERE "tags_0"."value" = $2 AND "runs"."lifecycle_stage" <> $3`,
+			expectedVars: []interface{}{"foo", "bar", models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {

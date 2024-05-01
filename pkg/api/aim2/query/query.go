@@ -747,8 +747,9 @@ func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {
 	}
 }
 
-func (pq *parsedQuery) tagsSubscriptSlicer(v any, table string) (any, error) {
-	switch v := v.(type) {
+// tagsSubscriptSlicer will join the tags table using the index key.
+func (pq *parsedQuery) tagsSubscriptSlicer(key any, table string) (any, error) {
+	switch v := key.(type) {
 	case string:
 		return pq.tagJoin(v, table)
 	default:
@@ -756,8 +757,9 @@ func (pq *parsedQuery) tagsSubscriptSlicer(v any, table string) (any, error) {
 	}
 }
 
-func (pq *parsedQuery) tagJoin(v string, table string) (any, error) {
-	joinKey := fmt.Sprintf("tags:%s", v)
+// tagJoin joins the tags table using provided key.
+func (pq *parsedQuery) tagJoin(key string, table string) (any, error) {
+	joinKey := fmt.Sprintf("tags:%s", key)
 	j, ok := pq.joins[joinKey]
 	if !ok {
 		alias := fmt.Sprintf("tags_%d", len(pq.joins))

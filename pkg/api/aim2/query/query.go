@@ -769,7 +769,7 @@ func (pq *parsedQuery) tagJoin(key string, table string) (any, error) {
 				"LEFT JOIN tags %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?",
 				alias, table, alias, alias,
 			),
-			args: []any{v},
+			args: []any{key},
 		}
 		pq.AddJoin(joinKey, j)
 	}

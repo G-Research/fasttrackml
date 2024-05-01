@@ -12,7 +12,7 @@ require (
 	dagger.io/dagger v0.11.2
 	dario.cat/mergo v1.0.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/G-Research/fasttrackml-ui-aim v0.31705.36
+	github.com/G-Research/fasttrackml-ui-aim v0.31705.40
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.7
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/apache/arrow/go/v14 v14.0.2
@@ -36,7 +36,7 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
 	github.com/zeebo/assert v1.3.0
-	google.golang.org/api v0.176.1
+	google.golang.org/api v0.177.0
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.25.10
@@ -54,7 +54,7 @@ require (
 )
 
 require (
-	cloud.google.com/go v0.112.1 // indirect
+	cloud.google.com/go v0.112.2 // indirect
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	cloud.google.com/go/iam v1.1.7 // indirect
 	github.com/99designs/gqlgen v0.17.44 // indirect
@@ -145,9 +145,9 @@ require (
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240314234333-6e1732d8331c // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240415180920-8c6c420018be // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240429193739-8cf5692501f6 // indirect
 	google.golang.org/grpc v1.63.2 // indirect
-	google.golang.org/protobuf v1.33.0 // indirect
+	google.golang.org/protobuf v1.34.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/datatypes v1.2.0

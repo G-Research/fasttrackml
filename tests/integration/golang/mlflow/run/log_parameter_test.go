@@ -96,25 +96,31 @@ func (s *LogParamTestSuite) Test_Ok() {
 
 func (s *LogParamTestSuite) Test_Error() {
 	tests := []struct {
+		key      string
 		name     string
 		runID    string
-		key      string
 		valueStr *string
-		errorMsg string
+		error    *api.ErrorResponse
 	}{
 		{
 			name:     "TestMissingParamKey",
 			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			key:      "",
 			valueStr: common.GetPointer("value1"),
-			errorMsg: "Missing value for required parameter 'key'",
+			error: &api.ErrorResponse{
+				Message:    "Missing value for required parameter 'key'",
+				StatusCode: http.StatusBadRequest,
+			},
 		},
 		{
 			name:     "TestConflictingParam",
 			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			key:      "key1",
 			valueStr: common.GetPointer("value2"),
-			errorMsg: "conflicting params found",
+			error: &api.ErrorResponse{
+				Message:    "unable to insert params for run",
+				StatusCode: http.StatusBadRequest,
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -153,7 +159,8 @@ func (s *LogParamTestSuite) Test_Error() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
 				),
 			)
-			s.Contains(resp.Message, tt.errorMsg)
+			s.Contains(resp.Message, tt.error.Message)
+			s.Equal(tt.error.StatusCode, resp.StatusCode)
 		})
 	}
 }

@@ -120,7 +120,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 	}
 	params := make(map[string]any, len(r.Params)+1)
 	for _, p := range r.Params {
-		params[p.Key] = p.Value
+		params[p.Key] = *p.ValueStr
 	}
 	tags := make(map[string]string, len(r.Tags))
 	for _, t := range r.Tags {
@@ -617,7 +617,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 
 		params := make(fiber.Map, len(r.Params)+1)
 		for _, p := range r.Params {
-			params[p.Key] = p.Value
+			params[p.Key] = *p.ValueStr
 		}
 		tags := make(map[string]string, len(r.Tags))
 		for _, t := range r.Tags {

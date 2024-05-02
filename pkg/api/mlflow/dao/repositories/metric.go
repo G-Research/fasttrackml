@@ -162,7 +162,7 @@ func (r MetricRepository) CreateBatch(
 		if err := r.GetDB().Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "run_uuid"}, {Name: "key"}, {Name: "context_id"}},
 			UpdateAll: true,
-		}).Create(&updatedLatestMetrics).Error; err != nil {
+		}).CreateInBatches(&updatedLatestMetrics, batchSize).Error; err != nil {
 			return eris.Wrapf(err, "error updating latest metrics for run: %s", run.ID)
 		}
 	}

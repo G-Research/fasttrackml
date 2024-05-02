@@ -360,11 +360,11 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 			request: &request.LogBatchRequest{
 				RunID: run.ID,
 				Metrics: func() []request.MetricPartialRequest {
-					metrics := make([]request.MetricPartialRequest, 100*1000)
-					for k := 0; k < 100; k++ {
+					metrics := make([]request.MetricPartialRequest, 10000*10)
+					for k := 0; k < 10000; k++ {
 						key := fmt.Sprintf("many%d", k)
-						for i := 0; i < 1000; i++ {
-							metrics[k*1000+i] = request.MetricPartialRequest{
+						for i := 0; i < 10; i++ {
+							metrics[k*10+i] = request.MetricPartialRequest{
 								Key:       key,
 								Value:     float64(i) + 0.1,
 								Timestamp: 1687325991,
@@ -382,7 +382,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				metrics := make(map[string]int64, 100)
 				for k := 0; k < 100; k++ {
 					key := fmt.Sprintf("many%d", k)
-					metrics[key] = 1000
+					metrics[key] = 10
 				}
 				return metrics
 			}(),

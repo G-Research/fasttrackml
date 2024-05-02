@@ -10,11 +10,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -202,24 +203,26 @@ func (s *RunFlowTestSuite) testRunFlow(
 ) {
 	// test `PUT /runs/:id` endpoint.
 	s.updateRun(namespace1Code, &request.UpdateRunRequest{
+		ID:    run1.ID,
 		RunID: common.GetPointer(run1.ID),
 		Name:  common.GetPointer("TestRun1Updated"),
 	})
 
 	s.updateRun(namespace2Code, &request.UpdateRunRequest{
+		ID:    run2.ID,
 		RunID: common.GetPointer(run2.ID),
 		Name:  common.GetPointer("TestRun2Updated"),
 	})
 
 	// test `GET /runs/:id/info` endpoint.
 	// check that runs were actually updated.
-	s.getRunAndCompare(namespace1Code, run1.ID, &response.GetRunInfo{
-		Props: response.GetRunInfoProps{
+	s.getRunAndCompare(namespace1Code, run1.ID, &response.GetRunInfoResponse{
+		Props: response.GetRunInfoPropsPartial{
 			Name: "TestRun1Updated",
 		},
 	})
-	s.getRunAndCompare(namespace2Code, run2.ID, &response.GetRunInfo{
-		Props: response.GetRunInfoProps{
+	s.getRunAndCompare(namespace2Code, run2.ID, &response.GetRunInfoResponse{
+		Props: response.GetRunInfoPropsPartial{
 			Name: "TestRun2Updated",
 		},
 	})
@@ -268,16 +271,16 @@ func (s *RunFlowTestSuite) testRunFlow(
 	s.getRunMetricsAndCompare(
 		namespace1Code,
 		run1.ID,
-		&request.GetRunMetrics{
+		&request.GetRunMetricsRequest{
 			{
 				Name: "key1",
 			},
 		},
-		response.GetRunMetrics{
-			response.RunMetrics{
+		[]response.GetRunMetricsResponse{
+			{
 				Name:    "key1",
-				Values:  []float64{1111.1},
-				Iters:   []int64{1},
+				Values:  []*float64{common.GetPointer(1111.1)},
+				Iters:   []int{1},
 				Context: []byte(`{}`),
 			},
 		},
@@ -285,16 +288,16 @@ func (s *RunFlowTestSuite) testRunFlow(
 	s.getRunMetricsAndCompare(
 		namespace2Code,
 		run2.ID,
-		&request.GetRunMetrics{
+		&request.GetRunMetricsRequest{
 			{
 				Name: "key2",
 			},
 		},
-		response.GetRunMetrics{
-			response.RunMetrics{
+		[]response.GetRunMetricsResponse{
+			{
 				Name:    "key2",
-				Values:  []float64{2222.2},
-				Iters:   []int64{2},
+				Values:  []*float64{common.GetPointer(2222.2)},
+				Iters:   []int{2},
 				Context: []byte(`{}`),
 			},
 		},
@@ -303,16 +306,16 @@ func (s *RunFlowTestSuite) testRunFlow(
 	// test `POST /runs/archive-batch` endpoint.
 	// check that run has been actually archived.
 	s.archiveRunsBatch(namespace1Code, []string{run1.ID}, true)
-	s.getRunAndCompare(namespace1Code, run1.ID, &response.GetRunInfo{
-		Props: response.GetRunInfoProps{
+	s.getRunAndCompare(namespace1Code, run1.ID, &response.GetRunInfoResponse{
+		Props: response.GetRunInfoPropsPartial{
 			Name:     "TestRun1Updated",
 			Archived: true,
 		},
 	})
 
 	s.archiveRunsBatch(namespace2Code, []string{run2.ID}, true)
-	s.getRunAndCompare(namespace2Code, run2.ID, &response.GetRunInfo{
-		Props: response.GetRunInfoProps{
+	s.getRunAndCompare(namespace2Code, run2.ID, &response.GetRunInfoResponse{
+		Props: response.GetRunInfoPropsPartial{
 			Name:     "TestRun2Updated",
 			Archived: true,
 		},
@@ -321,16 +324,16 @@ func (s *RunFlowTestSuite) testRunFlow(
 	// test `POST /runs/archive-batch` endpoint.
 	// when we call it second time, run has to be unarchived.
 	s.archiveRunsBatch(namespace1Code, []string{run1.ID}, false)
-	s.getRunAndCompare(namespace1Code, run1.ID, &response.GetRunInfo{
-		Props: response.GetRunInfoProps{
+	s.getRunAndCompare(namespace1Code, run1.ID, &response.GetRunInfoResponse{
+		Props: response.GetRunInfoPropsPartial{
 			Name:     "TestRun1Updated",
 			Archived: false,
 		},
 	})
 
 	s.archiveRunsBatch(namespace2Code, []string{run2.ID}, false)
-	s.getRunAndCompare(namespace2Code, run2.ID, &response.GetRunInfo{
-		Props: response.GetRunInfoProps{
+	s.getRunAndCompare(namespace2Code, run2.ID, &response.GetRunInfoResponse{
+		Props: response.GetRunInfoPropsPartial{
 			Name:     "TestRun2Updated",
 			Archived: false,
 		},
@@ -339,7 +342,7 @@ func (s *RunFlowTestSuite) testRunFlow(
 	// test `DELETE /runs/:id` endpoint.
 	// check that run has been actually deleted.
 	s.deleteRun(namespace1Code, run1.ID)
-	var resp response.Error
+	var resp api.ErrorResponse
 	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace1Code,
@@ -349,7 +352,8 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run1.ID,
 		),
 	)
-	s.Regexp("(Not Found|not found)", resp.Message)
+	s.Equal("run 'id1' not found", resp.Message)
+	s.Equal(http.StatusBadRequest, resp.StatusCode)
 
 	s.deleteRun(namespace2Code, run2.ID)
 	s.Require().Nil(
@@ -361,7 +365,8 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run1.ID,
 		),
 	)
-	s.Regexp("(Not Found|not found)", resp.Message)
+	s.Equal("run 'id1' not found", resp.Message)
+	s.Equal(http.StatusBadRequest, resp.StatusCode)
 
 	// test `DELETE /runs/delete-batch` endpoint.
 	// recreate deleted runs.
@@ -379,8 +384,8 @@ func (s *RunFlowTestSuite) testRunFlow(
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
-	s.getRunAndCompare(namespace1Code, run3.ID, &response.GetRunInfo{
-		Props: response.GetRunInfoProps{
+	s.getRunAndCompare(namespace1Code, run3.ID, &response.GetRunInfoResponse{
+		Props: response.GetRunInfoPropsPartial{
 			Name:     "TestRun3",
 			Archived: false,
 		},
@@ -395,7 +400,8 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run3.ID,
 		),
 	)
-	s.Regexp("(Not Found|not found)", resp.Message)
+	s.Equal("run 'id3' not found", resp.Message)
+	s.Equal(http.StatusBadRequest, resp.StatusCode)
 
 	run4, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:             "id4",
@@ -408,8 +414,8 @@ func (s *RunFlowTestSuite) testRunFlow(
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
-	s.getRunAndCompare(namespace2Code, run4.ID, &response.GetRunInfo{
-		Props: response.GetRunInfoProps{
+	s.getRunAndCompare(namespace2Code, run4.ID, &response.GetRunInfoResponse{
+		Props: response.GetRunInfoPropsPartial{
 			Name:     "TestRun4",
 			Archived: false,
 		},
@@ -424,7 +430,8 @@ func (s *RunFlowTestSuite) testRunFlow(
 			"/runs/%s/info", run4.ID,
 		),
 	)
-	s.Regexp("(Not Found|not found)", resp.Message)
+	s.Equal("run 'id4' not found", resp.Message)
+	s.Equal(http.StatusBadRequest, resp.StatusCode)
 }
 
 func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunRequest) {
@@ -442,9 +449,9 @@ func (s *RunFlowTestSuite) updateRun(namespace string, req *request.UpdateRunReq
 }
 
 func (s *RunFlowTestSuite) getRunAndCompare(
-	namespace string, runID string, expectedResponse *response.GetRunInfo,
+	namespace string, runID string, expectedResponse *response.GetRunInfoResponse,
 ) {
-	var resp response.GetRunInfo
+	var resp response.GetRunInfoResponse
 	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace,
@@ -529,9 +536,9 @@ func (s *RunFlowTestSuite) getActiveRunsAndCompare(namespace string, expectedRun
 }
 
 func (s *RunFlowTestSuite) getRunMetricsAndCompare(
-	namespace, runID string, request *request.GetRunMetrics, expectedMetrics response.GetRunMetrics,
+	namespace, runID string, request *request.GetRunMetricsRequest, expectedMetrics []response.GetRunMetricsResponse,
 ) {
-	var resp response.GetRunMetrics
+	var resp []response.GetRunMetricsResponse
 	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodPost,

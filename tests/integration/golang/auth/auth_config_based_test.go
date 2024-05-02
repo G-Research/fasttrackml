@@ -11,7 +11,7 @@ import (
 	"github.com/zeebo/assert"
 	"gopkg.in/yaml.v3"
 
-	aimResponse "github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	aimResponse "github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowResponse "github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"

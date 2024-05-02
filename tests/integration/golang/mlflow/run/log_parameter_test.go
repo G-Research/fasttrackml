@@ -90,19 +90,18 @@ func (s *LogParamTestSuite) Test_Error() {
 		Key:   "key1",
 		Value: "value1",
 	}
-	resp := api.ErrorResponse{}
+
+	client := s.MlflowClient().WithMethod(
+		http.MethodPost,
+	).WithRequest(
+		req,
+	)
 	s.Require().Nil(
-		s.MlflowClient().WithMethod(
-			http.MethodPost,
-		).WithRequest(
-			req,
-		).WithResponse(
-			&resp,
-		).DoRequest(
+		client.DoRequest(
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
 		),
 	)
-	s.Empty(resp)
+	s.Equal(http.StatusOK, client.GetStatusCode())
 
 	// error conditions
 
@@ -111,6 +110,7 @@ func (s *LogParamTestSuite) Test_Error() {
 		Key:   "key1",
 		Value: "value1",
 	}
+	resp := api.ErrorResponse{}
 	s.Require().Nil(
 		s.MlflowClient().WithMethod(
 			http.MethodPost,

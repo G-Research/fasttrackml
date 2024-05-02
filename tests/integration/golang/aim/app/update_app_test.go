@@ -9,8 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -33,11 +34,12 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 
 	tests := []struct {
 		name        string
-		requestBody request.UpdateApp
+		requestBody request.UpdateAppRequest
 	}{
 		{
 			name: "UpdateApplication",
-			requestBody: request.UpdateApp{
+			requestBody: request.UpdateAppRequest{
+				ID:   app.ID,
 				Type: "app-type",
 				State: request.AppState{
 					"app-state-key": "new-app-state-value",
@@ -48,17 +50,6 @@ func (s *UpdateAppTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			var resp response.App
-			s.Require().Nil(
-				s.AIMClient().WithMethod(
-					http.MethodPut,
-				).WithRequest(
-					tt.requestBody,
-				).WithResponse(
-					&resp,
-				).DoRequest(
-					"/apps/%s", app.ID,
-				),
-			)
 			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPut,
@@ -107,7 +98,7 @@ func (s *UpdateAppTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var resp response.Error
+			var resp api.ErrorResponse
 			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPut,

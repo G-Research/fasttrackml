@@ -11,7 +11,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 )
 
 type QueryTestSuite struct {
@@ -123,22 +123,6 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
 		{
-			name:          "TestMetricContext",
-			query:         `metric.context.key1 == 'value1'`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE "contexts"."json"#>>$1 = $2 AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextNegative",
-			query:         `metric.context.key1 != 'value1'`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE "contexts"."json"#>>$1 <> $2 AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"{key1}", "value1", models.LifecycleStageDeleted},
-		},
-		{
 			name:  "TestMetricContextSliceTuple",
 			query: `run.metrics["my_metric", {"key1": "value1"}].last < -1`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
@@ -157,75 +141,6 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`WHERE "contexts_1"."json"#>>$2 = $3 ` +
 				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5)`,
 			expectedVars: []interface{}{"my_metric", "{key1}", "value1", -1, models.LifecycleStageDeleted},
-		},
-		{
-			name:  "TestMetricCompound",
-			query: `run.metrics["my_metric"].last < -1 and metric.context.key1 == "value1"`,
-			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE ("metrics_0"."value" < $2 AND "contexts"."json"#>>$3 = $4) ` +
-				`AND "runs"."lifecycle_stage" <> $5`,
-			expectedVars: []interface{}{"my_metric", -1, "{key1}", "value1", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextArray",
-			query:         `metric.context.key1 == [1,2,3]`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE "contexts"."json"#>>$1 = '[1, 2, 3]' AND "runs"."lifecycle_stage" <> $2`,
-			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextObject",
-			query:         `metric.context.key1 == {"subkey": "val"}`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE "contexts"."json"#>>$1 = '{"subkey": "val"}' AND "runs"."lifecycle_stage" <> $2`,
-			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextObject2",
-			query:         `metric.context.key1 == {"subkey": "val", "subkey2": "val"}`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE "contexts"."json"#>>$1 = '{"subkey": "val", "subkey2": "val"}' AND "runs"."lifecycle_stage" <> $2`,
-			expectedVars: []interface{}{"{key1}", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextIn",
-			query:         `"val1" in metric.context.key1`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE "contexts"."json"#>>$1 LIKE $2 ` +
-				`AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"{key1}", "%val1%", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextNotIn",
-			query:         `"val1" not in metric.context.key1`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE "contexts"."json"#>>$1 NOT LIKE $2 ` +
-				`AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"{key1}", "%val1%", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextStartsWith",
-			query:         `metric.context.key1.startswith("va")`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE "contexts"."json"#>>$1 LIKE $2 ` +
-				`AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"{key1}", "va%", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextEndsWith",
-			query:         `metric.context.key1.endswith("va")`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE "contexts"."json"#>>$1 LIKE $2 ` +
-				`AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"{key1}", "%va", models.LifecycleStageDeleted},
 		},
 	}
 
@@ -351,23 +266,6 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 			expectedVars: []interface{}{"my_metric", -1.0, models.LifecycleStageDeleted},
 		},
 		{
-			name:          "TestMetricContext",
-			query:         `metric.context.key1 == 'value1'`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-
-				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 = $2 AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"$.key1", "value1", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextNegative",
-			query:         `metric.context.key1 != 'value1'`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 <> $2 AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"$.key1", "value1", models.LifecycleStageDeleted},
-		},
-		{
 			name:  "TestMetricKeySlice",
 			query: `run.metrics["key1"].last < -1`,
 			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
@@ -394,77 +292,6 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				`WHERE IFNULL("contexts_1"."json", JSON('{}'))->>$2 = $3 ` +
 				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5)`,
 			expectedVars: []interface{}{"my_metric", "$.key1", "value1", -1, models.LifecycleStageDeleted},
-		},
-		{
-			name:  "TestMetricCompound",
-			query: `run.metrics["my_metric"].last < -1 and metric.context.key1 == "value1"`,
-			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
-				`LEFT JOIN latest_metrics metrics_0 ON runs.run_uuid = metrics_0.run_uuid AND metrics_0.key = $1 ` +
-				`WHERE ("metrics_0"."value" < $2 AND IFNULL("contexts"."json", JSON('{}'))->>$3 = $4) ` +
-				`AND "runs"."lifecycle_stage" <> $5`,
-			expectedVars: []interface{}{"my_metric", -1, "$.key1", "value1", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextArray",
-			query:         `metric.context.key1 == [1,2,3]`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 = '[1,2,3]' AND "runs"."lifecycle_stage" <> $2`,
-			expectedVars: []interface{}{"$.key1", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextObject",
-			query:         `metric.context.key1 == {"subkey": "val"}`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 = '{"subkey":"val"}' ` +
-				`AND "runs"."lifecycle_stage" <> $2`,
-			expectedVars: []interface{}{"$.key1", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextObject2",
-			query:         `metric.context.key1 == {"subkey": "val", "subkey2": "val"}`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 = '{"subkey":"val","subkey2":"val"}' ` +
-				`AND "runs"."lifecycle_stage" <> $2`,
-			expectedVars: []interface{}{"$.key1", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextIn",
-			query:         `"val1" in metric.context.key1`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 LIKE $2 ` +
-				`AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"$.key1", "%val1%", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextNotIn",
-			query:         `"val1" not in metric.context.key1`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 NOT LIKE $2 ` +
-				`AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"$.key1", "%val1%", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextStartsWith",
-			query:         `metric.context.key1.startswith("va")`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 LIKE $2 ` +
-				`AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"$.key1", "va%", models.LifecycleStageDeleted},
-		},
-		{
-			name:          "TestMetricContextEndsWith",
-			query:         `metric.context.key1.endswith("va")`,
-			selectMetrics: true,
-			expectedSQL: `SELECT ID FROM "metrics" ` +
-				`WHERE IFNULL("contexts"."json", JSON('{}'))->>$1 LIKE $2 ` +
-				`AND "runs"."lifecycle_stage" <> $3`,
-			expectedVars: []interface{}{"$.key1", "%va", models.LifecycleStageDeleted},
 		},
 	}
 
@@ -508,11 +335,6 @@ func (s *QueryTestSuite) Test_Error() {
 		query         string
 		expectedError error
 	}{
-		{
-			name:          "TestMetricContextNested",
-			query:         `metric.context.parent.nested == 'value1'`,
-			expectedError: SyntaxError{},
-		},
 		{
 			name:          "TestMetricContextSubscriptTupleWrongOrder",
 			query:         `run.metrics[{"key1": "value1"}, "my_metric"].last < -1`,

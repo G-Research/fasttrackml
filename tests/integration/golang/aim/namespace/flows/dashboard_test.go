@@ -10,10 +10,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -74,14 +75,14 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 	namespace1Code, namespace2Code string,
 ) {
 	// create apps
-	app1ID := s.createApp(namespace1Code, &request.CreateApp{
+	app1ID := s.createApp(namespace1Code, &request.CreateAppRequest{
 		Type: "tf",
 		State: request.AppState{
 			"app-state-key": "app-state-value1",
 		},
 	})
 
-	app2ID := s.createApp(namespace2Code, &request.CreateApp{
+	app2ID := s.createApp(namespace2Code, &request.CreateAppRequest{
 		Type: "mpi",
 		State: request.AppState{
 			"app-state-key": "app-state-value2",
@@ -89,13 +90,13 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 	})
 
 	// create dashboards
-	dashboard1ID := s.createDashboard(namespace1Code, &request.CreateDashboard{
+	dashboard1ID := s.createDashboard(namespace1Code, &request.CreateDashboardRequest{
 		Name:        "dashboard1-name",
 		Description: "dashboard1-description",
 		AppID:       app1ID,
 	})
 
-	dashboard2ID := s.createDashboard(namespace2Code, &request.CreateDashboard{
+	dashboard2ID := s.createDashboard(namespace2Code, &request.CreateDashboardRequest{
 		Name:        "dashboard2-name",
 		Description: "dashboard2-description",
 		AppID:       app2ID,
@@ -119,7 +120,7 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 	s.deleteDashboardAndCompare(namespace2Code, dashboard2ID)
 
 	// IDs from other namespace cannot be fetched, updated, or deleted
-	errResp := response.Error{}
+	errResp := api.ErrorResponse{}
 	client := s.AIMClient()
 	s.Require().Nil(
 		client.WithMethod(
@@ -141,7 +142,8 @@ func (s *DashboardFlowTestSuite) testDashboardFlow(
 		).WithNamespace(
 			namespace2Code,
 		).WithRequest(
-			request.UpdateDashboard{
+			request.UpdateDashboardRequest{
+				ID:          dashboard1ID,
 				Name:        "new-dashboard-name",
 				Description: "new-dashboard-description",
 			},
@@ -198,7 +200,8 @@ func (s *DashboardFlowTestSuite) updateDashboardAndCompare(
 		).WithNamespace(
 			namespaceCode,
 		).WithRequest(
-			request.UpdateDashboard{
+			request.UpdateDashboardRequest{
+				ID:          dashboardID,
 				Name:        "new-dashboard-name",
 				Description: "new-dashboard-description",
 			},
@@ -249,7 +252,7 @@ func (s *DashboardFlowTestSuite) getDashboards(namespaceCode string) []response.
 	return resp
 }
 
-func (s *DashboardFlowTestSuite) createApp(namespace string, req *request.CreateApp) uuid.UUID {
+func (s *DashboardFlowTestSuite) createApp(namespace string, req *request.CreateAppRequest) uuid.UUID {
 	var resp response.App
 	s.Require().Nil(
 		s.AIMClient().WithMethod(
@@ -267,7 +270,7 @@ func (s *DashboardFlowTestSuite) createApp(namespace string, req *request.Create
 	return resp.ID
 }
 
-func (s *DashboardFlowTestSuite) createDashboard(namespace string, req *request.CreateDashboard) uuid.UUID {
+func (s *DashboardFlowTestSuite) createDashboard(namespace string, req *request.CreateDashboardRequest) uuid.UUID {
 	var resp response.Dashboard
 	s.Require().Nil(
 		s.AIMClient().WithMethod(

@@ -10,9 +10,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -110,13 +112,13 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	tests := []struct {
 		name             string
 		runID            string
-		request          request.GetRunMetrics
-		expectedResponse response.GetRunMetrics
+		request          request.GetRunMetricsRequest
+		expectedResponse []response.GetRunMetricsResponse
 	}{
 		{
 			name:  "GetOneRun",
 			runID: run.ID,
-			request: request.GetRunMetrics{
+			request: request.GetRunMetricsRequest{
 				{
 					Name: "key1",
 				},
@@ -124,29 +126,29 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					Name: "key2",
 				},
 			},
-			expectedResponse: response.GetRunMetrics{
-				response.RunMetrics{
+			expectedResponse: []response.GetRunMetricsResponse{
+				{
 					Name:    "key1",
-					Iters:   []int64{1},
-					Values:  []float64{123.1},
+					Iters:   []int{1},
+					Values:  []*float64{common.GetPointer(123.1)},
 					Context: json.RawMessage(`{"key1":"key1","value1":"value1"}`),
 				},
-				response.RunMetrics{
+				{
 					Name:    "key1",
-					Iters:   []int64{2},
-					Values:  []float64{123.2},
+					Iters:   []int{2},
+					Values:  []*float64{common.GetPointer(123.2)},
 					Context: json.RawMessage(`{"key2":"key2","value2":"value2"}`),
 				},
-				response.RunMetrics{
+				{
 					Name:    "key2",
-					Iters:   []int64{3},
-					Values:  []float64{124.1},
+					Iters:   []int{3},
+					Values:  []*float64{common.GetPointer(124.1)},
 					Context: json.RawMessage(`{"key3":"key3","value3":"value3"}`),
 				},
-				response.RunMetrics{
+				{
 					Name:    "key2",
-					Iters:   []int64{4},
-					Values:  []float64{124.2},
+					Iters:   []int{4},
+					Values:  []*float64{common.GetPointer(124.2)},
 					Context: json.RawMessage(`{"key4":"key4","value4":"value4"}`),
 				},
 			},
@@ -154,7 +156,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		{
 			name:  "GetOneRunWithContextCase1",
 			runID: run.ID,
-			request: request.GetRunMetrics{
+			request: request.GetRunMetricsRequest{
 				{
 					Name: "key1",
 					Context: map[string]string{
@@ -184,29 +186,29 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					},
 				},
 			},
-			expectedResponse: response.GetRunMetrics{
-				response.RunMetrics{
+			expectedResponse: []response.GetRunMetricsResponse{
+				{
 					Name:    "key1",
-					Iters:   []int64{1},
-					Values:  []float64{123.1},
+					Iters:   []int{1},
+					Values:  []*float64{common.GetPointer(123.1)},
 					Context: json.RawMessage(`{"key1":"key1","value1":"value1"}`),
 				},
-				response.RunMetrics{
+				{
 					Name:    "key1",
-					Iters:   []int64{2},
-					Values:  []float64{123.2},
+					Iters:   []int{2},
+					Values:  []*float64{common.GetPointer(123.2)},
 					Context: json.RawMessage(`{"key2":"key2","value2":"value2"}`),
 				},
-				response.RunMetrics{
+				{
 					Name:    "key2",
-					Iters:   []int64{3},
-					Values:  []float64{124.1},
+					Iters:   []int{3},
+					Values:  []*float64{common.GetPointer(124.1)},
 					Context: json.RawMessage(`{"key3":"key3","value3":"value3"}`),
 				},
-				response.RunMetrics{
+				{
 					Name:    "key2",
-					Iters:   []int64{4},
-					Values:  []float64{124.2},
+					Iters:   []int{4},
+					Values:  []*float64{common.GetPointer(124.2)},
 					Context: json.RawMessage(`{"key4":"key4","value4":"value4"}`),
 				},
 			},
@@ -214,7 +216,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 		{
 			name:  "GetOneRunWithContextCase2",
 			runID: run.ID,
-			request: request.GetRunMetrics{
+			request: request.GetRunMetricsRequest{
 				{
 					Name: "key1",
 					Context: map[string]string{
@@ -230,17 +232,17 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 					},
 				},
 			},
-			expectedResponse: response.GetRunMetrics{
-				response.RunMetrics{
+			expectedResponse: []response.GetRunMetricsResponse{
+				{
 					Name:    "key1",
-					Iters:   []int64{1},
-					Values:  []float64{123.1},
+					Iters:   []int{1},
+					Values:  []*float64{common.GetPointer(123.1)},
 					Context: json.RawMessage(`{"key1":"key1","value1":"value1"}`),
 				},
-				response.RunMetrics{
+				{
 					Name:    "key2",
-					Iters:   []int64{3},
-					Values:  []float64{124.1},
+					Iters:   []int{3},
+					Values:  []*float64{common.GetPointer(124.1)},
 					Context: json.RawMessage(`{"key3":"key3","value3":"value3"}`),
 				},
 			},
@@ -248,7 +250,7 @@ func (s *GetRunMetricsTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var resp response.GetRunMetrics
+			var resp []response.GetRunMetricsResponse
 			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPost,
@@ -269,21 +271,25 @@ func (s *GetRunMetricsTestSuite) Test_Error() {
 	tests := []struct {
 		name  string
 		runID string
-		error string
+		error *api.ErrorResponse
 	}{
 		{
 			name:  "GetNonexistentRun",
-			runID: uuid.NewString(),
-			error: `(Not Found|not found)`,
+			runID: "9facdfb7-d502-4172-9325-8df6f4dbcbc0",
+			error: &api.ErrorResponse{
+				Message:    "Not Found",
+				StatusCode: http.StatusNotFound,
+			},
 		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var resp response.Error
+			var resp api.ErrorResponse
 			s.Require().Nil(
 				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/metric/get-batch", tt.runID),
 			)
-			s.Regexp(tt.error, resp.Message)
+			s.Equal(tt.error.Message, resp.Message)
+			s.Equal(tt.error.StatusCode, resp.StatusCode)
 		})
 	}
 }

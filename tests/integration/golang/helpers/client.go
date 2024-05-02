@@ -14,6 +14,7 @@ import (
 	"github.com/hetiansu5/urlquery"
 	"github.com/rotisserie/eris"
 
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/server"
 )
 
@@ -212,6 +213,10 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 			defer resp.Body.Close()
 			if err := json.Unmarshal(body, c.response); err != nil {
 				return eris.Wrap(err, "error unmarshaling response data")
+			}
+			// if ErrorResponse object provided, then populate StatusCode also.
+			if _, ok := c.response.(*api.ErrorResponse); ok {
+				c.response.(*api.ErrorResponse).StatusCode = resp.StatusCode
 			}
 		case ResponseTypeBuffer:
 			buffer, ok := c.response.(io.Writer)

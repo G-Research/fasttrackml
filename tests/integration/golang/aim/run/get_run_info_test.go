@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -42,7 +42,7 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var resp response.GetRunInfo
+			var resp response.GetRunInfoResponse
 			s.Require().Nil(
 				s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID),
 			)
@@ -51,11 +51,11 @@ func (s *GetRunInfoTestSuite) Test_Ok() {
 			s.Equal(s.run.Experiment.Name, resp.Props.Experiment.Name)
 			s.Equal(float64(s.run.StartTime.Int64)/1000, resp.Props.CreationTime)
 			s.Equal(float64(s.run.EndTime.Int64)/1000, resp.Props.EndTime)
-			expectedTags := make(map[string]string, len(s.run.Tags))
+			expectedTags := make(map[string]any, len(s.run.Tags))
 			for _, tag := range s.run.Tags {
 				expectedTags[tag.Key] = tag.Value
 			}
-			s.Equal(expectedTags, resp.Params.Tags)
+			s.Equal(expectedTags, resp.Params["tags"])
 		})
 	}
 }
@@ -64,19 +64,20 @@ func (s *GetRunInfoTestSuite) Test_Error() {
 	tests := []struct {
 		name  string
 		runID string
-		error string
+		error *api.ErrorResponse
 	}{
 		{
 			name:  "GetNonexistentRun",
-			runID: uuid.NewString(),
-			error: `(Not Found|not found)`,
+			runID: "9facdfb7-d502-4172-9325-8df6f4dbcbc0",
+			error: api.NewBadRequestError("run '9facdfb7-d502-4172-9325-8df6f4dbcbc0' not found"),
 		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var resp response.Error
+			var resp api.ErrorResponse
 			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/runs/%s/info", tt.runID))
-			s.Regexp(tt.error, resp.Message)
+			s.Equal(tt.error.Message, resp.Message)
+			s.Equal(tt.error.StatusCode, resp.StatusCode)
 		})
 	}
 }

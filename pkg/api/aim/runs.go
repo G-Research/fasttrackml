@@ -560,10 +560,6 @@ func SearchMetrics(c *fiber.Ctx) error {
 		return err
 	}
 
-	if !pq.IsMetricSelected() {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, "No metrics are selected")
-	}
-
 	var totalRuns int64
 	if tx := database.DB.Model(&database.Run{}).Count(&totalRuns); tx.Error != nil {
 		return fmt.Errorf("error searching run metrics: %w", tx.Error)

@@ -17,15 +17,14 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
-	aim2API "github.com/G-Research/fasttrackml/pkg/api/aim2"
-	aim2Controller "github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
-	aimRepositories "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
-	aimAppService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/app"
-	aimDashboardService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/dashboard"
-	aimExperimentService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/experiment"
-	aimProjectService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/project"
-	aimRunService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/run"
-	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/services/tag"
+	aimController "github.com/G-Research/fasttrackml/pkg/api/aim/controller"
+	aimRepositories "github.com/G-Research/fasttrackml/pkg/api/aim/dao/repositories"
+	aimAppService "github.com/G-Research/fasttrackml/pkg/api/aim/services/app"
+	aimDashboardService "github.com/G-Research/fasttrackml/pkg/api/aim/services/dashboard"
+	aimExperimentService "github.com/G-Research/fasttrackml/pkg/api/aim/services/experiment"
+	aimProjectService "github.com/G-Research/fasttrackml/pkg/api/aim/services/project"
+	aimRunService "github.com/G-Research/fasttrackml/pkg/api/aim/services/run"
+	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim/services/tag"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
@@ -147,7 +146,7 @@ func createApp(
 			p := string(c.Request().URI().Path())
 			switch {
 			case strings.HasPrefix(p, "/aim"):
-				return aim2API.ErrorHandler(c, err)
+				return aimAPI.ErrorHandler(c, err)
 			case strings.HasPrefix(p, "/api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/mlflow/ajax-api/2.0/mlflow/"):
@@ -241,45 +240,38 @@ func createApp(
 		return c.SendString(version.Version)
 	})
 
-	if config.AimRevert {
-		// init original `aim` api routes.
-		log.Info("using original aim service")
-		router := app.Group("/aim/api/")
-		aimAPI.AddRoutes(router)
-	} else {
-		// init `aim` api refactored routes.
-		log.Info("using refactored aim service")
-		aim2API.NewRouter(
-			aim2Controller.NewController(
-				aimTagService.NewService(
-					aimRepositories.NewTagRepository(db.GormDB()),
-				),
-				aimAppService.NewService(
-					aimRepositories.NewAppRepository(db.GormDB()),
-				),
-				aimRunService.NewService(
-					aimRepositories.NewRunRepository(db.GormDB()),
-					aimRepositories.NewMetricRepository(db.GormDB()),
-				),
-				aimProjectService.NewService(
-					aimRepositories.NewTagRepository(db.GormDB()),
-					aimRepositories.NewRunRepository(db.GormDB()),
-					aimRepositories.NewParamRepository(db.GormDB()),
-					aimRepositories.NewMetricRepository(db.GormDB()),
-					aimRepositories.NewExperimentRepository(db.GormDB()),
-					config.LiveUpdatesEnabled,
-				),
-				aimDashboardService.NewService(
-					aimRepositories.NewDashboardRepository(db.GormDB()),
-					aimRepositories.NewAppRepository(db.GormDB()),
-				),
-				aimExperimentService.NewService(
-					aimRepositories.NewTagRepository(db.GormDB()),
-					aimRepositories.NewExperimentRepository(db.GormDB()),
-				),
+	// init `aim` api refactored routes.
+	log.Info("using refactored aim service")
+	aimAPI.NewRouter(
+		aimController.NewController(
+			aimTagService.NewService(
+				aimRepositories.NewTagRepository(db.GormDB()),
 			),
-		).Init(app)
-	}
+			aimAppService.NewService(
+				aimRepositories.NewAppRepository(db.GormDB()),
+			),
+			aimRunService.NewService(
+				aimRepositories.NewRunRepository(db.GormDB()),
+				aimRepositories.NewMetricRepository(db.GormDB()),
+			),
+			aimProjectService.NewService(
+				aimRepositories.NewTagRepository(db.GormDB()),
+				aimRepositories.NewRunRepository(db.GormDB()),
+				aimRepositories.NewParamRepository(db.GormDB()),
+				aimRepositories.NewMetricRepository(db.GormDB()),
+				aimRepositories.NewExperimentRepository(db.GormDB()),
+				config.LiveUpdatesEnabled,
+			),
+			aimDashboardService.NewService(
+				aimRepositories.NewDashboardRepository(db.GormDB()),
+				aimRepositories.NewAppRepository(db.GormDB()),
+			),
+			aimExperimentService.NewService(
+				aimRepositories.NewTagRepository(db.GormDB()),
+				aimRepositories.NewExperimentRepository(db.GormDB()),
+			),
+		),
+	).Init(app)
 
 	// init `mlflow` api and ui routes.
 	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.

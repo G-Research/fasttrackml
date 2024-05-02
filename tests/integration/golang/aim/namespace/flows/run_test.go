@@ -228,7 +228,9 @@ func (s *RunFlowTestSuite) testRunFlow(
 	})
 
 	// test `GET /runs/search/run` endpoint.
-	s.searchRunsAndCompare(namespace1Code, request.SearchRunsRequest{}, []models.Run{
+	s.searchRunsAndCompare(namespace1Code, request.SearchRunsRequest{
+		ExperimentNames: []string{experiment1.Name},
+	}, []models.Run{
 		{
 			ID:             run1.ID,
 			Name:           "TestRun1Updated",
@@ -237,7 +239,9 @@ func (s *RunFlowTestSuite) testRunFlow(
 			ExperimentID:   *experiment1.ID,
 		},
 	})
-	s.searchRunsAndCompare(namespace2Code, request.SearchRunsRequest{}, []models.Run{
+	s.searchRunsAndCompare(namespace2Code, request.SearchRunsRequest{
+		ExperimentNames: []string{experiment2.Name},
+	}, []models.Run{
 		{
 			ID:             run2.ID,
 			Name:           "TestRun2Updated",

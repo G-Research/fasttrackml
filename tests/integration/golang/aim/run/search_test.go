@@ -13,8 +13,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/exp/slices"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -108,9 +109,9 @@ func (s *SearchTestSuite) SetupTest() {
 	})
 	s.Require().Nil(err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-		Key:   "param1",
-		Value: "value1",
-		RunID: run1.ID,
+		Key:      "param1",
+		RunID:    run1.ID,
+		ValueStr: common.GetPointer("value1"),
 	})
 	s.Require().Nil(err)
 
@@ -157,9 +158,9 @@ func (s *SearchTestSuite) SetupTest() {
 	})
 	s.Require().Nil(err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-		Key:   "param2",
-		Value: "value2",
-		RunID: run2.ID,
+		Key:      "param2",
+		RunID:    run2.ID,
+		ValueStr: common.GetPointer("value2"),
 	})
 	s.Require().Nil(err)
 
@@ -206,9 +207,9 @@ func (s *SearchTestSuite) SetupTest() {
 	})
 	s.Require().Nil(err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-		Key:   "param3",
-		Value: "value3",
-		RunID: run3.ID,
+		Key:      "param3",
+		RunID:    run3.ID,
+		ValueStr: common.GetPointer("value3"),
 	})
 	s.Require().Nil(err)
 
@@ -255,9 +256,9 @@ func (s *SearchTestSuite) SetupTest() {
 	})
 	s.Require().Nil(err)
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-		Key:   "param4",
-		Value: "value4",
-		RunID: run4.ID,
+		Key:      "param4",
+		RunID:    run4.ID,
+		ValueStr: common.GetPointer("value4"),
 	})
 	s.Require().Nil(err)
 }

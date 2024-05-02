@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/rotisserie/eris"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -86,12 +87,21 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 // If the key already exists for the run but with a different value, it is a conflict. Conflicts are returned.
 func findConflictingParams(tx *gorm.DB, params []models.Param) ([]paramConflict, error) {
 	var conflicts []paramConflict
-	placeholders, values := makeParamConflictPlaceholdersAndValues(params)
-	sql := fmt.Sprintf(`WITH new(key, value, run_uuid) AS (VALUES %s)
-		     SELECT current.run_uuid, current.key, current.value as old_value, new.value as new_value
+	placeholders, values := makeParamConflictPlaceholdersAndValues(params, tx.Dialector.Name())
+	nullSafeEquality := "IS NOT"
+	if (tx.Dialector.Name() == postgres.Dialector{}.Name()) {
+		nullSafeEquality = "IS DISTINCT FROM"
+	}
+	sql := fmt.Sprintf(`WITH new(key, run_uuid, value_int, value_float, value_str) AS (%s)
+		     SELECT current.run_uuid, current.key, CONCAT(current.value_int, 
+			   current.value_float, current.value_str) as old_value, CONCAT(new.value_int,
+			   new.value_float, new.value_str) as new_value
 		     FROM params AS current
 		     INNER JOIN new USING (run_uuid, key)
-		     WHERE new.value != current.value`, placeholders)
+		     WHERE (new.value_int %s current.value_int)
+			 OR (new.value_float %s current.value_float)
+			 OR (new.value_str %s current.value_str)`,
+		placeholders, nullSafeEquality, nullSafeEquality, nullSafeEquality)
 	if err := tx.Raw(sql, values...).
 		Find(&conflicts).Error; err != nil {
 		return nil, eris.Wrap(err, "error fetching params from db")

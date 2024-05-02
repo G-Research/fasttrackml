@@ -22,34 +22,5 @@
     "isort.args": [
         "--profile",
         "black"
-    ],
-    "cSpell.words": [
-        "Aimhub",
-        "Codespace",
-        "Codespaces",
-        "dataframe",
-        "dataframes",
-        "delaybetween",
-        "devcontainer",
-        "extrac",
-        "fasttrack",
-        "fasttrackml",
-        "figsize",
-        "gresearch",
-        "hspace",
-        "isin",
-        "mflow",
-        "Minio",
-        "mlflow",
-        "mlfow",
-        "ncols",
-        "nrows",
-        "numchecks",
-        "Quickstart",
-        "randint",
-        "workdir",
-        "wspace",
-        "xlabel",
-        "ylabel"
     ]
 }

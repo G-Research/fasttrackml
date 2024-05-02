@@ -27,7 +27,7 @@ To run the performance benchmark ensure you have Docker and Docker Compose insta
 ## 3. Methodology
 For the implementation of the performance benchmarking we used [K6](https://k6.io) which is a developer load testing tool. We then used docker containers of 4 different applications, 2 variations of MLflow (sqlite and postgresql), and 2 variations of FastTrackML (sqlite and postgresql).
 
-For FastTrackML we used the standard container image provided by G-research from docker hub, while for MLflow we used a python3.8 image running on linux and started the mflow server by installing the mlflow python package on the image.
+For FastTrackML we used the standard container image provided by G-research from docker hub, while for MLflow we used the `python:3.8` image running on linux and started the mflow server by installing the mlflow python package on the image.
 
 We used the features provided natively by k6 to run the tests concurrently and iteratively. For each test on the applications we ran them using 20 virtual users concurrently running 100 iterations on each tested endpoint. This sums up to 2000 tests on each tested endpoint.
 
@@ -43,22 +43,27 @@ FastTrackML benchmark suite allows you to test the performance of the FastTrackM
 - MLflow with sqlite
 - MLflow with postgres
 
-We then perform 2 categories of API benchmark tests on them using the K6 benchmarking tool. The categories of tests are:
+We then performed 2 categories of API benchmark tests on them using the K6 benchmarking tool. The categories of tests are:
 - Logging (throughput)
 - Retrieval
 
 You run tests on any of these platforms in isolation for example:
 
-1. To test FastTrackML postgres in isolation:
+ To test FastTrackML postgres in isolation:
 
 ```bash
-docker-compose up logging_test_fasttrack_postgres
+docker compose up logging_test_fasttrack_postgres
 ```
 
-1. To test performance of MLflow sqlite:
+ To test performance of MLflow sqlite:
 
 ```bash
-docker-compose up retrieval_test_mlflow_sqlite
+docker compose up retrieval_test_mlflow_sqlite
+```
+
+To run all test and generate report, run:
+```bash
+./run.sh
 ```
 
 *Note* These tests in isolation will generate csv report files, but will not generate report images. To generate a report image you will have to run all the tests on all 4 instances then use the `generateReports.py` script to generate the `performanceReport.png` image

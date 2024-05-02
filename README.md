@@ -67,7 +67,7 @@ with mlflow.start_run():
 
 FastTrackML can be built and tested within a
 [dev container](https://containers.dev). This is the recommended way as the
-whole environment comes pre-configured with all the dependencies (Go SDK,
+whole environment comes preconfigured with all the dependencies (Go SDK,
 Postgres, Minio, etc.) and settings (formatting, linting, extensions, etc.) to
 get started instantly.
 
@@ -142,7 +142,6 @@ vscode ➜ /workspaces/fasttrackml (main) $ emacs .
 vscode ➜ /workspaces/fasttrackml (main) $ make run
 ```
 </details>
-
 
 ### License
 

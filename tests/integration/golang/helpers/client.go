@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/hetiansu5/urlquery"

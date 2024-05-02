@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	aimResponse "github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	aimResponse "github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	mlflowResponse "github.com/G-Research/fasttrackml/pkg/api/mlflow/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"

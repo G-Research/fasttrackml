@@ -88,8 +88,6 @@ func init() {
 	ServerCmd.Flags().MarkHidden("database-reset")
 	ServerCmd.Flags().Bool("dev-mode", false, "Development mode - enable CORS")
 	ServerCmd.Flags().MarkHidden("dev-mode")
-	ServerCmd.Flags().Bool("run-original-aim-service", false, "Run original aim service at /aim/api")
-	ServerCmd.Flags().MarkHidden("run-original-aim-service")
 	viper.BindEnv("auth-username", "MLFLOW_TRACKING_USERNAME")
 	viper.BindEnv("auth-password", "MLFLOW_TRACKING_PASSWORD")
 }

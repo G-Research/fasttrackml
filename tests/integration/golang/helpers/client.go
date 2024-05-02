@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -212,6 +213,11 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 			defer resp.Body.Close()
 			if err := json.Unmarshal(body, c.response); err != nil {
 				return eris.Wrap(err, "error unmarshaling response data")
+			}
+			// if provided response object is a api.ErrorResponse,
+			// then store actual StatusCode for further check.
+			if errorResponse, ok := c.response.(*api.ErrorResponse); ok {
+				errorResponse.StatusCode = resp.StatusCode
 			}
 		case ResponseTypeBuffer:
 			buffer, ok := c.response.(io.Writer)

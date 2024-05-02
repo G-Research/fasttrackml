@@ -91,8 +91,9 @@ func (s *LogParamTestSuite) Test_Error() {
 		Value: "value1",
 	}
 	resp := api.ErrorResponse{}
+	client := s.MlflowClient()
 	s.Require().Nil(
-		s.MlflowClient().WithMethod(
+		client.WithMethod(
 			http.MethodPost,
 		).WithRequest(
 			req,
@@ -102,7 +103,7 @@ func (s *LogParamTestSuite) Test_Error() {
 			"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogParameterRoute,
 		),
 	)
-	s.Empty(resp)
+	s.Equal(http.StatusOK, client.GetStatusCode())
 
 	// error conditions
 

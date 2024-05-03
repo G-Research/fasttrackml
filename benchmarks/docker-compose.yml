@@ -1,0 +1,197 @@
+services:
+    mlflowdb:
+      image: postgres:latest
+      container_name: mlflowdb
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+        - POSTGRES_DB=mlflow_db
+      networks:
+        - mlflow_network
+      ports:
+        - 5555:5432
+      healthcheck:
+        test: ["CMD", "pg_isready", "-U", "postgres"]
+        interval: 5s
+        timeout: 5s
+
+    fasttrackdb:
+      image: postgres:latest
+      container_name: fasttrackdb
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+        - POSTGRES_DB=fasttrack_db
+      networks:
+        - fasttrack_network
+      ports:
+        - 5556:5432
+      healthcheck:
+        test: ["CMD", "pg_isready", "-U", "postgres"]
+        interval: 5s
+        timeout: 5s
+
+    mlflowpostgres:
+      image: python:3.8
+      command: bash -c "pip install mlflow psycopg2 && mlflow server --host 0.0.0.0  --backend-store-uri postgresql://postgres:postgres@mlflowdb:5432/mlflow_db --gunicorn-opts '--access-logfile -' "
+      ports:
+        - 6005:5000
+      depends_on:
+        mlflowdb:
+          condition: service_healthy
+      networks:
+        - mlflow_network
+
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+        interval: 2s
+        timeout: 5s
+        start_period: 5m
+
+    mlflow:
+      image: python:3.8
+      command: bash -c "pip install mlflow && mlflow server --host 0.0.0.0  --gunicorn-opts '--access-logfile -'"
+      ports:
+        - 6001:5000
+      networks:
+        - mlflow_network
+
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+        interval: 2s
+        timeout: 5s
+        start_period: 5m
+
+    fasttrack:
+      image: gresearch/fasttrackml
+      networks:
+        - fasttrack_network
+      ports:
+        - 6002:5000
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+        interval: 2s
+        timeout: 5s
+        start_period: 5m
+
+    fasttrackpostgres:
+      image: gresearch/fasttrackml
+      networks:
+        - fasttrack_network
+      ports:
+        - 6003:5000
+      environment:
+        - FML_DATABASE_URI=postgresql://postgres:postgres@fasttrackdb:5432/fasttrack_db
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+        interval: 5s
+        timeout: 10s
+        retries: 3
+      depends_on:
+        fasttrackdb:
+          condition: service_healthy
+
+    logging_test_mlflow_sqlite:
+      image: grafana/k6:latest
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/mlflow_sqlite_logging.csv -e HOSTNAME=mlflow:5000
+      working_dir: /src
+      volumes:
+        - .:/src
+      networks:
+        - mlflow_network
+      depends_on:
+        mlflow:
+          condition: service_healthy
+
+    logging_test_mlflow_postgres:
+      image: grafana/k6:latest
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/mlflow_postgres_logging.csv -e HOSTNAME=mlflowpostgres:5000
+      working_dir: /src
+      volumes:
+        - .:/src
+      networks:
+        - mlflow_network
+      depends_on:
+        mlflowpostgres:
+          condition: service_healthy
+
+    logging_test_fasttrack_sqlite:
+      image: grafana/k6:latest
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/fasttrack_sqlite_logging.csv -e HOSTNAME=fasttrack:5000
+      working_dir: /src
+      volumes:
+        - .:/src
+      networks:
+        - fasttrack_network
+      depends_on:
+        - fasttrack
+
+    logging_test_fasttrack_postgres:
+      image: grafana/k6:latest
+      command: run  -u 20 -i 100  k6LoggingPerfScript.js --out csv=benchmark_outputs/fasttrack_postgres_logging.csv -e HOSTNAME=fasttrackpostgres:5000
+      working_dir: /src
+      volumes:
+        - .:/src
+      networks:
+        - fasttrack_network
+      depends_on:
+        - fasttrackpostgres
+
+    retrieval_test_mlflow_sqlite:
+      image: grafana/k6:latest
+      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/mlflow_sqlite_retrieval.csv -e HOSTNAME=mlflow:5000
+      working_dir: /src
+      volumes:
+        - .:/src
+      networks:
+        - mlflow_network
+      depends_on:
+        mlflow:
+          condition: service_healthy
+
+    retrieval_test_mlflow_postgres:
+      image: grafana/k6:latest
+      command: run -u 20 -i 100 k6RetrievalPerfScript.js --out csv=benchmark_outputs/mlflow_postgres_retrieval.csv -e HOSTNAME=mlflowpostgres:5000
+      working_dir: /src
+      volumes:
+        - .:/src
+      networks:
+        - mlflow_network
+      depends_on:
+        mlflowpostgres:
+          condition: service_healthy
+
+    retrieval_test_fasttrack_postgres:
+      image: grafana/k6:latest
+      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/fasttrack_postgres_retrieval.csv -e HOSTNAME=fasttrackpostgres:5000
+      working_dir: /src
+      volumes:
+        - .:/src
+      networks:
+        - fasttrack_network
+      depends_on:
+        - fasttrackpostgres
+
+    retrieval_test_fasttrack_sqlite:
+      image: grafana/k6:latest
+      command: run  -u 20 -i 100  k6RetrievalPerfScript.js --out csv=benchmark_outputs/fasttrack_sqlite_retrieval.csv -e HOSTNAME=fasttrack:5000
+      working_dir: /src
+      volumes:
+        - .:/src
+      networks:
+        - fasttrack_network
+      depends_on:
+        - fasttrack
+
+
+    generate_report:
+      build:
+        dockerfile: ./Dockerfile
+      working_dir: /src
+      volumes:
+        - .:/src
+
+
+networks:
+  mlflow_network:
+  fasttrack_network:

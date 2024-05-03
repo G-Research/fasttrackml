@@ -277,7 +277,7 @@ func (s *ProjectFlowTestSuite) getProjectParamsAndCompare(
 	s.Equal(1, len(*resp.Metric))
 	_, ok := (*resp.Metric)[metric.Key]
 	s.True(ok)
-	s.Equal(map[string]interface{}{
+	s.Equal(&map[string]interface{}{
 		param.Key: map[string]interface{}{
 			"__example_type__": "<class 'str'>",
 		},

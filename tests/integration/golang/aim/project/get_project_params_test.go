@@ -162,7 +162,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	s.Equal(0, len(*resp.Metric))
 	_, ok := (*resp.Metric)[metric.Key]
 	s.False(ok)
-	s.Equal(map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
+	s.Equal(&map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
 }
 
 func (s *GetProjectParamsTestSuite) Test_Error() {}

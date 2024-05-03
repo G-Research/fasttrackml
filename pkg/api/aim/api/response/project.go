@@ -53,13 +53,13 @@ func NewGetProjectResponse(name, dialector string, liveUpdatesEnabled bool) *Get
 
 // ProjectParamsResponse is a response object for `GET /projects/params` endpoint.
 type ProjectParamsResponse struct {
-	Metric        map[string][]fiber.Map `json:"metric"`
-	Params        map[string]any         `json:"params"`
-	Texts         fiber.Map              `json:"texts"`
-	Audios        fiber.Map              `json:"audios"`
-	Images        fiber.Map              `json:"images"`
-	Figures       fiber.Map              `json:"figures"`
-	Distributions fiber.Map              `json:"distributions"`
+	Metric        map[string][]fiber.Map `json:"metric,omitempty"`
+	Params        map[string]any         `json:"params,omitempty"`
+	Texts         fiber.Map              `json:"texts,omitempty"`
+	Audios        fiber.Map              `json:"audios,omitempty"`
+	Images        fiber.Map              `json:"images,omitempty"`
+	Figures       fiber.Map              `json:"figures,omitempty"`
+	Distributions fiber.Map              `json:"distributions,omitempty"`
 }
 
 // NewProjectParamsResponse creates new response object for `GET /projects/params` endpoint.

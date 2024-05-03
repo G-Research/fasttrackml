@@ -34,7 +34,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	// create latest metric.
-	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+	metric, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "key",
 		Value:     123.1,
 		Timestamp: 1234567890,
@@ -160,6 +160,8 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 		).DoRequest("/projects/params"),
 	)
 	s.Equal(0, len(*resp.Metric))
+	_, ok := (*resp.Metric)[metric.Key]
+	s.False(ok)
 	s.Equal(map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
 }
 

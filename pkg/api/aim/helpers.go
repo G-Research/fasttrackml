@@ -55,10 +55,10 @@ func RunsSearchAsCSVResponse(ctx *fiber.Ctx, runs []database.Run, excludeTraces,
 				if !excludeParams {
 					for _, param := range run.Params {
 						if _, ok := paramData[param.Key]; ok {
-							paramData[param.Key][run.ID] = param.Value
+							paramData[param.Key][run.ID] = *param.ValueStr
 						} else {
 							paramKeys = append(paramKeys, param.Key)
-							paramData[param.Key] = map[string]string{run.ID: param.Value}
+							paramData[param.Key] = map[string]string{run.ID: *param.ValueStr}
 						}
 					}
 					for _, tag := range run.Tags {
@@ -226,7 +226,7 @@ func RunsSearchAsStreamResponse(
 				if !excludeParams {
 					params := make(fiber.Map, len(r.Params)+1)
 					for _, p := range r.Params {
-						params[p.Key] = p.Value
+						params[p.Key] = *p.ValueStr
 					}
 					tags := make(map[string]string, len(r.Tags))
 					for _, t := range r.Tags {

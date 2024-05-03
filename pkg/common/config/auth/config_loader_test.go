@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 
-	"github.com/G-Research/fasttrackml/pkg/common/db/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 func TestLoad_Ok(t *testing.T) {

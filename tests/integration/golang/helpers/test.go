@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/pkg/server"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
@@ -19,7 +19,7 @@ import (
 type BaseTestSuite struct {
 	suite.Suite
 	db                          database.DBProvider
-	Config                      config.ServiceConfig
+	Config                      config.Config
 	server                      server.Server
 	setupHooks                  []func()
 	tearDownHooks               []func()
@@ -30,6 +30,7 @@ type BaseTestSuite struct {
 	AppFixtures                 *fixtures.AppFixtures
 	RunFixtures                 *fixtures.RunFixtures
 	TagFixtures                 *fixtures.TagFixtures
+	RolesFixtures               *fixtures.RoleFixtures
 	MetricFixtures              *fixtures.MetricFixtures
 	ContextFixtures             *fixtures.ContextFixtures
 	ParamFixtures               *fixtures.ParamFixtures
@@ -94,6 +95,10 @@ func (s *BaseTestSuite) initFixtures() {
 	s.Require().Nil(err)
 	s.MetricFixtures = metricFixtures
 
+	rolesFixtures, err := fixtures.NewRoleFixtures(db)
+	s.Require().Nil(err)
+	s.RolesFixtures = rolesFixtures
+
 	contextFixtures, err := fixtures.NewContextFixtures(db)
 	s.Require().Nil(err)
 	s.ContextFixtures = contextFixtures
@@ -124,7 +129,7 @@ func (s *BaseTestSuite) closeDB() {
 }
 
 func (s *BaseTestSuite) startServer() {
-	cfg := config.ServiceConfig{
+	cfg := config.Config{
 		DatabaseURI:           s.db.Dsn(),
 		DatabasePoolMax:       10,
 		DatabaseSlowThreshold: 1 * time.Second,

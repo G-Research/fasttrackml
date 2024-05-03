@@ -5,16 +5,13 @@ import (
 	"io/fs"
 	"net/http"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
-
-	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 	"github.com/rotisserie/eris"
 
-	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
-	"github.com/G-Research/fasttrackml/pkg/ui/chooser/middleware"
 )
 
 //go:embed embed
@@ -22,20 +19,19 @@ var content embed.FS
 
 // Router represents `chooser` router.
 type Router struct {
-	config     *mlflowConfig.ServiceConfig
-	controller *controller.Controller
+	controller        *controller.Controller
+	globalMiddlewares []fiber.Handler
 }
 
 // NewRouter creates new instance of `chooser` router.
-func NewRouter(config *mlflowConfig.ServiceConfig, controller *controller.Controller) *Router {
+func NewRouter(controller *controller.Controller) *Router {
 	return &Router{
-		config:     config,
 		controller: controller,
 	}
 }
 
 // Init adds all the `chooser` routes
-func (r Router) Init(router fiber.Router) error {
+func (r *Router) Init(router fiber.Router) error {
 	//nolint:errcheck
 	sub, err := fs.Sub(content, "embed")
 	if err != nil {
@@ -49,13 +45,14 @@ func (r Router) Init(router fiber.Router) error {
 	})
 	router.Mount("/", app)
 
-	// apply global auth middlewares.
-	switch {
-	case r.config.Auth.IsAuthTypeUser():
-		app.Use(middleware.NewUserMiddleware(r.config.Auth.AuthParsedUserPermissions))
+	// apply global middlewares.
+	for _, globalMiddleware := range r.globalMiddlewares {
+		app.Use(globalMiddleware)
 	}
 
 	// setup related routes.
+	app.Get("/login", r.controller.Login)
+
 	app.Get("/", r.controller.GetNamespaces)
 	app.Get("/chooser/namespaces", r.controller.ListNamespaces)
 	app.Get("/chooser/namespaces/current", r.controller.GetCurrentNamespace)
@@ -69,4 +66,10 @@ func (r Router) Init(router fiber.Router) error {
 	errors.Get("/not-found", r.controller.NotFoundError)
 
 	return nil
+}
+
+// AddGlobalMiddleware adds a global middleware which will be applied for each route.
+func (r *Router) AddGlobalMiddleware(middleware fiber.Handler) *Router {
+	r.globalMiddlewares = append(r.globalMiddlewares, middleware)
+	return r
 }

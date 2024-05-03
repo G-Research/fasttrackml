@@ -12,7 +12,7 @@ type Router struct {
 	globalMiddlewares []fiber.Handler
 }
 
-// NewRouter creates new instance of `mlflow` router.
+// NewRouter creates new instance of `aim` router.
 func NewRouter(controller *controller.Controller) *Router {
 	return &Router{
 		controller:        controller,

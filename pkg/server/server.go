@@ -17,7 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
-	aim2Controller "github.com/G-Research/fasttrackml/pkg/api/aim/controller"
+	aimController "github.com/G-Research/fasttrackml/pkg/api/aim/controller"
 	aimRepositories "github.com/G-Research/fasttrackml/pkg/api/aim/dao/repositories"
 	aimAppService "github.com/G-Research/fasttrackml/pkg/api/aim/services/app"
 	aimDashboardService "github.com/G-Research/fasttrackml/pkg/api/aim/services/dashboard"
@@ -243,7 +243,7 @@ func createApp(
 	// init `aim` api refactored routes.
 	log.Info("using refactored aim service")
 	aimAPI.NewRouter(
-		aim2Controller.NewController(
+		aimController.NewController(
 			aimTagService.NewService(
 				aimRepositories.NewTagRepository(db.GormDB()),
 			),

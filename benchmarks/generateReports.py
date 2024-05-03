@@ -13,8 +13,8 @@ BENCHMARKS = [
     "CreateRun",
     # "LogMetricSingle",
     "LogMetricBatch10",
-    "LogMetricBatch100",
-    # "LogMetricBatch500"
+    # "LogMetricBatch1000",
+    "LogMetricBatch500",
     "LogParamBatch10",
     "LogParamBatch100",
 ]

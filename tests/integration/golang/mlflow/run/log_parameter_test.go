@@ -36,26 +36,26 @@ func (s *LogParamTestSuite) Test_Ok() {
 	}{
 		{
 			name:     "TestWithValidParameters",
-			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			key:      "key1",
+			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			valueStr: common.GetPointer("value1"),
 		},
 		{
 			name:     "TestWithDuplicate",
-			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			key:      "key1",
+			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			valueStr: common.GetPointer("value1"),
 		},
 		{
 			name:       "TestWithFloat",
-			runID:      strings.ReplaceAll(uuid.NewString(), "-", ""),
 			key:        "key2",
+			runID:      strings.ReplaceAll(uuid.NewString(), "-", ""),
 			valueFloat: common.GetPointer(float64(123.45)),
 		},
 		{
 			name:     "TestWithInt",
-			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			key:      "key2",
+			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			valueInt: common.GetPointer(int64(123)),
 		},
 	}
@@ -104,8 +104,8 @@ func (s *LogParamTestSuite) Test_Error() {
 	}{
 		{
 			name:     "TestMissingParamKey",
-			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			key:      "",
+			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			valueStr: common.GetPointer("value1"),
 			error: &api.ErrorResponse{
 				Message:    "Missing value for required parameter 'key'",
@@ -114,8 +114,8 @@ func (s *LogParamTestSuite) Test_Error() {
 		},
 		{
 			name:     "TestConflictingParam",
-			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			key:      "key1",
+			runID:    strings.ReplaceAll(uuid.NewString(), "-", ""),
 			valueStr: common.GetPointer("value2"),
 			error: &api.ErrorResponse{
 				Message:    "unable to insert params for run",

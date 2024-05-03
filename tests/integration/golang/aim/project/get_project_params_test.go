@@ -126,6 +126,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 				Params: map[string]interface{}{
 					"tags": map[string]interface{}{},
 				},
+				Metric: map[string][]fiber.Map{},
 			},
 		},
 	}

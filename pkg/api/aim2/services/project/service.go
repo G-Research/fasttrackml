@@ -90,13 +90,13 @@ func (s Service) GetProjectParams(
 
 	projectParams := models.ProjectParams{}
 	if !req.ExcludeParams {
-		paramKeys, err := s.paramRepository.GetParamKeysByParameters(ctx, namespaceID, req.ExperimentNames)
+		paramKeys, err := s.paramRepository.GetParamKeysByParameters(ctx, namespaceID, req.Experiments)
 		if err != nil {
 			return nil, api.NewInternalError("error getting param keys: %s", err)
 		}
 		projectParams.ParamKeys = paramKeys
 
-		tagKeys, err := s.tagRepository.GetTagKeysByParameters(ctx, namespaceID, req.ExperimentNames)
+		tagKeys, err := s.tagRepository.GetTagKeysByParameters(ctx, namespaceID, req.Experiments)
 		if err != nil {
 			return nil, api.NewInternalError("error getting tag keys: %s", err)
 		}

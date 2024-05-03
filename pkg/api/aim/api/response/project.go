@@ -53,13 +53,13 @@ func NewGetProjectResponse(name, dialector string, liveUpdatesEnabled bool) *Get
 
 // ProjectParamsResponse is a response object for `GET /projects/params` endpoint.
 type ProjectParamsResponse struct {
-	Metric        map[string][]fiber.Map `json:"metric,omitempty"`
-	Params        map[string]any         `json:"params,omitempty"`
-	Texts         fiber.Map              `json:"texts,omitempty"`
-	Audios        fiber.Map              `json:"audios,omitempty"`
-	Images        fiber.Map              `json:"images,omitempty"`
-	Figures       fiber.Map              `json:"figures,omitempty"`
-	Distributions fiber.Map              `json:"distributions,omitempty"`
+	Metric        *map[string][]fiber.Map `json:"metric,omitempty"`
+	Params        *map[string]any         `json:"params,omitempty"`
+	Texts         *fiber.Map              `json:"texts,omitempty"`
+	Audios        *fiber.Map              `json:"audios,omitempty"`
+	Images        *fiber.Map              `json:"images,omitempty"`
+	Figures       *fiber.Map              `json:"figures,omitempty"`
+	Distributions *fiber.Map              `json:"distributions,omitempty"`
 }
 
 // NewProjectParamsResponse creates new response object for `GET /projects/params` endpoint.
@@ -103,7 +103,7 @@ func NewProjectParamsResponse(projectParams *models.ProjectParams,
 
 	rsp := ProjectParamsResponse{}
 	if !excludeParams {
-		rsp.Params = params
+		rsp.Params = &params
 	}
 	if len(sequences) == 0 {
 		sequences = []string{
@@ -118,17 +118,17 @@ func NewProjectParamsResponse(projectParams *models.ProjectParams,
 	for _, s := range sequences {
 		switch s {
 		case "images":
-			rsp.Images = fiber.Map{}
+			rsp.Images = &fiber.Map{}
 		case "texts":
-			rsp.Texts = fiber.Map{}
+			rsp.Texts = &fiber.Map{}
 		case "figures":
-			rsp.Figures = fiber.Map{}
+			rsp.Figures = &fiber.Map{}
 		case "distributions":
-			rsp.Distributions = fiber.Map{}
+			rsp.Distributions = &fiber.Map{}
 		case "audios":
-			rsp.Audios = fiber.Map{}
+			rsp.Audios = &fiber.Map{}
 		case "metric":
-			rsp.Metric = metrics
+			rsp.Metric = &metrics
 		}
 	}
 	return &rsp, nil

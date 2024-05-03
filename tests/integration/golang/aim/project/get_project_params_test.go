@@ -34,7 +34,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	// create latest metric.
-	metric, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
+	_, err = s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
 		Key:       "key",
 		Value:     123.1,
 		Timestamp: 1234567890,
@@ -73,14 +73,14 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 			name:    "RequestProjectParamsWithoutExperimentFilter",
 			request: map[any]any{"sequence": "metric"},
 			response: response.ProjectParamsResponse{
-				Metric: map[string][]fiber.Map{
+				Metric: &map[string][]fiber.Map{
 					"key": {
 						{
 							"key": "value",
 						},
 					},
 				},
-				Params: map[string]interface{}{
+				Params: &map[string]interface{}{
 					param.Key: map[string]interface{}{
 						"__example_type__": "<class 'str'>",
 					},
@@ -98,14 +98,14 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 				"experiments": *s.DefaultExperiment.ID,
 			},
 			response: response.ProjectParamsResponse{
-				Metric: map[string][]fiber.Map{
+				Metric: &map[string][]fiber.Map{
 					"key": {
 						{
 							"key": "value",
 						},
 					},
 				},
-				Params: map[string]interface{}{
+				Params: &map[string]interface{}{
 					param.Key: map[string]interface{}{
 						"__example_type__": "<class 'str'>",
 					},
@@ -123,9 +123,10 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 				"experiments": 999,
 			},
 			response: response.ProjectParamsResponse{
-				Params: map[string]interface{}{
+				Params: &map[string]interface{}{
 					"tags": map[string]interface{}{},
 				},
+				Metric: &map[string][]fiber.Map{},
 			},
 		},
 	}
@@ -158,9 +159,7 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 			&resp,
 		).DoRequest("/projects/params"),
 	)
-	s.Equal(0, len(resp.Metric))
-	_, ok := resp.Metric[metric.Key]
-	s.False(ok)
+	s.Equal(0, len(*resp.Metric))
 	s.Equal(map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
 }
 

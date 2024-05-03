@@ -11,6 +11,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/common"
 )
 
 // RunFixtures represents data fixtures object.
@@ -255,9 +256,9 @@ func (f RunFixtures) CreateParams(
 ) error {
 	for i := 1; i <= count; i++ {
 		err := f.baseFixtures.db.WithContext(ctx).Create(&models.Param{
-			Key:   fmt.Sprintf("key%d", i),
-			Value: fmt.Sprintf("val%d", i),
-			RunID: run.ID,
+			Key:      fmt.Sprintf("key%d", i),
+			ValueStr: common.GetPointer(fmt.Sprintf("val%d", i)),
+			RunID:    run.ID,
 		}).Error
 		if err != nil {
 			return err

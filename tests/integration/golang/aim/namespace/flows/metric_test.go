@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/gofiber/fiber/v2"
 	"net/http"
 	"os"
 	"testing"
@@ -245,7 +246,7 @@ func (s *MetricFlowTestSuite) testRunFlow(
 		Metrics: []request.MetricTuple{
 			{
 				Key:     "TestMetric1",
-				Context: `{"key":"value"}`,
+				Context: fiber.Map{"key": "value"},
 			},
 		},
 	}, []*models.Run{run1}, []*models.LatestMetric{
@@ -255,7 +256,7 @@ func (s *MetricFlowTestSuite) testRunFlow(
 		Metrics: []request.MetricTuple{
 			{
 				Key:     "TestMetric2",
-				Context: `{"key":"value"}`,
+				Context: fiber.Map{"key": "value"},
 			},
 		},
 	}, []*models.Run{run2}, []*models.LatestMetric{

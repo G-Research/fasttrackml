@@ -3,8 +3,11 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
@@ -257,7 +260,10 @@ func (r MetricRepository) findContextIDs(ctx context.Context, req *request.Searc
 	contextList := []types.JSONB{}
 	contextsMap := map[string]types.JSONB{}
 	for _, r := range req.Metrics {
-		data := types.JSONB(r.Context)
+		data, err := json.Marshal(r.Context)
+		if err != nil {
+			return nil, api.NewInternalError("error serializing context: %s", err)
+		}
 		contextList = append(contextList, data)
 		contextsMap[string(data)] = data
 	}

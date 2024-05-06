@@ -5,10 +5,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
 	"net/http"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 

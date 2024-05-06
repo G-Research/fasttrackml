@@ -3,10 +3,8 @@ package mlflow
 import (
 	"github.com/gofiber/fiber/v2"
 
-	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
 // List of route prefixes.
@@ -60,31 +58,30 @@ const (
 
 // Router represents `mlflow` router.
 type Router struct {
-	config     *mlflowConfig.ServiceConfig
-	prefixList []string
-	controller *controller.Controller
+	prefixList        []string
+	controller        *controller.Controller
+	globalMiddlewares []fiber.Handler
 }
 
 // NewRouter creates new instance of `mlflow` router.
-func NewRouter(config *mlflowConfig.ServiceConfig, controller *controller.Controller) *Router {
+func NewRouter(controller *controller.Controller) *Router {
 	return &Router{
-		config: config,
 		prefixList: []string{
 			"/api/2.0/mlflow/",
 			"/ajax-api/2.0/mlflow/",
 		},
-		controller: controller,
+		controller:        controller,
+		globalMiddlewares: make([]fiber.Handler, 0),
 	}
 }
 
 // Init makes initialization of all `mlflow` routes.
-func (r Router) Init(router fiber.Router) {
+func (r *Router) Init(router fiber.Router) {
 	for _, prefix := range r.prefixList {
 		mainGroup := router.Group(prefix)
-		// apply global auth middlewares.
-		switch {
-		case r.config.Auth.IsAuthTypeUser():
-			mainGroup.Use(middleware.NewUserMiddleware(r.config.Auth.AuthParsedUserPermissions))
+		// apply global middlewares.
+		for _, globalMiddleware := range r.globalMiddlewares {
+			mainGroup.Use(globalMiddleware)
 		}
 
 		// setup related routes.
@@ -129,4 +126,10 @@ func (r Router) Init(router fiber.Router) {
 			return api.NewEndpointNotFound("Not found")
 		})
 	}
+}
+
+// AddGlobalMiddleware adds a global middleware which will be applied for each route.
+func (r *Router) AddGlobalMiddleware(middleware fiber.Handler) *Router {
+	r.globalMiddlewares = append(r.globalMiddlewares, middleware)
+	return r
 }

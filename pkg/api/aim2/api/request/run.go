@@ -40,13 +40,14 @@ type UpdateRunRequest struct {
 // SearchRunsRequest is a request object for `GET /runs/search/run` endpoint.
 type SearchRunsRequest struct {
 	BaseSearchRequest
-	Query         string `query:"q"`
-	Limit         int    `query:"limit"`
-	Offset        string `query:"offset"`
-	Action        string `query:"action"`
-	SkipSystem    bool   `query:"skip_system"`
-	ExcludeParams bool   `query:"exclude_params"`
-	ExcludeTraces bool   `query:"exclude_traces"`
+	Query           string   `query:"q"`
+	Limit           int      `query:"limit"`
+	Offset          string   `query:"offset"`
+	Action          string   `query:"action"`
+	SkipSystem      bool     `query:"skip_system"`
+	ExcludeParams   bool     `query:"exclude_params"`
+	ExcludeTraces   bool     `query:"exclude_traces"`
+	ExperimentNames []string `query:"experiment_names"`
 }
 
 // MetricTuple represents a metric with key and context.

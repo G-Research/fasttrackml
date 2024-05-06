@@ -11,7 +11,7 @@ import (
 	"github.com/rotisserie/eris"
 	"gopkg.in/yaml.v3"
 
-	"github.com/G-Research/fasttrackml/pkg/common/db/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
 // Load loads user configuration from given configuration file.

@@ -25,7 +25,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
@@ -120,7 +120,7 @@ func GetRunInfo(c *fiber.Ctx) error {
 	}
 	params := make(map[string]any, len(r.Params)+1)
 	for _, p := range r.Params {
-		params[p.Key] = p.Value
+		params[p.Key] = *p.ValueStr
 	}
 	tags := make(map[string]string, len(r.Tags))
 	for _, t := range r.Tags {
@@ -617,7 +617,7 @@ func SearchMetrics(c *fiber.Ctx) error {
 
 		params := make(fiber.Map, len(r.Params)+1)
 		for _, p := range r.Params {
-			params[p.Key] = p.Value
+			params[p.Key] = *p.ValueStr
 		}
 		tags := make(map[string]string, len(r.Tags))
 		for _, t := range r.Tags {

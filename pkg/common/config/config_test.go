@@ -9,27 +9,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServiceConfig_Validate_Ok(t *testing.T) {
+func TestConfig_Validate_Ok(t *testing.T) {
 	testData := []struct {
 		name           string
-		providedConfig *ServiceConfig
-		expectedConfig *ServiceConfig
+		providedConfig *Config
+		expectedConfig *Config
 	}{
 		{
 			name: "DefaultArtifactRootHasS3Prefix",
-			providedConfig: &ServiceConfig{
+			providedConfig: &Config{
 				DefaultArtifactRoot: "s3://bucket_name",
 			},
-			expectedConfig: &ServiceConfig{
+			expectedConfig: &Config{
 				DefaultArtifactRoot: "s3://bucket_name",
 			},
 		},
 		{
 			name: "DefaultArtifactRootHasFilePrefixAndIsRelative",
-			providedConfig: &ServiceConfig{
+			providedConfig: &Config{
 				DefaultArtifactRoot: "file://path1/path2/path3",
 			},
-			expectedConfig: &ServiceConfig{
+			expectedConfig: &Config{
 				DefaultArtifactRoot: (func() string {
 					path, err := filepath.Abs("path1/path2/path3")
 					require.Nil(t, err)
@@ -39,28 +39,28 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 		},
 		{
 			name: "DefaultArtifactRootHasFilePrefixAndIsAbsolute",
-			providedConfig: &ServiceConfig{
+			providedConfig: &Config{
 				DefaultArtifactRoot: "file:///path1/path2/path3",
 			},
-			expectedConfig: &ServiceConfig{
+			expectedConfig: &Config{
 				DefaultArtifactRoot: "file:///path1/path2/path3",
 			},
 		},
 		{
 			name: "DefaultArtifactRootHasEmptyPrefixAndIsAbsolute",
-			providedConfig: &ServiceConfig{
+			providedConfig: &Config{
 				DefaultArtifactRoot: "/path1/path2/path3",
 			},
-			expectedConfig: &ServiceConfig{
+			expectedConfig: &Config{
 				DefaultArtifactRoot: "file:///path1/path2/path3",
 			},
 		},
 		{
 			name: "DefaultArtifactRootHasEmptyPrefixAndIsRelative",
-			providedConfig: &ServiceConfig{
+			providedConfig: &Config{
 				DefaultArtifactRoot: "path1/path2/path3",
 			},
-			expectedConfig: &ServiceConfig{
+			expectedConfig: &Config{
 				DefaultArtifactRoot: (func() string {
 					path, err := filepath.Abs("path1/path2/path3")
 					require.Nil(t, err)
@@ -78,11 +78,11 @@ func TestServiceConfig_Validate_Ok(t *testing.T) {
 	}
 }
 
-func TestServiceConfig_Validate_Error(t *testing.T) {
+func TestConfig_Validate_Error(t *testing.T) {
 	testData := []struct {
 		name   string
 		error  error
-		config *ServiceConfig
+		config *Config
 	}{
 		{
 			name: "DefaultArtifactRootHasIncorrectFormat",
@@ -90,7 +90,7 @@ func TestServiceConfig_Validate_Error(t *testing.T) {
 				`error validating service configuration: error parsing 'default-artifact-root' flag: parse ` +
 					`"incorrect_format_of_schema://something": first path segment in URL cannot contain colon`,
 			),
-			config: &ServiceConfig{
+			config: &Config{
 				DefaultArtifactRoot: "incorrect_format_of_schema://something",
 			},
 		},
@@ -99,7 +99,7 @@ func TestServiceConfig_Validate_Error(t *testing.T) {
 			error: eris.New(
 				"error validating service configuration: unsupported schema of 'default-artifact-root' flag",
 			),
-			config: &ServiceConfig{
+			config: &Config{
 				DefaultArtifactRoot: "unsupported://something",
 			},
 		},

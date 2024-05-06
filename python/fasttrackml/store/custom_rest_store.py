@@ -59,8 +59,39 @@ class CustomRestStore(RestStore):
             )
         return result
 
+    def log_param(self, run_id, param):
+        request_body = {
+            "run_id": run_id,
+            "run_uuid": run_id,
+            "key": param.key,
+        }
+
+        if isinstance(param.value, int):
+            request_body["value_int"] = param.value
+        elif isinstance(param.value, float):
+            request_body["value_float"] = param.value
+        else:
+            request_body["value"] = param.value
+
+        result = http_request(
+            **{
+                "host_creds": self.get_host_creds(),
+                "endpoint": "/api/2.0/mlflow/runs/log-parameter",
+                "method": "POST",
+                "json": request_body,
+            }
+        )
+        if result.status_code != 200:
+            result = result.json()
+        if "error_code" in result:
+            raise MlflowException(
+                message=result["message"],
+                error_code=result["error_code"],
+            )
+        return result
+
     def log_batch(self, run_id, metrics=[], params=[], tags=[]):
-        metrics_list = []
+        metrics_list, params_list, tags_list = [], [], []
         for metric in metrics:
             metrics_list.append(
                 {
@@ -72,12 +103,30 @@ class CustomRestStore(RestStore):
                 }
             )
 
+        for param in params:
+            param_partial = {"key": param.key}
+            if isinstance(param.value, int):
+                param_partial["value_int"] = param.value
+            elif isinstance(param.value, float):
+                param_partial["value_float"] = param.value
+            else:
+                param_partial["value"] = param.value
+            params_list.append(param_partial)
+
+        for tag in tags:
+            tag_list.append(
+                {
+                    "key": tag.key,
+                    "value": tag.value,
+                }
+            )
+
         result = http_request(
             **{
                 "host_creds": self.get_host_creds(),
                 "endpoint": "/api/2.0/mlflow/runs/log-batch",
                 "method": "POST",
-                "json": {"run_id": run_id, "metrics": metrics_list},
+                "json": {"run_id": run_id, "metrics": metrics_list, "params": params_list, "tags": tags_list},
             }
         )
 

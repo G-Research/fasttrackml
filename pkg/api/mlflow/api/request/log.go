@@ -2,8 +2,10 @@ package request
 
 // ParamPartialRequest is a partial request object for different requests.
 type ParamPartialRequest struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Key        string   `json:"key"`
+	ValueInt   *int64   `json:"value_int"`
+	ValueFloat *float64 `json:"value_float"`
+	ValueStr   *string  `json:"value"`
 }
 
 // TagPartialRequest is a partial request object for different requests.
@@ -23,10 +25,12 @@ type MetricPartialRequest struct {
 
 // LogParamRequest is a request object for `POST mlflow/runs/log-parameter` endpoint.
 type LogParamRequest struct {
-	RunID   string `json:"run_id"`
-	RunUUID string `json:"run_uuid"`
-	Key     string `json:"key"`
-	Value   string `json:"value"`
+	RunID      string   `json:"run_id"`
+	RunUUID    string   `json:"run_uuid"`
+	Key        string   `json:"key"`
+	ValueInt   *int64   `json:"value_int"`
+	ValueFloat *float64 `json:"value_float"`
+	ValueStr   *string  `json:"value"`
 }
 
 // GetRunID returns Run ID.

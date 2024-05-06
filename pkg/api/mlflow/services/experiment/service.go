@@ -15,11 +15,11 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/convertors"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -46,14 +46,14 @@ const (
 
 // Service provides service layer to work with `metric` business logic.
 type Service struct {
-	config               *config.ServiceConfig
+	config               *config.Config
 	tagRepository        repositories.TagRepositoryProvider
 	experimentRepository repositories.ExperimentRepositoryProvider
 }
 
 // NewService creates new Service instance.
 func NewService(
-	config *config.ServiceConfig,
+	config *config.Config,
 	tagRepository repositories.TagRepositoryProvider,
 	experimentRepository repositories.ExperimentRepositoryProvider,
 ) *Service {

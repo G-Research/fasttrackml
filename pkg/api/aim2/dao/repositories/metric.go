@@ -16,6 +16,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 )
 
@@ -30,10 +31,10 @@ type SearchResultMap = map[string]SearchResult
 
 // MetricRepositoryProvider provides an interface to work with models.Metric entity.
 type MetricRepositoryProvider interface {
-	BaseRepositoryProvider
+	repositories.BaseRepositoryProvider
 	// GetMetricKeysAndContextsByExperiments returns metric keys and contexts by provided experiments.
 	GetMetricKeysAndContextsByExperiments(
-		ctx context.Context, namespaceID uint, experimentNames []string,
+		ctx context.Context, namespaceID uint, experiments []int,
 	) ([]models.LatestMetric, error)
 	// SearchMetrics returns a sql.Rows cursor for streaming the metrics matching the request.
 	SearchMetrics(
@@ -47,23 +48,21 @@ type MetricRepositoryProvider interface {
 
 // MetricRepository repository to work with models.Metric entity.
 type MetricRepository struct {
-	BaseRepository
+	repositories.BaseRepositoryProvider
 }
 
 // NewMetricRepository creates repository to work with models.Metric entity.
 func NewMetricRepository(db *gorm.DB) *MetricRepository {
 	return &MetricRepository{
-		BaseRepository{
-			db: db,
-		},
+		repositories.NewBaseRepository(db),
 	}
 }
 
 // GetMetricKeysAndContextsByExperiments returns metric keys and contexts by provided experiments.
 func (r MetricRepository) GetMetricKeysAndContextsByExperiments(
-	ctx context.Context, namespaceID uint, experimentNames []string,
+	ctx context.Context, namespaceID uint, experiments []int,
 ) ([]models.LatestMetric, error) {
-	query := r.db.WithContext(ctx).Distinct().Select(
+	query := r.GetDB().WithContext(ctx).Distinct().Select(
 		"key", "context_id",
 	).Model(
 		&models.LatestMetric{},
@@ -77,8 +76,8 @@ func (r MetricRepository) GetMetricKeysAndContextsByExperiments(
 	).Where(
 		"runs.lifecycle_stage = ?", models.LifecycleStageActive,
 	)
-	if len(experimentNames) != 0 {
-		query = query.Where("experiments.name IN ?", experimentNames)
+	if len(experiments) != 0 {
+		query = query.Where("experiments.experiment_id IN ?", experiments)
 	}
 	var metrics []models.LatestMetric
 	if err := query.Find(&metrics).Error; err != nil {
@@ -102,7 +101,7 @@ func (r MetricRepository) SearchMetrics(
 			"metrics":     "latest_metrics",
 		},
 		TzOffset:  timeZoneOffset,
-		Dialector: r.db.Dialector.Name(),
+		Dialector: r.GetDB().Dialector.Name(),
 	}
 	pq, err := qp.Parse(req.Query)
 	if err != nil {
@@ -114,21 +113,21 @@ func (r MetricRepository) SearchMetrics(
 	}
 
 	var totalRuns int64
-	if err := r.db.WithContext(ctx).Model(&models.Run{}).Count(&totalRuns).Error; err != nil {
+	if err := r.GetDB().WithContext(ctx).Model(&models.Run{}).Count(&totalRuns).Error; err != nil {
 		return nil, 0, nil, eris.Wrap(err, "error counting metrics")
 	}
 
 	var runs []models.Run
-	if tx := r.db.WithContext(ctx).
+	if tx := r.GetDB().WithContext(ctx).
 		InnerJoins(
 			"Experiment",
-			r.db.WithContext(ctx).Select(
+			r.GetDB().WithContext(ctx).Select(
 				"ID", "Name",
 			).Where(&models.Experiment{NamespaceID: namespaceID}),
 		).
 		Preload("Params").
 		Preload("Tags").
-		Where("run_uuid IN (?)", pq.Filter(r.db.WithContext(ctx).
+		Where("run_uuid IN (?)", pq.Filter(r.GetDB().WithContext(ctx).
 			Select("runs.run_uuid").
 			Table("runs").
 			Joins(
@@ -163,7 +162,7 @@ func (r MetricRepository) SearchMetrics(
 
 		params := make(fiber.Map, len(r.Params)+1)
 		for _, p := range r.Params {
-			params[p.Key] = p.Value
+			params[p.Key] = p.ValueAny()
 		}
 		tags := make(map[string]string, len(r.Tags))
 		for _, t := range r.Tags {
@@ -187,7 +186,7 @@ func (r MetricRepository) SearchMetrics(
 	}
 	metricKeyContextCondition := strings.Join(metricKeyContextConditionSlice, " OR ")
 
-	subQuery := r.db.WithContext(ctx).
+	subQuery := r.GetDB().WithContext(ctx).
 		Select(
 			"runs.run_uuid",
 			"runs.row_num",
@@ -205,7 +204,7 @@ func (r MetricRepository) SearchMetrics(
 		Joins("LEFT JOIN contexts ON latest_metrics.context_id = contexts.id").
 		Where(metricKeyContextCondition)
 
-	tx := r.db.WithContext(ctx).
+	tx := r.GetDB().WithContext(ctx).
 		Select(`
         metrics.*,
         runmetrics.context_json`,
@@ -245,7 +244,7 @@ func (r MetricRepository) SearchMetrics(
 func (r MetricRepository) GetContextListByContextObjects(
 	ctx context.Context, contextsMap map[string]types.JSONB,
 ) ([]models.Context, error) {
-	query := r.db.WithContext(ctx)
+	query := r.GetDB().WithContext(ctx)
 	for _, context := range contextsMap {
 		query = query.Or("contexts.json = ?", context)
 	}

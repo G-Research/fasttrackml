@@ -11,5 +11,5 @@ type RoleNamespace struct {
 	Role        Role      `gorm:"constraint:OnDelete:CASCADE"`
 	RoleID      uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
 	Namespace   Namespace `gorm:"constraint:OnDelete:CASCADE"`
-	NamespaceID uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
+	NamespaceID uint      `gorm:"not null;index:,unique,composite:relation"`
 }

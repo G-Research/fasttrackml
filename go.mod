@@ -12,7 +12,7 @@ require (
 	dagger.io/dagger v0.11.0
 	dario.cat/mergo v1.0.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/G-Research/fasttrackml-ui-aim v0.31705.33
+	github.com/G-Research/fasttrackml-ui-aim v0.31705.43
 	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.7
 	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/apache/arrow/go/v14 v14.0.2

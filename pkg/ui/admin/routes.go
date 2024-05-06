@@ -11,9 +11,7 @@ import (
 	"github.com/gofiber/template/html/v2"
 	"github.com/rotisserie/eris"
 
-	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
-	"github.com/G-Research/fasttrackml/pkg/ui/admin/middleware"
 )
 
 //go:embed embed/*
@@ -21,20 +19,19 @@ var content embed.FS
 
 // Router represents `admin` router.
 type Router struct {
-	config     *mlflowConfig.ServiceConfig
-	controller *controller.Controller
+	controller        *controller.Controller
+	globalMiddlewares []fiber.Handler
 }
 
 // NewRouter creates new instance of `admin` router.
-func NewRouter(config *mlflowConfig.ServiceConfig, controller *controller.Controller) *Router {
+func NewRouter(controller *controller.Controller) *Router {
 	return &Router{
-		config:     config,
 		controller: controller,
 	}
 }
 
 // Init makes initialization of all `admin` routes.
-func (r Router) Init(router fiber.Router) error {
+func (r *Router) Init(router fiber.Router) error {
 	//nolint:errcheck
 	sub, err := fs.Sub(content, "embed")
 	if err != nil {
@@ -51,12 +48,10 @@ func (r Router) Init(router fiber.Router) error {
 
 	// specific routes
 	namespaces := app.Group("namespaces")
-	// apply global auth middlewares.
-	switch {
-	case r.config.Auth.IsAuthTypeUser():
-		namespaces.Use(middleware.NewAdminUserMiddleware(r.config.Auth.AuthParsedUserPermissions))
+	// apply global middlewares.
+	for _, globalMiddleware := range r.globalMiddlewares {
+		namespaces.Use(globalMiddleware)
 	}
-
 	namespaces.Get("/", r.controller.GetNamespaces)
 	namespaces.Post("/", r.controller.CreateNamespace)
 	namespaces.Get("/new", r.controller.NewNamespace)
@@ -70,4 +65,10 @@ func (r Router) Init(router fiber.Router) error {
 	}))
 
 	return nil
+}
+
+// AddGlobalMiddleware adds a global middleware which will be applied for each route.
+func (r *Router) AddGlobalMiddleware(middleware fiber.Handler) *Router {
+	r.globalMiddlewares = append(r.globalMiddlewares, middleware)
+	return r
 }

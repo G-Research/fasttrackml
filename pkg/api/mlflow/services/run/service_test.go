@@ -801,8 +801,8 @@ func TestService_GetRun_Ok(t *testing.T) {
 		RowNum:         1,
 		Params: []models.Param{
 			{
-				Key:   "key",
-				Value: "value",
+				Key:      "key",
+				ValueStr: common.GetPointer("value"),
 			},
 		},
 		Tags: []models.Tag{
@@ -851,8 +851,8 @@ func TestService_GetRun_Ok(t *testing.T) {
 	assert.Equal(t, models.RowNum(1), run.RowNum)
 	assert.Equal(t, []models.Param{
 		{
-			Key:   "key",
-			Value: "value",
+			Key:      "key",
+			ValueStr: common.GetPointer("value"),
 		},
 	}, run.Params)
 	assert.Equal(t, []models.Tag{
@@ -961,7 +961,7 @@ func TestService_LogBatch_Ok(t *testing.T) {
 		mock.MatchedBy(func(params []models.Param) bool {
 			assert.Equal(t, "1", params[0].RunID)
 			assert.Equal(t, "key2", params[0].Key)
-			assert.Equal(t, "value2", params[0].Value)
+			assert.Equal(t, "value2", params[0].ValueString())
 			return true
 		}),
 	).Return(nil)
@@ -1001,8 +1001,8 @@ func TestService_LogBatch_Ok(t *testing.T) {
 		},
 		Params: []request.ParamPartialRequest{
 			{
-				Key:   "key2",
-				Value: "value2",
+				Key:      "key2",
+				ValueStr: common.GetPointer("value2"),
 			},
 		},
 		Metrics: []request.MetricPartialRequest{
@@ -1152,8 +1152,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 				RunID: "1",
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
-						Value: "value",
+						Key:      "key",
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 			},
@@ -1175,9 +1175,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 					100,
 					[]models.Param{
 						{
-							Key:   "key",
-							Value: "value",
-							RunID: "1",
+							Key:      "key",
+							ValueStr: common.GetPointer("value"),
+							RunID:    "1",
 						},
 					},
 				).Return(errors.New("database error"))
@@ -1197,8 +1197,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 				RunID: "1",
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
-						Value: "value",
+						Key:      "key",
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 			},
@@ -1220,9 +1220,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 					100,
 					[]models.Param{
 						{
-							Key:   "key",
-							Value: "value",
-							RunID: "1",
+							Key:      "key",
+							ValueStr: common.GetPointer("value"),
+							RunID:    "1",
 						},
 					},
 				).Return(repositories.ParamConflictError{Message: "param conflict!"})
@@ -1242,8 +1242,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 				RunID: "1",
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
-						Value: "value",
+						Key:      "key",
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -1274,9 +1274,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 					100,
 					[]models.Param{
 						{
-							Key:   "key",
-							Value: "value",
-							RunID: "1",
+							Key:      "key",
+							ValueStr: common.GetPointer("value"),
+							RunID:    "1",
 						},
 					},
 				).Return(nil)
@@ -1317,8 +1317,8 @@ func TestService_LogBatch_Error(t *testing.T) {
 				RunID: "1",
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
-						Value: "value",
+						Key:      "key",
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Tags: []request.TagPartialRequest{
@@ -1371,9 +1371,9 @@ func TestService_LogBatch_Error(t *testing.T) {
 					100,
 					[]models.Param{
 						{
-							Key:   "key",
-							Value: "value",
-							RunID: "1",
+							Key:      "key",
+							ValueStr: common.GetPointer("value"),
+							RunID:    "1",
 						},
 					},
 				).Return(nil)
@@ -1656,7 +1656,7 @@ func TestService_LogParam_Ok(t *testing.T) {
 		mock.MatchedBy(func(params []models.Param) bool {
 			assert.Equal(t, "1", params[0].RunID)
 			assert.Equal(t, "key", params[0].Key)
-			assert.Equal(t, "value", params[0].Value)
+			assert.Equal(t, "value", params[0].ValueString())
 			return true
 		}),
 	).Return(nil)
@@ -1672,9 +1672,9 @@ func TestService_LogParam_Ok(t *testing.T) {
 	err := service.LogParam(context.TODO(), &models.Namespace{
 		ID: 1,
 	}, &request.LogParamRequest{
-		RunID: "1",
-		Key:   "key",
-		Value: "value",
+		RunID:    "1",
+		Key:      "key",
+		ValueStr: common.GetPointer("value"),
 	})
 
 	// compare results.
@@ -1722,9 +1722,9 @@ func TestService_LogParam_Error(t *testing.T) {
 			name:  "RunNotFoundDatabaseError",
 			error: api.NewInternalError(`Unable to find run '1': database error`),
 			request: &request.LogParamRequest{
-				RunID: "1",
-				Key:   "key",
-				Value: "value",
+				RunID:    "1",
+				Key:      "key",
+				ValueStr: common.GetPointer("value"),
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
@@ -1748,9 +1748,9 @@ func TestService_LogParam_Error(t *testing.T) {
 			name:  "NoActiveRunFound",
 			error: api.NewResourceDoesNotExistError("Run '1' not found"),
 			request: &request.LogParamRequest{
-				RunID: "1",
-				Key:   "key",
-				Value: "value",
+				RunID:    "1",
+				Key:      "key",
+				ValueStr: common.GetPointer("value"),
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
@@ -1774,9 +1774,9 @@ func TestService_LogParam_Error(t *testing.T) {
 			name:  "LogParamDatabaseError",
 			error: api.NewInternalError(`unable to insert params for run '1': database error`),
 			request: &request.LogParamRequest{
-				RunID: "1",
-				Key:   "key",
-				Value: "value",
+				RunID:    "1",
+				Key:      "key",
+				ValueStr: common.GetPointer("value"),
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
@@ -1798,7 +1798,7 @@ func TestService_LogParam_Error(t *testing.T) {
 					mock.MatchedBy(func(params []models.Param) bool {
 						assert.Equal(t, 1, len(params))
 						assert.Equal(t, "key", params[0].Key)
-						assert.Equal(t, "value", params[0].Value)
+						assert.Equal(t, "value", params[0].ValueString())
 						assert.Equal(t, "1", params[0].RunID)
 						return true
 					}),
@@ -1816,9 +1816,9 @@ func TestService_LogParam_Error(t *testing.T) {
 			name:  "LogParamConflictError",
 			error: api.NewInvalidParameterValueError(`unable to insert params for run '1': conflict!`),
 			request: &request.LogParamRequest{
-				RunID: "1",
-				Key:   "key",
-				Value: "value",
+				RunID:    "1",
+				Key:      "key",
+				ValueStr: common.GetPointer("value"),
 			},
 			service: func() *Service {
 				runRepository := repositories.MockRunRepositoryProvider{}
@@ -1840,7 +1840,7 @@ func TestService_LogParam_Error(t *testing.T) {
 					mock.MatchedBy(func(params []models.Param) bool {
 						assert.Equal(t, 1, len(params))
 						assert.Equal(t, "key", params[0].Key)
-						assert.Equal(t, "value", params[0].Value)
+						assert.Equal(t, "value", params[0].ValueString())
 						assert.Equal(t, "1", params[0].RunID)
 						return true
 					}),

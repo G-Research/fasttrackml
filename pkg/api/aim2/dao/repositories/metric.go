@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/G-Research/fasttrackml/pkg/common/api"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
@@ -17,6 +15,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/common"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 )

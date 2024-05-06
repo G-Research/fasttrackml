@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
@@ -307,7 +308,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	runs := []*models.Run{run1, run2, run3}
-	contextValue := "{\"testkey\":\"testvalue\"}"
+	contextValue := fiber.Map{"testkey": "testvalue"}
 	tests := []struct {
 		name    string
 		request request.SearchMetricsRequest
@@ -319,7 +320,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -339,15 +340,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.archived == True`,
@@ -359,15 +360,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -393,15 +394,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.active == True`,
@@ -418,15 +419,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -449,15 +450,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -480,15 +481,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -514,15 +515,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: fmt.Sprintf(
@@ -542,15 +543,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: fmt.Sprintf(
@@ -572,15 +573,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.duration == 0`,
@@ -597,15 +598,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -628,15 +629,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.created_at > 123456789`,
@@ -652,15 +653,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.created_at >= 123456789`,
@@ -679,15 +680,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -710,15 +711,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.created_at == 123456789`,
@@ -735,15 +736,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -767,15 +768,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -801,15 +802,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -832,15 +833,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -866,15 +867,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -897,15 +898,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.finalized_at == 123456789`,
@@ -922,15 +923,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.finalized_at < 444444444`,
@@ -947,15 +948,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -981,15 +982,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: fmt.Sprintf(`run.hash == "%s"`, run1.ID),
@@ -1006,15 +1007,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1037,15 +1038,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1068,15 +1069,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.name == "TestRun1"`,
@@ -1093,15 +1094,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `"Run3" in run.name`,
@@ -1117,15 +1118,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1149,15 +1150,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1183,15 +1184,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.name.endswith('3')`,
@@ -1207,15 +1208,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1242,15 +1243,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: fmt.Sprintf(
@@ -1269,15 +1270,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.tags['mlflow.runName'] == "TestRunTag1"`,
@@ -1294,15 +1295,15 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1325,7 +1326,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `re.match("TestRun1", run.name)`,
@@ -1340,7 +1341,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `re.search("TestRun1", run.name)`,
@@ -1355,7 +1356,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.name == "TestRun1"`,
@@ -1370,7 +1371,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1390,7 +1391,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1411,7 +1412,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1430,11 +1431,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `re.match("TestRun1", run.name)`,
@@ -1450,11 +1451,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `re.search("TestRun1", run.name)`,
@@ -1470,11 +1471,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.name == "TestRun1"`,
@@ -1490,11 +1491,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.name != "TestRun1"`,
@@ -1511,11 +1512,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.name.startswith("Test")`,
@@ -1534,11 +1535,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.name.endswith("Run2")`,
@@ -1554,7 +1555,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `run.duration == 222222`,
@@ -1569,7 +1570,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1589,7 +1590,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1609,7 +1610,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1630,7 +1631,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `(run.duration < 333333)`,
@@ -1646,7 +1647,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1667,7 +1668,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: fmt.Sprintf(`(run.hash == "%s")`, run1.ID),
@@ -1682,7 +1683,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1702,7 +1703,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1722,7 +1723,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1743,7 +1744,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `(run.finalized_at < 444444444)`,
@@ -1758,7 +1759,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1779,7 +1780,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `(run.finalized_at == 123456789)`,
@@ -1794,7 +1795,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1814,11 +1815,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `(run.finalized_at > 123456789)`,
@@ -1835,11 +1836,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric3",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `(run.finalized_at >= 123456789)`,
@@ -1858,7 +1859,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `(run.created_at > 123456789)`,
@@ -1873,7 +1874,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `(run.created_at >= 123456789)`,
@@ -1889,7 +1890,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1909,7 +1910,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1930,7 +1931,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 				},
 				Query: `(run.created_at == 123456789)`,
@@ -1945,7 +1946,7 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",
@@ -1965,11 +1966,11 @@ func (s *SearchMetricsTestSuite) Test_Ok() {
 				Metrics: []request.MetricTuple{
 					{
 						Key:     "TestMetric1",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric2",
-						Context: "{}",
+						Context: fiber.Map{},
 					},
 					{
 						Key:     "TestMetric1",

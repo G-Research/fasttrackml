@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -14,7 +15,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/common"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim2/query"
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 )
 
 // SearchResult is a helper for reporting result progress.
@@ -258,7 +260,10 @@ func (r MetricRepository) findContextIDs(ctx context.Context, req *request.Searc
 	contextList := []types.JSONB{}
 	contextsMap := map[string]types.JSONB{}
 	for _, r := range req.Metrics {
-		data := types.JSONB(r.Context)
+		data, err := json.Marshal(r.Context)
+		if err != nil {
+			return nil, api.NewInternalError("error serializing context: %s", err)
+		}
 		contextList = append(contextList, data)
 		contextsMap[string(data)] = data
 	}

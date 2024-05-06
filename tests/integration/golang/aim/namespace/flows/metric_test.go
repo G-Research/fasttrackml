@@ -9,6 +9,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -245,7 +246,7 @@ func (s *MetricFlowTestSuite) testRunFlow(
 		Metrics: []request.MetricTuple{
 			{
 				Key:     "TestMetric1",
-				Context: `{"key":"value"}`,
+				Context: fiber.Map{"key": "value"},
 			},
 		},
 	}, []*models.Run{run1}, []*models.LatestMetric{
@@ -255,7 +256,7 @@ func (s *MetricFlowTestSuite) testRunFlow(
 		Metrics: []request.MetricTuple{
 			{
 				Key:     "TestMetric2",
-				Context: `{"key":"value"}`,
+				Context: fiber.Map{"key": "value"},
 			},
 		},
 	}, []*models.Run{run2}, []*models.LatestMetric{

@@ -52,8 +52,8 @@ type SearchRunsRequest struct {
 
 // MetricTuple represents a metric with key and context.
 type MetricTuple struct {
-	Key     string `json:"key"`
-	Context string `json:"context"`
+	Key     string    `json:"key"`
+	Context fiber.Map `json:"context"`
 }
 
 // SearchMetricsRequest is a request struct for `GET /runs/search/metric` endpoint.

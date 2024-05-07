@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -34,7 +34,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 	length := len(experiments)
 
-	var resp response.DeleteExperiment
+	var resp response.DeleteExperimentResponse
 	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodDelete,
@@ -54,22 +54,31 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 	tests := []struct {
 		name  string
 		ID    string
-		error string
+		error *api.ErrorResponse
 	}{
 		{
-			ID:    "123",
-			name:  "DeleteWithUnknownIDFails",
-			error: "(Not Found|not found)",
+			ID:   "123",
+			name: "DeleteWithUnknownIDFails",
+			error: &api.ErrorResponse{
+				Message:    "experiment '123' not found",
+				StatusCode: http.StatusBadRequest,
+			},
 		},
 		{
-			ID:    "incorrect_experiment_id",
-			name:  "DeleteIncorrectExperimentID",
-			error: `(unable to parse|failed to decode)`,
+			ID:   "incorrect_experiment_id",
+			name: "DeleteIncorrectExperimentID",
+			error: &api.ErrorResponse{
+				Message:    `failed to decode: schema: error converting value for "id"`,
+				StatusCode: http.StatusUnprocessableEntity,
+			},
 		},
 		{
-			ID:    fmt.Sprintf("%d", *s.DefaultExperiment.ID),
-			name:  "DeleteDefaultExperiment",
-			error: `unable to delete default experiment`,
+			ID:   fmt.Sprintf("%d", *s.DefaultExperiment.ID),
+			name: "DeleteDefaultExperiment",
+			error: &api.ErrorResponse{
+				Message:    "unable to delete default experiment",
+				StatusCode: http.StatusBadRequest,
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -84,7 +93,8 @@ func (s *DeleteExperimentTestSuite) Test_Error() {
 					"/experiments/%s", tt.ID,
 				),
 			)
-			s.Regexp(tt.error, resp.Error())
+			s.Equal(tt.error.Message, resp.Message)
+			s.Equal(tt.error.StatusCode, resp.StatusCode)
 		})
 	}
 }

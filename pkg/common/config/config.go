@@ -17,7 +17,6 @@ import (
 type Config struct {
 	Auth                  auth.Config
 	DevMode               bool
-	AimRevert             bool
 	ListenAddress         string
 	DefaultArtifactRoot   string
 	S3EndpointURI         string
@@ -45,7 +44,6 @@ func NewConfig() *Config {
 			AuthOIDCProviderEndpoint: viper.GetString("auth-oidc-provider-endpoint"),
 		},
 		DevMode:               viper.GetBool("dev-mode"),
-		AimRevert:             viper.GetBool("run-original-aim-service"),
 		ListenAddress:         viper.GetString("listen-address"),
 		DefaultArtifactRoot:   viper.GetString("default-artifact-root"),
 		S3EndpointURI:         viper.GetString("s3-endpoint-uri"),

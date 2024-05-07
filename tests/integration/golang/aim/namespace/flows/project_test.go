@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -274,10 +274,10 @@ func (s *ProjectFlowTestSuite) getProjectParamsAndCompare(
 		).DoRequest("/projects/params"),
 	)
 
-	s.Equal(1, len(resp.Metric))
-	_, ok := resp.Metric[metric.Key]
+	s.Equal(1, len(*resp.Metric))
+	_, ok := (*resp.Metric)[metric.Key]
 	s.True(ok)
-	s.Equal(map[string]interface{}{
+	s.Equal(&map[string]interface{}{
 		param.Key: map[string]interface{}{
 			"__example_type__": "<class 'str'>",
 		},

@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 )
 
 const (
@@ -35,7 +35,6 @@ type QueryParser struct {
 
 type ParsedQuery interface {
 	Filter(*gorm.DB) *gorm.DB
-	IsMetricSelected() bool
 }
 
 type parsedQuery struct {
@@ -51,6 +50,8 @@ type callable func(args []ast.Expr) (any, error)
 type attributeGetter func(attr string) (any, error)
 
 type subscriptSlicer func(index ast.Slicer) (any, error)
+
+type attributeOrSubscript func(v any) (any, error)
 
 type join struct {
 	key   string
@@ -187,10 +188,6 @@ func (pq *parsedQuery) Filter(tx *gorm.DB) *gorm.DB {
 	return tx
 }
 
-func (pq *parsedQuery) IsMetricSelected() bool {
-	return pq.metricSelected
-}
-
 func (pq *parsedQuery) parseNode(node ast.Expr) (any, error) {
 	ret, err := pq._parseNode(node)
 	if err != nil && !errors.Is(err, SyntaxError{}) {
@@ -305,6 +302,8 @@ func (pq *parsedQuery) parseAttribute(node *ast.Attribute) (any, error) {
 
 		switch value := parsedNode.(type) {
 		case attributeGetter:
+			return value(attribute)
+		case attributeOrSubscript:
 			return value(attribute)
 		default:
 			return nil, fmt.Errorf("unsupported attribute value %#v", value)
@@ -588,38 +587,19 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 							}
 						}), nil
 					case "tags":
-						return subscriptSlicer(func(s ast.Slicer) (any, error) {
-							switch s := s.(type) {
+						// handle dot (attribute) or dict (subscriptSlicer) syntax
+						return attributeOrSubscript(func(v any) (any, error) {
+							switch v := v.(type) {
+							case string:
+								return pq.tagJoin(v, table)
 							case *ast.Index:
-								v, err := pq.parseNode(s.Value)
+								val, err := pq.parseNode(v.Value)
 								if err != nil {
 									return nil, err
 								}
-								switch v := v.(type) {
-								case string:
-									joinKey := fmt.Sprintf("tags:%s", v)
-									j, ok := pq.joins[joinKey]
-									if !ok {
-										alias := fmt.Sprintf("tags_%d", len(pq.joins))
-										j = join{
-											alias: alias,
-											query: fmt.Sprintf(
-												"LEFT JOIN tags %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?",
-												alias, table, alias, alias,
-											),
-											args: []any{v},
-										}
-										pq.AddJoin(joinKey, j)
-									}
-									return clause.Column{
-										Table: j.alias,
-										Name:  "value",
-									}, nil
-								default:
-									return nil, fmt.Errorf("unsupported index value type %T", v)
-								}
+								return pq.tagsSubscriptSlicer(val, table)
 							default:
-								return nil, fmt.Errorf("unsupported slicer %q", ast.Dump(s))
+								return nil, fmt.Errorf("unsupported slicer or attribute %v", v)
 							}
 						}), nil
 					default:
@@ -641,51 +621,6 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 							Table: j.alias,
 							Name:  "value",
 						}, nil
-					}
-				},
-			), nil
-		case "metric":
-			table, ok := pq.qp.Tables["metrics"]
-			if !ok {
-				return nil, errors.New("unsupported name identifier 'metric'")
-			}
-			return attributeGetter(
-				func(attr string) (any, error) {
-					switch attr {
-					case "name":
-						pq.metricSelected = true
-						return clause.Column{
-							Table: table,
-							Name:  "key",
-						}, nil
-					case "last":
-						return clause.Column{
-							Table: table,
-							Name:  "value",
-						}, nil
-					case "last_step":
-						return clause.Column{
-							Table: table,
-							Name:  "last_iter",
-						}, nil
-					case "first_step":
-						return 0, nil
-					case "context":
-						return attributeGetter(
-							func(contextKey string) (any, error) {
-								// Add a WHERE clause for the context key
-								return Json{
-									Column: clause.Column{
-										Table: TableContexts,
-										Name:  "json",
-									},
-									JsonPath:  contextKey,
-									Dialector: pq.qp.Dialector,
-								}, nil
-							},
-						), nil
-					default:
-						return nil, fmt.Errorf("unsupported metrics attribute %q", attr)
 					}
 				},
 			), nil
@@ -812,6 +747,38 @@ func (pq *parsedQuery) metricSubscriptSlicer(v any) (any, error) {
 	}
 }
 
+// tagsSubscriptSlicer will join the tags table using the index key.
+func (pq *parsedQuery) tagsSubscriptSlicer(key any, table string) (any, error) {
+	switch v := key.(type) {
+	case string:
+		return pq.tagJoin(v, table)
+	default:
+		return nil, fmt.Errorf("unsupported index value type %T", v)
+	}
+}
+
+// tagJoin joins the tags table using provided key.
+func (pq *parsedQuery) tagJoin(key string, table string) (any, error) {
+	joinKey := fmt.Sprintf("tags:%s", key)
+	j, ok := pq.joins[joinKey]
+	if !ok {
+		alias := fmt.Sprintf("tags_%d", len(pq.joins))
+		j = join{
+			alias: alias,
+			query: fmt.Sprintf(
+				"LEFT JOIN tags %s ON %s.run_uuid = %s.run_uuid AND %s.key = ?",
+				alias, table, alias, alias,
+			),
+			args: []any{key},
+		}
+		pq.AddJoin(joinKey, j)
+	}
+	return clause.Column{
+		Table: j.alias,
+		Name:  "value",
+	}, nil
+}
+
 // latestMetricsKeyJoin joins the latest_metrics table by run_uuid and metric key, returning the join struct.
 func (pq *parsedQuery) latestMetricsKeyJoin(key, table string) join {
 	joinsKey := fmt.Sprintf("metrics:%s", key)
@@ -932,6 +899,8 @@ func (pq *parsedQuery) parseSubscript(node *ast.Subscript) (any, error) {
 		}
 		switch v := v.(type) {
 		case subscriptSlicer:
+			return v(node.Slice)
+		case attributeOrSubscript:
 			return v(node.Slice)
 		default:
 			return nil, fmt.Errorf("unsupported attribute value %#v", v)

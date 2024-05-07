@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -28,10 +28,10 @@ func (s *GetProjectActivityTestSuite) Test_Ok() {
 	var resp response.ProjectActivityResponse
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/projects/activity"))
 
-	s.Equal(8, resp.NumActiveRuns)
-	s.Equal(2, resp.NumArchivedRuns)
-	s.Equal(1, resp.NumExperiments)
-	s.Equal(10, resp.NumRuns)
+	s.Equal(int64(8), resp.NumActiveRuns)
+	s.Equal(int64(2), resp.NumArchivedRuns)
+	s.Equal(int64(1), resp.NumExperiments)
+	s.Equal(int64(10), resp.NumRuns)
 	s.Equal(1, len(resp.ActivityMap))
 	for _, v := range resp.ActivityMap {
 		s.Equal(10, v)

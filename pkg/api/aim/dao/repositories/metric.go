@@ -260,7 +260,7 @@ func (r MetricRepository) findContextIDs(ctx context.Context, req *request.Searc
 	for _, r := range req.Metrics {
 		data, err := json.Marshal(r.Context)
 		if err != nil {
-			return nil, api.NewInternalError("error serializing context: %s", err)
+			return nil, eris.Wrap(err, "error serializing context")
 		}
 		contextList = append(contextList, data)
 		contextsMap[string(data)] = data

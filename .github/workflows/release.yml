@@ -118,3 +118,11 @@ jobs:
             $(printf -- "--tag ${{ vars.DOCKER_REPO }}:%s " ${tags[@]}) \
             $(printf "${{ vars.DOCKER_REPO }}@%s " ${digests[@]})
           echo "::endgroup::"
+
+  chart-release:
+    name: Publish Helm chart
+    if: startsWith(github.ref, 'refs/tags/v') 
+    uses: G-Research/charts/.github/workflows/invoke-push.yaml@master
+    secrets:
+      APP_ID: ${{ secrets.APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}

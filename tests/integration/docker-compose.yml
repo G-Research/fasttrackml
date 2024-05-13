@@ -27,8 +27,6 @@ services:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       timeout: 5s
-    ports:
-      - 5433:5432
     environment:
       - POSTGRES_PASSWORD=postgres
 

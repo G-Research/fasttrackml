@@ -40,6 +40,7 @@ func (s *MLflowTestSuite) SetupSuite() {
 		1*time.Second,
 		20,
 	)
+	s.Nil(err)
 
 	runsFixtures, err := fixtures.NewRunFixtures(db.GormDB())
 	s.Require().Nil(err)

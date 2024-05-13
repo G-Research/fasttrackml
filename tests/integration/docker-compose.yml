@@ -1,26 +1,5 @@
 services:
 
-  mlflow-server:
-    build:
-      dockerfile: MLflow.Server.Dockerfile
-    restart: always
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:5000" ]
-      interval: 5s
-      timeout: 5s
-    environment:
-      BACKEND_STORE_URI: "postgresql://postgres:postgres@postgres/postgres"
-    depends_on:
-      - postgres
-
-  mlflow-setup:
-    build:
-      dockerfile: MLflow.Server.Dockerfile
-    depends_on:
-      mlflow-server:
-        condition: service_healthy
-    command: python mlflow-setup.py
-
   postgres:
     image: postgres:latest
     healthcheck:
@@ -51,6 +30,16 @@ services:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:4443/storage/v1/b"]
       interval: 5s
       timeout: 5s
+
+  mlflow-setup:
+    build:
+      dockerfile: MLflow.Client.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      BACKEND_STORE_URI: postgresql://postgres:postgres@postgres/postgres
+    command: python mlflow-setup.py
 
   integration-tests:
     image: golang:1.21

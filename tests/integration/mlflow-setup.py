@@ -1,9 +1,10 @@
+import os
 from random import randint, random
 
 import mlflow
 from mlflow import log_metric, log_param
 
-mlflow.set_tracking_uri("http://mlflow-server:5000")
+mlflow.set_tracking_uri(os.getenv('BACKEND_STORE_URI'))
 mlflow.set_experiment("mlflow-experiment")
 
 if __name__ == "__main__":

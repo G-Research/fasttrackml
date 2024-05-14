@@ -1,4 +1,5 @@
 services:
+
   postgres:
     image: postgres:latest
     healthcheck:
@@ -30,6 +31,16 @@ services:
       interval: 5s
       timeout: 5s
 
+  mlflow-setup:
+    build:
+      dockerfile: MLflow.Client.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      BACKEND_STORE_URI: postgresql://postgres:postgres@postgres/postgres
+    command: python mlflow-setup.py
+
   integration-tests:
     image: golang:1.21
     command: make test-go-integration
@@ -44,6 +55,8 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      mlflow-setup:
+        condition: service_completed_successfully
     environment:
       GOCACHE: /cache/go-build
       GOMODCACHE: /cache/go-mod

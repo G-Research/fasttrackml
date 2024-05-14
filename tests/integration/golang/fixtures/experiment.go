@@ -34,8 +34,8 @@ func (f ExperimentFixtures) CreateExperiment(
 	return experiment, nil
 }
 
-// GetTestExperiments fetches all experiments.
-func (f ExperimentFixtures) GetTestExperiments(
+// GetExperiments fetches all experiments.
+func (f ExperimentFixtures) GetExperiments(
 	ctx context.Context,
 ) ([]models.Experiment, error) {
 	var experiments []models.Experiment

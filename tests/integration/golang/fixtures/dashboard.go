@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
 
@@ -27,6 +28,7 @@ func NewDashboardFixtures(db *gorm.DB) (*DashboardFixtures, error) {
 func (f DashboardFixtures) CreateDashboard(
 	ctx context.Context, dashboard *database.Dashboard,
 ) (*database.Dashboard, error) {
+	dashboard.ID = uuid.New()
 	if err := f.db.WithContext(ctx).Create(dashboard).Error; err != nil {
 		return nil, eris.Wrap(err, "error creating test dashboard")
 	}

@@ -2,55 +2,85 @@ package aim
 
 import (
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/G-Research/fasttrackml/pkg/api/aim/controller"
 )
 
-func AddRoutes(r fiber.Router) {
-	apps := r.Group("apps")
-	apps.Get("/", GetApps)
-	apps.Post("/", CreateApp)
-	apps.Get("/:id/", GetApp)
-	apps.Put("/:id/", UpdateApp)
-	apps.Delete("/:id/", DeleteApp)
+// Router represents `mlflow` router.
+type Router struct {
+	controller        *controller.Controller
+	globalMiddlewares []fiber.Handler
+}
 
-	dashboards := r.Group("/dashboards")
-	dashboards.Get("/", GetDashboards)
-	dashboards.Post("/", CreateDashboard)
-	dashboards.Get("/:id/", GetDashboard)
-	dashboards.Put("/:id/", UpdateDashboard)
-	dashboards.Delete("/:id/", DeleteDashboard)
+// NewRouter creates new instance of `aim` router.
+func NewRouter(controller *controller.Controller) *Router {
+	return &Router{
+		controller:        controller,
+		globalMiddlewares: make([]fiber.Handler, 0),
+	}
+}
 
-	experiments := r.Group("experiments")
-	experiments.Get("/", GetExperiments)
-	experiments.Get("/:id/", GetExperiment)
-	experiments.Get("/:id/activity/", GetExperimentActivity)
-	experiments.Get("/:id/runs/", GetExperimentRuns)
-	experiments.Delete("/:id/", DeleteExperiment)
-	experiments.Put("/:id/", UpdateExperiment)
+// Init initialise routes.
+func (r *Router) Init(server fiber.Router) {
+	mainGroup := server.Group("/aim/api")
+	// apply global middlewares.
+	for _, globalMiddleware := range r.globalMiddlewares {
+		mainGroup.Use(globalMiddleware)
+	}
 
-	projects := r.Group("/projects")
-	projects.Get("/", GetProject)
-	projects.Get("/activity/", GetProjectActivity)
-	projects.Get("/pinned-sequences/", GetProjectPinnedSequences)
-	projects.Post("/pinned-sequences/", UpdateProjectPinnedSequences)
-	projects.Get("/params/", GetProjectParams)
-	projects.Get("/status/", GetProjectStatus)
+	// setup related routes.
+	apps := mainGroup.Group("apps")
+	apps.Get("/", r.controller.GetApps)
+	apps.Post("/", r.controller.CreateApp)
+	apps.Get("/:id/", r.controller.GetApp)
+	apps.Put("/:id/", r.controller.UpdateApp)
+	apps.Delete("/:id/", r.controller.DeleteApp)
 
-	runs := r.Group("/runs")
-	runs.Get("/active/", GetRunsActive)
-	runs.Get("/search/run/", SearchRuns)
-	runs.Get("/search/metric/", SearchMetrics)
-	runs.Post("/search/metric/align/", SearchAlignedMetrics)
-	runs.Get("/:id/info/", GetRunInfo)
-	runs.Post("/:id/metric/get-batch/", GetRunMetrics)
-	runs.Put("/:id/", UpdateRun)
-	runs.Delete("/:id/", DeleteRun)
-	runs.Post("/delete-batch/", DeleteBatch)
-	runs.Post("/archive-batch/", ArchiveBatch)
+	dashboards := mainGroup.Group("/dashboards")
+	dashboards.Get("/", r.controller.GetDashboards)
+	dashboards.Post("/", r.controller.CreateDashboard)
+	dashboards.Get("/:id/", r.controller.GetDashboard)
+	dashboards.Put("/:id/", r.controller.UpdateDashboard)
+	dashboards.Delete("/:id/", r.controller.DeleteDashboard)
 
-	tags := r.Group("/tags")
-	tags.Get("/", GetTags)
+	experiments := mainGroup.Group("experiments")
+	experiments.Get("/", r.controller.GetExperiments)
+	experiments.Get("/:id/", r.controller.GetExperiment)
+	experiments.Get("/:id/activity/", r.controller.GetExperimentActivity)
+	experiments.Get("/:id/runs/", r.controller.GetExperimentRuns)
+	experiments.Delete("/:id/", r.controller.DeleteExperiment)
+	experiments.Put("/:id/", r.controller.UpdateExperiment)
 
-	r.Use(func(c *fiber.Ctx) error {
+	projects := mainGroup.Group("/projects")
+	projects.Get("/", r.controller.GetProject)
+	projects.Get("/activity/", r.controller.GetProjectActivity)
+	projects.Get("/pinned-sequences/", r.controller.GetProjectPinnedSequences)
+	projects.Post("/pinned-sequences/", r.controller.UpdateProjectPinnedSequences)
+	projects.Get("/params/", r.controller.GetProjectParams)
+	projects.Get("/status/", r.controller.GetProjectStatus)
+
+	runs := mainGroup.Group("/runs")
+	runs.Get("/active/", r.controller.GetRunsActive)
+	runs.Get("/search/run/", r.controller.SearchRuns)
+	runs.Post("/search/metric/", r.controller.SearchMetrics)
+	runs.Post("/search/metric/align/", r.controller.SearchAlignedMetrics)
+	runs.Get("/:id/info/", r.controller.GetRunInfo)
+	runs.Post("/:id/metric/get-batch/", r.controller.GetRunMetrics)
+	runs.Put("/:id/", r.controller.UpdateRun)
+	runs.Delete("/:id/", r.controller.DeleteRun)
+	runs.Post("/delete-batch/", r.controller.DeleteBatch)
+	runs.Post("/archive-batch/", r.controller.ArchiveBatch)
+
+	tags := mainGroup.Group("/tags")
+	tags.Get("/", r.controller.GetTags)
+
+	mainGroup.Use(func(c *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	})
+}
+
+// AddGlobalMiddleware adds a global middleware which will be applied for each route.
+func (r *Router) AddGlobalMiddleware(middleware fiber.Handler) *Router {
+	r.globalMiddlewares = append(r.globalMiddlewares, middleware)
+	return r
 }

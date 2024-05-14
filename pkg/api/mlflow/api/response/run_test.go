@@ -4,10 +4,9 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-
 	"github.com/stretchr/testify/assert"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
@@ -42,9 +41,9 @@ func TestNewRunPartialResponse(t *testing.T) {
 				RowNum:         1,
 				Params: []models.Param{
 					{
-						Key:   "Key",
-						Value: "Value",
-						RunID: "RunID",
+						Key:      "Key",
+						ValueStr: common.GetPointer("Value"),
+						RunID:    "RunID",
 					},
 				},
 				Tags: []models.Tag{
@@ -124,9 +123,9 @@ func TestNewRunPartialResponse(t *testing.T) {
 				RowNum:         1,
 				Params: []models.Param{
 					{
-						Key:   "Key",
-						Value: "Value",
-						RunID: "RunID",
+						Key:      "Key",
+						ValueStr: common.GetPointer("Value"),
+						RunID:    "RunID",
 					},
 				},
 				Tags: []models.Tag{

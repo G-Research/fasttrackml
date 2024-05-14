@@ -16,38 +16,38 @@ import (
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
-	adminAPI "github.com/G-Research/fasttrackml/pkg/api/admin"
-	adminAPIController "github.com/G-Research/fasttrackml/pkg/api/admin/controller"
-	"github.com/G-Research/fasttrackml/pkg/api/admin/service/namespace"
 	aimAPI "github.com/G-Research/fasttrackml/pkg/api/aim"
-	aim2API "github.com/G-Research/fasttrackml/pkg/api/aim2"
-	aim2Controller "github.com/G-Research/fasttrackml/pkg/api/aim2/controller"
-	aimRepositories "github.com/G-Research/fasttrackml/pkg/api/aim2/dao/repositories"
-	aimAppService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/app"
-	aimDashboardService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/dashboard"
-	aimExperimentService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/experiment"
-	aimProjectService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/project"
-	aimRunService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/run"
-	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim2/service/tag"
+	aimController "github.com/G-Research/fasttrackml/pkg/api/aim/controller"
+	aimRepositories "github.com/G-Research/fasttrackml/pkg/api/aim/dao/repositories"
+	aimAppService "github.com/G-Research/fasttrackml/pkg/api/aim/services/app"
+	aimDashboardService "github.com/G-Research/fasttrackml/pkg/api/aim/services/dashboard"
+	aimExperimentService "github.com/G-Research/fasttrackml/pkg/api/aim/services/experiment"
+	aimProjectService "github.com/G-Research/fasttrackml/pkg/api/aim/services/project"
+	aimRunService "github.com/G-Research/fasttrackml/pkg/api/aim/services/run"
+	aimTagService "github.com/G-Research/fasttrackml/pkg/api/aim/services/tag"
 	mlflowAPI "github.com/G-Research/fasttrackml/pkg/api/mlflow"
-	mlflowConfig "github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	mlflowController "github.com/G-Research/fasttrackml/pkg/api/mlflow/controller"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao"
 	mlflowRepositories "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service"
-	mlflowArtifactService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/service/artifact/storage"
-	mlflowExperimentService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/experiment"
-	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/metric"
-	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/model"
-	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/service/run"
-	namespaceMiddleware "github.com/G-Research/fasttrackml/pkg/common/middleware/namespace"
+	mlflowService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services"
+	mlflowArtifactService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact/storage"
+	mlflowExperimentService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/experiment"
+	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/metric"
+	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/model"
+	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/run"
+	"github.com/G-Research/fasttrackml/pkg/common/auth"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
+	"github.com/G-Research/fasttrackml/pkg/common/dao"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
 	adminUIController "github.com/G-Research/fasttrackml/pkg/ui/admin/controller"
+	adminUINamespaceService "github.com/G-Research/fasttrackml/pkg/ui/admin/service/namespace"
 	aimUI "github.com/G-Research/fasttrackml/pkg/ui/aim"
 	"github.com/G-Research/fasttrackml/pkg/ui/chooser"
 	chooserController "github.com/G-Research/fasttrackml/pkg/ui/chooser/controller"
+	chooserNamespaceService "github.com/G-Research/fasttrackml/pkg/ui/chooser/service/namespace"
 	mlflowUI "github.com/G-Research/fasttrackml/pkg/ui/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/version"
 )
@@ -63,7 +63,7 @@ type server struct {
 }
 
 // NewServer creates a new server instance.
-func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server, error) {
+func NewServer(ctx context.Context, config *config.Config) (Server, error) {
 	// create artifact storage factory.
 	artifactStorageFactory, err := storage.NewArtifactStorageFactory(config)
 	if err != nil {
@@ -71,28 +71,23 @@ func NewServer(ctx context.Context, config *mlflowConfig.ServiceConfig) (Server,
 	}
 
 	// create database provider.
-	db, err := createDBProvider(config)
+	db, err := createDBProvider(ctx, config)
 	if err != nil {
-		return nil, err
-	}
-
-	// create namespace repository.
-	namespaceRepository, err := createNamespaceRepository(ctx, db)
-	if err != nil {
-		//nolint:errcheck,gosec
-		db.Close()
 		return nil, err
 	}
 
 	// create fiber app.
 	//nolint:contextcheck
-	app := createApp(config, db, artifactStorageFactory, namespaceRepository)
+	app, err := createApp(ctx, config, db, artifactStorageFactory)
+	if err != nil {
+		return nil, eris.Wrapf(err, "error creating application")
+	}
 
 	return server{app}, nil
 }
 
 // createDBProvider creates a new DB provider.
-func createDBProvider(config *mlflowConfig.ServiceConfig) (database.DBProvider, error) {
+func createDBProvider(ctx context.Context, config *config.Config) (database.DBProvider, error) {
 	db, err := database.NewDBProvider(
 		config.DatabaseURI,
 		config.DatabaseSlowThreshold,
@@ -108,19 +103,20 @@ func createDBProvider(config *mlflowConfig.ServiceConfig) (database.DBProvider, 
 		}
 	}
 
-	if err := database.CheckAndMigrateDB(config.DatabaseMigrate, db.GormDB()); err != nil {
+	gormDBWithContext := db.GormDB().WithContext(ctx)
+	if err := database.CheckAndMigrateDB(config.DatabaseMigrate, gormDBWithContext); err != nil {
 		return nil, eris.Wrap(err, "error running database migration")
 	}
 
-	if err := database.CreateDefaultNamespace(db.GormDB()); err != nil {
+	if err := database.CreateDefaultNamespace(gormDBWithContext); err != nil {
 		return nil, eris.Wrap(err, "error creating default namespace")
 	}
 
-	if err := database.CreateDefaultExperiment(db.GormDB(), config.DefaultArtifactRoot); err != nil {
+	if err := database.CreateDefaultExperiment(gormDBWithContext, config.DefaultArtifactRoot); err != nil {
 		return nil, eris.Wrap(err, "error creating default experiment")
 	}
 
-	if err := database.CreateDefaultMetricContext(db.GormDB()); err != nil {
+	if err := database.CreateDefaultMetricContext(gormDBWithContext); err != nil {
 		return nil, eris.Wrap(err, "error creating default context")
 	}
 
@@ -129,34 +125,15 @@ func createDBProvider(config *mlflowConfig.ServiceConfig) (database.DBProvider, 
 	return db, nil
 }
 
-// createNamespaceRepository creates a new namespace repository.
-func createNamespaceRepository(
-	ctx context.Context, db database.DBProvider,
-) (mlflowRepositories.NamespaceRepositoryProvider, error) {
-	// create namespace notification listener.
-	listener, err := dao.NewNamespaceListener(ctx, db.GormDB())
-	if err != nil {
-		return nil, eris.Wrap(err, "error creating namespace notification listener")
-	}
-
-	// create cached namespace repository.
-	repo, err := mlflowRepositories.NewNamespaceCachedRepository(
-		db.GormDB(), listener, mlflowRepositories.NewNamespaceRepository(db.GormDB()),
-	)
-	if err != nil {
-		return nil, eris.Wrap(err, "error creating namespace repository")
-	}
-
-	return repo, nil
-}
-
 // createApp creates a new fiber app with base configuration.
+//
+//nolint:contextcheck
 func createApp(
-	config *mlflowConfig.ServiceConfig,
+	ctx context.Context,
+	config *config.Config,
 	db database.DBProvider,
 	artifactStorageFactory storage.ArtifactStorageFactoryProvider,
-	namespaceRepository mlflowRepositories.NamespaceRepositoryProvider,
-) *fiber.App {
+) (*fiber.App, error) {
 	app := fiber.New(fiber.Config{
 		BodyLimit:             16 * 1024 * 1024,
 		ReadBufferSize:        16384,
@@ -169,7 +146,7 @@ func createApp(
 			p := string(c.Request().URI().Path())
 			switch {
 			case strings.HasPrefix(p, "/aim"):
-				return aim2API.ErrorHandler(c, err)
+				return aimAPI.ErrorHandler(c, err)
 			case strings.HasPrefix(p, "/api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/ajax-api/2.0/mlflow/") ||
 				strings.HasPrefix(p, "/mlflow/ajax-api/2.0/mlflow/"):
@@ -191,12 +168,55 @@ func createApp(
 		app.Use(cors.New())
 	}
 
-	if config.AuthUsername != "" && config.AuthPassword != "" {
+	// create namespace notification listener.
+	namespaceEventListener, err := dao.NewNamespaceListener(ctx, db.GormDB())
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating namespace notification listener")
+	}
+
+	namespaceCachedRepository, err := mlflowRepositories.NewNamespaceCachedRepository(
+		ctx, mlflowRepositories.NewNamespaceRepository(db.GormDB()), namespaceEventListener,
+	)
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating namespace repository")
+	}
+	rolesCachedRepository, err := repositories.NewRoleCachedRepository(
+		ctx, db.GormDB(), namespaceEventListener,
+	)
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating roles repository")
+	}
+
+	namespaceEventListener.Listen()
+
+	// attach global middlewares.
+	if config.Auth.AuthUsername != "" && config.Auth.AuthPassword != "" {
+		log.Info("Auth - enabling Basic Auth")
 		app.Use(basicauth.New(basicauth.Config{
 			Users: map[string]string{
-				config.AuthUsername: config.AuthPassword,
+				config.Auth.AuthUsername: config.Auth.AuthPassword,
 			},
 		}))
+	}
+	app.Get("/set-cookie/:access_token", func(ctx *fiber.Ctx) error {
+		ctx.Cookie(&fiber.Cookie{
+			Name:  "access_token",
+			Value: ctx.Params("access_token"),
+		})
+		return ctx.Redirect("/", http.StatusMovedPermanently)
+	})
+	app.Use(middleware.NewNamespaceMiddleware(namespaceCachedRepository))
+
+	// based on Auth configuration attach global OIDC or Basic Auth middleware.
+	switch {
+	case config.Auth.IsAuthTypeOIDC():
+		oidcClient, err := auth.NewOIDCClient(ctx, &config.Auth)
+		if err != nil {
+			return nil, eris.Wrap(err, "error creating OIDC client")
+		}
+		app.Use(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
+	case config.Auth.IsAuthTypeUser():
+		app.Use(middleware.NewBasicAuthMiddleware(config.Auth.AuthParsedUserPermissions))
 	}
 
 	app.Use(compress.New(compress.Config{
@@ -213,8 +233,6 @@ func createApp(
 		Output: log.StandardLogger().Writer(),
 	}))
 
-	app.Use(namespaceMiddleware.New(namespaceRepository))
-
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")
 	})
@@ -222,23 +240,36 @@ func createApp(
 		return c.SendString(version.Version)
 	})
 
-	// init `aim` api and ui routes.
-	router := app.Group("/aim/api/")
-	aimAPI.AddRoutes(router)
-
-	// init `aim2` api routes.
-	aim2API.NewRouter(
-		aim2Controller.NewController(
+	// init `aim` api refactored routes.
+	log.Info("using refactored aim service")
+	aimAPI.NewRouter(
+		aimController.NewController(
 			aimTagService.NewService(
 				aimRepositories.NewTagRepository(db.GormDB()),
 			),
 			aimAppService.NewService(
 				aimRepositories.NewAppRepository(db.GormDB()),
 			),
-			aimRunService.NewService(),
-			aimProjectService.NewService(),
-			aimDashboardService.NewService(),
-			aimExperimentService.NewService(),
+			aimRunService.NewService(
+				aimRepositories.NewRunRepository(db.GormDB()),
+				aimRepositories.NewMetricRepository(db.GormDB()),
+			),
+			aimProjectService.NewService(
+				aimRepositories.NewTagRepository(db.GormDB()),
+				aimRepositories.NewRunRepository(db.GormDB()),
+				aimRepositories.NewParamRepository(db.GormDB()),
+				aimRepositories.NewMetricRepository(db.GormDB()),
+				aimRepositories.NewExperimentRepository(db.GormDB()),
+				config.LiveUpdatesEnabled,
+			),
+			aimDashboardService.NewService(
+				aimRepositories.NewDashboardRepository(db.GormDB()),
+				aimRepositories.NewAppRepository(db.GormDB()),
+			),
+			aimExperimentService.NewService(
+				aimRepositories.NewTagRepository(db.GormDB()),
+				aimRepositories.NewExperimentRepository(db.GormDB()),
+			),
 		),
 	).Init(app)
 
@@ -269,41 +300,34 @@ func createApp(
 			),
 		),
 	).Init(app)
+
 	mlflowUI.AddRoutes(app)
 	aimUI.AddRoutes(app)
 
-	// init `admin` api routes.
-	adminAPI.NewRouter(
-		adminAPIController.NewController(
-			namespace.NewService(
-				config,
-				namespaceRepository,
-				mlflowRepositories.NewExperimentRepository(db.GormDB()),
-			),
-		),
-	).Init(app)
-
 	// init `admin` UI routes.
-	adminUI.NewRouter(
+	if err := adminUI.NewRouter(
 		adminUIController.NewController(
-			namespace.NewService(
+			adminUINamespaceService.NewService(
 				config,
-				namespaceRepository,
+				namespaceCachedRepository,
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 			),
 		),
-	).Init(app)
+	).Init(app); err != nil {
+		return nil, eris.Wrap(err, "error initializing admin routes")
+	}
 
 	// init `chooser` ui routes.
-	chooser.NewRouter(
+	if err := chooser.NewRouter(
 		chooserController.NewController(
-			namespace.NewService(
+			chooserNamespaceService.NewService(
 				config,
-				namespaceRepository,
-				mlflowRepositories.NewExperimentRepository(db.GormDB()),
+				namespaceCachedRepository,
 			),
 		),
-	).AddRoutes(app)
+	).Init(app); err != nil {
+		return nil, eris.Wrap(err, "error initializing chooser routes")
+	}
 
-	return app
+	return app, nil
 }

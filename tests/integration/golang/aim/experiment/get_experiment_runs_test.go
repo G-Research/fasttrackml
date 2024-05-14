@@ -2,12 +2,13 @@ package experiment
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -36,12 +37,14 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 	runs, err := s.RunFixtures.CreateExampleRuns(context.Background(), experiment, 10)
 	s.Require().Nil(err)
 
-	var resp response.GetExperimentRuns
+	var resp response.ExperimentRuns
 	s.Require().Nil(
 		s.AIMClient().WithQuery(map[any]any{
 			"limit":  4,
 			"offset": runs[8].ID,
-		}).WithResponse(&resp).DoRequest(
+		}).WithResponse(
+			&resp,
+		).DoRequest(
 			"/experiments/%d/runs", *experiment.ID,
 		),
 	)
@@ -51,27 +54,33 @@ func (s *GetExperimentRunsTestSuite) Test_Ok() {
 		r := runs[8-(index+1)]
 		s.Equal(r.ID, resp.Runs[index].ID)
 		s.Equal(r.Name, resp.Runs[index].Name)
-		s.Equal(float64(r.StartTime.Int64)/1000, resp.Runs[index].CreationTime)
-		s.Equal(float64(r.EndTime.Int64)/1000, resp.Runs[index].EndTime)
+		s.Equal(r.StartTime.Int64/1000, resp.Runs[index].CreationTime)
+		s.Equal(r.EndTime.Int64/1000, resp.Runs[index].EndTime)
 		s.Equal(r.LifecycleStage == models.LifecycleStageDeleted, resp.Runs[index].Archived)
 	}
 }
 
 func (s *GetExperimentRunsTestSuite) Test_Error() {
 	tests := []struct {
-		name  string
-		error string
 		ID    string
+		name  string
+		error *api.ErrorResponse
 	}{
 		{
-			name:  "IncorrectExperimentID",
-			error: `(unable to parse|failed to decode)`,
-			ID:    "incorrect_experiment_id",
+			ID:   "incorrect_experiment_id",
+			name: "IncorrectExperimentID",
+			error: &api.ErrorResponse{
+				Message:    `failed to decode: schema: error converting value for "id"`,
+				StatusCode: http.StatusUnprocessableEntity,
+			},
 		},
 		{
-			name:  "NotFoundExperiment",
-			error: `Not Found`,
-			ID:    "123",
+			ID:   "123",
+			name: "NotFoundExperiment",
+			error: &api.ErrorResponse{
+				Message:    "experiment '123' not found",
+				StatusCode: http.StatusBadRequest,
+			},
 		},
 	}
 
@@ -79,7 +88,8 @@ func (s *GetExperimentRunsTestSuite) Test_Error() {
 		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
 			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s/runs", tt.ID))
-			s.Regexp(tt.error, resp.Error())
+			s.Equal(tt.error.Message, resp.Message)
+			s.Equal(tt.error.StatusCode, resp.StatusCode)
 		})
 	}
 }

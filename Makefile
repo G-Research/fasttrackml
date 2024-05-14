@@ -45,6 +45,9 @@ COMPOSE_FILE=tests/integration/docker-compose.yml
 # Docker compose project name.
 COMPOSE_PROJECT_NAME=$(APP)-integration-tests
 
+AIM_BUILD_LOCATION=$(HOME)/fasttrackml-ui-aim
+MLFLOW_BUILD_LOCATION=$(HOME)/fasttrackml-ui-mlflow
+
 #
 # Default target (help).
 #
@@ -138,12 +141,12 @@ test: test-go-unit container-test test-python-integration ## run all the tests.
 .PHONY: test-go-unit
 test-go-unit: ## run go unit tests.
 	@echo ">>> Running unit tests."
-	@go test -count 1 -tags="$(GO_BUILDTAGS)" ./pkg/...
+	@go test -tags="$(GO_BUILDTAGS)" ./pkg/...
 
 .PHONY: test-go-integration
 test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
-	@go test -count 1 -tags="$(GO_BUILDTAGS)" ./tests/integration/golang/...
+	@go test -tags="$(GO_BUILDTAGS)" ./tests/integration/golang/...
 
 .PHONY: test-python-integration
 test-python-integration: ## run all the python integration tests.
@@ -167,13 +170,13 @@ test-python-integration-aim: ## run the Aim python integration tests.
 container-test: ## run integration tests in container.
 	@echo ">>> Running integration tests in container."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose run -e FML_AIM_ENDPOINT_PATH integration-tests
+		docker compose run -e FML_SLOW_TESTS_ENABLED integration-tests
 
 .PHONY: container-clean
 container-clean: ## clean containers.
 	@echo ">>> Cleaning containers."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
-		docker-compose down -v --remove-orphans
+		docker compose down -v --remove-orphans
 
 #
 # Mockery targets.
@@ -223,7 +226,7 @@ endif
 
 #
 # Build targets.
-# 
+#
 .PHONY: clean
 clean: ## clean build artifacts.
 	@echo ">>> Cleaning build artifacts."
@@ -255,3 +258,23 @@ migrations-create: ## generate a new database migration.
 migrations-rebuild: ## rebuild the migrations script to detect new migrations.
 	@echo ">>> Running FastTrackML migrations rebuild."
 	@go run main.go migrations rebuild
+
+.PHONY: ui-aim-sync
+ui-aim-sync: ## copy Aim UI files to docker volume.
+	@echo ">>> Syncing the Aim UI."
+	@rsync -rvu --exclude node_modules --exclude .git ui/fasttrackml-ui-aim/ $(AIM_BUILD_LOCATION)
+
+.PHONY: ui-aim-start
+ui-aim-start: ui-aim-sync ## start the Aim UI for development.  
+	@echo ">>> Starting the Aim UI."
+	@cd $(AIM_BUILD_LOCATION)/src && npm ci --legacy-peer-deps && npm start
+
+.PHONY: ui-mlflow-sync
+ui-mlflow-sync: ## copy MLflow UI files to docker volume.
+	@echo ">>> Syncing the MLflow UI."
+	@rsync -rvu --exclude node_modules --exclude .git ui/fasttrackml-ui-mlflow/ $(MLFLOW_BUILD_LOCATION)
+
+.PHONY: ui-mlflow-start
+ui-mlflow-start: ui-mlflow-sync ## start the MLflow UI for development.
+	@echo ">>> Starting the MLflow UI."
+	@cd $(MLFLOW_BUILD_LOCATION)/src && yarn install --immutable && yarn start

@@ -2,12 +2,13 @@ package experiment
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -40,7 +41,7 @@ func (s *GetExperimentActivityTestSuite) Test_Ok() {
 	err = s.RunFixtures.ArchiveRuns(context.Background(), s.DefaultNamespace.ID, archivedRunsIds)
 	s.Require().Nil(err)
 
-	var resp response.GetExperimentActivity
+	var resp response.ExperimentActivity
 	s.Require().Nil(
 		s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d/activity", *experiment.ID),
 	)
@@ -52,19 +53,25 @@ func (s *GetExperimentActivityTestSuite) Test_Ok() {
 
 func (s *GetExperimentActivityTestSuite) Test_Error() {
 	tests := []struct {
-		name  string
 		ID    string
-		error string
+		name  string
+		error *api.ErrorResponse
 	}{
 		{
-			name:  "GetInvalidExperimentID",
-			ID:    "123",
-			error: "Not Found",
+			ID:   "123",
+			name: "GetInvalidExperimentID",
+			error: &api.ErrorResponse{
+				Message:    "experiment '123' not found",
+				StatusCode: http.StatusBadRequest,
+			},
 		},
 		{
-			name:  "DeleteIncorrectExperimentID",
-			error: `(unable to parse|failed to decode)`,
-			ID:    "incorrect_experiment_id",
+			ID:   "incorrect_experiment_id",
+			name: "DeleteIncorrectExperimentID",
+			error: &api.ErrorResponse{
+				Message:    `failed to decode: schema: error converting value for "id"`,
+				StatusCode: http.StatusUnprocessableEntity,
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -75,7 +82,8 @@ func (s *GetExperimentActivityTestSuite) Test_Error() {
 			}).WithResponse(&resp).DoRequest(
 				"/experiments/%s/activity", tt.ID,
 			))
-			s.Regexp(tt.error, resp.Error())
+			s.Equal(tt.error.Message, resp.Message)
+			s.Equal(tt.error.StatusCode, resp.StatusCode)
 		})
 	}
 }

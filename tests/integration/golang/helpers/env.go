@@ -1,6 +1,8 @@
 package helpers
 
-import "os"
+import (
+	"os"
+)
 
 const defaultDatabaseBackend = "sqlite"
 
@@ -44,10 +46,10 @@ func GetS3EndpointUri() string {
 	return "http://localhost:9000"
 }
 
-func GetAimEndpointPath() string {
-	path, ok := os.LookupEnv("FML_AIM_ENDPOINT_PATH")
-	if ok {
-		return path
+func GetSlowTestsEnabledFlag() bool {
+	flag, ok := os.LookupEnv("FML_SLOW_TESTS_ENABLED")
+	if ok && flag == "true" {
+		return true
 	}
-	return "/aim/api"
+	return false
 }

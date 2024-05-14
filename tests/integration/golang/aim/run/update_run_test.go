@@ -8,10 +8,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -40,6 +41,7 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 		{
 			name: "UpdateOneRun",
 			request: request.UpdateRunRequest{
+				ID:       s.run.ID,
 				RunID:    &(s.run.ID),
 				Name:     common.GetPointer(fmt.Sprintf("%v%v", s.run.Name, "-new")),
 				Status:   common.GetPointer(string(models.StatusFinished)),
@@ -73,10 +75,10 @@ func (s *UpdateRunTestSuite) Test_Ok() {
 
 func (s *UpdateRunTestSuite) Test_Error() {
 	tests := []struct {
-		name        string
 		ID          string
+		name        string
 		requestBody any
-		error       string
+		error       *api.ErrorResponse
 	}{
 		{
 			name: "UpdateRunWithIncorrectArchived",
@@ -84,18 +86,24 @@ func (s *UpdateRunTestSuite) Test_Error() {
 			requestBody: map[string]any{
 				"Archived": "this-cannot-unmarshal",
 			},
-			error: "cannot unmarshal",
+			error: &api.ErrorResponse{
+				Message:    "json: cannot unmarshal string into Go struct field UpdateRunRequest.archived of type bool",
+				StatusCode: http.StatusUnprocessableEntity,
+			},
 		},
 		{
 			name:        "UpdateRunWithUnknownID",
 			ID:          "incorrect-ID",
 			requestBody: map[string]any{},
-			error:       "unable to find run 'incorrect-ID'",
+			error: &api.ErrorResponse{
+				Message:    "run 'incorrect-ID' not found",
+				StatusCode: http.StatusBadRequest,
+			},
 		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var resp response.Error
+			var resp api.ErrorResponse
 			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPut,
@@ -107,7 +115,8 @@ func (s *UpdateRunTestSuite) Test_Error() {
 					"/runs/%s", tt.ID,
 				),
 			)
-			s.Contains(resp.Message, tt.error)
+			s.Equal(tt.error.Message, resp.Message)
+			s.Equal(tt.error.StatusCode, resp.StatusCode)
 		})
 	}
 }

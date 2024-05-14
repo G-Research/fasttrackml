@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 )
 
 type Status string
@@ -128,9 +128,11 @@ func (rn RowNum) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 }
 
 type Param struct {
-	Key   string `gorm:"type:varchar(250);not null;primaryKey"`
-	Value string `gorm:"type:varchar(500);not null"`
-	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
+	Key        string   `gorm:"type:varchar(250);not null;primaryKey"`
+	ValueStr   *string  `gorm:"type:varchar(500)"`
+	ValueInt   *int64   `gorm:"type:bigint"`
+	ValueFloat *float64 `gorm:"type:float"`
+	RunID      string   `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 
 type Tag struct {
@@ -191,10 +193,9 @@ func (SchemaVersion) TableName() string {
 }
 
 type Base struct {
-	ID         uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	IsArchived bool      `json:"-"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) error {
@@ -208,6 +209,7 @@ type Dashboard struct {
 	Description string     `json:"description"`
 	AppID       *uuid.UUID `gorm:"type:uuid" json:"app_id"`
 	App         App        `json:"-"`
+	IsArchived  bool       `json:"-"`
 }
 
 func (d Dashboard) MarshalJSON() ([]byte, error) {
@@ -233,6 +235,7 @@ type App struct {
 	State       AppState  `json:"state"`
 	Namespace   Namespace `json:"-"`
 	NamespaceID uint      `gorm:"not null" json:"-"`
+	IsArchived  bool      `json:"-"`
 }
 
 type AppState map[string]any
@@ -265,4 +268,17 @@ func NewUUID() string {
 	u := uuid.New()
 	hex.Encode(r[:], u[:])
 	return string(r[:])
+}
+
+type Role struct {
+	Base
+	Name string `gorm:"unique;index;not null"`
+}
+
+type RoleNamespace struct {
+	Base
+	Role        Role      `gorm:"constraint:OnDelete:CASCADE"`
+	RoleID      uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
+	Namespace   Namespace `gorm:"constraint:OnDelete:CASCADE"`
+	NamespaceID uint      `gorm:"not null;index:,unique,composite:relation"`
 }

@@ -152,7 +152,7 @@ jobs:
       - name: Compute cache info
         id: cache-info
         run: |
-          image=$(yq .services.service.image < tests/integration/docker-compose.yml)
+          image=$(yq .services.integration-tests.image < tests/integration/docker-compose.yml)
           echo go-version=$(skopeo inspect docker://${image} | jq -r .Digest | cut -d: -f2) >> $GITHUB_OUTPUT
 
       - name: Setup cache
@@ -171,13 +171,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
           FML_DATABASE_BACKEND: ${{ matrix.database-backend }}
-
-      - name: Run Integration Tests (Aim Refactor)
-        run: make container-test
-        env:
-          DOCKER_BUILDKIT: 1
-          FML_DATABASE_BACKEND: ${{ matrix.database-backend }}
-          FML_AIM_ENDPOINT_PATH: "/aim2/api"
+          FML_SLOW_TESTS_ENABLED: ${{ github.event_name == 'schedule' }}
 
       - name: Save cache
         if: steps.cache.outputs.cache-hit != 'true'

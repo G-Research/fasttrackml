@@ -14,7 +14,8 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
+	"github.com/G-Research/fasttrackml/pkg/database/migrations/v_0001"
 )
 
 var supportedAlembicVersions = []string{
@@ -52,10 +53,10 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 			log.Info("Migrating database to alembic schema bd07f7e963c5")
 			if err := db.Transaction(func(tx *gorm.DB) error {
 				for _, table := range []any{
-					&Param{},
-					&Metric{},
-					&LatestMetric{},
-					&Tag{},
+					&v_0001.Param{},
+					&v_0001.Metric{},
+					&v_0001.LatestMetric{},
+					&v_0001.Tag{},
 				} {
 					if err := tx.Migrator().CreateIndex(table, "RunID"); err != nil {
 						return err
@@ -73,7 +74,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 		case "bd07f7e963c5":
 			log.Info("Migrating database to alembic schema 0c779009ac13")
 			if err := db.Transaction(func(tx *gorm.DB) error {
-				if err := tx.Migrator().AddColumn(&Run{}, "DeletedTime"); err != nil {
+				if err := tx.Migrator().AddColumn(&v_0001.Run{}, "DeletedTime"); err != nil {
 					return err
 				}
 				return tx.Model(&AlembicVersion{}).
@@ -88,7 +89,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 		case "0c779009ac13":
 			log.Info("Migrating database to alembic schema cc1f77228345")
 			if err := db.Transaction(func(tx *gorm.DB) error {
-				if err := tx.Migrator().AlterColumn(&Param{}, "value"); err != nil {
+				if err := tx.Migrator().AlterColumn(&v_0001.Param{}, "value"); err != nil {
 					return err
 				}
 				return tx.Model(&AlembicVersion{}).
@@ -107,7 +108,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 					"CreationTime",
 					"LastUpdateTime",
 				} {
-					if err := tx.Migrator().AddColumn(&Experiment{}, column); err != nil {
+					if err := tx.Migrator().AddColumn(&v_0001.Experiment{}, column); err != nil {
 						return err
 					}
 				}
@@ -129,7 +130,9 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 			log.Info("Initializing database")
 			tx := db.Begin()
 			if err := tx.AutoMigrate(
+				&Role{},
 				&Namespace{},
+				&RoleNamespace{},
 				&Experiment{},
 				&ExperimentTag{},
 				&Run{},

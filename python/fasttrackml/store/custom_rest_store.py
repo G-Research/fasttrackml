@@ -1,4 +1,5 @@
 import json
+import threading
 from typing import Dict, Optional, Sequence
 
 import pyarrow as pa
@@ -13,6 +14,9 @@ from mlflow.tracking.fluent import (
     get_experiment_by_name,
     search_experiments,
 )
+from mlflow.utils.async_logging.async_logging_queue import AsyncLoggingQueue
+from mlflow.utils.async_logging.run_batch import RunBatch
+from mlflow.utils.async_logging.run_operations import RunOperations
 from mlflow.utils.rest_utils import http_request
 from mlflow.utils.string_utils import is_string_type
 
@@ -23,6 +27,7 @@ class CustomRestStore(RestStore):
 
     def __init__(self, host_creds) -> None:
         super().__init__(host_creds)
+        self._async_logging_queue = AsyncLoggingQueue(logging_func=self.log_batch)
 
     def log_metric(self, run_id, metric):
         try:
@@ -54,8 +59,39 @@ class CustomRestStore(RestStore):
             )
         return result
 
-    def log_batch(self, run_id, metrics):
-        metrics_list = []
+    def log_param(self, run_id, param):
+        request_body = {
+            "run_id": run_id,
+            "run_uuid": run_id,
+            "key": param.key,
+        }
+
+        if isinstance(param.value, int):
+            request_body["value_int"] = param.value
+        elif isinstance(param.value, float):
+            request_body["value_float"] = param.value
+        else:
+            request_body["value"] = param.value
+
+        result = http_request(
+            **{
+                "host_creds": self.get_host_creds(),
+                "endpoint": "/api/2.0/mlflow/runs/log-parameter",
+                "method": "POST",
+                "json": request_body,
+            }
+        )
+        if result.status_code != 200:
+            result = result.json()
+        if "error_code" in result:
+            raise MlflowException(
+                message=result["message"],
+                error_code=result["error_code"],
+            )
+        return result
+
+    def log_batch(self, run_id, metrics=[], params=[], tags=[]):
+        metrics_list, params_list, tags_list = [], [], []
         for metric in metrics:
             metrics_list.append(
                 {
@@ -67,12 +103,30 @@ class CustomRestStore(RestStore):
                 }
             )
 
+        for param in params:
+            param_partial = {"key": param.key}
+            if isinstance(param.value, int):
+                param_partial["value_int"] = param.value
+            elif isinstance(param.value, float):
+                param_partial["value_float"] = param.value
+            else:
+                param_partial["value"] = param.value
+            params_list.append(param_partial)
+
+        for tag in tags:
+            tag_list.append(
+                {
+                    "key": tag.key,
+                    "value": tag.value,
+                }
+            )
+
         result = http_request(
             **{
                 "host_creds": self.get_host_creds(),
                 "endpoint": "/api/2.0/mlflow/runs/log-batch",
                 "method": "POST",
-                "json": {"run_id": run_id, "metrics": metrics_list},
+                "json": {"run_id": run_id, "metrics": metrics_list, "params": params_list, "tags": tags_list},
             }
         )
 
@@ -84,6 +138,24 @@ class CustomRestStore(RestStore):
                 error_code=result["error_code"],
             )
         return result
+
+    def log_batch_async(self, run_id, metrics=[], params=[], tags=[]) -> RunOperations:
+        if not self._async_logging_queue.is_active():
+            self._async_logging_queue.activate()
+
+        batch = RunBatch(
+            run_id=run_id,
+            metrics=metrics,
+            params=params,
+            tags=tags,
+            completion_event=threading.Event(),
+        )
+
+        self._async_logging_queue._queue.put(batch)
+        operation_future = self._async_logging_queue._batch_status_check_threadpool.submit(
+            self._async_logging_queue._wait_for_batch, batch
+        )
+        return RunOperations(operation_futures=[operation_future])
 
     def get_metric_history(self, run_id, metric_key, max_results=None, page_token=None):
         result = http_request(

@@ -8,8 +8,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -32,11 +33,11 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 
 	tests := []struct {
 		name        string
-		requestBody request.CreateDashboard
+		requestBody request.CreateDashboardRequest
 	}{
 		{
 			name: "CreateValidDashboard",
-			requestBody: request.CreateDashboard{
+			requestBody: request.CreateDashboardRequest{
 				AppID:       app.ID,
 				Name:        "dashboard-name",
 				Description: "dashboard-description",
@@ -72,11 +73,11 @@ func (s *CreateDashboardTestSuite) Test_Ok() {
 func (s *CreateDashboardTestSuite) Test_Error() {
 	tests := []struct {
 		name        string
-		requestBody request.CreateDashboard
+		requestBody request.CreateDashboardRequest
 	}{
 		{
 			name: "CreateDashboardWithNonExistentAppID",
-			requestBody: request.CreateDashboard{
+			requestBody: request.CreateDashboardRequest{
 				AppID:       uuid.New(),
 				Name:        "dashboard-name",
 				Description: "dashboard-description",
@@ -85,7 +86,7 @@ func (s *CreateDashboardTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var resp response.Error
+			var resp api.ErrorResponse
 			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPost,

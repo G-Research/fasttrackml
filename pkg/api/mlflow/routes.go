@@ -58,8 +58,9 @@ const (
 
 // Router represents `mlflow` router.
 type Router struct {
-	prefixList []string
-	controller *controller.Controller
+	prefixList        []string
+	controller        *controller.Controller
+	globalMiddlewares []fiber.Handler
 }
 
 // NewRouter creates new instance of `mlflow` router.
@@ -69,15 +70,21 @@ func NewRouter(controller *controller.Controller) *Router {
 			"/api/2.0/mlflow/",
 			"/ajax-api/2.0/mlflow/",
 		},
-		controller: controller,
+		controller:        controller,
+		globalMiddlewares: make([]fiber.Handler, 0),
 	}
 }
 
 // Init makes initialization of all `mlflow` routes.
-func (r Router) Init(server fiber.Router) {
+func (r *Router) Init(router fiber.Router) {
 	for _, prefix := range r.prefixList {
-		mainGroup := server.Group(prefix)
+		mainGroup := router.Group(prefix)
+		// apply global middlewares.
+		for _, globalMiddleware := range r.globalMiddlewares {
+			mainGroup.Use(globalMiddleware)
+		}
 
+		// setup related routes.
 		artifacts := mainGroup.Group(ArtifactsRoutePrefix)
 		artifacts.Get(ArtifactsGetRoute, r.controller.GetArtifact)
 		artifacts.Get(ArtifactsListRoute, r.controller.ListArtifacts)
@@ -119,4 +126,10 @@ func (r Router) Init(server fiber.Router) {
 			return api.NewEndpointNotFound("Not found")
 		})
 	}
+}
+
+// AddGlobalMiddleware adds a global middleware which will be applied for each route.
+func (r *Router) AddGlobalMiddleware(middleware fiber.Handler) *Router {
+	r.globalMiddlewares = append(r.globalMiddlewares, middleware)
+	return r
 }

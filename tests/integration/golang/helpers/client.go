@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"reflect"
 
+	"github.com/G-Research/fasttrackml/pkg/common/api"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/hetiansu5/urlquery"
 	"github.com/rotisserie/eris"
@@ -62,12 +64,17 @@ func NewMlflowApiClient(server server.Server) *HttpClient {
 
 // NewAimApiClient creates new HTTP client for the aim api
 func NewAimApiClient(server server.Server) *HttpClient {
-	return NewClient(server, GetAimEndpointPath())
+	return NewClient(server, "/aim/api")
 }
 
 // NewAdminApiClient creates new HTTP client for the admin api
 func NewAdminApiClient(server server.Server) *HttpClient {
 	return NewClient(server, "/admin")
+}
+
+// NewChooserApiClient creates new HTTP client for the chooser api
+func NewChooserApiClient(server server.Server) *HttpClient {
+	return NewClient(server, "/chooser")
 }
 
 // WithMethod sets the HTTP method.
@@ -176,11 +183,22 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 		}
 	}
 
-	// 7. send request data.
+	// 7. send request data and handle possible redirects.
+	//nolint:bodyclose
 	resp, err := c.server.Test(req, 60000)
 	if err != nil {
 		return eris.Wrap(err, "error doing request")
 	}
+	if resp.StatusCode == http.StatusMovedPermanently {
+		req.RequestURI = resp.Header.Get("location")
+		//nolint:bodyclose
+		resp, err = c.server.Test(req, 60000)
+		if err != nil {
+			return eris.Wrap(err, "error doing request")
+		}
+	}
+	//nolint:errcheck
+	defer resp.Body.Close()
 
 	c.statusCode = resp.StatusCode
 
@@ -196,6 +214,11 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 			defer resp.Body.Close()
 			if err := json.Unmarshal(body, c.response); err != nil {
 				return eris.Wrap(err, "error unmarshaling response data")
+			}
+			// if provided response object is a api.ErrorResponse,
+			// then store actual StatusCode for further check.
+			if errorResponse, ok := c.response.(*api.ErrorResponse); ok {
+				errorResponse.StatusCode = resp.StatusCode
 			}
 		case ResponseTypeBuffer:
 			buffer, ok := c.response.(io.Writer)
@@ -225,7 +248,6 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 			}
 
 			*response = *doc
-
 		}
 	}
 

@@ -6,12 +6,14 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"os"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -26,12 +28,15 @@ type MetricFlowTestSuite struct {
 // - `GET /runs/search/metric`
 // - `GET /runs/search/metric/align`
 func TestMetricTestSuite(t *testing.T) {
-	suite.Run(t, &MetricFlowTestSuite{
-		helpers.BaseTestSuite{
-			ResetOnSubTest:             true,
-			SkipCreateDefaultNamespace: true,
-		},
-	})
+	flag, ok := os.LookupEnv("FML_RUN_ORIGINAL_AIM_SERVICE")
+	if !ok || flag == "false" {
+		suite.Run(t, &MetricFlowTestSuite{
+			helpers.BaseTestSuite{
+				ResetOnSubTest:             true,
+				SkipCreateDefaultNamespace: true,
+			},
+		})
+	}
 }
 
 func (s *MetricFlowTestSuite) Test_Ok() {
@@ -148,9 +153,9 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 			})
 			s.Require().Nil(err)
 			_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-				Key:   "param1",
-				Value: "value1",
-				RunID: run1.ID,
+				Key:      "param1",
+				ValueStr: common.GetPointer("value1"),
+				RunID:    run1.ID,
 			})
 			s.Require().Nil(err)
 			_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
@@ -213,9 +218,9 @@ func (s *MetricFlowTestSuite) Test_Ok() {
 			})
 			s.Require().Nil(err)
 			_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-				Key:   "param2",
-				Value: "value2",
-				RunID: run2.ID,
+				Key:      "param2",
+				ValueStr: common.GetPointer("value2"),
+				RunID:    run2.ID,
 			})
 			s.Require().Nil(err)
 			_, err = s.TagFixtures.CreateTag(context.Background(), &models.Tag{
@@ -238,12 +243,22 @@ func (s *MetricFlowTestSuite) testRunFlow(
 ) {
 	// test `GET /runs/search/metric` endpoint.
 	s.searchMetricsAndCompare(namespace1Code, request.SearchMetricsRequest{
-		Query: `(metric.name == "TestMetric1")`,
+		Metrics: []request.MetricTuple{
+			{
+				Key:     "TestMetric1",
+				Context: fiber.Map{"key": "value"},
+			},
+		},
 	}, []*models.Run{run1}, []*models.LatestMetric{
 		metric1Run1,
 	})
 	s.searchMetricsAndCompare(namespace2Code, request.SearchMetricsRequest{
-		Query: `(metric.name == "TestMetric2")`,
+		Metrics: []request.MetricTuple{
+			{
+				Key:     "TestMetric2",
+				Context: fiber.Map{"key": "value"},
+			},
+		},
 	}, []*models.Run{run2}, []*models.LatestMetric{
 		metric1Run2,
 	})
@@ -293,9 +308,11 @@ func (s *MetricFlowTestSuite) searchMetricsAndCompare(
 ) {
 	resp := new(bytes.Buffer)
 	s.Require().Nil(
-		s.AIMClient().WithNamespace(
+		s.AIMClient().WithMethod(
+			http.MethodPost,
+		).WithNamespace(
 			namespace,
-		).WithQuery(
+		).WithRequest(
 			request,
 		).WithResponseType(
 			helpers.ResponseTypeBuffer,

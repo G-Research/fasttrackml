@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
@@ -46,7 +47,7 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	var resp response.GetExperiment
+	var resp response.Experiment
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%d", *experiment.ID))
 	s.Equal(fmt.Sprintf("%d", *experiment.ID), resp.ID)
 	s.Equal(experiment.Name, resp.Name)
@@ -58,19 +59,25 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 
 func (s *GetExperimentTestSuite) Test_Error() {
 	tests := []struct {
-		name  string
-		error string
 		ID    string
+		name  string
+		error *api.ErrorResponse
 	}{
 		{
-			name:  "IncorrectExperimentID",
-			error: `(unable to parse|failed to decode)`,
-			ID:    "incorrect_experiment_id",
+			ID:   "incorrect_experiment_id",
+			name: "IncorrectExperimentID",
+			error: &api.ErrorResponse{
+				Message:    `failed to decode: schema: error converting value for "id"`,
+				StatusCode: http.StatusUnprocessableEntity,
+			},
 		},
 		{
-			name:  "NotFoundExperiment",
-			error: `Not Found`,
-			ID:    "1",
+			ID:   "1",
+			name: "NotFoundExperiment",
+			error: &api.ErrorResponse{
+				Message:    "experiment '1' not found",
+				StatusCode: http.StatusBadRequest,
+			},
 		},
 	}
 
@@ -78,7 +85,8 @@ func (s *GetExperimentTestSuite) Test_Error() {
 		s.Run(tt.name, func() {
 			var resp api.ErrorResponse
 			s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/%s", tt.ID))
-			s.Regexp(tt.error, resp.Error())
+			s.Equal(tt.error.Message, resp.Message)
+			s.Equal(tt.error.StatusCode, resp.StatusCode)
 		})
 	}
 }

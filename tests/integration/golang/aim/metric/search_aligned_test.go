@@ -12,8 +12,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -933,9 +933,8 @@ func (s *SearchAlignedMetricsTestSuite) Test_Ok() {
 
 			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
-
+			fmt.Println("decoded_data:", decodedData)
 			xValues := make(map[int][]float64)
-
 			for _, run := range runs {
 				metricCount := 0
 				for decodedData[fmt.Sprintf("%v.%d.name", run.ID, metricCount)] != nil {

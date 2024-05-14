@@ -113,7 +113,8 @@ func (s *DeleteRunTestSuite) Test_Error() {
 					"/runs/%s", tt.request.RunID,
 				),
 			)
-			s.Contains(resp.Error(), "unable to find run 'some-other-id'")
+			s.Equal("run 'some-other-id' not found", resp.Message)
+			s.Equal(http.StatusBadRequest, resp.StatusCode)
 
 			newMinRowNum, newMaxRowNum, err := s.RunFixtures.FindMinMaxRowNums(
 				context.Background(), s.runs[0].ExperimentID,

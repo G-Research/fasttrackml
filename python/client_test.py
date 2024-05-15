@@ -57,7 +57,9 @@ def test_log_batch(client, server, run):
     ]
     client.log_batch(run.info.run_id, metrics=metrics, params=params, synchronous=False)
 
+    time.sleep(1)
+
     metric_keys = [metric_key1, metric_key2]
     metric_histories_df = client.get_metric_histories(run_ids=[run.info.run_id], metric_keys=metric_keys)
-    # assert not metric_histories_df.empty
-    # assert set(metric_keys).issubset(metric_histories_df['key'].values)
+    assert not metric_histories_df.empty
+    assert set(metric_keys).issubset(metric_histories_df["key"].values)

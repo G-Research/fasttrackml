@@ -18,9 +18,11 @@ def server():
     # Kill the fml server
     process.kill()
 
+
 @pytest.fixture
 def client():
     return FasttrackmlClient("http://localhost:5000")
+
 
 @pytest.fixture
 def run(client, server):
@@ -28,6 +30,7 @@ def run(client, server):
     run = client.create_run(experiment_id)
     yield run
     client.set_terminated(run.info.run_id)
+
 
 def test_log_metric(client, server, run):
     metric_key = str(uuid.uuid4())
@@ -38,6 +41,7 @@ def test_log_metric(client, server, run):
     metric_history = client.get_metric_history(run.info.run_id, metric_key)
     assert metric_history is not None
     assert metric_history[0].key == metric_key
+
 
 def test_log_batch(client, server, run):
     param_key = str(uuid.uuid4())

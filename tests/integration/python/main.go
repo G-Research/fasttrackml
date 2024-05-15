@@ -215,7 +215,7 @@ func getBinary(client *dagger.Client, sourcePath string) *dagger.File {
 		WithEnvVariable("GOMODCACHE", cacheGoModPath).
 		WithMountedCache(cacheMountPath, client.CacheVolume(cacheVolumeKey)).
 		WithDirectory("/src", client.Host().Directory(sourcePath, dagger.HostDirectoryOpts{
-			Include: []string{"main.go", "pkg", "Makefile", ".go-build-tags", "go.mod", "go.sum", "python"},
+			Include: []string{"main.go", "pkg", "Makefile", ".go-build-tags", "go.mod", "go.sum"},
 		})).
 		WithWorkdir("/src").
 		WithExec([]string{

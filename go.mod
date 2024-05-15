@@ -18,7 +18,7 @@ require (
 	github.com/apache/arrow/go/v14 v14.0.2
 	github.com/aws/aws-sdk-go-v2 v1.26.1
 	github.com/aws/aws-sdk-go-v2/config v1.27.13
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.2
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.54.0
 	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/go-python/gpython v0.2.0
 	github.com/gofiber/fiber/v2 v2.52.4

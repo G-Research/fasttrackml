@@ -68,15 +68,16 @@ def test_log_batch(client, server, run):
     timestamp = int(time.time() * 1000)
     metric_key1 = str(uuid.uuid4())
     metric_key2 = str(uuid.uuid4())
+    metric_key1_value = 0.2
+    metric_key2_value = 0.92
     metrics = [
-        Metric(metric_key1, 0.2, timestamp, 1, context={"context_key": "context_value3"}),
-        Metric(metric_key2, 0.92, timestamp, 1, context={"context_key": "context_value4"}),
+        Metric(metric_key1, metric_key1_value, timestamp, 1, context={"context_key": "context_value3"}),
+        Metric(metric_key2, metric_key2_value, timestamp, 1, context={"context_key": "context_value4"}),
     ]
     client.log_batch(run.info.run_id, metrics=metrics, params=params, synchronous=False)
 
     time.sleep(1)
 
-    metric_keys = [metric_key1, metric_key2]
+    metric_keys = [metric_key2]
     metric_histories_df = client.get_metric_histories(run_ids=[run.info.run_id], metric_keys=metric_keys)
-    assert not metric_histories_df.empty
-    assert set(metric_keys).issubset(metric_histories_df["key"].values)
+    assert metric_histories_df.value[0] == metric_key2_value

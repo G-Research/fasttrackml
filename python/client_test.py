@@ -43,6 +43,23 @@ def test_log_metric(client, server, run):
     assert metric_history[0].key == metric_key
 
 
+def test_log_param(client, server, run):
+    # log param string and verify
+    param_key = str(uuid.uuid4())
+    param_value = str(uuid.uuid4())
+    client.log_param(run.info.run_id, param_key, param_value)
+
+    run_response = client.get_run(run.info.run_uuid)
+    assert run_response is not None
+    assert run_response.data.params[param_key] == param_value
+
+    # log param float
+    # TODO verify when get_run works with float value
+    param_key = str(uuid.uuid4())
+    param_value = uniform(0.0, 100.0)
+    client.log_param(run.info.run_id, param_key, param_value)
+
+
 def test_log_batch(client, server, run):
     param_key = str(uuid.uuid4())
     param_value = uniform(0.0, 100.0)

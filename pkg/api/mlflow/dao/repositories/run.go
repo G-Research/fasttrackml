@@ -86,6 +86,12 @@ func (r RunRepository) GetByNamespaceIDRunIDAndLifecycleStage(
 	run := models.Run{ID: runID}
 	if err := r.GetDB().WithContext(
 		ctx,
+	).Preload(
+		"LatestMetrics",
+	).Preload(
+		"Params",
+	).Preload(
+		"Tags",
 	).Joins(
 		"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
 		namespaceID,

@@ -183,7 +183,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        api: [aim, mlflow]
+        test-targets: [aim, mlflow, fml_client]
       fail-fast: false
     steps:
       - name: Checkout
@@ -214,7 +214,7 @@ jobs:
           else
             cache=-cache-to=/tmp/go-cache
           fi
-          go run tests/integration/python/main.go $cache -targets ${{ matrix.api }}
+          go run tests/integration/python/main.go $cache -targets ${{ matrix.test-targets }}
 
   build:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id

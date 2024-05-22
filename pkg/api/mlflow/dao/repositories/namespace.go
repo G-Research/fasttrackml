@@ -102,7 +102,7 @@ func (r NamespaceRepository) GetByRoles(ctx context.Context, roles []string) ([]
 	).Joins(
 		"INNER JOIN role_namespaces ON role_namespaces.namespace_id = namespaces.id",
 	).Joins(
-		"INNER JOIN roles ON roles.id = role_namespaces.role_id AND roles.role IN (?)",
+		"INNER JOIN roles ON roles.id = role_namespaces.role_id AND roles.name IN (?)",
 		roles,
 	).Find(&namespaces).Error; err != nil {
 		return nil, eris.Wrap(err, "error listing namespaces")

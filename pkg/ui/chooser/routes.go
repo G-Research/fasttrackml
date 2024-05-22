@@ -64,6 +64,7 @@ func (r *Router) Init(router fiber.Router) error {
 
 	errors := app.Group("errors")
 	errors.Get("/not-found", r.controller.NotFoundError)
+	errors.Get("/internal-server-error", r.controller.InternalServerError)
 
 	return nil
 }

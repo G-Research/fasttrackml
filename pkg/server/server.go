@@ -35,7 +35,6 @@ import (
 	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/metric"
 	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/model"
 	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/run"
-	"github.com/G-Research/fasttrackml/pkg/common/auth"
 	"github.com/G-Research/fasttrackml/pkg/common/config"
 	"github.com/G-Research/fasttrackml/pkg/common/dao"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
@@ -198,23 +197,29 @@ func createApp(
 			},
 		}))
 	}
-	app.Get("/set-cookie/:access_token", func(ctx *fiber.Ctx) error {
-		ctx.Cookie(&fiber.Cookie{
-			Name:  "access_token",
-			Value: ctx.Params("access_token"),
-		})
-		return ctx.Redirect("/", http.StatusMovedPermanently)
-	})
 	app.Use(middleware.NewNamespaceMiddleware(namespaceCachedRepository))
 
-	// based on Auth configuration attach global OIDC or Basic Auth middleware.
+	// based on Auth configuration, attach global OIDC or Basic Auth middleware.
 	switch {
 	case config.Auth.IsAuthTypeOIDC():
-		oidcClient, err := auth.NewOIDCClient(ctx, &config.Auth)
-		if err != nil {
-			return nil, eris.Wrap(err, "error creating OIDC client")
-		}
-		app.Use(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
+		app.Get("/callback/oidc", func(ctx *fiber.Ctx) error {
+			oauth2Token, err := config.Auth.AuthOIDCClient.Exchange(ctx.Context(), ctx.Query("code"))
+			if err != nil {
+				log.Errorf("error exchanging code to oauth2 token: %+v", err)
+				return ctx.Redirect("/errors/internal-server-error", http.StatusMovedPermanently)
+			}
+			rawIDToken, ok := oauth2Token.Extra("id_token").(string)
+			if !ok {
+				log.Error("id_token is missing")
+				return ctx.Redirect("/errors/internal-server-error", http.StatusMovedPermanently)
+			}
+			ctx.Cookie(&fiber.Cookie{
+				Name:  "access_token",
+				Value: rawIDToken,
+			})
+			return ctx.Redirect("/", http.StatusMovedPermanently)
+		})
+		app.Use(middleware.NewOIDCMiddleware(config.Auth.AuthOIDCClient, rolesCachedRepository))
 	case config.Auth.IsAuthTypeUser():
 		app.Use(middleware.NewBasicAuthMiddleware(config.Auth.AuthParsedUserPermissions))
 	}
@@ -320,6 +325,7 @@ func createApp(
 	// init `chooser` ui routes.
 	if err := chooser.NewRouter(
 		chooserController.NewController(
+			config.Auth.AuthOIDCClient.GetOauth2Config(),
 			chooserNamespaceService.NewService(
 				config,
 				namespaceCachedRepository,

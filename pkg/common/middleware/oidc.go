@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/auth"
+	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 )
 
@@ -21,13 +21,13 @@ const (
 
 // OIDCMiddleware represents OIDC middleware.
 type OIDCMiddleware struct {
-	client          auth.OIDCClientProvider
+	client          oidc.ClientProvider
 	rolesRepository repositories.RoleRepositoryProvider
 }
 
 // NewOIDCMiddleware creates new OIDC middleware logic.
 func NewOIDCMiddleware(
-	client auth.OIDCClientProvider,
+	client oidc.ClientProvider,
 	rolesRepository repositories.RoleRepositoryProvider,
 ) fiber.Handler {
 	return OIDCMiddleware{
@@ -53,12 +53,15 @@ func (m OIDCMiddleware) Handle() fiber.Handler {
 
 // handleAdminResourceRequest applies OIDC check for Admin resources.
 func (m OIDCMiddleware) handleAdminResourceRequest(ctx *fiber.Ctx) error {
-	authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
-	if authToken == "" {
-		log.Error("auth token has incorrect format")
-		return ctx.Redirect("/login", http.StatusMovedPermanently)
-	}
-	user, err := m.client.Verify(ctx.Context(), authToken)
+	/*
+		authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
+		if authToken == "" {
+			log.Error("auth token has incorrect format")
+			return ctx.Redirect("/login", http.StatusMovedPermanently)
+		}
+		user, err := m.client.Verify(ctx.Context(), authToken)
+	*/
+	user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
 	if err != nil {
 		log.Errorf("error verifying access token: %+v", err)
 		return ctx.Redirect("/login", http.StatusMovedPermanently)
@@ -80,12 +83,15 @@ func (m OIDCMiddleware) handleChooserResourceRequest(ctx *fiber.Ctx) error {
 	log.Debugf("checking access permission to %s namespace", namespace.Code)
 
 	if path := ctx.Path(); path != "/login" && !strings.Contains(path, "/chooser/static") {
-		authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
-		if authToken == "" {
-			log.Error("auth token has incorrect format")
-			return ctx.Redirect("/login", http.StatusMovedPermanently)
-		}
-		user, err := m.client.Verify(ctx.Context(), authToken)
+		/*
+			authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
+			if authToken == "" {
+				log.Error("auth token has incorrect format")
+				return ctx.Redirect("/login", http.StatusMovedPermanently)
+			}
+			user, err := m.client.Verify(ctx.Context(), authToken)
+		*/
+		user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
 		if err != nil {
 			log.Errorf("error verifying access token: %+v", err)
 			return ctx.Redirect("/login", http.StatusMovedPermanently)
@@ -105,17 +111,20 @@ func (m OIDCMiddleware) handleAimMlflowResourceRequest(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("checking access permission to %s namespace", namespace.Code)
 
-	authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
-	if authToken == "" {
-		log.Error("auth token has incorrect format")
-		return ctx.Status(
-			http.StatusNotFound,
-		).JSON(
-			api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
-		)
-	}
+	/*
+		authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
+		if authToken == "" {
+			log.Error("auth token has incorrect format")
+			return ctx.Status(
+				http.StatusNotFound,
+			).JSON(
+				api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
+			)
+		}
 
-	user, err := m.client.Verify(ctx.Context(), authToken)
+		user, err := m.client.Verify(ctx.Context(), authToken)
+	*/
+	user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
 	if err != nil {
 		return ctx.Status(
 			http.StatusNotFound,
@@ -147,8 +156,8 @@ func (m OIDCMiddleware) handleAimMlflowResourceRequest(ctx *fiber.Ctx) error {
 }
 
 // GetOIDCUserFromContext returns OIDC User object from the context.
-func GetOIDCUserFromContext(ctx context.Context) (*auth.User, error) {
-	user, ok := ctx.Value(oidcUserContextKey).(*auth.User)
+func GetOIDCUserFromContext(ctx context.Context) (*oidc.User, error) {
+	user, ok := ctx.Value(oidcUserContextKey).(*oidc.User)
 	if !ok {
 		return nil, eris.New("error getting oidc user object from context")
 	}

@@ -28,7 +28,7 @@ type RoleCachedRepository struct {
 	namespaceEventListener dao.EventListenerProvider
 }
 
-// NewRoleCachedRepository creates new instance of cached repository to work with `role` entity.
+// NewRoleCachedRepository creates a new instance of cached repository to work with `role` entity.
 func NewRoleCachedRepository(
 	ctx context.Context, db *gorm.DB, namespaceEventListener dao.EventListenerProvider,
 ) (*RoleCachedRepository, error) {
@@ -64,7 +64,7 @@ func NewRoleCachedRepository(
 	return &repository, nil
 }
 
-// ValidateRolesAccessToNamespace makes validation that requested roles has access to requested namespace.
+// ValidateRolesAccessToNamespace makes validation that requested roles have access to requested namespace.
 func (r RoleCachedRepository) ValidateRolesAccessToNamespace(
 	ctx context.Context, requestedRoles []string, requestedNamespaceCode string,
 ) (bool, error) {
@@ -79,7 +79,7 @@ func (r RoleCachedRepository) ValidateRolesAccessToNamespace(
 		return false, nil
 	}
 
-	// otherwise check database and store result in cache.
+	// otherwise, check database and store result in cache.
 	var data []models.RoleNamespace
 	if err := r.db.WithContext(ctx).Model(
 		&models.RoleNamespace{},
@@ -93,7 +93,7 @@ func (r RoleCachedRepository) ValidateRolesAccessToNamespace(
 		).Where(
 			&models.Namespace{Code: requestedNamespaceCode},
 		),
-	).Find(&data).Error; err != nil {
+	).Debug().Find(&data).Error; err != nil {
 		return false, eris.Wrapf(err, "error getting roles for namespace with code: %s", requestedNamespaceCode)
 	}
 
@@ -105,7 +105,7 @@ func (r RoleCachedRepository) ValidateRolesAccessToNamespace(
 	// save into cache.
 	r.cache.Add(requestedNamespaceCode, namespaceRoles)
 
-	// check permissions from database.
+	// check permissions from a database.
 	for _, requestedRole := range requestedRoles {
 		if slices.Contains(namespaceRoles, requestedRole) {
 			return true, nil

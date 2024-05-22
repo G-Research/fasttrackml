@@ -1,4 +1,4 @@
-package auth
+package oidc
 
 import "github.com/rotisserie/eris"
 

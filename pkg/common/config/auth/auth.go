@@ -1,8 +1,9 @@
 package auth
 
 import (
-	"github.com/rotisserie/eris"
+	"github.com/spf13/viper"
 
+	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/models"
 )
 
@@ -12,10 +13,12 @@ const (
 	TypeUser string = "user"
 )
 
+// Config represents Auth configuration.
 type Config struct {
 	AuthType                  string
 	AuthUsername              string
 	AuthPassword              string
+	AuthOIDCClient            *oidc.Client
 	AuthUsersConfig           string
 	AuthOIDCClientID          string
 	AuthOIDCClientSecret      string
@@ -26,6 +29,21 @@ type Config struct {
 	AuthParsedUserPermissions *models.UserPermissions
 }
 
+// NewConfig creates a new instance of Config.
+func NewConfig() *Config {
+	return &Config{
+		AuthUsername:             viper.GetString("auth-username"),
+		AuthPassword:             viper.GetString("auth-password"),
+		AuthUsersConfig:          viper.GetString("auth-users-config"),
+		AuthOIDCScopes:           viper.GetStringSlice("auth-oidc-scopes"),
+		AuthOIDCAdminRole:        viper.GetString("auth-oidc-admin-role"),
+		AuthOIDCClientID:         viper.GetString("auth-oidc-client-id"),
+		AuthOIDCClaimRoles:       viper.GetString("auth-oidc-claim-roles"),
+		AuthOIDCClientSecret:     viper.GetString("auth-oidc-client-secret"),
+		AuthOIDCProviderEndpoint: viper.GetString("auth-oidc-provider-endpoint"),
+	}
+}
+
 // IsAuthTypeOIDC makes check that current auth is TypeOIDC.
 func (c *Config) IsAuthTypeOIDC() bool {
 	return c.AuthType == TypeOIDC
@@ -34,25 +52,4 @@ func (c *Config) IsAuthTypeOIDC() bool {
 // IsAuthTypeUser makes check that current auth is TypeUser.
 func (c *Config) IsAuthTypeUser() bool {
 	return c.AuthType == TypeUser
-}
-
-// ValidateConfiguration validates service configuration for correctness.
-func (c *Config) ValidateConfiguration() error {
-	return nil
-}
-
-// NormalizeConfiguration normalizes auth configuration parameters.
-func (c *Config) NormalizeConfiguration() error {
-	switch {
-	case c.AuthUsersConfig != "":
-		c.AuthType = TypeUser
-		parsedUserPermissions, err := Load(c.AuthUsersConfig)
-		if err != nil {
-			return eris.Wrapf(err, "error loading auth user configuration from file: %s", c.AuthUsersConfig)
-		}
-		c.AuthParsedUserPermissions = parsedUserPermissions
-	case c.AuthOIDCClientID != "" && c.AuthOIDCClientSecret != "" && c.AuthOIDCProviderEndpoint != "":
-		c.AuthType = TypeOIDC
-	}
-	return nil
 }

@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -124,7 +123,7 @@ func (c *Config) normalizeConfiguration() error {
 	case c.Auth.AuthOIDCClientID != "" && c.Auth.AuthOIDCClientSecret != "" && c.Auth.AuthOIDCProviderEndpoint != "":
 		oidcClient, err := oidc.NewClient(
 			context.Background(),
-			fmt.Sprintf("http://%s", c.ListenAddress),
+			NormaliseListenAddress(c.ListenAddress),
 			c.Auth.AuthOIDCProviderEndpoint, c.Auth.AuthOIDCClientID, c.Auth.AuthOIDCClientSecret,
 			c.Auth.AuthOIDCClaimRoles, c.Auth.AuthOIDCAdminRole,
 			c.Auth.AuthOIDCScopes,

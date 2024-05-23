@@ -24,10 +24,11 @@ Performance Benchmark effectively.
 
 In general, the Benchmark Suite shows FastTrackML to perform better
 than MLflow, both for logging and retrieval endpoints, with a notable
-exception: writing against a Sqlite backend. In this case, MLflow
-provides equal or better performance. Sqlite is single-threaded for
-write operations (such as logging metrics or creating a run), so we do
-strongly recommend using Postgres for any substantive workloads.
+exception: writing against a Sqlite backend. In this case, FastTrackML
+performance will not necessarily exceed MLflow. Sqlite is
+single-threaded for write operations (such as logging metrics or
+creating a run), so we do strongly recommend using Postgres for any
+substantive workloads.
 
 ![Performance Report](performanceReport.png "Performance Report")
 

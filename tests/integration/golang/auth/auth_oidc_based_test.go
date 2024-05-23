@@ -43,7 +43,7 @@ func TestOIDCAuthTestSuite(t *testing.T) {
 	// create a service configuration with OIDC enabled option.
 	testSuite := new(OIDCAuthTestSuite)
 	testSuite.Config = config.Config{
-		Auth: auth.Config{
+		Auth: &auth.Config{
 			AuthType:                 auth.TypeOIDC,
 			AuthOIDCAdminRole:        "admin",
 			AuthOIDCClientID:         oidcMockServer.ClientID(),

@@ -68,7 +68,7 @@ func TestUserAuthFromConfigTestSuite(t *testing.T) {
 	// run test suite with newly created configuration.
 	testSuite := new(ConfigAuthTestSuite)
 	testSuite.Config = config.Config{
-		Auth: auth.Config{
+		Auth: &auth.Config{
 			AuthType:        auth.TypeUser,
 			AuthUsersConfig: configPath,
 		},

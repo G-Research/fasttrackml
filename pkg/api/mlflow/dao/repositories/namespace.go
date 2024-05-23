@@ -95,7 +95,7 @@ func (r NamespaceRepository) GetByID(ctx context.Context, id uint) (*models.Name
 // GetByRoles returns namespaces OIDC roles.
 func (r NamespaceRepository) GetByRoles(ctx context.Context, roles []string) ([]models.Namespace, error) {
 	var namespaces []models.Namespace
-	if err := r.GetDB().WithContext(
+	if err := r.GetDB().Distinct().WithContext(
 		ctx,
 	).Order(
 		"code",

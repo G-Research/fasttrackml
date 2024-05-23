@@ -2,17 +2,18 @@ package config
 
 import (
 	"context"
-	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
-	"github.com/oauth2-proxy/mockoidc"
+	"fmt"
 	"net/url"
 	"path"
 	"path/filepath"
 	"slices"
 	"time"
 
+	"github.com/oauth2-proxy/mockoidc"
 	"github.com/rotisserie/eris"
 	"github.com/spf13/viper"
 
+	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
 	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
 )
 
@@ -95,7 +96,8 @@ func (c *Config) normalizeConfiguration() error {
 		c.DefaultArtifactRoot = "file://" + absoluteArtifactRoot
 	}
 
-	// create temporary OIDC mock server and initialize application configuration.
+	// create temporary OIDC mock server here and initialize application configuration.
+	// this is a temporary solution just for testing.
 	oidcMockServer, err := mockoidc.Run()
 	if err != nil {
 		return eris.Wrap(err, "error creating oidc mock server")
@@ -122,7 +124,7 @@ func (c *Config) normalizeConfiguration() error {
 	case c.Auth.AuthOIDCClientID != "" && c.Auth.AuthOIDCClientSecret != "" && c.Auth.AuthOIDCProviderEndpoint != "":
 		oidcClient, err := oidc.NewClient(
 			context.Background(),
-			c.ListenAddress,
+			fmt.Sprintf("http://%s", c.ListenAddress),
 			c.Auth.AuthOIDCProviderEndpoint, c.Auth.AuthOIDCClientID, c.Auth.AuthOIDCClientSecret,
 			c.Auth.AuthOIDCClaimRoles, c.Auth.AuthOIDCAdminRole,
 			c.Auth.AuthOIDCScopes,

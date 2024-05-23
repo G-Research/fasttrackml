@@ -6,7 +6,12 @@ import (
 
 // Login renders Login page.
 func (c Controller) Login(ctx *fiber.Ctx) error {
-	return ctx.Render("login/login", fiber.Map{
-		"authUrl": c.oauth2Config.AuthCodeURL("state12"),
-	})
+	if c.config.Auth.IsAuthTypeOIDC() {
+		return ctx.Render("login/login", fiber.Map{
+			"authUrl": c.config.Auth.AuthOIDCClient.GetOauth2Config().AuthCodeURL(
+				GenerateRandomString(20),
+			),
+		})
+	}
+	return ctx.Redirect("/")
 }

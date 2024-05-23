@@ -245,8 +245,7 @@ func createApp(
 		return c.SendString(version.Version)
 	})
 
-	// init `aim` api refactored routes.
-	log.Info("using refactored aim service")
+	// init `aim` api routes.
 	aimAPI.NewRouter(
 		aimController.NewController(
 			aimTagService.NewService(
@@ -325,7 +324,7 @@ func createApp(
 	// init `chooser` ui routes.
 	if err := chooser.NewRouter(
 		chooserController.NewController(
-			config.Auth.AuthOIDCClient.GetOauth2Config(),
+			config,
 			chooserNamespaceService.NewService(
 				config,
 				namespaceCachedRepository,

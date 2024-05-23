@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"context"
+	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
 	"time"
 
 	"dario.cat/mergo"
@@ -130,6 +131,7 @@ func (s *BaseTestSuite) closeDB() {
 
 func (s *BaseTestSuite) startServer() {
 	cfg := config.Config{
+		Auth:                  auth.NewConfig(),
 		DatabaseURI:           s.db.Dsn(),
 		DatabasePoolMax:       10,
 		DatabaseSlowThreshold: 1 * time.Second,

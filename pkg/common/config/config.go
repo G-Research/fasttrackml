@@ -97,7 +97,7 @@ func (c *Config) normalizeConfiguration() error {
 	}
 
 	// create temporary OIDC mock server here and initialize application configuration.
-	// this is a temporary solution just for testing.
+	// this is a temporary solution just for testing purpose
 	oidcMockServer, err := mockoidc.Run()
 	if err != nil {
 		return eris.Wrap(err, "error creating oidc mock server")

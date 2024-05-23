@@ -14,12 +14,22 @@ Performance Benchmark effectively.
 - [FastTrackML Benchmark Suite](#fasttrackml-benchmark-suite)
   - [Introduction](#introduction)
   - [Table of Contents](#table-of-contents)
+  - [1. Findings](#1-findings)
   - [2. Getting Started ](#2-getting-started-)
   - [3. Methodology](#3-methodology)
   - [4. Usage ](#4-usage-)
     - [Benchmarking Performance ](#benchmarking-performance-)
-    - [Results ](#results-)
 
+## 1. Findings
+
+In general, the Benchmark Suite shows FastTrackML to perform better
+than MLflow, both for logging and retrieval endpoints, with a notable
+exception: writing against a Sqlite backend. In this case, MLflow
+provides equal or better performance. Sqlite is single-threaded for
+write operations (such as logging metrics or creating a run), so we do
+strongly recommend using Postgres for any substantive workloads.
+
+![Performance Report](performanceReport.png "Performance Report")
 
 ## 2. Getting Started <a name="getting-started"></a>
 
@@ -33,7 +43,7 @@ Compose installed and run the following command:
 ## 3. Methodology
 For the implementation of the performance benchmarking we used
 [K6](https://k6.io) which is a developer load testing tool. We then
-used docker containers of 4 different applications, 2 variations of
+used docker containers of 4 different applications: 2 variations of
 MLflow (sqlite and postgresql), and 2 variations of FastTrackML
 (sqlite and postgresql).
 
@@ -101,18 +111,3 @@ image
 `\benchmark_outputs` folder in this directory. If you are running the
 performance benchmarks without the `run.sh` script you will have to
 create this folder manually.
-
-### Results <a name="comparing-with-mlflow"></a>
-
-FastTrackML Performance Benchmark is designed to perform benchmark
-tests on both MLflow and FastTrackML:
-
-![Performance Report](performanceReport.png) FastTrackML offers the
-same functionality as MLflow but implements performance optimizations
-behind the scene to improve overall performance.
-
-
-Thank you for choosing FastTrackML Performance Tracker! We hope this
-documentation helps you effectively track and manage your machine
-learning experiments and compare it with other parameter servers like
-MLflow.

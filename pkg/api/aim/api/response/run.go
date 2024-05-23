@@ -128,7 +128,7 @@ type GetRunMetricsResponse struct {
 	Context json.RawMessage `json:"context"`
 }
 
-// NewGetRunMetricsResponse creates new response object for `GET /runs/:id/metric/get-batch` endpoint.
+// NewGetRunMetricsResponse creates a new response object for `GET /runs/:id/metric/get-batch` endpoint.
 func NewGetRunMetricsResponse(metrics []models.Metric, metricKeysMap models.MetricKeysMap) []GetRunMetricsResponse {
 	data := make(map[models.MetricKeysItem]struct {
 		iters  []int

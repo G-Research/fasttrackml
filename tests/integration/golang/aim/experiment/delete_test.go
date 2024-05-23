@@ -30,7 +30,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	experiments, err := s.ExperimentFixtures.GetTestExperiments(context.Background())
+	experiments, err := s.ExperimentFixtures.GetExperiments(context.Background())
 	s.Require().Nil(err)
 	length := len(experiments)
 
@@ -45,7 +45,7 @@ func (s *DeleteExperimentTestSuite) Test_Ok() {
 		),
 	)
 
-	remainingExperiments, err := s.ExperimentFixtures.GetTestExperiments(context.Background())
+	remainingExperiments, err := s.ExperimentFixtures.GetExperiments(context.Background())
 	s.Require().Nil(err)
 	s.Equal(length-1, len(remainingExperiments))
 }

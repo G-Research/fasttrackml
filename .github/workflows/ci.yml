@@ -179,7 +179,7 @@ jobs:
 
   python-integration-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Python Integration Tests (${{ matrix.api }})
+    name: Python Integration Tests (${{ matrix.test-targets }})
     runs-on: ubuntu-latest
     strategy:
       matrix:

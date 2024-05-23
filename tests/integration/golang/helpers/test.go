@@ -2,8 +2,9 @@ package helpers
 
 import (
 	"context"
-	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
 	"time"
+
+	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
 
 	"dario.cat/mergo"
 	"github.com/sirupsen/logrus"

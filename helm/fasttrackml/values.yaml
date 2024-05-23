@@ -1,0 +1,107 @@
+---
+replicaCount: 1
+namespace: default
+
+image:
+  repository: gresearch/fasttrackml
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+data:
+  # NOTE: Make sure you qoute values for all keys
+
+  # common service settings.
+  FML_DEV_MODE: "true"
+  FML_DATABASE_URI: "postgresql://admin:admin@localhost:5432" # PostgresSQL
+  # FML_DATABASE_URI: "sqlite:///data/mydatabase.db" # SQLite 
+  FML_LOG_LEVEL: "DEBUG"
+
+  # database settings.
+  LC_COLLATE: "POSIX"
+
+  # s3 compatible storage settings.
+  AWS_ACCESS_KEY_ID: "user"
+  AWS_SECRET_ACCESS_KEY: "password"
+  FML_S3_ENDPOINT_URI: "http://localhost:9000"
+  FML_GS_ENDPOINT_URI: "http://localhost:4443/storage/v1/"
+
+env: []
+  # - name: MY_NODE_NAME
+  #   valueFrom:
+  #     fieldRef:
+  #       fieldPath: spec.nodeName
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 5000
+
+# By default ingress is enabled, and set to have `nginx` as `className`.
+# Change depending of your environment and needs
+ingress:
+  enabled: true
+  className: nginx
+  path: "/"
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+  
+# Additional volumes on the output Deployment definition.
+volumes: []
+  # - name: sqlite-db
+  #   persistentVolumeClaim:
+  #     claimName: sqlite-pvc
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+  # - name: sqlite-db
+  #   mountPath: /data
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

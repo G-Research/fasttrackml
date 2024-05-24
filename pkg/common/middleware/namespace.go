@@ -26,7 +26,7 @@ var namespaceRegexp = regexp.MustCompile(`^/ns/([^/]+)/`)
 func NewNamespaceMiddleware(namespaceRepository repositories.NamespaceRepositoryProvider) fiber.Handler {
 	return func(ctx *fiber.Ctx) (err error) {
 		log.Debugf("checking namespace for path: %s", ctx.Path())
-		// if namespace exists in the request then try to process it, otherwise fallback to default namespace.
+		// if namespace exists in the request, then try to process it, otherwise fallback to default namespace.
 		namespaceCode := models.DefaultNamespaceCode
 		if matches := namespaceRegexp.FindStringSubmatch(ctx.Path()); matches != nil {
 			namespaceCode = strings.Clone(matches[1])

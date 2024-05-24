@@ -2,17 +2,14 @@ package middleware
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"strings"
-
-	"github.com/gofiber/fiber/v2"
-	"github.com/rotisserie/eris"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
+	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
+	log "github.com/sirupsen/logrus"
+	"net/http"
+	"strings"
 )
 
 // nolint:gosec
@@ -25,6 +22,10 @@ type OIDCMiddleware struct {
 	client          oidc.ClientProvider
 	rolesRepository repositories.RoleRepositoryProvider
 }
+
+var (
+	staticCount = 0
+)
 
 // NewOIDCMiddleware creates new OIDC middleware logic.
 func NewOIDCMiddleware(
@@ -40,14 +41,19 @@ func NewOIDCMiddleware(
 // Handle handles OIDC middleware logic.
 func (m OIDCMiddleware) Handle() fiber.Handler {
 	return func(ctx *fiber.Ctx) (err error) {
-		switch {
-		case AdminPrefixRegexp.MatchString(ctx.Path()):
-			return m.handleAdminResourceRequest(ctx)
-		case ChooserPrefixRegexp.MatchString(ctx.Path()):
-			return m.handleChooserResourceRequest(ctx)
-		case MlflowAimPrefixRegexp.MatchString(ctx.Path()):
-			return m.handleAimMlflowResourceRequest(ctx)
+		path := ctx.Path()
+		// if requested resource related to something static, then we don't need to apply auth.
+		if !strings.Contains(path, "static") {
+			switch {
+			case AdminPrefixRegexp.MatchString(path):
+				return m.handleAdminResourceRequest(ctx)
+			case ChooserPrefixRegexp.MatchString(path):
+				return m.handleChooserResourceRequest(ctx)
+			case MlflowAimPrefixRegexp.MatchString(path):
+				return m.handleAimMlflowResourceRequest(ctx)
+			}
 		}
+
 		return ctx.Next()
 	}
 }
@@ -73,18 +79,14 @@ func (m OIDCMiddleware) handleChooserResourceRequest(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Redirect("/errors/not-found", http.StatusMovedPermanently)
 	}
-	fmt.Println("access_token:", ctx.Cookies("access_token", ""))
 	log.Debugf("checking access permission to %s namespace", namespace.Code)
-	if path := ctx.Path(); path != "/login" && !strings.Contains(path, "/chooser/static") {
-		user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
-		if err != nil {
-			log.Errorf("error verifying access token: %+v", err)
-			return ctx.Redirect("/login", http.StatusMovedPermanently)
-		}
-
-		log.Debugf("user has roles: %v accociated", user.GetRoles())
-		ctx.Locals(oidcUserContextKey, user)
+	user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
+	if err != nil {
+		log.Errorf("error verifying access token: %+v", err)
+		return ctx.Redirect("/login", http.StatusMovedPermanently)
 	}
+	log.Debugf("user has roles: %v accociated", user.GetRoles())
+	ctx.Locals(oidcUserContextKey, user)
 	return ctx.Next()
 }
 

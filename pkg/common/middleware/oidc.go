@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -53,14 +54,6 @@ func (m OIDCMiddleware) Handle() fiber.Handler {
 
 // handleAdminResourceRequest applies OIDC check for Admin resources.
 func (m OIDCMiddleware) handleAdminResourceRequest(ctx *fiber.Ctx) error {
-	/*
-		authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
-		if authToken == "" {
-			log.Error("auth token has incorrect format")
-			return ctx.Redirect("/login", http.StatusMovedPermanently)
-		}
-		user, err := m.client.Verify(ctx.Context(), authToken)
-	*/
 	user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
 	if err != nil {
 		log.Errorf("error verifying access token: %+v", err)
@@ -80,17 +73,9 @@ func (m OIDCMiddleware) handleChooserResourceRequest(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Redirect("/errors/not-found", http.StatusMovedPermanently)
 	}
+	fmt.Println("access_token:", ctx.Cookies("access_token", ""))
 	log.Debugf("checking access permission to %s namespace", namespace.Code)
-
 	if path := ctx.Path(); path != "/login" && !strings.Contains(path, "/chooser/static") {
-		/*
-			authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
-			if authToken == "" {
-				log.Error("auth token has incorrect format")
-				return ctx.Redirect("/login", http.StatusMovedPermanently)
-			}
-			user, err := m.client.Verify(ctx.Context(), authToken)
-		*/
 		user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
 		if err != nil {
 			log.Errorf("error verifying access token: %+v", err)
@@ -111,19 +96,6 @@ func (m OIDCMiddleware) handleAimMlflowResourceRequest(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("checking access permission to %s namespace", namespace.Code)
 
-	/*
-		authToken := strings.Replace(ctx.Get("Authorization"), "Bearer ", "", 1)
-		if authToken == "" {
-			log.Error("auth token has incorrect format")
-			return ctx.Status(
-				http.StatusNotFound,
-			).JSON(
-				api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
-			)
-		}
-
-		user, err := m.client.Verify(ctx.Context(), authToken)
-	*/
 	user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
 	if err != nil {
 		return ctx.Status(

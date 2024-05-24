@@ -1,24 +1,21 @@
 package config
 
 import (
-	"context"
 	"net/url"
 	"path"
 	"path/filepath"
 	"slices"
 	"time"
 
-	"github.com/oauth2-proxy/mockoidc"
 	"github.com/rotisserie/eris"
 	"github.com/spf13/viper"
 
-	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
 	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
 )
 
 // Config represents main service configuration.
 type Config struct {
-	Auth                  *auth.Config
+	Auth                  auth.Config
 	DevMode               bool
 	ListenAddress         string
 	DefaultArtifactRoot   string
@@ -35,7 +32,17 @@ type Config struct {
 // NewConfig creates a new instance of Config.
 func NewConfig() *Config {
 	return &Config{
-		Auth:                  auth.NewConfig(),
+		Auth: auth.Config{
+			AuthUsername:             viper.GetString("auth-username"),
+			AuthPassword:             viper.GetString("auth-password"),
+			AuthUsersConfig:          viper.GetString("auth-users-config"),
+			AuthOIDCScopes:           viper.GetStringSlice("auth-oidc-scopes"),
+			AuthOIDCAdminRole:        viper.GetString("auth-oidc-admin-role"),
+			AuthOIDCClientID:         viper.GetString("auth-oidc-client-id"),
+			AuthOIDCClaimRoles:       viper.GetString("auth-oidc-claim-roles"),
+			AuthOIDCClientSecret:     viper.GetString("auth-oidc-client-secret"),
+			AuthOIDCProviderEndpoint: viper.GetString("auth-oidc-provider-endpoint"),
+		},
 		DevMode:               viper.GetBool("dev-mode"),
 		ListenAddress:         viper.GetString("listen-address"),
 		DefaultArtifactRoot:   viper.GetString("default-artifact-root"),
@@ -77,6 +84,10 @@ func (c *Config) validateConfiguration() error {
 		return eris.New("unsupported schema of 'default-artifact-root' flag")
 	}
 
+	if err := c.Auth.ValidateConfiguration(); err != nil {
+		return eris.Wrap(err, "error validating auth configuration")
+	}
+
 	return nil
 }
 
@@ -95,44 +106,9 @@ func (c *Config) normalizeConfiguration() error {
 		c.DefaultArtifactRoot = "file://" + absoluteArtifactRoot
 	}
 
-	// create temporary OIDC mock server here and initialize application configuration.
-	// this is a temporary solution just for testing purpose
-	oidcMockServer, err := mockoidc.Run()
-	if err != nil {
-		return eris.Wrap(err, "error creating oidc mock server")
+	if err := c.Auth.NormalizeConfiguration(); err != nil {
+		return eris.Wrap(err, "error normalizing auth configuration")
 	}
-	oidcMockServer.QueueUser(&mockoidc.MockUser{
-		Email:  "test.user@example.com",
-		Groups: []string{"group1", "group2"},
-	})
-	c.Auth.AuthOIDCScopes = []string{"openid", "groups"}
-	c.Auth.AuthOIDCClientID = oidcMockServer.ClientID
-	c.Auth.AuthOIDCAdminRole = "admin"
-	c.Auth.AuthOIDCClaimRoles = "groups"
-	c.Auth.AuthOIDCClientSecret = oidcMockServer.ClientSecret
-	c.Auth.AuthOIDCProviderEndpoint = oidcMockServer.Addr() + mockoidc.IssuerBase
 
-	switch {
-	case c.Auth.AuthUsersConfig != "":
-		c.Auth.AuthType = auth.TypeUser
-		parsedUserPermissions, err := auth.Load(c.Auth.AuthUsersConfig)
-		if err != nil {
-			return eris.Wrapf(err, "error loading auth user configuration from file: %s", c.Auth.AuthUsersConfig)
-		}
-		c.Auth.AuthParsedUserPermissions = parsedUserPermissions
-	case c.Auth.AuthOIDCClientID != "" && c.Auth.AuthOIDCClientSecret != "" && c.Auth.AuthOIDCProviderEndpoint != "":
-		oidcClient, err := oidc.NewClient(
-			context.Background(),
-			NormaliseListenAddress(c.ListenAddress),
-			c.Auth.AuthOIDCProviderEndpoint, c.Auth.AuthOIDCClientID, c.Auth.AuthOIDCClientSecret,
-			c.Auth.AuthOIDCClaimRoles, c.Auth.AuthOIDCAdminRole,
-			c.Auth.AuthOIDCScopes,
-		)
-		if err != nil {
-			return eris.Wrap(err, "error creating OIDC client")
-		}
-		c.Auth.AuthType = auth.TypeOIDC
-		c.Auth.AuthOIDCClient = oidcClient
-	}
 	return nil
 }

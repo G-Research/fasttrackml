@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/G-Research/fasttrackml/pkg/common/config/auth"
-
 	"dario.cat/mergo"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
@@ -132,7 +130,6 @@ func (s *BaseTestSuite) closeDB() {
 
 func (s *BaseTestSuite) startServer() {
 	cfg := config.Config{
-		Auth:                  auth.NewConfig(),
 		DatabaseURI:           s.db.Dsn(),
 		DatabasePoolMax:       10,
 		DatabaseSlowThreshold: 1 * time.Second,

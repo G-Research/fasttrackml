@@ -9,7 +9,7 @@ import (
 )
 
 // GetNamespaces renders the index view
-func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
+func (c *Controller) GetNamespaces(ctx *fiber.Ctx) error {
 	namespaces, isAdmin, err := c.namespaceService.ListNamespaces(ctx.Context())
 	if err != nil {
 		return err
@@ -26,7 +26,7 @@ func (c Controller) GetNamespaces(ctx *fiber.Ctx) error {
 }
 
 // ListNamespaces handles `GET /namespaces` endpoint.
-func (c Controller) ListNamespaces(ctx *fiber.Ctx) error {
+func (c *Controller) ListNamespaces(ctx *fiber.Ctx) error {
 	namespaces, _, err := c.namespaceService.ListNamespaces(ctx.Context())
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (c Controller) ListNamespaces(ctx *fiber.Ctx) error {
 }
 
 // GetCurrentNamespace handles `GET /namespaces/current` endpoint.
-func (c Controller) GetCurrentNamespace(ctx *fiber.Ctx) error {
+func (c *Controller) GetCurrentNamespace(ctx *fiber.Ctx) error {
 	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
 		return err

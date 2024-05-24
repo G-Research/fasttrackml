@@ -5,10 +5,10 @@ import (
 )
 
 // Login renders Login page.
-func (c Controller) Login(ctx *fiber.Ctx) error {
+func (c *Controller) Login(ctx *fiber.Ctx) error {
 	if c.config.Auth.IsAuthTypeOIDC() {
 		return ctx.Render("login/login", fiber.Map{
-			"authUrl": c.config.Auth.AuthOIDCClient.GetOauth2Config().AuthCodeURL(
+			"authUrl": c.oidcClient.GetOauth2Config().AuthCodeURL(
 				GenerateRandomString(20),
 			),
 		})

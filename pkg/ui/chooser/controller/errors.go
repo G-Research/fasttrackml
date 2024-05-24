@@ -5,11 +5,11 @@ import (
 )
 
 // NotFoundError renders Not Found error page.
-func (c Controller) NotFoundError(ctx *fiber.Ctx) error {
+func (c *Controller) NotFoundError(ctx *fiber.Ctx) error {
 	return ctx.Render("errors/not-found", fiber.Map{})
 }
 
 // InternalServerError renders Internal Server error page.
-func (c Controller) InternalServerError(ctx *fiber.Ctx) error {
-	return ctx.Render("errors/internal-server-error", fiber.Map{})
+func (c *Controller) InternalServerError(ctx *fiber.Ctx) error {
+	return ctx.Render("errors/internal-server", fiber.Map{})
 }

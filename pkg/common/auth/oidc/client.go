@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/G-Research/fasttrackml/pkg/common/config"
+
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/rotisserie/eris"
 	"golang.org/x/oauth2"
@@ -22,39 +24,32 @@ type ClientProvider interface {
 
 // Client represents OIDC client.
 type Client struct {
-	adminRole    string
-	claimRoles   string
+	config       *config.Config
 	verifier     *oidc.IDTokenVerifier
 	oauth2Config *oauth2.Config
 }
 
 // NewClient creates a new OIDC client.
-func NewClient(
-	ctx context.Context,
-	listenAddress string,
-	providerEndpoint, clientID, clientSecret string,
-	claimRoles, adminRole string,
-	scopes []string,
+func NewClient(ctx context.Context, config *config.Config,
 ) (*Client, error) {
-	provider, err := oidc.NewProvider(ctx, providerEndpoint)
+	provider, err := oidc.NewProvider(ctx, config.Auth.AuthOIDCProviderEndpoint)
 	if err != nil {
 		return nil, eris.Wrap(err, "error creating OIDC provider")
 	}
 	return &Client{
-		adminRole:  adminRole,
-		claimRoles: claimRoles,
+		config: config,
 		verifier: provider.Verifier(
 			&oidc.Config{
-				ClientID:        clientID,
+				ClientID:        config.Auth.AuthOIDCClientID,
 				SkipIssuerCheck: true,
 			},
 		),
 		oauth2Config: &oauth2.Config{
-			Scopes:       scopes,
+			Scopes:       config.Auth.AuthOIDCScopes,
 			Endpoint:     provider.Endpoint(),
-			ClientID:     clientID,
-			ClientSecret: clientSecret,
-			RedirectURL:  fmt.Sprintf("%s/callback/oidc", listenAddress),
+			ClientID:     config.Auth.AuthOIDCClientID,
+			ClientSecret: config.Auth.AuthOIDCClientSecret,
+			RedirectURL:  fmt.Sprintf("%s/callback/oidc", NormaliseListenAddress(config.ListenAddress)),
 		},
 	}, nil
 }
@@ -71,18 +66,18 @@ func (c Client) Verify(ctx context.Context, accessToken string) (*User, error) {
 		return nil, eris.Wrap(err, "error extracting token claims")
 	}
 
-	data, ok := claims[c.claimRoles]
+	data, ok := claims[c.config.Auth.AuthOIDCClaimRoles]
 	if !ok {
-		return nil, eris.Errorf("claim property: %s not found", c.claimRoles)
+		return nil, eris.Errorf("claim property: %s not found", c.config.Auth.AuthOIDCClaimRoles)
 	}
 
 	roles, err := ConvertAndNormaliseRoles(data)
 	if err != nil {
-		return nil, eris.Wrapf(err, "error converting claim %s property", c.claimRoles)
+		return nil, eris.Wrapf(err, "error converting claim %s property", c.config.Auth.AuthOIDCClaimRoles)
 	}
 	return &User{
 		roles:   roles,
-		isAdmin: slices.Contains(roles, c.adminRole),
+		isAdmin: slices.Contains(roles, c.config.Auth.AuthOIDCAdminRole),
 	}, nil
 }
 

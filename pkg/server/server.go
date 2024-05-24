@@ -7,6 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/oauth2-proxy/mockoidc"
+
+	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/compress"
@@ -188,6 +192,23 @@ func createApp(
 
 	namespaceEventListener.Listen()
 
+	// create temporary OIDC mock server here and initialize application configuration.
+	// this is a temporary solution just for testing purpose
+	oidcMockServer, err := mockoidc.Run()
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating oidc mock server")
+	}
+	oidcMockServer.QueueUser(&mockoidc.MockUser{
+		Email:  "test.user@example.com",
+		Groups: []string{"group1", "group2"},
+	})
+	config.Auth.AuthOIDCScopes = []string{"openid", "groups"}
+	config.Auth.AuthOIDCClientID = oidcMockServer.ClientID
+	config.Auth.AuthOIDCAdminRole = "admin"
+	config.Auth.AuthOIDCClaimRoles = "groups"
+	config.Auth.AuthOIDCClientSecret = oidcMockServer.ClientSecret
+	config.Auth.AuthOIDCProviderEndpoint = oidcMockServer.Addr() + mockoidc.IssuerBase
+
 	// attach global middlewares.
 	if config.Auth.AuthUsername != "" && config.Auth.AuthPassword != "" {
 		log.Info("Auth - enabling Basic Auth")
@@ -202,16 +223,20 @@ func createApp(
 	// based on Auth configuration, attach global OIDC or Basic Auth middleware.
 	switch {
 	case config.Auth.IsAuthTypeOIDC():
+		oidcClient, err := oidc.NewClient(ctx, config)
+		if err != nil {
+			return nil, eris.Wrap(err, "error creating oidc client")
+		}
 		app.Get("/callback/oidc", func(ctx *fiber.Ctx) error {
-			oauth2Token, err := config.Auth.AuthOIDCClient.Exchange(ctx.Context(), ctx.Query("code"))
+			oauth2Token, err := oidcClient.Exchange(ctx.Context(), ctx.Query("code"))
 			if err != nil {
 				log.Errorf("error exchanging code to oauth2 token: %+v", err)
-				return ctx.Redirect("/errors/internal-server-error", http.StatusMovedPermanently)
+				return ctx.Redirect("/errors/internal-server", http.StatusMovedPermanently)
 			}
 			rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 			if !ok {
 				log.Error("id_token is missing")
-				return ctx.Redirect("/errors/internal-server-error", http.StatusMovedPermanently)
+				return ctx.Redirect("/errors/internal-server", http.StatusMovedPermanently)
 			}
 			ctx.Cookie(&fiber.Cookie{
 				Name:  "access_token",
@@ -219,7 +244,7 @@ func createApp(
 			})
 			return ctx.Redirect("/", http.StatusMovedPermanently)
 		})
-		app.Use(middleware.NewOIDCMiddleware(config.Auth.AuthOIDCClient, rolesCachedRepository))
+		app.Use(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
 	case config.Auth.IsAuthTypeUser():
 		app.Use(middleware.NewBasicAuthMiddleware(config.Auth.AuthParsedUserPermissions))
 	}
@@ -278,7 +303,7 @@ func createApp(
 	).Init(app)
 
 	// init `mlflow` api and ui routes.
-	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
+	// TODO:refactoring right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
 		mlflowController.NewController(
 			mlflowRunService.NewService(
@@ -322,15 +347,21 @@ func createApp(
 	}
 
 	// init `chooser` ui routes.
-	if err := chooser.NewRouter(
-		chooserController.NewController(
+	controller := chooserController.NewController(
+		config,
+		chooserNamespaceService.NewService(
 			config,
-			chooserNamespaceService.NewService(
-				config,
-				namespaceCachedRepository,
-			),
+			namespaceCachedRepository,
 		),
-	).Init(app); err != nil {
+	)
+	if config.Auth.IsAuthTypeOIDC() {
+		oidcClient, err := oidc.NewClient(ctx, config)
+		if err != nil {
+			return nil, eris.Wrap(err, "error creating oidc client")
+		}
+		controller.SetOIDCClient(oidcClient)
+	}
+	if err := chooser.NewRouter(controller).Init(app); err != nil {
 		return nil, eris.Wrap(err, "error initializing chooser routes")
 	}
 

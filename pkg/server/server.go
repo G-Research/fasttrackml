@@ -220,6 +220,27 @@ func createApp(
 	}
 	app.Use(middleware.NewNamespaceMiddleware(namespaceCachedRepository))
 
+	app.Use(compress.New(compress.Config{
+		Next: func(c *fiber.Ctx) bool {
+			// This is a little brittle, maybe there is a better way?
+			// Do not compress metric histories as urllib3 did not support file-like compressed reads until 2.0.0a1
+			return strings.HasSuffix(c.Path(), "/metrics/get-histories")
+		},
+	}))
+
+	app.Use(recover.New(recover.Config{EnableStackTrace: true}))
+	app.Use(logger.New(logger.Config{
+		Format: "${status} - ${latency} ${method} ${path}\n",
+		Output: log.StandardLogger().Writer(),
+	}))
+
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendString("OK")
+	})
+	app.Get("/version", func(c *fiber.Ctx) error {
+		return c.SendString(version.Version)
+	})
+
 	// based on Auth configuration, attach global OIDC or Basic Auth middleware.
 	switch {
 	case config.Auth.IsAuthTypeOIDC():
@@ -242,6 +263,7 @@ func createApp(
 				Name:  "access_token",
 				Value: rawIDToken,
 			})
+			ctx.Response().Header.Add("Cache-Control", "no-store")
 			return ctx.Redirect("/", http.StatusMovedPermanently)
 		})
 		app.Use(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
@@ -256,19 +278,6 @@ func createApp(
 			return strings.HasSuffix(c.Path(), "/metrics/get-histories")
 		},
 	}))
-
-	app.Use(recover.New(recover.Config{EnableStackTrace: true}))
-	app.Use(logger.New(logger.Config{
-		Format: "${status} - ${latency} ${method} ${path}\n",
-		Output: log.StandardLogger().Writer(),
-	}))
-
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendString("OK")
-	})
-	app.Get("/version", func(c *fiber.Ctx) error {
-		return c.SendString(version.Version)
-	})
 
 	// init `aim` api routes.
 	aimAPI.NewRouter(

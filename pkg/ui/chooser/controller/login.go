@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"net/http"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -13,5 +15,5 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 			),
 		})
 	}
-	return ctx.Redirect("/")
+	return ctx.Redirect("/", http.StatusMovedPermanently)
 }

@@ -2,14 +2,16 @@ package middleware
 
 import (
 	"context"
-	"github.com/G-Research/fasttrackml/pkg/common/api"
-	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
+	"net/http"
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"strings"
+
+	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 )
 
 // nolint:gosec
@@ -63,6 +65,7 @@ func (m OIDCMiddleware) handleAdminResourceRequest(ctx *fiber.Ctx) error {
 	user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
 	if err != nil {
 		log.Errorf("error verifying access token: %+v", err)
+		ctx.Response().Header.Add("Cache-Control", "no-store")
 		return ctx.Redirect("/login", http.StatusMovedPermanently)
 	}
 
@@ -83,6 +86,7 @@ func (m OIDCMiddleware) handleChooserResourceRequest(ctx *fiber.Ctx) error {
 	user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
 	if err != nil {
 		log.Errorf("error verifying access token: %+v", err)
+		ctx.Response().Header.Add("Cache-Control", "no-store")
 		return ctx.Redirect("/login", http.StatusMovedPermanently)
 	}
 	log.Debugf("user has roles: %v accociated", user.GetRoles())
@@ -101,7 +105,7 @@ func (m OIDCMiddleware) handleAimMlflowResourceRequest(ctx *fiber.Ctx) error {
 	user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
 	if err != nil {
 		return ctx.Status(
-			http.StatusNotFound,
+			http.StatusForbidden,
 		).JSON(
 			api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
 		)

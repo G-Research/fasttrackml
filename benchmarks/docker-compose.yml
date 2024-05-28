@@ -50,7 +50,7 @@ services:
 
     mlflow:
       image: python:3.8
-      command: bash -c "pip install mlflow && mlflow server --host 0.0.0.0  --gunicorn-opts '--access-logfile -'"
+      command: bash -c "pip install mlflow && mlflow server --host 0.0.0.0  --gunicorn-opts '--access-logfile -' --backend-store-uri sqlite:///mlflow.db"
       ports:
         - 6001:5000
       networks:
@@ -63,7 +63,7 @@ services:
         start_period: 5m
 
     fasttrack:
-      image: gresearch/fasttrackml
+      image: gresearch/fasttrackml:main
       networks:
         - fasttrack_network
       ports:
@@ -75,7 +75,7 @@ services:
         start_period: 5m
 
     fasttrackpostgres:
-      image: gresearch/fasttrackml
+      image: gresearch/fasttrackml:main
       networks:
         - fasttrack_network
       ports:

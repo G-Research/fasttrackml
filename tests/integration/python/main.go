@@ -102,9 +102,16 @@ func main() {
 			continue
 		}
 
+		var srcDir *dagger.Directory
+		if td.Repository != "" {
+			srcDir = getPatchedSourceDirectory(client, td.Repository, td.Tag, filepath.Join(configDir, td.Patch))
+		} else {
+			srcDir = getLocalTestsSourceDirectory(client, filepath.Join(configDir, config.Source))
+		}
+
 		if _, err := getTestContainer(
 			client,
-			getPatchedSourceDirectory(client, td.Repository, td.Tag, filepath.Join(configDir, td.Patch)),
+			srcDir,
 			getPythonVirtualEnvDirectory(client, td.Requirements),
 			getBinary(client, filepath.Join(configDir, config.Source)),
 			getDatabaseService(client),
@@ -175,6 +182,15 @@ func getPatchedSourceDirectory(client *dagger.Client, repo, tag, patchPath strin
 		WithExec([]string{
 			"git", "apply", "/tmp/patch",
 		}).
+		Directory("/src")
+}
+
+func getLocalTestsSourceDirectory(client *dagger.Client, sourcePath string) *dagger.Directory {
+	return client.Container().
+		From(pythonImage).
+		WithDirectory("/src", client.Host().Directory(sourcePath, dagger.HostDirectoryOpts{
+			Include: []string{"python"},
+		})).
 		Directory("/src")
 }
 

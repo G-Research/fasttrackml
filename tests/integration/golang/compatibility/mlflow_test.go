@@ -63,7 +63,7 @@ func (s *MLflowTestSuite) SetupSuite() {
 		S3EndpointURI:         helpers.GetS3EndpointUri(),
 		GSEndpointURI:         helpers.GetGSEndpointUri(),
 	})
-	s.Nil(err)
+	s.Require().Nil(err)
 	s.server = srv
 
 	s.aimClient = func() *helpers.HttpClient {

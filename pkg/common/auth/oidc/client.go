@@ -49,7 +49,7 @@ func NewClient(ctx context.Context, config *config.Config,
 			Endpoint:     provider.Endpoint(),
 			ClientID:     config.Auth.AuthOIDCClientID,
 			ClientSecret: config.Auth.AuthOIDCClientSecret,
-			RedirectURL:  fmt.Sprintf("%s/callback/oidc", NormaliseListenAddress(config.ListenAddress)),
+			RedirectURL:  fmt.Sprintf("%s/auth/oidc", NormaliseListenAddress(config.ListenAddress)),
 		},
 	}, nil
 }

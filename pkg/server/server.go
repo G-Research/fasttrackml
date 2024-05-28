@@ -7,16 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oauth2-proxy/mockoidc"
-
-	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/oauth2-proxy/mockoidc"
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
@@ -39,6 +36,7 @@ import (
 	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/metric"
 	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/model"
 	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/run"
+	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
 	"github.com/G-Research/fasttrackml/pkg/common/config"
 	"github.com/G-Research/fasttrackml/pkg/common/dao"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
@@ -248,7 +246,7 @@ func createApp(
 		if err != nil {
 			return nil, eris.Wrap(err, "error creating oidc client")
 		}
-		app.Get("/callback/oidc", func(ctx *fiber.Ctx) error {
+		app.Get("/auth/oidc", func(ctx *fiber.Ctx) error {
 			oauth2Token, err := oidcClient.Exchange(ctx.Context(), ctx.Query("code"))
 			if err != nil {
 				log.Errorf("error exchanging code to oauth2 token: %+v", err)
@@ -262,6 +260,14 @@ func createApp(
 			ctx.Cookie(&fiber.Cookie{
 				Name:  "access_token",
 				Value: rawIDToken,
+			})
+			ctx.Response().Header.Add("Cache-Control", "no-store")
+			return ctx.Redirect("/", http.StatusMovedPermanently)
+		})
+		app.Get("/logout", func(ctx *fiber.Ctx) error {
+			ctx.Cookie(&fiber.Cookie{
+				Name:    "access_token",
+				Expires: time.Now().Add(-5 * time.Second),
 			})
 			ctx.Response().Header.Add("Cache-Control", "no-store")
 			return ctx.Redirect("/", http.StatusMovedPermanently)

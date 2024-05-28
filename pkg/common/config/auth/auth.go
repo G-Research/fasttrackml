@@ -32,7 +32,6 @@ func (c *Config) IsAuthTypeOIDC() bool {
 		c.AuthOIDCClaimRoles != "" &&
 		c.AuthOIDCClientSecret != "" &&
 		c.AuthOIDCProviderEndpoint != ""
-
 }
 
 // IsAuthTypeUser makes check that current auth is TypeUser.

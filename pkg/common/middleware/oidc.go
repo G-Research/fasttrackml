@@ -25,10 +25,6 @@ type OIDCMiddleware struct {
 	rolesRepository repositories.RoleRepositoryProvider
 }
 
-var (
-	staticCount = 0
-)
-
 // NewOIDCMiddleware creates new OIDC middleware logic.
 func NewOIDCMiddleware(
 	client oidc.ClientProvider,

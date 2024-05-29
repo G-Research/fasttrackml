@@ -13,11 +13,16 @@
         <p class="tight">This is the modern Aim UI, much faster than MLFlow.</p>
     </article>
 </div>
-<p>Selected namespace:
-    <b>
-        <u>{{.CurrentNamespace.DisplayName}}</u>
-    </b>
-</p>
+<div id="selected-namespace-container">
+    <p>Selected namespace:
+        <b>
+            <u>{{.CurrentNamespace.DisplayName}}</u>
+        </b>
+    </p>
+    <a href="/logout">
+        <button id="logout-button">Logout</button>
+    </a>
+</div>
 
 {{ if .Namespaces}}
 <div id="namespaces-list-container">
@@ -43,7 +48,3 @@
     <a href="#" onclick="window.location = window.location.origin + '/admin/namespaces/'">Manage namespaces</a>
 </p>
 {{ end }}
-
-<a href="/logout">
-    <button id="logout-button">Logout</button>
-</a>

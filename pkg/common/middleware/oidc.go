@@ -101,7 +101,7 @@ func (m OIDCMiddleware) handleAimMlflowResourceRequest(ctx *fiber.Ctx) error {
 	user, err := m.client.Verify(ctx.Context(), ctx.Cookies("access_token", ""))
 	if err != nil {
 		return ctx.Status(
-			http.StatusForbidden,
+			http.StatusUnauthorized,
 		).JSON(
 			api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
 		)
@@ -121,7 +121,7 @@ func (m OIDCMiddleware) handleAimMlflowResourceRequest(ctx *fiber.Ctx) error {
 	}
 	if !isValid {
 		return ctx.Status(
-			http.StatusNotFound,
+			http.StatusForbidden,
 		).JSON(
 			api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
 		)

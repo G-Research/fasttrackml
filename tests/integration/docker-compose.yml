@@ -32,15 +32,16 @@ services:
       timeout: 5s
 
   mlflow-setup:
-    build:
-      dockerfile: MLflow.Client.Dockerfile
+    image: python:latest
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - ./:/src
+    working_dir: /src
     environment:
       BACKEND_STORE_URI: postgresql://postgres:postgres@postgres/postgres
-      MLFLOW_VERSION: ${MLFLOW_VERSION:-2.13.1}
-    command: python mlflow-setup.py
+    command: pip install "mlflow==${MLFLOW_VERSION:-2.13.1}" psycopg2 boto3 && python mlflow-setup.py
 
   integration-tests:
     image: golang:1.21

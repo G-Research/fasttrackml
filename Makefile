@@ -181,6 +181,8 @@ container-test: ## run integration tests in container.
 container-compatibility-test: ## run compatibility tests in container.
 	@echo ">>> Running compatibility tests in container."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
+		docker compose run -e MLFLOW_VERSION mlflow-setup
+	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
 		docker compose run -e MLFLOW_VERSION compatibility-tests
 
 .PHONY: container-clean

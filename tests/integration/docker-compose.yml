@@ -39,6 +39,7 @@ services:
         condition: service_healthy
     environment:
       BACKEND_STORE_URI: postgresql://postgres:postgres@postgres/postgres
+      MLFLOW_VERSION: ${MLFLOW_VERSION:-2.13.1}
     command: python mlflow-setup.py
 
   integration-tests:
@@ -55,8 +56,6 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-      mlflow-setup:
-        condition: service_completed_successfully
     environment:
       GOCACHE: /cache/go-build
       GOMODCACHE: /cache/go-mod
@@ -67,6 +66,25 @@ services:
       FML_GS_ENDPOINT_URI: http://google-storage:4443/storage/v1/
       AWS_ACCESS_KEY_ID: "user"
       AWS_SECRET_ACCESS_KEY: "password"
+
+  compatibility-tests:
+    image: golang:1.21
+    command: make test-go-compatibility
+    volumes:
+      - ../../:/src
+      - go-cache:/cache
+    working_dir: /src
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow-setup:
+        condition: service_completed_successfully
+    environment:
+      GOCACHE: /cache/go-build
+      GOMODCACHE: /cache/go-mod
+      FML_LOG_LEVEL: ${FML_LOG_LEVEL:-fatal}
+      FML_DATABASE_BACKEND: ${FML_DATABASE_BACKEND:-postgres}
+      FML_POSTGRES_URI: postgres://postgres:postgres@postgres/postgres
 
 volumes:
   go-cache:

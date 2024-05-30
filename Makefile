@@ -177,6 +177,12 @@ container-test: ## run integration tests in container.
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
 		docker compose run -e FML_SLOW_TESTS_ENABLED integration-tests
 
+.PHONY: container-compatibility-test
+container-compatibility-test: ## run compatibility tests in container.
+	@echo ">>> Running compatibility tests in container."
+	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
+		docker compose run -e MLFLOW_VERSION compatibility-tests
+
 .PHONY: container-clean
 container-clean: ## clean containers.
 	@echo ">>> Cleaning containers."

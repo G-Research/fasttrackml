@@ -148,6 +148,11 @@ test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
 	@go test -tags="$(GO_BUILDTAGS)" ./tests/integration/golang/...
 
+.PHONY: test-go-compatibility
+test-go-compatibility: ## run go compatibility tests.
+	@echo ">>> Running compatibility tests."
+	@go test -tags="$(GO_BUILDTAGS),compatibility" ./tests/integration/golang/compatibility
+
 .PHONY: test-python-integration
 test-python-integration: ## run all the python integration tests.
 	@echo ">>> Running all python integration tests."

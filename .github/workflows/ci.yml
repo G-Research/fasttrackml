@@ -179,7 +179,7 @@ jobs:
 
   go-compatibility-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Go Compatibility Tests (Mlflow ${ matrix.mlflow-version } - ${ matrix.database-uri})
+    name: Go Compatibility Tests (Mlflow ${{ matrix.mlflow-version }} - ${{ matrix.database-uri}})
     runs-on: ubuntu-latest
     strategy:
       matrix:

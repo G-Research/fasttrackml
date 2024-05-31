@@ -38,9 +38,10 @@ services:
         condition: service_healthy
     volumes:
       - ./:/src
+      - db:/db
     working_dir: /src
     environment:
-      BACKEND_STORE_URI: postgresql://postgres:postgres@postgres/postgres
+      BACKEND_STORE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@postgres/postgres}
     command: pip install "mlflow==${MLFLOW_VERSION:-2.13.1}" psycopg2 boto3 && python mlflow-setup.py
 
   integration-tests:
@@ -74,6 +75,7 @@ services:
     volumes:
       - ../../:/src
       - go-cache:/cache
+      - db:/db
     working_dir: /src
     depends_on:
       postgres:
@@ -85,7 +87,9 @@ services:
       GOMODCACHE: /cache/go-mod
       FML_LOG_LEVEL: ${FML_LOG_LEVEL:-fatal}
       FML_DATABASE_BACKEND: ${FML_DATABASE_BACKEND:-postgres}
-      FML_POSTGRES_URI: postgres://postgres:postgres@postgres/postgres
+      FML_POSTGRES_URI: ${DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
+      FML_DATABASE_URI: ${DATABASE_URI:-sqlite:///db/mlflow.db}
 
 volumes:
   go-cache:
+  db:

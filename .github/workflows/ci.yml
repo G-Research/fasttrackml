@@ -179,11 +179,16 @@ jobs:
 
   go-compatibility-tests:
     if: github.event_name == 'schedule' || github.event_name == 'push' || github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id
-    name: Go Compatibility Tests (Mlflow ${{ matrix.mlflow-version }})
+    name: Go Compatibility Tests (Mlflow ${ matrix.mlflow-version } - ${ matrix.database-uri})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mlflow-version: [1.8.0, 2.13.0]
+        mlflow-version:
+          - 1.8.0
+          - 2.13.0
+        database-uri:
+          - postgres://postgres:postgres@postgres/postgres
+          - sqlite:///db/mlflow.db
       fail-fast: false
     steps:
       - name: Checkout
@@ -214,6 +219,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
           MLFLOW_VERSION: ${{ matrix.mlflow-version }}
+          DATABASE_URI: ${{ matrix.database-uri }}
 
       - name: Save cache
         if: steps.cache.outputs.cache-hit != 'true'

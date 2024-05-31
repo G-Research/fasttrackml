@@ -16,4 +16,3 @@ if __name__ == "__main__":
     log_metric("foo", random())
     log_metric("foo", random() + 1)
     log_metric("foo", random() + 2)
-

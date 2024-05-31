@@ -184,7 +184,7 @@ jobs:
     strategy:
       matrix:
         mlflow-version:
-          - 1.8.0
+          - 1.30.0
           - 2.13.0
         database-uri:
           - postgres://postgres:postgres@postgres/postgres

@@ -32,7 +32,7 @@ services:
       timeout: 5s
 
   mlflow-setup:
-    image: python:latest
+    image: python:3.10
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,8 +41,8 @@ services:
       - db:/db
     working_dir: /src
     environment:
-      BACKEND_STORE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@postgres/postgres}
-    command: pip install "mlflow==${MLFLOW_VERSION:-2.13.1}" psycopg2 boto3 && python mlflow-setup.py
+      BACKEND_STORE_URI: ${DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
+    command: bash -c "pip install mlflow==${MLFLOW_VERSION:-2.8.0} psycopg2 boto3 && python mlflow-setup.py"
 
   integration-tests:
     image: golang:1.21
@@ -80,8 +80,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      mlflow-setup:
-        condition: service_completed_successfully
     environment:
       GOCACHE: /cache/go-build
       GOMODCACHE: /cache/go-mod

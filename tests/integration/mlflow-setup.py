@@ -4,7 +4,8 @@ from random import randint, random
 import mlflow
 from mlflow import log_metric, log_param
 
-mlflow.set_tracking_uri(os.getenv("BACKEND_STORE_URI"))
+db_url = os.getenv("BACKEND_STORE_URI")
+mlflow.set_tracking_uri(db_url.replace("sqlite:///", "sqlite:////").replace("postgres://", "postgresql://"))
 mlflow.set_experiment("mlflow-experiment")
 
 if __name__ == "__main__":

@@ -32,14 +32,17 @@ services:
       timeout: 5s
 
   mlflow-setup:
-    build:
-      dockerfile: MLflow.Client.Dockerfile
+    image: python:3.8
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - ./:/src
+      - db:/db
+    working_dir: /src
     environment:
-      BACKEND_STORE_URI: postgresql://postgres:postgres@postgres/postgres
-    command: python mlflow-setup.py
+      BACKEND_STORE_URI: ${DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
+    command: bash -c "pip install mlflow==${MLFLOW_VERSION:-2.8.0} psycopg2 boto3 protobuf==3.20 && python mlflow-setup.py"
 
   integration-tests:
     image: golang:1.21
@@ -55,8 +58,6 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-      mlflow-setup:
-        condition: service_completed_successfully
     environment:
       GOCACHE: /cache/go-build
       GOMODCACHE: /cache/go-mod
@@ -68,5 +69,25 @@ services:
       AWS_ACCESS_KEY_ID: "user"
       AWS_SECRET_ACCESS_KEY: "password"
 
+  compatibility-tests:
+    image: golang:1.21
+    command: make test-go-compatibility
+    volumes:
+      - ../../:/src
+      - go-cache:/cache
+      - db:/db
+    working_dir: /src
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      GOCACHE: /cache/go-build
+      GOMODCACHE: /cache/go-mod
+      FML_LOG_LEVEL: ${FML_LOG_LEVEL:-fatal}
+      FML_DATABASE_BACKEND: ${FML_DATABASE_BACKEND:-postgres}
+      FML_POSTGRES_URI: ${DATABASE_URI:-postgres://postgres:postgres@postgres/postgres}
+      FML_DATABASE_URI: ${DATABASE_URI:-sqlite:///db/mlflow.db}
+
 volumes:
   go-cache:
+  db:

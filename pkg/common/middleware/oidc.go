@@ -65,7 +65,7 @@ func (m OIDCMiddleware) handleAdminResourceRequest(ctx *fiber.Ctx) error {
 		return ctx.Redirect("/login", http.StatusMovedPermanently)
 	}
 
-	log.Debugf("user has roles: %v accociated", user.GetRoles())
+	log.Debugf("user has roles: %v associated", user.GetRoles())
 	if !user.IsAdmin() {
 		return ctx.Redirect("/errors/not-found", http.StatusMovedPermanently)
 	}
@@ -85,7 +85,7 @@ func (m OIDCMiddleware) handleChooserResourceRequest(ctx *fiber.Ctx) error {
 		ctx.Response().Header.Add("Cache-Control", "no-store")
 		return ctx.Redirect("/login", http.StatusMovedPermanently)
 	}
-	log.Debugf("user has roles: %v accociated", user.GetRoles())
+	log.Debugf("user has roles: %v associated", user.GetRoles())
 	ctx.Locals(oidcUserContextKey, user)
 	return ctx.Next()
 }
@@ -106,7 +106,7 @@ func (m OIDCMiddleware) handleAimMlflowResourceRequest(ctx *fiber.Ctx) error {
 			api.NewResourceDoesNotExistError("unable to find namespace with code: %s", namespace.Code),
 		)
 	}
-	log.Debugf("user has roles: %v accociated", user.GetRoles())
+	log.Debugf("user has roles: %v associated", user.GetRoles())
 
 	if user.IsAdmin() {
 		return ctx.Next()

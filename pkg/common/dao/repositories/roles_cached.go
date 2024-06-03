@@ -93,7 +93,7 @@ func (r RoleCachedRepository) ValidateRolesAccessToNamespace(
 		).Where(
 			&models.Namespace{Code: requestedNamespaceCode},
 		),
-	).Debug().Find(&data).Error; err != nil {
+	).Find(&data).Error; err != nil {
 		return false, eris.Wrapf(err, "error getting roles for namespace with code: %s", requestedNamespaceCode)
 	}
 

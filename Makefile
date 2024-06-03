@@ -148,6 +148,11 @@ test-go-integration: ## run go integration tests.
 	@echo ">>> Running integration tests."
 	@go test -tags="$(GO_BUILDTAGS)" ./tests/integration/golang/...
 
+.PHONY: test-go-compatibility
+test-go-compatibility: ## run go compatibility tests.
+	@echo ">>> Running compatibility tests."
+	@go test -tags="$(GO_BUILDTAGS),compatibility" ./tests/integration/golang/compatibility
+
 .PHONY: test-python-integration
 test-python-integration: ## run all the python integration tests.
 	@echo ">>> Running all python integration tests."
@@ -171,6 +176,14 @@ container-test: ## run integration tests in container.
 	@echo ">>> Running integration tests in container."
 	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
 		docker compose run -e FML_SLOW_TESTS_ENABLED integration-tests
+
+.PHONY: container-compatibility-test
+container-compatibility-test: ## run compatibility tests in container.
+	@echo ">>> Running compatibility tests in container."
+	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
+		docker compose run -e MLFLOW_VERSION -e DATABASE_URI mlflow-setup
+	@COMPOSE_FILE=$(COMPOSE_FILE) COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT_NAME) \
+		docker compose run -e MLFLOW_VERSION -e DATABASE_URI compatibility-tests
 
 .PHONY: container-clean
 container-clean: ## clean containers.

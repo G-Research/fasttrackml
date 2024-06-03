@@ -1,3 +1,5 @@
+//go:build compatibility
+
 package compatibility
 
 import (

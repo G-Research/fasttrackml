@@ -4,8 +4,8 @@
 
 FastTrackML is an API for logging parameters and metrics when running
 machine learning code, and it is a UI for visualizing the result. The
-API is a drop-in replacement for Mlflow's tracking server, and it
-ships with the visualization UI of both Mlflow and Aim.
+API is a drop-in replacement for MLflow's tracking server, and it
+ships with the visualization UI of both MLflow and Aim.
 
 As the name implies, the emphasis is on speed -- fast logging, fast
 retrieval.
@@ -39,7 +39,7 @@ For more info, `--help` is your friend!
 
 #### Track your experiments
 
-Install the MLFlow Python package:
+Install the MLflow Python package:
 
 ```bash
 pip install mlflow-skinny

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/G-Research/fasttrackml/pkg/common/config"
-
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/rotisserie/eris"
 	"golang.org/x/oauth2"
+
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 )
 
 // ClientProvider provides an interface to work with OIDC provider.

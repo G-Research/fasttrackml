@@ -13,7 +13,6 @@ const (
 )
 
 type Config struct {
-	AuthType                  string
 	AuthUsername              string
 	AuthPassword              string
 	AuthUsersConfig           string
@@ -28,12 +27,16 @@ type Config struct {
 
 // IsAuthTypeOIDC makes check that current auth is TypeOIDC.
 func (c *Config) IsAuthTypeOIDC() bool {
-	return c.AuthType == TypeOIDC
+	return c.AuthOIDCClientID != "" &&
+		len(c.AuthOIDCScopes) > 0 &&
+		c.AuthOIDCClaimRoles != "" &&
+		c.AuthOIDCClientSecret != "" &&
+		c.AuthOIDCProviderEndpoint != ""
 }
 
 // IsAuthTypeUser makes check that current auth is TypeUser.
 func (c *Config) IsAuthTypeUser() bool {
-	return c.AuthType == TypeUser
+	return c.AuthParsedUserPermissions != nil
 }
 
 // ValidateConfiguration validates service configuration for correctness.
@@ -43,16 +46,12 @@ func (c *Config) ValidateConfiguration() error {
 
 // NormalizeConfiguration normalizes auth configuration parameters.
 func (c *Config) NormalizeConfiguration() error {
-	switch {
-	case c.AuthUsersConfig != "":
-		c.AuthType = TypeUser
+	if c.AuthUsersConfig != "" {
 		parsedUserPermissions, err := Load(c.AuthUsersConfig)
 		if err != nil {
 			return eris.Wrapf(err, "error loading auth user configuration from file: %s", c.AuthUsersConfig)
 		}
 		c.AuthParsedUserPermissions = parsedUserPermissions
-	case c.AuthOIDCClientID != "" && c.AuthOIDCClientSecret != "" && c.AuthOIDCProviderEndpoint != "":
-		c.AuthType = TypeOIDC
 	}
 	return nil
 }

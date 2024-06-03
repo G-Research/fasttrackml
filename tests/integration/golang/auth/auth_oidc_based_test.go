@@ -42,16 +42,18 @@ func TestOIDCAuthTestSuite(t *testing.T) {
 
 	// create a service configuration with OIDC enabled option.
 	testSuite := new(OIDCAuthTestSuite)
-	testSuite.Config = config.Config{
+	cfg := config.Config{
 		Auth: auth.Config{
-			AuthType:                 auth.TypeOIDC,
+			AuthOIDCScopes:           []string{"openid"},
 			AuthOIDCAdminRole:        "admin",
 			AuthOIDCClientID:         oidcMockServer.ClientID(),
-			AuthOIDCClientSecret:     oidcMockServer.ClientSecret(),
 			AuthOIDCClaimRoles:       "groups",
+			AuthOIDCClientSecret:     oidcMockServer.ClientSecret(),
 			AuthOIDCProviderEndpoint: oidcMockServer.Address(),
 		},
 	}
+	assert.Nil(t, cfg.Validate())
+	testSuite.Config = cfg
 	testSuite.oidcMockServer = oidcMockServer
 	suite.Run(t, testSuite)
 }
@@ -153,9 +155,9 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 						&successResponse,
 					).WithNamespace(
 						s.namespace1.Code,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user1Token),
-					}).DoRequest("/projects"),
+					).WithCookie(
+						"access_token", s.user1Token,
+					).DoRequest("/projects"),
 				)
 				s.Equal("FastTrackML", successResponse.Name)
 
@@ -165,12 +167,12 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 					&errorResponse,
 				).WithNamespace(
 					s.namespace2.Code,
-				).WithHeaders(map[string]string{
-					"Authorization": fmt.Sprintf("Bearer %s", s.user1Token),
-				})
+				).WithCookie(
+					"access_token", s.user1Token,
+				)
 				s.Require().Nil(client.DoRequest("/projects"))
 
-				s.Equal(client.GetStatusCode(), http.StatusNotFound)
+				s.Equal(http.StatusForbidden, client.GetStatusCode())
 				s.Equal(
 					"RESOURCE_DOES_NOT_EXIST: unable to find namespace with code: namespace2", errorResponse.Error(),
 				)
@@ -179,12 +181,12 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 					&errorResponse,
 				).WithNamespace(
 					s.namespace3.Code,
-				).WithHeaders(map[string]string{
-					"Authorization": fmt.Sprintf("Bearer %s", s.user1Token),
-				})
+				).WithCookie(
+					"access_token", s.user1Token,
+				)
 				s.Require().Nil(client.DoRequest("/projects"))
 
-				s.Equal(client.GetStatusCode(), http.StatusNotFound)
+				s.Equal(http.StatusForbidden, client.GetStatusCode())
 				s.Equal(
 					"RESOURCE_DOES_NOT_EXIST: unable to find namespace with code: namespace3", errorResponse.Error(),
 				)
@@ -200,9 +202,9 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 						&successResponse,
 					).WithNamespace(
 						s.namespace2.Code,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user2Token),
-					}).DoRequest("/projects"),
+					).WithCookie(
+						"access_token", s.user2Token,
+					).DoRequest("/projects"),
 				)
 				s.Equal("FastTrackML", successResponse.Name)
 
@@ -211,9 +213,9 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 						&successResponse,
 					).WithNamespace(
 						s.namespace3.Code,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user2Token),
-					}).DoRequest("/projects"),
+					).WithCookie(
+						"access_token", s.user2Token,
+					).DoRequest("/projects"),
 				)
 				s.Equal("FastTrackML", successResponse.Name)
 
@@ -223,12 +225,12 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 					&errorResponse,
 				).WithNamespace(
 					s.namespace1.Code,
-				).WithHeaders(map[string]string{
-					"Authorization": fmt.Sprintf("Bearer %s", s.user2Token),
-				})
+				).WithCookie(
+					"access_token", s.user2Token,
+				)
 				s.Require().Nil(client.DoRequest("/projects"))
 
-				s.Equal(client.GetStatusCode(), http.StatusNotFound)
+				s.Equal(http.StatusForbidden, client.GetStatusCode())
 				s.Equal(
 					"RESOURCE_DOES_NOT_EXIST: unable to find namespace with code: namespace1", errorResponse.Error(),
 				)
@@ -244,9 +246,9 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 						&successResponse,
 					).WithNamespace(
 						s.namespace1.Code,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user3Token),
-					}).DoRequest("/projects"),
+					).WithCookie(
+						"access_token", s.user3Token,
+					).DoRequest("/projects"),
 				)
 				s.Equal("FastTrackML", successResponse.Name)
 
@@ -255,9 +257,9 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 						&successResponse,
 					).WithNamespace(
 						s.namespace2.Code,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user3Token),
-					}).DoRequest("/projects"),
+					).WithCookie(
+						"access_token", s.user3Token,
+					).DoRequest("/projects"),
 				)
 				s.Equal("FastTrackML", successResponse.Name)
 
@@ -266,9 +268,9 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 						&successResponse,
 					).WithNamespace(
 						s.namespace3.Code,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user3Token),
-					}).DoRequest("/projects"),
+					).WithCookie(
+						"access_token", s.user3Token,
+					).DoRequest("/projects"),
 				)
 				s.Equal("FastTrackML", successResponse.Name)
 			},
@@ -283,9 +285,9 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 						&successResponse,
 					).WithNamespace(
 						s.namespace1.Code,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user4Token),
-					}).DoRequest("/projects"),
+					).WithCookie(
+						"access_token", s.user4Token,
+					).DoRequest("/projects"),
 				)
 				s.Equal("FastTrackML", successResponse.Name)
 
@@ -294,9 +296,9 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 						&successResponse,
 					).WithNamespace(
 						s.namespace2.Code,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user4Token),
-					}).DoRequest("/projects"),
+					).WithCookie(
+						"access_token", s.user4Token,
+					).DoRequest("/projects"),
 				)
 				s.Equal("FastTrackML", successResponse.Name)
 
@@ -305,9 +307,9 @@ func (s *OIDCAuthTestSuite) TestAIMAuth_Ok() {
 						&successResponse,
 					).WithNamespace(
 						s.namespace3.Code,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user4Token),
-					}).DoRequest("/projects"),
+					).WithCookie(
+						"access_token", s.user4Token,
+					).DoRequest("/projects"),
 				)
 				s.Equal("FastTrackML", successResponse.Name)
 			},
@@ -517,9 +519,9 @@ func (s *OIDCAuthTestSuite) TestAdminAuth_Ok() {
 						helpers.ResponseTypeHTML,
 					).WithResponse(
 						&resp,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user4Token),
-					}).DoRequest("/namespaces"),
+					).WithCookie(
+						"access_token", s.user4Token,
+					).DoRequest("/namespaces"),
 				)
 				s.Equal(1, resp.Find("#namespaces").Length(), "namespaces not found in HTML response")
 			},
@@ -552,9 +554,9 @@ func (s *OIDCAuthTestSuite) TestChooserAuth_Ok() {
 						helpers.ResponseTypeHTML,
 					).WithResponse(
 						&resp,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user1Token),
-					}).DoRequest("/"),
+					).WithCookie(
+						"access_token", s.user1Token,
+					).DoRequest("/"),
 				)
 
 				// check that HTML response has no button with id - #oidc-connect.
@@ -573,9 +575,9 @@ func (s *OIDCAuthTestSuite) TestChooserAuth_Ok() {
 						helpers.ResponseTypeHTML,
 					).WithResponse(
 						&resp,
-					).WithHeaders(map[string]string{
-						"Authorization": "Bearer incorrect-token",
-					}).DoRequest("/"),
+					).WithCookie(
+						"access_token", "incorrect_token",
+					).DoRequest("/"),
 				)
 
 				// check that HTML response has button with id - #oidc-connect.
@@ -594,9 +596,9 @@ func (s *OIDCAuthTestSuite) TestChooserAuth_Ok() {
 						helpers.ResponseTypeHTML,
 					).WithResponse(
 						&resp,
-					).WithHeaders(map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", s.user4Token),
-					}).DoRequest("/"),
+					).WithCookie(
+						"access_token", s.user4Token,
+					).DoRequest("/"),
 				)
 				// check that HTML response has no button with id - #oidc-connect.
 				s.Equal(0, resp.Find("#oidc-connect").Length())

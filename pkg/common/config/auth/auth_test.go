@@ -10,9 +10,9 @@ import (
 
 func TestConfig_NormalizeConfiguration(t *testing.T) {
 	tests := []struct {
-		name       string
-		init       func() *Config
-		configType string
+		name  string
+		init  func() *Config
+		check func(config *Config) bool
 	}{
 		{
 			name: "TestAuthTypeUser",
@@ -27,18 +27,24 @@ func TestConfig_NormalizeConfiguration(t *testing.T) {
 					AuthUsersConfig: configPath,
 				}
 			},
-			configType: TypeUser,
+			check: func(config *Config) bool {
+				return config.IsAuthTypeUser()
+			},
 		},
 		{
 			name: "TestAuthTypeOIDC",
 			init: func() *Config {
 				return &Config{
+					AuthOIDCScopes:           []string{"scope1", "scope2"},
 					AuthOIDCClientID:         "client_id",
+					AuthOIDCClaimRoles:       "groups",
 					AuthOIDCClientSecret:     "client_secret",
 					AuthOIDCProviderEndpoint: "provider_endpoint",
 				}
 			},
-			configType: TypeOIDC,
+			check: func(config *Config) bool {
+				return config.IsAuthTypeOIDC()
+			},
 		},
 	}
 
@@ -46,7 +52,7 @@ func TestConfig_NormalizeConfiguration(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config := tt.init()
 			assert.Nil(t, config.NormalizeConfiguration())
-			assert.Equal(t, tt.configType, config.AuthType)
+			assert.True(t, tt.check(config))
 		})
 	}
 }

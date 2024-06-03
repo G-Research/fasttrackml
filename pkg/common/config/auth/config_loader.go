@@ -56,7 +56,7 @@ func parseUserConfigFromYaml(content []byte) (*models.UserPermissions, error) {
 	passwordRegex := regexp.MustCompile(`^\$\{(.*)\}$`)
 	passwordReplacer := strings.NewReplacer("$", "", "{", "", "}", "")
 	for _, user := range config.Users {
-		// if password format is ${PASSWORD_PARAMETER_FROM_ENV} then try to load it from ENV.
+		// if a password format is ${PASSWORD_PARAMETER_FROM_ENV} then try to load it from ENV.
 		if passwordRegex.MatchString(user.Password) {
 			password, ok := os.LookupEnv(passwordReplacer.Replace(user.Password))
 			if !ok {

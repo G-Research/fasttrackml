@@ -13,7 +13,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/oauth2-proxy/mockoidc"
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
@@ -189,23 +188,6 @@ func createApp(
 	}
 
 	namespaceEventListener.Listen()
-
-	// create temporary OIDC mock server here and initialize application configuration.
-	// this is a temporary solution just for testing purpose
-	oidcMockServer, err := mockoidc.Run()
-	if err != nil {
-		return nil, eris.Wrap(err, "error creating oidc mock server")
-	}
-	oidcMockServer.QueueUser(&mockoidc.MockUser{
-		Email:  "test.user@example.com",
-		Groups: []string{"group1", "group2"},
-	})
-	config.Auth.AuthOIDCScopes = []string{"openid", "groups"}
-	config.Auth.AuthOIDCClientID = oidcMockServer.ClientID
-	config.Auth.AuthOIDCAdminRole = "admin"
-	config.Auth.AuthOIDCClaimRoles = "groups"
-	config.Auth.AuthOIDCClientSecret = oidcMockServer.ClientSecret
-	config.Auth.AuthOIDCProviderEndpoint = oidcMockServer.Addr() + mockoidc.IssuerBase
 
 	// attach global middlewares.
 	if config.Auth.AuthUsername != "" && config.Auth.AuthPassword != "" {

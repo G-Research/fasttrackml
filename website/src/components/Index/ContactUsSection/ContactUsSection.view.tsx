@@ -30,16 +30,16 @@ export default function ContactUsSection(): React.JSX.Element {
         siteConfig: {customFields}
     } = useDocusaurusContext();
     const email = customFields?.email;
-    const slackInviteUrl = customFields?.slackInviteUrl
 
     const onSendEmail: SubmitHandler<Inputs> = data => {
         openNewEmail(email as string, data.subject, getMessage(data.name, data.company, data.message));
     };
 
     return <section>
-        <div className="container padding-bottom--xl text--center">
+        <div className="container text--center">
             <h1 id="contact-us" className={clsx("section__ref")}>Contact Us</h1>
-            <p>We would love to hear from you! FastTrackML is a brand new project and any contribution would make a difference!</p>
+            <p>We would love to hear from you! FastTrackML is a brand new project and any contribution would make a
+                difference!</p>
             <form onSubmit={handleSubmit(onSendEmail)}>
                 <div className='row'>
                     <div className='col col--6'>
@@ -86,7 +86,6 @@ export default function ContactUsSection(): React.JSX.Element {
                     </div>
                 </div>
             </form>
-	    <p>Or, join the <a href={slackInviteUrl} target="_blank">#fasttrackml channel on the MLOps.community Slack!</a></p>
         </div>
     </section>;
 }

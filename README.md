@@ -143,6 +143,17 @@ vscode ➜ /workspaces/fasttrackml (main) $ make run
 ```
 </details>
 
+### Community
+
+We invite you to join our community on Slack:
+
+- If you haven't joined the `MLOps.community` workspace yet, please sign
+  up [here](https://join.slack.com/t/mlops-community/shared_invite/zt-258yl6ifq-zZNzBaddwlhifj56yt7ONg).
+- Once you're a member, feel free to join us in
+  the [#fasttrackml](https://mlops-community.slack.com/archives/C05ALNZ1XJN) channel.
+
+We look forward to seeing you there!
+
 ### License
 
 Copyright 2022-2023 G-Research

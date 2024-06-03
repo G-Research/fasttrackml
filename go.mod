@@ -50,9 +50,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.2 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.0 // indirect
-	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/sosodev/duration v1.2.0 // indirect
-	github.com/tinylib/msgp v1.1.8 // indirect
 )
 
 require (

@@ -16,7 +16,8 @@ module.exports = async function configCreatorAsync() {
     );
     const releaseVersion = data.tag_name.substring(1);
     const releaseUrl = data.html_url;
-    const slackUrl = 'https://join.slack.com/t/mlops-community/shared_invite/zt-258yl6ifq-zZNzBaddwlhifj56yt7ONg';
+    const slackUrl = 'https://mlops-community.slack.com/archives/C05ALNZ1XJN'
+    const slackInviteUrl = 'https://join.slack.com/t/mlops-community/shared_invite/zt-258yl6ifq-zZNzBaddwlhifj56yt7ONg';
 
     /** @type {import('@docusaurus/types').Config} */
     return {
@@ -92,6 +93,11 @@ module.exports = async function configCreatorAsync() {
                         },
                         {
                             href: slackUrl,
+                            label: 'Go to our Slack',
+                            position: 'right',
+                        },
+                        {
+                            href: slackInviteUrl,
                             label: 'Join our Slack',
                             position: 'right',
                         },

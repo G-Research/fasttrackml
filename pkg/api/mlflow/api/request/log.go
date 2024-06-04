@@ -67,3 +67,9 @@ type LogBatchRequest struct {
 	Params  []ParamPartialRequest  `json:"params,omitempty"`
 	Metrics []MetricPartialRequest `json:"metrics,omitempty"`
 }
+
+// LogOutputRequest is a request object for `POST mlflow/runs/log-output` endpoint.
+type LogOutputRequest struct {
+	RunID string `json:"run_id"`
+	Data  string `json:"data"`
+}

@@ -286,3 +286,32 @@ func (c Controller) LogBatch(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(fiber.Map{})
 }
+
+// LogOutput handles `POST /runs/log-output` endpoint.
+func (c Controller) LogOutput(ctx *fiber.Ctx) error {
+	var req request.LogOutputRequest
+	if err := ctx.BodyParser(&req); err != nil {
+		if err, ok := err.(*json.UnmarshalTypeError); ok {
+			return api.NewInvalidParameterValueError(
+				`Invalid value for run log field '%s'. Hint: Value was of type '%s'. `+
+					`See the API docs for more information about request parameters.`,
+				err.Field, err.Value,
+			)
+		}
+		return api.NewBadRequestError("Unable to decode request body: %s", err)
+	}
+	log.Debugf("setRunTag request: %#v", req)
+
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("setRunTag namespace: %s", ns.Code)
+
+	// if err := c.runService.RunLog(ctx.Context(), ns, &req); err != nil {
+	// 	return err
+	// }
+	log.Debugf("Run ID: %v - LogData: %v", req.RunID, req.Data)
+
+	return ctx.JSON(fiber.Map{})
+}

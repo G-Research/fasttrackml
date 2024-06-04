@@ -211,9 +211,10 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 			expectedVars: []interface{}{models.StatusRunning, models.LifecycleStageDeleted},
 		},
 		{
-			name:         "TestDurationAttribute",
-			query:        `run.duration == 123456789`,
-			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE (runs.end_time - runs.start_time) / 1000 = $1 AND "runs"."lifecycle_stage" <> $2`,
+			name:  "TestDurationAttribute",
+			query: `run.duration == 123456789`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" WHERE (runs.end_time - runs.start_time) / 1000 = $1 AND ` +
+				`"runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{123456789, models.LifecycleStageDeleted},
 		},
 		{

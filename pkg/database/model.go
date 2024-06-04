@@ -98,7 +98,6 @@ type Run struct {
 	Tags           []Tag          `gorm:"constraint:OnDelete:CASCADE"`
 	Metrics        []Metric       `gorm:"constraint:OnDelete:CASCADE"`
 	LatestMetrics  []LatestMetric `gorm:"constraint:OnDelete:CASCADE"`
-	Logs           []Log          `gorm:"constraing:OnDelete:CASCADE"`
 }
 
 type RowNum int64
@@ -164,12 +163,6 @@ type LatestMetric struct {
 	LastIter  int64
 	ContextID uint `gorm:"not null;primaryKey"`
 	Context   Context
-}
-
-type Log struct {
-	Timestamp int64  `gorm:"not null;primaryKey"`
-	Value     string `gorm:"type:varchar(5000)"`
-	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 
 type Context struct {

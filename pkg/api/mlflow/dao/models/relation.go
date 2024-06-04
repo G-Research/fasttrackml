@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// RoleNamespace represents model to work with `role_relations` table.
+// RoleNamespace represents a model to work with `role_relations` table.
 // Model holds relations between Role and Namespace models.
 type RoleNamespace struct {
 	Base

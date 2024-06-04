@@ -4,21 +4,27 @@
         <a href="#" onclick="window.location = window.location.origin + window.location.pathname + 'mlflow/'">
             <button>Classic</button>
         </a>
-        <p>This is the classic MLFlow UI, albeit fast and responsive.</p>
+        <p class="tight">This is the classic MLFlow UI, albeit fast and responsive.</p>
     </article>
     <article>
         <a href="#" onclick="window.location = window.location.origin + window.location.pathname + 'aim/'">
             <button>Modern</button>
         </a>
-        <p>This is the modern Aim UI, much faster than MLFlow.</p>
+        <p class="tight">This is the modern Aim UI, much faster than MLFlow.</p>
     </article>
 </div>
-<p>Selected namespace:
-    <b>
-        <u>{{.CurrentNamespace.DisplayName}}</u>
-    </b>
-</p>
+<div id="selected-namespace-container">
+    <p>Selected namespace:
+        <b>
+            <u>{{.CurrentNamespace.DisplayName}}</u>
+        </b>
+    </p>
+    <a href="/logout">
+        <button id="logout-button">Logout</button>
+    </a>
+</div>
 
+{{ if .Namespaces}}
 <div id="namespaces-list-container">
     <ul id="namespaces-list">
         {{ range .Namespaces }}
@@ -35,6 +41,7 @@
         {{ end }}
     </ul>
 </div>
+{{ end }}
 
 {{ if .IsAdmin }}
 <p>

@@ -35,7 +35,7 @@ import (
 	mlflowMetricService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/metric"
 	mlflowModelService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/model"
 	mlflowRunService "github.com/G-Research/fasttrackml/pkg/api/mlflow/services/run"
-	"github.com/G-Research/fasttrackml/pkg/common/auth"
+	"github.com/G-Research/fasttrackml/pkg/common/auth/oidc"
 	"github.com/G-Research/fasttrackml/pkg/common/config"
 	"github.com/G-Research/fasttrackml/pkg/common/dao"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
@@ -198,26 +198,7 @@ func createApp(
 			},
 		}))
 	}
-	app.Get("/set-cookie/:access_token", func(ctx *fiber.Ctx) error {
-		ctx.Cookie(&fiber.Cookie{
-			Name:  "access_token",
-			Value: ctx.Params("access_token"),
-		})
-		return ctx.Redirect("/", http.StatusMovedPermanently)
-	})
 	app.Use(middleware.NewNamespaceMiddleware(namespaceCachedRepository))
-
-	// based on Auth configuration attach global OIDC or Basic Auth middleware.
-	switch {
-	case config.Auth.IsAuthTypeOIDC():
-		oidcClient, err := auth.NewOIDCClient(ctx, &config.Auth)
-		if err != nil {
-			return nil, eris.Wrap(err, "error creating OIDC client")
-		}
-		app.Use(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
-	case config.Auth.IsAuthTypeUser():
-		app.Use(middleware.NewBasicAuthMiddleware(config.Auth.AuthParsedUserPermissions))
-	}
 
 	app.Use(compress.New(compress.Config{
 		Next: func(c *fiber.Ctx) bool {
@@ -240,8 +221,53 @@ func createApp(
 		return c.SendString(version.Version)
 	})
 
-	// init `aim` api refactored routes.
-	log.Info("using refactored aim service")
+	// based on Auth configuration, attach global OIDC or Basic Auth middleware.
+	switch {
+	case config.Auth.IsAuthTypeOIDC():
+		oidcClient, err := oidc.NewClient(ctx, config)
+		if err != nil {
+			return nil, eris.Wrap(err, "error creating oidc client")
+		}
+		app.Get("/auth/oidc", func(ctx *fiber.Ctx) error {
+			oauth2Token, err := oidcClient.Exchange(ctx.Context(), ctx.Query("code"))
+			if err != nil {
+				log.Errorf("error exchanging code to oauth2 token: %+v", err)
+				return ctx.Redirect("/errors/internal-server", http.StatusMovedPermanently)
+			}
+			rawIDToken, ok := oauth2Token.Extra("id_token").(string)
+			if !ok {
+				log.Error("id_token is missing")
+				return ctx.Redirect("/errors/internal-server", http.StatusMovedPermanently)
+			}
+			ctx.Cookie(&fiber.Cookie{
+				Name:  "access_token",
+				Value: rawIDToken,
+			})
+			ctx.Response().Header.Add("Cache-Control", "no-store")
+			return ctx.Redirect("/", http.StatusMovedPermanently)
+		})
+		app.Get("/logout", func(ctx *fiber.Ctx) error {
+			ctx.Cookie(&fiber.Cookie{
+				Name:    "access_token",
+				Expires: time.Now().Add(-5 * time.Second),
+			})
+			ctx.Response().Header.Add("Cache-Control", "no-store")
+			return ctx.Redirect("/", http.StatusMovedPermanently)
+		})
+		app.Use(middleware.NewOIDCMiddleware(oidcClient, rolesCachedRepository))
+	case config.Auth.IsAuthTypeUser():
+		app.Use(middleware.NewBasicAuthMiddleware(config.Auth.AuthParsedUserPermissions))
+	}
+
+	app.Use(compress.New(compress.Config{
+		Next: func(c *fiber.Ctx) bool {
+			// This is a little brittle, maybe there is a better way?
+			// Do not compress metric histories as urllib3 did not support file-like compressed reads until 2.0.0a1
+			return strings.HasSuffix(c.Path(), "/metrics/get-histories")
+		},
+	}))
+
+	// init `aim` api routes.
 	aimAPI.NewRouter(
 		aimController.NewController(
 			aimTagService.NewService(
@@ -274,7 +300,7 @@ func createApp(
 	).Init(app)
 
 	// init `mlflow` api and ui routes.
-	// TODO:DSuhinin right now it might look scary. we prettify it a bit later.
+	// TODO:refactoring right now it might look scary. we prettify it a bit later.
 	mlflowAPI.NewRouter(
 		mlflowController.NewController(
 			mlflowRunService.NewService(
@@ -318,14 +344,21 @@ func createApp(
 	}
 
 	// init `chooser` ui routes.
-	if err := chooser.NewRouter(
-		chooserController.NewController(
-			chooserNamespaceService.NewService(
-				config,
-				namespaceCachedRepository,
-			),
+	controller := chooserController.NewController(
+		config,
+		chooserNamespaceService.NewService(
+			config,
+			namespaceCachedRepository,
 		),
-	).Init(app); err != nil {
+	)
+	if config.Auth.IsAuthTypeOIDC() {
+		oidcClient, err := oidc.NewClient(ctx, config)
+		if err != nil {
+			return nil, eris.Wrap(err, "error creating oidc client")
+		}
+		controller.SetOIDCClient(oidcClient)
+	}
+	if err := chooser.NewRouter(controller).Init(app); err != nil {
 		return nil, eris.Wrap(err, "error initializing chooser routes")
 	}
 

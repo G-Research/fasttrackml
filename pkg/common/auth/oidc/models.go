@@ -1,6 +1,6 @@
-package auth
+package oidc
 
-// User represents object to store current user information.
+// User represents an object to store current user information.
 type User struct {
 	roles   []string
 	isAdmin bool

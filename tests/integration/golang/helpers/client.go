@@ -10,12 +10,11 @@ import (
 	"net/url"
 	"reflect"
 
-	"github.com/G-Research/fasttrackml/pkg/common/api"
-
 	"github.com/PuerkitoBio/goquery"
 	"github.com/hetiansu5/urlquery"
 	"github.com/rotisserie/eris"
 
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/server"
 )
 
@@ -38,13 +37,14 @@ type HttpClient struct {
 	method       string
 	params       any
 	headers      map[string]string
+	cookies      map[string]string
 	request      any
 	response     any
 	responseType ResponseType
 	statusCode   int
 }
 
-// NewClient creates new preconfigured HTTP client.
+// NewClient creates a new preconfigured HTTP client.
 func NewClient(server server.Server, basePath string) *HttpClient {
 	return &HttpClient{
 		server:   server,
@@ -53,26 +53,27 @@ func NewClient(server server.Server, basePath string) *HttpClient {
 		headers: map[string]string{
 			"Content-Type": "application/json",
 		},
+		cookies:      map[string]string{},
 		responseType: ResponseTypeJSON,
 	}
 }
 
-// NewMlflowApiClient creates new HTTP client for the mlflow api
+// NewMlflowApiClient creates a new HTTP client for the mlflow api
 func NewMlflowApiClient(server server.Server) *HttpClient {
 	return NewClient(server, "/api/2.0/mlflow")
 }
 
-// NewAimApiClient creates new HTTP client for the aim api
+// NewAimApiClient creates a new HTTP client for the aim api
 func NewAimApiClient(server server.Server) *HttpClient {
 	return NewClient(server, "/aim/api")
 }
 
-// NewAdminApiClient creates new HTTP client for the admin api
+// NewAdminApiClient creates a new HTTP client for the admin api
 func NewAdminApiClient(server server.Server) *HttpClient {
 	return NewClient(server, "/admin")
 }
 
-// NewChooserApiClient creates new HTTP client for the chooser api
+// NewChooserApiClient creates a new HTTP client for the chooser api
 func NewChooserApiClient(server server.Server) *HttpClient {
 	return NewClient(server, "/chooser")
 }
@@ -80,6 +81,12 @@ func NewChooserApiClient(server server.Server) *HttpClient {
 // WithMethod sets the HTTP method.
 func (c *HttpClient) WithMethod(method string) *HttpClient {
 	c.method = method
+	return c
+}
+
+// WithCookie sets the HTTP request cookies.
+func (c *HttpClient) WithCookie(name string, value string) *HttpClient {
+	c.cookies[name] = value
 	return c
 }
 
@@ -175,15 +182,23 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 		c.method, u.String(), requestBody,
 	)
 
-	// 6. if headers were provided, then attach them.
-	// by default attach `"Content-Type", "application/json"`
+	// 6. sets request cookies.
+	for name, value := range c.cookies {
+		req.AddCookie(&http.Cookie{
+			Name:  name,
+			Value: value,
+		})
+	}
+
+	// 7. if headers were provided, then attach them.
+	// by default, attach `"Content-Type", "application/json"`
 	if c.headers != nil {
 		for key, value := range c.headers {
 			req.Header.Set(key, value)
 		}
 	}
 
-	// 7. send request data and handle possible redirects.
+	// 8. send request data and handle possible redirects.
 	//nolint:bodyclose
 	resp, err := c.server.Test(req, 60000)
 	if err != nil {
@@ -202,7 +217,7 @@ func (c *HttpClient) DoRequest(uri string, values ...any) error {
 
 	c.statusCode = resp.StatusCode
 
-	// 8. read and check response data.
+	// 9. read and check response data.
 	if c.response != nil {
 		switch c.responseType {
 		case ResponseTypeJSON:

@@ -42,7 +42,7 @@ func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, bool, 
 			return nil, false, err
 		}
 		// if auth token is not admin auth token, then filter namespaces and show
-		// only those which belong to current user, otherwise just show everything.
+		// only those which belong to the current user, otherwise just show everything.
 		if !authToken.HasAdminAccess() {
 			return FilterNamespacesByAuthTokenUserRoles(authToken.GetRoles(), namespaces), false, nil
 		}
@@ -52,7 +52,7 @@ func (s Service) ListNamespaces(ctx context.Context) ([]models.Namespace, bool, 
 			return nil, false, err
 		}
 		// if auth token is not admin auth token, then filter namespaces and show
-		// only those which belong to current user, otherwise just show everything.
+		// only those which belong to the current user, otherwise just show everything.
 		if !user.IsAdmin() {
 			namespaces, err = s.namespaceRepository.GetByRoles(ctx, user.GetRoles())
 			if err != nil {

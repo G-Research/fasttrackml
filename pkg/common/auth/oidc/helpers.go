@@ -1,6 +1,11 @@
-package auth
+package oidc
 
-import "github.com/rotisserie/eris"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/rotisserie/eris"
+)
 
 // ConvertAndNormaliseRoles converts claim roles. normalise it, because `roles`
 // could be represented as a one role(string) or array of roles(slice).
@@ -23,4 +28,12 @@ func ConvertAndNormaliseRoles(in interface{}) ([]string, error) {
 	}
 
 	return out, nil
+}
+
+// NormaliseListenAddress normalise listenAddress parameter.
+func NormaliseListenAddress(listenAddress string) string {
+	if strings.Contains(listenAddress, "http://") || strings.Contains(listenAddress, "https://") {
+		return listenAddress
+	}
+	return fmt.Sprintf("http://%s", listenAddress)
 }

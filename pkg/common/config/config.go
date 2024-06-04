@@ -29,7 +29,7 @@ type Config struct {
 	LiveUpdatesEnabled    bool
 }
 
-// NewConfig creates new instance of Config.
+// NewConfig creates a new instance of Config.
 func NewConfig() *Config {
 	return &Config{
 		Auth: auth.Config{

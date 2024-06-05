@@ -137,3 +137,10 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
         """Yield successive chunks from input_list."""
         for i in range(0, len(input_list), chunk_size):
             yield input_list[i : i + chunk_size]
+
+    def log_output(
+        self,
+        run_id: str,
+        data: str,
+    ):
+        self.custom_store.log_output(run_id, data)

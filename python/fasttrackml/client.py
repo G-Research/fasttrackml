@@ -1,3 +1,7 @@
+import io
+import sys
+import threading
+import time
 from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
@@ -19,6 +23,37 @@ class FasttrackmlClient(MlflowClient):
         final_tracking_uri = utils._resolve_tracking_uri(tracking_uri)
         self._tracking_client_mlflow = self._tracking_client
         self._tracking_client = FasttrackmlTrackingServiceClient(final_tracking_uri)
+
+    def init_output_logging(self, run_id):
+        print("Capturing output")
+        self.original_stdout, self.original_stderr = sys.stdout, sys.stderr
+        sys.stdout, sys.stderr = self.stdout_buffer, self.stderr_buffer = io.StringIO(), io.StringIO()
+        self.is_capture_logging = True
+        threading.Thread(target=self._capture_output, args=(run_id,)).start()
+
+    def _capture_output(self, run_id):
+        while self.is_capture_logging:
+            self._flush_buffers(run_id)
+            time.sleep(3)
+        self._flush_buffers(run_id)
+
+    def _flush_buffers(self, run_id):
+        output = sys.stdout.getvalue()
+        self.stdout_buffer.truncate(0)
+        self.stdout_buffer.seek(0)
+        if output:
+            self.log_output(run_id, "STDOUT: " + output)
+            self.original_stdout.write(output + "\n")
+        output = sys.stderr.getvalue()
+        self.stderr_buffer.truncate(0)
+        self.stderr_buffer.seek(0)
+        if output:
+            self.log_output(run_id, "STDERR: " + output)
+            self.original_stderr.write(output + "\n")
+
+    def set_terminated(self, run_id):
+        self.is_capture_logging = False
+        super().set_terminated(run_id)
 
     def log_metric(
         self,
@@ -338,3 +373,10 @@ class FasttrackmlClient(MlflowClient):
             experiment_names,
             context,
         )
+
+    def log_output(
+        self,
+        run_id: str,
+        data: str,
+    ) -> None:
+        self._tracking_client.log_output(run_id, data)

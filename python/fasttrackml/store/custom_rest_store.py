@@ -251,3 +251,26 @@ class CustomRestStore(RestStore):
 
         with pa.ipc.open_stream(result.raw) as reader:
             return reader.read_pandas().set_index(["run_id", "key", index])
+
+    def log_output(self, run_id, data):
+        request_body = {
+            "run_id": run_id,
+            "data": data,
+        }
+
+        result = http_request(
+            **{
+                "host_creds": self.get_host_creds(),
+                "endpoint": "/api/2.0/mlflow/runs/log-output",
+                "method": "POST",
+                "json": request_body,
+            }
+        )
+        if result.status_code != 200:
+            result = result.json()
+        if "error_code" in result:
+            raise MlflowException(
+                message=result["message"],
+                error_code=result["error_code"],
+            )
+        return result

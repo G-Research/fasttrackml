@@ -81,6 +81,32 @@ class FasttrackmlClient(MlflowClient):
                 self.original_stderr.write(output + "\n")
 
     def set_terminated(self, run_id):
+        """
+        Set the run as terminated, and, if needed, stop capturing output.
+
+        Args:
+            run_id: String ID of the run
+
+        .. code-block:: python
+            :caption: Example
+
+            from fasttrackml import FasttrackmlClient
+
+            # Create a run under the default experiment (whose id is '0').
+            # Since these are low-level CRUD operations, this method will create a run.
+            # To end the run, you'll have to explicitly end it.
+            client = FasttrackmlClient()
+            experiment_id = "0"
+            run = client.create_run(experiment_id)
+            print_run_info(run)
+            print("--")
+
+            # Log some output
+            client.init_output_logging(run.info.run_id)
+            print("This is just some output we want to capture")
+
+            client.set_terminated(run.info.run_id)
+        """
         self.is_capture_logging = False
         super().set_terminated(run_id)
 

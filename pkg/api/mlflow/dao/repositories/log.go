@@ -46,7 +46,7 @@ func (r LogRepository) enforceMaxRowsPerRun(ctx context.Context, runID string) e
 		"run_uuid = ?", runID).Count(&rowCount).Error; err != nil {
 		return eris.Wrapf(err, "error counting log rows for run %s", runID)
 	}
-	if rowCount < int64(r.maxRowsPerRun) {
+	if rowCount <= int64(r.maxRowsPerRun) {
 		return nil
 	}
 	if err := r.GetDB().WithContext(ctx).Exec(`
@@ -59,7 +59,7 @@ func (r LogRepository) enforceMaxRowsPerRun(ctx context.Context, runID string) e
                      ORDER BY timestamp ASC
                      LIMIT ?
                 )`, runID, runID, rowCount-int64(r.maxRowsPerRun)).Error; err != nil {
-		return eris.Wrapf(err, "error counting log rows for run %s", runID)
+		return eris.Wrapf(err, "error deleting excess log rows for run %s", runID)
 	}
 	return nil
 }

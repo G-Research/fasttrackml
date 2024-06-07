@@ -309,7 +309,7 @@ func (c Controller) LogOutput(ctx *fiber.Ctx) error {
 	log.Debugf("LogOutput namespace: %s", ns.Code)
 
 	if err := c.runService.LogOutput(ctx.Context(), ns, &req); err != nil {
-		return err
+		return api.NewInternalError("error logging the output")
 	}
 
 	return ctx.JSON(fiber.Map{})

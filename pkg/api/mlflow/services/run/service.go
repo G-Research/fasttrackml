@@ -675,16 +675,16 @@ func (s Service) LogOutput(
 	ctx context.Context,
 	namespace *models.Namespace,
 	req *request.LogOutputRequest,
-) (*models.Run, error) {
+) error {
 	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.RunID)
 	if err != nil {
-		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
+		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
 	}
 	if run == nil {
-		return nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
+		return api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
 	}
 
 	log := convertors.ConvertLogOutputRequestToDBModel(run.ID, req)
 	s.logRepository.SaveLog(ctx, log)
-	return run, nil
+	return nil
 }

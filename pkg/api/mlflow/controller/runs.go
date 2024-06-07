@@ -308,7 +308,7 @@ func (c Controller) LogOutput(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("LogOutput namespace: %s", ns.Code)
 
-	if err := c.runService.(ctx.Context(), ns, &req); err != nil {
+	if err := c.runService.LogOutput(ctx.Context(), ns, &req); err != nil {
 		return err
 	}
 

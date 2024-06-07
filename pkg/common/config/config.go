@@ -27,6 +27,7 @@ type Config struct {
 	DatabaseMigrate       bool
 	DatabaseSlowThreshold time.Duration
 	LiveUpdatesEnabled    bool
+	LogMax                int
 }
 
 // NewConfig creates a new instance of Config.
@@ -54,6 +55,7 @@ func NewConfig() *Config {
 		DatabaseMigrate:       viper.GetBool("database-migrate"),
 		DatabaseSlowThreshold: viper.GetDuration("database-slow-threshold"),
 		LiveUpdatesEnabled:    viper.GetBool("live-updates-enabled"),
+		LogMax:                viper.GetInt("log-max"),
 	}
 }
 

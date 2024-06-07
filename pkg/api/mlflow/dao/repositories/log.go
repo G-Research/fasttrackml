@@ -3,10 +3,11 @@ package repositories
 import (
 	"context"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
+
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 )
 
 // LogRepositoryProvider provides an interface to work with models.Log entity.

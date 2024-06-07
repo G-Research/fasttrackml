@@ -8,7 +8,6 @@ const Version = "20240604123811"
 
 func Migrate(db *gorm.DB) error {
 	return db.Transaction(func(tx *gorm.DB) error {
-
 		if err := tx.Migrator().AutoMigrate(&Log{}); err != nil {
 			return err
 		}

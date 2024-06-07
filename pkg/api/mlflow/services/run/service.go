@@ -52,6 +52,7 @@ type Service struct {
 	paramRepository      repositories.ParamRepositoryProvider
 	metricRepository     repositories.MetricRepositoryProvider
 	experimentRepository repositories.ExperimentRepositoryProvider
+	logRepository        repositories.LogRepositoryProvider
 }
 
 // NewService creates new Service instance.
@@ -61,6 +62,7 @@ func NewService(
 	paramRepository repositories.ParamRepositoryProvider,
 	metricRepository repositories.MetricRepositoryProvider,
 	experimentRepository repositories.ExperimentRepositoryProvider,
+	logRepository repositories.LogRepositoryProvider,
 ) *Service {
 	return &Service{
 		tagRepository:        tagRepository,
@@ -68,6 +70,7 @@ func NewService(
 		paramRepository:      paramRepository,
 		metricRepository:     metricRepository,
 		experimentRepository: experimentRepository,
+		logRepository:        logRepository,
 	}
 }
 
@@ -666,4 +669,22 @@ func (s Service) LogBatch(
 	}
 
 	return nil
+}
+
+func (s Service) LogOutput(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.LogOutputRequest,
+) (*models.Run, error) {
+	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.RunID)
+	if err != nil {
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)
+	}
+	if run == nil {
+		return nil, api.NewResourceDoesNotExistError("unable to find run '%s'", req.RunID)
+	}
+
+	log := convertors.ConvertLogOutputRequestToDBModel(run.ID, req)
+	s.logRepository.SaveLog(ctx, log)
+	return run, nil
 }

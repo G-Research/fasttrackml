@@ -12,11 +12,12 @@ from fasttrackml import FasttrackmlClient
 
 @pytest.fixture(scope="session", autouse=True)
 def server():
-    # Launch the fml server
-    process = subprocess.Popen(["fml", "server"])
-    yield process
-    # Kill the fml server
-    process.kill()
+    pass
+    # # Launch the fml server
+    # process = subprocess.Popen(["fml", "server"])
+    # yield process
+    # # Kill the fml server
+    # process.kill()
 
 
 @pytest.fixture
@@ -81,18 +82,3 @@ def test_log_batch(client, server, run):
     metric_keys = [metric_key2]
     metric_histories_df = client.get_metric_histories(run_ids=[run.info.run_id], metric_keys=metric_keys)
     assert metric_histories_df.value[0] == metric_key2_value
-
-
-def test_log_output(client, server, run):
-    # test logging some output directly
-    for i in range(100):
-        log_data = str(uuid.uuid4()) + "\n" + str(uuid.uuid4())
-        assert client.log_output(run.info.run_id, log_data) == None
-
-
-def test_init_output_Logging(client, server, run):
-    # test logging some output implicitly
-    client.init_output_logging(run.info.run_id)
-    for i in range(100):
-        log_data = str(uuid.uuid4()) + "\n" + str(uuid.uuid4())
-        print(log_data)

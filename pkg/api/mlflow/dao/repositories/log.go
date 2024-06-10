@@ -51,14 +51,13 @@ func (r LogRepository) enforceMaxRowsPerRun(ctx context.Context, runID string) e
 	}
 	if err := r.GetDB().WithContext(ctx).Exec(`
                 DELETE FROM logs
-                WHERE run_uuid = ?
-                AND timestamp IN (
-                     SELECT timestamp
+                WHERE id IN (
+                     SELECT id
                      FROM logs
                      WHERE run_uuid = ?
                      ORDER BY timestamp ASC
                      LIMIT ?
-                )`, runID, runID, rowCount-int64(r.maxRowsPerRun)).Error; err != nil {
+                )`, runID, rowCount-int64(r.maxRowsPerRun)).Error; err != nil {
 		return eris.Wrapf(err, "error deleting excess log rows for run %s", runID)
 	}
 	return nil

@@ -167,9 +167,10 @@ type LatestMetric struct {
 }
 
 type Log struct {
-	Timestamp int64  `gorm:"not null;primaryKey"`
+	ID        uint   `gorm:"primaryKey;autoIncrement"`
+	Timestamp int64  `gorm:"not null;index:,composite:run_uuid"`
 	Value     string `gorm:"type:varchar(5000)"`
-	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
+	RunID     string `gorm:"column:run_uuid;not null;"`
 }
 
 type Context struct {

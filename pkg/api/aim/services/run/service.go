@@ -27,6 +27,7 @@ type Service struct {
 	runRepository    repositories.RunRepositoryProvider
 	logRepository    repositories.LogRepositoryProvider
 	metricRepository repositories.MetricRepositoryProvider
+	tagRepository    repositories.TagRepositoryProvider
 }
 
 // NewService creates new Service instance.
@@ -34,11 +35,13 @@ func NewService(
 	runRepository repositories.RunRepositoryProvider,
 	logRepository repositories.LogRepositoryProvider,
 	metricRepository repositories.MetricRepositoryProvider,
+	tagRepository repositories.TagRepositoryProvider,
 ) *Service {
 	return &Service{
 		runRepository:    runRepository,
 		logRepository:    logRepository,
 		metricRepository: metricRepository,
+		tagRepository:    tagRepository,
 	}
 }
 
@@ -222,6 +225,16 @@ func (s Service) UpdateRun(
 		run.Name = *req.Name
 		if err := s.runRepository.Update(ctx, run); err != nil {
 			return api.NewInternalError("error updating run %s: %s", req.ID, err)
+		}
+	}
+
+	if req.Description != nil {
+		if err := s.tagRepository.CreateRunTag(ctx, &models.Tag{
+			Key:   common.DescriptionTagKey,
+			Value: *req.Description,
+			RunID: req.ID,
+		}); err != nil {
+			return api.NewInternalError("unable to create experiment tag: %s", err)
 		}
 	}
 	return nil

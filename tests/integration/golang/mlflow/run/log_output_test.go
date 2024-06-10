@@ -106,7 +106,7 @@ func (s *LogOutputTestSuite) Test_Ok() {
 
 func (s *LogOutputTestSuite) Test_Error() {
 	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
-		ID:             uuid.NewString(),
+		ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 		ExperimentID:   *s.DefaultExperiment.ID,
 		SourceType:     "JOB",
 		LifecycleStage: models.LifecycleStageActive,

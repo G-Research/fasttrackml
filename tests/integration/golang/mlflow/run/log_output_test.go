@@ -3,7 +3,6 @@ package run
 import (
 	"context"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -105,6 +104,14 @@ func (s *LogOutputTestSuite) Test_Ok() {
 }
 
 func (s *LogOutputTestSuite) Test_Error() {
+	run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:             uuid.NewString(),
+		ExperimentID:   *s.DefaultExperiment.ID,
+		SourceType:     "JOB",
+		LifecycleStage: models.LifecycleStageActive,
+		Status:         models.StatusRunning,
+	})
+	s.Require().Nil(err)
 	tests := []struct {
 		name  string
 		runID string
@@ -113,7 +120,7 @@ func (s *LogOutputTestSuite) Test_Error() {
 	}{
 		{
 			name:  "MissingData",
-			runID: strings.ReplaceAll(uuid.NewString(), "-", ""),
+			runID: run.ID,
 			error: &api.ErrorResponse{
 				Message:    "Missing value for required parameter 'data'",
 				StatusCode: http.StatusBadRequest,
@@ -130,20 +137,11 @@ func (s *LogOutputTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
-				ID:             tt.runID,
-				ExperimentID:   *s.DefaultExperiment.ID,
-				SourceType:     "JOB",
-				LifecycleStage: models.LifecycleStageActive,
-				Status:         models.StatusRunning,
-			})
-			s.Require().Nil(err)
-
 			req := request.LogOutputRequest{
-				RunID: run.ID,
+				RunID: tt.runID,
 				Data:  tt.data,
 			}
-			resp := map[string]any{}
+			resp := api.ErrorResponse{}
 			s.Require().Nil(
 				s.MlflowClient().WithMethod(
 					http.MethodPost,
@@ -155,10 +153,8 @@ func (s *LogOutputTestSuite) Test_Error() {
 					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogOutputRoute,
 				),
 			)
-			s.Empty(resp)
-
-			// s.Contains(resp["message"], tt.error.Message)
-			// s.Equal(tt.error.StatusCode, resp["status_code"])
+			s.Equal(tt.error.Message, resp.Message)
+			s.Equal(tt.error.StatusCode, resp.StatusCode)
 		})
 	}
 }

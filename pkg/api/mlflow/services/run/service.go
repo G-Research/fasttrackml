@@ -676,6 +676,10 @@ func (s Service) LogOutput(
 	namespace *models.Namespace,
 	req *request.LogOutputRequest,
 ) error {
+	if err := ValidateLogOutputRequest(req); err != nil {
+		return err
+	}
+
 	run, err := s.runRepository.GetByNamespaceIDAndRunID(ctx, namespace.ID, req.RunID)
 	if err != nil {
 		return api.NewResourceDoesNotExistError("unable to find run '%s': %s", req.RunID, err)

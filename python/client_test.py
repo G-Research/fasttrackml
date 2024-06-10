@@ -12,12 +12,11 @@ from fasttrackml import FasttrackmlClient
 
 @pytest.fixture(scope="session", autouse=True)
 def server():
-    pass
-    # # Launch the fml server
-    # process = subprocess.Popen(["fml", "server"])
-    # yield process
-    # # Kill the fml server
-    # process.kill()
+    # Launch the fml server
+    process = subprocess.Popen(["fml", "server"])
+    yield process
+    # Kill the fml server
+    process.kill()
 
 
 @pytest.fixture

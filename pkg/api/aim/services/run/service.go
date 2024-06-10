@@ -25,16 +25,19 @@ const (
 // Service provides service layer to work with `run` business logic.
 type Service struct {
 	runRepository    repositories.RunRepositoryProvider
+	logRepository    repositories.LogRepositoryProvider
 	metricRepository repositories.MetricRepositoryProvider
 }
 
 // NewService creates new Service instance.
 func NewService(
 	runRepository repositories.RunRepositoryProvider,
+	logRepository repositories.LogRepositoryProvider,
 	metricRepository repositories.MetricRepositoryProvider,
 ) *Service {
 	return &Service{
 		runRepository:    runRepository,
+		logRepository:    logRepository,
 		metricRepository: metricRepository,
 	}
 }
@@ -63,7 +66,12 @@ func (s Service) GetRunInfo(
 func (s Service) GetRunLogs(
 	ctx context.Context, namespaceID uint, req *request.GetRunLogsRequest,
 ) (*sql.Rows, func(*sql.Rows) (*models.Log, error), error) {
-	return nil, nil, nil
+	rows, next, err := s.logRepository.GetLogsByNamespaceIDAndRunID(ctx, namespaceID, req.ID)
+	if err != nil {
+		return nil, nil, api.NewInternalError("error getting run logs: %s", err)
+	}
+
+	return rows, next, nil
 }
 
 // GetRunMetrics returns run metrics.

@@ -16,7 +16,7 @@ import (
 
 // NewGetRunLogsResponse creates a new response object for `GET /runs/logs` endpoint.
 func NewGetRunLogsResponse(
-	ctx *fiber.Ctx, rows *sql.Rows, next func(*sql.Rows) (*models.Log, error), capacity int,
+	ctx *fiber.Ctx, rows *sql.Rows, next func(*sql.Rows) (*models.Log, error),
 ) {
 	ctx.Set("Content-Type", "application/octet-stream")
 	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {

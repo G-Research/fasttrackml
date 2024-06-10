@@ -23,7 +23,7 @@ type LogRepository struct {
 	maxRowsPerRun int
 }
 
-// NewLogRepository creates repository to work with models.Log entity.
+// NewLogRepository creates a repository to work with models.Log entity.
 func NewLogRepository(db *gorm.DB, maxRowsPerRun int) *LogRepository {
 	return &LogRepository{
 		repositories.NewBaseRepository(db),
@@ -42,8 +42,13 @@ func (r LogRepository) SaveLog(ctx context.Context, log *models.Log) error {
 // enforceMaxRowsPerRun will truncate the log rows for the run if needed.
 func (r LogRepository) enforceMaxRowsPerRun(ctx context.Context, runID string) error {
 	var rowCount int64
-	if err := r.GetDB().WithContext(ctx).Model(models.Log{}).Where(
-		"run_uuid = ?", runID).Count(&rowCount).Error; err != nil {
+	if err := r.GetDB().WithContext(
+		ctx,
+	).Model(
+		models.Log{},
+	).Where(
+		"run_uuid = ?", runID,
+	).Count(&rowCount).Error; err != nil {
 		return eris.Wrapf(err, "error counting log rows for run %s", runID)
 	}
 	if rowCount <= int64(r.maxRowsPerRun) {

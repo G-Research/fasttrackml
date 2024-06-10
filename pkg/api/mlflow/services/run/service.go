@@ -667,3 +667,11 @@ func (s Service) LogBatch(
 
 	return nil
 }
+
+func (s Service) LogOutput(
+	ctx context.Context,
+	namespace *models.Namespace,
+	req *request.LogOutputRequest,
+) error {
+	return nil
+}

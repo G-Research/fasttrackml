@@ -406,3 +406,41 @@ func TestValidateSearchRunsRequest_Error(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateLogOutputRequest_Ok(t *testing.T) {
+	err := ValidateLogOutputRequest(&request.LogOutputRequest{
+		RunID: "id",
+		Data:  "some log row",
+	})
+	require.Nil(t, err)
+}
+
+func TestValidateLogOutputRequest_Error(t *testing.T) {
+	testData := []struct {
+		name    string
+		error   *api.ErrorResponse
+		request *request.LogOutputRequest
+	}{
+		{
+			name:  "EmptyRunID",
+			error: api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'"),
+			request: &request.LogOutputRequest{
+				Data: "Some log data",
+			},
+		},
+		{
+			name:  "EmptyData",
+			error: api.NewInvalidParameterValueError("Missing value for required parameter 'data'"),
+			request: &request.LogOutputRequest{
+				RunID: "id",
+			},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateLogOutputRequest(tt.request)
+			assert.Equal(t, tt.error, err)
+		})
+	}
+}

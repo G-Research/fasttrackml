@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -54,7 +55,7 @@ func (s *LogOutputTestSuite) Test_Ok() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			run, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
-				ID:             uuid.NewString(),
+				ID:             strings.ReplaceAll(uuid.New().String(), "-", ""),
 				ExperimentID:   *s.DefaultExperiment.ID,
 				SourceType:     "JOB",
 				LifecycleStage: models.LifecycleStageActive,

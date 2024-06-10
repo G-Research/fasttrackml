@@ -171,7 +171,7 @@ type SearchAlignedMetricsResponse struct {
 	XAxisIters  fiber.Map `json:"x_axis_iters"`
 }
 
-// NewSearchAlignedMetricsResponse creates new response object for `GET /runs/search/metric/align` endpoint.
+// NewSearchAlignedMetricsResponse creates a new response object for `GET /runs/search/metric/align` endpoint.
 func NewSearchAlignedMetricsResponse(
 	ctx *fiber.Ctx, rows *sql.Rows, next func(*sql.Rows) (*models.AlignedMetric, error), capacity int,
 ) {

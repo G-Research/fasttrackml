@@ -1,13 +1,9 @@
 package controller
 
 import (
-	"bufio"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
-	"strconv"
-	"time"
-
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+	"strconv"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
@@ -240,31 +236,17 @@ func (c Controller) GetRunLogs(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("GetRunLogs namespace: %s", ns.Code)
 
-	if err := c.runService.UpdateRun(ctx.Context(), ns.ID, &req); err != nil {
+	req := request.GetRunLogsRequest{}
+	if err = ctx.ParamsParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	rows, next, err := c.runService.GetRunLogs(ctx.Context(), ns.ID, &req)
+	if err != nil {
 		return err
 	}
 
-	ctx.Set("Content-Type", "application/octet-stream")
-	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		start := time.Now()
-		if err := func() error {
-			if err := encoding.EncodeTree(w, fiber.Map{
-				"1": "Hello World1",
-				"2": "Hello World2",
-				"3": "Hello World3",
-			}); err != nil {
-				return err
-			}
-
-			if err := w.Flush(); err != nil {
-				return err
-			}
-			return nil
-		}(); err != nil {
-			log.Errorf("error encountered in %s %s: error streaming metrics: %s", ctx.Method(), ctx.Path(), err)
-		}
-		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
-	})
+	response.NewGetRunLogsResponse(ctx, rows, next)
 	return nil
 }
 

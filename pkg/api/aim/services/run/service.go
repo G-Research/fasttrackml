@@ -59,6 +59,13 @@ func (s Service) GetRunInfo(
 	return runInfo, nil
 }
 
+// GetRunLogs return run logs.
+func (s Service) GetRunLogs(
+	ctx context.Context, namespaceID uint, req *request.GetRunLogsRequest,
+) (*sql.Rows, func(*sql.Rows) (*models.Log, error), error) {
+	return nil, nil, nil
+}
+
 // GetRunMetrics returns run metrics.
 func (s Service) GetRunMetrics(
 	ctx context.Context, namespaceID uint, runID string, req *request.GetRunMetricsRequest,

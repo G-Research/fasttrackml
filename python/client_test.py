@@ -12,6 +12,7 @@ from fasttrackml import FasttrackmlClient
 
 LOCALHOST = "127.0.0.1"
 
+
 @pytest.fixture(scope="session")
 def fml_address():
     # Launch the fml server
@@ -30,8 +31,7 @@ def get_safe_port():
 
 @pytest.fixture(scope="session", autouse=True)
 def server(fml_address):
-    process = subprocess.Popen(["/workspaces/fasttrackml/fml", "server"],
-                               env={**os.environ, "FML_LISTEN_ADDRESS": f"{fml_address}"})
+    process = subprocess.Popen(["fml", "server"], env={**os.environ, "FML_LISTEN_ADDRESS": f"{fml_address}"})
     yield process
     # Kill the fml server
     time.sleep(3)

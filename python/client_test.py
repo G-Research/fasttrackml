@@ -1,4 +1,5 @@
 import os
+import socket
 import subprocess
 import time
 import uuid
@@ -9,19 +10,37 @@ from fasttrackml.entities import Metric, Param
 
 from fasttrackml import FasttrackmlClient
 
+LOCALHOST = "127.0.0.1"
+
+@pytest.fixture(scope="session")
+def fml_address():
+    # Launch the fml server
+    port = get_safe_port()
+    return f"{LOCALHOST}:{port}"
+
+
+def get_safe_port():
+    """Returns an ephemeral port that is very likely to be free to bind to."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind((LOCALHOST, 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    return port
+
 
 @pytest.fixture(scope="session", autouse=True)
-def server():
-    # Launch the fml server
-    process = subprocess.Popen(["fml", "server"])
+def server(fml_address):
+    process = subprocess.Popen(["/workspaces/fasttrackml/fml", "server"],
+                               env={**os.environ, "FML_LISTEN_ADDRESS": f"{fml_address}"})
     yield process
     # Kill the fml server
+    time.sleep(3)
     process.kill()
 
 
 @pytest.fixture
-def client():
-    return FasttrackmlClient("http://localhost:5000")
+def client(fml_address):
+    return FasttrackmlClient(f"http://{fml_address}")
 
 
 @pytest.fixture
@@ -90,7 +109,7 @@ def test_log_output(client, server, run):
         assert client.log_output(run.info.run_id, log_data) == None
 
 
-def test_init_output_Logging(client, server, run):
+def test_init_output_logging(client, server, run):
     # test logging some output implicitly
     client.init_output_logging(run.info.run_id)
     for i in range(100):

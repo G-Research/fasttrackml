@@ -18,6 +18,8 @@ type TagRepositoryProvider interface {
 	GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.TagData, error)
 	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
+	// CreateRunTag creates new models.Tag entity connected to models.Run.
+	CreateRunTag(ctx context.Context, runTag *models.Tag) error
 	// GetTagKeysByParameters returns list of tag keys by requested parameters.
 	GetTagKeysByParameters(ctx context.Context, namespaceID uint, experiments []int) ([]string, error)
 }
@@ -71,6 +73,21 @@ func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint)
 		return nil, eris.Wrap(err, "unable to fetch tag_data")
 	}
 	return tagDatas, nil
+}
+
+// CreateRunTagn creates new models.Tag entity connected to models.Run.
+func (r TagRepository) CreateRunTag(ctx context.Context, runTag *models.Tag) error {
+	if err := r.GetDB().WithContext(ctx).Clauses(clause.OnConflict{
+		UpdateAll: true,
+	}).Create([]models.Tag{{
+		Key:   runTag.Key,
+		Value: runTag.Value,
+		RunID: runTag.RunID,
+	}}).Error; err != nil {
+		return eris.Wrapf(err, "error creating tag for run with id: %s", runTag.RunID)
+	}
+	return nil
+	}
 }
 
 // GetTagKeysByParameters returns list of tag keys by requested parameters.

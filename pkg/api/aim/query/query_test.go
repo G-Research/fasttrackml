@@ -176,7 +176,7 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 		},
 		{
 			name:         "TestFinalizedAtAttribute",
-			query:        `run.end_time == 12345678`,
+			query:        `run.finalized_at == 12345678`,
 			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE "runs"."end_time" = $1 AND "runs"."lifecycle_stage" <> $2`,
 			expectedVars: []interface{}{12345678, models.LifecycleStageDeleted},
 		},

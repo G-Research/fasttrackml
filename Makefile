@@ -168,6 +168,11 @@ test-python-integration-aim: ## run the Aim python integration tests.
 	@echo ">>> Running Aim python integration tests."
 	@go run tests/integration/python/main.go -targets aim
 
+.PHONY: test-python-integration-client
+test-python-integration-client: ## run the FML Client python integration tests.
+	@echo ">>> Running FasttrackmlClient python integration tests."
+	@go run tests/integration/python/main.go -targets fml_client
+
 #
 # Container test targets.
 #

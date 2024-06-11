@@ -15,7 +15,7 @@ import (
 type TagRepositoryProvider interface {
 	repositories.BaseRepositoryProvider
 	// GetTagsByNamespace returns the list of tags.
-	GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.TagData, error)
+	GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.SharedTag, error)
 	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
 	// CreateRunTag creates new models.Tag entity connected to models.Run.
@@ -46,13 +46,13 @@ func (r TagRepository) CreateExperimentTag(ctx context.Context, experimentTag *m
 	return nil
 }
 
-// GetTagsByNamespace returns the list of TagData, with virtual rows populated from the Tag table.
-func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.TagData, error) {
-	var tagDatas []models.TagData
+// GetTagsByNamespace returns the list of SharedTag, with virtual rows populated from the Tag table.
+func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.SharedTag, error) {
+	var tagDatas []models.SharedTag
 	if err := r.GetDB().WithContext(ctx).
 		Raw(`
                    SELECT *
-                   FROM tag_data
+                   FROM shared_tags
                    WHERE is_archived = false
                    AND namespace_id = ?
                    UNION
@@ -87,7 +87,6 @@ func (r TagRepository) CreateRunTag(ctx context.Context, runTag *models.Tag) err
 		return eris.Wrapf(err, "error creating tag for run with id: %s", runTag.RunID)
 	}
 	return nil
-	}
 }
 
 // GetTagKeysByParameters returns list of tag keys by requested parameters.

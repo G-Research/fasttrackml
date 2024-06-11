@@ -96,7 +96,7 @@ type Run struct {
 	RowNum         RowNum         `gorm:"<-:create;index"`
 	Params         []Param        `gorm:"constraint:OnDelete:CASCADE"`
 	Tags           []Tag          `gorm:"constraint:OnDelete:CASCADE"`
-	TagDatas       []TagData      `gorm:"many2many:run_tag_datas"`
+	SharedTags     []SharedTag    `gorm:"many2many:run_tag_shared"`
 	Metrics        []Metric       `gorm:"constraint:OnDelete:CASCADE"`
 	LatestMetrics  []LatestMetric `gorm:"constraint:OnDelete:CASCADE"`
 }
@@ -142,15 +142,15 @@ type Tag struct {
 	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 
-// TagData stores tag data for Aim UI.
-type TagData struct {
+// SharedTag stores tag data for Aim UI, which are shared.
+type SharedTag struct {
 	ID          uuid.UUID `gorm:"column:id;not null"`
 	IsArchived  bool      `gorm:"not null,default:false"`
 	Key         string    `gorm:"type:varchar(250);not null;primaryKey"`
 	Color       string    `gorm:"type:varchar(7);null"`
 	Description string    `gorm:"type:varchar(500);null`
 	NamespaceID uint      `gorm:"not null;primaryKey"`
-	Runs        []Run     `gorm:"many2many:run_tag_datas"`
+	Runs        []Run     `gorm:"many2many:run_tag_shared"`
 }
 
 type Metric struct {

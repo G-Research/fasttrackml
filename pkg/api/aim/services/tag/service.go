@@ -21,7 +21,7 @@ func NewService(tagRepository repositories.TagRepositoryProvider) *Service {
 }
 
 // GetTags returns the list of tags.
-func (s Service) GetTags(ctx context.Context, namespaceID uint) ([]models.TagData, error) {
+func (s Service) GetTags(ctx context.Context, namespaceID uint) ([]models.SharedTag, error) {
 	tags, err := s.tagRepository.GetTagsByNamespace(ctx, namespaceID)
 	if err != nil {
 		return nil, api.NewInternalError("unable to get active apps: %v", err)

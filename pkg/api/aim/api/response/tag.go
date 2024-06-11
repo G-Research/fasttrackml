@@ -19,8 +19,8 @@ type TagResponse struct {
 // GetTagsResponse represents a list of run tags.
 type GetTagsResponse []TagResponse
 
-// NewGetTagsResponse will convert the []model.TagData to GetTagsResponse
-func NewGetTagsResponse(tagDatas []models.TagData) GetTagsResponse {
+// NewGetTagsResponse will convert the []model.SharedTag to GetTagsResponse
+func NewGetTagsResponse(tagDatas []models.SharedTag) GetTagsResponse {
 	tagResponses := make(GetTagsResponse, len(tagDatas))
 	idx := 0
 	for _, tagData := range tagDatas {

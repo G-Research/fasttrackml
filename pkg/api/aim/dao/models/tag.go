@@ -12,8 +12,8 @@ type Tag struct {
 	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 
-// TagData stores tag data for Aim UI.
-type TagData struct {
+// SharedTag represents model to work with `shared_tags` for Aim UI.
+type SharedTag struct {
 	ID          uuid.UUID `gorm:"column:id;not null"`
 	IsArchived  bool      `gorm:"not null,default:false"`
 	Key         string    `gorm:"type:varchar(250);not null;primaryKey"`
@@ -23,8 +23,8 @@ type TagData struct {
 	Runs        []Run     `gorm:"many2many:run_tag_datas"`
 }
 
-// BeforeCreate supplies a UUID for TagData.
-func (tagData *TagData) BeforeCreate(tx *gorm.DB) error {
-	tagData.ID = uuid.New()
+// BeforeCreate supplies a UUID for SharedTag.
+func (sharedTag *SharedTag) BeforeCreate(tx *gorm.DB) error {
+	sharedTag.ID = uuid.New()
 	return nil
 }

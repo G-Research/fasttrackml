@@ -140,6 +140,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				&Run{},
 				&Param{},
 				&Tag{},
+				&SharedTag{},
 				&Context{},
 				&Metric{},
 				&LatestMetric{},

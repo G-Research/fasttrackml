@@ -96,7 +96,6 @@ type Run struct {
 	RowNum         RowNum         `gorm:"<-:create;index"`
 	Params         []Param        `gorm:"constraint:OnDelete:CASCADE"`
 	Tags           []Tag          `gorm:"constraint:OnDelete:CASCADE"`
-	TagDatas       []TagData      `gorm:"many2many:run_tag_datas"`
 	Metrics        []Metric       `gorm:"constraint:OnDelete:CASCADE"`
 	LatestMetrics  []LatestMetric `gorm:"constraint:OnDelete:CASCADE"`
 }
@@ -138,17 +137,6 @@ type Tag struct {
 	Key   string `gorm:"type:varchar(250);not null;primaryKey"`
 	Value string `gorm:"type:varchar(5000)"`
 	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
-}
-
-// TagData stores tag data for Aim UI.
-type TagData struct {
-	ID          uuid.UUID `gorm:"column:id;not null"`
-	IsArchived  bool      `gorm:"not null,default:false"`
-	Key         string    `gorm:"type:varchar(250);not null;primaryKey"`
-	Color       string    `gorm:"type:varchar(7);null"`
-	Description string    `gorm:"type:varchar(500);null`
-	NamespaceID uint      `gorm:"not null;primaryKey"`
-	Runs        []Run     `gorm:"many2many:run_tag_datas"`
 }
 
 type Metric struct {
@@ -203,10 +191,9 @@ func (SchemaVersion) TableName() string {
 }
 
 type Base struct {
-	ID         uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	IsArchived bool      `json:"-"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) error {
@@ -220,6 +207,7 @@ type Dashboard struct {
 	Description string     `json:"description"`
 	AppID       *uuid.UUID `gorm:"type:uuid" json:"app_id"`
 	App         App        `json:"-"`
+	IsArchived  bool       `json:"-"`
 }
 
 func (d Dashboard) MarshalJSON() ([]byte, error) {
@@ -245,6 +233,7 @@ type App struct {
 	State       AppState  `json:"state"`
 	Namespace   Namespace `json:"-"`
 	NamespaceID uint      `gorm:"not null" json:"-"`
+	IsArchived  bool      `json:"-"`
 }
 
 type AppState map[string]any

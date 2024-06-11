@@ -47,7 +47,7 @@ func (r TagRepository) CreateExperimentTag(ctx context.Context, experimentTag *m
 // GetTagsByNamespace returns the list of TagData, with virtual rows populated from the Tag table.
 func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.TagData, error) {
 	var tagDatas []models.TagData
-	if err := r.db.WithContext(ctx).
+	if err := r.GetDB().WithContext(ctx).
 		Raw(`
                    SELECT *
                    FROM tag_data

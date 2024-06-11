@@ -1,4 +1,4 @@
-package v_0012
+package v_0015
 
 import (
 	"context"
@@ -129,9 +129,11 @@ func (rn RowNum) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 }
 
 type Param struct {
-	Key   string `gorm:"type:varchar(250);not null;primaryKey"`
-	Value string `gorm:"type:varchar(500);not null"`
-	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
+	Key        string   `gorm:"type:varchar(250);not null;primaryKey"`
+	ValueStr   *string  `gorm:"type:varchar(500)"`
+	ValueInt   *int64   `gorm:"type:bigint"`
+	ValueFloat *float64 `gorm:"type:float"`
+	RunID      string   `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 
 type Tag struct {
@@ -203,10 +205,9 @@ func (SchemaVersion) TableName() string {
 }
 
 type Base struct {
-	ID         uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	IsArchived bool      `json:"-"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) error {
@@ -220,6 +221,7 @@ type Dashboard struct {
 	Description string     `json:"description"`
 	AppID       *uuid.UUID `gorm:"type:uuid" json:"app_id"`
 	App         App        `json:"-"`
+	IsArchived  bool       `json:"-"`
 }
 
 func (d Dashboard) MarshalJSON() ([]byte, error) {
@@ -245,6 +247,7 @@ type App struct {
 	State       AppState  `json:"state"`
 	Namespace   Namespace `json:"-"`
 	NamespaceID uint      `gorm:"not null" json:"-"`
+	IsArchived  bool      `json:"-"`
 }
 
 type AppState map[string]any
@@ -281,7 +284,7 @@ func NewUUID() string {
 
 type Role struct {
 	Base
-	Role string `gorm:"unique;index;not null"`
+	Name string `gorm:"unique;index;not null"`
 }
 
 type RoleNamespace struct {
@@ -289,5 +292,5 @@ type RoleNamespace struct {
 	Role        Role      `gorm:"constraint:OnDelete:CASCADE"`
 	RoleID      uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
 	Namespace   Namespace `gorm:"constraint:OnDelete:CASCADE"`
-	NamespaceID uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
+	NamespaceID uint      `gorm:"not null;index:,unique,composite:relation"`
 }

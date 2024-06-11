@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -141,26 +141,26 @@ func (s *ExperimentFlowTestSuite) testRunFlow(
 	namespace1Code, namespace2Code string, experiment1, experiment2 *models.Experiment, run1, run2 *models.Run,
 ) {
 	// test `GET /experiments/:id` endpoint.
-	s.getExperimentAndCompare(namespace1Code, *experiment1.ID, &response.GetExperiment{
+	s.getExperimentAndCompare(namespace1Code, *experiment1.ID, &response.Experiment{
 		ID:       fmt.Sprintf("%d", *experiment1.ID),
 		Name:     "Experiment1",
 		RunCount: 1,
 	})
-	s.getExperimentAndCompare(namespace2Code, *experiment2.ID, &response.GetExperiment{
+	s.getExperimentAndCompare(namespace2Code, *experiment2.ID, &response.Experiment{
 		ID:       fmt.Sprintf("%d", *experiment2.ID),
 		Name:     "Experiment2",
 		RunCount: 1,
 	})
 
 	// test `GET /experiments` endpoint.
-	s.getExperimentsAndCompare(namespace1Code, response.Experiments{
+	s.getExperimentsAndCompare(namespace1Code, []response.Experiment{
 		{
 			ID:       fmt.Sprintf("%d", *experiment1.ID),
 			Name:     "Experiment1",
 			RunCount: 1,
 		},
 	})
-	s.getExperimentsAndCompare(namespace2Code, response.Experiments{
+	s.getExperimentsAndCompare(namespace2Code, []response.Experiment{
 		{
 			ID:       fmt.Sprintf("%d", *experiment2.ID),
 			Name:     "Experiment2",
@@ -169,18 +169,18 @@ func (s *ExperimentFlowTestSuite) testRunFlow(
 	})
 
 	// test `GET /experiments/:id/runs` endpoint.
-	s.getExperimentRunsAndCompare(namespace1Code, *experiment1.ID, response.GetExperimentRuns{
+	s.getExperimentRunsAndCompare(namespace1Code, *experiment1.ID, response.ExperimentRuns{
 		ID: fmt.Sprintf("%d", *experiment1.ID),
-		Runs: []response.ExperimentRun{
+		Runs: []response.ExperimentRunPartial{
 			{
 				ID:   run1.ID,
 				Name: run1.Name,
 			},
 		},
 	})
-	s.getExperimentRunsAndCompare(namespace2Code, *experiment2.ID, response.GetExperimentRuns{
+	s.getExperimentRunsAndCompare(namespace2Code, *experiment2.ID, response.ExperimentRuns{
 		ID: fmt.Sprintf("%d", *experiment2.ID),
-		Runs: []response.ExperimentRun{
+		Runs: []response.ExperimentRunPartial{
 			{
 				ID:   run2.ID,
 				Name: run2.Name,
@@ -189,13 +189,13 @@ func (s *ExperimentFlowTestSuite) testRunFlow(
 	})
 
 	// test `GET /experiments/:id/activity` endpoint.
-	s.getExperimentActivityAndCompare(namespace1Code, *experiment1.ID, &response.GetExperimentActivity{
+	s.getExperimentActivityAndCompare(namespace1Code, *experiment1.ID, &response.ExperimentActivity{
 		NumRuns:         1,
 		NumArchivedRuns: 0,
 		NumActiveRuns:   1,
 		ActivityMap:     nil,
 	})
-	s.getExperimentActivityAndCompare(namespace2Code, *experiment2.ID, &response.GetExperimentActivity{
+	s.getExperimentActivityAndCompare(namespace2Code, *experiment2.ID, &response.ExperimentActivity{
 		NumRuns:         1,
 		NumArchivedRuns: 0,
 		NumActiveRuns:   1,
@@ -208,9 +208,9 @@ func (s *ExperimentFlowTestSuite) testRunFlow(
 }
 
 func (s *ExperimentFlowTestSuite) getExperimentAndCompare(
-	namespace string, experimentID int32, expectedResponse *response.GetExperiment,
+	namespace string, experimentID int32, expectedResponse *response.Experiment,
 ) {
-	var resp response.GetExperiment
+	var resp response.Experiment
 	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace,
@@ -228,9 +228,9 @@ func (s *ExperimentFlowTestSuite) getExperimentAndCompare(
 }
 
 func (s *ExperimentFlowTestSuite) getExperimentsAndCompare(
-	namespace string, expectedResponse response.Experiments,
+	namespace string, expectedResponse []response.Experiment,
 ) {
-	var resp response.Experiments
+	var resp []response.Experiment
 	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace,
@@ -244,9 +244,9 @@ func (s *ExperimentFlowTestSuite) getExperimentsAndCompare(
 }
 
 func (s *ExperimentFlowTestSuite) getExperimentRunsAndCompare(
-	namespace string, experimentID int32, expectedResponse response.GetExperimentRuns,
+	namespace string, experimentID int32, expectedResponse response.ExperimentRuns,
 ) {
-	var resp response.GetExperimentRuns
+	var resp response.ExperimentRuns
 	s.Require().Nil(
 		s.AIMClient().WithNamespace(
 			namespace,
@@ -261,9 +261,9 @@ func (s *ExperimentFlowTestSuite) getExperimentRunsAndCompare(
 }
 
 func (s *ExperimentFlowTestSuite) getExperimentActivityAndCompare(
-	namespace string, experimentID int32, expectedResponse *response.GetExperimentActivity,
+	namespace string, experimentID int32, expectedResponse *response.ExperimentActivity,
 ) {
-	var resp response.GetExperimentActivity
+	var resp response.ExperimentActivity
 	s.Require().Nil(
 		s.AIMClient().WithResponse(
 			&resp,
@@ -279,7 +279,7 @@ func (s *ExperimentFlowTestSuite) getExperimentActivityAndCompare(
 }
 
 func (s *ExperimentFlowTestSuite) deleteExperiment(namespace string, experimentID int32) {
-	var resp response.DeleteExperiment
+	var resp response.DeleteExperimentResponse
 	s.Require().Nil(
 		s.AIMClient().WithMethod(
 			http.MethodDelete,

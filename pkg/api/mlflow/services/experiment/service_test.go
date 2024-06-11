@@ -12,10 +12,10 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 )
 
 func TestService_CreateExperiment_Ok(t *testing.T) {
@@ -36,7 +36,7 @@ func TestService_CreateExperiment_Ok(t *testing.T) {
 
 	// call service under testing.
 	service := NewService(
-		&config.ServiceConfig{},
+		&config.Config{},
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
@@ -85,7 +85,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 			request: &request.CreateExperimentRequest{},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -107,7 +107,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
 				).Return(nil, nil)
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -125,7 +125,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
 				).Return(nil, errors.New("database error"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -143,7 +143,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
 				).Return(&models.Experiment{}, nil)
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -164,7 +164,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 					"Create", context.TODO(), mock.Anything,
 				).Return(errors.New("database error"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -193,7 +193,7 @@ func TestService_CreateExperiment_Error(t *testing.T) {
 					"Update", context.TODO(), mock.AnythingOfType("*models.Experiment"),
 				).Return(errors.New("database error"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -236,7 +236,7 @@ func TestService_DeleteExperiment_Ok(t *testing.T) {
 
 	// call service under testing.
 	service := NewService(
-		&config.ServiceConfig{},
+		&config.Config{},
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
@@ -268,7 +268,7 @@ func TestService_DeleteExperiment_Error(t *testing.T) {
 			request: &request.DeleteExperimentRequest{},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -284,7 +284,7 @@ func TestService_DeleteExperiment_Error(t *testing.T) {
 			},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -302,7 +302,7 @@ func TestService_DeleteExperiment_Error(t *testing.T) {
 					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
 				).Return(nil, errors.New("experiment not found"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -323,7 +323,7 @@ func TestService_DeleteExperiment_Error(t *testing.T) {
 					Name: models.DefaultExperimentName,
 				}, nil)
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -346,7 +346,7 @@ func TestService_DeleteExperiment_Error(t *testing.T) {
 					"Update", context.TODO(), mock.AnythingOfType("*models.Experiment"),
 				).Return(errors.New("database error"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -395,7 +395,7 @@ func TestService_GetExperiment_Ok(t *testing.T) {
 
 	// call service under testing.
 	service := NewService(
-		&config.ServiceConfig{},
+		&config.Config{},
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
@@ -443,7 +443,7 @@ func TestService_GetExperiment_Error(t *testing.T) {
 			request: &request.GetExperimentRequest{},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -459,7 +459,7 @@ func TestService_GetExperiment_Error(t *testing.T) {
 			},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -477,7 +477,7 @@ func TestService_GetExperiment_Error(t *testing.T) {
 					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
 				).Return(nil, errors.New("experiment not found"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -527,7 +527,7 @@ func TestService_GetExperimentByName_Ok(t *testing.T) {
 
 	// call service under testing.
 	service := NewService(
-		&config.ServiceConfig{},
+		&config.Config{},
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
@@ -579,7 +579,7 @@ func TestService_GetExperimentByName_Error(t *testing.T) {
 			request: &request.GetExperimentRequest{},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -597,7 +597,7 @@ func TestService_GetExperimentByName_Error(t *testing.T) {
 					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
 				).Return(nil, errors.New("database error"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -615,7 +615,7 @@ func TestService_GetExperimentByName_Error(t *testing.T) {
 					"GetByNamespaceIDAndName", context.TODO(), ns.ID, "name",
 				).Return(nil, nil)
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -658,7 +658,7 @@ func TestService_RestoreExperiment_Ok(t *testing.T) {
 
 	// call service under testing.
 	service := NewService(
-		&config.ServiceConfig{},
+		&config.Config{},
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
@@ -689,7 +689,7 @@ func TestService_RestoreExperiment_Error(t *testing.T) {
 			request: &request.RestoreExperimentRequest{},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -705,7 +705,7 @@ func TestService_RestoreExperiment_Error(t *testing.T) {
 			},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -723,7 +723,7 @@ func TestService_RestoreExperiment_Error(t *testing.T) {
 					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
 				).Return(nil, errors.New("experiment not found"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -746,7 +746,7 @@ func TestService_RestoreExperiment_Error(t *testing.T) {
 					"Update", context.TODO(), mock.AnythingOfType("*models.Experiment"),
 				).Return(errors.New("database error"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -790,7 +790,7 @@ func TestService_SetExperimentTag_Ok(t *testing.T) {
 
 	// call service under testing.
 	service := NewService(
-		&config.ServiceConfig{},
+		&config.Config{},
 		&tagsRepository,
 		&experimentRepository,
 	)
@@ -823,7 +823,7 @@ func TestService_SetExperimentTag_Error(t *testing.T) {
 			request: &request.SetExperimentTagRequest{},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -837,7 +837,7 @@ func TestService_SetExperimentTag_Error(t *testing.T) {
 			},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -854,7 +854,7 @@ func TestService_SetExperimentTag_Error(t *testing.T) {
 			},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -873,7 +873,7 @@ func TestService_SetExperimentTag_Error(t *testing.T) {
 					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
 				).Return(nil, errors.New("experiment not found"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -901,7 +901,7 @@ func TestService_SetExperimentTag_Error(t *testing.T) {
 				).Return(errors.New("database error"))
 
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&tagRepository,
 					&experimentRepository,
 				)
@@ -943,7 +943,7 @@ func TestService_UpdateExperiment_Ok(t *testing.T) {
 
 	// call service under testing.
 	service := NewService(
-		&config.ServiceConfig{},
+		&config.Config{},
 		&repositories.MockTagRepositoryProvider{},
 		&experimentRepository,
 	)
@@ -975,7 +975,7 @@ func TestService_UpdateExperiment_Error(t *testing.T) {
 			request: &request.UpdateExperimentRequest{},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -989,7 +989,7 @@ func TestService_UpdateExperiment_Error(t *testing.T) {
 			},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -1006,7 +1006,7 @@ func TestService_UpdateExperiment_Error(t *testing.T) {
 			},
 			service: func() *Service {
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&repositories.MockExperimentRepositoryProvider{},
 				)
@@ -1025,7 +1025,7 @@ func TestService_UpdateExperiment_Error(t *testing.T) {
 					"GetByNamespaceIDAndExperimentID", context.TODO(), ns.ID, int32(1),
 				).Return(nil, errors.New("experiment not found"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)
@@ -1049,7 +1049,7 @@ func TestService_UpdateExperiment_Error(t *testing.T) {
 					"Update", context.TODO(), mock.AnythingOfType("*models.Experiment"),
 				).Return(errors.New("database error"))
 				return NewService(
-					&config.ServiceConfig{},
+					&config.Config{},
 					&repositories.MockTagRepositoryProvider{},
 					&experimentRepository,
 				)

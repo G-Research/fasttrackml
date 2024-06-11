@@ -8,11 +8,12 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 )
 
 // TagRepositoryProvider provides an interface to work with models.Tag entity.
 type TagRepositoryProvider interface {
-	BaseRepositoryProvider
+	repositories.BaseRepositoryProvider
 	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
 	// CreateRunTagWithTransaction creates new models.Tag entity connected to models.Run.
@@ -25,21 +26,19 @@ type TagRepositoryProvider interface {
 
 // TagRepository repository to work with models.Tag entity.
 type TagRepository struct {
-	BaseRepository
+	repositories.BaseRepositoryProvider
 }
 
 // NewTagRepository creates repository to work with models.Tag entity.
 func NewTagRepository(db *gorm.DB) *TagRepository {
 	return &TagRepository{
-		BaseRepository{
-			db: db,
-		},
+		repositories.NewBaseRepository(db),
 	}
 }
 
 // CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 func (r TagRepository) CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error {
-	if err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+	if err := r.GetDB().WithContext(ctx).Clauses(clause.OnConflict{
 		UpdateAll: true,
 	}).Create(experimentTag).Error; err != nil {
 		return eris.Wrapf(err, "error creating tag for experiment with id: %d", experimentTag.ExperimentID)
@@ -66,7 +65,7 @@ func (r TagRepository) CreateRunTagWithTransaction(
 // GetByRunIDAndKey returns models.Tag by provided RunID and Tag Key.
 func (r TagRepository) GetByRunIDAndKey(ctx context.Context, runID, key string) (*models.Tag, error) {
 	tag := models.Tag{RunID: runID, Key: key}
-	if err := r.db.WithContext(ctx).First(&tag).Error; err != nil {
+	if err := r.GetDB().WithContext(ctx).First(&tag).Error; err != nil {
 		if eris.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -77,7 +76,7 @@ func (r TagRepository) GetByRunIDAndKey(ctx context.Context, runID, key string) 
 
 // Delete deletes existing models.Tag entity.
 func (r TagRepository) Delete(ctx context.Context, tag *models.Tag) error {
-	if err := r.db.Delete(tag).Error; err != nil {
+	if err := r.GetDB().Delete(tag).Error; err != nil {
 		return eris.Wrapf(err, "error deleting tag by run id: %s and key: %s", tag.RunID, tag.Key)
 	}
 	return nil

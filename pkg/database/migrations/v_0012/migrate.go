@@ -4,16 +4,16 @@ import (
 	"gorm.io/gorm"
 )
 
-const Version = "20240228084640"
+const Version = "20240403100850"
 
 func Migrate(db *gorm.DB) error {
 	return db.Transaction(func(tx *gorm.DB) error {
-		// Add new tables
-		if err := tx.Migrator().AutoMigrate(&TagData{}); err != nil {
+		if err := tx.AutoMigrate(&Role{}); err != nil {
 			return err
 		}
-
-		// Update the schema version
+		if err := tx.AutoMigrate(&RoleNamespace{}); err != nil {
+			return err
+		}
 		return tx.Model(&SchemaVersion{}).
 			Where("1 = 1").
 			Update("Version", Version).

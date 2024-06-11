@@ -1,0 +1,6 @@
+[submodule "ui/fasttrackml-ui-aim"]
+	path = ui/fasttrackml-ui-aim
+	url = ssh://git@github.com/g-research/fasttrackml-ui-aim.git
+[submodule "ui/fasttrackml-ui-mlflow"]
+	path = ui/fasttrackml-ui-mlflow
+	url = ssh://git@github.com/g-research/fasttrackml-ui-mlflow.git

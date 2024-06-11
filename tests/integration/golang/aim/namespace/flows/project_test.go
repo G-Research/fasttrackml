@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -143,9 +143,9 @@ func (s *ProjectFlowTestSuite) Test_Ok() {
 			s.Require().Nil(err)
 
 			param1, err := s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-				Key:   "param1",
-				Value: "value1",
-				RunID: run1.ID,
+				Key:      "param1",
+				ValueStr: common.GetPointer("value1"),
+				RunID:    run1.ID,
 			})
 			s.Require().Nil(err)
 
@@ -187,9 +187,9 @@ func (s *ProjectFlowTestSuite) Test_Ok() {
 			s.Require().Nil(err)
 
 			param2, err := s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-				Key:   "param2",
-				Value: "value2",
-				RunID: run2.ID,
+				Key:      "param2",
+				ValueStr: common.GetPointer("value2"),
+				RunID:    run2.ID,
 			})
 			s.Require().Nil(err)
 
@@ -274,10 +274,10 @@ func (s *ProjectFlowTestSuite) getProjectParamsAndCompare(
 		).DoRequest("/projects/params"),
 	)
 
-	s.Equal(1, len(resp.Metric))
-	_, ok := resp.Metric[metric.Key]
+	s.Equal(1, len(*resp.Metric))
+	_, ok := (*resp.Metric)[metric.Key]
 	s.True(ok)
-	s.Equal(map[string]interface{}{
+	s.Equal(&map[string]interface{}{
 		param.Key: map[string]interface{}{
 			"__example_type__": "<class 'str'>",
 		},

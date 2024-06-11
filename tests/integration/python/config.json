@@ -72,6 +72,15 @@
             "tests": [
                 "tests/tracking/test_rest_tracking.py"
             ]
+        },
+        "fml_client": {
+            "requirements": [
+                "mlflow==2.12",
+                "pytest==7.4.3"
+            ],
+            "tests": [
+                "/src/python/client_test.py"
+            ]
         }
     }
 }

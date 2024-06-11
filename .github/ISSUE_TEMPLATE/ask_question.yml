@@ -1,0 +1,34 @@
+name: Need Help?
+description: Ask a question or request help regarding FastTrackML
+title: "[QUESTION]: <title>"
+labels: [ "question" ]
+
+body:
+  - type: textarea
+    id: question-details
+    attributes:
+      label: Question / Problem
+      description: Provide a clear and concise description of your question or the issue you're facing.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: "Please provide details about your environment:"
+      value: |
+        - FastTrackML Version: [e.g., 0.3.6]
+        - Operating System: [e.g., Ubuntu 18.04]
+        - Database: [e.g., SQLite]
+        - Artifact Storage: [e.g., MinIO]
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Include any relevant context, screenshots, or code snippets that can help us better understand and address your question or problem.
+    validations:
+      required: false

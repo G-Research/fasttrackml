@@ -13,6 +13,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
@@ -84,9 +85,9 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 
 	// create preexisting param (other batch) for conflict testing
 	_, err = s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-		RunID: run.ID,
-		Key:   "key1",
-		Value: "value1",
+		RunID:    run.ID,
+		Key:      "key1",
+		ValueStr: common.GetPointer("value1"),
 	})
 	s.Require().Nil(err)
 
@@ -100,8 +101,32 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key1",
-						Value: "value1",
+						Key:      "key1",
+						ValueStr: common.GetPointer("value1"),
+					},
+				},
+			},
+		},
+		{
+			name: "LogFloat",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Params: []request.ParamPartialRequest{
+					{
+						Key:        "keyfloat",
+						ValueFloat: common.GetPointer(float64(123.45)),
+					},
+				},
+			},
+		},
+		{
+			name: "LogInt",
+			request: &request.LogBatchRequest{
+				RunID: run.ID,
+				Params: []request.ParamPartialRequest{
+					{
+						Key:      "keyInt",
+						ValueInt: common.GetPointer(int64(123)),
 					},
 				},
 			},
@@ -112,8 +137,8 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key1",
-						Value: "value1",
+						Key:      "key1",
+						ValueStr: common.GetPointer("value1"),
 					},
 				},
 			},
@@ -124,12 +149,12 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key2",
-						Value: "value2",
+						Key:      "key2",
+						ValueStr: common.GetPointer("value2"),
 					},
 					{
-						Key:   "key2",
-						Value: "value2",
+						Key:      "key2",
+						ValueStr: common.GetPointer("value2"),
 					},
 				},
 			},
@@ -155,7 +180,15 @@ func (s *LogBatchTestSuite) TestParams_Ok() {
 			params, err := s.ParamFixtures.GetParamsByRunID(context.Background(), run.ID)
 			s.Require().Nil(err)
 			for _, param := range tt.request.Params {
-				s.Contains(params, models.Param{Key: param.Key, Value: param.Value, RunID: run.ID})
+				modelParam := models.Param{Key: param.Key, RunID: run.ID}
+				if param.ValueInt != nil {
+					modelParam.ValueInt = param.ValueInt
+				} else if param.ValueFloat != nil {
+					modelParam.ValueFloat = param.ValueFloat
+				} else if param.ValueStr != nil {
+					modelParam.ValueStr = param.ValueStr
+				}
+				s.Contains(params, modelParam)
 			}
 		})
 	}
@@ -327,11 +360,11 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 			request: &request.LogBatchRequest{
 				RunID: run.ID,
 				Metrics: func() []request.MetricPartialRequest {
-					metrics := make([]request.MetricPartialRequest, 100*1000)
-					for k := 0; k < 100; k++ {
+					metrics := make([]request.MetricPartialRequest, 10000*10)
+					for k := 0; k < 10000; k++ {
 						key := fmt.Sprintf("many%d", k)
-						for i := 0; i < 1000; i++ {
-							metrics[k*1000+i] = request.MetricPartialRequest{
+						for i := 0; i < 10; i++ {
+							metrics[k*10+i] = request.MetricPartialRequest{
 								Key:       key,
 								Value:     float64(i) + 0.1,
 								Timestamp: 1687325991,
@@ -349,7 +382,7 @@ func (s *LogBatchTestSuite) TestMetrics_Ok() {
 				metrics := make(map[string]int64, 100)
 				for k := 0; k < 100; k++ {
 					key := fmt.Sprintf("many%d", k)
-					metrics[key] = 1000
+					metrics[key] = 10
 				}
 				return metrics
 			}(),
@@ -474,16 +507,16 @@ func (s *LogBatchTestSuite) Test_Error() {
 				RunID: run.ID,
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key1",
-						Value: "value1",
+						Key:      "key1",
+						ValueStr: common.GetPointer("value1"),
 					},
 					{
-						Key:   "key1",
-						Value: "value2",
+						Key:      "key1",
+						ValueStr: common.GetPointer("value2"),
 					},
 					{
-						Key:   "key2",
-						Value: "value2",
+						Key:      "key2",
+						ValueStr: common.GetPointer("value2"),
 					},
 				},
 			},

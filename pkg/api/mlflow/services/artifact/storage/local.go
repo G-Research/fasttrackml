@@ -12,7 +12,7 @@ import (
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 )
 
 // LocalStorageName is a file storage name.
@@ -24,7 +24,7 @@ const (
 type Local struct{}
 
 // NewLocal creates new Local storage instance.
-func NewLocal(config *config.ServiceConfig) (*Local, error) {
+func NewLocal(config *config.Config) (*Local, error) {
 	return &Local{}, nil
 }
 

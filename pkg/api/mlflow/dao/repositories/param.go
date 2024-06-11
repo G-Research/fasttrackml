@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	"github.com/rotisserie/eris"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 )
 
 // ParamConflictError is returned when there is a conflict in the params (same key, different value).
@@ -42,21 +44,19 @@ type ParamRepositoryProvider interface {
 
 // ParamRepository repository to work with models.Param entity.
 type ParamRepository struct {
-	BaseRepository
+	repositories.BaseRepositoryProvider
 }
 
 // NewParamRepository creates repository to work with models.Param entity.
 func NewParamRepository(db *gorm.DB) *ParamRepository {
 	return &ParamRepository{
-		BaseRepository{
-			db: db,
-		},
+		repositories.NewBaseRepository(db),
 	}
 }
 
 // CreateBatch creates []models.Param entities in batch.
 func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params []models.Param) error {
-	if err := r.db.Transaction(func(tx *gorm.DB) error {
+	if err := r.GetDB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.WithContext(ctx).Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "run_uuid"}, {Name: "key"}},
 			DoNothing: true,
@@ -87,12 +87,21 @@ func (r ParamRepository) CreateBatch(ctx context.Context, batchSize int, params 
 // If the key already exists for the run but with a different value, it is a conflict. Conflicts are returned.
 func findConflictingParams(tx *gorm.DB, params []models.Param) ([]paramConflict, error) {
 	var conflicts []paramConflict
-	placeholders, values := makeParamConflictPlaceholdersAndValues(params)
-	sql := fmt.Sprintf(`WITH new(key, value, run_uuid) AS (VALUES %s)
-		     SELECT current.run_uuid, current.key, current.value as old_value, new.value as new_value
+	placeholders, values := makeParamConflictPlaceholdersAndValues(params, tx.Dialector.Name())
+	nullSafeEquality := "IS NOT"
+	if (tx.Dialector.Name() == postgres.Dialector{}.Name()) {
+		nullSafeEquality = "IS DISTINCT FROM"
+	}
+	sql := fmt.Sprintf(`WITH new(key, run_uuid, value_int, value_float, value_str) AS (%s)
+		     SELECT current.run_uuid, current.key, CONCAT(current.value_int, 
+			   current.value_float, current.value_str) as old_value, CONCAT(new.value_int,
+			   new.value_float, new.value_str) as new_value
 		     FROM params AS current
 		     INNER JOIN new USING (run_uuid, key)
-		     WHERE new.value != current.value`, placeholders)
+		     WHERE (new.value_int %s current.value_int)
+			 OR (new.value_float %s current.value_float)
+			 OR (new.value_str %s current.value_str)`,
+		placeholders, nullSafeEquality, nullSafeEquality, nullSafeEquality)
 	if err := tx.Raw(sql, values...).
 		Find(&conflicts).Error; err != nil {
 		return nil, eris.Wrap(err, "error fetching params from db")

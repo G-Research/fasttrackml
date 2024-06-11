@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
@@ -18,17 +19,29 @@ func makeSqlPlaceholders(numberInEachSet, numberOfSets int) string {
 
 // makeParamConflictPlaceholdersAndValues provides sql placeholders and concatenates
 // Key, Value, RunID from each input Param for use in sql values replacement
-func makeParamConflictPlaceholdersAndValues(params []models.Param) (string, []interface{}) {
-	// make place holders of 3 fields for each param
-	placeholders := makeSqlPlaceholders(3, len(params))
-	// values array is params * 3 in length since using 3 fields from each
-	valuesArray := make([]interface{}, len(params)*3)
+func makeParamConflictPlaceholdersAndValues(params []models.Param, dialector string) (string, []interface{}) {
+	var placeholders string
+	// make place holders of 5 fields for each param
+	if (sqlite.Dialector{}.Name() == dialector) {
+		placeholders = fmt.Sprintf("VALUES %s", makeSqlPlaceholders(5, len(params)))
+	} else {
+		set := "SELECT ?::text, ?::text, ?::int, ?::float, ?::text"
+		placeholders = strings.Repeat(set+"\nUNION ALL\n", len(params)-1) + set
+	}
+	// values array is params * 5 in length since using 5 fields from each
+	valuesArray := make([]interface{}, len(params)*5)
 	index := 0
 	for _, param := range params {
 		valuesArray[index] = param.Key
-		valuesArray[index+1] = param.Value
-		valuesArray[index+2] = param.RunID
-		index = index + 3
+		valuesArray[index+1] = param.RunID
+		if param.ValueInt != nil {
+			valuesArray[index+2] = *param.ValueInt
+		} else if param.ValueFloat != nil {
+			valuesArray[index+3] = *param.ValueFloat
+		} else if param.ValueStr != nil {
+			valuesArray[index+4] = *param.ValueStr
+		}
+		index = index + 5
 	}
 	return placeholders, valuesArray
 }

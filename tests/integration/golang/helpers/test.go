@@ -4,12 +4,13 @@ import (
 	"context"
 	"time"
 
+	"dario.cat/mergo"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/pkg/server"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
@@ -17,16 +18,19 @@ import (
 
 type BaseTestSuite struct {
 	suite.Suite
-	server                      server.Server
 	db                          database.DBProvider
+	Config                      config.Config
+	server                      server.Server
 	setupHooks                  []func()
 	tearDownHooks               []func()
 	AIMClient                   func() *HttpClient
 	MlflowClient                func() *HttpClient
 	AdminClient                 func() *HttpClient
+	ChooserClient               func() *HttpClient
 	AppFixtures                 *fixtures.AppFixtures
 	RunFixtures                 *fixtures.RunFixtures
 	TagFixtures                 *fixtures.TagFixtures
+	RolesFixtures               *fixtures.RoleFixtures
 	MetricFixtures              *fixtures.MetricFixtures
 	ContextFixtures             *fixtures.ContextFixtures
 	ParamFixtures               *fixtures.ParamFixtures
@@ -91,6 +95,10 @@ func (s *BaseTestSuite) initFixtures() {
 	s.Require().Nil(err)
 	s.MetricFixtures = metricFixtures
 
+	rolesFixtures, err := fixtures.NewRoleFixtures(db)
+	s.Require().Nil(err)
+	s.RolesFixtures = rolesFixtures
+
 	contextFixtures, err := fixtures.NewContextFixtures(db)
 	s.Require().Nil(err)
 	s.ContextFixtures = contextFixtures
@@ -121,8 +129,7 @@ func (s *BaseTestSuite) closeDB() {
 }
 
 func (s *BaseTestSuite) startServer() {
-	var err error
-	s.server, err = server.NewServer(context.Background(), &config.ServiceConfig{
+	cfg := config.Config{
 		DatabaseURI:           s.db.Dsn(),
 		DatabasePoolMax:       10,
 		DatabaseSlowThreshold: 1 * time.Second,
@@ -130,8 +137,12 @@ func (s *BaseTestSuite) startServer() {
 		DefaultArtifactRoot:   s.T().TempDir(),
 		S3EndpointURI:         GetS3EndpointUri(),
 		GSEndpointURI:         GetGSEndpointUri(),
-	})
+	}
+	s.Require().Nil(mergo.Merge(&cfg, s.Config))
+
+	srv, err := server.NewServer(context.Background(), &cfg)
 	s.Require().Nil(err)
+	s.server = srv
 
 	s.AIMClient = func() *HttpClient {
 		return NewAimApiClient(s.server)
@@ -141,6 +152,9 @@ func (s *BaseTestSuite) startServer() {
 	}
 	s.AdminClient = func() *HttpClient {
 		return NewAdminApiClient(s.server)
+	}
+	s.ChooserClient = func() *HttpClient {
+		return NewChooserApiClient(s.server)
 	}
 }
 

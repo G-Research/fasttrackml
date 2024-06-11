@@ -10,6 +10,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -20,7 +21,7 @@ const (
 
 // MetricRepositoryProvider provides an interface to work with models.Metric entity.
 type MetricRepositoryProvider interface {
-	BaseRepositoryProvider
+	repositories.BaseRepositoryProvider
 	// CreateBatch creates []models.Metric entities in batch.
 	CreateBatch(ctx context.Context, run *models.Run, batchSize int, params []models.Metric) error
 	// GetMetricHistories returns metric histories by request parameters.
@@ -42,15 +43,13 @@ type MetricRepositoryProvider interface {
 
 // MetricRepository repository to work with models.Metric entity.
 type MetricRepository struct {
-	BaseRepository
+	repositories.BaseRepositoryProvider
 }
 
 // NewMetricRepository creates repository to work with models.Metric entity.
 func NewMetricRepository(db *gorm.DB) *MetricRepository {
 	return &MetricRepository{
-		BaseRepository{
-			db: db,
-		},
+		repositories.NewBaseRepository(db),
 	}
 }
 
@@ -100,7 +99,7 @@ func (r MetricRepository) CreateBatch(
 		}
 	}
 
-	if err := r.db.WithContext(ctx).Clauses(
+	if err := r.GetDB().WithContext(ctx).Clauses(
 		clause.OnConflict{
 			Columns:   []clause.Column{{Name: "json"}},
 			UpdateAll: true,
@@ -133,7 +132,7 @@ func (r MetricRepository) CreateBatch(
 		}
 	}
 
-	if err := r.db.WithContext(ctx).Clauses(
+	if err := r.GetDB().WithContext(ctx).Clauses(
 		clause.OnConflict{DoNothing: true},
 	).CreateInBatches(&metrics, batchSize).Error; err != nil {
 		return eris.Wrapf(err, "error creating metrics for run: %s", run.ID)
@@ -160,10 +159,10 @@ func (r MetricRepository) CreateBatch(
 	}
 
 	if len(updatedLatestMetrics) > 0 {
-		if err := r.db.Clauses(clause.OnConflict{
+		if err := r.GetDB().Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "run_uuid"}, {Name: "key"}, {Name: "context_id"}},
 			UpdateAll: true,
-		}).Create(&updatedLatestMetrics).Error; err != nil {
+		}).CreateInBatches(&updatedLatestMetrics, batchSize).Error; err != nil {
 			return eris.Wrapf(err, "error updating latest metrics for run: %s", run.ID)
 		}
 	}
@@ -182,7 +181,7 @@ func (r MetricRepository) GetMetricHistories(
 ) (*sql.Rows, func(*sql.Rows, interface{}) error, error) {
 	// if experimentIDs has been provided then firstly get the runs by provided experimentIDs.
 	if len(experimentIDs) > 0 {
-		query := r.db.WithContext(ctx).Model(
+		query := r.GetDB().WithContext(ctx).Model(
 			&database.Run{},
 		).Joins(
 			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
@@ -215,7 +214,7 @@ func (r MetricRepository) GetMetricHistories(
 
 	// if experimentIDs has been provided then runIDs contains values from previous step,
 	// otherwise runIDs may or may not contain values.
-	query := r.db.WithContext(ctx).Model(
+	query := r.GetDB().WithContext(ctx).Model(
 		&database.Metric{},
 	).Where(
 		"metrics.run_uuid IN ?", runIDs,
@@ -265,7 +264,7 @@ func (r MetricRepository) GetMetricHistories(
 			viewType,
 		)
 	}
-	return rows, r.db.ScanRows, nil
+	return rows, r.GetDB().ScanRows, nil
 }
 
 // getLatestMetricsByRunIDAndKeys returns the latest metrics by requested Run ID and keys.
@@ -273,7 +272,7 @@ func (r MetricRepository) getLatestMetricsByRunIDAndKeys(
 	ctx context.Context, runID string, keys []string,
 ) ([]models.LatestMetric, error) {
 	var metrics []models.LatestMetric
-	if err := r.db.WithContext(ctx).Where(
+	if err := r.GetDB().WithContext(ctx).Where(
 		"run_uuid = ?", runID,
 	).Where(
 		"key IN ?", keys,
@@ -288,7 +287,7 @@ func (r MetricRepository) GetMetricHistoryByRunIDAndKey(
 	ctx context.Context, runID, key string,
 ) ([]models.Metric, error) {
 	var metrics []models.Metric
-	if err := r.db.WithContext(
+	if err := r.GetDB().WithContext(
 		ctx,
 	).Joins(
 		"Context",
@@ -307,7 +306,7 @@ func (r MetricRepository) GetMetricHistoryBulk(
 	ctx context.Context, namespaceID uint, runIDs []string, key string, limit int,
 ) ([]models.Metric, error) {
 	var metrics []models.Metric
-	query := r.db.WithContext(ctx).Where(
+	query := r.GetDB().WithContext(ctx).Where(
 		"runs.run_uuid IN ?", runIDs,
 	).Joins(
 		"LEFT JOIN runs ON runs.run_uuid = metrics.run_uuid",

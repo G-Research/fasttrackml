@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -43,7 +43,7 @@ func (s *GetExperimentsTestSuite) Test_Ok() {
 		experiments[fmt.Sprintf("%d", *experiment.ID)] = experiment
 	}
 
-	var resp response.Experiments
+	var resp []response.Experiment
 	s.Require().Nil(s.AIMClient().WithResponse(&resp).DoRequest("/experiments/"))
 	s.Require().Equal(len(experiments), len(resp))
 	for _, actualExperiment := range resp {

@@ -5,38 +5,31 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
 func ErrorHandler(c *fiber.Ctx, err error) error {
-	var e *ErrorResponse
+	var e *api.ErrorResponse
 	var f *fiber.Error
-	var d DetailedError
 
 	switch {
-	case errors.As(err, &e):
 	case errors.As(err, &f):
-		e = &ErrorResponse{
-			Code:    f.Code,
-			Message: f.Message,
-			Detail:  "",
+		e = &api.ErrorResponse{
+			StatusCode: f.Code,
+			Message:    f.Message,
 		}
-	case errors.As(err, &d):
-		e = &ErrorResponse{
-			Code:    d.Code(),
-			Message: d.Message(),
-			Detail:  d.Detail(),
-		}
+	case errors.As(err, &e):
 	default:
-		e = &ErrorResponse{
-			Code:    fiber.StatusInternalServerError,
-			Message: err.Error(),
-			Detail:  "",
+		e = &api.ErrorResponse{
+			StatusCode: fiber.StatusInternalServerError,
+			Message:    err.Error(),
 		}
 	}
 
 	fn := log.Errorf
 
-	switch e.Code {
+	switch e.StatusCode {
 	case fiber.StatusNotFound:
 		fn = log.Debugf
 	case fiber.StatusInternalServerError:
@@ -46,5 +39,5 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 
 	fn("Error encountered in %s %s: %s", c.Method(), c.Path(), err)
 
-	return c.Status(e.Code).JSON(e)
+	return c.Status(e.StatusCode).JSON(e)
 }

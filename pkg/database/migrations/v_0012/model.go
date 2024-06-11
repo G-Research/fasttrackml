@@ -278,3 +278,16 @@ func NewUUID() string {
 	hex.Encode(r[:], u[:])
 	return string(r[:])
 }
+
+type Role struct {
+	Base
+	Role string `gorm:"unique;index;not null"`
+}
+
+type RoleNamespace struct {
+	Base
+	Role        Role      `gorm:"constraint:OnDelete:CASCADE"`
+	RoleID      uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
+	Namespace   Namespace `gorm:"constraint:OnDelete:CASCADE"`
+	NamespaceID uuid.UUID `gorm:"not null;index:,unique,composite:relation"`
+}

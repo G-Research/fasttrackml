@@ -42,7 +42,7 @@ jobs:
           cache-dependency-path: website/yarn.lock
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
         if: steps.has-pages.outputs.has_pages == 'true'
       - name: Restore cache
         uses: actions/cache@v4

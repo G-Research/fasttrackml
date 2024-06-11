@@ -54,14 +54,12 @@ func (s *GetExperimentByNameTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	// 2. make actual API call.
-	request := request.GetExperimentRequest{
-		Name: experiment.Name,
-	}
-
 	resp := response.GetExperimentResponse{}
 	s.Require().Nil(
 		s.MlflowClient().WithQuery(
-			request,
+			request.GetExperimentRequest{
+				Name: experiment.Name,
+			},
 		).WithResponse(
 			&resp,
 		).DoRequest(

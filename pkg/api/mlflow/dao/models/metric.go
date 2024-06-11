@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/G-Research/fasttrackml/pkg/common/db/types"
+	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 )
 
 // DefaultContext is the default metric context

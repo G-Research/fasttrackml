@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
@@ -30,26 +31,50 @@ func Test_makeSqlPlaceholders(t *testing.T) {
 func Test_makeParamConflictPlaceholdersAndValues(t *testing.T) {
 	tests := []struct {
 		params               []models.Param
+		dialector            string
 		expectedPlaceholders string
 		expectedValues       []interface{}
 	}{
 		{
-			params:               []models.Param{{Key: "key1", Value: "value1", RunID: "run1"}},
-			expectedPlaceholders: "(?,?,?)",
-			expectedValues:       []interface{}{"key1", "value1", "run1"},
+			params: []models.Param{
+				{Key: "key1", ValueStr: common.GetPointer("value1"), RunID: "run1"},
+			},
+			dialector:            "postgres",
+			expectedPlaceholders: "SELECT ?::text, ?::text, ?::int, ?::float, ?::text",
+			expectedValues:       []interface{}{"key1", "run1", nil, nil, "value1"},
 		},
 		{
 			params: []models.Param{
-				{Key: "key1", Value: "value1", RunID: "run1"},
-				{Key: "key2", Value: "value2", RunID: "run2"},
+				{Key: "key1", ValueStr: common.GetPointer("value1"), RunID: "run1"},
+				{Key: "key2", ValueStr: common.GetPointer("value2"), RunID: "run2"},
 			},
-			expectedPlaceholders: "(?,?,?),(?,?,?)",
-			expectedValues:       []interface{}{"key1", "value1", "run1", "key2", "value2", "run2"},
+			dialector: "postgres",
+			expectedPlaceholders: "SELECT ?::text, ?::text, ?::int, ?::float, ?::text\n" +
+				"UNION ALL\n" +
+				"SELECT ?::text, ?::text, ?::int, ?::float, ?::text",
+			expectedValues: []interface{}{"key1", "run1", nil, nil, "value1", "key2", "run2", nil, nil, "value2"},
+		},
+		{
+			params: []models.Param{
+				{Key: "key1", ValueStr: common.GetPointer("value1"), RunID: "run1"},
+			},
+			dialector:            "sqlite",
+			expectedPlaceholders: "VALUES (?,?,?,?,?)",
+			expectedValues:       []interface{}{"key1", "run1", nil, nil, "value1"},
+		},
+		{
+			params: []models.Param{
+				{Key: "key1", ValueStr: common.GetPointer("value1"), RunID: "run1"},
+				{Key: "key2", ValueStr: common.GetPointer("value2"), RunID: "run2"},
+			},
+			dialector:            "sqlite",
+			expectedPlaceholders: "VALUES (?,?,?,?,?),(?,?,?,?,?)",
+			expectedValues:       []interface{}{"key1", "run1", nil, nil, "value1", "key2", "run2", nil, nil, "value2"},
 		},
 	}
 
 	for _, tt := range tests {
-		placeholders, values := makeParamConflictPlaceholdersAndValues(tt.params)
+		placeholders, values := makeParamConflictPlaceholdersAndValues(tt.params, tt.dialector)
 		assert.Equal(t, tt.expectedPlaceholders, placeholders)
 		assert.Equal(t, tt.expectedValues, values)
 	}

@@ -9,17 +9,18 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 func TestConvertLogParamRequestToDBModel_Ok(t *testing.T) {
 	req := request.LogParamRequest{
-		Key:   "key",
-		Value: "value",
+		Key:      "key",
+		ValueStr: common.GetPointer("value"),
 	}
 	result := ConvertLogParamRequestToDBModel("run_id", &req)
 	assert.Equal(t, "key", result.Key)
-	assert.Equal(t, "value", result.Value)
+	assert.Equal(t, "value", *result.ValueStr)
 	assert.Equal(t, "run_id", result.RunID)
 }
 
@@ -40,8 +41,8 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
-						Value: "value",
+						Key:      "key",
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -62,9 +63,9 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 			},
 			expectedParams: []models.Param{
 				{
-					RunID: "run_id",
-					Key:   "key",
-					Value: "value",
+					RunID:    "run_id",
+					Key:      "key",
+					ValueStr: common.GetPointer("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{
@@ -87,8 +88,8 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
-						Value: "value",
+						Key:      "key",
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -109,9 +110,9 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 			},
 			expectedParams: []models.Param{
 				{
-					RunID: "run_id",
-					Key:   "key",
-					Value: "value",
+					RunID:    "run_id",
+					Key:      "key",
+					ValueStr: common.GetPointer("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{
@@ -135,8 +136,8 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
-						Value: "value",
+						Key:      "key",
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -157,9 +158,9 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 			},
 			expectedParams: []models.Param{
 				{
-					RunID: "run_id",
-					Key:   "key",
-					Value: "value",
+					RunID:    "run_id",
+					Key:      "key",
+					ValueStr: common.GetPointer("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{
@@ -182,8 +183,8 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
-						Value: "value",
+						Key:      "key",
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -204,9 +205,9 @@ func TestConvertLogBatchRequestToDBModel_Ok(t *testing.T) {
 			},
 			expectedParams: []models.Param{
 				{
-					RunID: "run_id",
-					Key:   "key",
-					Value: "value",
+					RunID:    "run_id",
+					Key:      "key",
+					ValueStr: common.GetPointer("value"),
 				},
 			},
 			expectedMetrics: []models.Metric{
@@ -248,8 +249,8 @@ func TestConvertLogBatchRequestToDBModel_Error(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
-						Value: "value",
+						Key:      "key",
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{
@@ -272,8 +273,8 @@ func TestConvertLogBatchRequestToDBModel_Error(t *testing.T) {
 				}},
 				Params: []request.ParamPartialRequest{
 					{
-						Key:   "key",
-						Value: "value",
+						Key:      "key",
+						ValueStr: common.GetPointer("value"),
 					},
 				},
 				Metrics: []request.MetricPartialRequest{

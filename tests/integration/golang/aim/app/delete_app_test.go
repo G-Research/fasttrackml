@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
@@ -76,7 +76,7 @@ func (s *DeleteAppTestSuite) Test_Error() {
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var resp response.Error
+			var resp api.ErrorResponse
 			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodDelete,

@@ -41,9 +41,9 @@ func TestNewRunPartialResponse(t *testing.T) {
 				RowNum:         1,
 				Params: []models.Param{
 					{
-						Key:   "Key",
-						Value: "Value",
-						RunID: "RunID",
+						Key:      "Key",
+						ValueStr: common.GetPointer("Value"),
+						RunID:    "RunID",
 					},
 				},
 				Tags: []models.Tag{
@@ -123,9 +123,9 @@ func TestNewRunPartialResponse(t *testing.T) {
 				RowNum:         1,
 				Params: []models.Param{
 					{
-						Key:   "Key",
-						Value: "Value",
-						RunID: "RunID",
+						Key:      "Key",
+						ValueStr: common.GetPointer("Value"),
+						RunID:    "RunID",
 					},
 				},
 				Tags: []models.Tag{

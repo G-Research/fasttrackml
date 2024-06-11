@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"os"
+	"strings"
 )
 
 const defaultDatabaseBackend = "sqlite"
@@ -15,9 +16,13 @@ func GetLogLevel() string {
 }
 
 func GetDatabaseBackend() string {
-	uri, ok := os.LookupEnv("FML_DATABASE_BACKEND")
+	backend, ok := os.LookupEnv("FML_DATABASE_BACKEND")
 	if ok {
-		return uri
+		return backend
+	}
+	dbUri, ok := os.LookupEnv("FML_DATABASE_URI")
+	if ok {
+		return strings.Split(dbUri, "://")[0]
 	}
 	return defaultDatabaseBackend
 }
@@ -44,4 +49,12 @@ func GetS3EndpointUri() string {
 		return uri
 	}
 	return "http://localhost:9000"
+}
+
+func GetSlowTestsEnabledFlag() bool {
+	flag, ok := os.LookupEnv("FML_SLOW_TESTS_ENABLED")
+	if ok && flag == "true" {
+		return true
+	}
+	return false
 }

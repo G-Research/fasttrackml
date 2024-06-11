@@ -14,7 +14,7 @@ import (
 	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/config"
+	"github.com/G-Research/fasttrackml/pkg/common/config"
 )
 
 // S3StorageName is a s3 storage name.
@@ -28,7 +28,7 @@ type S3 struct {
 }
 
 // NewS3 creates new S3 instance.
-func NewS3(ctx context.Context, config *config.ServiceConfig) (*S3, error) {
+func NewS3(ctx context.Context, config *config.Config) (*S3, error) {
 	var clientOptions []func(o *s3.Options)
 	var configOptions []func(*awsConfig.LoadOptions) error
 	if config.S3EndpointURI != "" {

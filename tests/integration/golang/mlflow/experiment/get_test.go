@@ -30,7 +30,7 @@ func TestGetExperimentTestSuite(t *testing.T) {
 }
 
 func (s *GetExperimentTestSuite) Test_Ok() {
-	// 1. prepare database with test data.
+	// 1. prepare a database with test data.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name: "Test Experiment",
 		Tags: []models.ExperimentTag{
@@ -54,14 +54,12 @@ func (s *GetExperimentTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	// 2. make actual API call.
-	request := request.GetExperimentRequest{
-		ID: fmt.Sprintf("%d", *experiment.ID),
-	}
-
 	resp := response.GetExperimentResponse{}
 	s.Require().Nil(
 		s.MlflowClient().WithQuery(
-			request,
+			request.GetExperimentRequest{
+				ID: fmt.Sprintf("%d", *experiment.ID),
+			},
 		).WithResponse(
 			&resp,
 		).DoRequest(

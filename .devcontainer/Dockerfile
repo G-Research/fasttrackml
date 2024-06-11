@@ -39,7 +39,3 @@ COPY --from=tools /tmp/tools /usr/local/bin
 
 # Install xh
 RUN curl -sfL https://raw.githubusercontent.com/ducaale/xh/master/install.sh | XH_BINDIR=/usr/local/bin sh
-
-# Add docker-compose symlink to Docker Compose v2
-# This is a workaround until https://github.com/devcontainers/features/pull/621 lands
-RUN ln -s /usr/libexec/docker/cli-plugins/docker-compose /usr/local/bin/

@@ -7,8 +7,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/G-Research/fasttrackml/pkg/common"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -57,9 +58,9 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	param, err := s.ParamFixtures.CreateParam(context.Background(), &models.Param{
-		Key:   "param1",
-		Value: "value1",
-		RunID: run.ID,
+		Key:      "param1",
+		ValueStr: common.GetPointer("value1"),
+		RunID:    run.ID,
 	})
 	s.Require().Nil(err)
 
@@ -72,14 +73,14 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 			name:    "RequestProjectParamsWithoutExperimentFilter",
 			request: map[any]any{"sequence": "metric"},
 			response: response.ProjectParamsResponse{
-				Metric: map[string][]fiber.Map{
+				Metric: &map[string][]fiber.Map{
 					"key": {
 						{
 							"key": "value",
 						},
 					},
 				},
-				Params: map[string]interface{}{
+				Params: &map[string]interface{}{
 					param.Key: map[string]interface{}{
 						"__example_type__": "<class 'str'>",
 					},
@@ -97,14 +98,14 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 				"experiments": *s.DefaultExperiment.ID,
 			},
 			response: response.ProjectParamsResponse{
-				Metric: map[string][]fiber.Map{
+				Metric: &map[string][]fiber.Map{
 					"key": {
 						{
 							"key": "value",
 						},
 					},
 				},
-				Params: map[string]interface{}{
+				Params: &map[string]interface{}{
 					param.Key: map[string]interface{}{
 						"__example_type__": "<class 'str'>",
 					},
@@ -122,10 +123,10 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 				"experiments": 999,
 			},
 			response: response.ProjectParamsResponse{
-				Metric: map[string][]fiber.Map{},
-				Params: map[string]interface{}{
+				Params: &map[string]interface{}{
 					"tags": map[string]interface{}{},
 				},
+				Metric: &map[string][]fiber.Map{},
 			},
 		},
 	}
@@ -158,10 +159,10 @@ func (s *GetProjectParamsTestSuite) Test_Ok() {
 			&resp,
 		).DoRequest("/projects/params"),
 	)
-	s.Equal(0, len(resp.Metric))
-	_, ok := resp.Metric[metric.Key]
+	s.Equal(0, len(*resp.Metric))
+	_, ok := (*resp.Metric)[metric.Key]
 	s.False(ok)
-	s.Equal(map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
+	s.Equal(&map[string]interface{}{"tags": map[string]interface{}{}}, resp.Params)
 }
 
 func (s *GetProjectParamsTestSuite) Test_Error() {}

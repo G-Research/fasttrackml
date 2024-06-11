@@ -47,6 +47,14 @@ You can also run FastTrackML in a container via [Docker](https://docs.docker.com
 docker run --rm -p 5000:5000 -ti gresearch/fasttrackml
 ```
 
+### Deploy Helm chart
+
+You can also run FastTrackML in a Kubernetes via [Helm](https://helm.sh/docs/intro/install/):
+
+```bash
+helm install fasttrackml ./helm/fasttrackml
+```
+
 ### Verification
 
 Verify that you can see the UI by navigating to http://localhost:5000/.

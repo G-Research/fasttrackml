@@ -14,7 +14,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 )
 
-// NewGetRunLogsResponse creates a new response object for `GET /runs/logs` endpoint.
+// NewGetRunLogsResponse creates a new response object for `GET /runs/:id/logs` endpoint.
 func NewGetRunLogsResponse(
 	ctx *fiber.Ctx, rows *sql.Rows, next func(*sql.Rows) (*models.Log, error),
 ) {
@@ -43,11 +43,11 @@ func NewGetRunLogsResponse(
 					return eris.Wrap(err, "error getting next result")
 				}
 				data[fmt.Sprintf("%d", count)] = runLog.Value
-				if count >= batchSize {
+				if count%batchSize == 0 {
 					if err := flush(w, data); err != nil {
 						return err
 					}
-					count = 0
+					data = fiber.Map{}
 				}
 				count++
 			}
@@ -57,7 +57,7 @@ func NewGetRunLogsResponse(
 			}
 			return nil
 		}(); err != nil {
-			log.Errorf("error encountered in %s %s: error streaming metrics: %s", ctx.Method(), ctx.Path(), err)
+			log.Errorf("error encountered in %s %s: error streaming run logs: %s", ctx.Method(), ctx.Path(), err)
 		}
 		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
 	})

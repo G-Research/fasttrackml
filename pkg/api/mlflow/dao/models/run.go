@@ -20,7 +20,7 @@ const (
 	StatusKilled    Status = "KILLED"
 )
 
-// Run represents model to work with `runs` table.
+// Run represents a model to work with `runs` table.
 //
 //nolint:lll
 type Run struct {

@@ -2,7 +2,8 @@ package models
 
 // Log represents a row of the `logs` table.
 type Log struct {
-	Timestamp int64  `gorm:"not null;primaryKey"`
-	Value     string `gorm:"type:varchar(5000)"`
-	RunID     string `gorm:"column:run_uuid;not null;primaryKey;index"`
+	ID        uint   `gorm:"primaryKey;autoIncrement"`
+	Value     string `gorm:"not null"`
+	RunID     string `gorm:"column:run_uuid;not null;index"`
+	Timestamp int64  `gorm:"not null;index:idx_run_timestamp"`
 }

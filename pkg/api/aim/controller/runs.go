@@ -1,9 +1,10 @@
 package controller
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"

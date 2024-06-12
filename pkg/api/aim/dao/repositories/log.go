@@ -3,9 +3,9 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"gorm.io/gorm"
 
 	"github.com/rotisserie/eris"
+	"gorm.io/gorm"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
@@ -44,7 +44,6 @@ func (r LogRepository) GetLogsByNamespaceIDAndRunID(
 	).Where(
 		"experiments.namespace_id = ?", namespaceID,
 	).Rows()
-
 	if err != nil {
 		return nil, nil, eris.Wrap(err, "error getting run logs")
 	}

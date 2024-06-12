@@ -242,6 +242,7 @@ func (c Controller) GetRunLogs(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
+	//nolint:rowserrcheck
 	rows, next, err := c.runService.GetRunLogs(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return err

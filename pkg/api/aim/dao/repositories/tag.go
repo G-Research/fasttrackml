@@ -14,8 +14,6 @@ import (
 // TagRepositoryProvider provides an interface to work with models.Tag entity.
 type TagRepositoryProvider interface {
 	repositories.BaseRepositoryProvider
-	// GetTagsByNamespace returns the list of tags.
-	GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.SharedTag, error)
 	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
 	// CreateRunTag creates new models.Tag entity connected to models.Run.
@@ -44,35 +42,6 @@ func (r TagRepository) CreateExperimentTag(ctx context.Context, experimentTag *m
 		return eris.Wrapf(err, "error creating tag for experiment with id: %d", experimentTag.ExperimentID)
 	}
 	return nil
-}
-
-// GetTagsByNamespace returns the list of SharedTag, with virtual rows populated from the Tag table.
-func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.SharedTag, error) {
-	var tagDatas []models.SharedTag
-	if err := r.GetDB().WithContext(ctx).
-		Raw(`
-                   SELECT *
-                   FROM shared_tags
-                   WHERE is_archived = false
-                   AND namespace_id = ?
-                   UNION
-                   SELECT "00000000-0000-0000-0000-000000000000" as id,
-                          'false' as is_archived,
-                          tags.key as key,
-                          '#cccccc' as color,
-                          '' as description,
-                          ? as namespace_id
-                   FROM tags JOIN runs USING(run_uuid)
-                   INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id
-                   AND experiments.namespace_id = ?
-                   AND key NOT IN (select key from tag_data where is_archived = false and namespace_id = ?)
-                   ORDER by key
-                 `, namespaceID, namespaceID, namespaceID, namespaceID).
-		Preload("Runs").
-		Find(&tagDatas).Error; err != nil {
-		return nil, eris.Wrap(err, "unable to fetch tag_data")
-	}
-	return tagDatas, nil
 }
 
 // CreateRunTagn creates new models.Tag entity connected to models.Run.
@@ -113,4 +82,12 @@ func (r TagRepository) GetTagKeysByParameters(
 		return nil, eris.Wrap(err, "error getting tag keys by parameters")
 	}
 	return keys, nil
+}
+
+// Create creates new models.Tag object.
+func (d TagRepository) Create(ctx context.Context, tag *models.Tag) error {
+	if err := d.GetDB().WithContext(ctx).Create(&tag).Error; err != nil {
+		return eris.Wrap(err, "error creating tag entity")
+	}
+	return nil
 }

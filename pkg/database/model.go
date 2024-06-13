@@ -136,22 +136,22 @@ type Param struct {
 	RunID      string   `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 
-// Tag represents a per-run tag.
+// Tag represents metadata about a particular run (for Mlflow).
 type Tag struct {
 	Key   string `gorm:"type:varchar(250);not null;primaryKey"`
 	Value string `gorm:"type:varchar(5000)"`
 	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 
-// SharedTag represents a tag which can be used for multiple Runs.
+// SharedTag represents a tag which can label multiple runs (for Aim)
 type SharedTag struct {
-	ID          uuid.UUID `gorm:"column:id;not null"`
+	ID          uuid.UUID `gorm:"column:id;not null;primaryKey"`
 	IsArchived  bool      `gorm:"not null,default:false"`
-	Key         string    `gorm:"type:varchar(250);not null;primaryKey"`
+	Name        string    `gorm:"type:varchar(250);not null"`
 	Color       string    `gorm:"type:varchar(7);null"`
-	Description string    `gorm:"type:varchar(500);null`
-	NamespaceID uint      `gorm:"not null;primaryKey"`
-	Runs        []Run     `gorm:"many2many:run_tag_shared"`
+	Description string    `gorm:"type:varchar(500);null"`
+	NamespaceID uint      `gorm:"not null"`
+	Runs        []Run     `gorm:"many2many:run_shared_tags"`
 }
 
 type Metric struct {

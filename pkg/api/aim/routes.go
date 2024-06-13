@@ -65,6 +65,9 @@ func (r *Router) Init(server fiber.Router) {
 	runs.Post("/search/metric/", r.controller.SearchMetrics)
 	runs.Post("/search/metric/align/", r.controller.SearchAlignedMetrics)
 	runs.Get("/:id/info/", r.controller.GetRunInfo)
+	// runs.Get("/:id/tags/", r.controller.GetRunTags)
+	// runs.Post("/:id/tags/new", r.controller.AddRunTag)
+	// runs.Delete("/:id/tags/:tagID", r.controller.DeleteRunTag)
 	runs.Post("/:id/metric/get-batch/", r.controller.GetRunMetrics)
 	runs.Put("/:id/", r.controller.UpdateRun)
 	runs.Delete("/:id/", r.controller.DeleteRun)
@@ -73,6 +76,10 @@ func (r *Router) Init(server fiber.Router) {
 
 	tags := mainGroup.Group("/tags")
 	tags.Get("/", r.controller.GetTags)
+	tags.Post("/", r.controller.CreateTag)
+	tags.Put("/:id/", r.controller.UpdateTag)
+	tags.Delete("/:id/", r.controller.DeleteTag)
+	tags.Get("/:id/runs", r.controller.GetRunsTagged)
 
 	mainGroup.Use(func(c *fiber.Ctx) error {
 		return fiber.ErrNotFound

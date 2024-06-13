@@ -271,7 +271,7 @@ func createApp(
 	aimAPI.NewRouter(
 		aimController.NewController(
 			aimTagService.NewService(
-				aimRepositories.NewTagRepository(db.GormDB()),
+				aimRepositories.NewSharedTagRepository(db.GormDB()),
 			),
 			aimAppService.NewService(
 				aimRepositories.NewAppRepository(db.GormDB()),

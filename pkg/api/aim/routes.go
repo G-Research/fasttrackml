@@ -76,6 +76,7 @@ func (r *Router) Init(server fiber.Router) {
 
 	tags := mainGroup.Group("/tags")
 	tags.Get("/", r.controller.GetTags)
+	tags.Get("/:id/", r.controller.GetTag)
 	tags.Post("/", r.controller.CreateTag)
 	tags.Put("/:id/", r.controller.UpdateTag)
 	tags.Delete("/:id/", r.controller.DeleteTag)

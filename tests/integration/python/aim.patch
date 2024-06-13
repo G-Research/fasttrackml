@@ -182,7 +182,7 @@ new file mode 100644
 index 0000000..099cab0
 --- /dev/null
 +++ b/tests/fml.py
-@@ -0,0 +1,200 @@
+@@ -0,0 +1,199 @@
 +import datetime
 +import itertools
 +import os
@@ -312,7 +312,7 @@ index 0000000..099cab0
 +        return response.json()["run"]["info"]["run_uuid"]
 +
 +    @classmethod
-+    def log_metric(cls, run_id, key, value, step, context={}):
++    def log_metric(cls, run_id, key, value, step):
 +        cls.mlflow_client.post(
 +            "/runs/log-metric",
 +            json={
@@ -321,7 +321,6 @@ index 0000000..099cab0
 +                "timestamp": get_current_timestamp(),
 +                "run_id": run_id,
 +                "step": step,
-+                "context": context,
 +            },
 +        )
 +

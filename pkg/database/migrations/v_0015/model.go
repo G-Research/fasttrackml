@@ -143,7 +143,7 @@ type Tag struct {
 	RunID string `gorm:"column:run_uuid;not null;primaryKey;index"`
 }
 
-// SharedTag represents a tag which can label multiple runs (for Aim)
+// SharedTag represents a tag which can label multiple runs (for Aim).
 type SharedTag struct {
 	ID          uuid.UUID `gorm:"column:id;not null;primaryKey"`
 	IsArchived  bool      `gorm:"not null,default:false"`

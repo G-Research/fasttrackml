@@ -29,9 +29,6 @@ type GetRunsTaggedResponse struct {
 func NewGetTagsResponse(tags []models.SharedTag) GetTagsResponse {
 	tagResponses := GetTagsResponse{}
 	for _, tag := range tags {
-		if tag.IsArchived {
-			continue
-		}
 		tagResponses = append(tagResponses, NewCreateTagResponse(&tag))
 	}
 	return tagResponses
@@ -56,6 +53,7 @@ func NewGetRunsTaggedResponse(tag *models.SharedTag) GetRunsTaggedResponse {
 	for _, run := range tag.Runs {
 		resp.Runs = append(resp.Runs, GetRunInfoPropsPartial{
 			ID:           run.ID,
+			RunID:        run.ID,
 			Name:         run.Name,
 			Experiment:   GetRunInfoExperimentPartial{Name: run.Experiment.Name},
 			CreationTime: float64(run.StartTime.Int64),

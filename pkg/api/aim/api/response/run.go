@@ -55,6 +55,7 @@ type GetRunInfoExperimentPartial struct {
 // GetRunInfoPropsPartial is a partial response object for GetRunInfoResponse.
 type GetRunInfoPropsPartial struct {
 	ID           string                      `json:"id,omitempty"`
+	RunID        string                      `json:"run_id,omitempty"`
 	Name         string                      `json:"name"`
 	Description  string                      `json:"description"`
 	Experiment   GetRunInfoExperimentPartial `json:"experiment"`

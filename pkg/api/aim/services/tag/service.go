@@ -70,6 +70,8 @@ func (s Service) Update(
 
 	tag.Name = req.Name
 	tag.Description = req.Description
+	tag.Color = req.Color
+	tag.IsArchived = req.IsArchived
 
 	if err := s.sharedTagRepository.Update(ctx, tag); err != nil {
 		return nil, api.NewInternalError("unable to update tag '%s': %s", tag.ID, err)

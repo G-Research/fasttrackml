@@ -62,7 +62,6 @@ func (d SharedTagRepository) GetByNamespaceIDAndTagID(ctx context.Context,
 ) (*models.SharedTag, error) {
 	var tag models.SharedTag
 	if err := d.GetDB().WithContext(ctx).
-		Where("NOT is_archived").
 		Where("namespace_id = ?", namespaceID).
 		Where("id = ?", tagID).
 		Preload("Runs").
@@ -82,7 +81,6 @@ func (d SharedTagRepository) GetByNamespaceIDAndTagName(ctx context.Context,
 ) (*models.SharedTag, error) {
 	var tag models.SharedTag
 	if err := d.GetDB().WithContext(ctx).
-		Where("NOT is_archived").
 		Where("namespace_id = ?", namespaceID).
 		Where("name = ?", tagName).
 		Preload("Runs").
@@ -112,6 +110,7 @@ func (d SharedTagRepository) Update(ctx context.Context, tag *models.SharedTag) 
 			Name:        tag.Name,
 			Description: tag.Description,
 			Color:       tag.Color,
+			IsArchived:  tag.IsArchived,
 		}).
 		Error; err != nil {
 		return eris.Wrap(err, "error updating tag entity")

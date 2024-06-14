@@ -18,12 +18,12 @@ func (c Controller) GetTags(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("getTags namespace: %s", ns.Code)
 
-	tagDatas, err := c.tagService.GetTags(ctx.Context(), ns.ID)
+	tags, err := c.tagService.GetTags(ctx.Context(), ns.ID)
 	if err != nil {
 		return err
 	}
 
-	resp := response.NewGetTagsResponse(tagDatas)
+	resp := response.NewGetTagsResponse(tags)
 	log.Debugf("getTags response: %#v", resp)
 
 	return ctx.JSON(resp)

@@ -27,18 +27,12 @@ type GetRunsTaggedResponse struct {
 
 // NewGetTagsResponse will convert the []model.SharedTag to GetTagsResponse
 func NewGetTagsResponse(tags []models.SharedTag) GetTagsResponse {
-	tagResponses := make(GetTagsResponse, len(tags))
-	idx := 0
+	tagResponses := GetTagsResponse{}
 	for _, tag := range tags {
-		tagResponses[idx] = TagResponse{
-			ID:          tag.ID,
-			Name:        tag.Name,
-			Color:       tag.Color,
-			Description: tag.Description,
-			Archived:    tag.IsArchived,
-			RunCount:    len(tag.Runs),
+		if tag.IsArchived {
+			continue
 		}
-		idx++
+		tagResponses = append(tagResponses, NewCreateTagResponse(&tag))
 	}
 	return tagResponses
 }
@@ -48,6 +42,7 @@ func NewCreateTagResponse(tag *models.SharedTag) TagResponse {
 	return TagResponse{
 		ID:          tag.ID,
 		Name:        tag.Name,
+		Color:       tag.Color,
 		Description: tag.Description,
 		Archived:    tag.IsArchived,
 		RunCount:    len(tag.Runs),

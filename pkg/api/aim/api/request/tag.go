@@ -10,6 +10,7 @@ type CreateTagRequest struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Color       string    `json:"color"`
+	IsArchived  bool      `json:"archived"`
 }
 
 // GetTagRequest is a request object for `GET /aim/tags/:id` endpoint.

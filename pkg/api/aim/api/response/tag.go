@@ -29,7 +29,14 @@ type GetRunsTaggedResponse struct {
 func NewGetTagsResponse(tags []models.SharedTag) GetTagsResponse {
 	tagResponses := GetTagsResponse{}
 	for _, tag := range tags {
-		tagResponses = append(tagResponses, NewCreateTagResponse(&tag))
+		tagResponses = append(tagResponses, TagResponse{
+			ID:          tag.ID,
+			Name:        tag.Name,
+			Color:       tag.Color,
+			Description: tag.Description,
+			Archived:    tag.IsArchived,
+			RunCount:    len(tag.Runs),
+		})
 	}
 	return tagResponses
 }

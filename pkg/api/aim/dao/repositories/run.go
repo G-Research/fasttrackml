@@ -92,6 +92,8 @@ func (r RunRepository) GetRunInfo(
 		"Params",
 	).Preload(
 		"Tags",
+	).Preload(
+		"SharedTags",
 	).First(&run).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -413,6 +415,7 @@ func (r RunRepository) SearchRuns(
 	if !req.ExcludeParams {
 		tx.Preload("Params")
 		tx.Preload("Tags")
+		tx.Preload("SharedTags")
 	}
 
 	if !req.ExcludeTraces {

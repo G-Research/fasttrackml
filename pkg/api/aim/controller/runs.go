@@ -273,3 +273,48 @@ func (c Controller) DeleteBatch(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(response.NewArchiveBatchResponse("OK"))
 }
+
+// AddRunTag handles `POST /runs/:id/tags/new` endpoint.
+func (c Controller) AddRunTag(ctx *fiber.Ctx) error {
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("addRunTag namespace: %s", ns.Code)
+
+	req := request.AddRunTagRequest{}
+	if err = ctx.ParamsParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+	if err = ctx.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	if err := c.runService.AddRunTag(ctx.Context(), ns.ID, &req); err != nil {
+		return err
+	}
+
+	ctx.Status(fiber.StatusCreated)
+	return nil
+}
+
+// AddRunTag handles `DELETE /runs/:id/tags/:tagID` endpoint.
+func (c Controller) DeleteRunTag(ctx *fiber.Ctx) error {
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("deleteRunTag namespace: %s", ns.Code)
+
+	req := request.DeleteRunTagRequest{}
+	if err = ctx.ParamsParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	if err := c.runService.DeleteRunTag(ctx.Context(), ns.ID, &req); err != nil {
+		return err
+	}
+
+	ctx.Status(fiber.StatusOK)
+	return nil
+}

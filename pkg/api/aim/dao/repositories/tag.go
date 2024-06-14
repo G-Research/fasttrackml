@@ -83,11 +83,3 @@ func (r TagRepository) GetTagKeysByParameters(
 	}
 	return keys, nil
 }
-
-// Create creates new models.Tag object.
-func (d TagRepository) Create(ctx context.Context, tag *models.Tag) error {
-	if err := d.GetDB().WithContext(ctx).Create(&tag).Error; err != nil {
-		return eris.Wrap(err, "error creating tag entity")
-	}
-	return nil
-}

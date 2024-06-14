@@ -50,7 +50,7 @@ func (m LogCleaner) Run() {
 				if m.config.RunLogOutputStorePeriod != 0 {
 					numberOfDeleted, err := m.logRepository.CleanExpired(m.ctx, m.config.RunLogOutputStorePeriod)
 					if err != nil {
-						log.Error("error cleaning expired run logs: %+v", err)
+						log.Errorf("error cleaning expired run logs: %+v", err)
 					} else {
 						log.Debugf("%d expired run logs were successfully cleaned", numberOfDeleted)
 					}

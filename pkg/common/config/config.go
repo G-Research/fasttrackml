@@ -15,19 +15,20 @@ import (
 
 // Config represents main service configuration.
 type Config struct {
-	Auth                  auth.Config
-	DevMode               bool
-	ListenAddress         string
-	DefaultArtifactRoot   string
-	S3EndpointURI         string
-	GSEndpointURI         string
-	DatabaseURI           string
-	DatabaseReset         bool
-	DatabasePoolMax       int
-	DatabaseMigrate       bool
-	DatabaseSlowThreshold time.Duration
-	LiveUpdatesEnabled    bool
-	LogMax                int
+	Auth                        auth.Config
+	DevMode                     bool
+	ListenAddress               string
+	DefaultArtifactRoot         string
+	S3EndpointURI               string
+	GSEndpointURI               string
+	DatabaseURI                 string
+	DatabaseReset               bool
+	DatabasePoolMax             int
+	DatabaseMigrate             bool
+	DatabaseSlowThreshold       time.Duration
+	LiveUpdatesEnabled          bool
+	RunLogOutputStorePeriod     time.Duration
+	RunLogOutputMaxRetainNumber int
 }
 
 // NewConfig creates a new instance of Config.
@@ -44,18 +45,19 @@ func NewConfig() *Config {
 			AuthOIDCClientSecret:     viper.GetString("auth-oidc-client-secret"),
 			AuthOIDCProviderEndpoint: viper.GetString("auth-oidc-provider-endpoint"),
 		},
-		DevMode:               viper.GetBool("dev-mode"),
-		ListenAddress:         viper.GetString("listen-address"),
-		DefaultArtifactRoot:   viper.GetString("default-artifact-root"),
-		S3EndpointURI:         viper.GetString("s3-endpoint-uri"),
-		GSEndpointURI:         viper.GetString("gs-endpoint-uri"),
-		DatabaseURI:           viper.GetString("database-uri"),
-		DatabaseReset:         viper.GetBool("database-reset"),
-		DatabasePoolMax:       viper.GetInt("database-pool-max"),
-		DatabaseMigrate:       viper.GetBool("database-migrate"),
-		DatabaseSlowThreshold: viper.GetDuration("database-slow-threshold"),
-		LiveUpdatesEnabled:    viper.GetBool("live-updates-enabled"),
-		LogMax:                viper.GetInt("log-max"),
+		DevMode:                     viper.GetBool("dev-mode"),
+		ListenAddress:               viper.GetString("listen-address"),
+		DefaultArtifactRoot:         viper.GetString("default-artifact-root"),
+		S3EndpointURI:               viper.GetString("s3-endpoint-uri"),
+		GSEndpointURI:               viper.GetString("gs-endpoint-uri"),
+		DatabaseURI:                 viper.GetString("database-uri"),
+		DatabaseReset:               viper.GetBool("database-reset"),
+		DatabasePoolMax:             viper.GetInt("database-pool-max"),
+		DatabaseMigrate:             viper.GetBool("database-migrate"),
+		DatabaseSlowThreshold:       viper.GetDuration("database-slow-threshold"),
+		LiveUpdatesEnabled:          viper.GetBool("live-updates-enabled"),
+		RunLogOutputStorePeriod:     viper.GetDuration("run-log-output-store-period"),
+		RunLogOutputMaxRetainNumber: viper.GetInt("run-log-output-max-retain-number"),
 	}
 }
 

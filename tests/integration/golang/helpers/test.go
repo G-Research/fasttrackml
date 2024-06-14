@@ -137,14 +137,14 @@ func (s *BaseTestSuite) closeDB() {
 
 func (s *BaseTestSuite) startServer() {
 	cfg := config.Config{
-		DatabaseURI:           s.db.Dsn(),
-		DatabasePoolMax:       10,
-		DatabaseSlowThreshold: 1 * time.Second,
-		DatabaseMigrate:       true,
-		DefaultArtifactRoot:   s.T().TempDir(),
-		S3EndpointURI:         GetS3EndpointUri(),
-		GSEndpointURI:         GetGSEndpointUri(),
-		LogMax:                MaxLogRows,
+		DatabaseURI:                 s.db.Dsn(),
+		DatabasePoolMax:             10,
+		DatabaseSlowThreshold:       1 * time.Second,
+		DatabaseMigrate:             true,
+		DefaultArtifactRoot:         s.T().TempDir(),
+		S3EndpointURI:               GetS3EndpointUri(),
+		GSEndpointURI:               GetGSEndpointUri(),
+		RunLogOutputMaxRetainNumber: MaxLogRows,
 	}
 	s.Require().Nil(mergo.Merge(&cfg, s.Config))
 

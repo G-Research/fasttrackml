@@ -689,7 +689,7 @@ func (s Service) LogOutput(
 	}
 
 	log := convertors.ConvertLogOutputRequestToDBModel(run.ID, req)
-	if err := s.logRepository.SaveLog(ctx, log); err != nil {
+	if err := s.logRepository.Create(ctx, log); err != nil {
 		return api.NewInternalError("unable to save log for run '%s'", req.RunID)
 	}
 	return nil

@@ -294,8 +294,7 @@ func (c Controller) AddRunTag(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	ctx.Status(fiber.StatusCreated)
-	return nil
+	return ctx.SendStatus(fiber.StatusCreated)
 }
 
 // AddRunTag handles `DELETE /runs/:id/tags/:tagID` endpoint.
@@ -315,6 +314,5 @@ func (c Controller) DeleteRunTag(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	ctx.Status(fiber.StatusOK)
-	return nil
+	return ctx.SendStatus(fiber.StatusOK)
 }

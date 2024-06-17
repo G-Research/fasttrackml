@@ -311,7 +311,7 @@ func createApp(
 				mlflowRepositories.NewParamRepository(db.GormDB()),
 				mlflowRepositories.NewMetricRepository(db.GormDB()),
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
-				mlflowRepositories.NewLogRepository(db.GormDB(), config.RunLogOutputRetain),
+				mlflowRepositories.NewLogRepository(db.GormDB(), config.RunLogOutputMax),
 			),
 			mlflowModelService.NewService(),
 			mlflowMetricService.NewService(

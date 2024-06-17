@@ -37,7 +37,7 @@ func (o ArtifactObject) IsDirectory() bool {
 type ArtifactStorageProvider interface {
 	// Get returns an io.ReadCloser for specific artifact.
 	Get(ctx context.Context, artifactURI, path string) (io.ReadCloser, error)
-	// List lists all artifact object under provided path.
+	// List lists all artifact objects under a provided path.
 	List(ctx context.Context, artifactURI, path string) ([]ArtifactObject, error)
 }
 
@@ -47,7 +47,7 @@ type ArtifactStorageFactoryProvider interface {
 	GetStorage(ctx context.Context, runArtifactPath string) (ArtifactStorageProvider, error)
 }
 
-// ArtifactStorageFactory represents Artifact Storage .
+// ArtifactStorageFactory represents Artifact Storage.
 type ArtifactStorageFactory struct {
 	config      *config.Config
 	storageList sync.Map

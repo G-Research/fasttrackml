@@ -8,12 +8,12 @@ replace (
 )
 
 require (
-	cloud.google.com/go/storage v1.41.0
+	cloud.google.com/go/storage v1.42.0
 	dagger.io/dagger v0.11.6
 	dario.cat/mergo v1.0.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/G-Research/fasttrackml-ui-aim v0.31705.58
-	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.8
+	github.com/G-Research/fasttrackml-ui-aim v0.31705.63
+	github.com/G-Research/fasttrackml-ui-mlflow v0.20902.9
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/apache/arrow/go/v14 v14.0.2
 	github.com/aws/aws-sdk-go-v2 v1.27.0
@@ -40,7 +40,7 @@ require (
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.25.10
-	gorm.io/plugin/dbresolver v1.5.1
+	gorm.io/plugin/dbresolver v1.5.2
 )
 
 require github.com/go-jose/go-jose/v4 v4.0.1 // indirect
@@ -144,12 +144,12 @@ require (
 	golang.org/x/tools v0.18.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto v0.0.0-20240528184218-531527333157 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240521202816-d264139d666e // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240604185151-ef581f913117 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
 	google.golang.org/grpc v1.64.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/datatypes v1.2.0
-	gorm.io/driver/mysql v1.4.7 // indirect
+	gorm.io/driver/mysql v1.5.6 // indirect
 )

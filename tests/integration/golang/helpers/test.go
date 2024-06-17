@@ -144,7 +144,7 @@ func (s *BaseTestSuite) startServer() {
 		DefaultArtifactRoot:   s.T().TempDir(),
 		S3EndpointURI:         GetS3EndpointUri(),
 		GSEndpointURI:         GetGSEndpointUri(),
-		LogMax:                MaxLogRows,
+		RunLogOutputMax:       MaxLogRows,
 	}
 	s.Require().Nil(mergo.Merge(&cfg, s.Config))
 

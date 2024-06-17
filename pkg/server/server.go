@@ -64,16 +64,16 @@ type server struct {
 
 // NewServer creates a new server instance.
 func NewServer(ctx context.Context, config *config.Config) (Server, error) {
-	// create artifact storage factory.
-	artifactStorageFactory, err := storage.NewArtifactStorageFactory(config)
-	if err != nil {
-		return nil, eris.Wrap(err, "error creating artifact storage factory")
-	}
-
 	// create database provider.
 	db, err := createDBProvider(ctx, config)
 	if err != nil {
 		return nil, err
+	}
+
+	// create artifact storage factory.
+	artifactStorageFactory, err := storage.NewArtifactStorageFactory(config)
+	if err != nil {
+		return nil, eris.Wrap(err, "error creating artifact storage factory")
 	}
 
 	// create fiber app.
@@ -311,7 +311,7 @@ func createApp(
 				mlflowRepositories.NewParamRepository(db.GormDB()),
 				mlflowRepositories.NewMetricRepository(db.GormDB()),
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
-				mlflowRepositories.NewLogRepository(db.GormDB(), config.LogMax),
+				mlflowRepositories.NewLogRepository(db.GormDB(), config.RunLogOutputMax),
 			),
 			mlflowModelService.NewService(),
 			mlflowMetricService.NewService(
@@ -329,6 +329,13 @@ func createApp(
 			),
 		),
 	).Init(app)
+
+	// run a log cleaner background job.
+	mlflowRunService.NewLogCleaner(
+		ctx,
+		config,
+		mlflowRepositories.NewLogRepository(db.GormDB(), config.RunLogOutputMax),
+	).Run()
 
 	mlflowUI.AddRoutes(app)
 	aimUI.AddRoutes(app)

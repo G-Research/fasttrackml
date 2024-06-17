@@ -47,8 +47,8 @@ func (m LogCleaner) Run() {
 				log.Debug("run logs cleaner finished. exiting.")
 				return
 			case <-ticker.C:
-				if m.config.RunLogOutputStorePeriod != 0 {
-					numberOfDeleted, err := m.logRepository.CleanExpired(m.ctx, m.config.RunLogOutputStorePeriod)
+				if m.config.RunLogOutputMax != 0 {
+					numberOfDeleted, err := m.logRepository.CleanExpired(m.ctx, m.config.RunLogOutputMax)
 					if err != nil {
 						log.Errorf("error cleaning expired run logs: %+v", err)
 					} else {

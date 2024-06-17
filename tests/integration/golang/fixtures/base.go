@@ -23,6 +23,7 @@ func (f baseFixtures) TruncateTables() error {
 		models.LatestMetric{},
 		models.Metric{},
 		models.Context{},
+		models.Log{},
 		models.Run{},
 		models.ExperimentTag{},
 		models.Experiment{},

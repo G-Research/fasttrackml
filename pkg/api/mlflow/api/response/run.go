@@ -65,7 +65,7 @@ type CreateRunResponse struct {
 	Run RunPartialResponse `json:"run"`
 }
 
-// NewCreateRunResponse creates new instance of CreateRunResponse object.
+// NewCreateRunResponse creates a new instance of CreateRunResponse object.
 func NewCreateRunResponse(run *models.Run) *CreateRunResponse {
 	resp := CreateRunResponse{
 		Run: RunPartialResponse{
@@ -99,7 +99,7 @@ type UpdateRunResponse struct {
 	RunInfo RunInfoPartialResponse `json:"run_info"`
 }
 
-// NewUpdateRunResponse creates new UpdateRunResponse object.
+// NewUpdateRunResponse creates a new UpdateRunResponse object.
 func NewUpdateRunResponse(run *models.Run) *UpdateRunResponse {
 	// TODO grab name and user from tags?
 	return &UpdateRunResponse{
@@ -123,7 +123,7 @@ type GetRunResponse struct {
 	Run *RunPartialResponse `json:"run"`
 }
 
-// NewGetRunResponse creates new GetRunResponse object.
+// NewGetRunResponse creates a new GetRunResponse object.
 func NewGetRunResponse(run *models.Run) *GetRunResponse {
 	return &GetRunResponse{
 		Run: NewRunPartialResponse(run),
@@ -136,7 +136,7 @@ type SearchRunsResponse struct {
 	NextPageToken string                `json:"next_page_token,omitempty"`
 }
 
-// NewSearchRunsResponse creates new SearchRunsResponse object.
+// NewSearchRunsResponse creates a new SearchRunsResponse object.
 func NewSearchRunsResponse(runs []models.Run, limit, offset int) (*SearchRunsResponse, error) {
 	resp := SearchRunsResponse{
 		Runs: make([]*RunPartialResponse, len(runs)),
@@ -165,7 +165,7 @@ func NewSearchRunsResponse(runs []models.Run, limit, offset int) (*SearchRunsRes
 }
 
 // NewRunPartialResponse is a helper function for NewSearchRunsResponse and NewGetRunResponse functions,
-// because the use almost the same response structure.
+// because they use almost the same response structure.
 func NewRunPartialResponse(run *models.Run) *RunPartialResponse {
 	metrics := make([]RunMetricPartialResponse, len(run.LatestMetrics))
 	for n, m := range run.LatestMetrics {

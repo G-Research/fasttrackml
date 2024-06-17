@@ -16,6 +16,7 @@ import (
 	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -94,15 +95,6 @@ func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
 	}
 	params["tags"] = tags
 
-	sharedTags := []map[string]string{}
-	for _, tag := range run.SharedTags {
-		sharedTags = append(sharedTags, map[string]string{
-			"id":    tag.ID.String(),
-			"name":  tag.Name,
-			"color": tag.Color,
-		})
-	}
-
 	return &GetRunInfoResponse{
 		Params: params,
 		Traces: GetRunInfoTracesPartial{
@@ -122,7 +114,7 @@ func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
 				ID:   fmt.Sprintf("%d", *run.Experiment.ID),
 				Name: run.Experiment.Name,
 			},
-			Tags:         sharedTags,
+			Tags:         GetStreamingTagResponse(run.SharedTags),
 			CreationTime: float64(run.StartTime.Int64) / 1000,
 			EndTime:      float64(run.EndTime.Int64) / 1000,
 			Archived:     run.LifecycleStage == models.LifecycleStageDeleted,
@@ -640,16 +632,6 @@ func NewRunsSearchStreamResponse(
 		start := time.Now()
 		if err := func() error {
 			for i, r := range runs {
-
-				sharedTags := []fiber.Map{}
-				for _, tag := range r.SharedTags {
-					sharedTags = append(sharedTags, fiber.Map{
-						"id":    tag.ID.String(),
-						"name":  tag.Name,
-						"color": tag.Color,
-					})
-				}
-
 				run := fiber.Map{
 					"props": fiber.Map{
 						"name":        r.Name,
@@ -658,7 +640,7 @@ func NewRunsSearchStreamResponse(
 							"id":   fmt.Sprintf("%d", *r.Experiment.ID),
 							"name": r.Experiment.Name,
 						},
-						"tags":          sharedTags,
+						"tags":          response.GetStreamingTagResponse(r.SharedTags),
 						"creation_time": float64(r.StartTime.Int64) / 1000,
 						"end_time":      float64(r.EndTime.Int64) / 1000,
 						"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
@@ -753,6 +735,7 @@ func NewActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgre
 		start := time.Now()
 		if err := func() error {
 			for i, r := range runs {
+
 				props := fiber.Map{
 					"name":        r.Name,
 					"description": nil,
@@ -760,7 +743,7 @@ func NewActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgre
 						"id":   fmt.Sprintf("%d", *r.Experiment.ID),
 						"name": r.Experiment.Name,
 					},
-					"tags":          []string{},
+					"tags":          response.GetStreamingTagResponse(r.SharedTags),
 					"creation_time": float64(r.StartTime.Int64) / 1000,
 					"end_time":      float64(r.EndTime.Int64) / 1000,
 					"archived":      r.LifecycleStage == models.LifecycleStageDeleted,

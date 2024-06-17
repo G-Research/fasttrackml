@@ -75,3 +75,16 @@ var NewGetTagResponse = NewCreateTagResponse
 
 // NewUpdateTagResponse creates new response object for `PUT /apps/:id` endpoint.
 var NewUpdateTagResponse = NewCreateTagResponse
+
+// GetStreamingTagResponse converts tags for streaming repsonses.
+func GetStreamingTagResponse(tags []models.SharedTag) []map[string]string {
+	sharedTags := []map[string]string{}
+	for _, tag := range tags {
+		sharedTags = append(sharedTags, map[string]string{
+			"id":    tag.ID.String(),
+			"name":  tag.Name,
+			"color": tag.Color,
+		})
+	}
+	return sharedTags
+}

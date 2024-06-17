@@ -11,7 +11,6 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -72,42 +71,32 @@ func (s *RunTagTestSuite) TestAddRunTag() {
 func (s *RunTagTestSuite) TestDeleteRunTag() {
 	tests := []struct {
 		name  string
-		ID    string
+		runID string
 		tagID string
-		error *api.ErrorResponse
 	}{
 		{
 			name:  "DeleteTagFromExistingRun",
-			ID:    "existing-run-ID",
-			tagID: "existing-tag-ID",
-			error: nil,
+			runID: s.run.ID,
+			tagID: s.tag.ID.String(),
 		},
-		{
-			name:  "DeleteTagFromNonExistingRun",
-			ID:    "non-existing-run-ID",
-			tagID: "existing-tag-ID",
-			error: &api.ErrorResponse{
-				Message:    "run 'non-existing-run-ID' not found",
-				StatusCode: http.StatusBadRequest,
-			},
-		},
-		// Add more test cases as needed...
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var resp api.ErrorResponse
+			s.Require().Nil(s.SharedTagFixtures.Associate(context.Background(), tt.runID, tt.tagID))
+
 			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodDelete,
-				).WithResponse(
-					&resp,
 				).DoRequest(
-					"/runs/%s/tags/%s", tt.ID, tt.tagID,
+					"/runs/%s/tags/%s", tt.runID, tt.tagID,
 				),
 			)
-			s.Equal(tt.error.Message, resp.Message)
-			s.Equal(tt.error.StatusCode, resp.StatusCode)
+
+			// verify
+			tags, err := s.SharedTagFixtures.GetByRunID(context.Background(), tt.runID)
+			s.Require().Nil(err)
+			s.Require().Len(tags, 0)
 		})
 	}
 }

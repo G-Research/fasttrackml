@@ -50,7 +50,7 @@ func (c Controller) CreateTag(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }
 
-// GetTag handles `GET /tag/:id` endpoint.
+// GetTag handles `GET /tags/:id` endpoint.
 func (c Controller) GetTag(ctx *fiber.Ctx) error {
 	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -72,7 +72,7 @@ func (c Controller) GetTag(ctx *fiber.Ctx) error {
 	return ctx.JSON(resp)
 }
 
-// UpdateTag handles `PUT /tag/:id` endpoint.
+// UpdateTag handles `PUT /tags/:id` endpoint.
 func (c Controller) UpdateTag(ctx *fiber.Ctx) error {
 	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
 	if err != nil {

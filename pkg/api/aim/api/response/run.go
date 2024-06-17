@@ -16,7 +16,6 @@ import (
 	"gorm.io/datatypes"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
@@ -640,7 +639,7 @@ func NewRunsSearchStreamResponse(
 							"id":   fmt.Sprintf("%d", *r.Experiment.ID),
 							"name": r.Experiment.Name,
 						},
-						"tags":          response.GetStreamingTagResponse(r.SharedTags),
+						"tags":          GetStreamingTagResponse(r.SharedTags),
 						"creation_time": float64(r.StartTime.Int64) / 1000,
 						"end_time":      float64(r.EndTime.Int64) / 1000,
 						"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
@@ -743,7 +742,7 @@ func NewActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgre
 						"id":   fmt.Sprintf("%d", *r.Experiment.ID),
 						"name": r.Experiment.Name,
 					},
-					"tags":          response.GetStreamingTagResponse(r.SharedTags),
+					"tags":          GetStreamingTagResponse(r.SharedTags),
 					"creation_time": float64(r.StartTime.Int64) / 1000,
 					"end_time":      float64(r.EndTime.Int64) / 1000,
 					"archived":      r.LifecycleStage == models.LifecycleStageDeleted,

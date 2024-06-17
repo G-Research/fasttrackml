@@ -34,7 +34,7 @@ func NewService(
 	}
 }
 
-// ListArtifacts handles business logic of `GET /artifacts/list` endpoint.
+// ListArtifacts handles the business logic of `GET /artifacts/list` endpoint.
 func (s Service) ListArtifacts(
 	ctx context.Context, namespace *models.Namespace, req *request.ListArtifactsRequest,
 ) (string, []storage.ArtifactObject, error) {
@@ -68,7 +68,7 @@ func (s Service) ListArtifacts(
 	return run.ArtifactURI, artifacts, nil
 }
 
-// GetArtifact handles business logic of `GET /artifacts/get` endpoint.
+// GetArtifact handles the business logic of `GET /artifacts/get` endpoint.
 func (s Service) GetArtifact(
 	ctx context.Context, namespace *models.Namespace, req *request.GetArtifactRequest,
 ) (io.ReadCloser, error) {

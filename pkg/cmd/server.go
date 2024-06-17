@@ -88,6 +88,8 @@ func init() {
 	ServerCmd.Flags().MarkHidden("database-reset")
 	ServerCmd.Flags().Bool("dev-mode", false, "Development mode - enable CORS")
 	ServerCmd.Flags().MarkHidden("dev-mode")
+	ServerCmd.Flags().Int("log-output-max", 2000, "Maximum log rows per run to retain.")
+	ServerCmd.Flags().Duration("log-output-retention", 7*24*time.Hour, "Run logs retention period")
 	viper.BindEnv("auth-username", "MLFLOW_TRACKING_USERNAME")
 	viper.BindEnv("auth-password", "MLFLOW_TRACKING_PASSWORD")
 }

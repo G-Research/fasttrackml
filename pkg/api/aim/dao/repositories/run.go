@@ -57,7 +57,7 @@ type RunRepository struct {
 	repositories.BaseRepositoryProvider
 }
 
-// NewRunRepository creates repository to work with models.Run entity.
+// NewRunRepository creates a repository to work with models.Run entity.
 func NewRunRepository(db *gorm.DB) *RunRepository {
 	return &RunRepository{
 		repositories.NewBaseRepository(db),

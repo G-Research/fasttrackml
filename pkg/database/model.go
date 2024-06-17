@@ -170,7 +170,7 @@ type Log struct {
 	ID        uint   `gorm:"primaryKey;autoIncrement"`
 	Value     string `gorm:"not null"`
 	RunID     string `gorm:"column:run_uuid;not null;index"`
-	Timestamp int64  `gorm:"not null;index:idx_run_timestamp"`
+	Timestamp int64  `gorm:"not null;index"`
 }
 
 type Context struct {

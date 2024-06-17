@@ -16,6 +16,8 @@ import (
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
 )
 
+const MaxLogRows = 10
+
 type BaseTestSuite struct {
 	suite.Suite
 	db                          database.DBProvider
@@ -29,6 +31,7 @@ type BaseTestSuite struct {
 	ChooserClient               func() *HttpClient
 	AppFixtures                 *fixtures.AppFixtures
 	RunFixtures                 *fixtures.RunFixtures
+	LogFixtures                 *fixtures.LogFixtures
 	TagFixtures                 *fixtures.TagFixtures
 	RolesFixtures               *fixtures.RoleFixtures
 	MetricFixtures              *fixtures.MetricFixtures
@@ -122,6 +125,10 @@ func (s *BaseTestSuite) initFixtures() {
 	tagFixtures, err := fixtures.NewTagFixtures(db)
 	s.Require().Nil(err)
 	s.TagFixtures = tagFixtures
+
+	logFixtures, err := fixtures.NewLogFixtures(db)
+	s.Require().Nil(err)
+	s.LogFixtures = logFixtures
 }
 
 func (s *BaseTestSuite) closeDB() {
@@ -137,6 +144,7 @@ func (s *BaseTestSuite) startServer() {
 		DefaultArtifactRoot:   s.T().TempDir(),
 		S3EndpointURI:         GetS3EndpointUri(),
 		GSEndpointURI:         GetGSEndpointUri(),
+		LogMax:                MaxLogRows,
 	}
 	s.Require().Nil(mergo.Merge(&cfg, s.Config))
 

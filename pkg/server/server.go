@@ -278,6 +278,7 @@ func createApp(
 			),
 			aimRunService.NewService(
 				aimRepositories.NewRunRepository(db.GormDB()),
+				aimRepositories.NewLogRepository(db.GormDB()),
 				aimRepositories.NewMetricRepository(db.GormDB()),
 				aimRepositories.NewTagRepository(db.GormDB()),
 			),
@@ -310,6 +311,7 @@ func createApp(
 				mlflowRepositories.NewParamRepository(db.GormDB()),
 				mlflowRepositories.NewMetricRepository(db.GormDB()),
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
+				mlflowRepositories.NewLogRepository(db.GormDB(), config.LogMax),
 			),
 			mlflowModelService.NewService(),
 			mlflowMetricService.NewService(

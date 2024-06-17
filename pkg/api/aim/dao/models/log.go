@@ -1,6 +1,5 @@
 package models
 
-// Log represents a row of the `logs` table.
 type Log struct {
 	ID        uint   `gorm:"primaryKey;autoIncrement"`
 	Value     string `gorm:"not null"`

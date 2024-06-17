@@ -70,6 +70,6 @@ type LogBatchRequest struct {
 
 // LogOutputRequest is a request object for `POST mlflow/runs/log-output` endpoint.
 type LogOutputRequest struct {
-	RunID string `json:"run_id"`
 	Data  string `json:"data"`
+	RunID string `json:"run_id"`
 }

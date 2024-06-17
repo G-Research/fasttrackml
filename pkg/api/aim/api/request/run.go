@@ -37,6 +37,11 @@ type UpdateRunRequest struct {
 	Archived    *bool   `json:"archived"`
 }
 
+// GetRunLogsRequest is a request struct for `GET /runs/:id/logs` endpoint.
+type GetRunLogsRequest struct {
+	ID string `params:"id"`
+}
+
 // SearchRunsRequest is a request object for `GET /runs/search/run` endpoint.
 type SearchRunsRequest struct {
 	BaseSearchRequest

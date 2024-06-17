@@ -31,6 +31,7 @@ type BaseTestSuite struct {
 	ChooserClient               func() *HttpClient
 	AppFixtures                 *fixtures.AppFixtures
 	RunFixtures                 *fixtures.RunFixtures
+	LogFixtures                 *fixtures.LogFixtures
 	TagFixtures                 *fixtures.TagFixtures
 	RolesFixtures               *fixtures.RoleFixtures
 	MetricFixtures              *fixtures.MetricFixtures
@@ -39,7 +40,6 @@ type BaseTestSuite struct {
 	ProjectFixtures             *fixtures.ProjectFixtures
 	DashboardFixtures           *fixtures.DashboardFixtures
 	ExperimentFixtures          *fixtures.ExperimentFixtures
-	LogFixtures                 *fixtures.LogFixtures
 	DefaultExperiment           *models.Experiment
 	NamespaceFixtures           *fixtures.NamespaceFixtures
 	DefaultNamespace            *models.Namespace

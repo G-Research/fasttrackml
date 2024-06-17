@@ -334,7 +334,7 @@ func createApp(
 	mlflowRunService.NewLogCleaner(
 		ctx,
 		config,
-		mlflowRepositories.NewLogRepository(db.GormDB(), config.RunLogOutputRetain),
+		mlflowRepositories.NewLogRepository(db.GormDB(), config.RunLogOutputMax),
 	).Run()
 
 	mlflowUI.AddRoutes(app)

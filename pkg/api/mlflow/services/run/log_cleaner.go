@@ -48,7 +48,7 @@ func (m LogCleaner) Run() {
 				return
 			case <-ticker.C:
 				if m.config.RunLogOutputMax != 0 {
-					numberOfDeleted, err := m.logRepository.CleanExpired(m.ctx, m.config.RunLogOutputMax)
+					numberOfDeleted, err := m.logRepository.CleanExpired(m.ctx, m.config.RunLogOutputRetain)
 					if err != nil {
 						log.Errorf("error cleaning expired run logs: %+v", err)
 					} else {

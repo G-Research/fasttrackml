@@ -27,8 +27,8 @@ type Config struct {
 	DatabaseMigrate       bool
 	DatabaseSlowThreshold time.Duration
 	LiveUpdatesEnabled    bool
-	RunLogOutputMax       time.Duration
-	RunLogOutputRetain    int
+	RunLogOutputMax       int
+	RunLogOutputRetain    time.Duration
 }
 
 // NewConfig creates a new instance of Config.
@@ -56,8 +56,8 @@ func NewConfig() *Config {
 		DatabaseMigrate:       viper.GetBool("database-migrate"),
 		DatabaseSlowThreshold: viper.GetDuration("database-slow-threshold"),
 		LiveUpdatesEnabled:    viper.GetBool("live-updates-enabled"),
-		RunLogOutputMax:       viper.GetDuration("log-output-max"),
-		RunLogOutputRetain:    viper.GetInt("log-output-retention"),
+		RunLogOutputMax:       viper.GetInt("log-output-max"),
+		RunLogOutputRetain:    viper.GetDuration("log-output-retention"),
 	}
 }
 

@@ -113,7 +113,7 @@ func (c Controller) DeleteTag(ctx *fiber.Ctx) error {
 	if err != nil {
 		return convertError(err)
 	}
-	return ctx.Status(200).JSON(nil)
+	return ctx.SendStatus(fiber.StatusOK)
 }
 
 func (c Controller) GetRunsTagged(ctx *fiber.Ctx) error {
@@ -127,11 +127,12 @@ func (c Controller) GetRunsTagged(ctx *fiber.Ctx) error {
 	if err := ctx.ParamsParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
-	tag, err := c.tagService.Get(ctx.Context(), ns.ID, &request.GetTagRequest{ID: req.ID})
+	tag, err := c.tagService.Get(ctx.Context(), ns.ID, &req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	resp := response.NewGetRunsTaggedResponse(tag)
-	return ctx.Status(200).JSON(resp)
+	log.Debugf("getRunsTagged response: %#v", resp)
+	return ctx.Status(fiber.StatusOK).JSON(resp)
 }

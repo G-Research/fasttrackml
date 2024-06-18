@@ -48,7 +48,6 @@ func NewSharedTagRepository(db *gorm.DB) *SharedTagRepository {
 func (r SharedTagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.SharedTag, error) {
 	var tags []models.SharedTag
 	if err := r.GetDB().WithContext(ctx).
-		Preload("Runs").
 		Preload("Runs.Experiment").
 		Find(&tags).Error; err != nil {
 		return nil, eris.Wrap(err, "unable to fetch tags")
@@ -57,14 +56,13 @@ func (r SharedTagRepository) GetTagsByNamespace(ctx context.Context, namespaceID
 }
 
 // GetByNamespaceIDAndTagID returns models.Tag by Namespace and Tag ID.
-func (d SharedTagRepository) GetByNamespaceIDAndTagID(ctx context.Context,
+func (r SharedTagRepository) GetByNamespaceIDAndTagID(ctx context.Context,
 	namespaceID uint, tagID string,
 ) (*models.SharedTag, error) {
 	var tag models.SharedTag
-	if err := d.GetDB().WithContext(ctx).
+	if err := r.GetDB().WithContext(ctx).
 		Where("namespace_id = ?", namespaceID).
 		Where("id = ?", tagID).
-		Preload("Runs").
 		Preload("Runs.Experiment").
 		First(&tag).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -76,14 +74,13 @@ func (d SharedTagRepository) GetByNamespaceIDAndTagID(ctx context.Context,
 }
 
 // GetByNamespaceIDAndTagName returns models.Tag by Namespace and Tag ID.
-func (d SharedTagRepository) GetByNamespaceIDAndTagName(ctx context.Context,
+func (r SharedTagRepository) GetByNamespaceIDAndTagName(ctx context.Context,
 	namespaceID uint, tagName string,
 ) (*models.SharedTag, error) {
 	var tag models.SharedTag
-	if err := d.GetDB().WithContext(ctx).
+	if err := r.GetDB().WithContext(ctx).
 		Where("namespace_id = ?", namespaceID).
 		Where("name = ?", tagName).
-		Preload("Runs").
 		Preload("Runs.Experiment").
 		First(&tag).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -95,16 +92,16 @@ func (d SharedTagRepository) GetByNamespaceIDAndTagName(ctx context.Context,
 }
 
 // Create creates new models.SharedTag object.
-func (d SharedTagRepository) Create(ctx context.Context, tag *models.SharedTag) error {
-	if err := d.GetDB().WithContext(ctx).Create(&tag).Error; err != nil {
+func (r SharedTagRepository) Create(ctx context.Context, tag *models.SharedTag) error {
+	if err := r.GetDB().WithContext(ctx).Create(&tag).Error; err != nil {
 		return eris.Wrap(err, "error creating tag entity")
 	}
 	return nil
 }
 
 // Update updates existing models.Tag object.
-func (d SharedTagRepository) Update(ctx context.Context, tag *models.SharedTag) error {
-	if err := d.GetDB().WithContext(ctx).
+func (r SharedTagRepository) Update(ctx context.Context, tag *models.SharedTag) error {
+	if err := r.GetDB().WithContext(ctx).
 		Model(&tag).
 		Updates(models.SharedTag{
 			Name:        tag.Name,
@@ -119,8 +116,8 @@ func (d SharedTagRepository) Update(ctx context.Context, tag *models.SharedTag) 
 }
 
 // Delete deletes a models.Tag object.
-func (d SharedTagRepository) Delete(ctx context.Context, tag *models.SharedTag) error {
-	if err := d.GetDB().WithContext(ctx).
+func (r SharedTagRepository) Delete(ctx context.Context, tag *models.SharedTag) error {
+	if err := r.GetDB().WithContext(ctx).
 		Model(&tag).
 		Update("IsArchived", true).
 		Error; err != nil {
@@ -130,8 +127,8 @@ func (d SharedTagRepository) Delete(ctx context.Context, tag *models.SharedTag) 
 }
 
 // AddAssociation will add the association between SharedTag and Run.
-func (d SharedTagRepository) AddAssociation(ctx context.Context, tag *models.SharedTag, run *models.Run) error {
-	if err := d.GetDB().WithContext(ctx).
+func (r SharedTagRepository) AddAssociation(ctx context.Context, tag *models.SharedTag, run *models.Run) error {
+	if err := r.GetDB().WithContext(ctx).
 		Exec("INSERT INTO run_shared_tags VALUES(?, ?) ON CONFLICT DO NOTHING", tag.ID, run.ID).
 		Error; err != nil {
 		return eris.Wrap(err, "error adding tag/run association")
@@ -140,8 +137,8 @@ func (d SharedTagRepository) AddAssociation(ctx context.Context, tag *models.Sha
 }
 
 // DeleteAssociation will remove the association between SharedTag and Run.
-func (d SharedTagRepository) DeleteAssociation(ctx context.Context, tag *models.SharedTag, run *models.Run) error {
-	if err := d.GetDB().WithContext(ctx).
+func (r SharedTagRepository) DeleteAssociation(ctx context.Context, tag *models.SharedTag, run *models.Run) error {
+	if err := r.GetDB().WithContext(ctx).
 		Model(&tag).
 		Association("Runs").
 		Delete(run); err != nil {

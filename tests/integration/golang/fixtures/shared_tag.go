@@ -2,6 +2,7 @@ package fixtures
 
 import (
 	"context"
+	"strings"
 
 	"github.com/rotisserie/eris"
 	"gorm.io/gorm"
@@ -36,6 +37,7 @@ func (f SharedTagFixtures) CreateTag(ctx context.Context, tagName string, namesp
 // GetByRunID returns SharedTag list by requested Run ID.
 func (f SharedTagFixtures) GetByRunID(ctx context.Context, runID string) ([]models.SharedTag, error) {
 	var run models.Run
+	runID = strings.ReplaceAll(runID, "-", "")
 	if err := f.db.WithContext(ctx).Where(
 		models.Run{ID: runID},
 	).Preload("SharedTags").First(&run).Error; err != nil {

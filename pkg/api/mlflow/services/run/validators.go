@@ -133,3 +133,14 @@ func ValidateSearchRunsRequest(req *request.SearchRunsRequest) error {
 	}
 	return nil
 }
+
+// ValidateLogOutputRequest validates `POST /mlflow/runs/output-log` request.
+func ValidateLogOutputRequest(req *request.LogOutputRequest) error {
+	if req.RunID == "" {
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'run_id'")
+	}
+	if req.Data == "" {
+		return api.NewInvalidParameterValueError("Missing value for required parameter 'data'")
+	}
+	return nil
+}

@@ -229,6 +229,29 @@ func (c Controller) UpdateRun(ctx *fiber.Ctx) error {
 	return ctx.JSON(response.NewUpdateRunResponse(req.ID, "OK"))
 }
 
+// GetRunLogs handles `GET /runs/:id/logs` endpoint.
+func (c Controller) GetRunLogs(ctx *fiber.Ctx) error {
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("GetRunLogs namespace: %s", ns.Code)
+
+	req := request.GetRunLogsRequest{}
+	if err = ctx.ParamsParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	//nolint:rowserrcheck
+	rows, next, err := c.runService.GetRunLogs(ctx.Context(), ns.ID, &req)
+	if err != nil {
+		return err
+	}
+
+	response.NewGetRunLogsResponse(ctx, rows, next)
+	return nil
+}
+
 // ArchiveBatch handles `POST /runs/archive-batch` endpoint.
 func (c Controller) ArchiveBatch(ctx *fiber.Ctx) error {
 	ns, err := middleware.GetNamespaceFromContext(ctx.Context())

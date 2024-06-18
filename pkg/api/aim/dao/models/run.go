@@ -43,6 +43,7 @@ type Run struct {
 	Params         []Param        `gorm:"constraint:OnDelete:CASCADE"`
 	Tags           []Tag          `gorm:"constraint:OnDelete:CASCADE"`
 	SharedTags     []SharedTag    `gorm:"many2many:run_shared_tags"`
+	Logs           []Log          `gorm:"constraint:OnDelete:CASCADE"`
 	Metrics        []Metric       `gorm:"constraint:OnDelete:CASCADE"`
 	LatestMetrics  []LatestMetric `gorm:"constraint:OnDelete:CASCADE"`
 }

@@ -1,3 +1,7 @@
+import io
+import sys
+import threading
+import time
 from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
@@ -19,6 +23,92 @@ class FasttrackmlClient(MlflowClient):
         final_tracking_uri = utils._resolve_tracking_uri(tracking_uri)
         self._tracking_client_mlflow = self._tracking_client
         self._tracking_client = FasttrackmlTrackingServiceClient(final_tracking_uri)
+
+    def init_output_logging(self, run_id):
+        """
+        Capture terminal output (stdout and  stderr) of the current script and send it to
+        the Fasttrackml server. The output will be visible in the Run detail > Logs tab.
+
+        Args:
+            run_id: String ID of the run
+
+        .. code-block:: python
+            :caption: Example
+
+            from fasttrackml import FasttrackmlClient
+
+            # Create a run under the default experiment (whose id is '0').
+            # Since these are low-level CRUD operations, this method will create a run.
+            # To end the run, you'll have to explicitly end it.
+            client = FasttrackmlClient()
+            experiment_id = "0"
+            run = client.create_run(experiment_id)
+            print_run_info(run)
+            print("--")
+
+            # start logging the terminal output
+            client.init_output_logging(run.info.run_id)
+
+            print("This will be logged in Fasttrackml")
+            client.set_terminated(run.info.run_id)
+        """
+        print("Capturing output")
+        self.original_stdout, self.original_stderr = sys.stdout, sys.stderr
+        sys.stdout, sys.stderr = self.stdout_buffer, self.stderr_buffer = io.StringIO(), io.StringIO()
+        self.is_capture_logging = True
+        threading.Thread(target=self._capture_output, args=(run_id,)).start()
+
+    def _capture_output(self, run_id):
+        while self.is_capture_logging:
+            self._flush_buffers(run_id)
+            time.sleep(3)
+        self._flush_buffers(run_id)
+
+    def _flush_buffers(self, run_id):
+        output = self.stdout_buffer.getvalue()
+        self.stdout_buffer.truncate(0)
+        self.stdout_buffer.seek(0)
+        if output:
+            self.log_output(run_id, "STDOUT: " + output)
+            if self.original_stdout.closed == False:
+                self.original_stdout.write(output + "\n")
+        output = self.stderr_buffer.getvalue()
+        self.stderr_buffer.truncate(0)
+        self.stderr_buffer.seek(0)
+        if output:
+            self.log_output(run_id, "STDERR: " + output)
+            if self.original_stderr.closed == False:
+                self.original_stderr.write(output + "\n")
+
+    def set_terminated(self, run_id):
+        """
+        Set the run as terminated, and, if needed, stop capturing output.
+
+        Args:
+            run_id: String ID of the run
+
+        .. code-block:: python
+            :caption: Example
+
+            from fasttrackml import FasttrackmlClient
+
+            # Create a run under the default experiment (whose id is '0').
+            # Since these are low-level CRUD operations, this method will create a run.
+            # To end the run, you'll have to explicitly end it.
+            client = FasttrackmlClient()
+            experiment_id = "0"
+            run = client.create_run(experiment_id)
+            print_run_info(run)
+            print("--")
+
+            # Log some output
+            client.init_output_logging(run.info.run_id)
+            print("This is just some output we want to capture")
+
+            client.set_terminated(run.info.run_id)
+        """
+        self.is_capture_logging = False
+        super().set_terminated(run_id)
 
     def log_metric(
         self,
@@ -338,3 +428,36 @@ class FasttrackmlClient(MlflowClient):
             experiment_names,
             context,
         )
+
+    def log_output(
+        self,
+        run_id: str,
+        data: str,
+    ) -> None:
+        """
+        Log an explicit string for the provided run which will be viewable in the Run detail > Logs
+        tab.
+
+        Args:
+            run_id: String ID of the run
+            data: The data to log
+
+        .. code-block:: python
+            :caption: Example
+
+            from fasttrackml import FasttrackmlClient
+
+            # Create a run under the default experiment (whose id is '0').
+            # Since these are low-level CRUD operations, this method will create a run.
+            # To end the run, you'll have to explicitly end it.
+            client = FasttrackmlClient()
+            experiment_id = "0"
+            run = client.create_run(experiment_id)
+            print_run_info(run)
+            print("--")
+
+            # Log some output
+            client.log_output(run.info.run_id, "This is just some output we want to capture")
+            client.set_terminated(run.info.run_id)
+        """
+        self._tracking_client.log_output(run_id, data)

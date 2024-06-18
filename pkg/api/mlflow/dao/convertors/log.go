@@ -5,6 +5,7 @@ package convertors
 import (
 	"encoding/json"
 	"math"
+	"time"
 
 	"github.com/rotisserie/eris"
 
@@ -21,6 +22,15 @@ func ConvertLogParamRequestToDBModel(runID string, req *request.LogParamRequest)
 		ValueInt:   req.ValueInt,
 		ValueFloat: req.ValueFloat,
 		ValueStr:   req.ValueStr,
+	}
+}
+
+// ConvertLogOutputRequestToDBModel converts request.LogOutRequest into actual models.Log model.
+func ConvertLogOutputRequestToDBModel(runID string, req *request.LogOutputRequest) *models.Log {
+	return &models.Log{
+		RunID:     runID,
+		Value:     req.Data,
+		Timestamp: time.Now().Unix(),
 	}
 }
 

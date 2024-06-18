@@ -99,6 +99,7 @@ type Run struct {
 	SharedTags     []SharedTag    `gorm:"many2many:run_shared_tags"`
 	Metrics        []Metric       `gorm:"constraint:OnDelete:CASCADE"`
 	LatestMetrics  []LatestMetric `gorm:"constraint:OnDelete:CASCADE"`
+	Logs           []Log          `gorm:"constraing:OnDelete:CASCADE"`
 }
 
 type RowNum int64
@@ -176,6 +177,13 @@ type LatestMetric struct {
 	LastIter  int64
 	ContextID uint `gorm:"not null;primaryKey"`
 	Context   Context
+}
+
+type Log struct {
+	ID        uint   `gorm:"primaryKey;autoIncrement"`
+	Value     string `gorm:"not null"`
+	RunID     string `gorm:"column:run_uuid;not null;index"`
+	Timestamp int64  `gorm:"not null;index"`
 }
 
 type Context struct {

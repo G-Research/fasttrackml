@@ -49,6 +49,9 @@ func (s Service) Get(
 func (s Service) Create(
 	ctx context.Context, namespaceID uint, req *request.CreateTagRequest,
 ) (*models.SharedTag, error) {
+	if err := ValidateCreateTagRequest(req); err != nil {
+		return nil, err
+	}
 	tag := convertors.ConvertCreateTagRequestToDBModel(*req, namespaceID)
 	if err := s.sharedTagRepository.Create(ctx, &tag); err != nil {
 		return nil, api.NewInternalError("unable to create tag: %v", err)

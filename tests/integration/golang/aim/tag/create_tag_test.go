@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
@@ -38,7 +37,7 @@ func (s *CreateTagTestSuite) Test_Ok() {
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var resp response.CreateTagResponse
+			var resp response.TagResponse
 			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPost,
@@ -67,10 +66,9 @@ func (s *CreateTagTestSuite) Test_Error() {
 		requestBody request.CreateTagRequest
 	}{
 		{
-			name: "CreateTagWithNonExistentAppID",
+			name: "CreateTagWithMissingField",
 			requestBody: request.CreateTagRequest{
-				AppID:       uuid.New(),
-				Name:        "tag-name",
+				Name:        "",
 				Description: "tag-description",
 			},
 		},
@@ -87,7 +85,7 @@ func (s *CreateTagTestSuite) Test_Error() {
 					&resp,
 				).DoRequest("/tags"),
 			)
-			s.Contains(resp.Message, "Not Found")
+			s.Contains(resp.Message, "not a valid tag name")
 		})
 	}
 }

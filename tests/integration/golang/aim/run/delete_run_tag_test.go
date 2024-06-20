@@ -48,7 +48,7 @@ func (s *DeleteRunTagTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			s.Require().Nil(s.SharedTagFixtures.Associate(context.Background(), tt.runID, tt.tagID))
+			s.Require().Nil(s.SharedTagFixtures.Associate(context.Background(), tt.tagID, tt.runID))
 
 			s.Require().Nil(
 				s.AIMClient().WithMethod(

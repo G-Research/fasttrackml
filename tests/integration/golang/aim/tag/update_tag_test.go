@@ -88,7 +88,7 @@ func (s *UpdateTagTestSuite) Test_Error() {
 			).DoRequest(
 				"/tags/%s", tt.ID,
 			))
-			s.Contains(resp.Message, "some error message")
+			s.Contains(resp.Message, "Not Found")
 		})
 	}
 }

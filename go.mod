@@ -37,7 +37,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/zeebo/assert v1.3.0
 	google.golang.org/api v0.185.0
-	gorm.io/driver/postgres v1.5.7
+	gorm.io/driver/postgres v1.5.9
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.25.10
 	gorm.io/plugin/dbresolver v1.5.2

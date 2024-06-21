@@ -5,7 +5,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 )
 
-// ValidateGetRunInfoRequest validates `GET /runs/:id/info` request.
+// ValidateCreateTagRequest validates `POST /tags` request.
 func ValidateCreateTagRequest(req *request.CreateTagRequest) error {
 	if len(req.Name) == 0 {
 		return api.NewInvalidParameterValueError("`%s` is not a valid tag name", req.Name)

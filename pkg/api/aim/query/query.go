@@ -657,7 +657,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 									)
 								}
 
-								// handle difference between `match` and `search`.
+								// handle the difference between `match` and `search`.
 								if attr == "match" {
 									str = fmt.Sprintf("^%s", str)
 								}

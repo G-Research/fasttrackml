@@ -156,6 +156,73 @@ func (s *QueryTestSuite) TestPostgresDialector_Ok() {
 				`AND tags_0.key = $1 WHERE "tags_0"."value" = $2 AND "runs"."lifecycle_stage" <> $3`,
 			expectedVars: []interface{}{"foo", "bar", models.LifecycleStageDeleted},
 		},
+		{
+			name:         "TestCreationTimeAttribute",
+			query:        `run.creation_time == 12345678`,
+			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE "runs"."start_time" = $1 AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{12345678, models.LifecycleStageDeleted},
+		},
+		{
+			name:         "TestCreatedAtAttribute",
+			query:        `run.created_at == 12345678`,
+			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE "runs"."start_time" = $1 AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{12345678, models.LifecycleStageDeleted},
+		},
+		{
+			name:         "TestEndTimeAttribute",
+			query:        `run.end_time == 12345678`,
+			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE "runs"."end_time" = $1 AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{12345678, models.LifecycleStageDeleted},
+		},
+		{
+			name:         "TestFinalizedAtAttribute",
+			query:        `run.finalized_at == 12345678`,
+			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE "runs"."end_time" = $1 AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{12345678, models.LifecycleStageDeleted},
+		},
+		{
+			name:         "TestHashAttribute",
+			query:        `run.hash == "hash"`,
+			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE "runs"."run_uuid" = $1 AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{"hash", models.LifecycleStageDeleted},
+		},
+		{
+			name:         "TestNameAttribute",
+			query:        `run.name == "run name"`,
+			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE "runs"."name" = $1 AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{"run name", models.LifecycleStageDeleted},
+		},
+		{
+			name:         "TestExperimentAttribute",
+			query:        `run.experiment == "experiment name"`,
+			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE "Experiment"."name" = $1 AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{"experiment name", models.LifecycleStageDeleted},
+		},
+		{
+			name:         "TestArchivedAttribute",
+			query:        `run.archived`,
+			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE "runs"."lifecycle_stage" = $1`,
+			expectedVars: []interface{}{models.LifecycleStageDeleted},
+		},
+		{
+			name:         "TestActiveAttribute",
+			query:        `run.active`,
+			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE "runs"."status" = $1 AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{models.StatusRunning, models.LifecycleStageDeleted},
+		},
+		{
+			name:  "TestDurationAttribute",
+			query: `run.duration == 123456789`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" WHERE (runs.end_time - runs.start_time) / 1000 = $1 AND ` +
+				`"runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{123456789, models.LifecycleStageDeleted},
+		},
+		{
+			name:         "TestDatetimeFunction",
+			query:        `run.creation_time > datetime(2022, 2, 2)`,
+			expectedSQL:  `SELECT "run_uuid" FROM "runs" WHERE "runs"."start_time" > $1 AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{int64(1643760000000), models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {

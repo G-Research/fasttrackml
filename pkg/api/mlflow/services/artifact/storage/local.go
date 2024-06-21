@@ -51,7 +51,7 @@ func (s Local) List(ctx context.Context, artifactURI, path string) ([]ArtifactOb
 		info, err := object.Info()
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
-				// file has been removed since we read the directory
+				// the file has been removed since we read the directory
 				continue
 			}
 			return nil, eris.Wrapf(err, "error getting info for object: %s", object.Name())
@@ -76,7 +76,7 @@ func (s Local) Get(ctx context.Context, artifactURI, path string) (io.ReadCloser
 	// 2. process `path` parameter.
 	absPath := filepath.Join(artifactURI, path)
 
-	// 3. check that the file exists and is not a directory.
+	// 3. checks that the file exists and is not a directory.
 	fileInfo, err := os.Stat(absPath)
 	if err != nil {
 		return nil, eris.Wrap(err, "path could not be opened")

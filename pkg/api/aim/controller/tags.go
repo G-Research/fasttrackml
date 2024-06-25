@@ -113,6 +113,7 @@ func (c Controller) DeleteTag(ctx *fiber.Ctx) error {
 	if err != nil {
 		return convertError(err)
 	}
+	log.Debugf("deleteTag response: %#v", fiber.StatusOK)
 	return ctx.SendStatus(fiber.StatusOK)
 }
 

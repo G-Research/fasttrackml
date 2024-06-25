@@ -49,7 +49,7 @@ func (s *AddRunTagTestSuite) Test_Ok() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			tt.request.RunID = uuid.MustParse(tt.runID)
+			tt.request.RunID = tt.runID
 			s.Require().Nil(
 				s.AIMClient().WithMethod(
 					http.MethodPost,

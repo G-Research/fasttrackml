@@ -268,7 +268,7 @@ func (s Service) ProcessBatch(
 
 // AddRunTag adds a SharedTag to a Run.
 func (s Service) AddRunTag(ctx context.Context, namespaceID uint, req *request.AddRunTagRequest) error {
-	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespaceID, req.RunID.String())
+	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespaceID, req.RunID)
 	if err != nil {
 		return api.NewInternalError("error getting run by id %s: %s", req.RunID, err)
 	}
@@ -290,14 +290,14 @@ func (s Service) AddRunTag(ctx context.Context, namespaceID uint, req *request.A
 
 // DeleteRunTag removes a SharedTag from a Run.
 func (s Service) DeleteRunTag(ctx context.Context, namespaceID uint, req *request.DeleteRunTagRequest) error {
-	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespaceID, req.RunID.String())
+	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespaceID, req.RunID)
 	if err != nil {
 		return api.NewInternalError("error getting run by id %s: %s", req.RunID, err)
 	}
 	if run == nil {
 		return api.NewResourceDoesNotExistError("run '%s' not found", req.RunID)
 	}
-	tag, err := s.sharedTagRepository.GetByNamespaceIDAndTagID(ctx, namespaceID, req.TagID.String())
+	tag, err := s.sharedTagRepository.GetByNamespaceIDAndTagID(ctx, namespaceID, req.TagID)
 	if err != nil {
 		return api.NewInternalError("unable to find tag by id %q: %s", req.TagID, err)
 	}

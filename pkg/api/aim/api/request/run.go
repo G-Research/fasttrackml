@@ -2,7 +2,6 @@ package request
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 )
 
 // BaseSearchRequest defines some shared fields for search requestes.
@@ -100,12 +99,12 @@ type DeleteBatchRequest []string
 
 // AddRunTagRequest is a request for `POST /runs/:id/tags/new` endpoint.
 type AddRunTagRequest struct {
-	RunID   uuid.UUID `params:"id"`
-	TagName string    `json:"tag_name"`
+	RunID   string `params:"id"`
+	TagName string `json:"tag_name"`
 }
 
 // DeleteRunTagRequest is a request for `DELETE /runs/:id/tags/:tagID` endpoint.
 type DeleteRunTagRequest struct {
-	RunID uuid.UUID `params:"id"`
-	TagID uuid.UUID `params:"tagID"`
+	RunID string `params:"id"`
+	TagID string `params:"tagID"`
 }

@@ -189,7 +189,6 @@ func (r RunRepository) GetAlignedMetrics(
 func (r RunRepository) GetRunByNamespaceIDAndRunID(
 	ctx context.Context, namespaceID uint, runID string,
 ) (*models.Run, error) {
-	runID = strings.ReplaceAll(runID, "-", "")
 	var run models.Run
 	if err := r.GetDB().WithContext(ctx).Select(
 		"ID",

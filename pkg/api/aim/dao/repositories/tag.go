@@ -14,8 +14,6 @@ import (
 // TagRepositoryProvider provides an interface to work with models.Tag entity.
 type TagRepositoryProvider interface {
 	repositories.BaseRepositoryProvider
-	// GetTagsByNamespace returns the list of tags.
-	GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.Tag, error)
 	// CreateExperimentTag creates new models.ExperimentTag entity connected to models.Experiment.
 	CreateExperimentTag(ctx context.Context, experimentTag *models.ExperimentTag) error
 	// CreateRunTag creates new models.Tag entity connected to models.Run.
@@ -58,16 +56,6 @@ func (r TagRepository) CreateRunTag(ctx context.Context, runTag *models.Tag) err
 		return eris.Wrapf(err, "error creating tag for run with id: %s", runTag.RunID)
 	}
 	return nil
-}
-
-// GetTagsByNamespace returns the list of tags.
-// TODO fix stub implementation
-func (r TagRepository) GetTagsByNamespace(ctx context.Context, namespaceID uint) ([]models.Tag, error) {
-	var tags []models.Tag
-	if err := r.GetDB().WithContext(ctx).Find(&tags).Error; err != nil {
-		return nil, err
-	}
-	return []models.Tag{}, nil
 }
 
 // GetTagKeysByParameters returns list of tag keys by requested parameters.

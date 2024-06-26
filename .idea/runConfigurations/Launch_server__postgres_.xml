@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Launch server (postgres)" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="fasttrackml" />
+    <working_directory value="$PROJECT_DIR$" />
+    <parameters value="server --log-level debug --listen-address localhost:5001 --database-uri postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable --default-artifact-root gs://fasttrackml --gs-endpoint-uri http://localhost:4443" />
+    <kind value="DIRECTORY" />
+    <package value="fasttrack" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/../fasttrack|$PROJECT_DIR$/main.go" />
+    <method v="2" />
+  </configuration>
+</component>

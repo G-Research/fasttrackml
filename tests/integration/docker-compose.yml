@@ -66,6 +66,7 @@ services:
       FML_POSTGRES_URI: postgres://postgres:postgres@postgres/postgres
       FML_S3_ENDPOINT_URI: http://minio:9000
       FML_GS_ENDPOINT_URI: http://google-storage:4443/storage/v1/
+      AWS_REGION: "region"
       AWS_ACCESS_KEY_ID: "user"
       AWS_SECRET_ACCESS_KEY: "password"
 

@@ -4,8 +4,8 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
+	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
 // baseFixtures represents base fixtures object.
@@ -15,9 +15,15 @@ type baseFixtures struct {
 
 // TruncateTables cleans database from the old data.
 func (f baseFixtures) TruncateTables() error {
+	if err := f.db.Session(
+		&gorm.Session{AllowGlobalUpdate: true},
+	).Exec("DELETE from run_shared_tags").Error; err != nil {
+		return errors.Wrap(err, "error deleting from many2many table")
+	}
 	for _, table := range []interface{}{
-		database.Dashboard{}, // TODO update to models when available
-		database.App{},       // TODO update to models when available
+		aimModels.Dashboard{},
+		aimModels.App{},
+		aimModels.SharedTag{},
 		models.Tag{},
 		models.Param{},
 		models.LatestMetric{},

@@ -1,6 +1,8 @@
 package request
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+)
 
 // BaseSearchRequest defines some shared fields for search requestes.
 type BaseSearchRequest struct {
@@ -94,3 +96,15 @@ type ArchiveBatchRequest []string
 
 // DeleteBatchRequest is a request struct for `DELETE /runs/delete-batch` endpoint.
 type DeleteBatchRequest []string
+
+// AddRunTagRequest is a request for `POST /runs/:id/tags/new` endpoint.
+type AddRunTagRequest struct {
+	RunID   string `params:"id"`
+	TagName string `json:"tag_name"`
+}
+
+// DeleteRunTagRequest is a request for `DELETE /runs/:id/tags/:tagID` endpoint.
+type DeleteRunTagRequest struct {
+	RunID string `params:"id"`
+	TagID string `params:"tagID"`
+}

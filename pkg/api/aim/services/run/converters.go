@@ -9,7 +9,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 )
 
-// ConvertRunMetricsRequestToMap converts request of `GET /runs/:id/metric/get-batch` endpoint to an internal DTO object.
+// ConvertRunMetricsRequestToMap converts request of
+// `GET /runs/:id/metric/get-batch` endpoint to an internal DTO object.
 func ConvertRunMetricsRequestToMap(req *request.GetRunMetricsRequest) (models.MetricKeysMap, error) {
 	// collect unique metrics. uniqueness provides metricKeysMap + metric struct.
 	metricKeysMap := make(map[models.MetricKeysItem]any, len(*req))
@@ -28,7 +29,8 @@ func ConvertRunMetricsRequestToMap(req *request.GetRunMetricsRequest) (models.Me
 	return metricKeysMap, nil
 }
 
-// ConvertCreateRunArtifactRequestToModel  converts request of `POST /runs/:id/artifact` endpoint to an internal Model object.
+// ConvertCreateRunArtifactRequestToModel  converts request of
+// `POST /runs/:id/artifact` endpoint to an internal Model object.
 func ConvertCreateRunArtifactRequestToModel(
 	namespaceID uint, runID string, req *request.CreateRunArtifactRequest,
 ) *models.Artifact {

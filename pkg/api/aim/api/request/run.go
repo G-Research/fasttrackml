@@ -22,6 +22,18 @@ type GetRunMetricsRequest []struct {
 	Context map[string]string `json:"context"`
 }
 
+// CreateRunArtifactRequest is a request object for `POST /runs/:id/artifacts` endpoint.
+type CreateRunArtifactRequest struct {
+	Iter    int64  `json:"iter"`
+	Step    int64  `json:"step"`
+	Caption string `json:"caption"`
+	Index   int64  `json:"index"`
+	Width   int64  `json:"width"`
+	Height  int64  `json:"height"`
+	Format  string `json:"format"`
+	BlobURI string `json:"blob_uri"`
+}
+
 // GetRunsActiveRequest is a request object for `GET /runs/active` endpoint.
 type GetRunsActiveRequest struct {
 	BaseSearchRequest

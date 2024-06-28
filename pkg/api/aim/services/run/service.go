@@ -28,6 +28,7 @@ type Service struct {
 	logRepository       repositories.LogRepositoryProvider
 	metricRepository    repositories.MetricRepositoryProvider
 	tagRepository       repositories.TagRepositoryProvider
+	artifactRepository  repositories.ArtifactRepositoryProvider
 	sharedTagRepository repositories.SharedTagRepositoryProvider
 }
 
@@ -37,6 +38,7 @@ func NewService(
 	logRepository repositories.LogRepositoryProvider,
 	metricRepository repositories.MetricRepositoryProvider,
 	tagRepository repositories.TagRepositoryProvider,
+	artifactRepository repositories.ArtifactRepositoryProvider,
 	sharedTagRepository repositories.SharedTagRepositoryProvider,
 ) *Service {
 	return &Service{
@@ -44,6 +46,7 @@ func NewService(
 		logRepository:       logRepository,
 		metricRepository:    metricRepository,
 		tagRepository:       tagRepository,
+		artifactRepository:  artifactRepository,
 		sharedTagRepository: sharedTagRepository,
 	}
 }
@@ -105,13 +108,24 @@ func (s Service) GetRunMetrics(
 	return metrics, metricKeysMap, nil
 }
 
+// CreateRunArtifact creates new Run artifact.
+func (s Service) CreateRunArtifact(
+	ctx context.Context, namespaceID uint, runID string, req *request.CreateRunArtifactRequest,
+) error {
+	artifact := ConvertCreateRunArtifactRequestToModel(namespaceID, runID, req)
+	if err := s.artifactRepository.Create(ctx, artifact); err != nil {
+		return api.NewInternalError("error creating run artifact: %s", err)
+	}
+	return nil
+}
+
 // GetRunsActive returns the active runs.
 func (s Service) GetRunsActive(
 	ctx context.Context, namespaceID uint, req *request.GetRunsActiveRequest,
 ) ([]models.Run, error) {
 	runs, err := s.runRepository.GetByNamespaceIDAndStatus(ctx, namespaceID, models.StatusRunning)
 	if err != nil {
-		return nil, api.NewInternalError("error ative runs: %s", err)
+		return nil, api.NewInternalError("error getting active runs: %s", err)
 	}
 	return runs, nil
 }

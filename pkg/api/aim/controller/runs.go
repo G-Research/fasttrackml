@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"net/http"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -60,6 +61,26 @@ func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 	resp := response.NewGetRunMetricsResponse(metrics, metricKeysMap)
 	log.Debugf("getRunMetrics response: %#v", resp)
 	return ctx.JSON(resp)
+}
+
+// CreateRunArtifact handles `POST /runs/:id/artifacts` endpoint.
+func (c Controller) CreateRunArtifact(ctx *fiber.Ctx) error {
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("createRunArtifact namespace: %s", ns.Code)
+
+	req := request.CreateRunArtifactRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	if err := c.runService.CreateRunArtifact(ctx.Context(), ns.ID, ctx.Params("id"), &req); err != nil {
+		return err
+	}
+
+	return ctx.SendStatus(http.StatusCreated)
 }
 
 // GetRunsActive handles `GET /runs/active` endpoint.

@@ -14,7 +14,7 @@ import (
 type AppRepositoryProvider interface {
 	// Update updates existing database.App object.
 	Update(cxt context.Context, app *models.App) error
-	// Create creates new database.App object.
+	// Create creates a new database.App object.
 	Create(ctx context.Context, app *models.App) error
 	// Delete deletes existing database.App object.
 	Delete(ctx context.Context, app *models.App) error
@@ -29,7 +29,7 @@ type AppRepository struct {
 	db *gorm.DB
 }
 
-// NewAppRepository creates repository to work with `app` entity.
+// NewAppRepository creates a repository to work with `app` entity.
 func NewAppRepository(db *gorm.DB) *AppRepository {
 	return &AppRepository{
 		db: db,
@@ -44,7 +44,7 @@ func (r AppRepository) Update(ctx context.Context, app *models.App) error {
 	return nil
 }
 
-// Create creates new app object.
+// Create creates a new app object.
 func (r AppRepository) Create(ctx context.Context, app *models.App) error {
 	if err := r.db.WithContext(ctx).Create(&app).Error; err != nil {
 		return eris.Wrap(err, "error creating app entity")

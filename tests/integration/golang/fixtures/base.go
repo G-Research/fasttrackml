@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 
 	aimModels "github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	mlflowModels "github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 )
 
 // baseFixtures represents base fixtures object.
@@ -21,21 +21,22 @@ func (f baseFixtures) TruncateTables() error {
 		return errors.Wrap(err, "error deleting from many2many table")
 	}
 	for _, table := range []interface{}{
+		aimModels.Artifact{},
 		aimModels.Dashboard{},
 		aimModels.App{},
 		aimModels.SharedTag{},
-		models.Tag{},
-		models.Param{},
-		models.LatestMetric{},
-		models.Metric{},
-		models.Context{},
-		models.Log{},
-		models.Run{},
-		models.ExperimentTag{},
-		models.Experiment{},
-		models.Namespace{},
-		models.RoleNamespace{},
-		models.Role{},
+		mlflowModels.Tag{},
+		mlflowModels.Param{},
+		mlflowModels.LatestMetric{},
+		mlflowModels.Metric{},
+		mlflowModels.Context{},
+		mlflowModels.Log{},
+		mlflowModels.Run{},
+		mlflowModels.ExperimentTag{},
+		mlflowModels.Experiment{},
+		mlflowModels.Namespace{},
+		mlflowModels.RoleNamespace{},
+		mlflowModels.Role{},
 	} {
 		if err := f.db.Session(
 			&gorm.Session{AllowGlobalUpdate: true},

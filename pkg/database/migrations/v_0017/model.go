@@ -1,4 +1,4 @@
-package database
+package v_0017
 
 import (
 	"context"
@@ -309,7 +309,7 @@ type Artifact struct {
 	Iter    int64 `gorm:"index"`
 	Step    int64 `gorm:"default:0;not null"`
 	Run     Run
-	RunID   string `gorm:"column:run_uuid;not null;index;constraint:OnDelete:CASCADE""`
+	RunID   string `gorm:"column:run_uuid;not null;index"`
 	Index   int64
 	Width   int64
 	Height  int64

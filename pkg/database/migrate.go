@@ -149,6 +149,7 @@ func CheckAndMigrateDB(migrate bool, db *gorm.DB) error {
 				&App{},
 				&SchemaVersion{},
 				&Log{},
+				&Artifact{},
 			); err != nil {
 				return fmt.Errorf("error initializing database: %w", err)
 			}

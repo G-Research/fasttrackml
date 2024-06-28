@@ -473,6 +473,133 @@ func NewStreamMetricsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 	})
 }
 
+// NewStreamArtifactsResponse streams the provided sql.Rows to the fiber context.
+//
+//nolint:gocyclo
+func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
+	result repositories.SearchResultMap, req request.SearchImagesRequest,
+) {
+	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		//nolint:errcheck
+		defer rows.Close()
+
+		start := time.Now()
+
+		if err := func() error {
+			var (
+				runID      string
+				images     []fiber.Map
+				values     []float64
+				iters      []float64
+				epochs     []float64
+				timestamps []float64
+				progress   int
+			)
+			reportProgress := func(cur int64) error {
+				if !req.ReportProgress {
+					return nil
+				}
+				err := encoding.EncodeTree(w, fiber.Map{
+					fmt.Sprintf("progress_%d", progress): []int64{cur, totalRuns},
+				})
+				if err != nil {
+					return err
+				}
+				progress++
+				return w.Flush()
+			}
+			addImages := func() {
+				if runID != "" {
+					image := fiber.Map{
+						"ranges": fiber.Map{
+							"record_range_total": []int{0, 0},
+							"record_range_used":  []int{0, 0},
+							"index_range_total":  []int{0, 0},
+							"index_range_used":   []int{0, 0},
+						},
+						"params": fiber.Map{
+							"images_per_step": 0,
+						},
+						"traces": []fiber.Map{},
+					}
+					images = append(images, image)
+				}
+			}
+			flushImages := func() error {
+				if runID == "" {
+					return nil
+				}
+				if err := encoding.EncodeTree(w, fiber.Map{
+					runID: fiber.Map{
+						"traces": images,
+					},
+				}); err != nil {
+					return err
+				}
+				if err := reportProgress(totalRuns - result[id].RowNum); err != nil {
+					return err
+				}
+				return w.Flush()
+			}
+			for rows.Next() {
+				var image models.Artifact
+				if err := database.DB.ScanRows(rows, &image); err != nil {
+					return err
+				}
+
+				if image.RunID != runID {
+					addImages()
+
+					if image.RunID != id {
+						if err := flushImages(); err != nil {
+							return err
+						}
+
+						images = make([]fiber.Map, 0)
+
+						if err := encoding.EncodeTree(w, fiber.Map{
+							image.RunID: result[image.RunID].Info,
+						}); err != nil {
+							return err
+						}
+
+						id = image.RunID
+					}
+
+					values = make([]float64, 0, req.Steps)
+					iters = make([]float64, 0, req.Steps)
+					epochs = make([]float64, 0, req.Steps)
+					context = fiber.Map{}
+					timestamps = make([]float64, 0, req.Steps)
+					if xAxis {
+						xAxisValues = make([]float64, 0, req.Steps)
+					}
+				}
+
+				values = append(values, v)
+				iters = append(iters, float64(image.Iter))
+				epochs = append(epochs, float64(image.Step))
+				timestamps = append(timestamps, float64(image.Timestamp)/1000)
+			}
+
+			addImages()
+			if err := flushImages(); err != nil {
+				return err
+			}
+
+			if err := reportProgress(totalRuns); err != nil {
+				return err
+			}
+
+			return nil
+		}(); err != nil {
+			log.Errorf("Error encountered in %s %s: error streaming images: %s", ctx.Method(), ctx.Path(), err)
+		}
+
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
+	})
+}
+
 // NewRunsSearchCSVResponse formats and sends Runs search response as a CSV file.
 //
 //nolint:gocyclo

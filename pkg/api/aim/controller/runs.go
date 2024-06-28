@@ -206,6 +206,37 @@ func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 	return nil
 }
 
+// SearchMetrics handles `POST /runs/search/images` endpoint.
+func (c Controller) SearchImages(ctx *fiber.Ctx) error {
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("searchMetrics namespace: %s", ns.Code)
+
+	req := request.SearchImagesRequest{}
+	if err = ctx.QueryParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+	if ctx.Query("report_progress") == "" {
+		req.ReportProgress = true
+	}
+
+	tzOffset, err := strconv.Atoi(ctx.Get("x-timezone-offset", "0"))
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "x-timezone-offset header is not a valid integer")
+	}
+
+	//nolint:rowserrcheck
+	rows, totalRuns, result, err := c.runService.SearchImages(ctx.Context(), ns.ID, tzOffset, req)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	response.NewStreamArtifactsResponse(ctx, rows, totalRuns, result, req)
+	return nil
+}
+
 // DeleteRun handles `DELETE /runs/:id` endpoint.
 func (c Controller) DeleteRun(ctx *fiber.Ctx) error {
 	ns, err := middleware.GetNamespaceFromContext(ctx.Context())

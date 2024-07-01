@@ -21,10 +21,10 @@ func (f baseFixtures) TruncateTables() error {
 		return errors.Wrap(err, "error deleting from many2many table")
 	}
 	for _, table := range []interface{}{
-		aimModels.Artifact{},
 		aimModels.Dashboard{},
 		aimModels.App{},
 		aimModels.SharedTag{},
+		mlflowModels.Artifact{},
 		mlflowModels.Tag{},
 		mlflowModels.Param{},
 		mlflowModels.LatestMetric{},

@@ -47,12 +47,13 @@ const (
 
 // Service provides service layer to work with `run` business logic.
 type Service struct {
+	logRepository        repositories.LogRepositoryProvider
 	tagRepository        repositories.TagRepositoryProvider
 	runRepository        repositories.RunRepositoryProvider
 	paramRepository      repositories.ParamRepositoryProvider
 	metricRepository     repositories.MetricRepositoryProvider
 	experimentRepository repositories.ExperimentRepositoryProvider
-	logRepository        repositories.LogRepositoryProvider
+	artifactRepository   repositories.ArtifactRepositoryProvider
 }
 
 // NewService creates new Service instance.
@@ -63,14 +64,16 @@ func NewService(
 	metricRepository repositories.MetricRepositoryProvider,
 	experimentRepository repositories.ExperimentRepositoryProvider,
 	logRepository repositories.LogRepositoryProvider,
+	artifactRepository repositories.ArtifactRepositoryProvider,
 ) *Service {
 	return &Service{
+		logRepository:        logRepository,
 		tagRepository:        tagRepository,
 		runRepository:        runRepository,
 		paramRepository:      paramRepository,
 		metricRepository:     metricRepository,
 		experimentRepository: experimentRepository,
-		logRepository:        logRepository,
+		artifactRepository:   artifactRepository,
 	}
 }
 
@@ -691,6 +694,17 @@ func (s Service) LogOutput(
 	log := convertors.ConvertLogOutputRequestToDBModel(run.ID, req)
 	if err := s.logRepository.Create(ctx, log); err != nil {
 		return api.NewInternalError("unable to save log for run '%s'", req.RunID)
+	}
+	return nil
+}
+
+// LogArtifact creates new Run artifact.
+func (s Service) LogArtifact(
+	ctx context.Context, namespaceID uint, req *request.LogArtifactRequest,
+) error {
+	artifact := ConvertCreateRunArtifactRequestToModel(namespaceID, req)
+	if err := s.artifactRepository.Create(ctx, artifact); err != nil {
+		return api.NewInternalError("error creating run artifact: %s", err)
 	}
 	return nil
 }

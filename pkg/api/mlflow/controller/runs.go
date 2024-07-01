@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
@@ -313,4 +314,24 @@ func (c Controller) LogOutput(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(fiber.Map{})
+}
+
+// LogArtifact handles `POST /runs/log-artifact` endpoint.
+func (c Controller) LogArtifact(ctx *fiber.Ctx) error {
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("LogArtifact namespace: %s", ns.Code)
+
+	req := request.LogArtifactRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	if err := c.runService.LogArtifact(ctx.Context(), ns.ID, &req); err != nil {
+		return err
+	}
+
+	return ctx.SendStatus(http.StatusCreated)
 }

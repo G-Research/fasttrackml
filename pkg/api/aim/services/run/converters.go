@@ -28,21 +28,3 @@ func ConvertRunMetricsRequestToMap(req *request.GetRunMetricsRequest) (models.Me
 	}
 	return metricKeysMap, nil
 }
-
-// ConvertCreateRunArtifactRequestToModel  converts request of
-// `POST /runs/:id/artifact` endpoint to an internal Model object.
-func ConvertCreateRunArtifactRequestToModel(
-	namespaceID uint, runID string, req *request.CreateRunArtifactRequest,
-) *models.Artifact {
-	return &models.Artifact{
-		Iter:    req.Iter,
-		Step:    req.Step,
-		RunID:   runID,
-		Index:   req.Index,
-		Width:   req.Width,
-		Height:  req.Height,
-		Format:  req.Format,
-		Caption: req.Caption,
-		BlobURI: req.BlobURI,
-	}
-}

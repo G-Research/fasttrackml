@@ -293,7 +293,7 @@ class CustomRestStore(RestStore):
         storage_path = posixpath.join(artifact_path, os.path.basename(filename))
         request_body = {
             "run_id": run_id,
-            "storage_path": storage_path,
+            "blob_uri": storage_path,
             "caption": caption,
             "index": index,
             "width": width,
@@ -305,7 +305,7 @@ class CustomRestStore(RestStore):
         result = http_request(
             **{
                 "host_creds": self.get_host_creds(),
-                "endpoint": "/api/2.0/mlflow/runs/log-image",
+                "endpoint": "/api/2.0/mlflow/runs/log-artifact",
                 "method": "POST",
                 "json": request_body,
             }

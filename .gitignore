@@ -1,8 +1,5 @@
-# Binaries
-dist/
-fml
-*.exe
-__debug_bin*
+# IDE
+.idea
 
 # Local database
 fasttrackml.db*

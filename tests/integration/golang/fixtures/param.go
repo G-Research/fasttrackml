@@ -14,7 +14,7 @@ type ParamFixtures struct {
 	baseFixtures
 }
 
-// NewParamFixtures creates new instance of ParamFixtures.
+// NewParamFixtures creates a new instance of ParamFixtures.
 func NewParamFixtures(db *gorm.DB) (*ParamFixtures, error) {
 	return &ParamFixtures{
 		baseFixtures: baseFixtures{db: db},

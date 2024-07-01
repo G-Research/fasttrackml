@@ -24,10 +24,11 @@ const (
 
 // Service provides service layer to work with `run` business logic.
 type Service struct {
-	runRepository    repositories.RunRepositoryProvider
-	logRepository    repositories.LogRepositoryProvider
-	metricRepository repositories.MetricRepositoryProvider
-	tagRepository    repositories.TagRepositoryProvider
+	runRepository       repositories.RunRepositoryProvider
+	logRepository       repositories.LogRepositoryProvider
+	metricRepository    repositories.MetricRepositoryProvider
+	tagRepository       repositories.TagRepositoryProvider
+	sharedTagRepository repositories.SharedTagRepositoryProvider
 }
 
 // NewService creates new Service instance.
@@ -36,12 +37,14 @@ func NewService(
 	logRepository repositories.LogRepositoryProvider,
 	metricRepository repositories.MetricRepositoryProvider,
 	tagRepository repositories.TagRepositoryProvider,
+	sharedTagRepository repositories.SharedTagRepositoryProvider,
 ) *Service {
 	return &Service{
-		runRepository:    runRepository,
-		logRepository:    logRepository,
-		metricRepository: metricRepository,
-		tagRepository:    tagRepository,
+		runRepository:       runRepository,
+		logRepository:       logRepository,
+		metricRepository:    metricRepository,
+		tagRepository:       tagRepository,
+		sharedTagRepository: sharedTagRepository,
 	}
 }
 
@@ -108,7 +111,7 @@ func (s Service) GetRunsActive(
 ) ([]models.Run, error) {
 	runs, err := s.runRepository.GetByNamespaceIDAndStatus(ctx, namespaceID, models.StatusRunning)
 	if err != nil {
-		return nil, api.NewInternalError("error ative runs: %s", err)
+		return nil, api.NewInternalError("error getting active runs: %s", err)
 	}
 	return runs, nil
 }
@@ -259,6 +262,50 @@ func (s Service) ProcessBatch(
 		}
 	default:
 		return eris.Errorf("unsupported batch action: %s", action)
+	}
+	return nil
+}
+
+// AddRunTag adds a SharedTag to a Run.
+func (s Service) AddRunTag(ctx context.Context, namespaceID uint, req *request.AddRunTagRequest) error {
+	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespaceID, req.RunID)
+	if err != nil {
+		return api.NewInternalError("error getting run by id %s: %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("run '%s' not found", req.RunID)
+	}
+	tag, err := s.sharedTagRepository.GetByNamespaceIDAndTagName(ctx, namespaceID, req.TagName)
+	if err != nil {
+		return api.NewInternalError("unable to find tag by name %q: %s", req.TagName, err)
+	}
+	if tag == nil {
+		return api.NewResourceDoesNotExistError("tag '%s' not found", req.TagName)
+	}
+	if err := s.sharedTagRepository.AddAssociation(ctx, tag, run); err != nil {
+		return api.NewInternalError("unable to update tag %s with run %s", tag.Name, run.ID)
+	}
+	return nil
+}
+
+// DeleteRunTag removes a SharedTag from a Run.
+func (s Service) DeleteRunTag(ctx context.Context, namespaceID uint, req *request.DeleteRunTagRequest) error {
+	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespaceID, req.RunID)
+	if err != nil {
+		return api.NewInternalError("error getting run by id %s: %s", req.RunID, err)
+	}
+	if run == nil {
+		return api.NewResourceDoesNotExistError("run '%s' not found", req.RunID)
+	}
+	tag, err := s.sharedTagRepository.GetByNamespaceIDAndTagID(ctx, namespaceID, req.TagID)
+	if err != nil {
+		return api.NewInternalError("unable to find tag by id %q: %s", req.TagID, err)
+	}
+	if tag == nil {
+		return api.NewResourceDoesNotExistError("tag '%s' not found", req.TagID)
+	}
+	if err := s.sharedTagRepository.DeleteAssociation(ctx, tag, run); err != nil {
+		return api.NewInternalError("unable to delete tag %s from run %s", tag.Name, req.RunID)
 	}
 	return nil
 }

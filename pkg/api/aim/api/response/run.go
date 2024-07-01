@@ -54,10 +54,12 @@ type GetRunInfoExperimentPartial struct {
 
 // GetRunInfoPropsPartial is a partial response object for GetRunInfoResponse.
 type GetRunInfoPropsPartial struct {
+	ID           string                      `json:"id,omitempty"`
+	RunID        string                      `json:"run_id,omitempty"`
 	Name         string                      `json:"name"`
 	Description  string                      `json:"description"`
 	Experiment   GetRunInfoExperimentPartial `json:"experiment"`
-	Tags         []string                    `json:"tags"`
+	Tags         []map[string]string         `json:"tags"`
 	CreationTime float64                     `json:"creation_time"`
 	EndTime      float64                     `json:"end_time"`
 	Archived     bool                        `json:"archived"`
@@ -111,7 +113,7 @@ func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
 				ID:   fmt.Sprintf("%d", *run.Experiment.ID),
 				Name: run.Experiment.Name,
 			},
-			Tags:         []string{},
+			Tags:         ConvertTagsToMaps(run.SharedTags),
 			CreationTime: float64(run.StartTime.Int64) / 1000,
 			EndTime:      float64(run.EndTime.Int64) / 1000,
 			Archived:     run.LifecycleStage == models.LifecycleStageDeleted,
@@ -637,7 +639,7 @@ func NewRunsSearchStreamResponse(
 							"id":   fmt.Sprintf("%d", *r.Experiment.ID),
 							"name": r.Experiment.Name,
 						},
-						"tags":          []string{}, // TODO insert real tags
+						"tags":          ConvertTagsToMaps(r.SharedTags),
 						"creation_time": float64(r.StartTime.Int64) / 1000,
 						"end_time":      float64(r.EndTime.Int64) / 1000,
 						"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
@@ -732,6 +734,7 @@ func NewActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgre
 		start := time.Now()
 		if err := func() error {
 			for i, r := range runs {
+
 				props := fiber.Map{
 					"name":        r.Name,
 					"description": nil,
@@ -739,7 +742,7 @@ func NewActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgre
 						"id":   fmt.Sprintf("%d", *r.Experiment.ID),
 						"name": r.Experiment.Name,
 					},
-					"tags":          []string{},
+					"tags":          ConvertTagsToMaps(r.SharedTags),
 					"creation_time": float64(r.StartTime.Int64) / 1000,
 					"end_time":      float64(r.EndTime.Int64) / 1000,
 					"archived":      r.LifecycleStage == models.LifecycleStageDeleted,

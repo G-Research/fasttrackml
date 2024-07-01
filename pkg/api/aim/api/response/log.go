@@ -36,7 +36,7 @@ func NewGetRunLogsResponse(
 		start := time.Now()
 		if err := func() error {
 			data := fiber.Map{}
-			count, batchSize := 0, 500
+			count, batchSize := 1, 500
 			for rows.Next() {
 				runLog, err := next(rows)
 				if err != nil {

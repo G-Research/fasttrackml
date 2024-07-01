@@ -26,7 +26,7 @@ func (s *GetRunLogsTestSuite) Test_Ok() {
 	run, err := s.RunFixtures.CreateExampleRun(context.Background(), s.DefaultExperiment)
 	s.Require().Nil(err)
 
-	for i := 0; i < 10; i++ {
+	for i := 1; i <= 10; i++ {
 		_, err := s.LogFixtures.CreateLog(context.Background(), &models.Log{
 			Timestamp: time.Now().Unix(),
 			Value:     fmt.Sprintf("value_%d", i),
@@ -46,7 +46,7 @@ func (s *GetRunLogsTestSuite) Test_Ok() {
 
 	decodedData, err := encoding.NewDecoder(resp).Decode()
 	s.Require().Nil(err)
-	for i := 0; i < 10; i++ {
+	for i := 1; i <= 10; i++ {
 		value, ok := decodedData[fmt.Sprintf("%d", i)]
 		s.Require().True(ok)
 		s.Require().Equal(fmt.Sprintf("value_%d", i), value)

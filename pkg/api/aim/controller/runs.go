@@ -185,7 +185,7 @@ func (c Controller) SearchAlignedMetrics(ctx *fiber.Ctx) error {
 	return nil
 }
 
-// SearchMetrics handles `POST /runs/search/images` endpoint.
+// SearchMetrics handles `POST /runs/search/image` endpoint.
 func (c Controller) SearchImages(ctx *fiber.Ctx) error {
 	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -193,7 +193,7 @@ func (c Controller) SearchImages(ctx *fiber.Ctx) error {
 	}
 	log.Debugf("searchMetrics namespace: %s", ns.Code)
 
-	req := request.SearchImagesRequest{}
+	req := request.SearchArtifactsRequest{}
 	if err = ctx.QueryParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
@@ -207,7 +207,7 @@ func (c Controller) SearchImages(ctx *fiber.Ctx) error {
 	}
 
 	//nolint:rowserrcheck
-	rows, totalRuns, result, err := c.runService.SearchImages(ctx.Context(), ns.ID, tzOffset, req)
+	rows, totalRuns, result, err := c.runService.SearchArtifacts(ctx.Context(), ns.ID, tzOffset, req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}

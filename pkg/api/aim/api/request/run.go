@@ -86,8 +86,8 @@ type SearchAlignedMetricsRequest struct {
 	AlignBy string `json:"align_by"`
 }
 
-// SearchImagesRequest is a request struct for `GET /runs/search/images` endpoint.
-type SearchImagesRequest struct {
+// SearchArtifactsRequest is a request struct for `GET /runs/search/image` endpoint.
+type SearchArtifactsRequest struct {
 	BaseSearchRequest
 	Query         string `query:"q"`
 	SkipSystem    bool   `query:"skip_system"`

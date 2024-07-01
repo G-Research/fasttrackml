@@ -29,6 +29,7 @@ type Service struct {
 	metricRepository    repositories.MetricRepositoryProvider
 	tagRepository       repositories.TagRepositoryProvider
 	sharedTagRepository repositories.SharedTagRepositoryProvider
+	artifactRepository  repositories.ArtifactRepositoryProvider
 }
 
 // NewService creates new Service instance.
@@ -38,6 +39,7 @@ func NewService(
 	metricRepository repositories.MetricRepositoryProvider,
 	tagRepository repositories.TagRepositoryProvider,
 	sharedTagRepository repositories.SharedTagRepositoryProvider,
+	artifactRepository repositories.ArtifactRepositoryProvider,
 ) *Service {
 	return &Service{
 		runRepository:       runRepository,
@@ -45,6 +47,7 @@ func NewService(
 		metricRepository:    metricRepository,
 		tagRepository:       tagRepository,
 		sharedTagRepository: sharedTagRepository,
+		artifactRepository:  artifactRepository,
 	}
 }
 
@@ -132,6 +135,17 @@ func (s Service) SearchMetrics(
 	ctx context.Context, namespaceID uint, timeZoneOffset int, req request.SearchMetricsRequest,
 ) (*sql.Rows, int64, repositories.SearchResultMap, error) {
 	rows, total, searchResult, err := s.metricRepository.SearchMetrics(ctx, namespaceID, timeZoneOffset, req)
+	if err != nil {
+		return nil, 0, nil, api.NewInternalError("error searching runs: %s", err)
+	}
+	return rows, total, searchResult, nil
+}
+
+// SearchArtifacts returns the list of artifacts (images) by provided search criteria.
+func (s Service) SearchArtifacts(
+	ctx context.Context, namespaceID uint, timeZoneOffset int, req request.SearchArtifactsRequest,
+) (*sql.Rows, int64, repositories.SearchResultMap, error) {
+	rows, total, searchResult, err := s.artifactRepository.Search(ctx, namespaceID, timeZoneOffset, req)
 	if err != nil {
 		return nil, 0, nil, api.NewInternalError("error searching runs: %s", err)
 	}

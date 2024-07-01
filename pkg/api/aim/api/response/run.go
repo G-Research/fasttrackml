@@ -477,7 +477,7 @@ func NewStreamMetricsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 //
 //nolint:gocyclo
 func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
-	result repositories.SearchResultMap, req request.SearchImagesRequest,
+	result repositories.SearchResultMap, req request.SearchArtifactsRequest,
 ) {
 	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		//nolint:errcheck

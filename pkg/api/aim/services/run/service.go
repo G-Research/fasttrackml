@@ -111,7 +111,7 @@ func (s Service) GetRunsActive(
 ) ([]models.Run, error) {
 	runs, err := s.runRepository.GetByNamespaceIDAndStatus(ctx, namespaceID, models.StatusRunning)
 	if err != nil {
-		return nil, api.NewInternalError("error ative runs: %s", err)
+		return nil, api.NewInternalError("error getting active runs: %s", err)
 	}
 	return runs, nil
 }

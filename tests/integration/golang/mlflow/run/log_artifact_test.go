@@ -1,4 +1,4 @@
-package artifact
+package run
 
 import (
 	"context"
@@ -7,49 +7,51 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
-type CreateRunArtifactTestSuite struct {
+type LogArtifactTestSuite struct {
 	helpers.BaseTestSuite
 }
 
-func TestCreateRunArtifactTestSuite(t *testing.T) {
-	suite.Run(t, new(CreateRunArtifactTestSuite))
+func TestLogArtifactTestSuite(t *testing.T) {
+	suite.Run(t, new(LogArtifactTestSuite))
 }
 
-func (s *CreateRunArtifactTestSuite) Test_Ok() {
+func (s *LogArtifactTestSuite) Test_Ok() {
 	run, err := s.RunFixtures.CreateExampleRun(context.Background(), s.DefaultExperiment)
 	s.Require().Nil(err)
 
 	tests := []struct {
 		name        string
-		requestBody request.CreateRunArtifactRequest
+		requestBody request.LogArtifactRequest
 	}{
 		{
 			name: "CreateRunArtifact",
-			requestBody: request.CreateRunArtifactRequest{
+			requestBody: request.LogArtifactRequest{
 				Iter:    1,
 				Step:    1,
-				Caption: "caption",
 				Index:   1,
+				RunID:   run.ID,
 				Width:   100,
 				Height:  200,
 				Format:  "test",
 				BlobURI: "/path/to/artifact",
+				Caption: "caption",
 			},
 		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			s.Require().Nil(
-				s.AIMClient().WithMethod(
+				s.MlflowClient().WithMethod(
 					http.MethodPost,
 				).WithRequest(
 					tt.requestBody,
 				).DoRequest(
-					"/runs/%s/artifact", run.ID,
+					"%s%s", mlflow.RunsRoutePrefix, mlflow.RunsLogArtifactRoute,
 				),
 			)
 		})

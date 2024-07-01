@@ -64,6 +64,7 @@ func (r *Router) Init(server fiber.Router) {
 	runs.Get("/search/run/", r.controller.SearchRuns)
 	runs.Post("/search/metric/", r.controller.SearchMetrics)
 	runs.Post("/search/metric/align/", r.controller.SearchAlignedMetrics)
+	runs.Post("/search/image/", r.controller.SearchImages)
 	runs.Get("/:id/info/", r.controller.GetRunInfo)
 	runs.Post("/:id/tags/new", r.controller.AddRunTag)
 	runs.Delete("/:id/tags/:tagID", r.controller.DeleteRunTag)

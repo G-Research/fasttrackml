@@ -17,7 +17,7 @@ type Base struct {
 	IsArchived bool      `json:"-"`
 }
 
-// App represents model to work with `apps` table.
+// App represents a model to work with `apps` table.
 type App struct {
 	Base
 	Type        string    `gorm:"not null" json:"type"`
@@ -26,7 +26,7 @@ type App struct {
 	NamespaceID uint      `gorm:"not null" json:"-"`
 }
 
-// AppState represents state of App entity.
+// AppState represents the state of App entity.
 type AppState map[string]any
 
 // Value implements Gorm interface.

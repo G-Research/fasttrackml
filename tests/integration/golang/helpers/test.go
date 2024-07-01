@@ -33,6 +33,8 @@ type BaseTestSuite struct {
 	RunFixtures                 *fixtures.RunFixtures
 	LogFixtures                 *fixtures.LogFixtures
 	TagFixtures                 *fixtures.TagFixtures
+	ArtifactFixtures            *fixtures.ArtifactFixtures
+	SharedTagFixtures           *fixtures.SharedTagFixtures
 	RolesFixtures               *fixtures.RoleFixtures
 	MetricFixtures              *fixtures.MetricFixtures
 	ContextFixtures             *fixtures.ContextFixtures
@@ -125,6 +127,14 @@ func (s *BaseTestSuite) initFixtures() {
 	tagFixtures, err := fixtures.NewTagFixtures(db)
 	s.Require().Nil(err)
 	s.TagFixtures = tagFixtures
+
+	sharedTagFixtures, err := fixtures.NewSharedTagFixtures(db)
+	s.Require().Nil(err)
+	s.SharedTagFixtures = sharedTagFixtures
+
+	artifactFixtures, err := fixtures.NewArtifactFixtures(db)
+	s.Require().Nil(err)
+	s.ArtifactFixtures = artifactFixtures
 
 	logFixtures, err := fixtures.NewLogFixtures(db)
 	s.Require().Nil(err)

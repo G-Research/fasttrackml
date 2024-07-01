@@ -22,3 +22,21 @@ func adjustCreateRunRequestForNamespace(ns *models.Namespace, req *request.Creat
 		req.ExperimentID = fmt.Sprintf("%d", *ns.DefaultExperimentID)
 	}
 }
+
+// ConvertCreateRunArtifactRequestToModel  converts request of
+// `POST /runs/:id/artifact` endpoint to an internal Model object.
+func ConvertCreateRunArtifactRequestToModel(
+	namespaceID uint, req *request.LogArtifactRequest,
+) *models.Artifact {
+	return &models.Artifact{
+		Iter:    req.Iter,
+		Step:    req.Step,
+		RunID:   req.RunID,
+		Index:   req.Index,
+		Width:   req.Width,
+		Height:  req.Height,
+		Format:  req.Format,
+		Caption: req.Caption,
+		BlobURI: req.BlobURI,
+	}
+}

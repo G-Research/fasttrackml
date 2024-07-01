@@ -30,27 +30,16 @@ type S3 struct {
 // NewS3 creates new S3 instance.
 func NewS3(ctx context.Context, config *config.Config) (*S3, error) {
 	var clientOptions []func(o *s3.Options)
-	var configOptions []func(*awsConfig.LoadOptions) error
 	if config.S3EndpointURI != "" {
 		clientOptions = append(clientOptions, func(o *s3.Options) {
 			o.UsePathStyle = true
 		})
-		configOptions = append(configOptions, awsConfig.WithEndpointResolverWithOptions(
-			aws.EndpointResolverWithOptionsFunc(
-				func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-					if service == s3.ServiceID {
-						return aws.Endpoint{
-							URL:           config.S3EndpointURI,
-							SigningRegion: region,
-						}, nil
-					}
-					return aws.Endpoint{}, eris.Errorf("unknown endpoint requested for the service: %s", service)
-				},
-			),
-		))
+		clientOptions = append(clientOptions, func(o *s3.Options) {
+			o.BaseEndpoint = aws.String(config.S3EndpointURI)
+		})
 	}
 
-	cfg, err := awsConfig.LoadDefaultConfig(ctx, configOptions...)
+	cfg, err := awsConfig.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "error loading configuration for S3 client")
 	}

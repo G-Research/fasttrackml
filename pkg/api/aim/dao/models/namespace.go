@@ -10,7 +10,7 @@ import (
 // DefaultNamespaceCode represents default Namespace code.
 const DefaultNamespaceCode = "default"
 
-// Namespace represents model to work with `namespaces` table.
+// Namespace represents a model to work with `namespaces` table.
 type Namespace struct {
 	ID                  uint           `gorm:"primaryKey;autoIncrement" json:"id"`
 	Code                string         `gorm:"unique;index;not null" json:"code"`

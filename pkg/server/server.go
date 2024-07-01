@@ -271,7 +271,7 @@ func createApp(
 	aimAPI.NewRouter(
 		aimController.NewController(
 			aimTagService.NewService(
-				aimRepositories.NewTagRepository(db.GormDB()),
+				aimRepositories.NewSharedTagRepository(db.GormDB()),
 			),
 			aimAppService.NewService(
 				aimRepositories.NewAppRepository(db.GormDB()),
@@ -281,6 +281,7 @@ func createApp(
 				aimRepositories.NewLogRepository(db.GormDB()),
 				aimRepositories.NewMetricRepository(db.GormDB()),
 				aimRepositories.NewTagRepository(db.GormDB()),
+				aimRepositories.NewSharedTagRepository(db.GormDB()),
 			),
 			aimProjectService.NewService(
 				aimRepositories.NewTagRepository(db.GormDB()),
@@ -312,6 +313,7 @@ func createApp(
 				mlflowRepositories.NewMetricRepository(db.GormDB()),
 				mlflowRepositories.NewExperimentRepository(db.GormDB()),
 				mlflowRepositories.NewLogRepository(db.GormDB(), config.RunLogOutputMax),
+				mlflowRepositories.NewArtifactRepository(db.GormDB()),
 			),
 			mlflowModelService.NewService(),
 			mlflowMetricService.NewService(

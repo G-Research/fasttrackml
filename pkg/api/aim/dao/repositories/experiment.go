@@ -47,7 +47,7 @@ type ExperimentRepository struct {
 	db *gorm.DB
 }
 
-// NewExperimentRepository creates repository to work with `experiment` entity.
+// NewExperimentRepository creates a repository to work with `experiment` entity.
 func NewExperimentRepository(db *gorm.DB) *ExperimentRepository {
 	return &ExperimentRepository{
 		db: db,

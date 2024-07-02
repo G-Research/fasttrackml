@@ -144,3 +144,21 @@ class FasttrackmlTrackingServiceClient(TrackingServiceClient):
         data: str,
     ):
         self.custom_store.log_output(run_id, data)
+
+    def log_image(
+        self,
+        run_id: str,
+        filename: str,
+        artifact_path: str,
+        caption: str,
+        index: int,
+        width: int,
+        height: int,
+        format: str,
+        step: int,
+        iter: int,
+    ):
+        # 1. log the artifact
+        self.log_artifact(run_id, filename, artifact_path)
+        # 2. log the image metadata
+        self.custom_store.log_image(run_id, filename, artifact_path, caption, index, width, height, format, step, iter)

@@ -310,7 +310,7 @@ class CustomRestStore(RestStore):
                 "json": request_body,
             }
         )
-        if result.status_code != 200:
+        if result.status_code != 201:
             result = result.json()
         if "error_code" in result:
             raise MlflowException(

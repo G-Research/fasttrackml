@@ -5,6 +5,7 @@ import (
 
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
+	"github.com/google/uuid"
 )
 
 // adjustSearchRunsRequestForNamespace preprocesses the SearchRunRequest for the given namespace.
@@ -29,6 +30,7 @@ func ConvertCreateRunArtifactRequestToModel(
 	namespaceID uint, req *request.LogArtifactRequest,
 ) *models.Artifact {
 	return &models.Artifact{
+		ID:      uuid.New(),
 		Iter:    req.Iter,
 		Step:    req.Step,
 		RunID:   req.RunID,

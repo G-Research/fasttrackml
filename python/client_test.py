@@ -6,9 +6,9 @@ import uuid
 from random import random, uniform
 
 import pytest
-from fasttrackml.entities import Metric, Param
 
 from fasttrackml import FasttrackmlClient
+from fasttrackml.entities import Metric, Param
 
 LOCALHOST = "127.0.0.1"
 
@@ -115,3 +115,11 @@ def test_init_output_logging(client, server, run):
     for i in range(100):
         log_data = str(uuid.uuid4()) + "\n" + str(uuid.uuid4())
         print(log_data)
+
+
+def test_log_image(client, server, run):
+    # test logging some images
+    for i in range(100):
+        assert (
+            client.log_image(run.info.run_id, "dice.png", "images", "These are dice", 0, 640, 480, "png", i, 0) == None
+        )

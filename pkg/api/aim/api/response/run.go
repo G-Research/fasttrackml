@@ -488,7 +488,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 		if err := func() error {
 			var (
 				runID      string
-				images     []fiber.Map
+				runData    fiber.Map
 				values     []float64
 				iters      []float64
 				epochs     []float64
@@ -508,9 +508,9 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 				progress++
 				return w.Flush()
 			}
-			addImages := func() {
-				if runID != "" {
-					image := fiber.Map{
+			addImage := func(img models.Artifact) {
+				if runData == nil {
+					runData = fiber.Map{
 						"ranges": fiber.Map{
 							"record_range_total": []int{0, 0},
 							"record_range_used":  []int{0, 0},
@@ -522,21 +522,19 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 						},
 						"traces": []fiber.Map{},
 					}
-					images = append(images, image)
 				}
+				runData["traces"] = append(runData["traces"].([]fiber.Map), fiber.Map{})
 			}
 			flushImages := func() error {
 				if runID == "" {
 					return nil
 				}
 				if err := encoding.EncodeTree(w, fiber.Map{
-					runID: fiber.Map{
-						"traces": images,
-					},
+					runID: runData,
 				}); err != nil {
 					return err
 				}
-				if err := reportProgress(totalRuns - result[id].RowNum); err != nil {
+				if err := reportProgress(totalRuns - 1); err != nil {
 					return err
 				}
 				return w.Flush()
@@ -548,41 +546,23 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 				}
 
 				if image.RunID != runID {
-					addImages()
-
-					if image.RunID != id {
-						if err := flushImages(); err != nil {
-							return err
-						}
-
-						images = make([]fiber.Map, 0)
-
-						if err := encoding.EncodeTree(w, fiber.Map{
-							image.RunID: result[image.RunID].Info,
-						}); err != nil {
-							return err
-						}
-
-						id = image.RunID
+					if err := flushImages(); err != nil {
+						return err
 					}
 
-					values = make([]float64, 0, req.Steps)
-					iters = make([]float64, 0, req.Steps)
-					epochs = make([]float64, 0, req.Steps)
-					context = fiber.Map{}
-					timestamps = make([]float64, 0, req.Steps)
-					if xAxis {
-						xAxisValues = make([]float64, 0, req.Steps)
+					if err := encoding.EncodeTree(w, fiber.Map{
+						image.RunID: result[image.RunID].Info,
+					}); err != nil {
+						return err
 					}
+
+					runID = image.RunID
+					runData = nil
 				}
+				addImage(image)
 
-				values = append(values, v)
-				iters = append(iters, float64(image.Iter))
-				epochs = append(epochs, float64(image.Step))
-				timestamps = append(timestamps, float64(image.Timestamp)/1000)
 			}
 
-			addImages()
 			if err := flushImages(); err != nil {
 				return err
 			}

@@ -3,9 +3,10 @@ package run
 import (
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
-	"github.com/google/uuid"
 )
 
 // adjustSearchRunsRequestForNamespace preprocesses the SearchRunRequest for the given namespace.

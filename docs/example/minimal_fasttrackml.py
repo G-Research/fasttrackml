@@ -1,10 +1,9 @@
 import time
 from random import randint, random
 
-from fasttrackml.entities.metric import Metric
-
 import fasttrackml
 from fasttrackml import FasttrackmlClient
+from fasttrackml.entities.metric import Metric
 
 
 def print_metric_info(history):

@@ -4,6 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"net/url"
 
 	"github.com/rotisserie/eris"
 
@@ -11,6 +16,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/common"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/repositories"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact/storage"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/types"
 )
@@ -24,11 +30,12 @@ const (
 
 // Service provides service layer to work with `run` business logic.
 type Service struct {
-	runRepository       repositories.RunRepositoryProvider
-	logRepository       repositories.LogRepositoryProvider
-	metricRepository    repositories.MetricRepositoryProvider
-	tagRepository       repositories.TagRepositoryProvider
-	sharedTagRepository repositories.SharedTagRepositoryProvider
+	runRepository          repositories.RunRepositoryProvider
+	logRepository          repositories.LogRepositoryProvider
+	metricRepository       repositories.MetricRepositoryProvider
+	tagRepository          repositories.TagRepositoryProvider
+	sharedTagRepository    repositories.SharedTagRepositoryProvider
+	artifactStorageFactory storage.ArtifactStorageFactoryProvider
 }
 
 // NewService creates new Service instance.
@@ -38,13 +45,15 @@ func NewService(
 	metricRepository repositories.MetricRepositoryProvider,
 	tagRepository repositories.TagRepositoryProvider,
 	sharedTagRepository repositories.SharedTagRepositoryProvider,
+	artifactStorageFactory storage.ArtifactStorageFactoryProvider,
 ) *Service {
 	return &Service{
-		runRepository:       runRepository,
-		logRepository:       logRepository,
-		metricRepository:    metricRepository,
-		tagRepository:       tagRepository,
-		sharedTagRepository: sharedTagRepository,
+		runRepository:          runRepository,
+		logRepository:          logRepository,
+		metricRepository:       metricRepository,
+		tagRepository:          tagRepository,
+		sharedTagRepository:    sharedTagRepository,
+		artifactStorageFactory: artifactStorageFactory,
 	}
 }
 
@@ -103,6 +112,86 @@ func (s Service) GetRunMetrics(
 	}
 
 	return metrics, metricKeysMap, nil
+}
+
+// GetRunImages returns run images.
+func (s Service) GetRunImages(
+	ctx context.Context, namespaceID uint, runID string, req *request.GetRunImagesRequest,
+) ([]models.Image, error) {
+	run, err := s.runRepository.GetRunByNamespaceIDAndRunID(ctx, namespaceID, runID)
+	if err != nil {
+		return nil, api.NewInternalError("error getting run by id %s: %s", runID, err)
+	}
+
+	if run == nil {
+		return nil, api.NewResourceDoesNotExistError("run '%s' not found", runID)
+	}
+	if err != nil {
+		return nil, api.NewBadRequestError("unable to convert request: %s", err)
+	}
+	var images []models.Image
+
+	for _, image := range *req {
+		var values [][]models.ImageValues
+		blobURI, err := url.JoinPath(run.ArtifactURI, image.Name)
+		if err != nil {
+			return nil, eris.Wrap(err, "error constructing blobURI")
+		}
+		imageValuesArray := []models.ImageValues{
+			{
+				BlobURI: blobURI,
+				Caption: "",
+				Context: nil,
+				Format:  "",
+				Height:  nil,
+				Index:   nil,
+				Key:     "",
+				SeqKey:  "",
+				Name:    image.Name,
+				Run:     nil,
+				Step:    0,
+				Width:   nil,
+			},
+		}
+		values = append(values, imageValuesArray)
+
+		image := models.Image{
+			RecordRange: nil,
+			IndexRange:  nil,
+			Name:        image.Name,
+			Context:     nil,
+			Values:      values,
+			Iters:       1,
+		}
+		images = append(images, image)
+	}
+
+	return images, nil
+}
+
+// GetRunImagesBatch returns run images.
+func (s Service) GetRunImagesBatch(
+	ctx context.Context, req *request.GetRunImagesBatchRequest,
+) ([]io.ReadCloser, error) {
+	readers := make([]io.ReadCloser, len(*req))
+	for i, image := range *req {
+		artifactStorage, err := s.artifactStorageFactory.GetStorage(ctx, image)
+		if err != nil {
+			return nil, api.NewInternalError("Unsupported artifact storage")
+		}
+		artifactReader, err := artifactStorage.Get(
+			ctx, image, "",
+		)
+		if err != nil {
+			msg := fmt.Sprintf("error getting artifact object for URI: %s", image)
+			if errors.Is(err, fs.ErrNotExist) {
+				return nil, api.NewResourceDoesNotExistError(msg)
+			}
+			return nil, api.NewInternalError(msg)
+		}
+		readers[i] = artifactReader
+	}
+	return readers, nil
 }
 
 // GetRunsActive returns the active runs.

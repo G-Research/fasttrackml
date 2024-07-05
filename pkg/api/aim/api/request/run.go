@@ -22,6 +22,15 @@ type GetRunMetricsRequest []struct {
 	Context map[string]string `json:"context"`
 }
 
+// GetRunImagesRequest is a request object for `POST /runs/:id/images/get-batch` endpoint.
+type GetRunImagesRequest []struct {
+	Name    string            `json:"name"`
+	Context map[string]string `json:"context"`
+}
+
+// GetRunImagesBatchRequest is a request object for `POST /runs/images/get-batch` endpoint.
+type GetRunImagesBatchRequest []string
+
 // GetRunsActiveRequest is a request object for `GET /runs/active` endpoint.
 type GetRunsActiveRequest struct {
 	BaseSearchRequest

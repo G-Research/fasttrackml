@@ -1,14 +1,19 @@
 package controller
 
 import (
+	"bufio"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/services/run"
+	mlflowRequest "github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
@@ -34,12 +39,21 @@ func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	resp := response.NewGetRunInfoResponse(runInfo)
+	artifactReq := mlflowRequest.ListArtifactsRequest{
+		RunUUID: req.ID,
+	}
+
+	_, artifacts, err := c.artifactService.ListArtifacts(ctx.Context(), ns, &artifactReq)
+	if err != nil {
+		return err
+	}
+
+	resp := response.NewGetRunInfoResponse(runInfo, artifacts)
 	log.Debugf("getRunInfo response: %#v", resp)
 	return ctx.JSON(resp)
 }
 
-// GetRunMetrics handles `GET /runs/:id/metric/get-batch` endpoint.
+// GetRunMetrics handles `POST /runs/:id/metric/get-batch` endpoint.
 func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -60,6 +74,75 @@ func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 	resp := response.NewGetRunMetricsResponse(metrics, metricKeysMap)
 	log.Debugf("getRunMetrics response: %#v", resp)
 	return ctx.JSON(resp)
+}
+
+// GetRunImages handles `POST /runs/:id/images/get-batch` endpoint.
+func (c Controller) GetRunImages(ctx *fiber.Ctx) error {
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("getRunImages namespace: %s", ns.Code)
+
+	req := request.GetRunImagesRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	images, err := c.runService.GetRunImages(ctx.Context(), ns.ID, ctx.Params("id"), &req)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	return response.NewRunImagesStreamResponse(ctx, images)
+}
+
+// GetRunImagesBatch handles `POST /runs/images/get-batch` endpoint.
+func (c Controller) GetRunImagesBatch(ctx *fiber.Ctx) error {
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("getRunImages namespace: %s", ns.Code)
+
+	req := request.GetRunImagesBatchRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	images, err := c.runService.GetRunImagesBatch(ctx.Context(), &req)
+	if err != nil {
+		return err
+	}
+	imagesMap, err := convertImagesToMap(images, req)
+	if err != nil {
+		return err
+	}
+
+	ctx.Context().Response.SetBodyStreamWriter(func(w *bufio.Writer) {
+		start := time.Now()
+		if err := func() error {
+			if err := encoding.EncodeTree(w, imagesMap); err != nil {
+				return err
+			}
+			if err != nil {
+				return eris.Wrap(err, "error copying artifact Reader to output stream")
+			}
+			if err := w.Flush(); err != nil {
+				return eris.Wrap(err, "error flushing output stream")
+			}
+			return nil
+		}(); err != nil {
+			log.Errorf(
+				"error encountered in %s %s: error streaming artifact: %s",
+				ctx.Method(),
+				ctx.Path(),
+				err,
+			)
+		}
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
+	})
+	return nil
 }
 
 // GetRunsActive handles `GET /runs/active` endpoint.

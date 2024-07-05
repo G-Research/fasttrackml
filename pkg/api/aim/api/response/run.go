@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -19,6 +21,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
+	mlflowCommon "github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact/storage"
 	"github.com/G-Research/fasttrackml/pkg/common"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
@@ -37,10 +41,10 @@ type GetRunInfoParamsPartial map[string]any
 type GetRunInfoTracesPartial struct {
 	Tags          map[string]string               `json:"tags"`
 	Logs          map[string]string               `json:"logs"`
-	Texts         map[string]string               `json:"texts"`
+	Texts         []GetRunInfoTracesMetricPartial `json:"texts"`
 	Audios        map[string]string               `json:"audios"`
 	Metric        []GetRunInfoTracesMetricPartial `json:"metric"`
-	Images        map[string]string               `json:"images"`
+	Images        []GetRunInfoTracesMetricPartial `json:"images"`
 	Figures       map[string]string               `json:"figures"`
 	LogRecords    map[string]string               `json:"log_records"`
 	Distributions map[string]string               `json:"distributions"`
@@ -74,7 +78,7 @@ type GetRunInfoResponse struct {
 }
 
 // NewGetRunInfoResponse creates new response object for `GER runs/:id/info` endpoint.
-func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
+func NewGetRunInfoResponse(run *models.Run, artifacts []storage.ArtifactObject) *GetRunInfoResponse {
 	metrics := make([]GetRunInfoTracesMetricPartial, len(run.LatestMetrics))
 	for i, metric := range run.LatestMetrics {
 		metrics[i] = GetRunInfoTracesMetricPartial{
@@ -84,6 +88,43 @@ func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
 		}
 	}
 
+	imagesCounter := 0
+	textsCounter := 0
+	const imageMimeType = "image/"
+	const textMimeType = "text/"
+	for _, artifact := range artifacts {
+		filename := filepath.Base(artifact.Path)
+		mime := mlflowCommon.GetContentType(filename)
+		if strings.HasPrefix(mime, imageMimeType) {
+			imagesCounter++
+		} else if strings.HasPrefix(mime, textMimeType) {
+			textsCounter++
+		}
+	}
+
+	images := make([]GetRunInfoTracesMetricPartial, imagesCounter)
+	texts := make([]GetRunInfoTracesMetricPartial, textsCounter)
+	imagesCounter = 0
+	textsCounter = 0
+	for _, artifact := range artifacts {
+		filename := filepath.Base(artifact.Path)
+		mime := mlflowCommon.GetContentType(filename)
+		if strings.HasPrefix(mime, imageMimeType) {
+			images[imagesCounter] = GetRunInfoTracesMetricPartial{
+				Name:      artifact.Path,
+				Context:   nil,
+				LastValue: 0,
+			}
+			imagesCounter++
+		} else if strings.HasPrefix(mime, textMimeType) {
+			texts[textsCounter] = GetRunInfoTracesMetricPartial{
+				Name:      artifact.Path,
+				Context:   nil,
+				LastValue: 0,
+			}
+			textsCounter++
+		}
+	}
 	params := make(GetRunInfoParamsPartial, len(run.Params)+1)
 	for _, p := range run.Params {
 		params[p.Key] = p.ValueAny()
@@ -99,10 +140,10 @@ func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
 		Traces: GetRunInfoTracesPartial{
 			Tags:          map[string]string{},
 			Logs:          map[string]string{},
-			Texts:         map[string]string{},
+			Texts:         texts,
 			Audios:        map[string]string{},
 			Metric:        metrics,
-			Images:        map[string]string{},
+			Images:        images,
 			Figures:       map[string]string{},
 			LogRecords:    map[string]string{},
 			Distributions: map[string]string{},
@@ -798,6 +839,61 @@ func NewActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgre
 					return err
 				}
 			}
+			return nil
+		}(); err != nil {
+			log.Errorf("Error encountered in %s %s: error streaming active runs: %s", ctx.Method(), ctx.Path(), err)
+		}
+
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
+	})
+	return nil
+}
+
+// NewRunImagesStreamResponse streams the provided images to the fiber context.
+func NewRunImagesStreamResponse(ctx *fiber.Ctx, images []models.Image) error {
+	ctx.Set("Content-Type", "application/octet-stream")
+	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		start := time.Now()
+		if err := func() error {
+			var values [][]map[string]interface{}
+			var valuesResult []map[string]interface{}
+
+			for _, image := range images {
+				for _, valueArray := range image.Values {
+					for _, val := range valueArray {
+						valMap := map[string]interface{}{
+							"blob_uri": val.BlobURI,
+							"caption":  val.Caption,
+							"context":  val.Context,
+							"format":   val.Format,
+							"height":   val.Height,
+							"index":    val.Index,
+							"key":      val.Key,
+							"seqKey":   val.SeqKey,
+							"name":     val.Name,
+							"run":      val.Run,
+							"step":     val.Step,
+							"width":    val.Width,
+						}
+						valuesResult = append(valuesResult, valMap)
+					}
+				}
+
+				values = append(values, valuesResult)
+				imgMap := map[string]interface{}{
+					"record_range": image.RecordRange,
+					"index_range":  image.IndexRange,
+					"name":         image.Name,
+					"context":      image.Context,
+					"values":       values,
+					"iters":        image.Iters,
+				}
+
+				if err := encoding.EncodeTree(w, imgMap); err != nil {
+					return err
+				}
+			}
+
 			return nil
 		}(); err != nil {
 			log.Errorf("Error encountered in %s %s: error streaming active runs: %s", ctx.Method(), ctx.Path(), err)

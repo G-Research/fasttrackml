@@ -282,6 +282,11 @@ func createApp(
 				aimRepositories.NewMetricRepository(db.GormDB()),
 				aimRepositories.NewTagRepository(db.GormDB()),
 				aimRepositories.NewSharedTagRepository(db.GormDB()),
+				artifactStorageFactory,
+			),
+			mlflowArtifactService.NewService(
+				mlflowRepositories.NewRunRepository(db.GormDB()),
+				artifactStorageFactory,
 			),
 			aimProjectService.NewService(
 				aimRepositories.NewTagRepository(db.GormDB()),

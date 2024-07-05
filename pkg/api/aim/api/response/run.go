@@ -477,7 +477,7 @@ func NewStreamMetricsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 //
 //nolint:gocyclo
 func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
-	result repositories.SearchResultMap, req request.SearchArtifactsRequest,
+	result repositories.ImageSearchSummary, req request.SearchArtifactsRequest,
 ) {
 	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		//nolint:errcheck
@@ -487,38 +487,32 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 
 		if err := func() error {
 			var (
-				runID      string
-				runData    fiber.Map
-				values     []float64
-				iters      []float64
-				epochs     []float64
-				timestamps []float64
-				progress   int
+				runID   string
+				step    int
+				index   int
+				runData fiber.Map
 			)
 			reportProgress := func(cur int64) error {
 				if !req.ReportProgress {
 					return nil
 				}
 				err := encoding.EncodeTree(w, fiber.Map{
-					fmt.Sprintf("progress_%d", progress): []int64{cur, totalRuns},
+					fmt.Sprintf("progress_%d", cur): []int64{cur, totalRuns},
 				})
 				if err != nil {
 					return err
 				}
-				progress++
+				cur++
 				return w.Flush()
 			}
 			addImage := func(img models.Artifact) {
 				if runData == nil {
 					runData = fiber.Map{
 						"ranges": fiber.Map{
-							"record_range_total": []int{0, 0},
-							"record_range_used":  []int{0, 0},
-							"index_range_total":  []int{0, 0},
-							"index_range_used":   []int{0, 0},
-						},
-						"params": fiber.Map{
-							"images_per_step": 0,
+							"record_range_total": []int{0, result.TotalSteps(img.RunID)},
+							"record_range_used":  []int{0, step},
+							"index_range_total":  []int{0, result.StepImageCount(img.RunID, step)},
+							"index_range_used":   []int{0, index},
 						},
 						"traces": []fiber.Map{},
 					}
@@ -534,7 +528,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 				}); err != nil {
 					return err
 				}
-				if err := reportProgress(totalRuns - 1); err != nil {
+				if err := reportProgress(); err != nil {
 					return err
 				}
 				return w.Flush()
@@ -545,17 +539,12 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 					return err
 				}
 
+				// flush after each change in runID
+				// (assumes order by runID)
 				if image.RunID != runID {
 					if err := flushImages(); err != nil {
 						return err
 					}
-
-					if err := encoding.EncodeTree(w, fiber.Map{
-						image.RunID: result[image.RunID].Info,
-					}); err != nil {
-						return err
-					}
-
 					runID = image.RunID
 					runData = nil
 				}

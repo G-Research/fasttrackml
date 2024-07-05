@@ -13,6 +13,27 @@ import (
 	"github.com/rotisserie/eris"
 )
 
+// ImageSearchStepInfo is a search summary for a Run Step.
+type ImageSearchStepInfo struct {
+	RunUUID  string `gorm:"column:run_uuid"`
+	Step     int    `gorm:"column:step"`
+	ImgCount int    `gorm:"column:count"`
+}
+
+// ImageSearchSummary is a search summary for whole run.
+type ImageSearchSummary map[string][]ImageSearchStepInfo
+
+// TotalSteps figures out how many steps belong to the runID.
+func (r ImageSearchSummary) TotalSteps(runID string) int {
+	return len(r[runID])
+}
+
+// StepImageCount figures out how many steps belong to the runID and step.
+func (r ImageSearchSummary) StepImageCount(runID string, step int) int {
+	runStepImages := r[runID]
+	return runStepImages[step].ImgCount
+}
+
 // ArtifactRepositoryProvider provides an interface to work with `artifact` entity.
 type ArtifactRepositoryProvider interface {
 	repositories.BaseRepositoryProvider
@@ -22,7 +43,7 @@ type ArtifactRepositoryProvider interface {
 		namespaceID uint,
 		timeZoneOffset int,
 		req request.SearchArtifactsRequest,
-	) (*sql.Rows, int64, SearchResultMap, error)
+	) (*sql.Rows, int64, ImageSearchSummary, error)
 }
 
 // ArtifactRepository repository to work with `artifact` entity.
@@ -43,7 +64,7 @@ func (r ArtifactRepository) Search(
 	namespaceID uint,
 	timeZoneOffset int,
 	req request.SearchArtifactsRequest,
-) (*sql.Rows, int64, SearchResultMap, error) {
+) (*sql.Rows, int64, ImageSearchSummary, error) {
 	qp := query.QueryParser{
 		Default: query.DefaultExpression{
 			Contains:   "run.archived",
@@ -66,42 +87,39 @@ func (r ArtifactRepository) Search(
 		return nil, 0, nil, eris.Wrap(err, "error counting metrics")
 	}
 
-	var runs []models.Run
-	if tx := r.GetDB().WithContext(ctx).
-		InnerJoins(
-			"Experiment",
-			r.GetDB().WithContext(ctx).Select(
-				"ID", "Name",
-			).Where(&models.Experiment{NamespaceID: namespaceID}),
-		).
-		Preload("Params").
-		Preload("Tags").
-		Where("run_uuid IN (?)", pq.Filter(r.GetDB().WithContext(ctx).
-			Select("runs.run_uuid").
-			Table("runs").
-			Joins(
-				"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
-				namespaceID,
-			),
+	runIDs := []string{}
+	if tx := pq.Filter(r.GetDB().WithContext(ctx).
+		Select("runs.run_uuid").
+		Table("runs").
+		Joins(
+			"INNER JOIN experiments ON experiments.experiment_id = runs.experiment_id AND experiments.namespace_id = ?",
+			namespaceID,
 		)).
-		Order("runs.row_num DESC").
-		Find(&runs); tx.Error != nil {
-		return nil, 0, nil, eris.Wrap(err, "error searching artifacts")
+		Find(&runIDs); tx.Error != nil {
+		return nil, 0, nil, eris.Wrap(err, "error finding runs for artifact search")
 	}
 
-	runIDs := []string{}
-	for _, run := range runs {
-		runIDs = append(runIDs, run.ID)
+	resultSummaries := []ImageSearchStepInfo{}
+	if tx := r.GetDB().WithContext(ctx).
+		Raw(`SELECT run_uuid, step, count(id)
+			  FROM artifacts
+			  WHERE run_uuid IN (?)
+			  GROUP BY run_uuid, step;`, runIDs).
+		Find(&resultSummaries); tx.Error != nil {
+		return nil, 0, nil, eris.Wrap(err, "error find result summary for artifact search")
 	}
-	result := make(SearchResultMap, len(runs))
+
+	runImages := make(ImageSearchSummary, len(runIDs))
+	for _, rslt := range resultSummaries {
+		runImages[rslt.RunUUID] = append(runImages[rslt.RunUUID], rslt)
+	}
 
 	tx := r.GetDB().WithContext(ctx).
-		Select(`row_number() over (order by run_uuid, step, created_at) as row_num, *`).
 		Table("artifacts").
 		Where("run_uuid IN ?", runIDs).
-		Order("metrics.run_uuid").
-		Order("metrics.step").
-		Order("metrics.created_at")
+		Order("run_uuid").
+		Order("step").
+		Order("created_at")
 
 	rows, err := tx.Rows()
 	if err != nil {
@@ -111,5 +129,5 @@ func (r ArtifactRepository) Search(
 		return nil, 0, nil, eris.Wrap(err, "error getting artifacts rows cursor")
 	}
 
-	return rows, int64(len(runs)), result, nil
+	return rows, int64(len(runIDs)), runImages, nil
 }

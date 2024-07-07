@@ -477,7 +477,7 @@ func NewStreamMetricsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 //
 //nolint:gocyclo
 func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
-	result repositories.ImageSearchSummary, req request.SearchArtifactsRequest,
+	result repositories.ArtifactSearchSummary, req request.SearchArtifactsRequest,
 ) {
 	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		//nolint:errcheck
@@ -488,11 +488,10 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 		if err := func() error {
 			var (
 				runID   string
-				step    int
-				index   int
 				runData fiber.Map
+				cur     int64
 			)
-			reportProgress := func(cur int64) error {
+			reportProgress := func() error {
 				if !req.ReportProgress {
 					return nil
 				}
@@ -507,12 +506,16 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 			}
 			addImage := func(img models.Artifact) {
 				if runData == nil {
+					imagesPerStep := result.StepImageCount(img.RunID, int(img.Step))
 					runData = fiber.Map{
 						"ranges": fiber.Map{
 							"record_range_total": []int{0, result.TotalSteps(img.RunID)},
-							"record_range_used":  []int{0, step},
-							"index_range_total":  []int{0, result.StepImageCount(img.RunID, step)},
-							"index_range_used":   []int{0, index},
+							"record_range_used":  []int{0, int(img.Step)},
+							"index_range_total":  []int{0, imagesPerStep},
+							"index_range_used":   []int{0, int(img.Index)},
+						},
+						"params": fiber.Map{
+							"images_per_step": imagesPerStep,
 						},
 						"traces": []fiber.Map{},
 					}
@@ -556,7 +559,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 				return err
 			}
 
-			if err := reportProgress(totalRuns); err != nil {
+			if err := reportProgress(); err != nil {
 				return err
 			}
 

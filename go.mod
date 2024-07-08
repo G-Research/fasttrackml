@@ -8,7 +8,7 @@ replace (
 )
 
 require (
-	cloud.google.com/go/storage v1.42.0
+	cloud.google.com/go/storage v1.43.0
 	dagger.io/dagger v0.11.6
 	dario.cat/mergo v1.0.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -22,7 +22,7 @@ require (
 	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/go-python/gpython v0.2.0
 	github.com/gofiber/fiber/v2 v2.52.5
-	github.com/gofiber/template/html/v2 v2.1.1
+	github.com/gofiber/template/html/v2 v2.1.2
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hetiansu5/urlquery v1.2.7

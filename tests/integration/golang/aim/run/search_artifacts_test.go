@@ -54,24 +54,16 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
-	_, err = s.MetricFixtures.CreateMetric(context.Background(), &models.Metric{
-		Key:       "TestMetric1",
-		Value:     1.1,
-		Timestamp: 123456789,
-		Step:      1,
-		IsNan:     false,
-		RunID:     run1.ID,
-		Iter:      1,
-	})
-	s.Require().Nil(err)
-	metric1Run1, err := s.MetricFixtures.CreateLatestMetric(context.Background(), &models.LatestMetric{
-		Key:       "TestMetric1",
-		Value:     1.1,
-		Timestamp: 123456789,
-		Step:      1,
-		IsNan:     false,
-		RunID:     run1.ID,
-		LastIter:  1,
+	_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
+		RunID:   run1.ID,
+		BlobURI: "path/filename.png",
+		Step:    1,
+		Iter:    1,
+		Index:   1,
+		Caption: "caption1",
+		Format:  "png",
+		Width:   100,
+		Height:  100,
 	})
 	s.Require().Nil(err)
 
@@ -84,9 +76,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 		{
 			name:    "SearchArtifact",
 			request: request.SearchArtifactsRequest{},
-			metrics: []*models.LatestMetric{
-				metric1Run1,
-			},
+			metrics: []*models.LatestMetric{},
 		},
 	}
 	for _, tt := range tests {
@@ -101,7 +91,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 					helpers.ResponseTypeBuffer,
 				).WithResponse(
 					resp,
-				).DoRequest("/runs/search/images"),
+				).DoRequest("/runs/search/image"),
 			)
 
 			decodedData, err := encoding.NewDecoder(resp).Decode()

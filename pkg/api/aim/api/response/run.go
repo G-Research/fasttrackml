@@ -489,6 +489,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 			var (
 				runID   string
 				runData fiber.Map
+				traces  []fiber.Map
 				cur     int64
 			)
 			reportProgress := func() error {
@@ -506,7 +507,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 			}
 			addImage := func(img models.Artifact) {
 				if runData == nil {
-					imagesPerStep := result.StepImageCount(img.RunID, int(img.Step))
+					imagesPerStep := result.StepImageCount(img.RunID, 0)
 					runData = fiber.Map{
 						"ranges": fiber.Map{
 							"record_range_total": []int{0, result.TotalSteps(img.RunID)},
@@ -517,15 +518,16 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 						"params": fiber.Map{
 							"images_per_step": imagesPerStep,
 						},
-						"traces": []fiber.Map{},
 					}
+					traces = []fiber.Map{}
 				}
-				runData["traces"] = append(runData["traces"].([]fiber.Map), fiber.Map{})
+				traces = append(traces, fiber.Map{})
 			}
 			flushImages := func() error {
 				if runID == "" {
 					return nil
 				}
+				runData["traces"] = traces
 				if err := encoding.EncodeTree(w, fiber.Map{
 					runID: runData,
 				}); err != nil {
@@ -550,6 +552,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 					}
 					runID = image.RunID
 					runData = nil
+					traces = nil
 				}
 				addImage(image)
 

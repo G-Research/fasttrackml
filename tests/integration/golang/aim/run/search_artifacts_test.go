@@ -98,44 +98,10 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 			s.Require().Nil(err)
 
 			for _, run := range runs {
-				metricCount := 0
-				for decodedData[fmt.Sprintf("%v.traces.%d", run.ID, metricCount)] != nil {
-					prefix := fmt.Sprintf("%v.traces.%d", run.ID, metricCount)
-					epochsKey := prefix + ".epochs.blob"
-					itersKey := prefix + ".iters.blob"
-					nameKey := prefix + ".name"
-					timestampsKey := prefix + ".timestamps.blob"
-					valuesKey := prefix + ".values.blob"
-
-					contextPrefix := prefix + ".context"
-					contx, err := helpers.ExtractContextBytes(contextPrefix, decodedData)
-					s.Require().Nil(err)
-
-					decodedContext, err := s.ContextFixtures.GetContextByJSON(
-						context.Background(),
-						string(contx),
-					)
-					s.Require().Nil(err)
-
-					m := models.LatestMetric{
-						Key:       decodedData[nameKey].(string),
-						Value:     decodedData[valuesKey].([]float64)[0],
-						Timestamp: int64(decodedData[timestampsKey].([]float64)[0] * 1000),
-						Step:      int64(decodedData[epochsKey].([]float64)[0]),
-						IsNan:     false,
-						RunID:     run.ID,
-						LastIter:  int64(decodedData[itersKey].([]float64)[0]),
-						ContextID: decodedContext.ID,
-						Context:   *decodedContext,
-					}
-					decodedMetrics = append(decodedMetrics, &m)
-					metricCount++
-				}
-			}
-			// Check if the received metrics match the expected ones
-			s.Equal(len(tt.metrics), len(decodedMetrics))
-			for i, metric := range tt.metrics {
-				s.Equal(metric, decodedMetrics[i])
+				imgIndex := 0
+				prefix := fmt.Sprintf("%v.traces.%d", run.ID, imgIndex)
+				blobUriKey := prefix + ".blob_uri"
+				s.Equal("path/filename.png", decodedData[blobUriKey])
 			}
 		})
 	}

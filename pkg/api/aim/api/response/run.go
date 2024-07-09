@@ -521,7 +521,16 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 					}
 					traces = []fiber.Map{}
 				}
-				traces = append(traces, fiber.Map{})
+				traces = append(traces, fiber.Map{
+					"blob_uri": img.BlobURI,
+					"caption":  img.Caption,
+					"height":   img.Height,
+					"width":    img.Width,
+					"format":   img.Format,
+					"iter":     img.Iter,
+					"index":    img.Index,
+					"step":     img.Step,
+				})
 			}
 			flushImages := func() error {
 				if runID == "" {

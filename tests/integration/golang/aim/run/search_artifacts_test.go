@@ -97,10 +97,9 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
 
-			var decodedMetrics []*models.LatestMetric
 			for _, run := range runs {
 				metricCount := 0
-				for decodedData[fmt.Sprintf("%v.traces.%d.name", run.ID, metricCount)] != nil {
+				for decodedData[fmt.Sprintf("%v.traces.%d", run.ID, metricCount)] != nil {
 					prefix := fmt.Sprintf("%v.traces.%d", run.ID, metricCount)
 					epochsKey := prefix + ".epochs.blob"
 					itersKey := prefix + ".iters.blob"

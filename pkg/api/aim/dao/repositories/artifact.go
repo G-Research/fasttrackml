@@ -16,7 +16,7 @@ import (
 type ArtifactSearchStepInfo struct {
 	RunUUID  string `gorm:"column:run_uuid"`
 	Step     int    `gorm:"column:step"`
-	ImgCount int    `gorm:"column:count"`
+	ImgCount int    `gorm:"column:img_count"`
 }
 
 // ArtifactSearchSummary is a search summary for whole run.
@@ -97,7 +97,7 @@ func (r ArtifactRepository) Search(
 	// collect some summary data for progress indicator
 	stepInfo := []ArtifactSearchStepInfo{}
 	if tx := r.GetDB().WithContext(ctx).
-		Raw(`SELECT run_uuid, step, count(id)
+		Raw(`SELECT run_uuid, step, count(id) as img_count
 			  FROM artifacts
 			  WHERE run_uuid IN (?)
 			  GROUP BY run_uuid, step;`, runIDs).

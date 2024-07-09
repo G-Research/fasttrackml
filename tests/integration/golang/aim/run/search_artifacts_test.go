@@ -34,7 +34,6 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	// create different test runs and attach tags, metrics, params, etc.
 	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
 		ID:         "id1",
 		Name:       "TestRun1",
@@ -55,6 +54,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 	_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
+		ID:      uuid.New(),
 		RunID:   run1.ID,
 		BlobURI: "path/filename.png",
 		Step:    1,
@@ -67,7 +67,40 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	runs := []*models.Run{run1}
+	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
+		ID:         "id2",
+		Name:       "TestRun2",
+		UserID:     "1",
+		Status:     models.StatusRunning,
+		SourceType: "JOB",
+		StartTime: sql.NullInt64{
+			Int64: 123456789,
+			Valid: true,
+		},
+		EndTime: sql.NullInt64{
+			Int64: 123456789,
+			Valid: true,
+		},
+		ExperimentID:   *experiment.ID,
+		ArtifactURI:    "artifact_uri1",
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+	_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
+		ID:      uuid.New(),
+		RunID:   run2.ID,
+		BlobURI: "path/filename.png",
+		Step:    1,
+		Iter:    1,
+		Index:   1,
+		Caption: "caption2",
+		Format:  "png",
+		Width:   100,
+		Height:  100,
+	})
+	s.Require().Nil(err)
+
+	runs := []*models.Run{run1, run2}
 	tests := []struct {
 		name    string
 		request request.SearchArtifactsRequest
@@ -99,8 +132,13 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 
 			for _, run := range runs {
 				imgIndex := 0
-				prefix := fmt.Sprintf("%v.traces.%d", run.ID, imgIndex)
-				blobUriKey := prefix + ".blob_uri"
+				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
+				recordRangeKey := rangesPrefix + ".record_range_total.1"
+				s.Equal(int64(1), decodedData[recordRangeKey])
+				indexRangeKey := rangesPrefix + ".index_range_total.1"
+				s.Equal(int64(1), decodedData[indexRangeKey])
+				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, imgIndex)
+				blobUriKey := tracesPrefix + ".blob_uri"
 				s.Equal("path/filename.png", decodedData[blobUriKey])
 			}
 		})

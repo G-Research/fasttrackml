@@ -903,3 +903,28 @@ func NewRunImagesStreamResponse(ctx *fiber.Ctx, images []models.Image) error {
 	})
 	return nil
 }
+
+// NewRunImagesBatchStreamResponse streams the provided images to the fiber context.
+func NewRunImagesBatchStreamResponse(ctx *fiber.Ctx, imagesMap map[string]any) error {
+	ctx.Context().Response.SetBodyStreamWriter(func(w *bufio.Writer) {
+		start := time.Now()
+		if err := func() error {
+			if err := encoding.EncodeTree(w, imagesMap); err != nil {
+				return err
+			}
+			if err := w.Flush(); err != nil {
+				return eris.Wrap(err, "error flushing output stream")
+			}
+			return nil
+		}(); err != nil {
+			log.Errorf(
+				"error encountered in %s %s: error streaming artifact: %s",
+				ctx.Method(),
+				ctx.Path(),
+				err,
+			)
+		}
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
+	})
+	return nil
+}

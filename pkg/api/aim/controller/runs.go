@@ -1,17 +1,13 @@
 package controller
 
 import (
-	"bufio"
 	"strconv"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/rotisserie/eris"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
-	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/services/run"
 	mlflowRequest "github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
@@ -119,30 +115,7 @@ func (c Controller) GetRunImagesBatch(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	ctx.Context().Response.SetBodyStreamWriter(func(w *bufio.Writer) {
-		start := time.Now()
-		if err := func() error {
-			if err := encoding.EncodeTree(w, imagesMap); err != nil {
-				return err
-			}
-			if err != nil {
-				return eris.Wrap(err, "error copying artifact Reader to output stream")
-			}
-			if err := w.Flush(); err != nil {
-				return eris.Wrap(err, "error flushing output stream")
-			}
-			return nil
-		}(); err != nil {
-			log.Errorf(
-				"error encountered in %s %s: error streaming artifact: %s",
-				ctx.Method(),
-				ctx.Path(),
-				err,
-			)
-		}
-		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
-	})
-	return nil
+	return response.NewRunImagesBatchStreamResponse(ctx, imagesMap)
 }
 
 // GetRunsActive handles `GET /runs/active` endpoint.

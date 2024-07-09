@@ -6,10 +6,11 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/rotisserie/eris"
+
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
-	"github.com/rotisserie/eris"
 )
 
 // ArtifactSearchStepInfo is a search summary for a Run Step.

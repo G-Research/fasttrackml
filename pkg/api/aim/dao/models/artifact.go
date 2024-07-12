@@ -8,7 +8,8 @@ import (
 
 // Artifact represents the artifact model.
 type Artifact struct {
-	RowNum    int64     // this field is virtual, not persistent
+	RowNum    int64 // this field is virtual, not persistent
+	Name      string
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
 	Iter      int64     `gorm:"index"`
 	Step      int64     `gorm:"default:0;not null"`

@@ -9,6 +9,7 @@ import (
 // Artifact represents the artifact model.
 type Artifact struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	Name      string    `gorm:"not null;index"`
 	Iter      int64     `gorm:"index"`
 	Step      int64     `gorm:"default:0;not null"`
 	Run       Run

@@ -522,6 +522,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 					traces = []fiber.Map{}
 				}
 				traces = append(traces, fiber.Map{
+					"name":     img.Name,
 					"blob_uri": img.BlobURI,
 					"caption":  img.Caption,
 					"height":   img.Height,

@@ -118,7 +118,7 @@ func NewProjectParamsResponse(projectParams *models.ProjectParams,
 	for _, s := range sequences {
 		switch s {
 		case "images":
-			rsp.Images = &fiber.Map{}
+			rsp.Images = &fiber.Map{"images": fiber.Map{}}
 		case "texts":
 			rsp.Texts = &fiber.Map{}
 		case "figures":

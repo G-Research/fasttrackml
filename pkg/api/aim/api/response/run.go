@@ -522,7 +522,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 							"name":        run.Name,
 							"description": nil,
 							"experiment": fiber.Map{
-								"id":   fmt.Sprintf("%d", *run.Experiment.ID),
+								"id":   fmt.Sprintf("%d", run.ExperimentID),
 								"name": run.Experiment.Name,
 							},
 							"tags":          ConvertTagsToMaps(run.SharedTags),

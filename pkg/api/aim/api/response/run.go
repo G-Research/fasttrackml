@@ -497,7 +497,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 					return nil
 				}
 				err := encoding.EncodeTree(w, fiber.Map{
-					fmt.Sprintf("progress_%d", cur): []int64{cur, totalRuns},
+					fmt.Sprintf("progress_%d", cur): []int64{cur, int64(len(runs))},
 				})
 				if err != nil {
 					return err

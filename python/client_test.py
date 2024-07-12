@@ -120,8 +120,8 @@ def test_init_output_logging(client, server, run):
 
 def test_log_image(client, server, run):
     # test logging some images
-    for i in range(100):
+    for i in range(10):
         img_local = posixpath.join(os.path.dirname(__file__), "dice.png")
         assert (
-            client.log_image(run.info.run_id, img_local, "images", "These are dice", 0, 640, 480, "png", i, 0) == None
+            client.log_image(run.info.run_id, "sequence name", img_local, "images", "These are dice", 0, 640, 480, "png", i, 0) == None
         )

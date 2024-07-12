@@ -461,3 +461,56 @@ class FasttrackmlClient(MlflowClient):
             client.set_terminated(run.info.run_id)
         """
         self._tracking_client.log_output(run_id, data)
+
+    def log_image(
+        self,
+        run_id: str,
+        filename: str,
+        artifact_path: str,
+        caption: str,
+        index: int,
+        width: int,
+        height: int,
+        format: str,
+        step: int,
+        iter: int,
+    ) -> None:
+        """
+        Log an image artifact for the provided run which will be viewable in the Images explorer.
+        The image itself will be stored in the configured artifact store (S3-compatible or local).
+
+        Args:
+            run_id: String ID of the run
+            filename: The filename of the image in the local filesystem
+            artifact_path: The optional path to append to the artifact_uri
+            caption: The image caption
+            index: The image index
+            width: The image width
+            height: The image height
+            format: The image format
+            step: The image step
+            iter: The image iteration
+
+        .. code-block:: python
+            :caption: Example
+
+            from fasttrackml import FasttrackmlClient
+
+            # Create a run under the default experiment (whose id is '0').
+            # Since these are low-level CRUD operations, this method will create a run.
+            # To end the run, you'll have to explicitly end it.
+            client = FasttrackmlClient()
+            experiment_id = "0"
+            run = client.create_run(experiment_id)
+            print_run_info(run)
+            print("--")
+
+            # Log an image
+            for step in range(10):
+                filename = generate_image(step) # some function that generates an image
+                client.log_image(run.info.run_id, filename, "This is an image", "images", step, 100, 100, "png", step, 0)
+            client.set_terminated(run.info.run_id)
+        """
+        return self._tracking_client.log_image(
+            run_id, filename, artifact_path, caption, index, width, height, format, step, iter
+        )

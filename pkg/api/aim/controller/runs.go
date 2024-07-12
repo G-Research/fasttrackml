@@ -207,12 +207,12 @@ func (c Controller) SearchImages(ctx *fiber.Ctx) error {
 	}
 
 	//nolint:rowserrcheck
-	rows, totalRuns, result, err := c.runService.SearchArtifacts(ctx.Context(), ns.ID, tzOffset, req)
+	rows, runs, result, err := c.runService.SearchArtifacts(ctx.Context(), ns.ID, tzOffset, req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	response.NewStreamArtifactsResponse(ctx, rows, totalRuns, result, req)
+	response.NewStreamArtifactsResponse(ctx, rows, runs, result, req)
 	return nil
 }
 

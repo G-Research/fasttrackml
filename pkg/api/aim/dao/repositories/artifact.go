@@ -9,6 +9,7 @@ import (
 	"github.com/rotisserie/eris"
 
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
+	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/query"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 )
@@ -43,7 +44,7 @@ type ArtifactRepositoryProvider interface {
 		namespaceID uint,
 		timeZoneOffset int,
 		req request.SearchArtifactsRequest,
-	) (*sql.Rows, int64, ArtifactSearchSummary, error)
+	) (*sql.Rows, map[string]models.Run, ArtifactSearchSummary, error)
 	GetArtifactNamesByExperiments(
 		ctx context.Context, namespaceID uint, experiments []int,
 	) ([]string, error)
@@ -67,7 +68,7 @@ func (r ArtifactRepository) Search(
 	namespaceID uint,
 	timeZoneOffset int,
 	req request.SearchArtifactsRequest,
-) (*sql.Rows, int64, ArtifactSearchSummary, error) {
+) (*sql.Rows, map[string]models.Run, ArtifactSearchSummary, error) {
 	qp := query.QueryParser{
 		Default: query.DefaultExpression{
 			Contains:   "run.archived",
@@ -82,20 +83,26 @@ func (r ArtifactRepository) Search(
 	}
 	pq, err := qp.Parse(req.Query)
 	if err != nil {
-		return nil, 0, nil, err
+		return nil, nil, nil, err
 	}
 
 	runIDs := []string{}
+	runs := []models.Run{}
 	if tx := pq.Filter(r.GetDB().WithContext(ctx).
-		Select("runs.run_uuid").
 		Table("runs").
 		Joins(`INNER JOIN experiments
                         ON experiments.experiment_id = runs.experiment_id
                         AND experiments.namespace_id = ?`,
 			namespaceID,
 		)).
-		Find(&runIDs); tx.Error != nil {
-		return nil, 0, nil, eris.Wrap(err, "error finding runs for artifact search")
+		Find(&runs); tx.Error != nil {
+		return nil, nil, nil, eris.Wrap(err, "error finding runs for artifact search")
+	}
+
+	runMap := make(map[string]models.Run, len(runs))
+	for _, run := range runs {
+		runIDs = append(runIDs, run.ID)
+		runMap[run.ID] = run
 	}
 
 	// collect some summary data for progress indicator
@@ -106,7 +113,7 @@ func (r ArtifactRepository) Search(
 			  WHERE run_uuid IN (?)
 			  GROUP BY run_uuid, step;`, runIDs).
 		Find(&stepInfo); tx.Error != nil {
-		return nil, 0, nil, eris.Wrap(err, "error find result summary for artifact search")
+		return nil, nil, nil, eris.Wrap(err, "error find result summary for artifact search")
 	}
 
 	resultSummary := make(ArtifactSearchSummary, len(runIDs))
@@ -124,13 +131,13 @@ func (r ArtifactRepository) Search(
 
 	rows, err := tx.Rows()
 	if err != nil {
-		return nil, 0, nil, eris.Wrap(err, "error searching artifacts")
+		return nil, nil, nil, eris.Wrap(err, "error searching artifacts")
 	}
 	if err := rows.Err(); err != nil {
-		return nil, 0, nil, eris.Wrap(err, "error getting artifacts rows cursor")
+		return nil, nil, nil, eris.Wrap(err, "error getting artifacts rows cursor")
 	}
 
-	return rows, int64(len(runIDs)), resultSummary, nil
+	return rows, runMap, resultSummary, nil
 }
 
 // GetArtifactNamesByExperiments will find image names in the selected experiments.

@@ -476,7 +476,7 @@ func NewStreamMetricsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 // NewStreamArtifactsResponse streams the provided sql.Rows to the fiber context.
 //
 //nolint:gocyclo
-func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
+func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]models.Run,
 	result repositories.ArtifactSearchSummary, req request.SearchArtifactsRequest,
 ) {
 	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
@@ -505,7 +505,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 				cur++
 				return w.Flush()
 			}
-			addImage := func(img models.Artifact) {
+			addImage := func(img models.Artifact, run models.Run) {
 				if runData == nil {
 					imagesPerStep := result.StepImageCount(img.RunID, 0)
 					runData = fiber.Map{
@@ -517,6 +517,19 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 						},
 						"params": fiber.Map{
 							"images_per_step": imagesPerStep,
+						},
+						"props": fiber.Map{
+							"name":        run.Name,
+							"description": nil,
+							"experiment": fiber.Map{
+								"id":   fmt.Sprintf("%d", *run.Experiment.ID),
+								"name": run.Experiment.Name,
+							},
+							"tags":          ConvertTagsToMaps(run.SharedTags),
+							"creation_time": float64(run.StartTime.Int64) / 1000,
+							"end_time":      float64(run.EndTime.Int64) / 1000,
+							"archived":      run.LifecycleStage == models.LifecycleStageDeleted,
+							"active":        run.Status == models.StatusRunning,
 						},
 					}
 					traces = []fiber.Map{}
@@ -564,7 +577,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 					runData = nil
 					traces = nil
 				}
-				addImage(image)
+				addImage(image, runs[image.RunID])
 
 			}
 

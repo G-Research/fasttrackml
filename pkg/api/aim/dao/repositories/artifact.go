@@ -150,7 +150,7 @@ func (r ArtifactRepository) GetArtifactNamesByExperiments(
 		Joins(`INNER JOIN experiments
                         ON experiments.experiment_id = runs.experiment_id
                         AND experiments.namespace_id = ?
-		        AND experiments.id IN ?`,
+		        AND experiments.experiment_id IN ?`,
 			namespaceID, experiments,
 		).
 		Find(&runIDs).Error; err != nil {

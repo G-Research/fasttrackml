@@ -38,6 +38,7 @@ func NewService(
 		paramRepository:      paramRepository,
 		metricRepository:     metricRepository,
 		experimentRepository: experimentRepository,
+		artifactRepository:   artifactRepository,
 		liveUpdatesEnabled:   liveUpdatesEnabled,
 	}
 }

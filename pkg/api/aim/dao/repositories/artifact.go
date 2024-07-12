@@ -44,6 +44,9 @@ type ArtifactRepositoryProvider interface {
 		timeZoneOffset int,
 		req request.SearchArtifactsRequest,
 	) (*sql.Rows, int64, ArtifactSearchSummary, error)
+	GetArtifactNamesByExperiments(
+		ctx context.Context, namespaceID uint, experiments []int,
+	) ([]string, error)
 }
 
 // ArtifactRepository repository to work with `artifact` entity.
@@ -128,4 +131,32 @@ func (r ArtifactRepository) Search(
 	}
 
 	return rows, int64(len(runIDs)), resultSummary, nil
+}
+
+// GetArtifactNamesByExperiments will find image names in the selected experiments.
+func (r ArtifactRepository) GetArtifactNamesByExperiments(
+	ctx context.Context, namespaceID uint, experiments []int,
+) ([]string, error) {
+	runIDs := []string{}
+	if err := r.GetDB().WithContext(ctx).
+		Table("runs").
+		Joins(`INNER JOIN experiments
+                        ON experiments.experiment_id = runs.experiment_id
+                        AND experiments.namespace_id = ?
+		        AND experiments.id IN ?`,
+			namespaceID, experiments,
+		).
+		Find(&runIDs).Error; err != nil {
+		return nil, eris.Wrap(err, "error finding runs for artifacts")
+	}
+
+	imageNames := []string{}
+	if err := r.GetDB().WithContext(ctx).
+		Distinct("name").
+		Table("artifacts").
+		Where("run_uuid IN ?", runIDs).
+		Find(&imageNames).Error; err != nil {
+		return nil, eris.Wrap(err, "error finding runs for artifact search")
+	}
+	return imageNames, nil
 }

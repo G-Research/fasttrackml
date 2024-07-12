@@ -101,6 +101,12 @@ func NewProjectParamsResponse(projectParams *models.ProjectParams,
 		}
 	}
 
+	// process images
+	images := make(fiber.Map, len(projectParams.Images))
+	for _, imageName := range projectParams.Images {
+		images[imageName] = []fiber.Map{}
+	}
+
 	rsp := ProjectParamsResponse{}
 	if !excludeParams {
 		rsp.Params = &params
@@ -118,7 +124,7 @@ func NewProjectParamsResponse(projectParams *models.ProjectParams,
 	for _, s := range sequences {
 		switch s {
 		case "images":
-			rsp.Images = &fiber.Map{"images": fiber.Map{}}
+			rsp.Images = &images
 		case "texts":
 			rsp.Texts = &fiber.Map{}
 		case "figures":

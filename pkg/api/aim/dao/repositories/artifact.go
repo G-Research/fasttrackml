@@ -146,6 +146,7 @@ func (r ArtifactRepository) GetArtifactNamesByExperiments(
 ) ([]string, error) {
 	runIDs := []string{}
 	if err := r.GetDB().WithContext(ctx).
+		Select("run_uuid").
 		Table("runs").
 		Joins(`INNER JOIN experiments
                         ON experiments.experiment_id = runs.experiment_id

@@ -77,6 +77,7 @@ func (r ArtifactRepository) Search(
 		Tables: map[string]string{
 			"runs":        "runs",
 			"experiments": "experiments",
+			"artifacts":   "artifacts",
 		},
 		TzOffset:  timeZoneOffset,
 		Dialector: r.GetDB().Dialector.Name(),

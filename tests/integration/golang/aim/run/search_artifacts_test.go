@@ -55,6 +55,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 	_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
 		ID:      uuid.New(),
+		Name:    "some-name",
 		RunID:   run1.ID,
 		BlobURI: "path/filename.png",
 		Step:    1,
@@ -88,6 +89,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 	_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
 		ID:      uuid.New(),
+		Name:    "other-name",
 		RunID:   run2.ID,
 		BlobURI: "path/filename.png",
 		Step:    1,
@@ -100,16 +102,24 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 
-	runs := []*models.Run{run1, run2}
 	tests := []struct {
-		name    string
-		request request.SearchArtifactsRequest
-		metrics []*models.LatestMetric
+		name         string
+		request      request.SearchArtifactsRequest
+		includedRuns []*models.Run
+		excludedRuns []*models.Run
 	}{
 		{
-			name:    "SearchArtifact",
-			request: request.SearchArtifactsRequest{},
-			metrics: []*models.LatestMetric{},
+			name:         "SearchArtifact",
+			request:      request.SearchArtifactsRequest{},
+			includedRuns: []*models.Run{run1, run2},
+		},
+		{
+			name: "SearchArtifactWithNameQuery",
+			request: request.SearchArtifactsRequest{
+				Query: `images.name == "some-name"`,
+			},
+			includedRuns: []*models.Run{run1},
+			excludedRuns: []*models.Run{run2},
 		},
 	}
 	for _, tt := range tests {
@@ -130,7 +140,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 			decodedData, err := encoding.NewDecoder(resp).Decode()
 			s.Require().Nil(err)
 
-			for _, run := range runs {
+			for _, run := range tt.includedRuns {
 				imgIndex := 0
 				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
 				recordRangeKey := rangesPrefix + ".record_range_total.1"
@@ -140,6 +150,17 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, imgIndex)
 				blobUriKey := tracesPrefix + ".blob_uri"
 				s.Equal("path/filename.png", decodedData[blobUriKey])
+			}
+			for _, run := range tt.excludedRuns {
+				imgIndex := 0
+				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
+				recordRangeKey := rangesPrefix + ".record_range_total.1"
+				s.Empty(decodedData[recordRangeKey])
+				indexRangeKey := rangesPrefix + ".index_range_total.1"
+				s.Empty(decodedData[indexRangeKey])
+				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, imgIndex)
+				blobUriKey := tracesPrefix + ".blob_uri"
+				s.Empty(decodedData[blobUriKey])
 			}
 		})
 	}

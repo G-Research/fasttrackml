@@ -194,7 +194,7 @@ func (c Controller) SearchImages(ctx *fiber.Ctx) error {
 	log.Debugf("searchMetrics namespace: %s", ns.Code)
 
 	req := request.SearchArtifactsRequest{}
-	if err = ctx.QueryParser(&req); err != nil {
+	if err = ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 	if ctx.Query("report_progress") == "" {

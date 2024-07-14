@@ -86,16 +86,16 @@ type SearchAlignedMetricsRequest struct {
 	AlignBy string `json:"align_by"`
 }
 
-// SearchArtifactsRequest is a request struct for `GET /runs/search/image` endpoint.
+// SearchArtifactsRequest is a request struct for `POST /runs/search/image` endpoint.
 type SearchArtifactsRequest struct {
 	BaseSearchRequest
-	Query         string `query:"q"`
-	SkipSystem    bool   `query:"skip_system"`
-	RecordDensity int    `query:"record_density"`
-	IndexDensity  int    `query:"index_density"`
-	RecordRange   string `query:"record_range"`
-	IndexRange    string `query:"index_range"`
-	CalcRanges    bool   `query:"calc_ranges"`
+	Query         string `params:"q"`
+	SkipSystem    bool   `params:"skip_system"`
+	RecordDensity int    `params:"record_density"`
+	IndexDensity  int    `params:"index_density"`
+	RecordRange   string `params:"record_range"`
+	IndexRange    string `params:"index_range"`
+	CalcRanges    bool   `params:"calc_ranges"`
 }
 
 // DeleteRunRequest is a request struct for `DELETE /runs/:id` endpoint.

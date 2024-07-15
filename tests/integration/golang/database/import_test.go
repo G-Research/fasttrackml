@@ -177,7 +177,6 @@ func (s *ImportTestSuite) TearDownSubTest() {
 }
 
 func (s *ImportTestSuite) TestGlobalScopeImport_Ok() {
-
 	backends := []string{"sqlite", "sqlcipher", "postgres"}
 	for _, inputBackend := range backends {
 		for _, outputBackend := range backends {

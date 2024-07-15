@@ -3,13 +3,11 @@ package helpers
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/rotisserie/eris"
 	"net/url"
 	"strings"
 	"testing"
-	"time"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/rotisserie/eris"
 )
 
 func GenerateDatabaseURI(t *testing.T, backend string) (string, error) {
@@ -29,7 +27,6 @@ func GenerateDatabaseURI(t *testing.T, backend string) (string, error) {
 }
 
 func getPostgresDatabase(t *testing.T, dsn string, name string) (string, error) {
-	name = fmt.Sprintf("db_%d", time.Now().Unix()) + name
 	uri, err := url.Parse(dsn)
 	if err != nil {
 		return "", eris.Wrapf(err, "failed to parse dsn %q", dsn)

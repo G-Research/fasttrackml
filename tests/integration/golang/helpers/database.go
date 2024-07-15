@@ -3,12 +3,13 @@ package helpers
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/rotisserie/eris"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/rotisserie/eris"
 )
 
 func GenerateDatabaseURI(t *testing.T, backend string) (string, error) {

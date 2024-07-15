@@ -97,6 +97,7 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 		Code:                "source-namespace",
 		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
 	})
+	s.Require().Nil(err)
 
 	// experiment 1
 	experiment, err := experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{

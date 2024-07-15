@@ -31,3 +31,11 @@ func (f ArtifactFixtures) GetArtifactByRunID(ctx context.Context, runID string) 
 	}
 	return &artifact, nil
 }
+
+// CreateArtifact creates new test Artifact.
+func (f ArtifactFixtures) CreateArtifact(ctx context.Context, artifact *models.Artifact) (*models.Artifact, error) {
+	if err := f.baseFixtures.db.WithContext(ctx).Create(artifact).Error; err != nil {
+		return nil, eris.Wrap(err, "error creating artifact")
+	}
+	return artifact, nil
+}

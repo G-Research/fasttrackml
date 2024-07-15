@@ -36,6 +36,7 @@ type Service struct {
 	tagRepository          repositories.TagRepositoryProvider
 	sharedTagRepository    repositories.SharedTagRepositoryProvider
 	artifactStorageFactory storage.ArtifactStorageFactoryProvider
+	artifactRepository     repositories.ArtifactRepositoryProvider
 }
 
 // NewService creates new Service instance.
@@ -46,6 +47,7 @@ func NewService(
 	tagRepository repositories.TagRepositoryProvider,
 	sharedTagRepository repositories.SharedTagRepositoryProvider,
 	artifactStorageFactory storage.ArtifactStorageFactoryProvider,
+	artifactRepository repositories.ArtifactRepositoryProvider,
 ) *Service {
 	return &Service{
 		runRepository:          runRepository,
@@ -54,6 +56,7 @@ func NewService(
 		tagRepository:          tagRepository,
 		sharedTagRepository:    sharedTagRepository,
 		artifactStorageFactory: artifactStorageFactory,
+		artifactRepository:     artifactRepository,
 	}
 }
 
@@ -225,6 +228,17 @@ func (s Service) SearchMetrics(
 		return nil, 0, nil, api.NewInternalError("error searching runs: %s", err)
 	}
 	return rows, total, searchResult, nil
+}
+
+// SearchArtifacts returns the list of artifacts (images) by provided search criteria.
+func (s Service) SearchArtifacts(
+	ctx context.Context, namespaceID uint, timeZoneOffset int, req request.SearchArtifactsRequest,
+) (*sql.Rows, int64, repositories.ArtifactSearchSummary, error) {
+	rows, total, result, err := s.artifactRepository.Search(ctx, namespaceID, timeZoneOffset, req)
+	if err != nil {
+		return nil, 0, nil, api.NewInternalError("error searching artifacts: %s", err)
+	}
+	return rows, total, result, nil
 }
 
 // SearchAlignedMetrics returns the list of aligned metrics.

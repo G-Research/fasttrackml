@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "88f77f374942f132d0a86b696222e777aec3fd08f14f00be3f92b2626aa9469f"
+            "sha256": "5941e2222117abd1c53aa1958ad4220baaf70e4f05ce500fb64fb89643e67d09"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1634,12 +1634,12 @@
         },
         "mlflow": {
             "hashes": [
-                "sha256:cc809250bc6c20f821519ef93230fe886d243a40c5ac650578aaa4e38e30aadc",
-                "sha256:cea0b678adf38d1f8f6cd97130a86325d74bb1593b895b6afadc750021ebf5a2"
+                "sha256:292cae4b83574a0cb223117e224caa6798933078af0233719c2b612bea645617",
+                "sha256:2de915346c8e34a9d13efbd6469551980923619274db57fd2253621a2c666e18"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==2.14.2"
+            "version": "==2.14.3"
         },
         "numpy": {
             "hashes": [

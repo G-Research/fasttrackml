@@ -126,3 +126,15 @@ jobs:
     secrets:
       APP_ID: ${{ secrets.APP_ID }}
       APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+
+  aws-release:
+    needs: docker-release
+    runs-on: self-hosted
+    steps:
+      - name: Pull docker image
+        run: docker pull gresearch/fasttrackml
+      - name: Delete old container
+        run: docker rm -f 
+      - name: Run docker container go-app-container
+        run: docker run -d -p 4040:4040 --name go-app-container gresearch/fasttrackml
+    

@@ -67,15 +67,11 @@ func importCmd(cmd *cobra.Command, args []string) error {
 func init() {
 	RootCmd.AddCommand(ImportCmd)
 
-	ImportCmd.Flags().StringP(
-		"input-namespace", "io", "", "Input Namespace",
-	)
+	ImportCmd.Flags().String("input-namespace", "", "Input Namespace")
 	ImportCmd.Flags().StringP(
 		"input-database-uri", "i", "", "Input Database URI (eg., sqlite://fasttrackml.db)",
 	)
-	ImportCmd.Flags().StringP(
-		"output-namespace", "on", "", "Output Namespace",
-	)
+	ImportCmd.Flags().String("output-namespace", "", "Output Namespace")
 	ImportCmd.Flags().StringP(
 		"output-database-uri", "o", "", "Output Database URI (eg., postgres://user:psw@postgres:5432)",
 	)

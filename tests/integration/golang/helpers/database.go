@@ -3,12 +3,12 @@ package helpers
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/rotisserie/eris"
 	"net/url"
 	"strings"
 	"testing"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/rotisserie/eris"
+	"time"
 )
 
 func GenerateDatabaseURI(t *testing.T, backend string) (string, error) {
@@ -21,6 +21,7 @@ func GenerateDatabaseURI(t *testing.T, backend string) (string, error) {
 		// temporary directory name contains some not allowed character to be in database name. filter it.
 		tmpDir := strings.ReplaceAll(t.TempDir(), "-", "_")
 		tmpDir = strings.ReplaceAll(tmpDir, "/", "_")
+		tmpDir = fmt.Sprintf("db_%d%s", time.Now().UnixMicro(), tmpDir)
 		return getPostgresDatabase(t, GetPostgresUri(), strings.ToLower(tmpDir))
 	default:
 		return "", fmt.Errorf("unknown backend: %s", backend)

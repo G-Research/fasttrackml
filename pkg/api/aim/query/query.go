@@ -730,7 +730,7 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 					switch attr {
 					case "name":
 						return clause.Column{
-							Table: alias,
+							Table: j.alias,
 							Name:  "name",
 						}, nil
 					}

@@ -89,6 +89,8 @@ func (s *Importer) Import() error {
 		"contexts",
 		"metrics",
 		"latest_metrics",
+		"shared_tags",
+		"run_shared_tags",
 	}
 	for _, table := range tables {
 		if err := s.importTable(table); err != nil {
@@ -361,6 +363,16 @@ func EntityLimitedByNamespace(table string, db *gorm.DB, namespace *Namespace) *
 			// if source namespace has been provided, we don't need to import any namespace.
 			// just other related data.
 			return db.Where("id = ?", -1)
+		case "shared_tags":
+			return db.Where("shared_tags.namespace_id = ?", namespace.ID)
+		case "run_shared_tags":
+			// if source namespace has been provided, we don't need to import any namespace.
+			// just other related data.
+			return db.Joins(
+				"LEFT JOIN shared_tags ON shared_tags.id = run_shared_tags.shared_tag_id",
+			).Where(
+				"shared_tags.namespace_id = ?", namespace.ID,
+			)
 		}
 	}
 	return db

@@ -27,6 +27,8 @@ type rowCounts struct {
 	params                   int
 	dashboards               int
 	apps                     int
+	sharedTags               int
+	runSharedTags            int
 }
 
 type ImportTestSuite struct {
@@ -91,6 +93,9 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 	s.Require().Nil(err)
 
 	namespaceFixtures, err := fixtures.NewNamespaceFixtures(db)
+	s.Require().Nil(err)
+
+	sharedTagsFixtures, err := fixtures.NewSharedTagFixtures(db)
 	s.Require().Nil(err)
 
 	namespace, err := namespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
@@ -170,6 +175,17 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 		Name: uuid.NewString(),
 	})
 	s.Require().Nil(err)
+
+	// shared tags
+	sharedTag1, err := sharedTagsFixtures.CreateTag(context.Background(), "tag1", 1)
+	s.Require().Nil(err)
+
+	s.Require().Nil(sharedTagsFixtures.Associate(context.Background(), sharedTag1.ID.String(), runs[0].ID))
+
+	sharedTag2, err := sharedTagsFixtures.CreateTag(context.Background(), "tag1", namespace.ID)
+	s.Require().Nil(err)
+
+	s.Require().Nil(sharedTagsFixtures.Associate(context.Background(), sharedTag2.ID.String(), runs[0].ID))
 }
 
 func (s *ImportTestSuite) TearDownSubTest() {
@@ -196,6 +212,8 @@ func (s *ImportTestSuite) TestGlobalScopeImport_Ok() {
 					params:                   30,
 					dashboards:               3,
 					apps:                     3,
+					sharedTags:               2,
+					runSharedTags:            2,
 				})
 
 				// initially, dest DB is empty
@@ -217,6 +235,8 @@ func (s *ImportTestSuite) TestGlobalScopeImport_Ok() {
 					params:                   30,
 					dashboards:               3,
 					apps:                     3,
+					sharedTags:               2,
+					runSharedTags:            2,
 				})
 
 				// invoke the Importer.Import method a 2nd time
@@ -234,6 +254,8 @@ func (s *ImportTestSuite) TestGlobalScopeImport_Ok() {
 					params:                   30,
 					dashboards:               3,
 					apps:                     3,
+					sharedTags:               2,
+					runSharedTags:            2,
 				})
 
 				// confirm row-for-row equality
@@ -247,6 +269,8 @@ func (s *ImportTestSuite) TestGlobalScopeImport_Ok() {
 					"params",
 					"metrics",
 					"latest_metrics",
+					"shared_tags",
+					"run_shared_tags",
 				} {
 					s.validateTable(s.inputDB, s.outputDB, table)
 				}
@@ -283,6 +307,8 @@ func (s *ImportTestSuite) TestNamespaceScopeImport_Ok() {
 					params:                   30,
 					dashboards:               3,
 					apps:                     3,
+					sharedTags:               2,
+					runSharedTags:            2,
 				})
 
 				// initially, dest DB is empty
@@ -309,6 +335,8 @@ func (s *ImportTestSuite) TestNamespaceScopeImport_Ok() {
 					params:                   10,
 					dashboards:               1,
 					apps:                     1,
+					sharedTags:               1,
+					runSharedTags:            1,
 				})
 
 				// invoke the Importer.Import method a 2nd time
@@ -326,6 +354,8 @@ func (s *ImportTestSuite) TestNamespaceScopeImport_Ok() {
 					params:                   10,
 					dashboards:               1,
 					apps:                     1,
+					sharedTags:               1,
+					runSharedTags:            1,
 				})
 			})
 		}
@@ -366,6 +396,12 @@ func (s *ImportTestSuite) validateRowCounts(db *gorm.DB, counts rowCounts) {
 
 	s.Require().Nil(db.Model(&database.Dashboard{}).Count(&countVal).Error)
 	s.Equal(counts.dashboards, int(countVal), "Dashboard count incorrect")
+
+	s.Require().Nil(db.Model(&database.SharedTag{}).Count(&countVal).Error)
+	s.Equal(counts.sharedTags, int(countVal), "Shared tag count incorrect")
+
+	s.Require().Nil(db.Model(&database.RunSharedTag{}).Count(&countVal).Error)
+	s.Equal(counts.runSharedTags, int(countVal), "Run shared tag count incorrect")
 }
 
 // validateTable will scan source and dest table and confirm they are identical
@@ -382,7 +418,7 @@ func (s *ImportTestSuite) validateTable(source, dest *gorm.DB, table string) {
 	defer destRows.Close()
 
 	for sourceRows.Next() {
-		// dest should have the same number of rows as source
+		// dest should have the same number of rows as a source
 		s.Require().True(destRows.Next())
 
 		var sourceRow, destRow map[string]any

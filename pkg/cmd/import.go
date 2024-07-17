@@ -55,6 +55,8 @@ func importCmd(cmd *cobra.Command, args []string) error {
 	if err := database.NewImporter(
 		input.GormDB().WithContext(ctx),
 		output.GormDB().WithContext(ctx),
+		database.WithSourceNamespace(viper.GetString("input-namespace")),
+		database.WithDestinationNamespace(viper.GetString("output-namespace")),
 	).Import(); err != nil {
 		return err
 	}
@@ -65,9 +67,11 @@ func importCmd(cmd *cobra.Command, args []string) error {
 func init() {
 	RootCmd.AddCommand(ImportCmd)
 
+	ImportCmd.Flags().String("input-namespace", "", "Input Namespace")
 	ImportCmd.Flags().StringP(
 		"input-database-uri", "i", "", "Input Database URI (eg., sqlite://fasttrackml.db)",
 	)
+	ImportCmd.Flags().String("output-namespace", "", "Output Namespace")
 	ImportCmd.Flags().StringP(
 		"output-database-uri", "o", "", "Output Database URI (eg., postgres://user:psw@postgres:5432)",
 	)

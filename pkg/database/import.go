@@ -1,9 +1,11 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
@@ -21,24 +23,60 @@ type experimentInfo struct {
 
 var uuidRegexp = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 
-// Importer will handle transport of data from source to destination db.
+// Importer will handle the transport of data from source to destination db.
 type Importer struct {
-	destDB          *gorm.DB
-	sourceDB        *gorm.DB
-	experimentInfos []experimentInfo
+	sourceDB                 *gorm.DB
+	destinationDB            *gorm.DB
+	experimentInfos          []experimentInfo
+	sourceNamespace          *Namespace
+	destinationNamespace     *Namespace
+	sourceNamespaceName      *string
+	destinationNamespaceName *string
 }
 
 // NewImporter initializes an Importer.
-func NewImporter(input, output *gorm.DB) *Importer {
-	return &Importer{
-		destDB:          output,
+func NewImporter(input, output *gorm.DB, options ...func(importer *Importer)) *Importer {
+	importer := Importer{
+		destinationDB:   output,
 		sourceDB:        input,
 		experimentInfos: []experimentInfo{},
 	}
+	for _, o := range options {
+		o(&importer)
+	}
+	return &importer
 }
 
 // Import copies the contents of input db to output db.
 func (s *Importer) Import() error {
+	// if source Namespace has been provided, then apply restriction, otherwise fetch everything.
+	if s.sourceNamespaceName != nil {
+		var sourceNamespace Namespace
+		if err := s.sourceDB.Where(
+			"code = ?", *s.sourceNamespaceName,
+		).First(&sourceNamespace).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return eris.Wrapf(err, "source namespace %s not found", *s.sourceNamespaceName)
+			}
+			return eris.Wrapf(err, "error getting namespace %s", *s.sourceNamespaceName)
+		}
+		s.sourceNamespace = &sourceNamespace
+	}
+
+	// if destination Namespace has been provided, then apply restriction, otherwise fetch everything.
+	if s.destinationNamespaceName != nil {
+		var destinationNamespace Namespace
+		if err := s.destinationDB.Where(
+			"code = ?", *s.destinationNamespaceName,
+		).First(&destinationNamespace).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return eris.Wrapf(err, "destination namespace %s not found", *s.destinationNamespaceName)
+			}
+			return eris.Wrapf(err, "error getting namespace %s", *s.destinationNamespaceName)
+		}
+		s.destinationNamespace = &destinationNamespace
+	}
+
 	tables := []string{
 		"namespaces",
 		"apps",
@@ -51,6 +89,8 @@ func (s *Importer) Import() error {
 		"contexts",
 		"metrics",
 		"latest_metrics",
+		"shared_tags",
+		"run_shared_tags",
 	}
 	for _, table := range tables {
 		if err := s.importTable(table); err != nil {
@@ -63,13 +103,17 @@ func (s *Importer) Import() error {
 	return nil
 }
 
-// importExperiments copies the contents of the experiments table from sourceDB to destDB,
+// importExperiments copies the contents of the experiment table from sourceDB to destinationDB,
 // while recording the new ID.
 func (s *Importer) importExperiments() error {
 	// Start transaction in the destDB
-	err := s.destDB.Transaction(func(destTX *gorm.DB) error {
+	err := s.destinationDB.Transaction(func(destTX *gorm.DB) error {
 		// Query data from the source database
-		rows, err := s.sourceDB.Model(Experiment{}).Rows()
+		rows, err := EntityLimitedByNamespace(
+			"experiments",
+			s.sourceDB.Model(Experiment{}),
+			s.sourceNamespace,
+		).Rows()
 		if err != nil {
 			return eris.Wrap(err, "error creating Rows instance from source")
 		}
@@ -93,13 +137,19 @@ func (s *Importer) importExperiments() error {
 				CreationTime:     scannedItem.CreationTime,
 				LastUpdateTime:   scannedItem.LastUpdateTime,
 			}
+			// override Namespace if it was provided during the import.
+			if s.destinationNamespace != nil {
+				newItem.NamespaceID = s.destinationNamespace.ID
+			}
 			// keep default experiment ID, but otherwise draw new one
 			if *scannedItem.ID == int32(0) {
 				newItem.ID = scannedItem.ID
 			}
-			if err := destTX.
-				Where(Experiment{Name: scannedItem.Name}).
-				FirstOrCreate(&newItem).Error; err != nil {
+			if err := destTX.Where(
+				Experiment{Name: scannedItem.Name},
+			).FirstOrCreate(
+				&newItem,
+			).Error; err != nil {
 				return eris.Wrap(err, "error creating destination row")
 			}
 			s.saveExperimentInfo(scannedItem, newItem)
@@ -115,21 +165,27 @@ func (s *Importer) importExperiments() error {
 }
 
 // importTable copies the contents of one table (model) from sourceDB
-// while updating the experiment_id to destDB.
+// while updating the experiment_id to destinationDB.
 func (s *Importer) importTable(table string) error {
 	switch table {
-	// handle special case for experiments.
+	// handle a special case for experiments.
 	case "experiments":
 		if err := s.importExperiments(); err != nil {
 			return eris.Wrap(err, "error importing table experiments")
 		}
 	default:
-		// Start transaction in the destDB
-		err := s.destDB.Transaction(func(destTX *gorm.DB) error {
+		// Start transaction in the destinationDB
+		err := s.destinationDB.Transaction(func(destTX *gorm.DB) error {
 			// Query data from the source database
-			rows, err := s.sourceDB.Table(table).Rows()
+			rows, err := EntityLimitedByNamespace(
+				table,
+				s.sourceDB.Table(table).Select(
+					fmt.Sprintf("%s.*", table),
+				),
+				s.sourceNamespace,
+			).Rows()
 			if err != nil {
-				return eris.Wrap(err, "error creating Rows instance from source")
+				return eris.Wrap(err, "error creating rows instance from source")
 			}
 			if err := rows.Err(); err != nil {
 				return eris.Wrap(err, "error getting query result")
@@ -140,17 +196,17 @@ func (s *Importer) importTable(table string) error {
 			count := 0
 			for rows.Next() {
 				var item map[string]any
-				if err = s.sourceDB.ScanRows(rows, &item); err != nil {
+				if err = s.sourceDB.Debug().ScanRows(rows, &item); err != nil {
 					return eris.Wrap(err, "error scanning source row")
 				}
 				item, err = s.translateFields(item)
 				if err != nil {
 					return eris.Wrap(err, "error translating fields")
 				}
-				if err := destTX.
-					Table(table).
-					Clauses(clause.OnConflict{DoNothing: true}, clause.Returning{}).
-					Create(&item).Error; err != nil {
+				item = ApplyNamespaceRestriction(table, item, s.destinationNamespace)
+				if err := destTX.Table(table).Clauses(
+					clause.OnConflict{DoNothing: true}, clause.Returning{},
+				).Create(&item).Error; err != nil {
 					return eris.Wrap(err, "error creating destination row")
 				}
 				count++
@@ -225,9 +281,9 @@ func (s *Importer) translateFields(item map[string]any) (map[string]any, error) 
 
 // updateNamespaceDefaultExperiment updates the default_experiment_id for all namespaces
 // when its related experiment received a new id.
-func (s Importer) updateNamespaceDefaultExperiment() error {
-	// Start transaction in the destDB
-	err := s.destDB.Transaction(func(destTX *gorm.DB) error {
+func (s *Importer) updateNamespaceDefaultExperiment() error {
+	// Start transaction in the destinationDB
+	err := s.destinationDB.Transaction(func(destTX *gorm.DB) error {
 		// Get namespaces
 		var namespaces []Namespace
 		if err := destTX.Model(Namespace{}).Find(&namespaces).Error; err != nil {
@@ -241,10 +297,13 @@ func (s Importer) updateNamespaceDefaultExperiment() error {
 					break
 				}
 			}
-			if err := destTX.
-				Model(Namespace{}).
-				Where(Namespace{ID: ns.ID}).
-				Update("default_experiment_id", updatedExperimentID).Error; err != nil {
+			if err := destTX.Model(
+				Namespace{},
+			).Where(
+				Namespace{ID: ns.ID},
+			).Update(
+				"default_experiment_id", updatedExperimentID,
+			).Error; err != nil {
 				return eris.Wrap(err, "error updating destination namespace row")
 			}
 		}
@@ -252,4 +311,83 @@ func (s Importer) updateNamespaceDefaultExperiment() error {
 		return nil
 	})
 	return err
+}
+
+// ApplyNamespaceRestriction overwrite Namespace if it is needed.
+func ApplyNamespaceRestriction(table string, item map[string]any, namespace *Namespace) map[string]any {
+	if namespace != nil {
+		if slices.Contains([]string{"apps", "experiments"}, table) {
+			item["namespace_id"] = namespace.ID
+		}
+	}
+	return item
+}
+
+// EntityLimitedByNamespace represents scope function that limits current query by Namespace.
+func EntityLimitedByNamespace(table string, db *gorm.DB, namespace *Namespace) *gorm.DB {
+	if namespace != nil {
+		switch table {
+		case "contexts":
+			return db.Joins(
+				"LEFT JOIN metrics ON metrics.context_id = contexts.id",
+			).Joins(
+				"LEFT JOIN runs ON runs.run_uuid = metrics.run_uuid",
+			).Joins(
+				"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+			).Where(
+				"experiments.namespace_id = ?", namespace.ID,
+			)
+		case "runs":
+			return db.Joins(
+				"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+			).Where(
+				"experiments.namespace_id = ?", namespace.ID,
+			)
+		case "tags", "params", "metrics", "latest_metrics":
+			return db.Joins(
+				fmt.Sprintf("LEFT JOIN runs ON runs.run_uuid = %s.run_uuid", table),
+			).Joins(
+				"LEFT JOIN experiments ON experiments.experiment_id = runs.experiment_id",
+			).Where(
+				"experiments.namespace_id = ?", namespace.ID,
+			)
+		case "apps", "experiments":
+			return db.Where(fmt.Sprintf("%s.namespace_id = ?", table), namespace.ID)
+		case "dashboards":
+			return db.Joins(
+				"LEFT JOIN apps ON apps.id = dashboards.app_id",
+			).Where(
+				"apps.namespace_id = ?", namespace.ID,
+			)
+		case "namespaces":
+			// if source namespace has been provided, we don't need to import any namespace.
+			// just other related data.
+			return db.Where("id = ?", -1)
+		case "shared_tags":
+			return db.Where("shared_tags.namespace_id = ?", namespace.ID)
+		case "run_shared_tags":
+			// if source namespace has been provided, we don't need to import any namespace.
+			// just other related data.
+			return db.Joins(
+				"LEFT JOIN shared_tags ON shared_tags.id = run_shared_tags.shared_tag_id",
+			).Where(
+				"shared_tags.namespace_id = ?", namespace.ID,
+			)
+		}
+	}
+	return db
+}
+
+// WithSourceNamespace sets Importer source Namespace.
+func WithSourceNamespace(namespace string) func(importer *Importer) {
+	return func(s *Importer) {
+		s.sourceNamespaceName = &namespace
+	}
+}
+
+// WithDestinationNamespace sets Importer destination Namespace.
+func WithDestinationNamespace(namespace string) func(importer *Importer) {
+	return func(s *Importer) {
+		s.destinationNamespaceName = &namespace
+	}
 }

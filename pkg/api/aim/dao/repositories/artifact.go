@@ -17,21 +17,22 @@ import (
 // ArtifactSearchStepInfo is a search summary for a Run Step.
 type ArtifactSearchStepInfo struct {
 	RunUUID  string `gorm:"column:run_uuid"`
+	Name     string `gorm:"column:name"`
 	Step     int    `gorm:"column:step"`
 	ImgCount int    `gorm:"column:img_count"`
 }
 
-// ArtifactSearchSummary is a search summary for whole run.
-type ArtifactSearchSummary map[string][]ArtifactSearchStepInfo
+// ArtifactSearchSummary is a search summary for run and name.
+type ArtifactSearchSummary map[string]map[string][]ArtifactSearchStepInfo
 
 // TotalSteps figures out how many steps belong to the runID.
-func (r ArtifactSearchSummary) TotalSteps(runID string) int {
-	return len(r[runID])
+func (r ArtifactSearchSummary) TotalSteps(runID, name string) int {
+	return len(r[runID][name])
 }
 
 // StepImageCount figures out how many steps belong to the runID and step.
-func (r ArtifactSearchSummary) StepImageCount(runID string, step int) int {
-	runStepImages := r[runID]
+func (r ArtifactSearchSummary) StepImageCount(runID, name string, step int) int {
+	runStepImages := r[runID][name]
 	return runStepImages[step].ImgCount
 }
 
@@ -109,17 +110,22 @@ func (r ArtifactRepository) Search(
 	// collect some summary data for progress indicator
 	stepInfo := []ArtifactSearchStepInfo{}
 	if tx := r.GetDB().WithContext(ctx).
-		Raw(`SELECT run_uuid, step, count(id) as img_count
+		Raw(`SELECT run_uuid, name, step, count(id) as img_count
 			  FROM artifacts
 			  WHERE run_uuid IN (?)
-			  GROUP BY run_uuid, step;`, runIDs).
+			  GROUP BY run_uuid, name, step;`, runIDs).
 		Find(&stepInfo); tx.Error != nil {
 		return nil, nil, nil, eris.Wrap(err, "error find result summary for artifact search")
 	}
 
 	resultSummary := make(ArtifactSearchSummary, len(runIDs))
 	for _, rslt := range stepInfo {
-		resultSummary[rslt.RunUUID] = append(resultSummary[rslt.RunUUID], rslt)
+		traceMap, ok := resultSummary[rslt.RunUUID]
+		if !ok {
+			traceMap = map[string][]ArtifactSearchStepInfo{}
+		}
+		traceMap[rslt.Name] = append(traceMap[rslt.Name], rslt)
+		resultSummary[rslt.RunUUID] = traceMap
 	}
 
 	// get a cursor for the artifacts
@@ -127,6 +133,7 @@ func (r ArtifactRepository) Search(
 		Table("artifacts").
 		Where("run_uuid IN ?", runIDs).
 		Order("run_uuid").
+		Order("name").
 		Order("step").
 		Order("created_at")
 

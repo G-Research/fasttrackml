@@ -489,7 +489,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 			var (
 				runID   string
 				runData fiber.Map
-				traces  []fiber.Map
+				traces  map[string]fiber.Map
 				cur     int64
 			)
 			reportProgress := func() error {
@@ -532,10 +532,24 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 							"active":        run.Status == models.StatusRunning,
 						},
 					}
-					traces = []fiber.Map{}
+					traces = map[string]fiber.Map{}
 				}
-				traces = append(traces, fiber.Map{
-					"name":     img.Name,
+				trace, ok := traces[img.Name]
+				if !ok {
+					trace = fiber.Map{
+						"name":    img.Name,
+						"context": fiber.Map{},
+						"caption": img.Caption,
+						"values":  []fiber.Map{},
+						"iters":   []fiber.Map{},
+					}
+					traces[img.Name] = trace
+				}
+				traceValues, ok := trace["values"]
+				if !ok {
+					traceValues = []fiber.Map{}
+				}
+				value := fiber.Map{
 					"blob_uri": img.BlobURI,
 					"caption":  img.Caption,
 					"height":   img.Height,
@@ -544,13 +558,17 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 					"iter":     img.Iter,
 					"index":    img.Index,
 					"step":     img.Step,
-				})
+				}
+				traceValues = append(traceValues, value)
+				trace["values"] = traceValues
+				trace["iters"] = traceValues
 			}
 			flushImages := func() error {
 				if runID == "" {
 					return nil
 				}
-				runData["traces"] = traces
+				runData["traces"]["values"] = traceValues
+
 				if err := encoding.EncodeTree(w, fiber.Map{
 					runID: runData,
 				}); err != nil {

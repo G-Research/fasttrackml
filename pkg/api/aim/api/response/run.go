@@ -562,7 +562,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 					"step":     img.Step,
 				}
 				traceValues = append(traceValues, value)
-				iters = append(iters, img.Iter)
+				iters = append(iters, img.Step)
 				trace["values"] = traceValues
 				trace["iters"] = iters
 				tracesMap[img.Name] = trace

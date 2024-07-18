@@ -506,11 +506,12 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				return w.Flush()
 			}
 			addImage := func(img models.Artifact, run models.Run) {
+				imagesPerStep := result.StepImageCount(img.RunID, img.Name, 0)
+				totalSteps := result.TotalSteps(img.RunID, img.Name)
 				if runData == nil {
-					imagesPerStep := result.StepImageCount(img.RunID, img.Name, 0)
 					runData = fiber.Map{
 						"ranges": fiber.Map{
-							"record_range_total": []int{0, result.TotalSteps(img.RunID, img.Name)},
+							"record_range_total": []int{0, totalSteps},
 							"record_range_used":  []int{0, int(img.Step)},
 							"index_range_total":  []int{0, imagesPerStep},
 							"index_range_used":   []int{0, int(img.Index)},
@@ -543,13 +544,21 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 					}
 					tracesMap[img.Name] = trace
 				}
-				traceValues, ok := trace["values"].([]fiber.Map)
+				traceValues, ok := trace["values"].([][]fiber.Map)
 				if !ok {
-					traceValues = []fiber.Map{}
+					stepsSlice := make([][]fiber.Map, totalSteps)
+					traceValues = stepsSlice
 				}
+
+				stepImages := traceValues[img.Step]
+				if stepImages == nil {
+					stepImages = make([]fiber.Map, imagesPerStep)
+					traceValues[img.Step] = stepImages
+				}
+
 				iters, ok := trace["iters"].([]int64)
 				if !ok {
-					iters = []int64{}
+					iters = make([]int64, totalSteps)
 				}
 				value := fiber.Map{
 					"blob_uri": img.BlobURI,
@@ -561,8 +570,8 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 					"index":    img.Index,
 					"step":     img.Step,
 				}
-				traceValues = append(traceValues, value)
-				iters = append(iters, img.Step)
+				stepImages = append(stepImages, value)
+				iters[img.Step] = img.Iter // TODO maybe not correct
 				trace["values"] = traceValues
 				trace["iters"] = iters
 				tracesMap[img.Name] = trace

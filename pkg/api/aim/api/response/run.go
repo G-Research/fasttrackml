@@ -567,7 +567,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				trace["iters"] = iters
 				tracesMap[img.Name] = trace
 			}
-			setTraces := func(run fiber.Map) {
+			setTraces := func() {
 				traces := make([]fiber.Map, len(tracesMap))
 				i := 0
 				for _, trace := range tracesMap {
@@ -580,7 +580,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				if runID == "" {
 					return nil
 				}
-				setTraces(runData)
+				setTraces()
 				if err := encoding.EncodeTree(w, fiber.Map{
 					runID: runData,
 				}); err != nil {

@@ -142,24 +142,28 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 
 			for _, run := range tt.includedRuns {
 				imgIndex := 0
+				valuesIndex := 0
 				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
 				recordRangeKey := rangesPrefix + ".record_range_total.1"
 				s.Equal(int64(1), decodedData[recordRangeKey])
 				indexRangeKey := rangesPrefix + ".index_range_total.1"
 				s.Equal(int64(1), decodedData[indexRangeKey])
 				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, imgIndex)
-				blobUriKey := tracesPrefix + ".blob_uri"
+				valuesPrefix := fmt.Sprintf(".values.%d", valuesIndex)
+				blobUriKey := tracesPrefix + valuesPrefix + ".blob_uri"
 				s.Equal("path/filename.png", decodedData[blobUriKey])
 			}
 			for _, run := range tt.excludedRuns {
 				imgIndex := 0
+				valuesIndex := 0
 				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
 				recordRangeKey := rangesPrefix + ".record_range_total.1"
 				s.Empty(decodedData[recordRangeKey])
 				indexRangeKey := rangesPrefix + ".index_range_total.1"
 				s.Empty(decodedData[indexRangeKey])
 				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, imgIndex)
-				blobUriKey := tracesPrefix + ".blob_uri"
+				valuesPrefix := fmt.Sprintf(".values.%d", valuesIndex)
+				blobUriKey := tracesPrefix + valuesPrefix + ".blob_uri"
 				s.Empty(decodedData[blobUriKey])
 			}
 		})

@@ -576,7 +576,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				trace["iters"] = iters
 				tracesMap[img.Name] = trace
 			}
-			setTraces := func(run fiber.Map) {
+			setTraces := func() {
 				traces := make([]fiber.Map, len(tracesMap))
 				i := 0
 				for _, trace := range tracesMap {
@@ -589,7 +589,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				if runID == "" {
 					return nil
 				}
-				setTraces(runData)
+				setTraces()
 				if err := encoding.EncodeTree(w, fiber.Map{
 					runID: runData,
 				}); err != nil {
@@ -795,19 +795,7 @@ func NewRunsSearchStreamResponse(
 		if err := func() error {
 			for i, r := range runs {
 				run := fiber.Map{
-					"props": fiber.Map{
-						"name":        r.Name,
-						"description": nil,
-						"experiment": fiber.Map{
-							"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-							"name": r.Experiment.Name,
-						},
-						"tags":          ConvertTagsToMaps(r.SharedTags),
-						"creation_time": float64(r.StartTime.Int64) / 1000,
-						"end_time":      float64(r.EndTime.Int64) / 1000,
-						"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
-						"active":        r.Status == models.StatusRunning,
-					},
+					"props": renderProps(r),
 				}
 
 				if !excludeTraces {
@@ -897,21 +885,7 @@ func NewActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgre
 		start := time.Now()
 		if err := func() error {
 			for i, r := range runs {
-
-				props := fiber.Map{
-					"name":        r.Name,
-					"description": nil,
-					"experiment": fiber.Map{
-						"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-						"name": r.Experiment.Name,
-					},
-					"tags":          ConvertTagsToMaps(r.SharedTags),
-					"creation_time": float64(r.StartTime.Int64) / 1000,
-					"end_time":      float64(r.EndTime.Int64) / 1000,
-					"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
-					"active":        r.Status == models.StatusRunning,
-				}
-
+				props := renderProps(r)
 				metrics := make([]fiber.Map, len(r.LatestMetrics))
 				for i, m := range r.LatestMetrics {
 					v := m.Value
@@ -969,4 +943,21 @@ func NewActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgre
 		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
 	})
 	return nil
+}
+
+// renderProps makes the "props" map for a run.
+func renderProps(r models.Run) fiber.Map {
+	return fiber.Map{
+		"name":        r.Name,
+		"description": nil,
+		"experiment": fiber.Map{
+			"id":   fmt.Sprintf("%d", *r.Experiment.ID),
+			"name": r.Experiment.Name,
+		},
+		"tags":          ConvertTagsToMaps(r.SharedTags),
+		"creation_time": float64(r.StartTime.Int64) / 1000,
+		"end_time":      float64(r.EndTime.Int64) / 1000,
+		"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
+		"active":        r.Status == models.StatusRunning,
+	}
 }

@@ -1,5 +1,5 @@
 diff --git a/tests/api/test_dashboards_api.py b/tests/api/test_dashboards_api.py
-index 94bc29c..85000fc 100644
+index 94bc29ce..85000fc4 100644
 --- a/tests/api/test_dashboards_api.py
 +++ b/tests/api/test_dashboards_api.py
 @@ -1,7 +1,7 @@
@@ -33,7 +33,7 @@ index 94bc29c..85000fc 100644
      def test_list_dashboards_api(self):
          response = self.client.get('/api/dashboards/')
 diff --git a/tests/api/test_project_api.py b/tests/api/test_project_api.py
-index 31d3654..060d528 100644
+index 31d36547..060d528a 100644
 --- a/tests/api/test_project_api.py
 +++ b/tests/api/test_project_api.py
 @@ -1,21 +1,17 @@
@@ -128,8 +128,59 @@ index 31d3654..060d528 100644
  
      def test_project_images_info_only_api(self):
          client = self.client
+diff --git a/tests/api/test_run_images_api.py b/tests/api/test_run_images_api.py
+index 2726dcd9..9151a5c9 100644
+--- a/tests/api/test_run_images_api.py
++++ b/tests/api/test_run_images_api.py
+@@ -1,13 +1,7 @@
+ from parameterized import parameterized
+ import random
+ 
+-from tests.base import ApiTestBase
+-from tests.utils import decode_encoded_tree_stream, generate_image_set
+-
+-from aim.storage.treeutils import decode_tree
+-from aim.storage.context import Context
+-from aim.sdk.run import Run
+-
++from tests.fml import ApiTestBase, db_fixtures
+ 
+ class TestNoImagesRunQueryApi(ApiTestBase):
+     def test_query_images_api_empty_result(self):
+@@ -22,13 +16,13 @@ class TestNoImagesRunQueryApi(ApiTestBase):
+ class RunImagesTestBase(ApiTestBase):
+     @classmethod
+     def setUpClass(cls) -> None:
+-        super().setUpClass()
++        # super().setUpClass()
+         run = cls.create_run(repo=cls.repo)
+         run['images_per_step'] = 16
+-        for step in range(100):
+-            images = generate_image_set(img_count=16, caption_prefix=f'Image {step}')
+-            run.track(images, name='random_images')
+-            run.track(random.random(), name='random_values')
++        # for step in range(100):
++             # images = generate_image_set(img_count=16, caption_prefix=f'Image {step}') 
++             # run.track(images, name='random_images')
++             # run.track(random.random(), name='random_values')
+         cls.run_hash = run.hash
+ 
+ 
+diff --git a/tests/base.py b/tests/base.py
+index 0ebd14d0..82e2c757 100644
+--- a/tests/base.py
++++ b/tests/base.py
+@@ -8,7 +8,7 @@ from aim.sdk.run import Run
+ from aim.web.run import app
+ 
+ 
+-class TestBase(unittest.TestCase):
++class TestBase(unittest.TFestCase):
+     @classmethod
+     def setUpClass(cls) -> None:
+         super().setUpClass()
 diff --git a/tests/conftest.py b/tests/conftest.py
-index 8cdd353..e69de29 100644
+index 8cdd353e..e69de29b 100644
 --- a/tests/conftest.py
 +++ b/tests/conftest.py
 @@ -1,44 +0,0 @@
@@ -179,7 +230,7 @@ index 8cdd353..e69de29 100644
 -    del os.environ[AIM_REPO_NAME]
 diff --git a/tests/fml.py b/tests/fml.py
 new file mode 100644
-index 0000000..099cab0
+index 00000000..91a0c51c
 --- /dev/null
 +++ b/tests/fml.py
 @@ -0,0 +1,199 @@

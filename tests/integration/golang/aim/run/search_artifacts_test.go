@@ -58,7 +58,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 		Name:    "some-name",
 		RunID:   run1.ID,
 		BlobURI: "path/filename.png",
-		Step:    1,
+		Step:    0,
 		Iter:    1,
 		Index:   1,
 		Caption: "caption1",
@@ -92,7 +92,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 		Name:    "other-name",
 		RunID:   run2.ID,
 		BlobURI: "path/filename.png",
-		Step:    1,
+		Step:    0,
 		Iter:    1,
 		Index:   1,
 		Caption: "caption2",
@@ -141,6 +141,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 			s.Require().Nil(err)
 
 			for _, run := range tt.includedRuns {
+				traceIndex := 0
 				imgIndex := 0
 				valuesIndex := 0
 				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
@@ -148,8 +149,8 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 				s.Equal(int64(1), decodedData[recordRangeKey])
 				indexRangeKey := rangesPrefix + ".index_range_total.1"
 				s.Equal(int64(1), decodedData[indexRangeKey])
-				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, imgIndex)
-				valuesPrefix := fmt.Sprintf(".values.%d", valuesIndex)
+				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, traceIndex)
+				valuesPrefix := fmt.Sprintf(".values.%d.%d", valuesIndex, imgIndex)
 				blobUriKey := tracesPrefix + valuesPrefix + ".blob_uri"
 				s.Equal("path/filename.png", decodedData[blobUriKey])
 			}

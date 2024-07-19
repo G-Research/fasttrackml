@@ -552,8 +552,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 
 				stepImages := traceValues[img.Step]
 				if stepImages == nil {
-					stepImages = make([]fiber.Map, imagesPerStep)
-					traceValues[img.Step] = stepImages
+					stepImages = []fiber.Map{}
 				}
 
 				iters, ok := trace["iters"].([]int64)
@@ -571,6 +570,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 					"step":     img.Step,
 				}
 				stepImages = append(stepImages, value)
+				traceValues[img.Step] = stepImages
 				iters[img.Step] = img.Iter // TODO maybe not correct
 				trace["values"] = traceValues
 				trace["iters"] = iters

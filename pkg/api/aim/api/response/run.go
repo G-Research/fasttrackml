@@ -600,7 +600,9 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				}
 				return w.Flush()
 			}
+			hasRows := false
 			for rows.Next() {
+				hasRows = true
 				var image models.Artifact
 				if err := database.DB.ScanRows(rows, &image); err != nil {
 					return err
@@ -623,8 +625,10 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				return err
 			}
 
-			if err := reportProgress(); err != nil {
-				return err
+			if hasRows {
+				if err := reportProgress(); err != nil {
+					return err
+				}
 			}
 
 			return nil

@@ -129,10 +129,10 @@ index 31d36547..060d528a 100644
      def test_project_images_info_only_api(self):
          client = self.client
 diff --git a/tests/api/test_run_images_api.py b/tests/api/test_run_images_api.py
-index 2726dcd9..9151a5c9 100644
+index 2726dcd9..401484b9 100644
 --- a/tests/api/test_run_images_api.py
 +++ b/tests/api/test_run_images_api.py
-@@ -1,13 +1,7 @@
+@@ -1,20 +1,13 @@
  from parameterized import parameterized
  import random
  
@@ -145,9 +145,18 @@ index 2726dcd9..9151a5c9 100644
 -
 +from tests.fml import ApiTestBase, db_fixtures
  
++@db_fixtures()
  class TestNoImagesRunQueryApi(ApiTestBase):
      def test_query_images_api_empty_result(self):
-@@ -22,13 +16,13 @@ class TestNoImagesRunQueryApi(ApiTestBase):
+         client = self.client
+-
+-        query = self.isolated_query_patch()
+-        response = client.get('/api/runs/search/images/', params={'q': query, 'report_progress': False})
++        response = client.post('/api/runs/search/images/', json={'q': 'run.name=="not-found"','report_progress': False})
+         self.assertEqual(200, response.status_code)
+         self.assertEqual(b'', response.content)
+ 
+@@ -22,13 +15,13 @@ class TestNoImagesRunQueryApi(ApiTestBase):
  class RunImagesTestBase(ApiTestBase):
      @classmethod
      def setUpClass(cls) -> None:
@@ -166,19 +175,180 @@ index 2726dcd9..9151a5c9 100644
          cls.run_hash = run.hash
  
  
-diff --git a/tests/base.py b/tests/base.py
-index 0ebd14d0..82e2c757 100644
---- a/tests/base.py
-+++ b/tests/base.py
-@@ -8,7 +8,7 @@ from aim.sdk.run import Run
- from aim.web.run import app
+@@ -37,7 +30,7 @@ class TestRunImagesSearchApi(RunImagesTestBase):
+         client = self.client
  
+         query = self.isolated_query_patch()
+-        response = client.get('/api/runs/search/images/', params={'q': query, 'report_progress': False})
++        response = client.post('/api/runs/search/images/', json={'q': query, 'report_progress': False})
+         self.assertEqual(200, response.status_code)
  
--class TestBase(unittest.TestCase):
-+class TestBase(unittest.TFestCase):
+         decoded_response = decode_tree(decode_encoded_tree_stream(response.iter_bytes(chunk_size=512 * 1024)))
+@@ -70,8 +63,8 @@ class TestRunImagesSearchApi(RunImagesTestBase):
+         client = self.client
+ 
+         query = self.isolated_query_patch()
+-        response = client.get('/api/runs/search/images/',
+-                              params={'q': query, 'record_density': 200, 'index_density': 10, 'report_progress': False})
++        response = client.post('/api/runs/search/images/',
++                              json={'q': query, 'record_density': 200, 'index_density': 10, 'report_progress': False})
+         self.assertEqual(200, response.status_code)
+ 
+         decoded_response = decode_tree(decode_encoded_tree_stream(response.iter_bytes(chunk_size=512 * 1024),
+@@ -88,7 +81,7 @@ class TestRunImagesSearchApi(RunImagesTestBase):
+         client = self.client
+ 
+         query = self.isolated_query_patch()
+-        response = client.get('/api/runs/search/images/', params={'q': query,
++        response = client.post('/api/runs/search/images/', json={'q': query,
+                                                                   'record_density': 10,
+                                                                   'index_density': 4,
+                                                                   'report_progress': False})
+@@ -116,7 +109,7 @@ class TestRunImagesSearchApi(RunImagesTestBase):
+         client = self.client
+ 
+         query = self.isolated_query_patch()
+-        response = client.get('/api/runs/search/images/', params={'q': query,
++        response = client.post('/api/runs/search/images/', json={'q': query,
+                                                                   'record_range': input_range,
+                                                                   'record_density': 100,
+                                                                   'report_progress': False})
+@@ -137,7 +130,7 @@ class TestRunImagesSearchApi(RunImagesTestBase):
+         client = self.client
+ 
+         query = self.isolated_query_patch()
+-        response = client.get('/api/runs/search/images/', params={
++        response = client.post('/api/runs/search/images/', json={
+             'q': query,
+             'record_range': '10:20',
+             'index_range': '3:6',
+@@ -169,7 +162,7 @@ class TestRunImagesSearchApi(RunImagesTestBase):
+ class RunImagesURIBulkLoadApi(RunImagesTestBase):
      @classmethod
      def setUpClass(cls) -> None:
-         super().setUpClass()
+-        super().setUpClass()
++        # super().setUpClass()
+         cls.image_blobs = {}
+         run = Run(run_hash=cls.run_hash, read_only=True)
+         empty_context = Context({})
+@@ -190,7 +183,7 @@ class RunImagesURIBulkLoadApi(RunImagesTestBase):
+         self.uri_map = {}
+         client = self.client
+ 
+-        response = client.get('/api/runs/search/images/', params={
++        response = client.post('/api/runs/search/images/', json={
+             'record_range': '0:10',
+             'index_range': '0:5',
+             'report_progress': False,
+@@ -254,7 +247,7 @@ class TestRunImagesBatchApi(RunImagesTestBase):
+ class TestImageListsAndSingleImagesSearchApi(ApiTestBase):
+     @classmethod
+     def setUpClass(cls) -> None:
+-        super().setUpClass()
++        # super().setUpClass()
+ 
+         run = cls.create_run(system_tracking_interval=None)
+         cls.run_hash = run.hash
+@@ -268,8 +261,8 @@ class TestImageListsAndSingleImagesSearchApi(ApiTestBase):
+         client = self.client
+ 
+         query = self.isolated_query_patch('images.name == "single_images"')
+-        response = client.get('/api/runs/search/images/',
+-                              params={'q': query, 'report_progress': False})
++        response = client.post('/api/runs/search/images/',
++                              json={'q': query, 'report_progress': False})
+         self.assertEqual(200, response.status_code)
+ 
+         decoded_response = decode_tree(decode_encoded_tree_stream(response.iter_bytes(chunk_size=512 * 1024)))
+@@ -291,7 +284,7 @@ class TestImageListsAndSingleImagesSearchApi(ApiTestBase):
+         client = self.client
+ 
+         query = self.isolated_query_patch()
+-        response = client.get('/api/runs/search/images/', params={'q': query, 'report_progress': False})
++        response = client.post('/api/runs/search/images/', json={'q': query, 'report_progress': False})
+         self.assertEqual(200, response.status_code)
+ 
+         decoded_response = decode_tree(decode_encoded_tree_stream(response.iter_bytes(chunk_size=512 * 1024)))
+@@ -319,8 +312,8 @@ class TestImageListsAndSingleImagesSearchApi(ApiTestBase):
+         client = self.client
+ 
+         query = self.isolated_query_patch()
+-        response = client.get('/api/runs/search/images/',
+-                              params={'q': query, 'index_range': '3:5', 'report_progress': False})
++        response = client.post('/api/runs/search/images/',
++                              json={'q': query, 'index_range': '3:5', 'report_progress': False})
+         self.assertEqual(200, response.status_code)
+ 
+         decoded_response = decode_tree(decode_encoded_tree_stream(response.iter_bytes(chunk_size=512 * 1024)))
+@@ -348,7 +341,7 @@ class TestImageListsAndSingleImagesSearchApi(ApiTestBase):
+ class TestRunInfoApi(ApiTestBase):
+     @classmethod
+     def setUpClass(cls) -> None:
+-        super().setUpClass()
++        # super().setUpClass()
+ 
+         # run1 -> context {'subset': 'train'} -> Image[]
+         #      |                              -> integers
+@@ -375,7 +368,7 @@ class TestRunInfoApi(ApiTestBase):
+ 
+     def test_run_info_get_images_only_api(self):
+         client = self.client
+-        response = client.get(f'api/runs/{self.run1_hash}/info', params={'sequence': 'images'})
++        response = client.post(f'api/runs/{self.run1_hash}/info', json={'sequence': 'images'})
+         self.assertEqual(200, response.status_code)
+         response_data = response.json()
+         self.assertEqual(1, len(response_data['traces']))
+@@ -383,7 +376,7 @@ class TestRunInfoApi(ApiTestBase):
+         self.assertDictEqual({'subset': 'train'}, response_data['traces']['images'][0]['context'])
+         self.assertEqual('image_lists', response_data['traces']['images'][0]['name'])
+ 
+-        response = client.get(f'api/runs/{self.run2_hash}/info', params={'sequence': 'images'})
++        response = client.post(f'api/runs/{self.run2_hash}/info', json={'sequence': 'images'})
+         self.assertEqual(200, response.status_code)
+         response_data = response.json()
+         self.assertEqual(1, len(response_data['traces']))
+@@ -398,7 +391,7 @@ class TestRunInfoApi(ApiTestBase):
+     ])
+     def test_run_info_get_all_sequences_api(self, qparams, trace_type_count):
+         client = self.client
+-        response = client.get(f'api/runs/{self.run1_hash}/info', params=qparams)
++        response = client.post(f'api/runs/{self.run1_hash}/info', json=qparams)
+         self.assertEqual(200, response.status_code)
+         response_data = response.json()
+         self.assertEqual(trace_type_count, len(response_data['traces']))
+@@ -419,7 +412,7 @@ class TestRunInfoApi(ApiTestBase):
+         self.assertDictEqual({'subset': 'train'}, metrics_data[1]['context'])
+         self.assertDictEqual({'subset': 'train'}, metrics_data[2]['context'])
+ 
+-        response = client.get(f'api/runs/{self.run2_hash}/info', params={'sequence': ('images', 'metric')})
++        response = client.post(f'api/runs/{self.run2_hash}/info', json={'sequence': ('images', 'metric')})
+         self.assertEqual(200, response.status_code)
+         response_data = response.json()
+         self.assertEqual(2, len(response_data['traces']))
+@@ -436,14 +429,14 @@ class TestRunInfoApi(ApiTestBase):
+ 
+     def test_run_info_get_metrics_only_api(self):
+         client = self.client
+-        response = client.get(f'api/runs/{self.run1_hash}/info', params={'sequence': 'metric'})
++        response = client.post(f'api/runs/{self.run1_hash}/info', json={'sequence': 'metric'})
+         self.assertEqual(200, response.status_code)
+         response_data = response.json()
+         self.assertEqual(1, len(response_data['traces']))
+         self.assertIn('metric', response_data['traces'])
+         self.assertEqual(3, len(response_data['traces']['metric']))
+ 
+-        response = client.get(f'api/runs/{self.run2_hash}/info', params={'sequence': 'metric'})
++        response = client.post(f'api/runs/{self.run2_hash}/info', json={'sequence': 'metric'})
+         self.assertEqual(200, response.status_code)
+         response_data = response.json()
+         self.assertEqual(1, len(response_data['traces']))
+@@ -452,5 +445,5 @@ class TestRunInfoApi(ApiTestBase):
+ 
+     def test_invalid_sequence_type(self):
+         client = self.client
+-        response = client.get(f'api/runs/{self.run1_hash}/info', params={'sequence': 'non-existing-sequence'})
++        response = client.post(f'api/runs/{self.run1_hash}/info', json={'sequence': 'non-existing-sequence'})
+         self.assertEqual(400, response.status_code)
 diff --git a/tests/conftest.py b/tests/conftest.py
 index 8cdd353e..e69de29b 100644
 --- a/tests/conftest.py
@@ -230,7 +400,7 @@ index 8cdd353e..e69de29b 100644
 -    del os.environ[AIM_REPO_NAME]
 diff --git a/tests/fml.py b/tests/fml.py
 new file mode 100644
-index 00000000..91a0c51c
+index 00000000..19a3387d
 --- /dev/null
 +++ b/tests/fml.py
 @@ -0,0 +1,199 @@
@@ -259,7 +429,7 @@ index 00000000..91a0c51c
 +
 +
 +def init_server(backend_uri, root_artifact_uri):
-+    port = get_safe_port()
++    port = 5000 #get_safe_port()
 +    address = f"{LOCALHOST}:{port}"
 +    process = Popen(
 +        [

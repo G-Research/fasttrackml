@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -35,7 +36,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 	s.Require().Nil(err)
 
 	run1, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
-		ID:         "id1",
+		ID:         strings.ReplaceAll(uuid.New().String(), "-", ""),
 		Name:       "TestRun1",
 		UserID:     "1",
 		Status:     models.StatusRunning,
@@ -53,23 +54,25 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
-	_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
-		ID:      uuid.New(),
-		Name:    "some-name",
-		RunID:   run1.ID,
-		BlobURI: "path/filename.png",
-		Step:    0,
-		Iter:    1,
-		Index:   1,
-		Caption: "caption1",
-		Format:  "png",
-		Width:   100,
-		Height:  100,
-	})
-	s.Require().Nil(err)
+	for i := 0; i < 5; i++ {
+		_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
+			ID:      uuid.New(),
+			Name:    "some-name",
+			RunID:   run1.ID,
+			BlobURI: "path/filename.png",
+			Step:    int64(i),
+			Iter:    1,
+			Index:   1,
+			Caption: "caption1",
+			Format:  "png",
+			Width:   100,
+			Height:  100,
+		})
+		s.Require().Nil(err)
+	}
 
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
-		ID:         "id2",
+		ID:         strings.ReplaceAll(uuid.New().String(), "-", ""),
 		Name:       "TestRun2",
 		UserID:     "1",
 		Status:     models.StatusRunning,
@@ -87,39 +90,47 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
-	_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
-		ID:      uuid.New(),
-		Name:    "other-name",
-		RunID:   run2.ID,
-		BlobURI: "path/filename.png",
-		Step:    0,
-		Iter:    1,
-		Index:   1,
-		Caption: "caption2",
-		Format:  "png",
-		Width:   100,
-		Height:  100,
-	})
-	s.Require().Nil(err)
+	for i := 0; i < 5; i++ {
+		_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
+			ID:      uuid.New(),
+			Name:    "other-name",
+			RunID:   run2.ID,
+			BlobURI: "path/filename.png",
+			Step:    int64(i),
+			Iter:    1,
+			Index:   1,
+			Caption: "caption2",
+			Format:  "png",
+			Width:   100,
+			Height:  100,
+		})
+		s.Require().Nil(err)
+	}
 
 	tests := []struct {
-		name         string
-		request      request.SearchArtifactsRequest
-		includedRuns []*models.Run
-		excludedRuns []*models.Run
+		name                string
+		request             request.SearchArtifactsRequest
+		includedRuns        []*models.Run
+		excludedRuns        []*models.Run
+		expectedRecordRange int64
+		expectedIndexRange  int64
 	}{
 		{
-			name:         "SearchArtifact",
-			request:      request.SearchArtifactsRequest{},
-			includedRuns: []*models.Run{run1, run2},
+			name:                "SearchArtifact",
+			request:             request.SearchArtifactsRequest{},
+			includedRuns:        []*models.Run{run1, run2},
+			expectedRecordRange: 5,
+			expectedIndexRange:  1,
 		},
 		{
 			name: "SearchArtifactWithNameQuery",
 			request: request.SearchArtifactsRequest{
-				Query: `images.name == "some-name"`,
+				Query: `((images.name == "some-name"))`,
 			},
-			includedRuns: []*models.Run{run1},
-			excludedRuns: []*models.Run{run2},
+			includedRuns:        []*models.Run{run1},
+			excludedRuns:        []*models.Run{run2},
+			expectedRecordRange: 5,
+			expectedIndexRange:  1,
 		},
 	}
 	for _, tt := range tests {
@@ -134,7 +145,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 					helpers.ResponseTypeBuffer,
 				).WithResponse(
 					resp,
-				).DoRequest("/runs/search/image"),
+				).DoRequest("/runs/search/images"),
 			)
 
 			decodedData, err := encoding.NewDecoder(resp).Decode()
@@ -146,9 +157,9 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 				valuesIndex := 0
 				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
 				recordRangeKey := rangesPrefix + ".record_range_total.1"
-				s.Equal(int64(1), decodedData[recordRangeKey])
+				s.Equal(tt.expectedRecordRange, decodedData[recordRangeKey])
 				indexRangeKey := rangesPrefix + ".index_range_total.1"
-				s.Equal(int64(1), decodedData[indexRangeKey])
+				s.Equal(tt.expectedIndexRange, decodedData[indexRangeKey])
 				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, traceIndex)
 				valuesPrefix := fmt.Sprintf(".values.%d.%d", valuesIndex, imgIndex)
 				blobUriKey := tracesPrefix + valuesPrefix + ".blob_uri"

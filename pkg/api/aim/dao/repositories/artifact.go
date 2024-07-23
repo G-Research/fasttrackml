@@ -103,8 +103,10 @@ func (r ArtifactRepository) Search(
 
 	runMap := make(map[string]models.Run, len(runs))
 	for _, run := range runs {
-		runIDs = append(runIDs, run.ID)
-		runMap[run.ID] = run
+		if _, ok := runMap[run.ID]; !ok {
+			runIDs = append(runIDs, run.ID)
+			runMap[run.ID] = run
+		}
 	}
 
 	// collect some summary data for progress indicator

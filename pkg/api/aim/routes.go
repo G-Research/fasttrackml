@@ -69,6 +69,8 @@ func (r *Router) Init(server fiber.Router) {
 	runs.Post("/:id/tags/new", r.controller.AddRunTag)
 	runs.Delete("/:id/tags/:tagID", r.controller.DeleteRunTag)
 	runs.Post("/:id/metric/get-batch/", r.controller.GetRunMetrics)
+	runs.Post("/:id/images/get-batch/", r.controller.GetRunImages)
+	runs.Post("/images/get-batch/", r.controller.GetRunImagesBatch)
 	runs.Put("/:id/", r.controller.UpdateRun)
 	runs.Get("/:id/logs", r.controller.GetRunLogs)
 	runs.Delete("/:id/", r.controller.DeleteRun)

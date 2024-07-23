@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 
+	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/fixtures"
@@ -26,18 +27,19 @@ type rowCounts struct {
 	params                   int
 	dashboards               int
 	apps                     int
+	sharedTags               int
+	runSharedTags            int
 }
 
 type ImportTestSuite struct {
 	suite.Suite
-	runs               []*models.Run
-	inputRunFixtures   *fixtures.RunFixtures
-	outputRunFixtures  *fixtures.RunFixtures
-	inputBackend       string
-	outputBackend      string
-	inputDB            *gorm.DB
-	outputDB           *gorm.DB
-	populatedRowCounts rowCounts
+	runs              []*models.Run
+	inputRunFixtures  *fixtures.RunFixtures
+	outputRunFixtures *fixtures.RunFixtures
+	inputBackend      string
+	outputBackend     string
+	inputDB           *gorm.DB
+	outputDB          *gorm.DB
 }
 
 func TestImportTestSuite(t *testing.T) {
@@ -81,19 +83,6 @@ func (s *ImportTestSuite) SetupSubTest() {
 	outputRunFixtures, err := fixtures.NewRunFixtures(db.GormDB())
 	s.Require().Nil(err)
 	s.outputRunFixtures = outputRunFixtures
-
-	s.populatedRowCounts = rowCounts{
-		namespaces:               1,
-		experiments:              3,
-		runs:                     10,
-		distinctRunExperimentIDs: 2,
-		metrics:                  40,
-		latestMetrics:            20,
-		tags:                     10,
-		params:                   20,
-		dashboards:               2,
-		apps:                     2,
-	}
 }
 
 func (s *ImportTestSuite) populateDB(db *gorm.DB) {
@@ -101,6 +90,18 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 	s.Require().Nil(err)
 
 	runFixtures, err := fixtures.NewRunFixtures(db)
+	s.Require().Nil(err)
+
+	namespaceFixtures, err := fixtures.NewNamespaceFixtures(db)
+	s.Require().Nil(err)
+
+	sharedTagsFixtures, err := fixtures.NewSharedTagFixtures(db)
+	s.Require().Nil(err)
+
+	namespace, err := namespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+		Code:                "source-namespace",
+		DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
+	})
 	s.Require().Nil(err)
 
 	// experiment 1
@@ -119,6 +120,18 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 	experiment, err = experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
 		Name:           uuid.New().String(),
 		NamespaceID:    1,
+		LifecycleStage: models.LifecycleStageActive,
+	})
+	s.Require().Nil(err)
+
+	runs, err = runFixtures.CreateExampleRuns(context.Background(), experiment, 5)
+	s.Require().Nil(err)
+	s.runs = runs
+
+	// experiment 3
+	experiment, err = experimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
+		Name:           uuid.New().String(),
+		NamespaceID:    namespace.ID,
 		LifecycleStage: models.LifecycleStageActive,
 	})
 	s.Require().Nil(err)
@@ -151,6 +164,28 @@ func (s *ImportTestSuite) populateDB(db *gorm.DB) {
 		Name: uuid.NewString(),
 	})
 	s.Require().Nil(err)
+
+	// dashboard 3
+	_, err = dashboardFixtures.CreateDashboard(context.Background(), &database.Dashboard{
+		App: database.App{
+			Type:        "mpi",
+			State:       database.AppState{},
+			NamespaceID: namespace.ID,
+		},
+		Name: uuid.NewString(),
+	})
+	s.Require().Nil(err)
+
+	// shared tags
+	sharedTag1, err := sharedTagsFixtures.CreateTag(context.Background(), "tag1", 1)
+	s.Require().Nil(err)
+
+	s.Require().Nil(sharedTagsFixtures.Associate(context.Background(), sharedTag1.ID.String(), runs[0].ID))
+
+	sharedTag2, err := sharedTagsFixtures.CreateTag(context.Background(), "tag1", namespace.ID)
+	s.Require().Nil(err)
+
+	s.Require().Nil(sharedTagsFixtures.Associate(context.Background(), sharedTag2.ID.String(), runs[0].ID))
 }
 
 func (s *ImportTestSuite) TearDownSubTest() {
@@ -158,7 +193,7 @@ func (s *ImportTestSuite) TearDownSubTest() {
 	s.Require().Nil(s.outputRunFixtures.TruncateTables())
 }
 
-func (s *ImportTestSuite) Test_Ok() {
+func (s *ImportTestSuite) TestGlobalScopeImport_Ok() {
 	backends := []string{"sqlite", "sqlcipher", "postgres"}
 	for _, inputBackend := range backends {
 		for _, outputBackend := range backends {
@@ -166,7 +201,20 @@ func (s *ImportTestSuite) Test_Ok() {
 			s.outputBackend = outputBackend
 			s.Run(inputBackend+"->"+outputBackend, func() {
 				// source DB should have expected
-				s.validateRowCounts(s.inputDB, s.populatedRowCounts)
+				s.validateRowCounts(s.inputDB, rowCounts{
+					namespaces:               2,
+					experiments:              4,
+					runs:                     15,
+					distinctRunExperimentIDs: 3,
+					metrics:                  60,
+					latestMetrics:            30,
+					tags:                     15,
+					params:                   30,
+					dashboards:               3,
+					apps:                     3,
+					sharedTags:               2,
+					runSharedTags:            2,
+				})
 
 				// initially, dest DB is empty
 				s.validateRowCounts(s.outputDB, rowCounts{namespaces: 1, experiments: 1})
@@ -176,13 +224,39 @@ func (s *ImportTestSuite) Test_Ok() {
 				s.Require().Nil(importer.Import())
 
 				// dest DB should now have the expected
-				s.validateRowCounts(s.outputDB, s.populatedRowCounts)
+				s.validateRowCounts(s.outputDB, rowCounts{
+					namespaces:               2,
+					experiments:              4,
+					runs:                     15,
+					distinctRunExperimentIDs: 3,
+					metrics:                  60,
+					latestMetrics:            30,
+					tags:                     15,
+					params:                   30,
+					dashboards:               3,
+					apps:                     3,
+					sharedTags:               2,
+					runSharedTags:            2,
+				})
 
 				// invoke the Importer.Import method a 2nd time
 				s.Require().Nil(importer.Import())
 
 				// dest DB should still only have the expected (idempotent)
-				s.validateRowCounts(s.outputDB, s.populatedRowCounts)
+				s.validateRowCounts(s.outputDB, rowCounts{
+					namespaces:               2,
+					experiments:              4,
+					runs:                     15,
+					distinctRunExperimentIDs: 3,
+					metrics:                  60,
+					latestMetrics:            30,
+					tags:                     15,
+					params:                   30,
+					dashboards:               3,
+					apps:                     3,
+					sharedTags:               2,
+					runSharedTags:            2,
+				})
 
 				// confirm row-for-row equality
 				for _, table := range []string{
@@ -195,9 +269,94 @@ func (s *ImportTestSuite) Test_Ok() {
 					"params",
 					"metrics",
 					"latest_metrics",
+					"shared_tags",
+					"run_shared_tags",
 				} {
 					s.validateTable(s.inputDB, s.outputDB, table)
 				}
+			})
+		}
+	}
+}
+
+func (s *ImportTestSuite) TestNamespaceScopeImport_Ok() {
+	backends := []string{"sqlite", "sqlcipher", "postgres"}
+	for _, inputBackend := range backends {
+		for _, outputBackend := range backends {
+			s.inputBackend = inputBackend
+			s.outputBackend = outputBackend
+			s.Run(inputBackend+"->"+outputBackend, func() {
+				namespaceFixtures, err := fixtures.NewNamespaceFixtures(s.outputDB)
+				s.Require().Nil(err)
+
+				namespace, err := namespaceFixtures.CreateNamespace(context.Background(), &models.Namespace{
+					Code:                "destination-namespace",
+					DefaultExperimentID: common.GetPointer(models.DefaultExperimentID),
+				})
+				s.Require().Nil(err)
+
+				// source DB should have expected
+				s.validateRowCounts(s.inputDB, rowCounts{
+					namespaces:               2,
+					experiments:              4,
+					runs:                     15,
+					distinctRunExperimentIDs: 3,
+					metrics:                  60,
+					latestMetrics:            30,
+					tags:                     15,
+					params:                   30,
+					dashboards:               3,
+					apps:                     3,
+					sharedTags:               2,
+					runSharedTags:            2,
+				})
+
+				// initially, dest DB is empty
+				s.validateRowCounts(s.outputDB, rowCounts{namespaces: 2, experiments: 1})
+
+				// invoke the Importer.Import() method
+				importer := database.NewImporter(
+					s.inputDB,
+					s.outputDB,
+					database.WithSourceNamespace("source-namespace"),
+					database.WithDestinationNamespace(namespace.Code),
+				)
+				s.Require().Nil(importer.Import())
+
+				// dest DB should now have the expected
+				s.validateRowCounts(s.outputDB, rowCounts{
+					namespaces:               2,
+					experiments:              2,
+					runs:                     5,
+					distinctRunExperimentIDs: 1,
+					metrics:                  20,
+					latestMetrics:            10,
+					tags:                     5,
+					params:                   10,
+					dashboards:               1,
+					apps:                     1,
+					sharedTags:               1,
+					runSharedTags:            1,
+				})
+
+				// invoke the Importer.Import method a 2nd time
+				s.Require().Nil(importer.Import())
+
+				// dest DB should still only have the expected (idempotent)
+				s.validateRowCounts(s.outputDB, rowCounts{
+					namespaces:               2,
+					experiments:              2,
+					runs:                     5,
+					distinctRunExperimentIDs: 1,
+					metrics:                  20,
+					latestMetrics:            10,
+					tags:                     5,
+					params:                   10,
+					dashboards:               1,
+					apps:                     1,
+					sharedTags:               1,
+					runSharedTags:            1,
+				})
 			})
 		}
 	}
@@ -237,6 +396,12 @@ func (s *ImportTestSuite) validateRowCounts(db *gorm.DB, counts rowCounts) {
 
 	s.Require().Nil(db.Model(&database.Dashboard{}).Count(&countVal).Error)
 	s.Equal(counts.dashboards, int(countVal), "Dashboard count incorrect")
+
+	s.Require().Nil(db.Model(&database.SharedTag{}).Count(&countVal).Error)
+	s.Equal(counts.sharedTags, int(countVal), "Shared tag count incorrect")
+
+	s.Require().Nil(db.Model(&database.RunSharedTag{}).Count(&countVal).Error)
+	s.Equal(counts.runSharedTags, int(countVal), "Run shared tag count incorrect")
 }
 
 // validateTable will scan source and dest table and confirm they are identical
@@ -253,7 +418,7 @@ func (s *ImportTestSuite) validateTable(source, dest *gorm.DB, table string) {
 	defer destRows.Close()
 
 	for sourceRows.Next() {
-		// dest should have the same number of rows as source
+		// dest should have the same number of rows as a source
 		s.Require().True(destRows.Next())
 
 		var sourceRow, destRow map[string]any

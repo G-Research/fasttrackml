@@ -191,7 +191,7 @@ func (r RunRepository) GetRunByNamespaceIDAndRunID(
 ) (*models.Run, error) {
 	var run models.Run
 	if err := r.GetDB().WithContext(ctx).Select(
-		"ID",
+		"ID", "ArtifactURI",
 	).InnerJoins(
 		"Experiment",
 		database.DB.Select(

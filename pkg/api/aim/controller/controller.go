@@ -7,7 +7,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/services/project"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/services/run"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/services/tag"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact"
+	"github.com/G-Research/fasttrackml/pkg/common/services/artifact"
 )
 
 // Controller handles all the input HTTP requests.

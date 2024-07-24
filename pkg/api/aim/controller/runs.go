@@ -9,8 +9,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/services/run"
-	mlflowRequest "github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
+	commonRequest "github.com/G-Research/fasttrackml/pkg/common/api/request"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
@@ -35,7 +35,7 @@ func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	artifactReq := mlflowRequest.ListArtifactsRequest{
+	artifactReq := commonRequest.ListArtifactsRequest{
 		RunUUID: req.ID,
 	}
 

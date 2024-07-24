@@ -38,7 +38,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/common/dao"
 	"github.com/G-Research/fasttrackml/pkg/common/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
-	mlflowArtifactService "github.com/G-Research/fasttrackml/pkg/common/services/artifact"
+	artifactService "github.com/G-Research/fasttrackml/pkg/common/services/artifact"
 	"github.com/G-Research/fasttrackml/pkg/common/services/artifact/storage"
 	"github.com/G-Research/fasttrackml/pkg/database"
 	adminUI "github.com/G-Research/fasttrackml/pkg/ui/admin"
@@ -285,7 +285,7 @@ func createApp(
 				artifactStorageFactory,
 				aimRepositories.NewArtifactRepository(db.GormDB()),
 			),
-			mlflowArtifactService.NewService(
+			artifactService.NewService(
 				mlflowRepositories.NewRunRepository(db.GormDB()),
 				artifactStorageFactory,
 			),
@@ -326,7 +326,7 @@ func createApp(
 				mlflowRepositories.NewRunRepository(db.GormDB()),
 				mlflowRepositories.NewMetricRepository(db.GormDB()),
 			),
-			mlflowArtifactService.NewService(
+			artifactService.NewService(
 				mlflowRepositories.NewRunRepository(db.GormDB()),
 				artifactStorageFactory,
 			),

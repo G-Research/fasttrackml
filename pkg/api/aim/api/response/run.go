@@ -996,8 +996,9 @@ func renderProps(r models.Run) fiber.Map {
 		"name":        r.Name,
 		"description": nil,
 		"experiment": fiber.Map{
-			"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-			"name": r.Experiment.Name,
+			"id":                fmt.Sprintf("%d", *r.Experiment.ID),
+			"name":              r.Experiment.Name,
+			"artifact_location": r.Experiment.ArtifactLocation,
 		},
 		"tags":          ConvertTagsToMaps(r.SharedTags),
 		"creation_time": float64(r.StartTime.Int64) / 1000,

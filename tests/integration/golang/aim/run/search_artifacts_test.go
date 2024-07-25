@@ -29,9 +29,10 @@ func TestSearchArtifactsTestSuite(t *testing.T) {
 func (s *SearchArtifactsTestSuite) Test_Ok() {
 	// create test experiments.
 	experiment, err := s.ExperimentFixtures.CreateExperiment(context.Background(), &models.Experiment{
-		Name:           uuid.New().String(),
-		LifecycleStage: models.LifecycleStageActive,
-		NamespaceID:    s.DefaultNamespace.ID,
+		Name:             uuid.New().String(),
+		LifecycleStage:   models.LifecycleStageActive,
+		NamespaceID:      s.DefaultNamespace.ID,
+		ArtifactLocation: "s3://my-bucket",
 	})
 	s.Require().Nil(err)
 
@@ -158,6 +159,9 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
 				recordRangeKey := rangesPrefix + ".record_range_total.1"
 				s.Equal(tt.expectedRecordRange, decodedData[recordRangeKey])
+				propsPrefix := fmt.Sprintf("%v.propss", run.ID)
+				artifactLocation := propsPrefix + ".experiment.artifact_location"
+				s.Equal(experiment.ArtifactLocation, decodedData[artifactLocation])
 				indexRangeKey := rangesPrefix + ".index_range_total.1"
 				s.Equal(tt.expectedIndexRange, decodedData[indexRangeKey])
 				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, traceIndex)

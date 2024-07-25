@@ -16,5 +16,5 @@ jobs:
       - name: Delete old container
         run: docker rm -f 
       - name: Run docker container go-app-container
-        run: docker run -d -p 4040:4040 --name go-app-container gresearch/fasttrackml
+        run: docker run -d -p 80:5000 --name go-app-container gresearch/fasttrackml
     

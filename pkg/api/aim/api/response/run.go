@@ -980,11 +980,11 @@ func NewActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgre
 
 // renderProps makes the "props" map for a run.
 func renderProps(r models.Run) fiber.Map {
-	return fiber.Map{
+	m := fiber.Map{
 		"name":        r.Name,
 		"description": nil,
 		"experiment": fiber.Map{
-			"id":                fmt.Sprintf("%d", *r.Experiment.ID),
+			"id":                fmt.Sprintf("%d", r.ExperimentID),
 			"name":              r.Experiment.Name,
 			"artifact_location": r.Experiment.ArtifactLocation,
 		},
@@ -994,6 +994,7 @@ func renderProps(r models.Run) fiber.Map {
 		"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
 		"active":        r.Status == models.StatusRunning,
 	}
+	return m
 }
 
 // NewRunImagesStreamResponse streams the provided images to the fiber context.

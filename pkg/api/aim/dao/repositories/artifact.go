@@ -97,6 +97,7 @@ func (r ArtifactRepository) Search(
                         AND experiments.namespace_id = ?`,
 			namespaceID,
 		)).
+		Preload("Experiment").
 		Find(&runs); tx.Error != nil {
 		return nil, nil, nil, eris.Wrap(err, "error finding runs for artifact search")
 	}

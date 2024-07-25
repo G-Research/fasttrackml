@@ -560,19 +560,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 						"params": fiber.Map{
 							"images_per_step": imagesPerStep,
 						},
-						"props": fiber.Map{
-							"name":        run.Name,
-							"description": nil,
-							"experiment": fiber.Map{
-								"id":   fmt.Sprintf("%d", run.ExperimentID),
-								"name": run.Experiment.Name,
-							},
-							"tags":          ConvertTagsToMaps(run.SharedTags),
-							"creation_time": float64(run.StartTime.Int64) / 1000,
-							"end_time":      float64(run.EndTime.Int64) / 1000,
-							"archived":      run.LifecycleStage == models.LifecycleStageDeleted,
-							"active":        run.Status == models.StatusRunning,
-						},
+						"props": renderProps(run),
 					}
 					tracesMap = map[string]fiber.Map{}
 				}

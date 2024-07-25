@@ -14,7 +14,7 @@ packages:
       TagRepositoryProvider:
       LogRepositoryProvider:
       ArtifactRepositoryProvider:
-  github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact/storage:
+  github.com/G-Research/fasttrackml/pkg/common/services/artifact/storage:
     interfaces:
       ArtifactStorageFactoryProvider:
       ArtifactStorageProvider:

@@ -159,7 +159,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
 				recordRangeKey := rangesPrefix + ".record_range_total.1"
 				s.Equal(tt.expectedRecordRange, decodedData[recordRangeKey])
-				propsPrefix := fmt.Sprintf("%v.propss", run.ID)
+				propsPrefix := fmt.Sprintf("%v.props", run.ID)
 				artifactLocation := propsPrefix + ".experiment.artifact_location"
 				s.Equal(experiment.ArtifactLocation, decodedData[artifactLocation])
 				indexRangeKey := rangesPrefix + ".index_range_total.1"
@@ -175,6 +175,9 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
 				recordRangeKey := rangesPrefix + ".record_range_total.1"
 				s.Empty(decodedData[recordRangeKey])
+				propsPrefix := fmt.Sprintf("%v.props", run.ID)
+				artifactLocation := propsPrefix + ".experiment.artifact_location"
+				s.Empty(decodedData[artifactLocation])
 				indexRangeKey := rangesPrefix + ".index_range_total.1"
 				s.Empty(decodedData[indexRangeKey])
 				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, imgIndex)

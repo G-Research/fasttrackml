@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/api/request"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/repositories"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact/storage"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
+	"github.com/G-Research/fasttrackml/pkg/common/api/request"
+	"github.com/G-Research/fasttrackml/pkg/common/services/artifact/storage"
 )
 
 func TestService_ListArtifacts_Ok(t *testing.T) {

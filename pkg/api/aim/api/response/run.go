@@ -22,8 +22,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
 	mlflowCommon "github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
-	"github.com/G-Research/fasttrackml/pkg/api/mlflow/services/artifact/storage"
 	"github.com/G-Research/fasttrackml/pkg/common"
+	"github.com/G-Research/fasttrackml/pkg/common/services/artifact/storage"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 

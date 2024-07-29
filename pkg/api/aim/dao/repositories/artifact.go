@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"math"
 
 	"gorm.io/gorm"
 
@@ -114,14 +115,18 @@ func (r ArtifactRepository) Search(
 	stepInfo := []ArtifactSearchStepInfo{}
 	if tx := r.GetDB().WithContext(ctx).
 		Raw(`SELECT run_uuid, name, step, count(id) as img_count
-			  FROM artifacts
-			  WHERE run_uuid IN (?)
-			  GROUP BY run_uuid, name, step;`, runIDs).
+			FROM artifacts
+			WHERE run_uuid IN (?)
+			AND step BETWEEN ? AND ?
+			GROUP BY run_uuid, name, step;`,
+			runIDs, req.RecordRangeMin(), req.RecordRangeMax()).
 		Find(&stepInfo); tx.Error != nil {
 		return nil, nil, nil, eris.Wrap(err, "error find result summary for artifact search")
 	}
 
 	resultSummary := make(ArtifactSearchSummary, len(runIDs))
+	minStep := math.MaxInt
+	maxStep := 0
 	for _, rslt := range stepInfo {
 		traceMap, ok := resultSummary[rslt.RunUUID]
 		if !ok {
@@ -129,16 +134,32 @@ func (r ArtifactRepository) Search(
 		}
 		traceMap[rslt.Name] = append(traceMap[rslt.Name], rslt)
 		resultSummary[rslt.RunUUID] = traceMap
+		if rslt.Step < minStep {
+			minStep = rslt.Step
+		}
+		if rslt.Step > maxStep {
+			maxStep = rslt.Step
+		}
+	}
+
+	interval := 1
+	if req.RecordDensity > 0 {
+		interval = maxStep - minStep/req.RecordDensity
 	}
 
 	// get a cursor for the artifacts
 	tx := r.GetDB().WithContext(ctx).
-		Table("artifacts").
-		Where("run_uuid IN ?", runIDs).
-		Order("run_uuid").
-		Order("name").
-		Order("step").
-		Order("created_at")
+		Raw(`
+                    SELECT artifacts.*, rows.row_num
+                    FROM artifacts
+                    JOIN (
+                       SELECT id, ROW_NUMBER() OVER() row_num
+                       FROM artifacts
+                    ) rows USING (id)
+                    WHERE run_uuid IN ?
+                    AND row_num % ? = 0
+                    ORDER BY run_uuid, name, step
+                `, runIDs, interval)
 
 	rows, err := tx.Rows()
 	if err != nil {

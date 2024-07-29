@@ -1,6 +1,10 @@
 package request
 
 import (
+	"math"
+	"strconv"
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -128,4 +132,40 @@ type AddRunTagRequest struct {
 type DeleteRunTagRequest struct {
 	RunID string `params:"id"`
 	TagID string `params:"tagID"`
+}
+
+// RecordRangeMin returns the low end of the record range.
+func (req SearchArtifactsRequest) RecordRangeMin() int {
+	return rangeMin(req.RecordRange)
+}
+
+// RecordRangeMax returns the high end of the record range.
+func (req SearchArtifactsRequest) RecordRangeMax() int {
+	return rangeMax(req.RecordRange)
+}
+
+// rangeMin will extract the lower end of a range string in the request.
+func rangeMin(r string) int {
+	rangeVals := strings.Split(r, ":")
+	if len(rangeVals) != 2 {
+		return 0
+	}
+	num, err := strconv.Atoi(rangeVals[0])
+	if err == nil {
+		return num
+	}
+	return 0
+}
+
+// rangeMax will extract the lower end of a range string in the request.
+func rangeMax(r string) int {
+	rangeVals := strings.Split(r, ":")
+	if len(rangeVals) != 2 {
+		return math.MaxInt16
+	}
+	num, err := strconv.Atoi(rangeVals[1])
+	if err == nil {
+		return num
+	}
+	return math.MaxInt16
 }

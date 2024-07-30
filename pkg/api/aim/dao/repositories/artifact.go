@@ -118,8 +118,13 @@ func (r ArtifactRepository) Search(
 			FROM artifacts
 			WHERE run_uuid IN (?)
 			AND step BETWEEN ? AND ?
+                        AND "index" BETWEEN ? AND ?
 			GROUP BY run_uuid, name, step;`,
-			runIDs, req.RecordRangeMin(), req.RecordRangeMax()).
+			runIDs,
+			req.RecordRangeMin(),
+			req.RecordRangeMax(),
+			req.IndexRangeMin(),
+			req.IndexRangeMax()).
 		Find(&stepInfo); tx.Error != nil {
 		return nil, nil, nil, eris.Wrap(err, "error find result summary for artifact search")
 	}

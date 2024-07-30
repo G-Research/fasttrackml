@@ -144,6 +144,16 @@ func (req SearchArtifactsRequest) RecordRangeMax() int {
 	return rangeMax(req.RecordRange)
 }
 
+// IndexRangeMin returns the low end of the index range.
+func (req SearchArtifactsRequest) IndexRangeMin() int {
+	return rangeMin(req.IndexRange)
+}
+
+// IndexRangeMax returns the high end of the index range.
+func (req SearchArtifactsRequest) IndexRangeMax() int {
+	return rangeMax(req.IndexRange)
+}
+
 // rangeMin will extract the lower end of a range string in the request.
 func rangeMin(r string) int {
 	rangeVals := strings.Split(r, ":")

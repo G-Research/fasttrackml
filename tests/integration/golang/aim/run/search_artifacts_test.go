@@ -56,20 +56,22 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 	for i := 0; i < 5; i++ {
-		_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
-			ID:      uuid.New(),
-			Name:    "some-name",
-			RunID:   run1.ID,
-			BlobURI: "path/filename.png",
-			Step:    int64(i),
-			Iter:    1,
-			Index:   1,
-			Caption: "caption1",
-			Format:  "png",
-			Width:   100,
-			Height:  100,
-		})
-		s.Require().Nil(err)
+		for j := 0; j < 5; j++ {
+			_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
+				ID:      uuid.New(),
+				Name:    "some-name",
+				RunID:   run1.ID,
+				BlobURI: "path/filename.png",
+				Step:    int64(i),
+				Iter:    1,
+				Index:   int64(j),
+				Caption: "caption1",
+				Format:  "png",
+				Width:   100,
+				Height:  100,
+			})
+			s.Require().Nil(err)
+		}
 	}
 
 	run2, err := s.RunFixtures.CreateRun(context.Background(), &models.Run{
@@ -92,46 +94,76 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 	})
 	s.Require().Nil(err)
 	for i := 0; i < 5; i++ {
-		_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
-			ID:      uuid.New(),
-			Name:    "other-name",
-			RunID:   run2.ID,
-			BlobURI: "path/filename.png",
-			Step:    int64(i),
-			Iter:    1,
-			Index:   1,
-			Caption: "caption2",
-			Format:  "png",
-			Width:   100,
-			Height:  100,
-		})
-		s.Require().Nil(err)
+		for j := 0; j < 5; j++ {
+			_, err = s.ArtifactFixtures.CreateArtifact(context.Background(), &models.Artifact{
+				ID:      uuid.New(),
+				Name:    "other-name",
+				RunID:   run2.ID,
+				BlobURI: "path/filename.png",
+				Step:    int64(i),
+				Iter:    1,
+				Index:   int64(j),
+				Caption: "caption2",
+				Format:  "png",
+				Width:   100,
+				Height:  100,
+			})
+			s.Require().Nil(err)
+		}
 	}
 
 	tests := []struct {
-		name                string
-		request             request.SearchArtifactsRequest
-		includedRuns        []*models.Run
-		excludedRuns        []*models.Run
-		expectedRecordRange int64
-		expectedIndexRange  int64
+		name                   string
+		request                request.SearchArtifactsRequest
+		includedRuns           []*models.Run
+		excludedRuns           []*models.Run
+		expectedRecordRangeMax int64
+		expectedIndexRangeMax  int64
+		expectedTraceLength    int
 	}{
 		{
-			name:                "SearchArtifact",
-			request:             request.SearchArtifactsRequest{},
-			includedRuns:        []*models.Run{run1, run2},
-			expectedRecordRange: 5,
-			expectedIndexRange:  1,
+			name:                   "SearchArtifact",
+			request:                request.SearchArtifactsRequest{},
+			includedRuns:           []*models.Run{run1, run2},
+			expectedRecordRangeMax: 4,
+			expectedIndexRangeMax:  4,
 		},
 		{
 			name: "SearchArtifactWithNameQuery",
 			request: request.SearchArtifactsRequest{
 				Query: `((images.name == "some-name"))`,
 			},
-			includedRuns:        []*models.Run{run1},
-			excludedRuns:        []*models.Run{run2},
-			expectedRecordRange: 5,
-			expectedIndexRange:  1,
+			includedRuns:           []*models.Run{run1},
+			excludedRuns:           []*models.Run{run2},
+			expectedRecordRangeMax: 4,
+			expectedIndexRangeMax:  4,
+		},
+		{
+			name: "SearchArtifactWithRecordRange",
+			request: request.SearchArtifactsRequest{
+				RecordRange: "0:2",
+			},
+			includedRuns:           []*models.Run{run1, run2},
+			expectedRecordRangeMax: 2,
+			expectedIndexRangeMax:  4,
+		},
+		{
+			name: "SearchArtifactWithIndexRange",
+			request: request.SearchArtifactsRequest{
+				IndexRange: "0:2",
+			},
+			includedRuns:           []*models.Run{run1, run2},
+			expectedRecordRangeMax: 4,
+			expectedIndexRangeMax:  2,
+		},
+		{
+			name: "SearchArtifactWithRecordDensity",
+			request: request.SearchArtifactsRequest{
+				RecordDensity: 2,
+			},
+			includedRuns:           []*models.Run{run1, run2},
+			expectedRecordRangeMax: 4,
+			expectedIndexRangeMax:  4,
 		},
 	}
 	for _, tt := range tests {
@@ -158,12 +190,12 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 				valuesIndex := 0
 				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
 				recordRangeKey := rangesPrefix + ".record_range_total.1"
-				s.Equal(tt.expectedRecordRange, decodedData[recordRangeKey])
+				s.Equal(tt.expectedRecordRangeMax, decodedData[recordRangeKey])
 				propsPrefix := fmt.Sprintf("%v.props", run.ID)
 				artifactLocation := propsPrefix + ".experiment.artifact_location"
 				s.Equal(experiment.ArtifactLocation, decodedData[artifactLocation])
 				indexRangeKey := rangesPrefix + ".index_range_total.1"
-				s.Equal(tt.expectedIndexRange, decodedData[indexRangeKey])
+				s.Equal(tt.expectedIndexRangeMax, decodedData[indexRangeKey])
 				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, traceIndex)
 				valuesPrefix := fmt.Sprintf(".values.%d.%d", valuesIndex, imgIndex)
 				blobUriKey := tracesPrefix + valuesPrefix + ".blob_uri"

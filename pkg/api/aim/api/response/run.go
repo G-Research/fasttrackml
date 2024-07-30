@@ -518,7 +518,7 @@ func NewStreamMetricsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 //
 //nolint:gocyclo
 func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]models.Run,
-	result repositories.ArtifactSearchSummary, req request.SearchArtifactsRequest,
+	summary repositories.ArtifactSearchSummary, req request.SearchArtifactsRequest,
 ) {
 	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		//nolint:errcheck
@@ -547,18 +547,18 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				return w.Flush()
 			}
 			addImage := func(img models.Artifact, run models.Run) {
-				imagesPerStep := result.StepImageCount(img.RunID, img.Name, 0)
-				totalSteps := result.TotalSteps(img.RunID, img.Name)
+				maxIndex := summary.MaxIndex(img.RunID, img.Name)
+				maxStep := summary.MaxStep(img.RunID, img.Name)
 				if runData == nil {
 					runData = fiber.Map{
 						"ranges": fiber.Map{
-							"record_range_total": []int{0, totalSteps},
+							"record_range_total": []int{0, maxStep},
 							"record_range_used":  []int{0, int(img.Step)},
-							"index_range_total":  []int{0, imagesPerStep},
+							"index_range_total":  []int{0, maxIndex},
 							"index_range_used":   []int{0, int(img.Index)},
 						},
 						"params": fiber.Map{
-							"images_per_step": imagesPerStep,
+							"images_per_step": maxIndex,
 						},
 						"props": renderProps(run),
 					}
@@ -575,18 +575,13 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				}
 				traceValues, ok := trace["values"].([][]fiber.Map)
 				if !ok {
-					stepsSlice := make([][]fiber.Map, totalSteps)
+					stepsSlice := make([][]fiber.Map, maxStep+1)
 					traceValues = stepsSlice
-				}
-
-				stepImages := traceValues[img.Step]
-				if stepImages == nil {
-					stepImages = []fiber.Map{}
 				}
 
 				iters, ok := trace["iters"].([]int64)
 				if !ok {
-					iters = make([]int64, totalSteps)
+					iters = make([]int64, maxStep+1)
 				}
 				value := fiber.Map{
 					"blob_uri": img.BlobURI,
@@ -597,6 +592,11 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 					"iter":     img.Iter,
 					"index":    img.Index,
 					"step":     img.Step,
+				}
+
+				stepImages := traceValues[img.Step]
+				if stepImages == nil {
+					stepImages = []fiber.Map{}
 				}
 				stepImages = append(stepImages, value)
 				traceValues[img.Step] = stepImages

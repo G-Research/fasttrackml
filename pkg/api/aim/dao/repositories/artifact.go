@@ -21,14 +21,34 @@ type ArtifactSearchStepInfo struct {
 	Name     string `gorm:"column:name"`
 	Step     int    `gorm:"column:step"`
 	ImgCount int    `gorm:"column:img_count"`
+	MaxIndex int    `gorm:"column:max_index"`
 }
 
 // ArtifactSearchSummary is a search summary for run and name.
 type ArtifactSearchSummary map[string]map[string][]ArtifactSearchStepInfo
 
-// TotalSteps figures out how many steps belong to the runID.
-func (r ArtifactSearchSummary) TotalSteps(runID, name string) int {
-	return len(r[runID][name])
+// MaxStep figures out the max step belonging to the runID and sequence name.
+func (r ArtifactSearchSummary) MaxStep(runID, name string) int {
+	runSequence := r[runID][name]
+	maxStep := 0
+	for _, step := range runSequence {
+		if step.Step > maxStep {
+			maxStep = step.Step
+		}
+	}
+	return maxStep
+}
+
+// MaxIndex figures out the maximum index for the runID and sequence name.
+func (r ArtifactSearchSummary) MaxIndex(runID, name string) int {
+	runSequence := r[runID][name]
+	maxIndex := 0
+	for _, step := range runSequence {
+		if step.MaxIndex > maxIndex {
+			maxIndex = step.MaxIndex
+		}
+	}
+	return maxIndex
 }
 
 // StepImageCount figures out how many steps belong to the runID and step.
@@ -114,11 +134,11 @@ func (r ArtifactRepository) Search(
 	// collect some summary data for progress indicator
 	stepInfo := []ArtifactSearchStepInfo{}
 	if tx := r.GetDB().WithContext(ctx).
-		Raw(`SELECT run_uuid, name, step, count(id) as img_count
+		Raw(`SELECT run_uuid, name, step, count(id) as img_count, max("index") as max_index
 			FROM artifacts
 			WHERE run_uuid IN (?)
 			AND step BETWEEN ? AND ?
-                        AND "index" BETWEEN ? AND ?
+            AND "index" BETWEEN ? AND ?
 			GROUP BY run_uuid, name, step;`,
 			runIDs,
 			req.RecordRangeMin(),
@@ -163,9 +183,16 @@ func (r ArtifactRepository) Search(
                     ) rows USING (id)
                     WHERE run_uuid IN ?
                     AND row_num % ? = 0
+					AND step BETWEEN ? AND ?
+                    AND "index" BETWEEN ? AND ?
                     ORDER BY run_uuid, name, step
-                `, runIDs, interval)
-
+                `,
+			runIDs,
+			interval,
+			req.RecordRangeMin(),
+			req.RecordRangeMax(),
+			req.IndexRangeMin(),
+			req.IndexRangeMax())
 	rows, err := tx.Rows()
 	if err != nil {
 		return nil, nil, nil, eris.Wrap(err, "error searching artifacts")

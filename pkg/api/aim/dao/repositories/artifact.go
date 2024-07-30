@@ -169,7 +169,7 @@ func (r ArtifactRepository) Search(
 
 	interval := 1
 	if req.RecordDensity > 0 {
-		interval = maxStep - minStep/req.RecordDensity
+		interval = (maxStep - minStep) / req.RecordDensity
 	}
 
 	// get a cursor for the artifacts

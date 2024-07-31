@@ -71,7 +71,7 @@ services:
       AWS_SECRET_ACCESS_KEY: "password"
 
   compatibility-tests:
-    image: golang:1.21
+    image: golang:1.22
     command: make test-go-compatibility
     volumes:
       - ../../:/src

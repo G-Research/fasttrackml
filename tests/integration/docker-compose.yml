@@ -45,7 +45,7 @@ services:
     command: bash -c "pip install mlflow==${MLFLOW_VERSION:-2.8.0} psycopg2 boto3 protobuf==3.20 && python mlflow-setup.py"
 
   integration-tests:
-    image: golang:1.21
+    image: golang:1.22
     command: make test-go-integration
     volumes:
       - ../../:/src

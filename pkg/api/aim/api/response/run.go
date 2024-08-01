@@ -531,8 +531,6 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				runID     string
 				runData   fiber.Map
 				tracesMap map[string]fiber.Map
-				imgIndex  int
-				curStep   int
 				cur       int64
 			)
 			reportProgress := func() error {
@@ -592,7 +590,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 					"width":    img.Width,
 					"format":   img.Format,
 					"iter":     img.Iter,
-					"index":    imgIndex, // calculated
+					"index":    img.Index,
 					"step":     img.Step,
 				}
 
@@ -642,26 +640,18 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 			includeIndex := func(img models.Artifact) bool {
 				switch v := req.IndexDensity.(type) {
 				case float64:
-					interval := summary.StepImageCount(img.RunID, img.Name, int(img.Step)) / int(v)
-					return imgIndex%interval == 0
+					interval := summary.MaxIndex(img.RunID, img.Name) / int(v)
+					return img.Index%int64(interval) == 0
 				default:
 					return true
 				}
 			}
 			hasRows := false
 			for rows.Next() {
-				hasRows = true
 				var image models.Artifact
 				if err := database.DB.ScanRows(rows, &image); err != nil {
 					return err
 				}
-				if image.Step != int64(curStep) {
-					imgIndex = 0
-				} else {
-					imgIndex = imgIndex + 1
-				}
-				curStep = int(image.Step)
-
 				// flush after each change in runID
 				// (assumes order by runID)
 				if image.RunID != runID {
@@ -673,15 +663,15 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				}
 				if includeStep(image) && includeIndex(image) {
 					addImage(image, runs[image.RunID])
+					hasRows = true
 				}
 
 			}
 
-			if err := flushImages(); err != nil {
-				return err
-			}
-
 			if hasRows {
+				if err := flushImages(); err != nil {
+					return err
+				}
 				if err := reportProgress(); err != nil {
 					return err
 				}

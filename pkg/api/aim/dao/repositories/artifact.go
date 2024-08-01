@@ -46,8 +46,8 @@ func (r ArtifactSearchSummary) MaxIndex(runID, name string) int {
 	runSequence := r[runID][name]
 	maxIndex := 0
 	for _, step := range runSequence {
-		if step.ImgCount > maxIndex {
-			maxIndex = step.ImgCount - 1
+		if step.MaxIndex > maxIndex {
+			maxIndex = step.MaxIndex
 		}
 	}
 	return maxIndex

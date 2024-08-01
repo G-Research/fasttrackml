@@ -2,7 +2,7 @@ name: Nudge
 
 on:
   workflow_run:
-    workflows: [CI]
+    workflows: ["CI", "Create release", "Release", "Build and Deploy website to Pages"]
     types: [completed]
     branches: [main]
 
@@ -15,4 +15,3 @@ jobs:
         uses: pavlovic-ivan/octo-nudge@main
         with:
           webhooks: ${{ secrets.WEBHOOKS }}
-          conclusions: 'failure,success'

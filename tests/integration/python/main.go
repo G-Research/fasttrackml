@@ -199,6 +199,11 @@ func getDatabaseService(client *dagger.Client) *dagger.Service {
 		From(postgresImage).
 		WithEnvVariable("POSTGRES_PASSWORD", "postgres").
 		WithEnvVariable("LC_COLLATE", "POSIX").
+		WithExec([]string{
+			"postgres",
+			"-c", "log_min_error_statement=panic",
+			"-c", "log_min_messages=fatal",
+		}).
 		WithExposedPort(5432).
 		AsService()
 }

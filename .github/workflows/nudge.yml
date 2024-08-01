@@ -1,0 +1,22 @@
+name: Nudge
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    environment: protected
+    steps:
+      - name: Send message
+        uses: pavlovic-ivan/octo-nudge@main
+        with:
+          webhooks: ${{ secrets.WEBHOOKS }}
+          events: 'push'
+          conclusions: 'failure,success'
+          nudge-blocks: 'commit,message'
+          success-color: '#e6cc00'
+          failure-color: '#0066ff'

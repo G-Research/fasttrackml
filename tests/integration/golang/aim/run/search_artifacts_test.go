@@ -123,8 +123,10 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 		expectedImageIndexesAbsent  []int
 	}{
 		{
-			name:                        "SearchArtifact",
-			request:                     request.SearchArtifactsRequest{},
+			name: "SearchArtifact",
+			request: request.SearchArtifactsRequest{
+				Query: `((images.name == "some-name") or (images.name == "other-name"))`,
+			},
 			includedRuns:                []*models.Run{run1, run2},
 			expectedRecordRangeUsedMax:  4,
 			expectedIndexRangeUsedMax:   4,
@@ -146,9 +148,10 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 		{
 			name: "SearchArtifactWithRecordRange",
 			request: request.SearchArtifactsRequest{
+				Query:       `((images.name == "some-name"))`,
 				RecordRange: "0:2",
 			},
-			includedRuns:                []*models.Run{run1, run2},
+			includedRuns:                []*models.Run{run1},
 			expectedRecordRangeUsedMax:  2,
 			expectedIndexRangeUsedMax:   4,
 			expectedImageIndexesPresent: []int{0, 1, 2, 3},
@@ -157,9 +160,10 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 		{
 			name: "SearchArtifactWithIndexRange",
 			request: request.SearchArtifactsRequest{
+				Query:      `((images.name == "some-name"))`,
 				IndexRange: "0:2",
 			},
-			includedRuns:                []*models.Run{run1, run2},
+			includedRuns:                []*models.Run{run1},
 			expectedRecordRangeUsedMax:  4,
 			expectedIndexRangeUsedMax:   2,
 			expectedImageIndexesPresent: []int{0, 1, 2},
@@ -168,6 +172,7 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 		{
 			name: "SearchArtifactWithIndexDensity",
 			request: request.SearchArtifactsRequest{
+				Query:        `((images.name == "other-name"))`,
 				IndexDensity: 2,
 			},
 			includedRuns:                []*models.Run{run2},

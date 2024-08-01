@@ -3,7 +3,9 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"math"
+	"strings"
 
 	"gorm.io/gorm"
 
@@ -143,6 +145,8 @@ func (r ArtifactRepository) Search(
 		return nil, nil, nil, eris.Wrap(err, "error find result summary for artifact search")
 	}
 
+	imageNames := []string{}
+	imageNameQueryTemplate := `images.name == "%s"`
 	resultSummary := make(ArtifactSearchSummary, len(runIDs))
 	for _, rslt := range stepInfo {
 		traceMap, ok := resultSummary[rslt.RunUUID]
@@ -151,6 +155,10 @@ func (r ArtifactRepository) Search(
 		}
 		traceMap[rslt.Name] = append(traceMap[rslt.Name], rslt)
 		resultSummary[rslt.RunUUID] = traceMap
+		qImage := fmt.Sprintf(imageNameQueryTemplate, rslt.Name)
+		if strings.Contains(req.Query, qImage) {
+			imageNames = append(imageNames, rslt.Name)
+		}
 	}
 
 	// get a cursor for the artifacts
@@ -165,13 +173,16 @@ func (r ArtifactRepository) Search(
                     WHERE run_uuid IN ?
                     AND step BETWEEN ? AND ?
                     AND "index" BETWEEN ? AND ?
+                    AND name IN ?
                     ORDER BY run_uuid, name, step
                 `,
 			runIDs,
 			req.RecordRangeMin(),
 			req.RecordRangeMax(math.MaxInt16),
 			req.IndexRangeMin(),
-			req.IndexRangeMax(math.MaxInt16))
+			req.IndexRangeMax(math.MaxInt16),
+			imageNames)
+
 	rows, err := tx.Rows()
 	if err != nil {
 		return nil, nil, nil, eris.Wrap(err, "error searching artifacts")

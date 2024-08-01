@@ -592,7 +592,7 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 					"width":    img.Width,
 					"format":   img.Format,
 					"iter":     img.Iter,
-					"index":    img.Index,
+					"index":    imgIndex, // calculated
 					"step":     img.Step,
 				}
 
@@ -632,17 +632,21 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				return w.Flush()
 			}
 			includeStep := func(img models.Artifact) bool {
-				if req.RecordDensity == 0 {
+				switch v := req.RecordDensity.(type) {
+				case int:
+					return img.Step%int64(v) == 0
+				default:
 					return true
 				}
-				return img.Step%int64(req.RecordDensity) == 0
 			}
 			includeIndex := func(img models.Artifact) bool {
-				if req.IndexDensity == 0 {
+				switch v := req.IndexDensity.(type) {
+				case int:
+					interval := summary.StepImageCount(img.RunID, img.Name, int(img.Step)) / v
+					return imgIndex%interval == 0
+				default:
 					return true
 				}
-				interval := summary.StepImageCount(img.RunID, img.Name, int(img.Step)) / req.IndexDensity
-				return imgIndex%interval == 0
 			}
 			hasRows := false
 			for rows.Next() {

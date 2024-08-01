@@ -18,5 +18,3 @@ jobs:
           events: 'push'
           conclusions: 'failure,success'
           nudge-blocks: 'commit,message'
-          success-color: '#e6cc00'
-          failure-color: '#0066ff'

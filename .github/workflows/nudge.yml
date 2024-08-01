@@ -9,7 +9,7 @@ on:
 jobs:
   nudge:
     runs-on: ubuntu-latest
-    environment: protected
+    environment: nudge
     steps:
       - name: Send message
         uses: pavlovic-ivan/octo-nudge@main

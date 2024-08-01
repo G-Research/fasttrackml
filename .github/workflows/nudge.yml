@@ -4,10 +4,10 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-    branches: [add-ci-alerts]
+    branches: [main]
 
 jobs:
-  test:
+  nudge:
     runs-on: ubuntu-latest
     environment: protected
     steps:

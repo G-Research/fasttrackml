@@ -117,8 +117,8 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 		request                     request.SearchArtifactsRequest
 		includedRuns                []*models.Run
 		excludedRuns                []*models.Run
-		expectedRecordRangeMax      int64
-		expectedIndexRangeMax       int64
+		expectedRecordRangeUsedMax  int64
+		expectedIndexRangeUsedMax   int64
 		expectedImageIndexesPresent []int
 		expectedImageIndexesAbsent  []int
 	}{
@@ -126,8 +126,8 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 			name:                        "SearchArtifact",
 			request:                     request.SearchArtifactsRequest{},
 			includedRuns:                []*models.Run{run1, run2},
-			expectedRecordRangeMax:      4,
-			expectedIndexRangeMax:       4,
+			expectedRecordRangeUsedMax:  4,
+			expectedIndexRangeUsedMax:   4,
 			expectedImageIndexesPresent: []int{0, 1, 2, 3},
 			expectedImageIndexesAbsent:  []int{},
 		},
@@ -138,8 +138,8 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 			},
 			includedRuns:                []*models.Run{run1},
 			excludedRuns:                []*models.Run{run2},
-			expectedRecordRangeMax:      4,
-			expectedIndexRangeMax:       4,
+			expectedRecordRangeUsedMax:  4,
+			expectedIndexRangeUsedMax:   4,
 			expectedImageIndexesPresent: []int{0, 1, 2, 3},
 			expectedImageIndexesAbsent:  []int{},
 		},
@@ -149,8 +149,8 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 				RecordRange: "0:2",
 			},
 			includedRuns:                []*models.Run{run1, run2},
-			expectedRecordRangeMax:      2,
-			expectedIndexRangeMax:       4,
+			expectedRecordRangeUsedMax:  2,
+			expectedIndexRangeUsedMax:   4,
 			expectedImageIndexesPresent: []int{0, 1, 2, 3},
 			expectedImageIndexesAbsent:  []int{},
 		},
@@ -160,22 +160,22 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 				IndexRange: "0:2",
 			},
 			includedRuns:                []*models.Run{run1, run2},
-			expectedRecordRangeMax:      4,
-			expectedIndexRangeMax:       2,
+			expectedRecordRangeUsedMax:  4,
+			expectedIndexRangeUsedMax:   2,
 			expectedImageIndexesPresent: []int{0, 1, 2},
 			expectedImageIndexesAbsent:  []int{3},
 		},
-		// {
-		// 	name: "SearchArtifactWithRecordDensity",
-		// 	request: request.SearchArtifactsRequest{
-		// 		RecordDensity: 2,
-		// 	},
-		// 	includedRuns:                []*models.Run{run2},
-		// 	expectedRecordRangeMax:      4,
-		// 	expectedIndexRangeMax:       4,
-		// 	expectedImageIndexesPresent: []int{0, 1},
-		// 	expectedImageIndexesAbsent:  []int{2, 3},
-		// },
+		{
+			name: "SearchArtifactWithIndexDensity",
+			request: request.SearchArtifactsRequest{
+				IndexDensity: 2,
+			},
+			includedRuns:                []*models.Run{run2},
+			expectedRecordRangeUsedMax:  4,
+			expectedIndexRangeUsedMax:   4,
+			expectedImageIndexesPresent: []int{0, 1},
+			expectedImageIndexesAbsent:  []int{2, 3},
+		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
@@ -199,13 +199,13 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 				traceIndex := 0
 				valuesIndex := 0
 				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
-				recordRangeKey := rangesPrefix + ".record_range_total.1"
-				s.Equal(tt.expectedRecordRangeMax, decodedData[recordRangeKey])
+				recordRangeKey := rangesPrefix + ".record_range_used.1"
+				s.Equal(tt.expectedRecordRangeUsedMax, decodedData[recordRangeKey])
 				propsPrefix := fmt.Sprintf("%v.props", run.ID)
 				artifactLocation := propsPrefix + ".experiment.artifact_location"
 				s.Equal(experiment.ArtifactLocation, decodedData[artifactLocation])
-				indexRangeKey := rangesPrefix + ".index_range_total.1"
-				s.Equal(tt.expectedIndexRangeMax, decodedData[indexRangeKey])
+				indexRangeKey := rangesPrefix + ".index_range_used.1"
+				s.Equal(tt.expectedIndexRangeUsedMax, decodedData[indexRangeKey])
 				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, traceIndex)
 				for _, imgIndex := range tt.expectedImageIndexesPresent {
 					valuesPrefix := fmt.Sprintf(".values.%d.%d", valuesIndex, imgIndex)
@@ -223,12 +223,12 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 				imgIndex := 0
 				valuesIndex := 0
 				rangesPrefix := fmt.Sprintf("%v.ranges", run.ID)
-				recordRangeKey := rangesPrefix + ".record_range_total.1"
+				recordRangeKey := rangesPrefix + ".record_range_used.1"
 				s.Empty(decodedData[recordRangeKey])
 				propsPrefix := fmt.Sprintf("%v.props", run.ID)
 				artifactLocation := propsPrefix + ".experiment.artifact_location"
 				s.Empty(decodedData[artifactLocation])
-				indexRangeKey := rangesPrefix + ".index_range_total.1"
+				indexRangeKey := rangesPrefix + ".index_range_used.1"
 				s.Empty(decodedData[indexRangeKey])
 				tracesPrefix := fmt.Sprintf("%v.traces.%d", run.ID, imgIndex)
 				valuesPrefix := fmt.Sprintf(".values.%d", valuesIndex)

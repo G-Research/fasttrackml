@@ -531,6 +531,8 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				runID     string
 				runData   fiber.Map
 				tracesMap map[string]fiber.Map
+				imgIndex  int
+				curStep   int
 				cur       int64
 			)
 			reportProgress := func() error {
@@ -553,9 +555,9 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 					runData = fiber.Map{
 						"ranges": fiber.Map{
 							"record_range_total": []int{0, maxStep},
-							"record_range_used":  []int{0, int(img.Step)},
+							"record_range_used":  []int{req.RecordRangeMin(), req.RecordRangeMax(maxStep)},
 							"index_range_total":  []int{0, maxIndex},
-							"index_range_used":   []int{0, int(img.Index)},
+							"index_range_used":   []int{req.IndexRangeMin(), req.IndexRangeMax(maxIndex)},
 						},
 						"params": fiber.Map{
 							"images_per_step": maxIndex,
@@ -629,6 +631,19 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				}
 				return w.Flush()
 			}
+			includeStep := func(img models.Artifact) bool {
+				if req.RecordDensity == 0 {
+					return true
+				}
+				return img.Step%int64(req.RecordDensity) == 0
+			}
+			includeIndex := func(img models.Artifact) bool {
+				if req.IndexDensity == 0 {
+					return true
+				}
+				interval := summary.StepImageCount(img.RunID, img.Name, int(img.Step)) / req.IndexDensity
+				return imgIndex%interval == 0
+			}
 			hasRows := false
 			for rows.Next() {
 				hasRows = true
@@ -636,6 +651,12 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 				if err := database.DB.ScanRows(rows, &image); err != nil {
 					return err
 				}
+				if image.Step != int64(curStep) {
+					imgIndex = 0
+				} else {
+					imgIndex = imgIndex + 1
+				}
+				curStep = int(image.Step)
 
 				// flush after each change in runID
 				// (assumes order by runID)
@@ -646,7 +667,9 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 					runID = image.RunID
 					runData = nil
 				}
-				addImage(image, runs[image.RunID])
+				if includeStep(image) && includeIndex(image) {
+					addImage(image, runs[image.RunID])
+				}
 
 			}
 

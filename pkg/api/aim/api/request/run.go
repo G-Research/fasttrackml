@@ -1,7 +1,6 @@
 package request
 
 import (
-	"math"
 	"strconv"
 	"strings"
 
@@ -140,8 +139,8 @@ func (req SearchArtifactsRequest) RecordRangeMin() int {
 }
 
 // RecordRangeMax returns the high end of the record range.
-func (req SearchArtifactsRequest) RecordRangeMax() int {
-	return rangeMax(req.RecordRange)
+func (req SearchArtifactsRequest) RecordRangeMax(dflt int) int {
+	return rangeMax(req.RecordRange, dflt)
 }
 
 // IndexRangeMin returns the low end of the index range.
@@ -150,8 +149,8 @@ func (req SearchArtifactsRequest) IndexRangeMin() int {
 }
 
 // IndexRangeMax returns the high end of the index range.
-func (req SearchArtifactsRequest) IndexRangeMax() int {
-	return rangeMax(req.IndexRange)
+func (req SearchArtifactsRequest) IndexRangeMax(dflt int) int {
+	return rangeMax(req.IndexRange, dflt)
 }
 
 // rangeMin will extract the lower end of a range string in the request.
@@ -168,14 +167,14 @@ func rangeMin(r string) int {
 }
 
 // rangeMax will extract the lower end of a range string in the request.
-func rangeMax(r string) int {
+func rangeMax(r string, dflt int) int {
 	rangeVals := strings.Split(r, ":")
 	if len(rangeVals) != 2 {
-		return math.MaxInt16
+		return dflt
 	}
 	num, err := strconv.Atoi(rangeVals[1])
 	if err == nil {
 		return num
 	}
-	return math.MaxInt16
+	return dflt
 }

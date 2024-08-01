@@ -44,8 +44,8 @@ func (r ArtifactSearchSummary) MaxIndex(runID, name string) int {
 	runSequence := r[runID][name]
 	maxIndex := 0
 	for _, step := range runSequence {
-		if step.MaxIndex > maxIndex {
-			maxIndex = step.MaxIndex
+		if step.ImgCount > maxIndex {
+			maxIndex = step.ImgCount - 1
 		}
 	}
 	return maxIndex
@@ -137,21 +137,13 @@ func (r ArtifactRepository) Search(
 		Raw(`SELECT run_uuid, name, step, count(id) as img_count, max("index") as max_index
 			FROM artifacts
 			WHERE run_uuid IN (?)
-			AND step BETWEEN ? AND ?
-            AND "index" BETWEEN ? AND ?
 			GROUP BY run_uuid, name, step;`,
-			runIDs,
-			req.RecordRangeMin(),
-			req.RecordRangeMax(),
-			req.IndexRangeMin(),
-			req.IndexRangeMax()).
+			runIDs).
 		Find(&stepInfo); tx.Error != nil {
 		return nil, nil, nil, eris.Wrap(err, "error find result summary for artifact search")
 	}
 
 	resultSummary := make(ArtifactSearchSummary, len(runIDs))
-	minStep := math.MaxInt
-	maxStep := 0
 	for _, rslt := range stepInfo {
 		traceMap, ok := resultSummary[rslt.RunUUID]
 		if !ok {
@@ -159,17 +151,6 @@ func (r ArtifactRepository) Search(
 		}
 		traceMap[rslt.Name] = append(traceMap[rslt.Name], rslt)
 		resultSummary[rslt.RunUUID] = traceMap
-		if rslt.Step < minStep {
-			minStep = rslt.Step
-		}
-		if rslt.Step > maxStep {
-			maxStep = rslt.Step
-		}
-	}
-
-	interval := 1
-	if req.RecordDensity > 0 {
-		interval = (maxStep - minStep) / req.RecordDensity
 	}
 
 	// get a cursor for the artifacts
@@ -182,17 +163,15 @@ func (r ArtifactRepository) Search(
                        FROM artifacts
                     ) rows USING (id)
                     WHERE run_uuid IN ?
-                    AND row_num % ? = 0
-					AND step BETWEEN ? AND ?
+                    AND step BETWEEN ? AND ?
                     AND "index" BETWEEN ? AND ?
                     ORDER BY run_uuid, name, step
                 `,
 			runIDs,
-			interval,
 			req.RecordRangeMin(),
-			req.RecordRangeMax(),
+			req.RecordRangeMax(math.MaxInt16),
 			req.IndexRangeMin(),
-			req.IndexRangeMax())
+			req.IndexRangeMax(math.MaxInt16))
 	rows, err := tx.Rows()
 	if err != nil {
 		return nil, nil, nil, eris.Wrap(err, "error searching artifacts")

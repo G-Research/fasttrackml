@@ -173,13 +173,13 @@ func (s *SearchArtifactsTestSuite) Test_Ok() {
 			name: "SearchArtifactWithIndexDensity",
 			request: request.SearchArtifactsRequest{
 				Query:        `((images.name == "other-name"))`,
-				IndexDensity: 2,
+				IndexDensity: 1,
 			},
 			includedRuns:                []*models.Run{run2},
 			expectedRecordRangeUsedMax:  4,
 			expectedIndexRangeUsedMax:   4,
-			expectedImageIndexesPresent: []int{0, 1},
-			expectedImageIndexesAbsent:  []int{2, 3},
+			expectedImageIndexesPresent: []int{0},
+			expectedImageIndexesAbsent:  []int{1, 2, 3},
 		},
 	}
 	for _, tt := range tests {

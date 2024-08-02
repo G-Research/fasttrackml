@@ -634,10 +634,9 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]
 									len(step) <= imgCount ||
 									imgIndex%imgInterval == 0 {
 									newStep = append(newStep, step[imgIndex])
-
 								}
 							}
-							filteredSteps = append(filteredSteps, step)
+							filteredSteps = append(filteredSteps, newStep)
 							filteredIters = append(filteredIters, iters[stepIndex])
 						}
 					}

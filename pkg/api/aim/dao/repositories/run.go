@@ -398,16 +398,22 @@ func (r RunRepository) SearchRuns(
 
 	log.Debugf("Total runs: %d", total)
 
+	experimentsSelect := database.DB.Select(
+		"ID", "Name",
+	).Where(
+		&models.Experiment{NamespaceID: namespaceID},
+	)
+	// Do not include the filter if there are no ExperimentNames
+	if len(req.ExperimentNames) > 0 {
+		experimentsSelect = experimentsSelect.Where(
+			`"Experiment"."name" IN ?`, req.ExperimentNames,
+		)
+	}
+
 	tx := r.GetDB().WithContext(ctx).
 		InnerJoins(
 			"Experiment",
-			database.DB.Select(
-				"ID", "Name",
-			).Where(
-				&models.Experiment{NamespaceID: namespaceID},
-			).Where(
-				`"Experiment"."name" IN ?`, req.ExperimentNames,
-			),
+			experimentsSelect,
 		).
 		Order("row_num DESC")
 

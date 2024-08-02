@@ -153,6 +153,38 @@ func (req SearchArtifactsRequest) IndexRangeMax(dflt int) int {
 	return rangeMax(req.IndexRange, dflt)
 }
 
+// StepCount returns the RecordDensity requested or -1 if not limited.
+func (req SearchArtifactsRequest) StepCount() int {
+	switch v := req.RecordDensity.(type) {
+	case float64:
+		return int(v)
+	case string:
+		num, err := strconv.Atoi(v)
+		if err != nil || num < 1 {
+			return -1
+		}
+		return num
+	default:
+		return -1
+	}
+}
+
+// ItemsPerStep returns the IndexDensity requested or -1 if not limited.
+func (req SearchArtifactsRequest) ItemsPerStep() int {
+	switch v := req.IndexDensity.(type) {
+	case float64:
+		return int(v)
+	case string:
+		num, err := strconv.Atoi(v)
+		if err != nil || num < 1 {
+			return -1
+		}
+		return num
+	default:
+		return -1
+	}
+}
+
 // rangeMin will extract the lower end of a range string in the request.
 func rangeMin(r string) int {
 	rangeVals := strings.Split(r, ":")

@@ -44,7 +44,7 @@ func (r ArtifactSearchSummary) MaxStep(runID, name string) int {
 // MaxIndex figures out the maximum index for the runID and sequence name.
 func (r ArtifactSearchSummary) MaxIndex(runID, name string) int {
 	runSequence := r[runID][name]
-	maxIndex := 0
+	maxIndex := 1
 	for _, step := range runSequence {
 		if step.MaxIndex > maxIndex {
 			maxIndex = step.MaxIndex

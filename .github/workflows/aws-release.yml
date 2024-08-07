@@ -12,11 +12,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Set permissions for private key
       run: |
         echo "${{ secrets.AWS_PRIVATE_KEY }}" > key.pem
@@ -26,8 +21,8 @@ jobs:
         ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker pull gresearch/fasttrackml:latest'
     - name: Stop running container
       run: |
-        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker stop cddemo || true'
-        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker rm cddemo || true'
+        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker stop fasttrackml || true'
+        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker rm fasttrackml || true'
     - name: Run new container
       run: |
         ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker run -d --name fasttrackml -p 80:5000 gresearch/fasttrackml:latest'

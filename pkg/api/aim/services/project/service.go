@@ -18,6 +18,7 @@ type Service struct {
 	paramRepository      repositories.ParamRepositoryProvider
 	metricRepository     repositories.MetricRepositoryProvider
 	experimentRepository repositories.ExperimentRepositoryProvider
+	artifactRepository   repositories.ArtifactRepositoryProvider
 	liveUpdatesEnabled   bool
 }
 
@@ -28,6 +29,7 @@ func NewService(
 	paramRepository repositories.ParamRepositoryProvider,
 	metricRepository repositories.MetricRepositoryProvider,
 	experimentRepository repositories.ExperimentRepositoryProvider,
+	artifactRepository repositories.ArtifactRepositoryProvider,
 	liveUpdatesEnabled bool,
 ) *Service {
 	return &Service{
@@ -36,6 +38,7 @@ func NewService(
 		paramRepository:      paramRepository,
 		metricRepository:     metricRepository,
 		experimentRepository: experimentRepository,
+		artifactRepository:   artifactRepository,
 		liveUpdatesEnabled:   liveUpdatesEnabled,
 	}
 }
@@ -112,6 +115,16 @@ func (s Service) GetProjectParams(
 			return nil, api.NewInternalError("error getting metrics: %s", err)
 		}
 		projectParams.Metrics = metrics
+	}
+	if slices.Contains(req.Sequences, "images") {
+		// fetch images available for requested Experiments.
+		images, err := s.artifactRepository.GetArtifactNamesByExperiments(
+			ctx, namespaceID, req.Experiments,
+		)
+		if err != nil {
+			return nil, api.NewInternalError("error getting images: %s", err)
+		}
+		projectParams.Images = images
 	}
 	return &projectParams, nil
 }

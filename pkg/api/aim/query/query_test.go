@@ -374,6 +374,14 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 				`AND ("metrics_0"."value" < $4 AND "runs"."lifecycle_stage" <> $5)`,
 			expectedVars: []interface{}{"my_metric", "$.key1", "value1", -1, models.LifecycleStageDeleted},
 		},
+		{
+			name:  "TestImagesName",
+			query: `(images.name == 'my-image')`,
+			expectedSQL: `SELECT "run_uuid" FROM "runs" ` +
+				`INNER JOIN artifacts artifacts_0 ON runs.run_uuid = artifacts_0.run_uuid ` +
+				`WHERE "artifacts_0"."name" = $1 AND "runs"."lifecycle_stage" <> $2`,
+			expectedVars: []interface{}{"my-image", models.LifecycleStageDeleted},
+		},
 	}
 
 	for _, tt := range tests {
@@ -387,6 +395,7 @@ func (s *QueryTestSuite) TestSqliteDialector_Ok() {
 					"runs":        "runs",
 					"experiments": "Experiment",
 					"metrics":     "metrics",
+					"images":      "images",
 				},
 				Dialector: sqlite.Dialector{}.Name(),
 			}

@@ -32,6 +32,7 @@ func ConvertCreateRunArtifactRequestToModel(
 ) *models.Artifact {
 	return &models.Artifact{
 		ID:      uuid.New(),
+		Name:    req.Name,
 		Iter:    req.Iter,
 		Step:    req.Step,
 		RunID:   req.RunID,

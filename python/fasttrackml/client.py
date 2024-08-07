@@ -465,6 +465,7 @@ class FasttrackmlClient(MlflowClient):
     def log_image(
         self,
         run_id: str,
+        name: str,
         filename: str,
         artifact_path: str,
         caption: str,
@@ -481,6 +482,7 @@ class FasttrackmlClient(MlflowClient):
 
         Args:
             run_id: String ID of the run
+            name: String the name for this sequence of images
             filename: The filename of the image in the local filesystem
             artifact_path: The optional path to append to the artifact_uri
             caption: The image caption
@@ -512,5 +514,5 @@ class FasttrackmlClient(MlflowClient):
             client.set_terminated(run.info.run_id)
         """
         return self._tracking_client.log_image(
-            run_id, filename, artifact_path, caption, index, width, height, format, step, iter
+            run_id, name, filename, artifact_path, caption, index, width, height, format, step, iter
         )

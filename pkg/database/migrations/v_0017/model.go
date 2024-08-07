@@ -306,8 +306,9 @@ type RoleNamespace struct {
 
 type Artifact struct {
 	Base
-	Iter    int64 `gorm:"index"`
-	Step    int64 `gorm:"default:0;not null"`
+	Name    string `gorm:"not null;index"`
+	Iter    int64  `gorm:"index"`
+	Step    int64  `gorm:"default:0;not null"`
 	Run     Run
 	RunID   string `gorm:"column:run_uuid;not null;index;constraint:OnDelete:CASCADE"`
 	Index   int64

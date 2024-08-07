@@ -31,4 +31,4 @@ jobs:
         ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker rm cddemo || true'
     - name: Run new container
       run: |
-        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker run -d --name cddemo -p 80:3000 your-dockerhub-username/cddemo:latest'
+        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker run -d --name fasttrackml -p 80:5000 gresearch/fasttrackml:latest'

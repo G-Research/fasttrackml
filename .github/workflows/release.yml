@@ -126,3 +126,24 @@ jobs:
     secrets:
       APP_ID: ${{ secrets.APP_ID }}
       APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+
+  aws-release:
+    runs-on: ubuntu-latest
+    needs:
+      - docker-release
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set permissions for private key
+      run: |
+        echo "${{ secrets.AWS_PRIVATE_KEY }}" > key.pem
+        chmod 600 key.pem
+    - name: Pull Docker image
+      run: |
+        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker pull gresearch/fasttrackml:latest'
+    - name: Stop running container
+      run: |
+        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker rm -f fasttrackml || true'
+    - name: Run new container
+      run: |
+        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker run -d --name fasttrackml -p 80:5000 gresearch/fasttrackml'

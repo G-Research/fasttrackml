@@ -7,14 +7,28 @@ permissions:
   contents: read
 
 jobs:
-  aws-release:
-    needs: docker-release
-    runs-on: self-hosted
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
     steps:
-      - name: Pull docker image
-        run: docker pull gresearch/fasttrackml
-      - name: Delete old container
-        run: docker rm -f 
-      - name: Run docker container go-app-container
-        run: docker run -d -p 80:5000 --name go-app-container gresearch/fasttrackml
-    
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Set permissions for private key
+      run: |
+        echo "${{ secrets.AWS_PRIVATE_KEY }}" > key.pem
+        chmod 600 key.pem
+    - name: Pull Docker image
+      run: |
+        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker pull gresearch/fasttrackml:latest'
+    - name: Stop running container
+      run: |
+        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker stop cddemo || true'
+        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker rm cddemo || true'
+    - name: Run new container
+      run: |
+        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@ec2-54-204-182-81.compute-1.amazonaws.com 'sudo docker run -d --name cddemo -p 80:3000 your-dockerhub-username/cddemo:latest'

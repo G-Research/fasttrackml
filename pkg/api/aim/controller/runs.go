@@ -10,6 +10,7 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/api/response"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/services/run"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
+	commonRequest "github.com/G-Research/fasttrackml/pkg/common/api/request"
 	"github.com/G-Research/fasttrackml/pkg/common/middleware"
 )
 
@@ -34,12 +35,21 @@ func (c Controller) GetRunInfo(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	resp := response.NewGetRunInfoResponse(runInfo)
+	artifactReq := commonRequest.ListArtifactsRequest{
+		RunUUID: req.ID,
+	}
+
+	_, artifacts, err := c.artifactService.ListArtifacts(ctx.Context(), ns, &artifactReq)
+	if err != nil {
+		return err
+	}
+
+	resp := response.NewGetRunInfoResponse(runInfo, artifacts)
 	log.Debugf("getRunInfo response: %#v", resp)
 	return ctx.JSON(resp)
 }
 
-// GetRunMetrics handles `GET /runs/:id/metric/get-batch` endpoint.
+// GetRunMetrics handles `POST /runs/:id/metric/get-batch` endpoint.
 func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
 	if err != nil {
@@ -60,6 +70,52 @@ func (c Controller) GetRunMetrics(ctx *fiber.Ctx) error {
 	resp := response.NewGetRunMetricsResponse(metrics, metricKeysMap)
 	log.Debugf("getRunMetrics response: %#v", resp)
 	return ctx.JSON(resp)
+}
+
+// GetRunImages handles `POST /runs/:id/images/get-batch` endpoint.
+func (c Controller) GetRunImages(ctx *fiber.Ctx) error {
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("getRunImages namespace: %s", ns.Code)
+
+	req := request.GetRunImagesRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	images, err := c.runService.GetRunImages(ctx.Context(), ns.ID, ctx.Params("id"), &req)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	return response.NewRunImagesStreamResponse(ctx, images)
+}
+
+// GetRunImagesBatch handles `POST /runs/images/get-batch` endpoint.
+func (c Controller) GetRunImagesBatch(ctx *fiber.Ctx) error {
+	ns, err := middleware.GetNamespaceFromContext(ctx.Context())
+	if err != nil {
+		return api.NewInternalError("error getting namespace from context")
+	}
+	log.Debugf("getRunImages namespace: %s", ns.Code)
+
+	req := request.GetRunImagesBatchRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	images, err := c.runService.GetRunImagesBatch(ctx.Context(), &req)
+	if err != nil {
+		return err
+	}
+	imagesMap, err := convertImagesToMap(images, req)
+	if err != nil {
+		return err
+	}
+
+	return response.NewRunImagesBatchStreamResponse(ctx, imagesMap)
 }
 
 // GetRunsActive handles `GET /runs/active` endpoint.
@@ -194,7 +250,7 @@ func (c Controller) SearchImages(ctx *fiber.Ctx) error {
 	log.Debugf("searchMetrics namespace: %s", ns.Code)
 
 	req := request.SearchArtifactsRequest{}
-	if err = ctx.QueryParser(&req); err != nil {
+	if err = ctx.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 	if ctx.Query("report_progress") == "" {
@@ -207,12 +263,12 @@ func (c Controller) SearchImages(ctx *fiber.Ctx) error {
 	}
 
 	//nolint:rowserrcheck
-	rows, totalRuns, result, err := c.runService.SearchArtifacts(ctx.Context(), ns.ID, tzOffset, req)
+	rows, runs, result, err := c.runService.SearchArtifacts(ctx.Context(), ns.ID, tzOffset, req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	response.NewStreamArtifactsResponse(ctx, rows, totalRuns, result, req)
+	response.NewStreamArtifactsResponse(ctx, rows, runs, result, req)
 	return nil
 }
 

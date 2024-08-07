@@ -1,6 +1,9 @@
 package request
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -21,6 +24,15 @@ type GetRunMetricsRequest []struct {
 	Name    string            `json:"name"`
 	Context map[string]string `json:"context"`
 }
+
+// GetRunImagesRequest is a request object for `POST /runs/:id/images/get-batch` endpoint.
+type GetRunImagesRequest []struct {
+	Name    string            `json:"name"`
+	Context map[string]string `json:"context"`
+}
+
+// GetRunImagesBatchRequest is a request object for `POST /runs/images/get-batch` endpoint.
+type GetRunImagesBatchRequest []string
 
 // GetRunsActiveRequest is a request object for `GET /runs/active` endpoint.
 type GetRunsActiveRequest struct {
@@ -86,16 +98,16 @@ type SearchAlignedMetricsRequest struct {
 	AlignBy string `json:"align_by"`
 }
 
-// SearchArtifactsRequest is a request struct for `GET /runs/search/image` endpoint.
+// SearchArtifactsRequest is a request struct for `POST /runs/search/image` endpoint.
 type SearchArtifactsRequest struct {
 	BaseSearchRequest
-	Query         string `query:"q"`
-	SkipSystem    bool   `query:"skip_system"`
-	RecordDensity int    `query:"record_density"`
-	IndexDensity  int    `query:"index_density"`
-	RecordRange   string `query:"record_range"`
-	IndexRange    string `query:"index_range"`
-	CalcRanges    bool   `query:"calc_ranges"`
+	Query         string `json:"q"`
+	SkipSystem    bool   `json:"skip_system"`
+	RecordDensity any    `json:"record_density"`
+	IndexDensity  any    `json:"index_density"`
+	RecordRange   string `json:"record_range"`
+	IndexRange    string `json:"index_range"`
+	CalcRanges    bool   `json:"calc_ranges"`
 }
 
 // DeleteRunRequest is a request struct for `DELETE /runs/:id` endpoint.
@@ -119,4 +131,82 @@ type AddRunTagRequest struct {
 type DeleteRunTagRequest struct {
 	RunID string `params:"id"`
 	TagID string `params:"tagID"`
+}
+
+// RecordRangeMin returns the low end of the record range.
+func (req SearchArtifactsRequest) RecordRangeMin() int {
+	return rangeMin(req.RecordRange)
+}
+
+// RecordRangeMax returns the high end of the record range.
+func (req SearchArtifactsRequest) RecordRangeMax(dflt int) int {
+	return rangeMax(req.RecordRange, dflt)
+}
+
+// IndexRangeMin returns the low end of the index range.
+func (req SearchArtifactsRequest) IndexRangeMin() int {
+	return rangeMin(req.IndexRange)
+}
+
+// IndexRangeMax returns the high end of the index range.
+func (req SearchArtifactsRequest) IndexRangeMax(dflt int) int {
+	return rangeMax(req.IndexRange, dflt)
+}
+
+// StepCount returns the RecordDensity requested or -1 if not limited.
+func (req SearchArtifactsRequest) StepCount() int {
+	switch v := req.RecordDensity.(type) {
+	case float64:
+		return int(v)
+	case string:
+		num, err := strconv.Atoi(v)
+		if err != nil || num < 1 {
+			return -1
+		}
+		return num
+	default:
+		return -1
+	}
+}
+
+// ItemsPerStep returns the IndexDensity requested or -1 if not limited.
+func (req SearchArtifactsRequest) ItemsPerStep() int {
+	switch v := req.IndexDensity.(type) {
+	case float64:
+		return int(v)
+	case string:
+		num, err := strconv.Atoi(v)
+		if err != nil || num < 1 {
+			return -1
+		}
+		return num
+	default:
+		return -1
+	}
+}
+
+// rangeMin will extract the lower end of a range string in the request.
+func rangeMin(r string) int {
+	rangeVals := strings.Split(r, ":")
+	if len(rangeVals) != 2 {
+		return 0
+	}
+	num, err := strconv.Atoi(rangeVals[0])
+	if err == nil {
+		return num
+	}
+	return 0
+}
+
+// rangeMax will extract the lower end of a range string in the request.
+func rangeMax(r string, dflt int) int {
+	rangeVals := strings.Split(r, ":")
+	if len(rangeVals) != 2 {
+		return dflt
+	}
+	num, err := strconv.Atoi(rangeVals[1])
+	if err == nil {
+		return num
+	}
+	return dflt
 }

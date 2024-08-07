@@ -155,6 +155,12 @@ type SharedTag struct {
 	Runs        []Run     `gorm:"many2many:run_shared_tags"`
 }
 
+// RunSharedTag represents a model to store connection between tags and runs.
+type RunSharedTag struct {
+	RunID       uuid.UUID `gorm:"column:run_id"`
+	SharedTagID uuid.UUID `gorm:"column:shared_tag_id"`
+}
+
 type Metric struct {
 	Key       string  `gorm:"type:varchar(250);not null;primaryKey"`
 	Value     float64 `gorm:"type:double precision;not null;primaryKey"`
@@ -306,8 +312,9 @@ type RoleNamespace struct {
 
 type Artifact struct {
 	Base
-	Iter    int64 `gorm:"index"`
-	Step    int64 `gorm:"default:0;not null"`
+	Name    string `gorm:"not null;index"`
+	Iter    int64  `gorm:"index"`
+	Step    int64  `gorm:"default:0;not null"`
 	Run     Run
 	RunID   string `gorm:"column:run_uuid;not null;index;constraint:OnDelete:CASCADE"`
 	Index   int64

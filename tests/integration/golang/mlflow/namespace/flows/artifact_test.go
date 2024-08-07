@@ -18,6 +18,8 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/api/mlflow/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/common/api"
+	commonRequest "github.com/G-Research/fasttrackml/pkg/common/api/request"
+	commonResponse "github.com/G-Research/fasttrackml/pkg/common/api/response"
 	"github.com/G-Research/fasttrackml/tests/integration/golang/helpers"
 )
 
@@ -149,9 +151,9 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	s.Require().Nil(err)
 
 	// test `GET /artifacts/list` endpoint.
-	s.listRunArtifactsAndCompare(namespace1Code, request.ListArtifactsRequest{
+	s.listRunArtifactsAndCompare(namespace1Code, commonRequest.ListArtifactsRequest{
 		RunID: run1ID,
-	}, []response.FilePartialResponse{
+	}, []commonResponse.FilePartialResponse{
 		{
 			Path:     "artifact1.file",
 			IsDir:    false,
@@ -159,9 +161,9 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		},
 	})
 
-	s.listRunArtifactsAndCompare(namespace2Code, request.ListArtifactsRequest{
+	s.listRunArtifactsAndCompare(namespace2Code, commonRequest.ListArtifactsRequest{
 		RunID: run2ID,
-	}, []response.FilePartialResponse{
+	}, []commonResponse.FilePartialResponse{
 		{
 			Path:     "artifact2.file",
 			IsDir:    false,
@@ -177,7 +179,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
-			request.ListArtifactsRequest{
+			commonRequest.ListArtifactsRequest{
 				RunID: run1ID,
 			},
 		).WithResponse(
@@ -194,7 +196,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
-			request.ListArtifactsRequest{
+			commonRequest.ListArtifactsRequest{
 				RunID: run2ID,
 			},
 		).WithResponse(
@@ -207,12 +209,12 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 	s.Equal(api.ErrorCodeResourceDoesNotExist, string(resp.ErrorCode))
 
 	// test `GET /artifacts/get` endpoint.
-	s.getRunArtifactAndCompare(namespace1Code, request.GetArtifactRequest{
+	s.getRunArtifactAndCompare(namespace1Code, commonRequest.GetArtifactRequest{
 		RunID: run1ID,
 		Path:  "artifact1.file",
 	}, "content1")
 
-	s.getRunArtifactAndCompare(namespace2Code, request.GetArtifactRequest{
+	s.getRunArtifactAndCompare(namespace2Code, commonRequest.GetArtifactRequest{
 		RunID: run2ID,
 		Path:  "artifact2.file",
 	}, "content2")
@@ -225,7 +227,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		s.MlflowClient().WithNamespace(
 			namespace2Code,
 		).WithQuery(
-			request.GetArtifactRequest{
+			commonRequest.GetArtifactRequest{
 				RunID: run1ID,
 			},
 		).WithResponse(
@@ -242,7 +244,7 @@ func (s *ArtifactFlowTestSuite) testRunArtifactFlow(
 		s.MlflowClient().WithNamespace(
 			namespace1Code,
 		).WithQuery(
-			request.ListArtifactsRequest{
+			commonRequest.ListArtifactsRequest{
 				RunID: run2ID,
 			},
 		).WithResponse(
@@ -274,9 +276,9 @@ func (s *ArtifactFlowTestSuite) createRun(namespace string, req *request.CreateR
 }
 
 func (s *ArtifactFlowTestSuite) listRunArtifactsAndCompare(
-	namespace string, req request.ListArtifactsRequest, expectedResponse []response.FilePartialResponse,
+	namespace string, req commonRequest.ListArtifactsRequest, expectedResponse []commonResponse.FilePartialResponse,
 ) {
-	actualResponse := response.ListArtifactsResponse{}
+	actualResponse := commonResponse.ListArtifactsResponse{}
 	s.Require().Nil(
 		s.MlflowClient().WithNamespace(
 			namespace,
@@ -292,7 +294,7 @@ func (s *ArtifactFlowTestSuite) listRunArtifactsAndCompare(
 }
 
 func (s *ArtifactFlowTestSuite) getRunArtifactAndCompare(
-	namespace string, req request.GetArtifactRequest, expectedResponse string,
+	namespace string, req commonRequest.GetArtifactRequest, expectedResponse string,
 ) {
 	actualResponse := new(bytes.Buffer)
 	s.Require().Nil(s.MlflowClient().WithNamespace(

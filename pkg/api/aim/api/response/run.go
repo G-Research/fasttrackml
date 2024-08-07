@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -19,7 +21,9 @@ import (
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/models"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/dao/repositories"
 	"github.com/G-Research/fasttrackml/pkg/api/aim/encoding"
+	mlflowCommon "github.com/G-Research/fasttrackml/pkg/api/mlflow/common"
 	"github.com/G-Research/fasttrackml/pkg/common"
+	"github.com/G-Research/fasttrackml/pkg/common/services/artifact/storage"
 	"github.com/G-Research/fasttrackml/pkg/database"
 )
 
@@ -37,10 +41,10 @@ type GetRunInfoParamsPartial map[string]any
 type GetRunInfoTracesPartial struct {
 	Tags          map[string]string               `json:"tags"`
 	Logs          map[string]string               `json:"logs"`
-	Texts         map[string]string               `json:"texts"`
+	Texts         []GetRunInfoTracesMetricPartial `json:"texts"`
 	Audios        map[string]string               `json:"audios"`
 	Metric        []GetRunInfoTracesMetricPartial `json:"metric"`
-	Images        map[string]string               `json:"images"`
+	Images        []GetRunInfoTracesMetricPartial `json:"images"`
 	Figures       map[string]string               `json:"figures"`
 	LogRecords    map[string]string               `json:"log_records"`
 	Distributions map[string]string               `json:"distributions"`
@@ -74,7 +78,7 @@ type GetRunInfoResponse struct {
 }
 
 // NewGetRunInfoResponse creates new response object for `GER runs/:id/info` endpoint.
-func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
+func NewGetRunInfoResponse(run *models.Run, artifacts []storage.ArtifactObject) *GetRunInfoResponse {
 	metrics := make([]GetRunInfoTracesMetricPartial, len(run.LatestMetrics))
 	for i, metric := range run.LatestMetrics {
 		metrics[i] = GetRunInfoTracesMetricPartial{
@@ -84,6 +88,43 @@ func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
 		}
 	}
 
+	imagesCounter := 0
+	textsCounter := 0
+	const imageMimeType = "image/"
+	const textMimeType = "text/"
+	for _, artifact := range artifacts {
+		filename := filepath.Base(artifact.Path)
+		mime := mlflowCommon.GetContentType(filename)
+		if strings.HasPrefix(mime, imageMimeType) {
+			imagesCounter++
+		} else if strings.HasPrefix(mime, textMimeType) {
+			textsCounter++
+		}
+	}
+
+	images := make([]GetRunInfoTracesMetricPartial, imagesCounter)
+	texts := make([]GetRunInfoTracesMetricPartial, textsCounter)
+	imagesCounter = 0
+	textsCounter = 0
+	for _, artifact := range artifacts {
+		filename := filepath.Base(artifact.Path)
+		mime := mlflowCommon.GetContentType(filename)
+		if strings.HasPrefix(mime, imageMimeType) {
+			images[imagesCounter] = GetRunInfoTracesMetricPartial{
+				Name:      artifact.Path,
+				Context:   nil,
+				LastValue: 0,
+			}
+			imagesCounter++
+		} else if strings.HasPrefix(mime, textMimeType) {
+			texts[textsCounter] = GetRunInfoTracesMetricPartial{
+				Name:      artifact.Path,
+				Context:   nil,
+				LastValue: 0,
+			}
+			textsCounter++
+		}
+	}
 	params := make(GetRunInfoParamsPartial, len(run.Params)+1)
 	for _, p := range run.Params {
 		params[p.Key] = p.ValueAny()
@@ -99,10 +140,10 @@ func NewGetRunInfoResponse(run *models.Run) *GetRunInfoResponse {
 		Traces: GetRunInfoTracesPartial{
 			Tags:          map[string]string{},
 			Logs:          map[string]string{},
-			Texts:         map[string]string{},
+			Texts:         texts,
 			Audios:        map[string]string{},
 			Metric:        metrics,
-			Images:        map[string]string{},
+			Images:        images,
 			Figures:       map[string]string{},
 			LogRecords:    map[string]string{},
 			Distributions: map[string]string{},
@@ -476,8 +517,8 @@ func NewStreamMetricsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 // NewStreamArtifactsResponse streams the provided sql.Rows to the fiber context.
 //
 //nolint:gocyclo
-func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
-	result repositories.ArtifactSearchSummary, req request.SearchArtifactsRequest,
+func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, runs map[string]models.Run,
+	summary repositories.ArtifactSearchSummary, req request.SearchArtifactsRequest,
 ) {
 	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		//nolint:errcheck
@@ -487,17 +528,17 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 
 		if err := func() error {
 			var (
-				runID   string
-				runData fiber.Map
-				traces  []fiber.Map
-				cur     int64
+				runID     string
+				runData   fiber.Map
+				tracesMap map[string]fiber.Map
+				cur       int64
 			)
 			reportProgress := func() error {
 				if !req.ReportProgress {
 					return nil
 				}
 				err := encoding.EncodeTree(w, fiber.Map{
-					fmt.Sprintf("progress_%d", cur): []int64{cur, totalRuns},
+					fmt.Sprintf("progress_%d", cur): []int64{cur, int64(len(runs))},
 				})
 				if err != nil {
 					return err
@@ -505,23 +546,44 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 				cur++
 				return w.Flush()
 			}
-			addImage := func(img models.Artifact) {
+			addImage := func(img models.Artifact, run models.Run) {
+				maxIndex := summary.MaxIndex(img.RunID, img.Name)
+				maxStep := summary.MaxStep(img.RunID, img.Name)
 				if runData == nil {
-					imagesPerStep := result.StepImageCount(img.RunID, 0)
 					runData = fiber.Map{
 						"ranges": fiber.Map{
-							"record_range_total": []int{0, result.TotalSteps(img.RunID)},
-							"record_range_used":  []int{0, int(img.Step)},
-							"index_range_total":  []int{0, imagesPerStep},
-							"index_range_used":   []int{0, int(img.Index)},
+							"record_range_total": []int{0, maxStep},
+							"record_range_used":  []int{req.RecordRangeMin(), req.RecordRangeMax(maxStep)},
+							"index_range_total":  []int{0, maxIndex},
+							"index_range_used":   []int{req.IndexRangeMin(), req.IndexRangeMax(maxIndex)},
 						},
 						"params": fiber.Map{
-							"images_per_step": imagesPerStep,
+							"images_per_step": maxIndex,
 						},
+						"props": renderProps(run),
 					}
-					traces = []fiber.Map{}
+					tracesMap = map[string]fiber.Map{}
 				}
-				traces = append(traces, fiber.Map{
+				trace, ok := tracesMap[img.Name]
+				if !ok {
+					trace = fiber.Map{
+						"name":    img.Name,
+						"context": fiber.Map{},
+						"caption": img.Caption,
+					}
+					tracesMap[img.Name] = trace
+				}
+				traceValues, ok := trace["values"].([][]fiber.Map)
+				if !ok {
+					stepsSlice := make([][]fiber.Map, maxStep+1)
+					traceValues = stepsSlice
+				}
+
+				iters, ok := trace["iters"].([]int64)
+				if !ok {
+					iters = make([]int64, maxStep+1)
+				}
+				value := fiber.Map{
 					"blob_uri": img.BlobURI,
 					"caption":  img.Caption,
 					"height":   img.Height,
@@ -530,13 +592,72 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 					"iter":     img.Iter,
 					"index":    img.Index,
 					"step":     img.Step,
-				})
+				}
+
+				stepImages := traceValues[img.Step]
+				if stepImages == nil {
+					stepImages = []fiber.Map{}
+				}
+				stepImages = append(stepImages, value)
+				traceValues[img.Step] = stepImages
+				iters[img.Step] = img.Iter // TODO maybe not correct
+				trace["values"] = traceValues
+				trace["iters"] = iters
+				tracesMap[img.Name] = trace
+			}
+			selectTraces := func() {
+				// collect the traces for this run, limiting to RecordDensity and IndexDensity.
+				selectIndices := func(trace fiber.Map) fiber.Map {
+					// limit steps slice to len of RecordDensity.
+					stepCount := req.StepCount()
+					imgCount := req.ItemsPerStep()
+					steps, ok := trace["values"].([][]fiber.Map)
+					if !ok {
+						return trace
+					}
+					iters, ok := trace["iters"].([]int64)
+					if !ok {
+						return trace
+					}
+					filteredSteps := [][]fiber.Map{}
+					filteredIters := []int64{}
+					stepInterval := len(steps) / stepCount
+					for stepIndex := 0; stepIndex < len(steps); stepIndex++ {
+						if stepCount == -1 ||
+							len(steps) <= stepCount ||
+							stepIndex%stepInterval == 0 {
+							step := steps[stepIndex]
+							newStep := []fiber.Map{}
+							imgInterval := len(step) / imgCount
+							for imgIndex := 0; imgIndex < len(step); imgIndex++ {
+								if imgCount == -1 ||
+									len(step) <= imgCount ||
+									imgIndex%imgInterval == 0 {
+									newStep = append(newStep, step[imgIndex])
+								}
+							}
+							filteredSteps = append(filteredSteps, newStep)
+							filteredIters = append(filteredIters, iters[stepIndex])
+						}
+					}
+					trace["values"] = filteredSteps
+					trace["iters"] = filteredIters
+					return trace
+				}
+
+				traces := make([]fiber.Map, len(tracesMap))
+				i := 0
+				for _, trace := range tracesMap {
+					traces[i] = selectIndices(trace)
+					i++
+				}
+				runData["traces"] = traces
 			}
 			flushImages := func() error {
 				if runID == "" {
 					return nil
 				}
-				runData["traces"] = traces
+				selectTraces()
 				if err := encoding.EncodeTree(w, fiber.Map{
 					runID: runData,
 				}); err != nil {
@@ -547,12 +668,12 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 				}
 				return w.Flush()
 			}
+			hasRows := false
 			for rows.Next() {
 				var image models.Artifact
 				if err := database.DB.ScanRows(rows, &image); err != nil {
 					return err
 				}
-
 				// flush after each change in runID
 				// (assumes order by runID)
 				if image.RunID != runID {
@@ -561,18 +682,18 @@ func NewStreamArtifactsResponse(ctx *fiber.Ctx, rows *sql.Rows, totalRuns int64,
 					}
 					runID = image.RunID
 					runData = nil
-					traces = nil
 				}
-				addImage(image)
-
+				addImage(image, runs[image.RunID])
+				hasRows = true
 			}
 
-			if err := flushImages(); err != nil {
-				return err
-			}
-
-			if err := reportProgress(); err != nil {
-				return err
+			if hasRows {
+				if err := flushImages(); err != nil {
+					return err
+				}
+				if err := reportProgress(); err != nil {
+					return err
+				}
 			}
 
 			return nil
@@ -743,19 +864,7 @@ func NewRunsSearchStreamResponse(
 		if err := func() error {
 			for i, r := range runs {
 				run := fiber.Map{
-					"props": fiber.Map{
-						"name":        r.Name,
-						"description": nil,
-						"experiment": fiber.Map{
-							"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-							"name": r.Experiment.Name,
-						},
-						"tags":          ConvertTagsToMaps(r.SharedTags),
-						"creation_time": float64(r.StartTime.Int64) / 1000,
-						"end_time":      float64(r.EndTime.Int64) / 1000,
-						"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
-						"active":        r.Status == models.StatusRunning,
-					},
+					"props": renderProps(r),
 				}
 
 				if !excludeTraces {
@@ -845,21 +954,7 @@ func NewActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgre
 		start := time.Now()
 		if err := func() error {
 			for i, r := range runs {
-
-				props := fiber.Map{
-					"name":        r.Name,
-					"description": nil,
-					"experiment": fiber.Map{
-						"id":   fmt.Sprintf("%d", *r.Experiment.ID),
-						"name": r.Experiment.Name,
-					},
-					"tags":          ConvertTagsToMaps(r.SharedTags),
-					"creation_time": float64(r.StartTime.Int64) / 1000,
-					"end_time":      float64(r.EndTime.Int64) / 1000,
-					"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
-					"active":        r.Status == models.StatusRunning,
-				}
-
+				props := renderProps(r)
 				metrics := make([]fiber.Map, len(r.LatestMetrics))
 				for i, m := range r.LatestMetrics {
 					v := m.Value
@@ -914,6 +1009,105 @@ func NewActiveRunsStreamResponse(ctx *fiber.Ctx, runs []models.Run, reportProgre
 			log.Errorf("Error encountered in %s %s: error streaming active runs: %s", ctx.Method(), ctx.Path(), err)
 		}
 
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
+	})
+	return nil
+}
+
+// renderProps makes the "props" map for a run.
+func renderProps(r models.Run) fiber.Map {
+	m := fiber.Map{
+		"name":        r.Name,
+		"description": nil,
+		"experiment": fiber.Map{
+			"id":                fmt.Sprintf("%d", r.ExperimentID),
+			"name":              r.Experiment.Name,
+			"artifact_location": r.Experiment.ArtifactLocation,
+		},
+		"tags":          ConvertTagsToMaps(r.SharedTags),
+		"creation_time": float64(r.StartTime.Int64) / 1000,
+		"end_time":      float64(r.EndTime.Int64) / 1000,
+		"archived":      r.LifecycleStage == models.LifecycleStageDeleted,
+		"active":        r.Status == models.StatusRunning,
+	}
+	return m
+}
+
+// NewRunImagesStreamResponse streams the provided images to the fiber context.
+func NewRunImagesStreamResponse(ctx *fiber.Ctx, images []models.Image) error {
+	ctx.Set("Content-Type", "application/octet-stream")
+	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		start := time.Now()
+		if err := func() error {
+			var values [][]map[string]interface{}
+			var valuesResult []map[string]interface{}
+
+			for _, image := range images {
+				for _, valueArray := range image.Values {
+					for _, val := range valueArray {
+						valMap := map[string]interface{}{
+							"blob_uri": val.BlobURI,
+							"caption":  val.Caption,
+							"context":  val.Context,
+							"format":   val.Format,
+							"height":   val.Height,
+							"index":    val.Index,
+							"key":      val.Key,
+							"seqKey":   val.SeqKey,
+							"name":     val.Name,
+							"run":      val.Run,
+							"step":     val.Step,
+							"width":    val.Width,
+						}
+						valuesResult = append(valuesResult, valMap)
+					}
+				}
+
+				values = append(values, valuesResult)
+				imgMap := map[string]interface{}{
+					"record_range": image.RecordRange,
+					"index_range":  image.IndexRange,
+					"name":         image.Name,
+					"context":      image.Context,
+					"values":       values,
+					"iters":        image.Iters,
+				}
+
+				if err := encoding.EncodeTree(w, imgMap); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}(); err != nil {
+			log.Errorf("Error encountered in %s %s: error streaming active runs: %s", ctx.Method(), ctx.Path(), err)
+		}
+
+		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
+	})
+	return nil
+}
+
+// NewRunImagesBatchStreamResponse streams the provided images to the fiber context.
+func NewRunImagesBatchStreamResponse(ctx *fiber.Ctx, imagesMap map[string]any) error {
+	ctx.Context().Response.SetBodyStreamWriter(func(w *bufio.Writer) {
+		start := time.Now()
+		if err := func() error {
+			if err := encoding.EncodeTree(w, imagesMap); err != nil {
+				return err
+			}
+			if err := w.Flush(); err != nil {
+				return eris.Wrap(err, "error flushing output stream")
+			}
+			return nil
+		}(); err != nil {
+			log.Errorf(
+				"error encountered in %s %s: error streaming artifact: %s",
+				ctx.Method(),
+				ctx.Path(),
+				err,
+			)
+		}
 		log.Infof("body - %s %s %s", time.Since(start), ctx.Method(), ctx.Path())
 	})
 	return nil

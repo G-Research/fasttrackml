@@ -14,4 +14,5 @@ type ProjectParams struct {
 	Metrics   []LatestMetric
 	TagKeys   []string
 	ParamKeys []string
+	Images    []string
 }

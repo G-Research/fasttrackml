@@ -706,6 +706,37 @@ func (pq *parsedQuery) parseName(node *ast.Name) (any, error) {
 					).UnixMilli(), nil
 				},
 			), nil
+		case "images":
+			table, ok := pq.qp.Tables["runs"]
+			if !ok {
+				return nil, errors.New("unsupported name identifier 'runs'")
+			}
+			return attributeGetter(
+				func(attr string) (any, error) {
+					joinKey := fmt.Sprintf("artifacts:%s", attr)
+					j, ok := pq.joins[joinKey]
+					alias := fmt.Sprintf("artifacts_%d", len(pq.joins))
+					if !ok {
+						j = join{
+							alias: alias,
+							query: fmt.Sprintf(
+								"INNER JOIN artifacts %s ON %s.run_uuid = %s.run_uuid",
+								alias, table, alias,
+							),
+							args: []any{attr},
+						}
+						pq.AddJoin(joinKey, j)
+					}
+					switch attr {
+					case "name":
+						return clause.Column{
+							Table: j.alias,
+							Name:  "name",
+						}, nil
+					}
+					return nil, fmt.Errorf("unsupported name identifier %q", node.Id)
+				},
+			), nil
 		default:
 			return nil, fmt.Errorf("unsupported name identifier %q", node.Id)
 		}

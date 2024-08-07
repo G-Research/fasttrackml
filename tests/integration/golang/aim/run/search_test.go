@@ -469,12 +469,17 @@ func (s *SearchTestSuite) TestStreamData_Ok() {
 			},
 		},
 		{
-			name: "NoExperimentNamesNoResults",
+			name: "NoExperimentNamesQueryResults",
 			request: request.SearchRunsRequest{
 				Query:           `run.archived == True or run.archived == False`,
 				ExperimentNames: []string{},
 			},
-			runs: []*models.Run{},
+			runs: []*models.Run{
+				s.run1,
+				s.run2,
+				s.run3,
+				s.run4,
+			},
 		},
 		{
 			name: "SearchDurationOperationLess",

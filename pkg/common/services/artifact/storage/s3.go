@@ -32,7 +32,7 @@ func NewS3(ctx context.Context, config *config.Config) (*S3, error) {
 	var clientOptions []func(o *s3.Options)
 	if config.S3EndpointURI != "" {
 		clientOptions = append(clientOptions, func(o *s3.Options) {
-			o.UsePathStyle = false
+			o.UsePathStyle = true
 		})
 		clientOptions = append(clientOptions, func(o *s3.Options) {
 			o.BaseEndpoint = aws.String(config.S3EndpointURI)

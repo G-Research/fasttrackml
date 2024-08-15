@@ -107,6 +107,7 @@ func (s S3) List(ctx context.Context, artifactURI, path string) ([]ArtifactObjec
 	return artifactList, nil
 }
 
+// Get returns file content at the storage location.
 func (s S3) Get(ctx context.Context, artifactURI, path string) (io.ReadCloser, error) {
 	// 1. create s3 request input.
 	bucketName, prefix, err := ExtractBucketAndPrefix(artifactURI)

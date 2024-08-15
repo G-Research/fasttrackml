@@ -46,7 +46,7 @@ func NewS3Client(endpoint string) (*s3.Client, error) {
 		return nil, eris.Wrap(err, "error loading configuration for S3 client")
 	}
 	return s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.UsePathStyle = true
+		o.UsePathStyle = false
 		o.BaseEndpoint = aws.String(endpoint)
 	}), nil
 }

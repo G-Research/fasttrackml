@@ -16,11 +16,6 @@ The AWS region where your S3 bucket is located. Example: `us-east-1`, `us-west-2
 `FML_S3_ENDPOINT_URI`
 The endpoint URI for your S3 bucket. This will change depending on the path-style access type. If path-style access is disabled, exclude the bucket name subdomain. Example: `https://s3.your-region.amazonaws.com`. Otherwise, the bucket subdomain can be included: `https://your-bucket-name.s3.your-region.amazonaws.com`.
 
-<!-- FML_S3_USE_PATH_STYLE
-    Description: Determines whether to use path-style access when interacting with S3.
-    Format: true or false
-    Notes: This should typically be set to true for older S3 buckets or S3-compatible storage that requires path-style access. -->
-
 ## AWS S3 Bucket Setup
 
 ### Bucket Permissions:
@@ -37,5 +32,4 @@ The following errors may show up in the frontend if there are issues with your A
 3. If using a non-AWS S3-compatible storage such as Minio, verify that `FML_S3_ENDPOINT_URI` is correct.
 
 ### 404 (Object Does Not Exist)
-1. Check that the object key format matches the actual key in your S3 bucket.
-<!-- 2. Make sure that `FML_S3_USE_PATH_STYLE` is set correctly based on your bucket's URL structure. -->
+Check that the object key format matches the actual key in your S3 bucket.

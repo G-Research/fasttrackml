@@ -43,8 +43,8 @@ func NewGetExperimentsResponse(experiments []models.ExperimentExtended) []Experi
 type ExperimentRunPartial struct {
 	ID           string `json:"run_id"`
 	Name         string `json:"name"`
-	CreationTime int64  `json:"creationTime"`
-	EndTime      int64  `json:"endTime"`
+	CreationTime int64  `json:"creation_time"`
+	EndTime      int64  `json:"end_time"`
 	Archived     bool   `json:"archived"`
 }
 

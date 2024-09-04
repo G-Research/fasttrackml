@@ -280,6 +280,7 @@ class CustomRestStore(RestStore):
     def log_image(
         self,
         run_id: str,
+        name: str,
         filename: str,
         artifact_path: str,
         caption: str,
@@ -293,6 +294,7 @@ class CustomRestStore(RestStore):
         storage_path = posixpath.join(artifact_path, os.path.basename(filename))
         request_body = {
             "run_id": run_id,
+            "name": name,
             "blob_uri": storage_path,
             "caption": caption,
             "index": index,

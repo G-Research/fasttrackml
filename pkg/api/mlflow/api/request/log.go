@@ -76,6 +76,7 @@ type LogOutputRequest struct {
 
 // LogArtifactRequest is a request object for `POST mlflow/runs/log-artifact` endpoint.
 type LogArtifactRequest struct {
+	Name    string `json:"name"`
 	Iter    int64  `json:"iter"`
 	Step    int64  `json:"step"`
 	Caption string `json:"caption"`

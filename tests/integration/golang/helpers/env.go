@@ -32,7 +32,7 @@ func GetPostgresUri() string {
 	if ok {
 		return uri
 	}
-	return "postgres://postgres:postgres@localhost/postgres?sslmode=disable"
+	return "postgres://postgres:postgres@localhost/postgres"
 }
 
 func GetGSEndpointUri() string {

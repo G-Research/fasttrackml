@@ -20,9 +20,7 @@ func GenerateDatabaseURI(t *testing.T, backend string) (string, error) {
 		return fmt.Sprintf("sqlite://%s/test.db?_key=passphrase", t.TempDir()), nil
 	case "postgres":
 		// temporary directory name contains some not allowed character to be in database name. filter it.
-		tmpDir := strings.ReplaceAll(t.TempDir(), "-", "_")
-		tmpDir = strings.ReplaceAll(tmpDir, "/", "_")
-		tmpDir = fmt.Sprintf("db_%d%s", time.Now().UnixMicro(), tmpDir)
+		tmpDir := fmt.Sprintf("db_%d", time.Now().UnixMicro())
 		return getPostgresDatabase(t, GetPostgresUri(), strings.ToLower(tmpDir))
 	default:
 		return "", fmt.Errorf("unknown backend: %s", backend)

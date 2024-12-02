@@ -79,7 +79,8 @@
         "fml_client": {
             "requirements": [
                 "mlflow==2.12",
-                "pytest==7.4.3"
+                "pytest==7.4.3",
+                "protobuf==4.25.1"
             ],
             "tests": [
                 "/src/python/client_test.py"

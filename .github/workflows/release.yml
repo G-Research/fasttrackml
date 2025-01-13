@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  attestations: write
 
 jobs:
   pypi-publish:

@@ -14,6 +14,7 @@ jobs:
     environment: release
     permissions:
       id-token: write
+      attestations: write
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4

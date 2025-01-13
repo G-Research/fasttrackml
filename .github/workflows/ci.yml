@@ -431,5 +431,6 @@ jobs:
       contents: write
       pages: write
       id-token: write
+      attestations: write
     secrets: inherit
     uses: ./.github/workflows/release.yml

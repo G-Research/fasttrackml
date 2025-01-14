@@ -129,7 +129,7 @@ jobs:
             $(printf "${{ vars.DOCKER_REPO }}@%s " ${digests[@]})
           echo "::endgroup::"
           # Output digests as a JSON array for use in a matrix
-          echo "::set-output name=digests::$(printf '%s\n' "${digests[@]}" | jq -R . | jq -s .)"
+          echo "digests=$(printf '%s\n' "${digests[@]}" | jq -R . | jq -s .)" >> $GITHUB_OUTPUT
       outputs:
         digests: ${{ steps.publish-docker-hub.outputs.digests }}
 

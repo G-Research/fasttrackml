@@ -129,16 +129,21 @@ jobs:
           echo "::endgroup::"
           # Output digests as a JSON array for use in a matrix
           echo "::set-output name=digests::$(printf '%s\n' "${digests[@]}" | jq -R . | jq -s .)"
+      outputs:
+        digests: ${{ steps.set-matrix.outputs.matrix }}
 
-      - name: Attest Each Docker Image
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: index.docker.io/${{ vars.DOCKER_REPO }}
-          subject-digest: ${{ matrix.digest }}
-          push-to-registry: true
-        strategy:
-          matrix:
-            digest: ${{ fromJson(steps.push.outputs.digests) }}
+    attest-docker-images:
+      name: Publish Docker images attestations
+      strategy:
+        matrix:
+          digest: ${{ fromJson(needs.docker-release.outputs.digests) }}
+      steps:
+        - name: Attest Each Docker Image
+          uses: actions/attest-build-provenance@v2
+          with:
+            subject-name: index.docker.io/${{ vars.DOCKER_REPO }}
+            subject-digest: ${{ matrix.digest }}
+            push-to-registry: true
 
   chart-release:
     name: Publish Helm chart

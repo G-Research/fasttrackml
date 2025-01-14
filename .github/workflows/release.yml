@@ -112,6 +112,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Push to Docker Hub
+        id: publish-docker-hub
         run: |
           tags=(${{ steps.tags.outputs.tags }})
           for image in fasttrackml-oci-*.tar
@@ -130,7 +131,7 @@ jobs:
           # Output digests as a JSON array for use in a matrix
           echo "::set-output name=digests::$(printf '%s\n' "${digests[@]}" | jq -R . | jq -s .)"
       outputs:
-        digests: ${{ steps.set-matrix.outputs.matrix }}
+        digests: ${{ steps.publish-docker-hub.outputs.digests }}
 
     attest-docker-images:
       name: Publish Docker images attestations

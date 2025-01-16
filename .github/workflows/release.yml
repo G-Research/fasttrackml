@@ -66,9 +66,6 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: release
-    permissions:
-      id-token: write
-      attestations: write
     steps:
       # We need to checkout the repo in order to determine the latest tag.
       - name: Checkout
@@ -133,19 +130,22 @@ jobs:
       outputs:
         digests: ${{ steps.publish-docker-hub.outputs.digests }}
 
-    attest-docker-images:
-      name: Publish Docker images attestations
-      needs: docker-release
-      strategy:
-        matrix:
-          digest: ${{ fromJson(needs.docker-release.outputs.digests) }}
-      steps:
-        - name: Attest Each Docker Image
-          uses: actions/attest-build-provenance@v2
-          with:
-            subject-name: index.docker.io/${{ vars.DOCKER_REPO }}
-            subject-digest: ${{ matrix.digest }}
-            push-to-registry: true
+  attest-docker-images:
+    name: Publish Docker images attestations
+    needs: docker-release
+    permissions:
+      id-token: write
+      attestations: write
+    strategy:
+      matrix:
+        digest: ${{ fromJson(needs.docker-release.outputs.digests) }}
+    steps:
+      - name: Attest Each Docker Image
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: index.docker.io/${{ vars.DOCKER_REPO }}
+          subject-digest: ${{ matrix.digest }}
+          push-to-registry: true
 
   chart-release:
     name: Publish Helm chart

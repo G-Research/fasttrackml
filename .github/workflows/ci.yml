@@ -270,7 +270,7 @@ jobs:
     name: Build (${{ matrix.os }}/${{ matrix.arch }})
     strategy:
       matrix:
-        os: [linux] #[darwin, linux, windows]
+        os: [darwin, linux, windows]
         arch: [amd64, arm64]
         exclude:
           - os: windows
@@ -360,52 +360,6 @@ jobs:
         with:
           name: fasttrackml-oci-images-${{ matrix.arch }}
           path: fasttrackml-oci-*.tar
-
-      - name: Compute tags
-        id: tags
-        if: matrix.os == 'linux'
-        run: |
-          ref='${{ github.ref }}'
-          case $ref in
-            refs/heads/main)
-              tags=("main" "edge")
-              ;;
-            refs/tags/v*)
-              tags=("${ref#refs/tags/v}")
-              if [ "$(git -c 'versionsort.suffix=-' for-each-ref --sort=version:refname --format='%(refname)' 'refs/tags/v*' | grep -v -- - | tail -n1)" == "$ref" ]; then
-                tags+=("latest")
-              fi
-          esac
-          echo "ref=${ref#refs/*/}" >> $GITHUB_OUTPUT
-          echo "tags=${tags[@]}" >> $GITHUB_OUTPUT
-
-      - name: Test Push to Docker Hub
-        id: publish-docker-hub
-        if: matrix.os == 'linux'
-        run: |
-          tags=(${{ steps.tags.outputs.tags }})
-          for image in fasttrackml-oci-*.tar
-          do
-            digest=$(tar -xOf $image index.json | jq -r '.manifests[0].digest')
-            digests+=($digest)
-          done
-          # Output digests as a JSON array for use in a matrix
-          echo "digests=$(printf '%s\n' "${digests[@]}" | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
-          echo "digests=$(printf '%s\n' "${digests[@]}" | jq -R . | jq -cs .)"
-
-    outputs:
-      digests: ${{ steps.publish-docker-hub.outputs.digests }}
-
-  attest-docker-images:
-    name: Test digest
-    runs-on: ubuntu-latest
-    needs: build
-    strategy:
-      matrix:
-        digest: ${{ fromJson(needs.build.outputs.digests) }}
-    steps:
-      - name: Dump digest
-        run: echo ${{ matrix.digest }}
 
   # Virtual job that can be configured as a required check before a PR can be merged.
   # As GitHub considers a check as successful if it is skipped, we need to check its status in

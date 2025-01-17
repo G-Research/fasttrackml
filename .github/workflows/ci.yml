@@ -397,7 +397,7 @@ jobs:
       digests: ${{ steps.publish-docker-hub.outputs.digests }}
 
   attest-docker-images:
-    name: Publish Docker images attestations
+    name: Test digest
     runs-on: ubuntu-latest
     needs: build
     strategy:

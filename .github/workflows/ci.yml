@@ -402,7 +402,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        digest: ${{ fromJson(needs.docker-release.outputs.digests) }}
+        digest: ${{ fromJson(needs.build.outputs.digests) }}
     steps:
       - name: Dump digest
         run: echo ${{ matrix.digest }}

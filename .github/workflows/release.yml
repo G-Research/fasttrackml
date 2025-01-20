@@ -133,6 +133,7 @@ jobs:
   attest-docker-images:
     name: Publish Docker images attestations
     runs-on: ubuntu-latest
+    environment: release
     needs: docker-release
     permissions:
       id-token: write

@@ -124,7 +124,20 @@ jobs:
           docker buildx imagetools create \
             $(printf -- "--tag ${{ vars.DOCKER_REPO }}:%s " ${tags[@]}) \
             $(printf "${{ vars.DOCKER_REPO }}@%s " ${digests[@]})
+
+          # Generate the multiarch manifest digest using dry-run and skopeo
+          multiarch_digest=$(docker buildx imagetools create \
+            $(printf -- "--tag ${{ vars.DOCKER_REPO }}:%s " ${tags[@]}) \
+            $(printf "${{ vars.DOCKER_REPO }}@%s " ${digests[@]}) \
+            --dry-run | perl -pe 'chomp if eof' | skopeo manifest-digest /dev/stdin)
+
+          # Add the multiarch digest to the digests array
+          digests+=($multiarch_digest)
           echo "::endgroup::"
+
+          # Log the multiarch digest for reference
+          echo "Multiarch digest added to digests array: $multiarch_digest"
+
           # Output digests as a JSON array for use in a matrix
           echo "digests=$(printf '%s\n' "${digests[@]}" | jq -R . | jq -cs .)" >> $GITHUB_OUTPUT
     outputs:

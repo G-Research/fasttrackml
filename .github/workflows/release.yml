@@ -32,6 +32,8 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: wheelhouse
+          # this is _not_ GitHub attestations and must be disabled to work with reusable workflows
+          attestations: false
 
   github-release:
     name: Publish GitHub release

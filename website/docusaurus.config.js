@@ -164,7 +164,7 @@ module.exports = async function configCreatorAsync() {
                 announcementBar: {
                     // https://docusaurus.io/docs/api/themes/configuration#announcement-bar
                     id: `announcement-bar-mlflow-go`,
-                    content: `We are excited to introduce <a href="https://github.com/mlflow/mlflow-go-backend" target="_blank">mlflow-go</a>, the successor of FastTrackML!`,
+                    content: `We are excited to introduce <a href="https://github.com/mlflow/mlflow-go-backend" target="_blank">mlflow-go</a>, the successor to FastTrackML!`,
                     isCloseable: false
                 },
                 colorMode: {

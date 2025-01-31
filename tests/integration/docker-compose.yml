@@ -1,7 +1,7 @@
 services:
 
   postgres:
-    image: postgres:latest
+    image: postgres:17
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s

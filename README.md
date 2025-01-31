@@ -10,6 +10,11 @@ ships with the visualization UI of both MLflow and Aim.
 As the name implies, the emphasis is on speed -- fast logging, fast
 retrieval.
 
+## mlflow-go
+
+> [!TIP]
+> We are excited to be developing the next evolution of performant experiment tracking at [mlflow/mlflow-go-backend](https://github.com/mlflow/mlflow-go-backend)!
+
 ### Quickstart
 
 #### Run the tracking server

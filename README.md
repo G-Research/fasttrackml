@@ -153,6 +153,10 @@ vscode ➜ /workspaces/fasttrackml (main) $ make run
 ```
 </details>
 
+### Security
+
+Please see our [security policy](https://github.com/G-Research/fasttrackml/blob/main/SECURITY.md) for details on reporting security vulnerabilities.
+
 ### License
 
 Copyright 2022-2023 G-Research

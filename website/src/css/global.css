@@ -57,3 +57,10 @@ input, textarea {
 }
 
 /* Navbar */
+
+/* Footer */
+footer .footer__logo {
+    margin-bottom: 1.5rem;
+    max-width: 400px;
+}
+/* Footer */

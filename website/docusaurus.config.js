@@ -155,9 +155,9 @@ module.exports = async function configCreatorAsync() {
                     ],
                     logo: {
                         alt: 'G-Research Open-Source Software',
-                        src: 'logo/organization.svg',
-                        srcDark: 'logo/organization-dark.svg',
-                        href: 'https://opensource.gresearch.co.uk/',
+                        src: 'https://github.com/G-Research/brand/raw/main/logo/GR-OSS/logo-light-bg.svg',
+                        srcDark: 'https://github.com/G-Research/brand/raw/main/logo/GR-OSS/logo-dark-bg.svg',
+                        href: 'https://opensource.gresearch.com/',
                     },
                     copyright: `Copyright © ${new Date().getFullYear()} G-Research`,
                 },
